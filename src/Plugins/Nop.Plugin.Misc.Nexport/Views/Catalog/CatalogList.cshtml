@@ -1,0 +1,55 @@
+﻿@using Microsoft.AspNetCore.Routing
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Web.Framework.Models.DataTables
+@model Nop.Plugin.Misc.Nexport.Models.NexportCatalogSearchModel
+
+@await Html.PartialAsync("Table", new DataTablesModel
+{
+    Name = "catalog-grid",
+    UrlRead = new DataUrl("GetCatalogs", "NexportIntegration",
+        new RouteValueDictionary { [nameof(Model.OrgId)] = Model.OrgId }),
+    Length = Model.PageSize,
+    LengthMenu = Model.AvailablePageSizes,
+    ColumnCollection = new List<ColumnProperty>
+        {
+        new ColumnProperty(nameof(NexportCatalogResponseItemModel.CatalogId))
+        {
+            Title = "Catalog Id",
+            Width = "150",
+        },
+        new ColumnProperty(nameof(NexportCatalogResponseItemModel.Name))
+        {
+            Title = "CatalogName",
+            Width = "150"
+        },
+        new ColumnProperty(nameof(NexportCatalogResponseItemModel.UtcDateCreated))
+        {
+            Title = "Created Date",
+            Width = "150",
+            Render = new RenderDate()
+        },
+        new ColumnProperty(nameof(NexportCatalogResponseItemModel.UtcDateLastModified))
+        {
+            Title = "Last Modified Date",
+            Width = "150",
+            Render = new RenderDate()
+        },
+        new ColumnProperty(nameof(NexportCatalogResponseItemModel.CatalogId))
+        {
+            Title = T("Admin.Common.View").Text,
+            Width = "150",
+            ClassName = NopColumnClassDefaults.Button,
+            Render = new RenderCustom("renderCustomCatalogView")
+        }
+    }
+})
+
+<script>
+    function renderCustomCatalogView(data, type, row, meta) {
+        var url = "@Url.Action("ShowProductDetails", "NexportIntegration")" +
+            "?nexportProductId=" + data + "&nexportProductType=@NexportProductTypeEnum.Catalog";
+
+        return "<a href=\""+ url +"\" class=\"btn btn-default\"><i class=\"fa fa-eye\"></i>@T("Admin.Common.View")</button>";
+    }
+</script>

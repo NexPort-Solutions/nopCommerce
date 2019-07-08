@@ -1,0 +1,141 @@
+﻿@using NexportApi.Model
+@using Nop.Core
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Extensions
+@using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Services.Common
+@using Nop.Services.Helpers
+@inject IDateTimeHelper dateTimeHelper
+@inject IGenericAttributeService genericAttributeService
+@inject IWorkContext workContext
+@model CatalogResponseItem
+
+@{
+    Layout = "_AdminLayout";
+    ViewBag.Title = "Nexport Integration - Catalog Details";
+
+    Html.SetActiveMenuItemSystemName("Nexport Integration - Product Mappings");
+
+    const string hideNexportCatalogInfoBlockAttributeName = "Nexport.Catalog.HideInfoBlock";
+    var hideInfoBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportCatalogInfoBlockAttributeName);
+
+    const string hideNexportCatalogMappingsBlockAttributeName = "Nexport.Catalog.HideMappingsBlock";
+    var hideMappingsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportCatalogMappingsBlockAttributeName);
+
+    const string hideNexportSyllabusesBlockAttributeName = "Nexport.Catalog.HideSyllabusesBlock";
+    var hideSyllabusesBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportSyllabusesBlockAttributeName);
+}
+
+<div class="content-header clearfix">
+    <h1 class="pull-left">
+        Catalog Details - @Model.Name (@Model.OrgShortName)
+        <small>
+            <i class="fa fa-arrow-circle-left"></i>
+            <a asp-action="ListCatalogs" asp-controller="NexportIntegration">back to catalog list</a>
+        </small>
+    </h1>
+    <div class="pull-right">
+        <button type="button" id="mapExistingProductsBtn" class="btn bg-olive">
+            <i class="fa fa-plus"></i>
+            Map with existing products
+        </button>
+    </div>
+</div>
+
+<div class="content">
+    <div class="form-horizontal">
+        <nop-panels id="nexport-catalog-panels">
+            <nop-panel asp-name="nexport-catalog-info" asp-icon="fa fa-info" asp-hide="@hideInfoBlock"
+                       asp-hide-block-attribute-name="@hideNexportCatalogInfoBlockAttributeName" asp-title="Catalog Details" asp-advanced="false">
+                <div class="raw clearfix">
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <div class="label-wrapper">
+                                <label class="control-label">Catalog Id</label>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.CatalogId</div>
+                        </div>
+                    </div>
+                    @if (Model.DateCreated.HasValue)
+                    {
+                        <div class="form-group">
+                            <div class="col-md-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label">Date Created</label>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@dateTimeHelper.ConvertToUserTime(Model.DateCreated.Value).ToString("f")</div>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.LastModified.HasValue)
+                    {
+                        <div class="form-group">
+                            <div class="col-md-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label">Last Modified Date</label>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@dateTimeHelper.ConvertToUserTime(Model.LastModified.Value).ToString("f")</div>
+                            </div>
+                        </div>
+                    }
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <div class="label-wrapper">
+                                <label class="control-label">Pricing Model</label>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.PricingModel.GetDisplayName()</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <div class="label-wrapper">
+                                <label class="control-label">Pricing Model</label>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.PublishingModel.GetDisplayName()</div>
+                        </div>
+                    </div>
+                </div>
+            </nop-panel>
+            <nop-panel asp-name="nexport-catalog-mappings" asp-icon="fa fa-paperclip" asp-hide="@hideMappingsBlock"
+                       asp-hide-block-attribute-name="@hideNexportCatalogMappingsBlockAttributeName" asp-title="Catalog Mappings" asp-advanced="false">
+                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappings.cshtml",
+                    new NexportProductMappingListSearchModel()
+                    {
+                        NexportProductId = Model.CatalogId,
+                        NexportProductType = NexportProductTypeEnum.Catalog
+                    })
+            </nop-panel>
+            <nop-panel asp-name="nexport-catalog-syllabus" asp-icon="fa fa-book" asp-hide="@hideSyllabusesBlock"
+                       asp-hide-block-attribute-name="@hideNexportSyllabusesBlockAttributeName" asp-title="Syllabuses" asp-advanced="false">
+                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Syllabus/SyllabusList.cshtml",
+                    new NexportSyllabusListSearchModel()
+                    {
+                        CatalogId = Guid.Parse(Model.CatalogId)
+                    })
+            </nop-panel>
+        </nop-panels>
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        $("#mapExistingProductsBtn").on("click",
+            function() {
+                var url =
+                    "@Url.Action("MapProductPopup", "NexportIntegration")";
+                url += "?nexportProductId=@Model.CatalogId&nexportCatalogId=@Model.CatalogId&nexportProductType=@NexportProductTypeEnum.Catalog" +
+                    "&containerId=nexport-catalog-panels&btnId=btnRefreshMappings";
+                console.log(url);
+                OpenWindow(url, 800, 800, true);
+            });
+    });
+</script>

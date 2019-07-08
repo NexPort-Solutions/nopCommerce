@@ -1,0 +1,160 @@
+﻿@using NexportApi.Model
+@using Nop.Core
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Services.Common
+@using Nop.Services.Helpers
+@inject IDateTimeHelper dateTimeHelper
+@inject IGenericAttributeService genericAttributeService
+@inject IWorkContext workContext
+@model SectionResponse
+
+@{
+    Layout = "_AdminLayout";
+    ViewBag.Title = "Nexport Integration - Section Details";
+
+    Html.SetActiveMenuItemSystemName("Nexport Integration - Product Mappings");
+
+    const string hideNexportSectionInfoBlockAttributeName = "Nexport.Section.HideInfoBlock";
+    var hideInfoBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportSectionInfoBlockAttributeName);
+
+    const string hideNexportSectionMappingsBlockAttributeName = "Nexport.Section.HideMappingsBlock";
+    var hideMappingsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportSectionMappingsBlockAttributeName);
+
+    var nexportProductId = Context.Request.Query["nexportProductId"];
+    var nexportCatalogId = Context.Request.Query["nexportCatalogId"];
+}
+
+<div class="content-header clearfix">
+    <h1 class="pull-left">
+        Section Details - @Model.Title (@Model.SectionNumber)
+        <small>
+            <i class="fa fa-arrow-circle-left"></i>
+            <a asp-action="ShowProductDetails"
+               asp-controller="NexportIntegration"
+               asp-route-nexportProductId="@nexportCatalogId"
+               asp-route-nexportProductType="Catalog">back to catalog details</a>
+        </small>
+    </h1>
+    <div class="pull-right">
+        <button type="button" id="mapProductForSectionBtn" class="btn bg-olive">
+            <i class="fa fa-plus"></i>
+            Map products
+        </button>
+    </div>
+</div>
+
+<div class="content">
+    <div class="form-horizontal">
+        <nop-panels id="nexport-section-panels">
+            <nop-panel asp-name="nexport-section-info" asp-icon="fa fa-info" asp-hide="@hideInfoBlock"
+                       asp-hide-block-attribute-name="@hideNexportSectionInfoBlockAttributeName" asp-title="Section Details" asp-advanced="false">
+                <div class="raw clearfix">
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <div class="label-wrapper">
+                                <label class="control-label">Section Id</label>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.SyllabusId</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="UniqueName" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.UniqueName</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="SectionCeus" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.SectionCeus</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="SectionDuration" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.SectionDuration</div>
+                        </div>
+                    </div>
+                    @if (Model.CreditHours.HasValue)
+                    {
+                        <div class="form-group">
+                            <div class="col-md-3">
+                                <nop-label asp-for="CreditHours" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.CreditHours</div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.EnrollmentStart.HasValue)
+                    {
+                        <div class="form-group">
+                            <div class="col-md-3">
+                                <nop-label asp-for="EnrollmentStart" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@dateTimeHelper.ConvertToUserTime(Model.EnrollmentStart.Value).ToString("f")</div>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.EnrollmentEnd.HasValue)
+                    {
+                        <div class="form-group">
+                            <div class="col-md-3">
+                                <nop-label asp-for="EnrollmentEnd" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@dateTimeHelper.ConvertToUserTime(Model.EnrollmentEnd.Value).ToString("f")</div>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.EnrollmentEnd.HasValue)
+                    {
+                        <div class="form-group">
+                            <div class="col-md-3">
+                                <nop-label asp-for="EnrollmentEnd" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@dateTimeHelper.ConvertToUserTime(Model.EnrollmentEnd.Value).ToString("f")</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </nop-panel>
+            <nop-panel asp-name="nexport-section-mappings" asp-icon="fa fa-paperclip" asp-hide="@hideMappingsBlock"
+                       asp-hide-block-attribute-name="@hideNexportSectionMappingsBlockAttributeName" asp-title="Section Mappings" asp-advanced="false">
+                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappings.cshtml",
+                    new NexportProductMappingListSearchModel()
+                    {
+                        NexportProductId = nexportProductId,
+                        NexportCatalogId = nexportCatalogId,
+                        NexportSyllabusId = Model.SyllabusId,
+                        NexportProductType = NexportProductTypeEnum.Section
+                    })
+            </nop-panel>
+        </nop-panels>
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        $("#mapProductForSectionBtn").on("click",
+            function(e) {
+                var url =
+                    "@Url.Action("MapProductPopup", "NexportIntegration")";
+                url += "?nexportProductId=@nexportProductId&nexportCatalogId=@nexportCatalogId&nexportSyllabusId=@Model.SyllabusId&nexportProductType=@NexportProductTypeEnum.Section" +
+                    "&containerId=nexport-section-panels&btnId=btnRefreshMappings";
+                console.log(url);
+                OpenWindow(url, 800, 800, true);
+            });
+    });
+</script>

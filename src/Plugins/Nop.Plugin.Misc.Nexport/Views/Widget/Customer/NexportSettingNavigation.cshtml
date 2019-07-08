@@ -1,0 +1,12 @@
+﻿<li class="customer-nexport-info">
+    <a href="@Url.RouteUrl("Plugin.Misc.Nexport.Customer.MapNexportUser")" class="inactive">Nexport User Settings</a>
+</li>
+<li class="customer-nexport-training">
+    <a href="@Url.RouteUrl("Plugin.Misc.Nexport.MyTraining")" class="inactive">My Training</a>
+</li>
+
+<script asp-location="Footer">
+    $(document).ready(function() {
+        $("a[href=\"" + window.location.pathname + "\"]").removeClass("inactive").addClass("active");
+    });
+</script>

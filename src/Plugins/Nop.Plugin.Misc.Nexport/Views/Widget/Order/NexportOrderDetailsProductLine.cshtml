@@ -1,0 +1,42 @@
+﻿@using Nop.Plugin.Misc.Nexport.Services
+@using Nop.Services.Orders
+@inject IOrderService orderService
+@inject NexportService nexportService
+@model Nop.Web.Models.Order.OrderDetailsModel.OrderItemModel
+
+@if (Model != null && Model.Id > 0)
+{
+    var orderItem = orderService.GetOrderItemById(Model.Id);
+    var nexportOrderInvoice = nexportService.FindNexportOrderInvoiceItem(orderItem.OrderId, orderItem.Id);
+
+    if (nexportOrderInvoice != null)
+    {
+        if (nexportOrderInvoice.UtcDateRedemption != null)
+        {
+            <a href="javascript:void(0);" id="view-redemption-link">(View your redemption)</a>
+        }
+        else
+        {
+            <a href="javascript:void(0);" id="view-redemption-link">(Redeem)</a>
+        }
+
+
+        <div id="redemption-view-popup" title="Redemption" style="display: none;">
+            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/_RedeemOrViewOrder.cshtml", nexportOrderInvoice)
+        </div>
+
+        <script asp-location="Footer">
+            $(document).ready(function () {
+                $("#view-redemption-link").on("click", function () {
+                    var targetWidth = 550;
+                    var maxHeight = $(window).height() - 20;
+
+                    $("#redemption-view-popup").dialog({
+                        width: targetWidth,
+                        maxHeight: maxHeight
+                    });
+                });
+            });
+        </script>
+    }
+}

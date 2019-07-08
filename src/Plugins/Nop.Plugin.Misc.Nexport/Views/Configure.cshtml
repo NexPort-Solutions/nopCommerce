@@ -1,0 +1,298 @@
+﻿@using Nop.Services.Helpers
+@inject IDateTimeHelper dateTimeHelper
+@inject IJsonHelper Json
+@model Nop.Plugin.Misc.Nexport.Models.ConfigurationModel
+
+@{
+    Layout = "_ConfigurePlugin";
+
+    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
+}
+
+<form asp-controller="NexportIntegration" asp-action="Configure" method="post">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Plugin Api Credential
+        </div>
+        <div class="panel-body">
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="Url" />
+                </div>
+                <div class="col-md-9">
+                    @if (!string.IsNullOrEmpty(Model.Url))
+                    {
+                        <div class="input-group">
+                            <nop-editor asp-for="Url" />
+                            <div class="input-group-btn">
+                                <button id="setServerUrl" name="setserverurl" class="btn btn-info">
+                                    Set url
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <nop-editor asp-for="Url" />
+                    }
+                    <span asp-validation-for="Url"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="Username" />
+                </div>
+                <div class="col-md-9">
+                    <nop-editor asp-for="Username" />
+                    <span asp-validation-for="Username"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="Password" />
+                </div>
+                <div class="col-md-9">
+                    <nop-editor asp-for="Password" />
+                    <span asp-validation-for="Password"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="CustomTokenExpirationDate" />
+                </div>
+                <div class="col-md-9">
+                    <nop-editor asp-for="CustomTokenExpirationDate" asp-disabled="@Model.TokenNeverExpired" />
+                    <span asp-validation-for="CustomTokenExpirationDate"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="AutoRenewToken" />
+                </div>
+                <div class="col-md-9">
+                    <input asp-for="AutoRenewToken" disabled="@Model.TokenNeverExpired" />
+                    <span asp-validation-for="AutoRenewToken"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="TokenNeverExpired" />
+                </div>
+                <div class="col-md-9">
+                    <input asp-for="TokenNeverExpired" disabled="@Model.AutoRenewToken" />
+                    <span asp-validation-for="TokenNeverExpired"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-md-9 col-md-offset-3">
+                    <input type="submit" name="save" class="btn bg-blue" value="@T("Admin.Common.Save")" />
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@if (!string.IsNullOrEmpty(Model.NexportAuthenticationToken))
+{
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Plugin Api Token
+        </div>
+        <div class="panel-body">
+
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="NexportAuthenticationToken" />
+                </div>
+                <div class="col-md-9">
+                    <div class="form-text-row">@Model.NexportAuthenticationToken</div>
+                </div>
+            </div>
+
+            @if (Model.UtcExpirationDate.HasValue)
+            {
+                <div class="form-group">
+                    <div class="col-md-3">
+                        <nop-label asp-for="UtcExpirationDate" />
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-text-row">@dateTimeHelper.ConvertToUserTime(Model.UtcExpirationDate.Value).ToString("f")</div>
+                    </div>
+                </div>
+            }
+
+            @if (Model.UtcExpirationDate.HasValue && Model.UtcExpirationDate.Value < DateTime.UtcNow)
+            {
+                <div class="form-group">
+                    <div class="col-md-9 col-md-offset-3">
+                        <p class="text-yellow">
+                            <i class="icon fa fa-warning"></i>
+                            Api authentication token has expired. Please regenerate new token by submit the credential again
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Root Organization
+        </div>
+        <div class="panel-body">
+            <form id="set-root-org-form" action="" onSubmit="return false;">
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <div class="col-md-3">
+                        <div class="label-wrapper">
+                            <label class="control-label" for="root-org-search-box">@T("Plugins.Misc.Nexport.FindRootOrganization")</label>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <input type="text" class="form-control typeahead" placeholder="Search" id="root-org-search-box">
+                        <input type="hidden" id="root-org-search-selected" name="orgId" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-9 col-md-offset-3">
+                        <button class="btn bg-blue" id="set-root-org-btn">Set Root Organization</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="RootOrganizationId" />
+                </div>
+                <div class="col-md-9">
+                    <div class="form-text-row" id="selectedRootOrg">
+                        @if (Model.RootOrganizationId.HasValue && Model.RootOrganizationId.Value != Guid.Empty)
+                        {
+                            @Model.RootOrganizationId
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Merchant Account
+        </div>
+        <div class="panel-body">
+            <form id="set-merchant-account-form" action="" onSubmit="return false;">
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <div class="col-md-3">
+                        <nop-label asp-for="MerchantAccountId" />
+                    </div>
+                    <div class="col-md-9">
+                        <div class="input-group">
+                            <input class="form-control text-box single-line" id="nexportMerchantAccountId" name="merchantAccountId" type="text"
+                                   value="@if (Model.MerchantAccountId != Guid.Empty)
+                                          {<text>@Model.MerchantAccountId</text>}">
+                            <div class="input-group-btn">
+                                <button id="set-merchant-account-btn" class="btn btn-info">
+                                    Set
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<script>
+    $(document).ready(function() {
+        $.fn.bootstrapTypeahead = $.fn.typeahead.noConflict();
+        $("#TokenNeverExpired").on("change",
+            function(e) {
+                $("#AutoRenewToken").prop("disabled", this.checked);
+                $("#CustomTokenExpirationDate").data("kendoDateTimePicker").enable(!this.checked);
+            });
+
+        $("#AutoRenewToken").on("change",
+            function(e) {
+                $("#TokenNeverExpired").prop("disabled", this.checked);
+            });
+
+        $("#CustomTokenExpirationDate").data("kendoDateTimePicker").bind("change",
+            function() {
+                $("#TokenNeverExpired").prop("disabled", this.value() !== null);
+            });
+
+        window.query_cache = {};
+
+        var hasToken = @Json.Serialize(!string.IsNullOrEmpty(Model.NexportAuthenticationToken));
+
+        if (hasToken) {
+            $("#root-org-search-box").bootstrapTypeahead({
+                source: function(query, process) {
+                    if (query_cache[query]) {
+                        process(query_cache[query]);
+                        return;
+                    }
+
+                    if (typeof searching != "undefined") {
+                        clearTimeout(searching);
+                        process([]);
+                    }
+
+                    var url = "@Url.Action("GetOrganizations", "NexportIntegration")";
+                    searching = setTimeout(function() {
+                            return $.getJSON(
+                                url,
+                                { searchTerm: query },
+                                function(data) {
+                                    // save result to cache, remove next line if you don't want to use cache
+                                    query_cache[query] = data;
+                                    // only search if stop typing for 300ms aka fast typers
+                                    return process(data);
+                                }
+                            );
+                        }, 300);
+                },
+                autoSelect: false,
+                fitToElement: true,
+                displayText: function(item) {
+                    return item.name;
+                },
+                afterSelect: function(selectedItem) {
+                    console.log(selectedItem.org_id);
+                    $("#root-org-search-selected").val(selectedItem.org_id);
+                }
+            });
+
+            $("#set-root-org-btn").on("click",
+                function(e) {
+                    $.ajax({
+                        url: "@Url.Action("SetRootOrganization", "NexportIntegration")",
+                        type: "POST",
+                        data: $("#set-root-org-form").serializeArray(),
+                        success: function (result) {
+                            $("#selectedRootOrg").html(result);
+                        }
+                    });
+                });
+
+            $("#set-merchant-account-btn").on("click",
+                function(e) {
+                    $.ajax({
+                        url: "@Url.Action("SetMerchantAccount", "NexportIntegration")",
+                        type: "POST",
+                        data: $("#set-merchant-account-form").serializeArray(),
+                        success: function(result) {
+                            $("#nexportMerchantAccountId").val(result);
+                        }
+                    });
+                });
+        }
+    });
+</script>

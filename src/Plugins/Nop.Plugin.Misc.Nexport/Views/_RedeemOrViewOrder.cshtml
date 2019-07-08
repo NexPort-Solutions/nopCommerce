@@ -1,0 +1,80 @@
+﻿@using Nop.Core
+@using Nop.Plugin.Misc.Nexport.Services
+@model Nop.Plugin.Misc.Nexport.Domain.NexportOrderInvoiceItem
+@inject IWorkContext workContext
+@inject NexportService nexportService
+
+@{
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
+}
+
+@if (Model != null && Model.Id > 0)
+{
+    <div id="redeem-view-order-container">
+        @if (Model.UtcDateRedemption != null)
+        {
+            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ViewOrder.cshtml", Model)
+        }
+        else
+        {
+            <div id="redemption-options" style="">
+                <div>
+                    @Html.AntiForgeryToken()
+                    <input type="radio" name="redemptionOption" value="redeem"> Redeem for yourself<br />
+                    <input type="radio" name="redemptionOption" value="gift"> Gift to other<br />
+                    <div>
+                        <input type="text" name="redemptionUser" placeholder="Redeeming User Id" style="display: none; width: 100%">
+                    </div>
+                </div>
+                <div>
+                    <input type="button" class="button-1 redemption-submit-btn" id="redemption-submit" value="Continue">
+                </div>
+            </div>
+        }
+
+        <script asp-location="Footer">
+            $(document).ready(function () {
+                console.log("Init radio");
+                $("input[type=radio][name=redemptionOption]").on("change", function(e) {
+                    if (this.value === "redeem") {
+                        $("input[name=redemptionUser]").hide();
+                    }
+                    else {
+                        $("input[name=redemptionUser]").show();
+                    }
+                });
+
+                $("#redemption-submit").on("click",
+                    function(e) {
+                        // Call redemption action
+                        var postData = {
+                            orderItemInvoiceId: "@Model.Id"
+                        };
+
+                        var redeemingUserId = $("input[name=redemptionUser]").val();
+                        if (redeemingUserId !== null) {
+                            postData.redeemingUserId = redeemingUserId;
+                        }
+
+                        addAntiForgeryToken(postData);
+
+                        $.ajax({
+                            url: "@Url.RouteUrl("Plugin.Misc.Nexport.RedeemOrder")",
+                            type: "POST",
+                            data: postData,
+                            success: function(result) {
+                                $.ajax({
+                                    url: "@Url.Action("ViewNexportOrderRedemption", "NexportIntegration")",
+                                    type: "GET",
+                                    data: result,
+                                    success: function(viewResult) {
+                                        $("#redeem-view-order-container").html(viewResult);
+                                    }
+                                });
+                            }
+                        });
+                    });
+            });
+        </script>
+    </div>
+}

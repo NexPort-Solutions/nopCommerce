@@ -1,0 +1,36 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.NexportUserMappingModel
+
+@{
+    Layout = "_ColumnsTwo";
+
+    //title
+    Html.AddTitleParts("Nexport User");
+}
+
+@section left
+{
+    @await Component.InvokeAsync("CustomerNavigation", new { selectedTabId = 1000 })
+}
+
+<div class="page account-page nexport-user-mapping-page">
+    <div class="page-title">
+        <h1>@T("Account.MyAccount") - Nexport Credential</h1>
+    </div>
+    <div class="page-body">
+        <form asp-action="MapNexportUser" asp-controller="NexportIntegration" method="post">
+            <div asp-validation-summary="ModelOnly" class="message-error"></div>
+            <div class="fieldset">
+                <div class="form-fields">
+                    <div class="inputs">
+                        <label asp-for="NexportUserId" asp-postfix=":"></label>
+                        <input asp-for="NexportUserId" />
+                        <span asp-validation-for="NexportUserId"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="buttons">
+                <input type="submit" value="@T("Common.Save")" name="save-nexport-user-button" class="button-1"/>
+            </div>
+        </form>
+    </div>
+</div>

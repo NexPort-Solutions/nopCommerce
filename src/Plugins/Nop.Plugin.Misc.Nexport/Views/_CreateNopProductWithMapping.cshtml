@@ -1,0 +1,160 @@
+﻿@using Nop.Web.Areas.Admin.Models.Catalog
+@model Nop.Web.Areas.Admin.Models.Catalog.ProductModel
+
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
+
+<div class="content">
+    <div class="form-horizontal">
+        <div class="panel-group">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    @(Html.LocalizedEditor<ProductModel, ProductLocalizedModel>("product-info-localized",
+                                        @<div>
+                                            <div class="form-group">
+                                                <div class="col-md-3">
+                                                    <nop-label asp-for="@Model.Locales[item].Name" />
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <nop-editor asp-for="@Model.Locales[item].Name" />
+                                                    <span asp-validation-for="@Model.Locales[item].Name"></span>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="col-md-3">
+                                                    <nop-label asp-for="@Model.Locales[item].ShortDescription" />
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <nop-textarea asp-for="@Model.Locales[item].ShortDescription" />
+                                                    <span asp-validation-for="@Model.Locales[item].ShortDescription"></span>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="col-md-3">
+                                                    <nop-label asp-for="@Model.Locales[item].FullDescription" />
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <nop-editor asp-for="@Model.Locales[item].FullDescription" asp-template="RichEditor" />
+                                                    <span asp-validation-for="@Model.Locales[item].FullDescription"></span>
+                                                </div>
+                                            </div>
+
+                                            <input type="hidden" asp-for="@Model.Locales[item].LanguageId" />
+                                        </div>,
+                                                                                        @<div>
+                                                                                            <div class="form-group">
+                                                                                                <div class="col-md-3">
+                                                                                                    <nop-label asp-for="Name" />
+                                                                                                </div>
+                                                                                                <div class="col-md-9">
+                                                                                                    <nop-editor asp-for="Name" asp-required="true" />
+                                                                                                    <span asp-validation-for="Name"></span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div class="form-group">
+                                                                                                <div class="col-md-3">
+                                                                                                    <nop-label asp-for="ShortDescription" />
+                                                                                                </div>
+                                                                                                <div class="col-md-9">
+                                                                                                    <nop-textarea asp-for="ShortDescription" />
+                                                                                                    <span asp-validation-for="ShortDescription"></span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div class="form-group">
+                                                                                                <div class="col-md-3">
+                                                                                                    <nop-label asp-for="FullDescription" />
+                                                                                                </div>
+                                                                                                <div class="col-md-9">
+                                                                                                    <nop-editor asp-for="FullDescription" asp-template="RichEditor" />
+                                                                                                    <span asp-validation-for="FullDescription"></span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>))
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="Sku" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="Sku" />
+                            <span asp-validation-for="Sku"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="SelectedCategoryIds" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-select asp-for="SelectedCategoryIds" asp-items="Model.AvailableCategories" asp-multiple="true" />
+                            <script>
+                                $(document).ready(function() {
+                                    var categoryIdsInput = $('#@Html.IdFor(model => model.SelectedCategoryIds)').data("kendoMultiSelect");
+                                    categoryIdsInput.setOptions({
+                                        autoClose: false,
+                                        filter: "contains"
+                                    });
+
+                                    @if (Model.AvailableCategories.Count == 0)
+                                    {
+                                        <text>
+                                            categoryIdsInput.setOptions({
+                                                enable: false,
+                                                placeholder: '@T("Admin.Catalog.Products.Fields.Categories.NoCategoriesAvailable")'
+                                            });
+                                            categoryIdsInput._placeholder();
+                                            categoryIdsInput._enable();
+                                        </text>
+                                    }
+                                });
+                            </script>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="Published" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="Published" />
+                            <span asp-validation-for="Published"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="Price" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="Price" asp-postfix="@Model.PrimaryStoreCurrencyCode" />
+                            <span asp-validation-for="Price"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="OldPrice" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="OldPrice" asp-postfix="@Model.PrimaryStoreCurrencyCode" />
+                            <span asp-validation-for="OldPrice"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="IsTaxExempt" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="IsTaxExempt" />
+                            <span asp-validation-for="IsTaxExempt"></span>
+                        </div>
+                    </div>
+                    <div class="form-group" id="pnlTaxCategory">
+                        <div class="col-md-3">
+                            <nop-label asp-for="TaxCategoryId" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-select asp-for="TaxCategoryId" asp-items="Model.AvailableTaxCategories" />
+                            <span asp-validation-for="TaxCategoryId"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

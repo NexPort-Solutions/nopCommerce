@@ -1,0 +1,88 @@
+﻿@using Nop.Core
+@using Nop.Plugin.Misc.Nexport.Extensions
+@using Nop.Services.Common
+@using Nop.Services.Helpers
+@inject IGenericAttributeService genericAttributeService
+@inject IWorkContext workContext
+@inject IDateTimeHelper dateTimeHelper
+@model Nop.Plugin.Misc.Nexport.Domain.NexportProductMapping
+
+@if (Model != null && Model.Id > 0)
+{
+    const string hideNexportMappingsBlockAttributeName = "ProductPage.HideNexportMappingsBlock";
+    var hideNexportMappingsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportMappingsBlockAttributeName);
+
+    <nop-panels id="nexport-integration-panels">
+        <nop-panel asp-name="nexport-mapping-list" asp-icon="fa fa-paperclip" asp-title="Nexport Product Mappings"
+                   asp-hide-block-attribute-name="@hideNexportMappingsBlockAttributeName" asp-hide="@hideNexportMappingsBlock" asp-advanced="false">
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="DisplayName" />
+                </div>
+                <div class="col-md-9">
+                    <div class="form-text-row">@Model.DisplayName</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="NexportCatalogId" />
+                </div>
+                <div class="col-md-9">
+                    <div class="form-text-row">@Model.NexportCatalogId</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="NexportSyllabusId" />
+                </div>
+                <div class="col-md-9">
+                    <div class="form-text-row">@Model.NexportSyllabusId</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="Type" />
+                </div>
+                <div class="col-md-9">
+                    <div class="form-text-row">@Model.Type.GetDisplayName()</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="CreditHours" />
+                </div>
+                <div class="col-md-9">
+                    <div class="form-text-row">@Model.CreditHours</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="IsSynchronized" />
+                </div>
+                <div class="col-md-9">
+                    <div class="form-text-row">
+                        @if (Model.IsSynchronized)
+                        {
+                            <text>Yes</text>
+                        }
+                        else
+                        {
+                            <text>No</text>
+                        }
+                    </div>
+                </div>
+            </div>
+            @if (Model.IsSynchronized && Model.UtcLastSynchronizationDate.HasValue)
+            {
+                <div class="form-group">
+                    <div class="col-md-3">
+                        <nop-label asp-for="UtcLastSynchronizationDate" />
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-text-row">@dateTimeHelper.ConvertToUserTime(Model.UtcLastSynchronizationDate.Value).ToString("f")</div>
+                    </div>
+                </div>
+            }
+        </nop-panel>
+    </nop-panels>
+}

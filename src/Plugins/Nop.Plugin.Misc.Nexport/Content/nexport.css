@@ -1,0 +1,28 @@
+﻿.organization-selection .label-wrapper {
+  float: left;
+  margin-right: 10px;
+}
+
+.redemption-submit-btn {
+  display: inline-block;
+  min-width: 165px;
+  margin: 5px;
+  border: none;
+  background-color: #aaa;
+  background-image: none;
+  padding: 10px 20px;
+  font-size: 15px;
+  color: #fff;
+}
+
+  .redemption-submit-btn input:hover {
+    background-color: #999;
+  }
+
+  .redemption-submit-btn input:first-child {
+    background-color: #4ab2f1;
+  }
+
+    .redemption-submit-btn input:first-child:hover {
+      background-color: #248ece;
+    }

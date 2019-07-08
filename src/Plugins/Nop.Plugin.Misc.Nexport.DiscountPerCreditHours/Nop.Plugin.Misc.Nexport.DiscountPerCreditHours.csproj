@@ -1,0 +1,57 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TieredCompilation>true</TieredCompilation>
+    <ApplicationIcon />
+    <Authors>Nexport Solutions</Authors>
+    <Company>Nexport Solutions</Company>
+    <Copyright>Copyright © Nexport Solutions</Copyright>
+    <PackageProjectUrl>www.nexportsolutions.com</PackageProjectUrl>
+    <RepositoryType>Git</RepositoryType>
+    <OutputPath>..\..\Presentation\Nop.Web\Plugins\Misc.Nexport.DiscountPerCreditHours</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nop.Plugin.Misc.Nexport\Nop.Plugin.Misc.Nexport.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <!--<Reference Include="Nop.Plugin.Misc.Nexport">
+      <HintPath>..\..\Presentation\Nop.Web\Plugins\Misc.Nexport\Nop.Plugin.Misc.Nexport.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <ProjectReference Include="..\..\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />-->
+    <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="logo.jpg" />
+    <None Remove="plugin.json" />
+    <None Remove="Views\Configure.cshtml" />
+    <None Remove="Views\_ViewImports.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="logo.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="plugin.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Configure.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\_ViewImports.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <!-- This target execute after "Build" target -->
+  <Target Name="NopTarget" AfterTargets="Build">
+    <!-- Delete unnecessary libraries from plugins path -->
+    <MSBuild Projects="@(ClearPluginAssemblies)" Properties="PluginPath=$(MSBuildProjectDirectory)\$(OutDir)" Targets="NopClear" />
+  </Target>
+
+</Project>

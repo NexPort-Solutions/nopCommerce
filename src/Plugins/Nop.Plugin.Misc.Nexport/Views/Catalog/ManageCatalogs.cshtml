@@ -1,0 +1,21 @@
+﻿@{
+    Layout = "_AdminLayout";
+    ViewBag.Title = "Nexport Integration - Manage Nexport Catalogs";
+
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
+    Html.SetActiveMenuItemSystemName("Nexport Integration - Product Mappings");
+}
+
+<div>
+    <div class="content-header clearfix">
+        <h1 class="pull-left">
+            Manage Nexport Catalogs
+        </h1>
+    </div>
+
+    <div class="content">
+        <div class="form-horizontal">
+            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Catalog/Catalogs.cshtml")
+        </div>
+    </div>
+</div>

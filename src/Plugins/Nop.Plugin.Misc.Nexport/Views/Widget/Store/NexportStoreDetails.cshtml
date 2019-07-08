@@ -1,0 +1,83 @@
+﻿@using Nop.Services.Common
+@using Nop.Services.Stores
+@inject IGenericAttributeService genericAttributeService
+@inject IStoreService storeService
+@model Nop.Web.Areas.Admin.Models.Stores.StoreModel
+
+@{
+    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
+
+    var store = storeService.GetStoreById(Model.Id, false);
+    var nexportSubOrgId = genericAttributeService.GetAttribute<Guid>(store, "NexportSubscriptionOrganizationId", store.Id);
+}
+
+<input type="hidden" value="@nexportSubOrgId" />
+<div class="panel panel-default">
+    <div class="panel-body">
+        <div class="form-group">
+            <div class="col-md-3">
+                <div class="label-wrapper">
+                    <label class="control-label" for="NexportSubscriptionOrgId">@T("Plugins.Misc.Nexport.NexportSubscriptionOrgId")</label>
+                    <div title="@T("Plugins.Misc.Nexport.NexportSubscriptionOrgId.Hint")" data-toggle="tooltip" class="ico-help"><i class="fa fa-question-circle"></i></div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="input-group">
+                    <input class="form-control text-box single-line" id="NexportSubscriptionOrgId" name="NexportSubscriptionOrgId" type="text"
+                           value="@if (nexportSubOrgId != Guid.Empty)
+                                  {<text>@nexportSubOrgId</text>}">
+                    <div class="input-group-btn">
+                        <button id="setSubscriptionOrgId" name="setsubscriptionorgid" class="btn btn-info">
+                            Set subscription organization
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $.fn.bootstrapTypeahead = $.fn.typeahead.noConflict();
+
+        window.query_cache = {};
+
+        $("#NexportSubscriptionOrgId").bootstrapTypeahead({
+            source: function(query, process) {
+                if (query_cache[query]) {
+                    process(query_cache[query]);
+                    return;
+                }
+
+                if (typeof searching != "undefined") {
+                    clearTimeout(searching);
+                    process([]);
+                }
+
+                var url = "@Url.Action("GetOrganizations", "NexportIntegration")";
+                searching = setTimeout(function() {
+                    return $.getJSON(
+                        url,
+                        { searchTerm: query },
+                        function(data) {
+                            // save result to cache, remove next line if you don't want to use cache
+                            query_cache[query] = data;
+                            // only search if stop typing for 300ms aka fast typers
+                            return process(data);
+                        }
+                    );
+                }, 300);
+            },
+            autoSelect: false,
+            fitToElement: true,
+            displayText: function(item) {
+                return item.name;
+            },
+            afterSelect: function(selectedItem) {
+                console.log(selectedItem.org_id);
+                $("#NexportSubscriptionOrgId").val(selectedItem.org_id);
+            }
+        });
+    });
+</script>

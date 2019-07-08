@@ -1,0 +1,25 @@
+﻿@await Component.InvokeAsync("NexportOrganizationList")
+<div class="panel-group">
+    <div class="panel panel-default">
+        <div class="panel-body" id="catalog-panel">
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#nexport-organization-list").on("change",
+            function (e) {
+                var orgId = $(this).val();
+                $.ajax({
+                    url: "@Url.Action("CatalogList","NexportIntegration")" + "?orgId=" + orgId,
+                    type: "GET",
+                    success: function(result) {
+                        $("#catalog-panel").html(result);
+                    }
+                });
+            });
+
+        $("#nexport-organization-list").change();
+    });
+</script>

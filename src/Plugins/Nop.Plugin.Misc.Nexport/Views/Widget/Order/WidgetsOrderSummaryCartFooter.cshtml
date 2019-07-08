@@ -1,0 +1,26 @@
+﻿@using Nop.Services.Discounts
+
+@{
+    var discounts = ViewData["DiscountList"] as List<DiscountForCaching>;
+}
+
+@if (discounts != null)
+{
+    <div style="float: left;">
+        <strong>Note: You are currently receiving these discount(s) for this order:</strong>
+        @if (discounts.Count > 0)
+        {
+            <div>
+                <ul style="list-style-type: disc; float: left; margin-left: 25px; font-style: italic;">
+                    @foreach (var discount in discounts)
+                    {
+                        <text>
+                            <li>@discount.Name</li>
+                        </text>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+    <br />
+}

@@ -1,0 +1,101 @@
+﻿@using Microsoft.AspNetCore.Routing
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Web.Framework.Models.DataTables
+@model NexportSyllabusListSearchModel
+
+<div class="panel-body">
+    <div class="sub-panel" id="syllabuses-grid-container">
+        @await Html.PartialAsync("Table", new DataTablesModel
+        {
+            Name = "syllabuses-grid",
+            UrlRead = new DataUrl("GetSyllabuses", "NexportIntegration",
+                new RouteValueDictionary { [nameof(Model.CatalogId)] = Model.CatalogId }),
+            Length = Model.PageSize,
+            LengthMenu = Model.AvailablePageSizes,
+            ColumnCollection = new List<ColumnProperty>
+            {
+                new ColumnProperty(nameof(NexportSyllabiResponseItemModel.SyllabusId))
+                {
+                    Title = "Syllabus Id",
+                    Width = "150",
+                },
+                new ColumnProperty(nameof(NexportSyllabiResponseItemModel.Name))
+                {
+                    Title = "Syllabus Name",
+                    Width = "150"
+                },
+                new ColumnProperty(nameof(NexportSyllabiResponseItemModel.Type))
+                {
+                    Title = "Type",
+                    Width = "150"
+                },
+                new ColumnProperty(nameof(NexportSyllabiResponseItemModel.ProductId))
+                {
+                    Title = "Product Id",
+                    Width = "150"
+                },
+                new ColumnProperty(nameof(NexportSyllabiResponseItemModel.TotalMappings))
+                {
+                    Title = "Total Product Mappings",
+                    Width = "150"
+                },
+                new ColumnProperty(nameof(NexportSyllabiResponseItemModel.SyllabusId))
+                {
+                    Title = T("Admin.Common.View").Text,
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.Button,
+                    Render = new RenderCustom("renderCustomSyllabusView")
+                },
+                new ColumnProperty(nameof(NexportSyllabiResponseItemModel.ProductId))
+                {
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.Button,
+                    Render = new RenderCustom("renderCustomSyllabusMapProducts"),
+                }
+            }
+        })
+
+        <input type="submit" id="btnRefreshMappingsForSyllabusList" style="display: none">
+    </div>
+</div>
+<script>
+    function renderCustomSyllabusView(data, type, row, meta) {
+        var url = "@Url.Content("~/Admin/NexportIntegration/ShowProductDetails")";
+        url += "?nexportProductId=" + row.ProductId + "&nexportCatalogId=@Model.CatalogId&nexportSyllabusId=" + row.SyllabusId +  "&nexportProductType=";
+
+        if (row.Type === 0) {
+            url += "@NexportProductTypeEnum.Section";
+        } else if (row.Type === 1) {
+            url += "@NexportProductTypeEnum.TrainingPlan";
+        }
+
+        return "<a href=\""+ url +"\" class=\"btn btn-default\"><i class=\"fa fa-eye\"></i>@T("Admin.Common.View")</button>";
+    }
+
+    function renderCustomSyllabusMapProducts(data, type, row, meta) {
+        var url = "@Html.Raw(Url.Action("MapProductPopup", "NexportIntegration"))";
+        url += "?nexportProductId=" + row.ProductId + "&nexportCatalogId=@Model.CatalogId&nexportSyllabusId=" + row.SyllabusId +  "&nexportProductType=";
+
+        if (row.Type === 0) {
+            url += "@NexportProductTypeEnum.Section";
+        } else if (row.Type === 1) {
+            url += "@NexportProductTypeEnum.TrainingPlan";
+        }
+
+        url += "&containerId=syllabuses-grid-container&btnId=btnRefreshMappingsForSyllabusList";
+
+        return "<button onclick=\"javascript:OpenWindow('" + url + "', 800, 800, true); return false;" +
+            "\" class=\"btn btn-default\"><i class=\"fa fa-plus\"></i>Map existing products</button>";
+    }
+
+    $(document).ready(function () {
+        $("#btnRefreshMappingsForSyllabusList").click(function () {
+            //refresh grid
+            $("#syllabuses-grid").DataTable().ajax.reload();
+
+            //return false to don't reload a page
+            return false;
+        });
+    });
+</script>

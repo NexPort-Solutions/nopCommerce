@@ -1,0 +1,26 @@
+﻿@using Nop.Core
+@using Nop.Plugin.Misc.Nexport.Services
+@inject IWorkContext workContext
+@inject NexportService nexportService
+@model Nop.Plugin.Misc.Nexport.Domain.NexportOrderInvoiceItem
+
+@{
+    var currentUserId = nexportService.FindUserMappingByCustomerId(workContext.CurrentCustomer.Id).NexportUserId;
+}
+
+<div id="redemption-details" style="">
+    @if (Model.RedeemingUserId == currentUserId)
+    {
+        if (Model.RedeemingUserId != null)
+        {
+            <a href="@Url.Action("GoToNexport", "NexportIntegration",
+                         new {
+                             orderInvoiceItemId = Model.Id
+                         })" target="_blank" id="go-to-nexport-link">Click here to go to Nexport</a>
+        }
+    }
+    else
+    {
+        <span>This product has been redeemed by user [@Model.RedeemingUserId]</span>
+    }
+</div>
