@@ -1,8 +1,19 @@
-﻿@model Nop.Plugin.Misc.Nexport.Domain.NexportProductMapping
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@model Nop.Plugin.Misc.Nexport.Domain.NexportProductMapping
 
 @if (Model != null && Model.Id > 0)
 {
-    <div style="margin: 0 0 25px;">
-        Credit Hours:<span>@Model.CreditHours</span>
-    </div>
+    if (Model.CreditHours.HasValue)
+    {
+        <div style="margin: 0 0 25px;">
+            Credit Hours: <span>@decimal.Round(Model.CreditHours.Value, 2)</span>
+        </div>
+    }
+
+    if (Model.Type == NexportProductTypeEnum.Section)
+    {
+        <div style="margin: 0 0 25px;">
+            Section CEUs: <span>@Model.SectionCeus</span>
+        </div>
+    }
 }

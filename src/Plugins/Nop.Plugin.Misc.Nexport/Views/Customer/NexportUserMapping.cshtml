@@ -4,7 +4,9 @@
     Layout = "_ColumnsTwo";
 
     //title
-    Html.AddTitleParts("Nexport User");
+    Html.AddTitleParts("Nexport Account Details");
+    Html.AppendPageCssClassParts("html-account-page");
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport-store.css");
 }
 
 @section left
@@ -12,25 +14,49 @@
     @await Component.InvokeAsync("CustomerNavigation", new { selectedTabId = 1000 })
 }
 
-<div class="page account-page nexport-user-mapping-page">
+<div class="page account-page nexport-user-details-page">
     <div class="page-title">
-        <h1>@T("Account.MyAccount") - Nexport Credential</h1>
+        <h1>@T("Account.MyAccount") - Nexport Account Details</h1>
     </div>
     <div class="page-body">
-        <form asp-action="MapNexportUser" asp-controller="NexportIntegration" method="post">
-            <div asp-validation-summary="ModelOnly" class="message-error"></div>
-            <div class="fieldset">
-                <div class="form-fields">
-                    <div class="inputs">
-                        <label asp-for="NexportUserId" asp-postfix=":"></label>
-                        <input asp-for="NexportUserId" />
-                        <span asp-validation-for="NexportUserId"></span>
+        @*<form asp-action="MapNexportUser" asp-controller="NexportIntegration" method="post">
+                <div asp-validation-summary="ModelOnly" class="message-error"></div>
+                <div class="fieldset">
+                    <div class="form-fields">
+                        <div class="inputs">
+                            <label asp-for="NexportUserId"></label>
+                            <input asp-for="NexportUserId" />
+                            <span asp-validation-for="NexportUserId"></span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="buttons">
-                <input type="submit" value="@T("Common.Save")" name="save-nexport-user-button" class="button-1"/>
-            </div>
-        </form>
+                <div class="buttons">
+                    <input type="submit" value="@T("Common.Save")" name="save-nexport-user-button" class="button-1"/>
+                </div>
+            </form>*@
+        @if (Model.NexportUserId != null)
+        {
+            <ul class="info">
+                <li>
+                    <label><strong>@T("Account.Fields.Nexport.UserId"):</strong></label>
+                    @Model.NexportUserId
+                </li>
+                <li>
+                    <label><strong>@T("Account.Fields.Nexport.Email"):</strong></label>
+                    @Model.NexportEmail
+                </li>
+                @if (Model.OwnerOrgId != null)
+                {
+                    <li>
+                        <label><strong>@T("Account.Fields.Nexport.OwnerOrgId"):</strong></label>
+                        @Model.OwnerOrgId
+                    </li>
+                    <li>
+                        <label><strong>@T("Account.Fields.Nexport.OwnerOrgShortName"):</strong></label>
+                        @Model.OwnerOrgShortName
+                    </li>
+                }
+            </ul>
+        }
     </div>
 </div>

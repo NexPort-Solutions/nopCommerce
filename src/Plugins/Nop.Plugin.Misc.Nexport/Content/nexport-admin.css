@@ -1,0 +1,66 @@
+﻿.nex-duration-picker-element {
+  padding-left: 7.5px;
+  padding-right: 7.5px;
+}
+
+  .nex-duration-picker-element:first-child {
+    padding-left: 0;
+    padding-right: 7.5px;
+  }
+
+  .nex-duration-picker-element:last-of-type {
+    padding-left: 7.5px;
+    padding-right: 0;
+  }
+
+  .nex-duration-picker-element input {
+    border-radius: 0 !important;
+  }
+
+  .nex-duration-picker-element .nex-duration-picker-element-label {
+    text-align: center;
+    padding-top: 5px;
+  }
+
+@media (max-width: 1200px) {
+}
+
+@media (max-width: 992px) {
+}
+
+@media (max-width: 767px) {
+  .nex-duration-picker-element {
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+
+    .nex-duration-picker-element:first-child {
+      padding-left: 0;
+      padding-right: 0;
+      padding-bottom: 5px;
+    }
+
+    .nex-duration-picker-element:last-of-type {
+      padding-left: 0;
+      padding-right: 0;
+      padding-top: 5px;
+    }
+
+    .nex-duration-picker-element > div:first-of-type {
+      max-width: 100%;
+    }
+
+    .nex-duration-picker-element .nex-duration-picker-element-label {
+      text-align: left;
+      padding-bottom: 5px;
+    }
+
+    .nex-duration-picker-element:last-of-type .nex-duration-picker-element-label {
+      padding-bottom: 0;
+    }
+}
+
+@media (max-width: 572px) {
+}

@@ -3,8 +3,10 @@ using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Services.Configuration;
 using Nop.Web.Areas.Admin.Factories;
+using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Components;
+using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Services;
 
 namespace Nop.Plugin.Misc.Nexport.Components
@@ -41,8 +43,12 @@ namespace Nop.Plugin.Misc.Nexport.Components
                 return Content("");
 
             var productModel = (ProductModel)additionalData;
+            var productMapping =_nexportService.GetProductMappingByNopProductId(productModel.Id);
 
-            var model = _nexportService.GetProductMappingByNopProductId(productModel.Id);
+            if (productMapping == null)
+                return Content("");
+
+            var model = productMapping.ToModel<NexportProductMappingModel>();
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductMappingsInProductPage.cshtml", model);
         }

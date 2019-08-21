@@ -28,7 +28,9 @@
                 new ColumnProperty(nameof(NexportSyllabiResponseItemModel.Type))
                 {
                     Title = "Type",
-                    Width = "150"
+                    Width = "50",
+                    Render = new RenderCustom("renderSyllabusType"),
+                    AutoWidth = false
                 },
                 new ColumnProperty(nameof(NexportSyllabiResponseItemModel.ProductId))
                 {
@@ -38,20 +40,23 @@
                 new ColumnProperty(nameof(NexportSyllabiResponseItemModel.TotalMappings))
                 {
                     Title = "Total Product Mappings",
-                    Width = "150"
+                    Width = "100",
+                    AutoWidth = false
                 },
                 new ColumnProperty(nameof(NexportSyllabiResponseItemModel.SyllabusId))
                 {
-                    Title = T("Admin.Common.View").Text,
+                    Title = "View Syllabus",
                     Width = "100",
                     ClassName = NopColumnClassDefaults.Button,
-                    Render = new RenderCustom("renderCustomSyllabusView")
+                    Render = new RenderCustom("renderSyllabusView"),
+                    AutoWidth = false
                 },
                 new ColumnProperty(nameof(NexportSyllabiResponseItemModel.ProductId))
                 {
                     Width = "100",
                     ClassName = NopColumnClassDefaults.Button,
-                    Render = new RenderCustom("renderCustomSyllabusMapProducts"),
+                    Render = new RenderCustom("renderSyllabusMapProducts"),
+                    AutoWidth = false
                 }
             }
         })
@@ -60,7 +65,19 @@
     </div>
 </div>
 <script>
-    function renderCustomSyllabusView(data, type, row, meta) {
+    function renderSyllabusType(data, type, row, meta) {
+        var textRenderer = $.fn.dataTable.render.text().display;
+
+        var displayText = "Section";
+
+        if (row.Type === 1) {
+            displayText = "Training Plan";
+        }
+
+        return textRenderer(displayText);
+    }
+
+    function renderSyllabusView(data, type, row, meta) {
         var url = "@Url.Content("~/Admin/NexportIntegration/ShowProductDetails")";
         url += "?nexportProductId=" + row.ProductId + "&nexportCatalogId=@Model.CatalogId&nexportSyllabusId=" + row.SyllabusId +  "&nexportProductType=";
 
@@ -73,7 +90,7 @@
         return "<a href=\""+ url +"\" class=\"btn btn-default\"><i class=\"fa fa-eye\"></i>@T("Admin.Common.View")</button>";
     }
 
-    function renderCustomSyllabusMapProducts(data, type, row, meta) {
+    function renderSyllabusMapProducts(data, type, row, meta) {
         var url = "@Html.Raw(Url.Action("MapProductPopup", "NexportIntegration"))";
         url += "?nexportProductId=" + row.ProductId + "&nexportCatalogId=@Model.CatalogId&nexportSyllabusId=" + row.SyllabusId +  "&nexportProductType=";
 
@@ -86,7 +103,7 @@
         url += "&containerId=syllabuses-grid-container&btnId=btnRefreshMappingsForSyllabusList";
 
         return "<button onclick=\"javascript:OpenWindow('" + url + "', 800, 800, true); return false;" +
-            "\" class=\"btn btn-default\"><i class=\"fa fa-plus\"></i>Map existing products</button>";
+            "\" class=\"btn btn-default\"><i class=\"fa fa-plus\"></i>Map with existing products</button>";
     }
 
     $(document).ready(function () {

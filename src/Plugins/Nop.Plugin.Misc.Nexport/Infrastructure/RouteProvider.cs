@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
+using Nop.Web.Framework.Localization;
 using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure
@@ -33,6 +34,14 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             routeBuilder.MapRoute("Plugin.Misc.Nexport.GoToNexport",
                 "customer/transfertonexport",
                 new { controller = "NexportIntegration", action = "GoToNexport" });
+
+            routeBuilder.MapLocalizedRoute("NexportLogin",
+                "login/",
+                new { controller = "NexportCustomer", action = "Login" });
+
+            routeBuilder.MapLocalizedRoute("NexportLoginCheckoutAsGuest",
+                "login/checkoutasguest",
+                new { controller = "NexportCustomer", action = "Login", checkoutAsGuest = true });
         }
     }
 }

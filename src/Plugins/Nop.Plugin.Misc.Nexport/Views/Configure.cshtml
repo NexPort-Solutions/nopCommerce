@@ -147,36 +147,28 @@
                 @Html.AntiForgeryToken()
                 <div class="form-group">
                     <div class="col-md-3">
-                        <div class="label-wrapper">
-                            <label class="control-label" for="root-org-search-box">@T("Plugins.Misc.Nexport.FindRootOrganization")</label>
-                        </div>
+                        <nop-label asp-for="RootOrganizationId" />
                     </div>
                     <div class="col-md-9">
-                        <input type="text" class="form-control typeahead" placeholder="Search" id="root-org-search-box">
-                        <input type="hidden" id="root-org-search-selected" name="orgId" />
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <div class="col-md-9 col-md-offset-3">
-                        <button class="btn bg-blue" id="set-root-org-btn">Set Root Organization</button>
+                        @if (Model.RootOrganizationId != null)
+                        {
+                            <div class="input-group">
+                                <nop-editor asp-for="RootOrganizationId" asp-render-form-control-class="true" />
+                                <div class="input-group-btn">
+                                    <button id="setServerUrl" name="setrootorgid" class="btn btn-info">
+                                        Set root organization
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <nop-editor asp-for="RootOrganizationId" asp-render-form-control-class="true" />
+                        }
+                        <span asp-validation-for="RootOrganizationId"></span>
                     </div>
                 </div>
             </form>
-
-            <div class="form-group">
-                <div class="col-md-3">
-                    <nop-label asp-for="RootOrganizationId" />
-                </div>
-                <div class="col-md-9">
-                    <div class="form-text-row" id="selectedRootOrg">
-                        @if (Model.RootOrganizationId.HasValue && Model.RootOrganizationId.Value != Guid.Empty)
-                        {
-                            @Model.RootOrganizationId
-                        }
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -228,71 +220,27 @@
                 $("#TokenNeverExpired").prop("disabled", this.value() !== null);
             });
 
-        window.query_cache = {};
-
-        var hasToken = @Json.Serialize(!string.IsNullOrEmpty(Model.NexportAuthenticationToken));
-
-        if (hasToken) {
-            $("#root-org-search-box").bootstrapTypeahead({
-                source: function(query, process) {
-                    if (query_cache[query]) {
-                        process(query_cache[query]);
-                        return;
+        $("#set-root-org-btn").on("click",
+            function(e) {
+                $.ajax({
+                    url: "@Url.Action("SetRootOrganization", "NexportIntegration")",
+                    type: "POST",
+                    data: $("#set-root-org-form").serializeArray(),
+                    success: function (result) {
                     }
-
-                    if (typeof searching != "undefined") {
-                        clearTimeout(searching);
-                        process([]);
-                    }
-
-                    var url = "@Url.Action("GetOrganizations", "NexportIntegration")";
-                    searching = setTimeout(function() {
-                            return $.getJSON(
-                                url,
-                                { searchTerm: query },
-                                function(data) {
-                                    // save result to cache, remove next line if you don't want to use cache
-                                    query_cache[query] = data;
-                                    // only search if stop typing for 300ms aka fast typers
-                                    return process(data);
-                                }
-                            );
-                        }, 300);
-                },
-                autoSelect: false,
-                fitToElement: true,
-                displayText: function(item) {
-                    return item.name;
-                },
-                afterSelect: function(selectedItem) {
-                    console.log(selectedItem.org_id);
-                    $("#root-org-search-selected").val(selectedItem.org_id);
-                }
+                });
             });
 
-            $("#set-root-org-btn").on("click",
-                function(e) {
-                    $.ajax({
-                        url: "@Url.Action("SetRootOrganization", "NexportIntegration")",
-                        type: "POST",
-                        data: $("#set-root-org-form").serializeArray(),
-                        success: function (result) {
-                            $("#selectedRootOrg").html(result);
-                        }
-                    });
+        $("#set-merchant-account-btn").on("click",
+            function(e) {
+                $.ajax({
+                    url: "@Url.Action("SetMerchantAccount", "NexportIntegration")",
+                    type: "POST",
+                    data: $("#set-merchant-account-form").serializeArray(),
+                    success: function(result) {
+                        $("#nexportMerchantAccountId").val(result);
+                    }
                 });
-
-            $("#set-merchant-account-btn").on("click",
-                function(e) {
-                    $.ajax({
-                        url: "@Url.Action("SetMerchantAccount", "NexportIntegration")",
-                        type: "POST",
-                        data: $("#set-merchant-account-form").serializeArray(),
-                        success: function(result) {
-                            $("#nexportMerchantAccountId").val(result);
-                        }
-                    });
-                });
-        }
+            });
     });
 </script>

@@ -1,0 +1,42 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.NexportTrainingListModel
+
+@{
+    Layout = "_ColumnsTwo";
+
+    Html.AddTitleParts("Nexport Trainings");
+    Html.AppendPageCssClassParts("html-account-page");
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport-store.css");
+}
+
+@section left
+{
+    @await Component.InvokeAsync("CustomerNavigation", new { selectedTabId = 1001 })
+}
+
+<div class="page account-page order-list-page">
+    <div class="page-title">
+        <h1>@T("Account.MyAccount") - Nexport Trainings</h1>
+    </div>
+    <div class="page-body">
+        @if (Model != null)
+        {
+            if (Model.RedemptionOrganizations.Count > 0)
+            {
+                <div class="nexport-training-list">
+                    @foreach (var org in Model.RedemptionOrganizations)
+                    {
+                        <div class="section nexport-training-item">
+                            <div class="title">
+                                <a href="@Url.Action("GoToNexportOrg", "NexportIntegration",
+                                             new {
+                                                 orgId = org.OrgId,
+                                                 userId = Model.UserId
+                                             })" target="_blank" class="button-2 order-details-button" style="font-size: 1em;">@org.OrgName (@org.OrgShortName)</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>

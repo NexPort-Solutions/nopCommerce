@@ -2,6 +2,7 @@
 using System.Reflection;
 using FluentMigrator.Runner;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -34,10 +35,10 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 optionsBuilder.UseSqlServerWithLazyLoading(services);
             });
 
-            //services.Configure<RazorViewEngineOptions>(options =>
-            //{
-            //    options.ViewLocationExpanders.Add(new ViewLocationExpander());
-            //});
+            services.Configure<RazorViewEngineOptions>(options =>
+            {
+                options.ViewLocationExpanders.Add(new ViewLocationExpander());
+            });
 
             // Add action filters
             services.AddMvc(options =>

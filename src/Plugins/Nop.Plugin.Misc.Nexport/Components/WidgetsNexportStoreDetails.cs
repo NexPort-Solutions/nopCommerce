@@ -3,6 +3,7 @@ using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Services.Configuration;
 using Nop.Web.Areas.Admin.Factories;
+using Nop.Web.Areas.Admin.Models.Stores;
 using Nop.Web.Framework.Components;
 
 namespace Nop.Plugin.Misc.Nexport.Components
@@ -29,10 +30,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
         public IViewComponentResult Invoke(string widgetZone, object additionalData)
         {
-            if(_storeContext.CurrentStore == null)
-                return Content("");
-
-            var model = _storeModelFactory.PrepareStoreModel(null, _storeContext.CurrentStore);
+            var model = (StoreModel) additionalData;
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Store/NexportStoreDetails.cshtml", model);
         }

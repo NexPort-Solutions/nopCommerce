@@ -2,6 +2,8 @@
 {
     public class NexportApiResponseBase
     {
+        public int StatusCode { get; set; }
+
         public int TotalRecord { get; set; }
 
         public int RecordPerPage { get; set; }

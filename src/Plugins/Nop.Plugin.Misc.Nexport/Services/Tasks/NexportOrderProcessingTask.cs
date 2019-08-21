@@ -113,6 +113,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                         decimal invoiceTotalCost = 0;
 
+                        var redeemingOrderIds = new List<int>();
+
                         foreach (var orderItem in order.OrderItems)
                         {
                             var mapping = _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
@@ -120,26 +122,34 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                             {
                                 var productCost = orderItem.Product.ProductCost;
                                 var subscriptionOrgId = mapping.NexportSubscriptionOrgId ?? orgId;
-
+                                var groupMembershipIds =
+                                    _nexportService.GetProductGroupMembershipIds(mapping.NopProductId);
                                 string invoiceItemId;
 
                                 if (mapping.Type == NexportProductTypeEnum.Catalog)
                                 {
                                     invoiceItemId = _nexportService.AddItemToNexportOrderInvoice(invoiceId, mapping.NexportCatalogId,
-                                        CreateInvoiceItemRequest.ProductTypeEnum.Catalog, productCost, subscriptionOrgId);
+                                        CreateInvoiceItemRequest.ProductTypeEnum.Catalog, productCost, subscriptionOrgId, groupMembershipIds, mapping.UtcAccessExpirationDate, mapping.AccessTimeLimit.ToString());
                                 } else
                                 {
                                     invoiceItemId =_nexportService.AddItemToNexportOrderInvoice(invoiceId, mapping.NexportCatalogSyllabusLinkId.Value,
-                                        CreateInvoiceItemRequest.ProductTypeEnum.Syllabus, productCost, subscriptionOrgId);
+                                        CreateInvoiceItemRequest.ProductTypeEnum.Syllabus, productCost, subscriptionOrgId, groupMembershipIds, mapping.UtcAccessExpirationDate, mapping.AccessTimeLimit.ToString());
                                 }
 
-                                _nexportService.InsertNexportOrderInvoiceItem(new NexportOrderInvoiceItem()
+                                var nexportOrderInvoiceItem = new NexportOrderInvoiceItem()
                                 {
                                     OrderId = queueItem.OrderId,
                                     OrderItemId = orderItem.Id,
                                     InvoiceItemId = Guid.Parse(invoiceItemId),
                                     UtcDateProcessed = DateTime.UtcNow
-                                });
+                                };
+
+                                _nexportService.InsertNexportOrderInvoiceItem(nexportOrderInvoiceItem);
+
+                                if (mapping.AutoRedeem)
+                                {
+                                    redeemingOrderIds.Add(nexportOrderInvoiceItem.Id);
+                                }
 
                                 invoiceTotalCost += productCost;
                             }
@@ -151,8 +161,15 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                         // Commit
                         _nexportService.CommitNexportOrderInvoiceTransaction(invoiceId);
 
+                        foreach (var nexportOrderInvoice in redeemingOrderIds.Select(redeemingOrderId => _nexportService.FindNexportOrderInvoiceItemById(redeemingOrderId)).Where(nexportOrderInvoice => nexportOrderInvoice != null))
+                        {
+                            _nexportService.RedeemNexportOrder(nexportOrderInvoice, userMapping.NexportUserId);
+                        }
+
                         // Delete queue item
                         _nexportService.DeleteNexportOrderProcessingQueueItem(queueItem);
+
+                        _logger.Information($"Order {queueItem.OrderId} has been successfully processed!");
                     }
                     catch (Exception ex)
                     {

@@ -1,4 +1,5 @@
 ﻿using System;
+using NexportApi.Model;
 using Nop.Core;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 
@@ -23,11 +24,15 @@ namespace Nop.Plugin.Misc.Nexport.Domain
         /// </summary>
         public Guid? NexportSubscriptionOrgId { get; set; }
 
+        public string NexportSubscriptionOrgName { get; set; }
+
+        public string NexportSubscriptionOrgShortName { get; set; }
+
         public NexportProductTypeEnum Type { get; set; }
 
-        public int? PublishingModel { get; set; }
+        public CatalogResponseItem.PublishingModelEnum? PublishingModel { get; set; }
 
-        public int? PricingModel { get; set; }
+        public CatalogResponseItem.PricingModelEnum? PricingModel { get; set; }
 
         public DateTime? UtcLastModifiedDate { get; set; }
 
@@ -37,10 +42,16 @@ namespace Nop.Plugin.Misc.Nexport.Domain
 
         public DateTime? UtcLastSynchronizationDate { get; set; }
 
-        public int? AccessTimeLimit { get; set; }
+        public DateTime? UtcAccessExpirationDate { get; set; }
+
+        public long? AccessTimeLimit { get; set; }
 
         public decimal? CreditHours { get; set; }
 
+        public string SectionCeus { get; set; }
+
         public bool IsSynchronized { get; set; }
+
+        public bool AutoRedeem { get; set; }
     }
 }

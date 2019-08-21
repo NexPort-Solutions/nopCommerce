@@ -27,6 +27,21 @@ namespace Nop.Plugin.Misc.Nexport
         public static int NexportOrderProcessingTaskInterval => 30;
 
         /// <summary>
+        /// Name of the Nexport synchronization schedule task
+        /// </summary>
+        public static string NexportSynchronizationTaskName => "Synchronize with Nexport";
+
+        /// <summary>
+        /// Type of the Nexport synchronization schedule task
+        /// </summary>
+        public static string NexportSynchronizationTask => $"{typeof(NexportSynchronizationTask).Namespace}.{nameof(NexportSynchronizationTask)}";
+
+        /// <summary>
+        /// Nexport synchronization task interval (in seconds)
+        /// </summary>
+        public static int NexportSynchronizationTaskInterval => 20 * 60;
+
+        /// <summary>
         /// Assembly version key for provisioning
         /// </summary>
         public const string AssemblyVersionKey = "nexportsettings.plugins.nexport.version";

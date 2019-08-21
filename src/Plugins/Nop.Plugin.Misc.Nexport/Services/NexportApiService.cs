@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using NexportApi.Api;
 using NexportApi.Model;
 using Nop.Plugin.Misc.Nexport.Models;
@@ -8,7 +9,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 {
     public class NexportApiService
     {
-        public static AuthenticationTokenResponse AuthenticateNexportApi(string url, string username, string password, DateTime? tokenExp)
+        public static NexportAuthenticationResponseDetails AuthenticateNexportApi(string url, string username, string password, DateTime? tokenExp)
         {
             if (string.IsNullOrEmpty(url))
             {
@@ -16,13 +17,19 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
 
             var nexportApi = new AdminApiApi(url);
-            var response = nexportApi.AdminApiAuthenticate(new AuthenticationTokenRequest(username, password,
+            var response = nexportApi.AdminApiAuthenticateWithHttpInfo(new AuthenticationTokenRequest(username, password,
                 "password", utcExpirationDate: tokenExp));
 
-            return response;
+            var result = new NexportAuthenticationResponseDetails()
+            {
+                Response = response.Data,
+                StatusCode = response.StatusCode
+            };
+
+            return result;
         }
 
-        public static GetUserResponse GetNexportUserByLogin(string url, string accessToken, string loginName)
+        public static NexportGetUserResponseDetails GetNexportUserByLogin(string url, string accessToken, string loginName)
         {
             if (string.IsNullOrEmpty(url))
             {
@@ -30,12 +37,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
 
             var nexportApi = new AdminApiApi(url);
-            var response = nexportApi.AdminApiGetUser(accessToken, loginName);
+            var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, loginName);
 
-            return response;
+            var result = new NexportGetUserResponseDetails()
+            {
+                Response =  response.Data,
+                StatusCode =  response.StatusCode
+            };
+
+            return result;
         }
 
-        public static GetUserResponse GetNexportUserByUserId(string url, string accessToken, string userId)
+        public static NexportGetUserResponseDetails GetNexportUserByUserId(string url, string accessToken, Guid userId)
         {
             if (string.IsNullOrEmpty(url))
             {
@@ -43,9 +56,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
 
             var nexportApi = new AdminApiApi(url);
-            var response = nexportApi.AdminApiGetUser(accessToken, userId: userId);
+            var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, userId: userId.ToString());
 
-            return response;
+            var result = new NexportGetUserResponseDetails()
+            {
+                Response =  response.Data,
+                StatusCode =  response.StatusCode
+            };
+
+            return result;
         }
 
         public static NexportUserListResponse GetNexportUsers(string url, string accessToken, string searchTerm, int? page = null)
@@ -69,19 +88,41 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public static NexportOrganizationResponse GetNexportOrganization(string url, string accessToken, string searchTerm, int? page = null)
+        public static NexportCreateUserResponseDetails CreateNexportUser(string url, string accessToken,
+            string login, string password,
+            string firstName, string lastName, string email, Guid ownerOrgId)
         {
             if (string.IsNullOrEmpty(url))
             {
                 throw new NullReferenceException("Api url cannot be empty");
             }
 
-            var nexportApi = new LearningApiApi(url);
-            var response = nexportApi.LearningApiSearchOrganizationsWithHttpInfo(0, accessToken, searchTerm, searchTerm, page);
+            var nexportApi = new AdminApiApi(url);
+            var response = nexportApi.AdminApiCreateUserWithHttpInfo(
+                new CreateUserRequest(ownerOrgId.ToString(), login, password, firstName, "", lastName, email), accessToken);
 
-            var result = new NexportOrganizationResponse
+            var result = new NexportCreateUserResponseDetails()
             {
-                OrganizationList = response.Data,
+                Response = response.Data, StatusCode = response.StatusCode
+            };
+
+            return result;
+        }
+
+        public static NexportDirectoryResponse SearchNexportDirectory(string url, string accessToken,
+            Guid baseOrgId, string searchTerm, int? page = null)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                throw new NullReferenceException("Api url cannot be empty");
+            }
+
+            var nexportApi = new AdminApiApi(url);
+            var response = nexportApi.AdminApiSearchDirectoryWithHttpInfo(0, baseOrgId.ToString(), accessToken, searchTerm, searchTerm, page);
+
+            var result = new NexportDirectoryResponse
+            {
+                DirectoryList = response.Data,
                 TotalRecord = int.Parse(response.Headers["X-Total-Count"]),
                 RecordPerPage = int.Parse(response.Headers["X-Per-Page"]),
                 CurrentPage = int.Parse(response.Headers["X-Page"])
@@ -162,7 +203,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public static GetCatalogCreditHoursResponse getNexportCatalogCreditHours(string url, string accessToken,
+        public static GetCatalogCreditHoursResponse GetNexportCatalogCreditHours(string url, string accessToken,
             Guid catalogId)
         {
             if (string.IsNullOrEmpty(url))
@@ -282,12 +323,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public static AddInvoiceItemResponse AddNexportInvoiceItem(string url, string accessToken,
             string invoiceId, Guid productId, CreateInvoiceItemRequest.ProductTypeEnum productType,
-            Guid subscriptionOrgId, decimal cost, string note = null, string accessExpirationTimeLimit = null, DateTime? accessExpirationDate = null)
+            Guid subscriptionOrgId, List<Guid> groupMembershipIds,
+            decimal cost, string note = null, DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null)
         {
             if (string.IsNullOrEmpty(url))
             {
                 throw new NullReferenceException("Api url cannot be empty");
             }
+
+            var groupMembershipIdList = groupMembershipIds.ConvertAll(x => x.ToString());
 
             var nexportApi = new PointOfSaleApiApi(url);
             var result =
@@ -295,10 +339,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 {
                     ProductType = productType,
                     SubscriptionOrgId = subscriptionOrgId.ToString(),
+                    GroupMembershipIds = groupMembershipIdList,
                     Note = note,
                     Cost = cost,
-                    AccessExpirationTimeLimit = accessExpirationTimeLimit,
-                    UtcAccessExpirationDate = accessExpirationDate
+                    UtcAccessExpirationDate = accessExpirationDate,
+                    AccessExpirationTimeLimit = accessExpirationTimeLimit
                 }, accessToken);
 
             return result;

@@ -23,6 +23,7 @@ using Nop.Services.Stores;
 using Nop.Plugin.Misc.Nexport.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Models;
+using Nop.Services.Orders;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -34,20 +35,20 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly NexportSettings _nexportSettings;
         private readonly IAclService _aclService;
         private readonly ICacheManager _cacheManager;
-        private readonly IDataProvider _dataProvider;
-        private readonly IDbContext _dbContext;
         private readonly IEventPublisher _eventPublisher;
         private readonly ILocalizationService _localizationService;
         private readonly IProductService _productService;
         private readonly IRepository<AclRecord> _aclRepository;
         private readonly IRepository<Product> _productRepository;
-        private readonly IRepository<NexportProductMapping> _nexportProductRepository;
+        private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
+        private readonly IRepository<NexportProductGroupMembershipMapping> _nexportProductGroupMembershipMappingRepository;
         private readonly IRepository<NexportOrderProcessingQueueItem> _nexportOrderProcessingQueueRepository;
         private readonly IRepository<NexportOrderInvoiceItem> _nexportOrderInvoiceItemRepository;
         private readonly IRepository<NexportUserMapping> _nexportUserMappingRepository;
         private readonly IRepository<StoreMapping> _storeMappingRepository;
         private readonly IStaticCacheManager _staticCacheManager;
         private readonly IStoreMappingService _storeMappingService;
+        private readonly IOrderService _orderService;
         private readonly ISettingService _settingService;
         private readonly INotificationService _notificationService;
         private readonly IWorkContext _workContext;
@@ -63,19 +64,19 @@ namespace Nop.Plugin.Misc.Nexport.Services
             NexportSettings nexportSettings,
             IAclService aclService,
             ICacheManager cacheManager,
-            IDataProvider dataProvider,
-            IDbContext dbContext,
             IEventPublisher eventPublisher,
             IProductService productService,
             IRepository<AclRecord> aclRepository,
             IRepository<Product> productRepository,
-            IRepository<NexportProductMapping> nexportProduct,
+            IRepository<NexportProductMapping> nexportProductMappingRepository,
+            IRepository<NexportProductGroupMembershipMapping> nexportProductGroupMembershipMappingRepository,
             IRepository<NexportOrderProcessingQueueItem> nexportOrderProcessingQueueRepository,
             IRepository<NexportOrderInvoiceItem> nexportOrderInvoiceItemRepository,
             IRepository<NexportUserMapping> nexportUserMappingRepository,
             IRepository<StoreMapping> storeMappingRepository,
             IStaticCacheManager staticCacheManager,
             IStoreMappingService storeMappingService,
+            IOrderService orderService,
             ISettingService settingService,
             INotificationService notificationService,
             ILocalizationService localizationService,
@@ -87,25 +88,25 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportSettings = nexportSettings;
             _aclService = aclService;
             _cacheManager = cacheManager;
-            _dataProvider = dataProvider;
-            _dbContext = dbContext;
             _eventPublisher = eventPublisher;
             _localizationService = localizationService;
             _productService = productService;
             _aclRepository = aclRepository;
             _productRepository = productRepository;
-            _nexportProductRepository = nexportProduct;
+            _nexportProductMappingRepository = nexportProductMappingRepository;
+            _nexportProductGroupMembershipMappingRepository = nexportProductGroupMembershipMappingRepository;
             _nexportOrderProcessingQueueRepository = nexportOrderProcessingQueueRepository;
             _nexportOrderInvoiceItemRepository = nexportOrderInvoiceItemRepository;
             _nexportUserMappingRepository = nexportUserMappingRepository;
             _storeMappingRepository = storeMappingRepository;
             _staticCacheManager = staticCacheManager;
-            _storeContext = storeContext;
             _storeMappingService = storeMappingService;
-            _workContext = workContext;
+            _orderService = orderService;
             _settingService = settingService;
             _notificationService = notificationService;
             _localizationService = localizationService;
+            _workContext = workContext;
+            _storeContext = storeContext;
             _logger = logger;
         }
 
@@ -122,7 +123,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     tokenExpiration = model.CustomTokenExpirationDate ?? DateTime.UtcNow.AddDays(30);
                 }
 
-                var response = NexportApiService.AuthenticateNexportApi(model.Url, model.Username, model.Password, tokenExpiration);
+                var response = NexportApiService.AuthenticateNexportApi(model.Url, model.Username, model.Password, tokenExpiration).Response;
 
                 _nexportSettings.AuthenticationToken = response.AccessToken;
                 _nexportSettings.Url = model.Url;
@@ -141,13 +142,132 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public JsonResult GenerateOrganizationList(string searchTerm, int? page = null)
+        public AuthenticationTokenResponse AuthenticateUser(string username, string password)
+        {
+            AuthenticationTokenResponse result = null;
+            try
+            {
+                var response = NexportApiService.AuthenticateNexportApi(_nexportSettings.Url,
+                    username, password, (DateTime.UtcNow.AddDays(1.0)));
+
+                result = response.Response;
+            }
+            catch (ApiException e)
+            {
+                _logger.Error(e.Message);
+                _notificationService.ErrorNotification(e.ErrorContent);
+            }
+
+            return result;
+        }
+
+        public GetUserResponse ValidateUser(string username)
         {
             try
             {
-                var result = NexportApiService.GetNexportOrganization(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, searchTerm, page);
-                return new JsonResult(result.OrganizationList.ToList());
+                var response = NexportApiService.GetNexportUserByLogin(_nexportSettings.Url, _nexportSettings.AuthenticationToken, username);
+
+                if (response.StatusCode == 409)
+                    return null;
+
+                if (response.StatusCode == 200)
+                    return response.Response;
+
+                if (response.StatusCode == 403)
+                {
+                    var message =
+                        $"Nexport plugin access does not have permission to look up the user with login {username}";
+                    _logger.Error(message);
+                    throw new Exception(message);
+                }
+
+                if (response.StatusCode == 422)
+                {
+                    var message = $"Validation exception occurred when trying to get a user with login {username}";
+                    _logger.Error(message);
+                    throw new Exception(message);
+                }
+            }
+            catch (ApiException e)
+            {
+                _logger.Error(e.Message);
+                _notificationService.ErrorNotification(e.ErrorContent);
+            }
+
+            return null;
+        }
+
+        public CreateUserResponse CreateNexportUser(string login, string password,
+            string firstName, string lastName, string email, Guid ownerOrgId)
+        {
+            try
+            {
+                var response = NexportApiService.CreateNexportUser(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                    login, password, firstName, lastName, email, ownerOrgId);
+
+                if (response.StatusCode == 200)
+                    return response.Response;
+
+                if (response.StatusCode == 403)
+                {
+                    var message =
+                        $"Nexport plugin access does not have permission to create new user with login {login} in the organization {ownerOrgId}";
+                    _logger.Error(message);
+                    throw new Exception(message);
+                }
+
+                if (response.StatusCode == 409)
+                {
+                    var message = response.Response.ApiErrorEntity.ErrorMessage.Contains("exists") ?
+                        $"Cannot create new user with {login} in the organization {ownerOrgId} because of duplication" :
+                        $"Cannot find any organization with the Id of {ownerOrgId}";
+                    _logger.Error(message);
+                    throw new Exception(message);
+                }
+
+                if (response.StatusCode == 422)
+                {
+                    var message =
+                        $"Validation exception occurred when trying to create new user with login {login} in organization {ownerOrgId}";
+                    _logger.Error(message);
+                    throw new Exception(message);
+                }
+            }
+            catch (ApiException e)
+            {
+                _logger.Error(e.Message);
+                _notificationService.ErrorNotification(e.ErrorContent);
+            }
+
+            return null;
+        }
+
+        public GetUserResponse GetNexportUser(Guid userId)
+        {
+            try
+            {
+                var response = NexportApiService.GetNexportUserByUserId(_nexportSettings.Url, _nexportSettings.AuthenticationToken, userId);
+
+                if (response.StatusCode == 409)
+                    return null;
+
+                if (response.StatusCode == 200)
+                    return response.Response;
+
+                if (response.StatusCode == 403)
+                {
+                    var message =
+                        $"Nexport plugin access does not have permission to look up the user with Id {userId}";
+                    _logger.Error(message);
+                    throw new Exception(message);
+                }
+
+                if (response.StatusCode == 422)
+                {
+                    var message = $"Validation exception occurred when trying to get a user with Id {userId}";
+                    _logger.Error(message);
+                    throw new Exception(message);
+                }
             }
             catch (ApiException e)
             {
@@ -157,11 +277,52 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
+        public List<DirectoryResponseItem> SearchNexportDirectory(string searchTerm, int? page = null)
+        {
+            try
+            {
+                if (_nexportSettings.RootOrganizationId.HasValue)
+                {
+                    var response = NexportApiService.SearchNexportDirectory(_nexportSettings.Url,
+                        _nexportSettings.AuthenticationToken,
+                        _nexportSettings.RootOrganizationId.Value, searchTerm, page);
+
+                    return response.DirectoryList.ToList();
+                }
+            }
+            catch (ApiException e)
+            {
+                _logger.Error(e.Message);
+                _notificationService.ErrorNotification(e.ErrorContent);
+            }
+
+            return null;
+        }
+
+        public OrganizationResponseItem GetOrganizationDetails(Guid orgId)
+        {
+            OrganizationResponseItem result = null;
+
+            try
+            {
+                var response = NexportApiService.GetNexportOrganizations(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                    orgId, 0);
+                if (response.TotalRecord > 0)
+                    result = response.OrganizationList.SingleOrDefault(s => s.OrgId == orgId.ToString());
+            }
+            catch (ApiException e)
+            {
+                _logger.Error(e.Message);
+            }
+
+            return result;
+        }
+
         public IList<OrganizationResponseItem> FindAllOrganizations()
         {
             var items = new List<OrganizationResponseItem>();
 
-            if(!_nexportSettings.RootOrganizationId.HasValue)
+            if (!_nexportSettings.RootOrganizationId.HasValue)
                 throw new NullReferenceException("Root organization has not been set");
 
             try
@@ -218,7 +379,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return pagedItems;
         }
 
-        public CatalogResponseItem FindCatalogDetails(Guid catalogId)
+        public CatalogResponseItem GetCatalogDetails(Guid catalogId)
         {
             CatalogResponseItem result = null;
 
@@ -235,7 +396,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public GetDescriptionResponse FindCatalogDescription(Guid catalogId)
+        public GetDescriptionResponse GetCatalogDescription(Guid catalogId)
         {
             GetDescriptionResponse result = null;
 
@@ -252,13 +413,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public GetCatalogCreditHoursResponse FindCatalogCreditHours(Guid catalogId)
+        public GetCatalogCreditHoursResponse GetCatalogCreditHours(Guid catalogId)
         {
             GetCatalogCreditHoursResponse result = null;
 
             try
             {
-                result = NexportApiService.getNexportCatalogCreditHours(_nexportSettings.Url,
+                result = NexportApiService.GetNexportCatalogCreditHours(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, catalogId);
             }
             catch (ApiException e)
@@ -301,7 +462,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return pagedItems;
         }
 
-        public SectionResponse FindSectionDetails(Guid sectionId)
+        public SectionResponse GetSectionDetails(Guid sectionId)
         {
             SectionResponse result = null;
 
@@ -318,7 +479,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public GetDescriptionResponse FindSectionDescription(Guid sectionId)
+        public GetDescriptionResponse GetSectionDescription(Guid sectionId)
         {
             GetDescriptionResponse result = null;
 
@@ -335,7 +496,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public GetObjectivesResponse FindSectionObjectives(Guid sectionId)
+        public GetObjectivesResponse GetSectionObjectives(Guid sectionId)
         {
             GetObjectivesResponse result = null;
 
@@ -352,7 +513,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public TrainingPlanResponse FindTrainingPlanDetails(Guid trainingPlanId)
+        public TrainingPlanResponse GetTrainingPlanDetails(Guid trainingPlanId)
         {
             TrainingPlanResponse result = null;
 
@@ -369,7 +530,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public GetDescriptionResponse FindTrainingPlanDescription(Guid trainingPlanId)
+        public GetDescriptionResponse GetTrainingPlanDescription(Guid trainingPlanId)
         {
             GetDescriptionResponse result = null;
 
@@ -405,7 +566,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public string AddItemToNexportOrderInvoice(string invoiceId, Guid nexportProductId,
             CreateInvoiceItemRequest.ProductTypeEnum productType, decimal productCost,
-            Guid subscriptionOrgId, string note = null)
+            Guid subscriptionOrgId, List<Guid> groupMembershipIds = null,
+            DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null, string note = null)
         {
             AddInvoiceItemResponse addInvoiceItemResult = null;
 
@@ -413,7 +575,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 addInvoiceItemResult = NexportApiService.AddNexportInvoiceItem(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, invoiceId, nexportProductId,
-                    productType, subscriptionOrgId, productCost, note);
+                    productType, subscriptionOrgId, groupMembershipIds,
+                    productCost, note, accessExpirationDate, accessExpirationTimeLimit);
             }
             catch (ApiException e)
             {
@@ -523,6 +686,57 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
 
             return null;
+        }
+
+        public string SignInNexport(Guid orgId, Guid userId)
+        {
+            if (orgId == Guid.Empty)
+                throw new ArgumentException("Organization Id cannot be null", nameof (orgId));
+
+            try
+            {
+                var response = NexportApiService.NexportSingleSignOn(_nexportSettings.Url,
+                    _nexportSettings.AuthenticationToken,
+                    orgId.ToString(), userId.ToString(), _storeContext.CurrentStore.Url);
+
+                if (response.ApiErrorEntity.ErrorCode == 0)
+                    return response.Url;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+            }
+
+            return null;
+        }
+
+        public List<NexportOrganizationModel> FindNexportRedemptionOrganizationsByCustomerId(int customerId)
+        {
+            var orders = _orderService.SearchOrders(_storeContext.CurrentStore.Id, customerId: customerId);
+            var organizationModelList = new List<NexportOrganizationModel>();
+
+            foreach (var order in orders)
+            {
+                var orderItems = order.OrderItems;
+                foreach (var orderItem in orderItems)
+                {
+                    var orderInvoiceItem = FindNexportOrderInvoiceItem(order.Id, orderItem.Id);
+                    if (orderInvoiceItem?.UtcDateRedemption != null)
+                    {
+                        var invoiceRedemption = NexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                            orderInvoiceItem.InvoiceItemId.ToString());
+                        if (invoiceRedemption.ApiErrorEntity.ErrorCode == 0)
+                            organizationModelList.Add(new NexportOrganizationModel()
+                            {
+                                OrgId = Guid.Parse(invoiceRedemption.OrganizationId),
+                                OrgName = invoiceRedemption.OrganizationName,
+                                OrgShortName = invoiceRedemption.OrganizationShortName
+                            });
+                    }
+                }
+            }
+
+            return organizationModelList;
         }
     }
 }

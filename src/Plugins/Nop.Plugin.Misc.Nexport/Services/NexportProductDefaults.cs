@@ -74,6 +74,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public static string ProductMappingPatternCacheKey => "Nop.nexport.mapping.";
 
+        public static string ProductGroupMembershipMappingsAllCachekey => "Nop.nexport.groupmembership.mapping.all-{0}-{1}-{2}-{3}";
+
+        public static string ProductGroupMembershipMappingPatternCacheKey => "Nop.nexport.groupmembership.mapping.";
+
         public static string UserMappingPatternCacheKey => "Nop.nexport.user.mapping.";
     }
 }

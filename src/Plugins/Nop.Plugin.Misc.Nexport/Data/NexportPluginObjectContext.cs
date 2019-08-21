@@ -17,6 +17,7 @@ namespace Nop.Plugin.Misc.Nexport.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new NexportProductMappingMap());
+            modelBuilder.ApplyConfiguration(new NexportProductGroupMembershipMappingMap());
             modelBuilder.ApplyConfiguration(new NexportOrderProcessingQueueMap());
             modelBuilder.ApplyConfiguration(new NexportUserMappingMap());
             modelBuilder.ApplyConfiguration(new NexportOrderInvoiceItemMap());

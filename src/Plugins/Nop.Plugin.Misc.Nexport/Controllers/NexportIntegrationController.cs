@@ -37,9 +37,12 @@ using Nop.Plugin.Misc.Nexport.Services;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
+    [ResponseCache(Duration = 0, NoStore = true)]
     public class NexportIntegrationController : BasePluginController,
+        IConsumer<CustomerRegisteredEvent>,
         IConsumer<EntityInsertedEvent<Order>>, IConsumer<EntityUpdatedEvent<Order>>, IConsumer<OrderPlacedEvent>,
-        IConsumer<EntityUpdatedEvent<Product>>, IConsumer<EntityDeletedEvent<Product>>
+        IConsumer<EntityUpdatedEvent<Product>>, IConsumer<EntityDeletedEvent<Product>>,
+        IConsumer<EntityDeletedEvent<Customer>>
     {
 
         #region Fields
@@ -143,7 +146,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpGet]
-        public IActionResult GetOrganizations(string searchTerm, int? page = null)
+        public IActionResult SearchNexportDirectory(string searchTerm, int? page = null)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
@@ -151,7 +154,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return Configure();
 
-            return _nexportService.GenerateOrganizationList(searchTerm, page);
+            var result = _nexportService.SearchNexportDirectory(searchTerm, page);
+
+            return new JsonResult(result);
         }
 
         #endregion
@@ -291,91 +296,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return RedirectToAction("Edit", "Store", new { id = store.Id });
         }
 
-        //[Area(AreaNames.Admin)]
-        //[AuthorizeAdmin]
-        //public IActionResult ConfigureDiscount(int discountId, int? discountRequirementId)
-        //{
-        //    if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
-        //        return Content("Access denied");
-
-        //    //load the discount
-        //    var discount = _discountService.GetDiscountById(discountId);
-        //    if (discount == null)
-        //        throw new ArgumentException("Discount could not be loaded");
-
-        //    //check whether the discount requirement exists
-        //    if (discountRequirementId.HasValue && discount.DiscountRequirements.All(requirement => requirement.Id != discountRequirementId.Value))
-        //        return Content("Failed to load requirement.");
-
-        //    //try to get previously saved restricted customer role identifier
-        //    var settingKey = _settingService.GetSettingByKey<string>(string.Format(NexportDefaults.NexportDiscountSettingsKey, discountRequirementId ?? 0));
-
-        //    var model = new AttributeDiscountRequirementModel
-        //    {
-        //        RequirementId = discountRequirementId ?? 0,
-        //        DiscountId = discountId
-        //    };
-
-        //    if (!string.IsNullOrEmpty(settingKey))
-        //    {
-        //        model.ProductAttributeValues = settingKey.Split(',', StringSplitOptions.RemoveEmptyEntries);
-        //    }
-
-        //    var products = _productService.SearchProducts();
-        //    foreach (var product in products)
-        //    {
-        //        var specAttributes = product.ProductSpecificationAttributes;
-        //        foreach (var attr in specAttributes)
-        //        {
-        //            model.AvailableProductAttributeValues.Add(new SelectListItem
-        //            {
-        //                Text = $"{attr.SpecificationAttributeOption.SpecificationAttribute.Name} ({attr.SpecificationAttributeOption.Name})",
-        //                Value = $"{product.Id} : {attr.SpecificationAttributeOption.Id}"
-        //            });
-        //        }
-        //    }
-
-        //    ////set the HTML field prefix
-        //    ViewData.TemplateInfo.HtmlFieldPrefix = string.Format(NexportDefaults.NexportDiscountHtmlFieldPrefix, discountRequirementId ?? 0);
-
-        //    return View("~/Plugins/Misc.Nexport/Views/Discount/Configure.cshtml", model);
-        //}
-
-        //[Area(AreaNames.Admin)]
-        //[AuthorizeAdmin]
-        //[HttpPost]
-        //[AdminAntiForgery]
-        //public IActionResult ConfigureDiscount(int discountId, int? discountRequirementId, List<string> productAttributeValues)
-        //{
-        //    if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
-        //        return Content("Access denied");
-
-        //    //load the discount
-        //    var discount = _discountService.GetDiscountById(discountId);
-        //    if (discount == null)
-        //        throw new ArgumentException("Discount could not be loaded");
-
-        //    //get the discount requirement
-        //    var discountRequirement = discountRequirementId.HasValue
-        //        ? discount.DiscountRequirements.FirstOrDefault(requirement => requirement.Id == discountRequirementId.Value) : null;
-
-        //    //the discount requirement does not exist, so create a new one
-        //    if (discountRequirement == null)
-        //    {
-        //        discountRequirement = new DiscountRequirement
-        //        {
-        //            DiscountRequirementRuleSystemName = NexportDefaults.NexportDiscountSystemName
-        //        };
-        //        discount.DiscountRequirements.Add(discountRequirement);
-        //        _discountService.UpdateDiscount(discount);
-        //    }
-
-        //    //save restricted customer role identifier
-        //    _settingService.SetSetting(string.Format(NexportDefaults.NexportDiscountSettingsKey, discountRequirement.Id), string.Join(",", productAttributeValues));
-
-        //    return Json(new { Result = true, NewRequirementId = discountRequirement.Id });
-        //}
-
         #endregion
 
         #region User Configuration Actions
@@ -490,6 +410,22 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         #region Mapping Actions
 
         [AuthorizeAdmin]
+        [Area("Admin")]
+        [AdminAntiForgery]
+        public IActionResult ProductMappingDetailsPopup(int mappingId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
+                return AccessDeniedView();
+
+            var productMapping = _nexportService.GetProductMappingById(mappingId);
+
+            var model = productMapping.ToModel<NexportProductMappingModel>();
+            model.Editable = true;
+
+            return View("~/Plugins/Misc.Nexport/Views/ProductMappingDetailsPopup.cshtml", model);
+        }
+
+        [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AdminAntiForgery]
@@ -509,18 +445,131 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
+        [ParameterBasedOnFormName("save-continue", "continueEditing")]
+        [FormValueRequired("save", "save-continue")]
         [AdminAntiForgery]
-        public IActionResult EditMapping(NexportProductMappingModel model)
+        public IActionResult EditMapping(NexportProductMappingModel model, bool continueEditing)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
 
-            var productMapping = _nexportService.FindProductMappingById(model.Id)
+            var productMapping = _nexportService.GetProductMappingById(model.Id)
                 ?? throw new ArgumentException("No product mapping found with the specified id");
 
             // Fill entity from product
             productMapping = model.ToEntity(productMapping);
+
+            if (productMapping.NexportSubscriptionOrgId.HasValue)
+            {
+                if (string.IsNullOrWhiteSpace(model.NexportSubscriptionOrgName))
+                {
+                    var organizationDetails = _nexportService.GetOrganizationDetails(productMapping.NexportSubscriptionOrgId.Value);
+                    productMapping.NexportSubscriptionOrgName = organizationDetails.Name;
+                    productMapping.NexportSubscriptionOrgShortName = organizationDetails.ShortName;
+                }
+            }
+            else
+            {
+                productMapping.NexportSubscriptionOrgName = null;
+                productMapping.NexportSubscriptionOrgShortName = null;
+            }
+
+            productMapping.UtcLastModifiedDate = DateTime.UtcNow;
+
             _nexportService.UpdateMapping(productMapping);
+
+            if (!continueEditing)
+            {
+                ViewBag.ClosePage = true;
+            }
+
+            ViewBag.RefreshPage = true;
+
+            model.UtcLastModifiedDate = productMapping.UtcLastModifiedDate;
+            model.Editable = true;
+
+            return View("~/Plugins/Misc.Nexport/Views/ProductMappingDetailsPopup.cshtml", model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        [HttpPost]
+        public IActionResult DeleteMapping(int id)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+                return AccessDeniedView();
+
+            var mapping = _nexportService.GetProductMappingById(id) ??
+                          throw new Exception($"No nexport mapping found with the specified id {id}");
+
+            _nexportService.DeleteMapping(mapping);
+
+            return new NullJsonResult();
+        }
+
+        [AuthorizeAdmin]
+        [Area("Admin")]
+        [HttpPost]
+        [AdminAntiForgery]
+        public IActionResult GetProductGroupMembershipMappings(int nexportProductMappingId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+                return AccessDeniedDataTablesJson();
+
+            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+                return AccessDeniedDataTablesJson();
+
+            var model = _nexportPluginModelFactory.PrepareNexportProductMappingGroupMembershipListModel(
+                new NexportProductGroupMembershipMappingSearchModel(), nexportProductMappingId);
+
+            return Json(model);
+        }
+
+        [Area("Admin")]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        [HttpPost]
+        public IActionResult AddGroupMembershipMapping(int nexportProductMappingId, Guid nexportGroupId, string nexportGroupName, string nexportGroupShortName)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+                return AccessDeniedView();
+
+            if (nexportGroupId == Guid.Empty)
+                throw new ArgumentException("Group Id cannot be empty Guid", nameof(nexportGroupId));
+
+            var productMapping = _nexportService.GetProductMappingById(nexportProductMappingId);
+            if (productMapping == null)
+                throw new ArgumentException("No nexport mapping found with the specified id", nameof(nexportProductMappingId));
+
+            _nexportService.InsertNexportProductGroupMembershipMapping(new NexportProductGroupMembershipMapping()
+            {
+                NexportGroupId = nexportGroupId,
+                NexportGroupName = nexportGroupName,
+                NexportGroupShortName = nexportGroupShortName,
+                NexportProductMappingId = productMapping.Id
+            });
+
+            return Json(new
+            {
+                Result = true
+            });
+        }
+
+        [Area("Admin")]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        [HttpPost]
+        public IActionResult DeleteGroupMembershipMapping(int id)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+                return AccessDeniedView();
+
+            var groupMembershipMapping = _nexportService.GetProductGroupMembershipMappingById(id);
+            if (groupMembershipMapping == null)
+                throw new Exception($"No nexport group membership mapping found with the specified id {id}");
+
+            _nexportService.DeleteGroupMembershipMapping(groupMembershipMapping);
 
             return new NullJsonResult();
         }
@@ -587,23 +636,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return View("~/Plugins/Misc.Nexport/Views/AddNewNopProductWithMapping.cshtml", model);
         }
 
-        [Area(AreaNames.Admin)]
-        [AuthorizeAdmin]
-        [AdminAntiForgery]
-        [HttpPost]
-        public IActionResult DeleteMapping(int id)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
-                return AccessDeniedView();
-
-            var mapping = _nexportService.FindProductMappingById(id) ??
-                          throw new ArgumentException("No nexport mapping found with the specified id", nameof(id));
-
-            _nexportService.DeleteMapping(mapping);
-
-            return new NullJsonResult();
-        }
-
         #endregion
 
         [AuthorizeAdmin]
@@ -616,14 +648,14 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             switch (nexportProductType)
             {
                 case NexportProductTypeEnum.Catalog:
-                    var catalogModel = _nexportService.FindCatalogDetails(nexportProductId);
+                    var catalogModel = _nexportService.GetCatalogDetails(nexportProductId);
 
                     return View("~/Plugins/Misc.Nexport/Views/Catalog/CatalogDetails.cshtml", catalogModel);
 
                 case NexportProductTypeEnum.Section:
                     if (nexportSyllabusId != null)
                     {
-                        var sectionModel = _nexportService.FindSectionDetails(nexportSyllabusId.Value);
+                        var sectionModel = _nexportService.GetSectionDetails(nexportSyllabusId.Value);
 
                         return View("~/Plugins/Misc.Nexport/Views/Syllabus/Section/SectionDetails.cshtml", sectionModel);
                     }
@@ -633,7 +665,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 case NexportProductTypeEnum.TrainingPlan:
                     if (nexportSyllabusId != null)
                     {
-                        var trainingPlanModel = _nexportService.FindTrainingPlanDetails(nexportSyllabusId.Value);
+                        var trainingPlanModel = _nexportService.GetTrainingPlanDetails(nexportSyllabusId.Value);
 
                         return View("~/Plugins/Misc.Nexport/Views/Syllabus/TrainingPlan/TrainingPlanDetails.cshtml", trainingPlanModel);
                     }
@@ -648,6 +680,26 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         public IActionResult ViewNexportOrderRedemption(NexportOrderInvoiceItem model)
         {
             return View("~/Plugins/Misc.Nexport/Views/ViewOrder.cshtml", model);
+        }
+
+        public IActionResult ViewNexportTraining()
+        {
+            if (!_workContext.CurrentCustomer.IsRegistered())
+                return Challenge();
+
+            try
+            {
+                var model = _nexportPluginModelFactory.PrepareNexportTrainingListModel(_workContext.CurrentCustomer);
+
+                return View("~/Plugins/Misc.Nexport/Views/NexportTrainings.cshtml", model);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message, ex, _workContext.CurrentCustomer);
+                _notificationService.ErrorNotification(ex.Message);
+            }
+
+            return new EmptyResult();
         }
 
         [Area(AreaNames.Admin)]
@@ -668,7 +720,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (_workContext.CurrentVendor != null && product.VendorId != _workContext.CurrentVendor.Id)
                 return RedirectToAction("List", "Product");
 
-            var mapping = _nexportService.FindProductMappingById(mappingId);
+            var mapping = _nexportService.GetProductMappingById(mappingId);
 
             if (ModelState.IsValid)
             {
@@ -677,9 +729,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 switch (mapping.Type)
                 {
                     case NexportProductTypeEnum.Catalog:
-                        var catalogDetails = _nexportService.FindCatalogDetails(mapping.NexportCatalogId);
-                        var catalogDescription = _nexportService.FindCatalogDescription(mapping.NexportCatalogId);
-                        var catalogCreditHours = _nexportService.FindCatalogCreditHours(mapping.NexportCatalogId);
+                        var catalogDetails = _nexportService.GetCatalogDetails(mapping.NexportCatalogId);
+                        var catalogDescription = _nexportService.GetCatalogDescription(mapping.NexportCatalogId);
+                        var catalogCreditHours = _nexportService.GetCatalogCreditHours(mapping.NexportCatalogId);
 
                         product.Name = catalogDetails.Name;
                         product.FullDescription = catalogDescription.Description;
@@ -695,9 +747,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                         var sectionId = mapping.NexportSyllabusId.Value;
 
-                        var sectionDetails = _nexportService.FindSectionDetails(sectionId);
-                        var sectionDescription = _nexportService.FindSectionDescription(sectionId);
-                        var sectionObjective = _nexportService.FindSectionObjectives(sectionId);
+                        var sectionDetails = _nexportService.GetSectionDetails(sectionId);
+                        var sectionDescription = _nexportService.GetSectionDescription(sectionId);
+                        var sectionObjective = _nexportService.GetSectionObjectives(sectionId);
 
                         product.Name = sectionDetails.Title;
                         product.FullDescription = sectionDescription.Description;
@@ -707,6 +759,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                         product.AvailableEndDateTimeUtc = sectionDetails.EnrollmentEnd;
 
                         mapping.CreditHours = sectionDetails.CreditHours;
+                        mapping.SectionCeus = sectionDetails.SectionCeus;
 
                         break;
 
@@ -718,8 +771,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                         var trainingPlanId = mapping.NexportSyllabusId.Value;
 
-                        var trainingPlanDetails = _nexportService.FindTrainingPlanDetails(trainingPlanId);
-                        var trainingPlanDescription = _nexportService.FindTrainingPlanDescription(trainingPlanId);
+                        var trainingPlanDetails = _nexportService.GetTrainingPlanDetails(trainingPlanId);
+                        var trainingPlanDescription = _nexportService.GetTrainingPlanDescription(trainingPlanId);
 
                         product.Name = trainingPlanDetails.Title;
                         product.FullDescription = trainingPlanDescription.Description;
@@ -751,6 +804,31 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         #region Event Handling
+
+        public void HandleEvent(CustomerRegisteredEvent eventMessage)
+        {
+            var customer = eventMessage.Customer;
+
+            if (!_nexportSettings.RootOrganizationId.HasValue)
+                return;
+
+            if (_nexportService.FindUserMappingByCustomerId(customer.Id) != null)
+                return;
+
+            var login = CommonHelper.GenerateRandomDigitCode(10);
+            var password = CommonHelper.GenerateRandomDigitCode(20);
+            var firstName = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.FirstNameAttribute);
+            var lastName = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.LastNameAttribute);
+
+            var nexportUser = _nexportService.CreateNexportUser(login, password, firstName, lastName,
+                customer.Email, _nexportSettings.RootOrganizationId.Value);
+
+            _nexportService.InsertUserMapping(new NexportUserMapping()
+            {
+                NexportUserId = Guid.Parse(nexportUser.UserId),
+                NopUserId = customer.Id
+            });
+        }
 
         public void HandleEvent(EntityUpdatedEvent<Product> eventMessage)
         {
@@ -797,6 +875,16 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 OrderId = order.Id,
                 UtcDateCreated = DateTime.UtcNow
             });
+        }
+
+        public void HandleEvent(EntityDeletedEvent<Customer> eventMessage)
+        {
+            var deletedCustomer = eventMessage.Entity;
+            var userMapping = _nexportService.FindUserMappingByCustomerId(deletedCustomer.Id);
+            if (userMapping == null)
+                return;
+
+            _nexportService.DeleteUserMapping(userMapping);
         }
 
         #endregion
@@ -868,6 +956,29 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 _logger.Error(errorMsg, ex);
                 _notificationService.ErrorNotification(errorMsg);
+            }
+
+            return new EmptyResult();
+        }
+
+        public IActionResult GoToNexportOrg(Guid orgId, Guid userId)
+        {
+            if (!_workContext.CurrentCustomer.IsRegistered())
+                return Challenge();
+
+            if (orgId == Guid.Empty)
+                return Content("");
+
+            try
+            {
+                return RedirectPermanent(_nexportService.SignInNexport(orgId, userId));
+            }
+            catch (Exception ex)
+            {
+                var str =
+                    $"Error occured during transferring to Nexport organization {orgId} for user {userId}";
+                _logger.Error(str, ex);
+                _notificationService.ErrorNotification(str);
             }
 
             return new EmptyResult();

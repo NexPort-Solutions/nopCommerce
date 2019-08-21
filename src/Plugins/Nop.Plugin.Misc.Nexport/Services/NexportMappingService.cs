@@ -18,13 +18,31 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (nexportProductMapping == null)
                 throw new ArgumentNullException(nameof(nexportProductMapping));
 
-            _nexportProductRepository.Insert(nexportProductMapping);
+            _nexportProductMappingRepository.Insert(nexportProductMapping);
 
             //cache
             _cacheManager.RemoveByPrefix(NexportProductDefaults.ProductMappingPatternCacheKey);
 
             //event notification
             _eventPublisher.EntityInserted(nexportProductMapping);
+        }
+
+        public void InsertNexportProductGroupMembershipMapping(
+            NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping)
+        {
+            if (nexportProductGroupMembershipMapping == null)
+                throw new ArgumentNullException(nameof (nexportProductGroupMembershipMapping));
+
+            if (_nexportProductGroupMembershipMappingRepository.Table.Any(
+                m => m.NexportProductMappingId == nexportProductGroupMembershipMapping.NexportProductMappingId &&
+                m.NexportGroupId == nexportProductGroupMembershipMapping.NexportGroupId))
+                return;
+
+            _nexportProductGroupMembershipMappingRepository.Insert(nexportProductGroupMembershipMapping);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.ProductGroupMembershipMappingPatternCacheKey);
+
+            _eventPublisher.EntityInserted(nexportProductGroupMembershipMapping);
         }
 
         public IPagedList<NexportProductMapping> GetProductCatalogsByCatalogId(Guid catalogId, int pageIndex = 0, int pageSize = int.MaxValue,
@@ -39,7 +57,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 showHidden, catalogId, pageIndex, pageSize, _workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id);
             return _cacheManager.Get(key, () =>
             {
-                //var query = from np in _nexportProductRepository.Table
+                //var query = from np in _nexportProductMappingRepository.Table
                 //    join p in _productRepository.Table on np.NopProductId equals p.Id
                 //    where np.NexportCatalogId == catalogId && !p.Deleted && (showHidden || p.Published)
                 //    select np;
@@ -48,7 +66,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     where !p.Deleted && (showHidden || p.Published)
                     select p.Id).ToList();
 
-                var query = from np in _nexportProductRepository.Table
+                var query = from np in _nexportProductMappingRepository.Table
                     where np.NexportCatalogId == catalogId && productQuery.Contains(np.NopProductId)
                     select np;
                 //var query = from pc in _productCategoryRepository.Table
@@ -112,7 +130,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                     where !p.Deleted && (showHidden || p.Published)
                                     select p.Id).ToList();
 
-                var query = from np in _nexportProductRepository.Table
+                var query = from np in _nexportProductMappingRepository.Table
                             where np.NexportSyllabusId == sectionId &&
                                   np.Type == NexportProductTypeEnum.Section &&
                                   productQuery.Contains(np.NopProductId)
@@ -171,7 +189,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                     where !p.Deleted && (showHidden || p.Published)
                                     select p.Id).ToList();
 
-                var query = from np in _nexportProductRepository.Table
+                var query = from np in _nexportProductMappingRepository.Table
                             where np.NexportSyllabusId == trainingPlanId &&
                                   np.Type == NexportProductTypeEnum.TrainingPlan &&
                                   productQuery.Contains(np.NopProductId)
@@ -244,7 +262,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             return _cacheManager.Get(key, () =>
             {
-                var query = _nexportProductRepository.Table;
+                var query = _nexportProductMappingRepository.Table;
 
                 var nexportMappings = new PagedList<NexportProductMapping>(query, pageIndex, pageSize);
                 return nexportMappings;
@@ -265,7 +283,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 showHidden, "", false);
 
             return _cacheManager.Get(key, () => {
-                var query = _nexportProductRepository.Table
+                var query = _nexportProductMappingRepository.Table
                     .Where(np => np.Type == nexportProductType);
 
                 switch (nexportProductType)
@@ -291,7 +309,39 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public NexportProductMapping GetProductMappingByNopProductId(int nopProductId)
         {
-            return nopProductId < 1 ? null : _nexportProductRepository.Table.SingleOrDefault(np => np.NopProductId == nopProductId);
+            return nopProductId < 1 ? null : _nexportProductMappingRepository.Table.SingleOrDefault(np => np.NopProductId == nopProductId);
+        }
+
+        public IPagedList<NexportProductGroupMembershipMapping> GetProductGroupMembershipMappings(int nexportProductMappingId,
+            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
+        {
+            if (nexportProductMappingId == 0)
+            {
+                return new PagedList<NexportProductGroupMembershipMapping>(new List<NexportProductGroupMembershipMapping>(), pageIndex, pageSize);
+            }
+
+            var key = string.Format(NexportProductDefaults.ProductGroupMembershipMappingsAllCachekey,
+                _storeContext.CurrentStore.Id,
+                string.Join(",", _workContext.CurrentCustomer.GetCustomerRoleIds()),
+                showHidden, "", false);
+
+            return _cacheManager.Get(key, () =>
+            {
+                var query = _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
+                    np.NexportProductMappingId == nexportProductMappingId);
+
+                var nexportGroupMembershipMappings =
+                    new PagedList<NexportProductGroupMembershipMapping>(query, pageIndex, pageSize);
+
+                return nexportGroupMembershipMappings;
+            });
+        }
+
+        public List<Guid> GetProductGroupMembershipIds(int nexportProductMappingId)
+        {
+            return nexportProductMappingId < 1 ? null :
+                _nexportProductGroupMembershipMappingRepository.Table.Where(np => np.NexportProductMappingId == nexportProductMappingId)
+                    .Select(g => g.NexportGroupId).ToList();
         }
 
         public Dictionary<Guid, int> FindMappingCountPerSyllabus(IList<GetSyllabiResponseItem> syllabusList)
@@ -309,14 +359,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public int FindMappingCountPerSyllabi(Guid syllabusId)
         {
-            return (from np in _nexportProductRepository.Table
+            return (from np in _nexportProductMappingRepository.Table
                 where np.NexportSyllabusId == syllabusId
                 select np.Id).Count();
         }
 
-        public NexportProductMapping FindProductMappingById(int mappingId)
+        public NexportProductMapping GetProductMappingById(int mappingId)
         {
-            return mappingId == 0 ? null : _nexportProductRepository.GetById(mappingId);
+            return mappingId == 0 ? null : _nexportProductMappingRepository.GetById(mappingId);
         }
 
         public void DeleteMapping(NexportProductMapping mapping)
@@ -324,7 +374,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (mapping == null)
                 throw new ArgumentNullException(nameof(mapping));
 
-            _nexportProductRepository.Delete(mapping);
+            _nexportProductMappingRepository.Delete(mapping);
 
             //cache
             _cacheManager.RemoveByPrefix(NexportProductDefaults.ProductMappingPatternCacheKey);
@@ -338,13 +388,30 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (mapping == null)
                 throw new ArgumentNullException(nameof(mapping));
 
-            _nexportProductRepository.Update(mapping);
+            _nexportProductMappingRepository.Update(mapping);
 
             //cache
             _cacheManager.RemoveByPrefix(NexportProductDefaults.ProductMappingPatternCacheKey);
 
             //event notification
             _eventPublisher.EntityUpdated(mapping);
+        }
+
+        public NexportProductGroupMembershipMapping GetProductGroupMembershipMappingById(int mappingId)
+        {
+            return mappingId == 0 ? null : _nexportProductGroupMembershipMappingRepository.GetById(mappingId);
+        }
+
+        public void DeleteGroupMembershipMapping(NexportProductGroupMembershipMapping mapping)
+        {
+            if (mapping == null)
+                throw new ArgumentNullException(nameof (mapping));
+
+            _nexportProductGroupMembershipMappingRepository.Delete(mapping);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.ProductGroupMembershipMappingPatternCacheKey);
+
+            _eventPublisher.EntityDeleted(mapping);
         }
 
         public void InsertNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem)
@@ -451,8 +518,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 switch (model.NexportProductType)
                 {
                     case NexportProductTypeEnum.Catalog:
-                        var catalogDetails = FindCatalogDetails(model.NexportProductId);
-                        var catalogCreditHours = FindCatalogCreditHours(model.NexportProductId);
+                        var catalogDetails = GetCatalogDetails(model.NexportProductId);
+                        var catalogCreditHours = GetCatalogCreditHours(model.NexportProductId);
 
                         var existingProductCatalogs = GetProductCatalogsByCatalogId(model.NexportProductId, showHidden: true);
                         foreach (var product in selectedProducts)
@@ -461,9 +528,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                             if (FindProductCatalog(existingProductCatalogs, product.Id, model.NexportProductId) != null)
                                 continue;
 
-                            int? accessLimit = null;
-                            if (!string.IsNullOrEmpty(catalogDetails.AccessTimeLimit))
-                                accessLimit = int.Parse(catalogDetails.AccessTimeLimit);
+                            //int? accessLimit = null;
+                            //if (!string.IsNullOrEmpty(catalogDetails.AccessTimeLimit))
+                            //    accessLimit = int.Parse(catalogDetails.AccessTimeLimit);
 
                             // Insert the new product catalog mapping
                             InsertNexportProductMapping(new NexportProductMapping
@@ -472,10 +539,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                 DisplayName = product.Name,
                                 NexportProductName = catalogDetails.Name,
                                 NexportCatalogId = model.NexportProductId,
-                                PricingModel = (int?)catalogDetails.PricingModel.GetValueOrDefault(),
-                                PublishingModel = (int?)catalogDetails.PublishingModel.GetValueOrDefault(),
+                                PricingModel = catalogDetails.PricingModel,
+                                PublishingModel = catalogDetails.PublishingModel,
                                 Type = model.NexportProductType,
-                                AccessTimeLimit = accessLimit,
                                 CreditHours = catalogCreditHours.CreditHours
                             });
                         }
@@ -486,7 +552,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         if (model.NexportSyllabusId == null)
                             throw new ArgumentNullException(nameof(model.NexportSyllabusId), "Syllabus Id cannot be null");
 
-                        var sectionDetails = FindSectionDetails(model.NexportSyllabusId.Value);
+                        var sectionDetails = GetSectionDetails(model.NexportSyllabusId.Value);
 
                         var existingProductSections = GetProductSectionsBySectionId(model.NexportSyllabusId.Value, showHidden: true);
                         foreach (var product in selectedProducts)
@@ -508,7 +574,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                 UtcEndDate = sectionDetails.EnrollmentEnd,
                                 UtcLastModifiedDate = sectionDetails.UtcDateLastModified,
                                 Type = model.NexportProductType,
-                                CreditHours = sectionDetails.CreditHours
+                                CreditHours = sectionDetails.CreditHours,
+                                SectionCeus = sectionDetails.SectionCeus
                             });
                         }
 
@@ -518,7 +585,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         if (model.NexportSyllabusId == null)
                             throw new ArgumentNullException(nameof(model.NexportSyllabusId), "Syllabus Id cannot be null");
 
-                        var trainingPlanDetails = FindTrainingPlanDetails(model.NexportSyllabusId.Value);
+                        var trainingPlanDetails = GetTrainingPlanDetails(model.NexportSyllabusId.Value);
 
                         var existingProductTrainingPlan = GetProductTrainingPlansByTrainingPlanId(model.NexportSyllabusId.Value, showHidden: true);
                         foreach (var product in selectedProducts)
@@ -597,6 +664,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public NexportUserMapping FindUserMappingByCustomerId(int nopCustomerId)
         {
             return nopCustomerId < 1 ? null : _nexportUserMappingRepository.Table.SingleOrDefault(np => np.NopUserId == nopCustomerId);
+        }
+
+        public NexportUserMapping FindUserMappingByNexportUserId(Guid userId)
+        {
+            return userId == Guid.Empty
+                ? null
+                : _nexportUserMappingRepository.Table.SingleOrDefault(np => np.NexportUserId == userId);
         }
     }
 }

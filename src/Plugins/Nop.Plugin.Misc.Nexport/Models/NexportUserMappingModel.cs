@@ -8,5 +8,11 @@ namespace Nop.Plugin.Misc.Nexport.Models
     {
         [NopResourceDisplayName("Account.Fields.Nexport.UserId")]
         public Guid? NexportUserId { get; set; }
+
+        public Guid? OwnerOrgId { get; set; }
+
+        public string OwnerOrgShortName { get; set; }
+
+        public string NexportEmail { get; set; }
     }
 }

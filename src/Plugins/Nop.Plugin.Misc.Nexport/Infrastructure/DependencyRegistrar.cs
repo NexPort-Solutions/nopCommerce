@@ -11,6 +11,7 @@ using Nop.Plugin.Misc.Nexport.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Customers;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure
 {
@@ -20,11 +21,13 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
         public void Register(ContainerBuilder builder, ITypeFinder typeFinder, NopConfig config)
         {
+            builder.RegisterType<NexportCustomerRegistrationService>().As<ICustomerRegistrationService>().InstancePerLifetimeScope();
             builder.RegisterType<NexportService>().AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<NexportPluginService>().AsSelf().InstancePerLifetimeScope();
 
             builder.RegisterType<NexportPluginModelFactory>().As<INexportPluginModelFactory>()
                 .InstancePerLifetimeScope();
+
             builder.RegisterType<NexportIntegrationController>().AsSelf().InstancePerLifetimeScope();
 
             builder.RegisterPluginDataContext<NexportPluginObjectContext>(NEXPORT_PLUGIN_CONTEXT_NAME);
@@ -35,6 +38,11 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
            builder.RegisterType<EfRepository<NexportProductMapping>>()
                .As<IRepository<NexportProductMapping>>()
+               .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+               .InstancePerLifetimeScope();
+
+           builder.RegisterType<EfRepository<NexportProductGroupMembershipMapping>>()
+               .As<IRepository<NexportProductGroupMembershipMapping>>()
                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
                .InstancePerLifetimeScope();
 
@@ -54,6 +62,6 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                .InstancePerLifetimeScope();
         }
 
-        public int Order => 100;
+        public int Order => 1000;
     }
 }

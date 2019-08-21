@@ -12,6 +12,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
     {
         void InsertNexportProductMapping(NexportProductMapping nexportProductMapping);
 
+        void InsertNexportProductGroupMembershipMapping(NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping);
+
         IPagedList<NexportProductMapping> GetProductCatalogsByCatalogId(Guid catalogId,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
@@ -35,13 +37,22 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         NexportProductMapping GetProductMappingByNopProductId(int nopProductId);
 
+        IPagedList<NexportProductGroupMembershipMapping> GetProductGroupMembershipMappings(int nexportProductMappingId,
+            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
+
+        List<Guid> GetProductGroupMembershipIds(int nexportProductMappingId);
+
         Dictionary<Guid, int> FindMappingCountPerSyllabus(IList<GetSyllabiResponseItem> syllabusList);
 
-        NexportProductMapping FindProductMappingById(int mappingId);
+        NexportProductMapping GetProductMappingById(int mappingId);
 
         void DeleteMapping(NexportProductMapping mapping);
 
         void UpdateMapping(NexportProductMapping mapping);
+
+        NexportProductGroupMembershipMapping GetProductGroupMembershipMappingById(int mappingId);
+
+        void DeleteGroupMembershipMapping(NexportProductGroupMembershipMapping mapping);
 
         void InsertNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem);
 
@@ -66,5 +77,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         void UpdateUserMapping(NexportUserMapping nexportUserMapping);
 
         NexportUserMapping FindUserMappingByCustomerId(int nopCustomerId);
+
+        NexportUserMapping FindUserMappingByNexportUserId(Guid userId);
     }
 }

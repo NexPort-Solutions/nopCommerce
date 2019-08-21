@@ -18,6 +18,8 @@ namespace Nop.Plugin.Misc.Nexport.Data
             builder.Property(m => m.DisplayName).HasMaxLength(255);
             builder.Property(m => m.NexportCatalogSyllabusLinkId);
             builder.Property(m => m.NexportSubscriptionOrgId);
+            builder.Property(m => m.NexportSubscriptionOrgName);
+            builder.Property(m => m.NexportSubscriptionOrgShortName).HasMaxLength(50);
             builder.Property(m => m.NexportCatalogId);
             builder.Property(m => m.NexportSyllabusId);
             builder.Property(m => m.Type);
@@ -27,9 +29,12 @@ namespace Nop.Plugin.Misc.Nexport.Data
             builder.Property(m => m.UtcAvailableDate);
             builder.Property(m => m.UtcEndDate);
             builder.Property(m => m.UtcLastSynchronizationDate);
+            builder.Property(m => m.UtcAccessExpirationDate);
             builder.Property(m => m.AccessTimeLimit);
             builder.Property(m => m.CreditHours);
+            builder.Property(m => m.SectionCeus).HasMaxLength(64);
             builder.Property(m => m.IsSynchronized);
+            builder.Property(m => m.AutoRedeem);
 
             base.Configure(builder);
         }

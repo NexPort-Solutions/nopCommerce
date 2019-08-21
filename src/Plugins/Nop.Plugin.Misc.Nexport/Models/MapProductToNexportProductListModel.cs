@@ -29,6 +29,6 @@ namespace Nop.Plugin.Misc.Nexport.Models
 
         public DateTime? UtcEndDate { get; set; }
 
-        public int? AccessTimeLimit { get; set; }
+        public long? AccessTimeLimit { get; set; }
     }
 }

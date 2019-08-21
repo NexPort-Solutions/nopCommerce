@@ -5,6 +5,7 @@ using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
+using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Tax;
 using Nop.Core.Domain.Vendors;
 using Nop.Services.Catalog;
@@ -68,6 +69,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly MeasureSettings _measureSettings;
         private readonly TaxSettings _taxSettings;
         private readonly VendorSettings _vendorSettings;
+        private readonly CustomerSettings _customerSettings;
+        private readonly CaptchaSettings _captchaSettings;
+
         private readonly NexportService _nexportService;
 
         #endregion
@@ -109,6 +113,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             MeasureSettings measureSettings,
             TaxSettings taxSettings,
             VendorSettings vendorSettings,
+            CustomerSettings customerSettings,
+            CaptchaSettings captchaSettings,
             NexportService nexportService)
         {
             _catalogSettings = catalogSettings;
@@ -146,6 +152,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _workContext = workContext;
             _taxSettings = taxSettings;
             _vendorSettings = vendorSettings;
+            _customerSettings = customerSettings;
+            _captchaSettings = captchaSettings;
             _nexportService = nexportService;
         }
 
@@ -216,6 +224,29 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 {
                     // Fill in model values from the entity
                     var mappingModel = mapping.ToModel<NexportProductMappingModel>();
+
+                    return mappingModel;
+                });
+            });
+
+            return model;
+        }
+
+        public NexportProductGroupMembershipMappingListModel PrepareNexportProductMappingGroupMembershipListModel(
+            NexportProductGroupMembershipMappingSearchModel searchModel, int nexportProductMappingId)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var groupMembershipMappings = _nexportService.GetProductGroupMembershipMappings(nexportProductMappingId,
+                searchModel.Page - 1,
+                searchModel.PageSize);
+
+            var model = new NexportProductGroupMembershipMappingListModel().PrepareToGrid(searchModel, groupMembershipMappings, () =>
+            {
+                return groupMembershipMappings.Select(mapping =>
+                {
+                    var mappingModel = mapping.ToModel<NexportProductGroupMembershipMappingModel>();
 
                     return mappingModel;
                 });
@@ -299,6 +330,34 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     return syllabiItemModel;
                 });
             });
+
+            return model;
+        }
+
+        public NexportLoginModel PrepareNexportLoginModel(bool? checkoutAsGuest)
+        {
+            return new NexportLoginModel()
+            {
+                UsernamesEnabled = true,
+                RegistrationType = _customerSettings.UserRegistrationType,
+                CheckoutAsGuest = checkoutAsGuest.GetValueOrDefault(),
+                DisplayCaptcha = _captchaSettings.Enabled && _captchaSettings.ShowOnLoginPage
+            };
+        }
+
+        public NexportTrainingListModel PrepareNexportTrainingListModel(Customer customer)
+        {
+            if (customer == null)
+                throw new ArgumentNullException(nameof (customer));
+
+            var userMapping = _nexportService.FindUserMappingByCustomerId(customer.Id);
+            var redemptionOrganizations = _nexportService.FindNexportRedemptionOrganizationsByCustomerId(customer.Id);
+
+            var model = new NexportTrainingListModel()
+            {
+                RedemptionOrganizations = redemptionOrganizations,
+                UserId = userMapping.NexportUserId
+            };
 
             return model;
         }

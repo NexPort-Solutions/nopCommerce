@@ -1,0 +1,64 @@
+﻿@using Nop.Core
+@using Nop.Services.Common
+@using Nop.Services.Helpers
+
+@inject IGenericAttributeService genericAttributeService
+@inject IWorkContext workContext
+
+@model Nop.Plugin.Misc.Nexport.Models.NexportUserMappingModel
+
+@if (Model?.NexportUserId != null)
+{
+    const string hideNexportCustomerDetailsBlockAttributeName = "CustomerPage.HideNexportCustomerDetailsBlock";
+    var hideNexportCustomerDetailsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportCustomerDetailsBlockAttributeName);
+
+    <nop-panel asp-name="nexport-customer-details" asp-icon="fa fa-sticky-note-o" asp-title="Nexport Customer Info"
+               asp-hide-block-attribute-name="@hideNexportCustomerDetailsBlockAttributeName" asp-hide="@hideNexportCustomerDetailsBlock" asp-advanced="false">
+        <div class="panel-body">
+            <div class="form-group">
+                <div class="col-md-3">
+                    <div class="label-wrapper">
+                        <label class="control-label" for="NexportUserId">@T("Account.Fields.Nexport.UserId")</label>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="input-group">
+                        <input class="form-control text-box single-line" id="NexportUserId" name="NexportUserId" type="text" value="@Model.NexportUserId">
+                        <div class="input-group-btn">
+                            <button id="setNexportUserId" name="setnexportuserid" class="btn btn-info">
+                                Set user Id
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="NexportEmail" />
+                </div>
+                <div class="col-md-9">
+                    <div class="form-text-row">@Model.NexportEmail</div>
+                </div>
+            </div>
+            @if (Model.OwnerOrgId != null)
+            {
+                <div class="form-group">
+                    <div class="col-md-3">
+                        <nop-label asp-for="OwnerOrgId" />
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-text-row">@Model.OwnerOrgId</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        <nop-label asp-for="OwnerOrgShortName" />
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-text-row">@Model.OwnerOrgShortName</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </nop-panel>
+}
