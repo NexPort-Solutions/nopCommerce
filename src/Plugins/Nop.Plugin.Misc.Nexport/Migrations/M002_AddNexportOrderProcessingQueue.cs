@@ -12,8 +12,6 @@ namespace Nop.Plugin.Misc.Nexport.Migrations
             Create.Table(TABLE_NAME)
                 .WithColumn("Id").AsInt32().PrimaryKey().Identity()
                 .WithColumn("OrderId").AsInt32().NotNullable()
-                //.WithColumn("OrderItemId").AsInt32().NotNullable()
-                //.WithColumn("NexportProductMappingId").AsInt32().NotNullable()
                 .WithColumn("UtcDateCreated").AsDateTime2();
         }
 
