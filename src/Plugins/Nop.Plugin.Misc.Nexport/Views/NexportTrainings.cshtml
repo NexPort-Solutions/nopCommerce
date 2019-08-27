@@ -18,25 +18,22 @@
         <h1>@T("Account.MyAccount") - Nexport Trainings</h1>
     </div>
     <div class="page-body">
-        @if (Model != null)
+        @if (Model?.RedemptionOrganizations != null && Model.RedemptionOrganizations.Count > 0)
         {
-            if (Model.RedemptionOrganizations.Count > 0)
-            {
-                <div class="nexport-training-list">
-                    @foreach (var org in Model.RedemptionOrganizations)
-                    {
-                        <div class="section nexport-training-item">
-                            <div class="title">
-                                <a href="@Url.Action("GoToNexportOrg", "NexportIntegration",
-                                             new {
-                                                 orgId = org.OrgId,
-                                                 userId = Model.UserId
-                                             })" target="_blank" class="button-2 order-details-button" style="font-size: 1em;">@org.OrgName (@org.OrgShortName)</a>
-                            </div>
+            <div class="nexport-training-list">
+                @foreach (var org in Model.RedemptionOrganizations)
+                {
+                    <div class="section nexport-training-item">
+                        <div class="title">
+                            <a href="@Url.Action("GoToNexportOrg", "NexportIntegration",
+                                         new {
+                                             orgId = org.OrgId,
+                                             userId = Model.UserId
+                                         })" target="_blank" class="button-2 order-details-button" style="font-size: 1em;">@org.OrgName (@org.OrgShortName)</a>
                         </div>
-                    }
-                </div>
-            }
+                    </div>
+                }
+            </div>
         }
     </div>
 </div>

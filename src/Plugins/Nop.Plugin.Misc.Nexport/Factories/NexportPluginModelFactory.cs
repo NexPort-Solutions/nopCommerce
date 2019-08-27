@@ -353,11 +353,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             var userMapping = _nexportService.FindUserMappingByCustomerId(customer.Id);
             var redemptionOrganizations = _nexportService.FindNexportRedemptionOrganizationsByCustomerId(customer.Id);
 
-            var model = new NexportTrainingListModel()
+            var model = new NexportTrainingListModel();
+
+            if (userMapping != null && redemptionOrganizations != null)
             {
-                RedemptionOrganizations = redemptionOrganizations,
-                UserId = userMapping.NexportUserId
-            };
+                model.RedemptionOrganizations = redemptionOrganizations;
+                model.UserId = userMapping.NexportUserId;
+            }
 
             return model;
         }
