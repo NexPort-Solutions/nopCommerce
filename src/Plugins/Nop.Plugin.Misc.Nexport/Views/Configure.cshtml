@@ -94,112 +94,98 @@
             </div>
         </div>
     </div>
-</form>
 
-@if (!string.IsNullOrEmpty(Model.NexportAuthenticationToken))
-{
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            Plugin Api Token
-        </div>
-        <div class="panel-body">
-
-            <div class="form-group">
-                <div class="col-md-3">
-                    <nop-label asp-for="NexportAuthenticationToken" />
-                </div>
-                <div class="col-md-9">
-                    <div class="form-text-row">@Model.NexportAuthenticationToken</div>
-                </div>
+    @if (!string.IsNullOrEmpty(Model.NexportAuthenticationToken))
+    {
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Plugin Api Token
             </div>
+            <div class="panel-body">
 
-            @if (Model.UtcExpirationDate.HasValue)
-            {
                 <div class="form-group">
                     <div class="col-md-3">
-                        <nop-label asp-for="UtcExpirationDate" />
+                        <nop-label asp-for="NexportAuthenticationToken" />
                     </div>
                     <div class="col-md-9">
-                        <div class="form-text-row">@dateTimeHelper.ConvertToUserTime(Model.UtcExpirationDate.Value).ToString("f")</div>
+                        <div class="form-text-row">@Model.NexportAuthenticationToken</div>
                     </div>
                 </div>
-            }
 
-            @if (Model.UtcExpirationDate.HasValue && Model.UtcExpirationDate.Value < DateTime.UtcNow)
-            {
-                <div class="form-group">
-                    <div class="col-md-9 col-md-offset-3">
-                        <p class="text-yellow">
-                            <i class="icon fa fa-warning"></i>
-                            Api authentication token has expired. Please regenerate new token by submit the credential again
+                @if (Model.UtcExpirationDate.HasValue)
+                {
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="UtcExpirationDate" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@dateTimeHelper.ConvertToUserTime(Model.UtcExpirationDate.Value).ToString("f")</div>
+                        </div>
                     </div>
-                </div>
-            }
-        </div>
-    </div>
+                }
 
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            Root Organization
+                @if (Model.UtcExpirationDate.HasValue && Model.UtcExpirationDate.Value < DateTime.UtcNow)
+                {
+                    <div class="form-group">
+                        <div class="col-md-9 col-md-offset-3">
+                            <p class="text-yellow">
+                                <i class="icon fa fa-warning"></i>
+                                Api authentication token has expired. Please regenerate new token by submit the credential again
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
-        <div class="panel-body">
-            <form id="set-root-org-form" action="" onSubmit="return false;">
-                @Html.AntiForgeryToken()
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Root Organization
+            </div>
+            <div class="panel-body">
                 <div class="form-group">
                     <div class="col-md-3">
                         <nop-label asp-for="RootOrganizationId" />
                     </div>
                     <div class="col-md-9">
-                        @if (Model.RootOrganizationId != null)
-                        {
-                            <div class="input-group">
-                                <nop-editor asp-for="RootOrganizationId" asp-render-form-control-class="true" />
-                                <div class="input-group-btn">
-                                    <button id="setServerUrl" name="setrootorgid" class="btn btn-info">
-                                        Set root organization
-                                    </button>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
+                        <div class="input-group">
                             <nop-editor asp-for="RootOrganizationId" asp-render-form-control-class="true" />
-                        }
+                            <div class="input-group-btn">
+                                <button id="set-root-org-btn" name="setrootorganizationid" class="btn btn-info">
+                                    Set root organization
+                                </button>
+                            </div>
+                        </div>
                         <span asp-validation-for="RootOrganizationId"></span>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
 
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            Merchant Account
-        </div>
-        <div class="panel-body">
-            <form id="set-merchant-account-form" action="" onSubmit="return false;">
-                @Html.AntiForgeryToken()
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Merchant Account
+            </div>
+            <div class="panel-body">
                 <div class="form-group">
                     <div class="col-md-3">
                         <nop-label asp-for="MerchantAccountId" />
                     </div>
                     <div class="col-md-9">
                         <div class="input-group">
-                            <input class="form-control text-box single-line" id="nexportMerchantAccountId" name="merchantAccountId" type="text"
-                                   value="@if (Model.MerchantAccountId != Guid.Empty)
-                                          {<text>@Model.MerchantAccountId</text>}">
+                            <nop-editor asp-for="MerchantAccountId" asp-render-form-control-class="true" />
                             <div class="input-group-btn">
-                                <button id="set-merchant-account-btn" class="btn btn-info">
-                                    Set
+                                <button id="set-merchant-account-btn" name="setmerchantaccountid" class="btn btn-info">
+                                    Set merchant account
                                 </button>
                             </div>
                         </div>
+                        <span asp-validation-for="MerchantAccountId"></span>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
-}
+    }
+</form>
 
 <script>
     $(document).ready(function() {
@@ -218,29 +204,6 @@
         $("#CustomTokenExpirationDate").data("kendoDateTimePicker").bind("change",
             function() {
                 $("#TokenNeverExpired").prop("disabled", this.value() !== null);
-            });
-
-        $("#set-root-org-btn").on("click",
-            function(e) {
-                $.ajax({
-                    url: "@Url.Action("SetRootOrganization", "NexportIntegration")",
-                    type: "POST",
-                    data: $("#set-root-org-form").serializeArray(),
-                    success: function (result) {
-                    }
-                });
-            });
-
-        $("#set-merchant-account-btn").on("click",
-            function(e) {
-                $.ajax({
-                    url: "@Url.Action("SetMerchantAccount", "NexportIntegration")",
-                    type: "POST",
-                    data: $("#set-merchant-account-form").serializeArray(),
-                    success: function(result) {
-                        $("#nexportMerchantAccountId").val(result);
-                    }
-                });
             });
     });
 </script>

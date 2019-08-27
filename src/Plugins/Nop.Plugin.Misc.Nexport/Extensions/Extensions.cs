@@ -55,5 +55,11 @@ namespace Nop.Plugin.Misc.Nexport.Extensions
                 return match.Groups[1].Value + ascii;
             }
         }
+
+        public static bool IsValidUrl(this string url)
+        {
+            var tryCreateResult = Uri.TryCreate(url, UriKind.Absolute, out var uriResult);
+            return tryCreateResult && uriResult != null;
+        }
     }
 }

@@ -31,7 +31,9 @@ using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Framework.Security;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Infrastructure.ModelState;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Services;
 
@@ -165,6 +167,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
+        [ImportModelState]
         public IActionResult Configure()
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
@@ -186,20 +189,21 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AdminAntiForgery]
+        [ExportModelState]
         public IActionResult Configure(ConfigurationModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
 
             if (!ModelState.IsValid)
-                return Configure();
+                return RedirectToAction("Configure");
 
             if (!string.IsNullOrWhiteSpace(model.Password))
             {
                 _nexportService.GenerateNewNexportToken(model);
             }
 
-            return Configure();
+            return RedirectToAction("Configure");
         }
 
         [Area(AreaNames.Admin)]
@@ -207,71 +211,97 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AdminAntiForgery]
         [HttpPost, ActionName("Configure")]
         [FormValueRequired("setserverurl")]
+        [ExportModelState]
         public IActionResult SetServerUrl(ConfigurationModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
 
             if (!ModelState.IsValid)
-                return Configure();
+                return RedirectToAction("Configure");
 
-            _settingService.SetSetting("nexportsettings.url", model.Url);
+            try
+            {
+                if (model.Url.IsValidUrl())
+                {
+                    _nexportSettings.Url = model.Url;
+                    _settingService.SaveSetting(_nexportSettings);
 
-            _settingService.ClearCache();
+                    _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                var errMsg = "Cannot set the server url!";
+                _logger.Error(errMsg, ex);
+                _notificationService.ErrorNotification(errMsg);
+            }
 
-            _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
-
-            return Configure();
+            return RedirectToAction("Configure");
         }
 
         [HttpPost]
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [AdminAntiForgery]
-        public IActionResult SetRootOrganization(Guid orgId)
+        [HttpPost, ActionName("Configure")]
+        [FormValueRequired("setrootorganizationid")]
+        [ExportModelState]
+        public IActionResult SetRootOrganization(ConfigurationModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
 
+            if (!ModelState.IsValid)
+                return RedirectToAction("Configure");
+
             try
             {
-                _nexportSettings.RootOrganizationId = orgId;
+                _nexportSettings.RootOrganizationId = model.RootOrganizationId;
                 _settingService.SaveSetting(_nexportSettings);
 
-                _settingService.ClearCache();
+                _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
             }
             catch (Exception ex)
             {
-                _logger.Error("Cannot set the root organization", ex);
-                _notificationService.ErrorNotification("Cannot set the root organization");
+                var errMsg = "Cannot set the root organization!";
+                _logger.Error(errMsg, ex);
+                _notificationService.ErrorNotification(errMsg);
             }
 
-            return Content(orgId.ToString());
+            return RedirectToAction("Configure");
         }
 
         [HttpPost]
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [AdminAntiForgery]
-        public IActionResult SetMerchantAccount(Guid merchantAccountId)
+        [HttpPost, ActionName("Configure")]
+        [FormValueRequired("setmerchantaccountid")]
+        [ExportModelState]
+        public IActionResult SetMerchantAccount(ConfigurationModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
 
+            if (!ModelState.IsValid)
+                return RedirectToAction("Configure");
+
             try
             {
-                _nexportSettings.MerchantAccountId = merchantAccountId;
+                _nexportSettings.MerchantAccountId = model.MerchantAccountId;
                 _settingService.SaveSetting(_nexportSettings);
 
-                _settingService.ClearCache();
+                _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
             }
             catch (Exception ex)
             {
-                _logger.Error("Cannot set the merchant account", ex);
-                _notificationService.ErrorNotification("Cannot set the merchant account");
+                var errMsg = "Cannot set the merchant account!";
+                _logger.Error(errMsg, ex);
+                _notificationService.ErrorNotification(errMsg);
             }
 
-            return Content(merchantAccountId.ToString());
+            return RedirectToAction("Configure");
         }
 
         [Area(AreaNames.Admin)]

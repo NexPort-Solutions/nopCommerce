@@ -131,14 +131,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 _settingService.SaveSetting(_nexportSettings);
 
-                _settingService.ClearCache();
-
                 _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
             }
             catch (ApiException e)
             {
-                _logger.Error(e.Message);
-                _notificationService.ErrorNotification(e.ErrorContent);
+                var errMsg = "Cannot generate new Nexport authentication token!";
+                _logger.Error($"{errMsg}: {e.Message}", e);
+                _notificationService.ErrorNotification(errMsg);
             }
         }
 
