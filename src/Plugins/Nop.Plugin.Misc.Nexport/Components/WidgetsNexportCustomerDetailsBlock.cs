@@ -34,8 +34,12 @@ namespace Nop.Plugin.Misc.Nexport.Components
             if (mapping == null)
                 return Content("");
 
-            var model = _nexportPluginModelFactory.PrepareNexportUserMappingModel(customerModel.ToEntity<Customer>());
             var nexportUser = _nexportService.GetNexportUser(mapping.NexportUserId);
+
+            if (nexportUser == null)
+                return Content("");
+
+            var model = _nexportPluginModelFactory.PrepareNexportUserMappingModel(customerModel.ToEntity<Customer>());
 
             model.NexportEmail = nexportUser.Email;
             if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgId))
