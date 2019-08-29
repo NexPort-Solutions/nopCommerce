@@ -750,87 +750,16 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (_workContext.CurrentVendor != null && product.VendorId != _workContext.CurrentVendor.Id)
                 return RedirectToAction("List", "Product");
 
-            var mapping = _nexportService.GetProductMappingById(mappingId);
-
             if (ModelState.IsValid)
             {
                 product = model.ToEntity(product);
 
-                switch (mapping.Type)
-                {
-                    case NexportProductTypeEnum.Catalog:
-                        var catalogDetails = _nexportService.GetCatalogDetails(mapping.NexportCatalogId);
-                        var catalogDescription = _nexportService.GetCatalogDescription(mapping.NexportCatalogId);
-                        var catalogCreditHours = _nexportService.GetCatalogCreditHours(mapping.NexportCatalogId);
-
-                        product.Name = catalogDetails.Name;
-                        product.FullDescription = catalogDescription.Description;
-                        mapping.CreditHours = catalogCreditHours.CreditHours;
-
-                        break;
-
-                    case NexportProductTypeEnum.Section:
-                        if (!mapping.NexportSyllabusId.HasValue)
-                        {
-                            throw new Exception("Section Id cannot be null");
-                        }
-
-                        var sectionId = mapping.NexportSyllabusId.Value;
-
-                        var sectionDetails = _nexportService.GetSectionDetails(sectionId);
-                        var sectionDescription = _nexportService.GetSectionDescription(sectionId);
-                        var sectionObjective = _nexportService.GetSectionObjectives(sectionId);
-
-                        product.Name = sectionDetails.Title;
-                        product.FullDescription = sectionDescription.Description;
-                        product.ShortDescription = sectionObjective.Objectives;
-                        product.Sku = sectionDetails.SectionNumber;
-                        product.AvailableStartDateTimeUtc = sectionDetails.EnrollmentStart;
-                        product.AvailableEndDateTimeUtc = sectionDetails.EnrollmentEnd;
-
-                        mapping.CreditHours = sectionDetails.CreditHours;
-                        mapping.SectionCeus = sectionDetails.SectionCeus;
-
-                        break;
-
-                    case NexportProductTypeEnum.TrainingPlan:
-                        if (!mapping.NexportSyllabusId.HasValue)
-                        {
-                            throw new Exception("Training Plan Id cannot be null");
-                        }
-
-                        var trainingPlanId = mapping.NexportSyllabusId.Value;
-
-                        var trainingPlanDetails = _nexportService.GetTrainingPlanDetails(trainingPlanId);
-                        var trainingPlanDescription = _nexportService.GetTrainingPlanDescription(trainingPlanId);
-
-                        product.Name = trainingPlanDetails.Title;
-                        product.FullDescription = trainingPlanDescription.Description;
-                        product.AvailableStartDateTimeUtc = trainingPlanDetails.EnrollmentStart;
-                        product.AvailableEndDateTimeUtc = trainingPlanDetails.EnrollmentEnd;
-
-                        mapping.CreditHours = trainingPlanDetails.CreditHours;
-
-                        break;
-
-                    default:
-                        goto case NexportProductTypeEnum.Catalog;
-                }
-
-                _productService.UpdateProduct(product);
-
-                mapping.IsSynchronized = true;
-                mapping.UtcLastSynchronizationDate = DateTime.UtcNow;
-
-                _nexportService.UpdateMapping(mapping);
-
-                _customerActivityService.InsertActivity("EditProduct",
-                    string.Format(_localizationService.GetResource("ActivityLog.EditProduct"), product.Name), product);
+                _nexportService.SyncNexportProduct(mappingId, product);
 
                 _notificationService.SuccessNotification("The product has been synchronized successfully with Nexport data");
             }
 
-            return RedirectToAction("Edit", "Product", new { id = mapping.NopProductId });
+            return RedirectToAction("Edit", "Product", new { id = model.Id });
         }
 
         #region Event Handling

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using Microsoft.AspNetCore.Mvc;
 using NexportApi.Client;
 using NexportApi.Model;
 using Nop.Core;
@@ -11,7 +10,6 @@ using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
-using Nop.Data;
 using Nop.Services.Catalog;
 using Nop.Services.Configuration;
 using Nop.Services.Events;
@@ -22,6 +20,7 @@ using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Plugin.Misc.Nexport.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Services.Orders;
 
@@ -48,6 +47,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<StoreMapping> _storeMappingRepository;
         private readonly IStaticCacheManager _staticCacheManager;
         private readonly IStoreMappingService _storeMappingService;
+        private readonly ICustomerActivityService _customerActivityService;
         private readonly IOrderService _orderService;
         private readonly ISettingService _settingService;
         private readonly INotificationService _notificationService;
@@ -76,6 +76,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<StoreMapping> storeMappingRepository,
             IStaticCacheManager staticCacheManager,
             IStoreMappingService storeMappingService,
+            ICustomerActivityService customerActivityService,
             IOrderService orderService,
             ISettingService settingService,
             INotificationService notificationService,
@@ -101,6 +102,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _storeMappingRepository = storeMappingRepository;
             _staticCacheManager = staticCacheManager;
             _storeMappingService = storeMappingService;
+            _customerActivityService = customerActivityService;
             _orderService = orderService;
             _settingService = settingService;
             _notificationService = notificationService;
@@ -692,7 +694,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public string SignInNexport(Guid orgId, Guid userId)
         {
             if (orgId == Guid.Empty)
-                throw new ArgumentException("Organization Id cannot be null", nameof (orgId));
+                throw new ArgumentException("Organization Id cannot be null", nameof(orgId));
 
             try
             {
@@ -738,6 +740,96 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
 
             return organizationModelList;
+        }
+
+        public void SyncNexportProduct(int mappingId, [CanBeNull] Product product = null)
+        {
+            if (mappingId == 0)
+                throw new ArgumentException("Mapping Id is invalid!", nameof(mappingId));
+
+            var productMapping = GetProductMappingById(mappingId);
+
+            if (productMapping != null)
+            {
+                product = product ?? _productService.GetProductById(productMapping.NopProductId);
+
+                if (product != null && productMapping.NopProductId == product.Id)
+                {
+                    switch (productMapping.Type)
+                    {
+                        case NexportProductTypeEnum.Catalog:
+                            var catalogDetails = GetCatalogDetails(productMapping.NexportCatalogId);
+                            var catalogDescription = GetCatalogDescription(productMapping.NexportCatalogId);
+                            var catalogCreditHours = GetCatalogCreditHours(productMapping.NexportCatalogId);
+
+                            product.Name = catalogDetails.Name;
+                            product.FullDescription = catalogDescription.Description;
+                            productMapping.CreditHours = catalogCreditHours.CreditHours;
+
+                            break;
+
+                        case NexportProductTypeEnum.Section:
+                            if (!productMapping.NexportSyllabusId.HasValue)
+                            {
+                                throw new Exception("Section Id cannot be null");
+                            }
+
+                            var sectionId = productMapping.NexportSyllabusId.Value;
+
+                            var sectionDetails = GetSectionDetails(sectionId);
+                            var sectionDescription = GetSectionDescription(sectionId);
+                            var sectionObjective = GetSectionObjectives(sectionId);
+
+                            product.Name = sectionDetails.Title;
+                            product.FullDescription = sectionDescription.Description;
+                            product.ShortDescription = sectionObjective.Objectives;
+                            product.Sku = sectionDetails.SectionNumber;
+                            product.AvailableStartDateTimeUtc = sectionDetails.EnrollmentStart;
+                            product.AvailableEndDateTimeUtc = sectionDetails.EnrollmentEnd;
+
+                            productMapping.CreditHours = sectionDetails.CreditHours;
+                            productMapping.SectionCeus = sectionDetails.SectionCeus;
+
+                            break;
+
+                        case NexportProductTypeEnum.TrainingPlan:
+                            if (!productMapping.NexportSyllabusId.HasValue)
+                            {
+                                throw new Exception("Training Plan Id cannot be null");
+                            }
+
+                            var trainingPlanId = productMapping.NexportSyllabusId.Value;
+
+                            var trainingPlanDetails = GetTrainingPlanDetails(trainingPlanId);
+                            var trainingPlanDescription = GetTrainingPlanDescription(trainingPlanId);
+
+                            product.Name = trainingPlanDetails.Title;
+                            product.FullDescription = trainingPlanDescription.Description;
+                            product.AvailableStartDateTimeUtc = trainingPlanDetails.EnrollmentStart;
+                            product.AvailableEndDateTimeUtc = trainingPlanDetails.EnrollmentEnd;
+
+                            productMapping.CreditHours = trainingPlanDetails.CreditHours;
+
+                            break;
+
+                        default:
+                            goto case NexportProductTypeEnum.Catalog;
+                    }
+
+                    _productService.UpdateProduct(product);
+
+                    productMapping.IsSynchronized = true;
+                    productMapping.UtcLastSynchronizationDate = DateTime.UtcNow;
+
+                    UpdateMapping(productMapping);
+
+                    _customerActivityService.InsertActivity("EditProduct",
+                        string.Format(_localizationService.GetResource("ActivityLog.EditProduct"), product.Name),
+                        product);
+
+                    _logger.Information($"Successfully synchronized product {productMapping.NopProductId} with Nexport using the information from mapping {productMapping.Id}.");
+                }
+            }
         }
     }
 }
