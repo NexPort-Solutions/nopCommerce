@@ -168,6 +168,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Navigation.UserInfo", "Nexport user info");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Navigation.MyTrainings", "My trainings");
+
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Order.ViewRedemption", "Launch this training");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Order.Redeem", "Redeem");
         }
 
         public void DeleteResources()
@@ -252,6 +255,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Navigation.UserInfo");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Navigation.MyTrainings");
+
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Order.ViewRedemption");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Order.Redeem");
         }
     }
 }
