@@ -30,27 +30,33 @@ namespace Nop.Plugin.Misc.Nexport.Components
         public IViewComponentResult Invoke(string widgetZone, object additionalData)
         {
             var customerModel = (CustomerModel) additionalData;
-            var mapping = _nexportService.FindUserMappingByCustomerId(customerModel.Id);
-            if (mapping == null)
-                return Content("");
 
-            var nexportUser = _nexportService.GetNexportUser(mapping.NexportUserId);
-
-            if (nexportUser == null)
+            if (customerModel.Id == 0)
                 return Content("");
 
             var model = _nexportPluginModelFactory.PrepareNexportUserMappingModel(customerModel.ToEntity<Customer>());
 
-            model.NexportEmail = nexportUser.Email;
-            if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgId))
+            var mapping = _nexportService.FindUserMappingByCustomerId(customerModel.Id);
+            if (mapping != null)
             {
-                model.OwnerOrgId = Guid.Parse(nexportUser.OwnerOrgId);
+                var nexportUser = _nexportService.GetNexportUser(mapping.NexportUserId);
+
+                if (nexportUser != null)
+                {
+                    model.NexportEmail = nexportUser.InternalEmail;
+                    if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgId))
+                    {
+                        model.OwnerOrgId = Guid.Parse(nexportUser.OwnerOrgId);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgShortName))
+                    {
+                        model.OwnerOrgShortName = nexportUser.OwnerOrgShortName;
+                    }
+                }
             }
 
-            if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgShortName))
-            {
-                model.OwnerOrgShortName = nexportUser.OwnerOrgShortName;
-            }
+            model.Editable = true;
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportCustomerDetails.cshtml", model);
         }

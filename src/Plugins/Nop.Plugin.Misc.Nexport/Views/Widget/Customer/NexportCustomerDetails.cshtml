@@ -1,13 +1,12 @@
 ﻿@using Nop.Core
 @using Nop.Services.Common
-@using Nop.Services.Helpers
 
 @inject IGenericAttributeService genericAttributeService
 @inject IWorkContext workContext
 
 @model Nop.Plugin.Misc.Nexport.Models.NexportUserMappingModel
 
-@if (Model?.NexportUserId != null)
+@if (Model != null && Model.Editable)
 {
     const string hideNexportCustomerDetailsBlockAttributeName = "CustomerPage.HideNexportCustomerDetailsBlock";
     var hideNexportCustomerDetailsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportCustomerDetailsBlockAttributeName);
@@ -17,13 +16,11 @@
         <div class="panel-body">
             <div class="form-group">
                 <div class="col-md-3">
-                    <div class="label-wrapper">
-                        <label class="control-label" for="NexportUserId">@T("Account.Fields.Nexport.UserId")</label>
-                    </div>
+                    <nop-label asp-for="NexportUserId"></nop-label>
                 </div>
                 <div class="col-md-9">
                     <div class="input-group">
-                        <input class="form-control text-box single-line" id="NexportUserId" name="NexportUserId" type="text" value="@Model.NexportUserId">
+                        <nop-editor asp-for="NexportUserId" asp-render-form-control-class="true" />
                         <div class="input-group-btn">
                             <button id="setNexportUserId" name="setnexportuserid" class="btn btn-info">
                                 Set user Id
@@ -32,32 +29,38 @@
                     </div>
                 </div>
             </div>
-            <div class="form-group">
-                <div class="col-md-3">
-                    <nop-label asp-for="NexportEmail" />
-                </div>
-                <div class="col-md-9">
-                    <div class="form-text-row">@Model.NexportEmail</div>
-                </div>
-            </div>
-            @if (Model.OwnerOrgId != null)
+            @if (Model.NexportUserId.HasValue)
             {
-                <div class="form-group">
-                    <div class="col-md-3">
-                        <nop-label asp-for="OwnerOrgId" />
+                @if (string.IsNullOrEmpty(Model.NexportEmail))
+                {
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="NexportEmail" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.NexportEmail</div>
+                        </div>
                     </div>
-                    <div class="col-md-9">
-                        <div class="form-text-row">@Model.OwnerOrgId</div>
+                }
+                @if (Model.OwnerOrgId != null)
+                {
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="OwnerOrgId" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.OwnerOrgId</div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <div class="col-md-3">
-                        <nop-label asp-for="OwnerOrgShortName" />
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="OwnerOrgShortName" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.OwnerOrgShortName</div>
+                        </div>
                     </div>
-                    <div class="col-md-9">
-                        <div class="form-text-row">@Model.OwnerOrgShortName</div>
-                    </div>
-                </div>
+                }
             }
         </div>
     </nop-panel>

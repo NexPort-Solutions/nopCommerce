@@ -10,6 +10,7 @@ using Nop.Core.Events;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
+using Nop.Services.Customers;
 using Nop.Services.Discounts;
 using Nop.Services.Events;
 using Nop.Services.Helpers;
@@ -23,6 +24,7 @@ using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Catalog;
+using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Web.Areas.Admin.Models.Stores;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
@@ -64,6 +66,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         private readonly IProductModelFactory _productModelFactory;
         private readonly IStoreService _storeService;
         private readonly IOrderService _orderService;
+        private readonly ICustomerService _customerService;
         private readonly IDiscountService _discountService;
 
         private readonly ISettingService _settingService;
@@ -97,6 +100,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             IProductService productService,
             IStoreService storeService,
             IOrderService orderService,
+            ICustomerService customerService,
             IDiscountService discountService,
             ISettingService settingService,
             IPermissionService permissionService,
@@ -122,6 +126,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _productService = productService;
             _storeService = storeService;
             _orderService = orderService;
+            _customerService = customerService;
             _discountService = discountService;
 
             _nexportSettings = nexportSettings;
@@ -341,37 +346,33 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return View("~/Plugins/Misc.Nexport/Views/Customer/NexportUserMapping.cshtml", model);
         }
 
+        [Area(AreaNames.Admin)]
         [HttpPost]
         [PublicAntiForgery]
-        public IActionResult MapNexportUser(NexportUserMappingModel model)
+        [Route("Admin/Customer/Edit/{id}")]
+        [HttpPost, ActionName("Edit")]
+        [FormValueRequired("setnexportuserid")]
+        public IActionResult MapNexportUser(CustomerModel model, [FromForm(Name = "NexportUserId")]Guid nexportUserId)
         {
-            if (!_workContext.CurrentCustomer.IsRegistered())
-                return Challenge();
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
 
-            var customer = _workContext.CurrentCustomer;
+            var customer = _customerService.GetCustomerById(model.Id);
+            if (customer == null)
+                return RedirectToAction("List", "Customer");
 
-            try
+            if (nexportUserId != Guid.Empty)
             {
-                if (ModelState.IsValid)
+                _nexportService.InsertUserMapping(new NexportUserMapping()
                 {
-                    if (_nexportService.FindUserMappingByCustomerId(customer.Id) == null)
-                    {
-                        _nexportService.InsertUserMapping(new NexportUserMapping()
-                        {
-                            NexportUserId = model.NexportUserId.Value,
-                            NopUserId = customer.Id
-                        });
-                    }
+                    NexportUserId = nexportUserId,
+                    NopUserId = customer.Id
+                });
 
-                    return MapNexportUser();
-                }
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("", ex.Message);
+                _notificationService.SuccessNotification("Success update Nexport user mapping");
             }
 
-            return View("~/Plugins/Misc.Nexport/Views/Customer/NexportUserMapping.cshtml", model);
+            return RedirectToAction("Edit", "Customer", new { id = customer.Id });
         }
 
         #endregion

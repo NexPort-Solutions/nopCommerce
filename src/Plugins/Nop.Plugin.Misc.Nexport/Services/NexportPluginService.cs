@@ -158,6 +158,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.UserId", "Nexport user Id");
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.UserId.Hint", "The user Id in Nexport");
+            _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.OwnerOrgId", "Nexport owner organization Id");
+            _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.OwnerOrgId.Hint", "The Id of the owner organization for the user");
+            _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.OwnerOrgShortName", "Nexport owner organization short name");
+            _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.OwnerOrgShortName.Hint", "The short name of the owner organization for the user");
+            _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.Email", "Nexport email");
+            _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.Email.Hint", "The internal email of the user in Nexport");
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Login.Fields.EmailOrUsername", "Email/Username");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Navigation.UserInfo", "Nexport user info");
@@ -236,6 +242,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.UserId");
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.UserId.Hint");
+            _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.OwnerOrgId");
+            _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.OwnerOrgId.Hint");
+            _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.OwnerOrgShortName");
+            _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.OwnerOrgShortName.Hint");
+            _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.Email");
+            _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.Email.Hint");
             _localizationService.DeletePluginLocaleResource("Account.Login.Fields.EmailOrUsername");
 
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Navigation.UserInfo");
