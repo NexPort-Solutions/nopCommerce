@@ -141,13 +141,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public AuthenticationTokenResponse AuthenticateUser(string username, string password)
+        public GetUserResponse AuthenticateUser(string username, string password)
         {
-            AuthenticationTokenResponse result = null;
+            GetUserResponse result = null;
             try
             {
-                var response = NexportApiService.AuthenticateNexportApi(_nexportSettings.Url,
-                    username, password, (DateTime.UtcNow.AddDays(1.0)));
+                var response = NexportApiService.AuthenticateNexportUser(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                    username, password);
 
                 result = response.Response;
             }
@@ -270,7 +270,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
             catch (ApiException e)
             {
-                _logger.Error(e.Message);
+                var errMsg = $"Error occured during GetUser api call for Nexport user {userId}";
+                _logger.Error($"{errMsg}: {e.Message}", e);
+                _notificationService.ErrorNotification(errMsg);
             }
 
             return null;

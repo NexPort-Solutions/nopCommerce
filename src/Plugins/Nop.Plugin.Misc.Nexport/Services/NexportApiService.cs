@@ -29,6 +29,25 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
+        public static NexportGetUserResponseDetails AuthenticateNexportUser(string url, string accessToken, string loginName, string password)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                throw new NullReferenceException("Api url cannot be empty");
+            }
+
+            var nexportApi = new AdminApiApi(url);
+            var response = nexportApi.AdminApiAuthenticateUserWithHttpInfo(loginName, password, accessToken);
+
+            var result = new NexportGetUserResponseDetails()
+            {
+                Response =  response.Data,
+                StatusCode =  response.StatusCode
+            };
+
+            return result;
+        }
+
         public static NexportGetUserResponseDetails GetNexportUserByLogin(string url, string accessToken, string loginName)
         {
             if (string.IsNullOrEmpty(url))
