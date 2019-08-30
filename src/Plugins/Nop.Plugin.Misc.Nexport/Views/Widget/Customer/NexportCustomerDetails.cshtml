@@ -1,8 +1,10 @@
 ﻿@using Nop.Core
+@using Nop.Plugin.Misc.Nexport
 @using Nop.Services.Common
 
 @inject IGenericAttributeService genericAttributeService
 @inject IWorkContext workContext
+@inject NexportSettings _nexportSettings
 
 @model Nop.Plugin.Misc.Nexport.Models.NexportUserMappingModel
 
@@ -31,7 +33,7 @@
             </div>
             @if (Model.NexportUserId.HasValue)
             {
-                @if (string.IsNullOrEmpty(Model.NexportEmail))
+                if (string.IsNullOrEmpty(Model.NexportEmail))
                 {
                     <div class="form-group">
                         <div class="col-md-3">
@@ -42,7 +44,7 @@
                         </div>
                     </div>
                 }
-                @if (Model.OwnerOrgId != null)
+                if (Model.OwnerOrgId != null)
                 {
                     <div class="form-group">
                         <div class="col-md-3">
@@ -58,6 +60,17 @@
                         </div>
                         <div class="col-md-9">
                             <div class="form-text-row">@Model.OwnerOrgShortName</div>
+                        </div>
+                    </div>
+                }
+                var userInfoUrlCreated = Uri.TryCreate(new Uri(_nexportSettings.Url.TrimEnd('/')), $"Account/Info.nex?user={Model.NexportUserId}", out var userInfoUrl);
+                if(userInfoUrlCreated && userInfoUrl != null)
+                {
+                    <div class="form-group">
+                        <div class="col-md-3">
+                        </div>
+                        <div class="col-md-9">
+                            <a class="btn bg-blue" target="_blank" href="@userInfoUrl.AbsoluteUri">View user info in Nexport</a>
                         </div>
                     </div>
                 }
