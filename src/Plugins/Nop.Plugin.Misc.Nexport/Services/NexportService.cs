@@ -758,12 +758,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     switch (productMapping.Type)
                     {
                         case NexportProductTypeEnum.Catalog:
-                            var catalogDetails = GetCatalogDetails(productMapping.NexportCatalogId);
-                            var catalogDescription = GetCatalogDescription(productMapping.NexportCatalogId);
+                            //var catalogDetails = GetCatalogDetails(productMapping.NexportCatalogId);
+                            //var catalogDescription = GetCatalogDescription(productMapping.NexportCatalogId);
                             var catalogCreditHours = GetCatalogCreditHours(productMapping.NexportCatalogId);
 
-                            product.Name = catalogDetails.Name;
-                            product.FullDescription = catalogDescription.Description;
+                            //product.Name = catalogDetails.Name;
+                            //product.FullDescription = catalogDescription.Description;
                             productMapping.CreditHours = catalogCreditHours.CreditHours;
 
                             break;
@@ -777,15 +777,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
                             var sectionId = productMapping.NexportSyllabusId.Value;
 
                             var sectionDetails = GetSectionDetails(sectionId);
-                            var sectionDescription = GetSectionDescription(sectionId);
-                            var sectionObjective = GetSectionObjectives(sectionId);
+                            //var sectionDescription = GetSectionDescription(sectionId);
+                            //var sectionObjective = GetSectionObjectives(sectionId);
 
-                            product.Name = sectionDetails.Title;
-                            product.FullDescription = sectionDescription.Description;
-                            product.ShortDescription = sectionObjective.Objectives;
-                            product.Sku = sectionDetails.SectionNumber;
-                            product.AvailableStartDateTimeUtc = sectionDetails.EnrollmentStart;
-                            product.AvailableEndDateTimeUtc = sectionDetails.EnrollmentEnd;
+                            //product.Name = sectionDetails.Title;
+                            //product.FullDescription = sectionDescription.Description;
+                            //product.ShortDescription = sectionObjective.Objectives;
+                            //product.Sku = sectionDetails.SectionNumber;
+                            //product.AvailableStartDateTimeUtc = sectionDetails.EnrollmentStart;
+                            //product.AvailableEndDateTimeUtc = sectionDetails.EnrollmentEnd;
 
                             productMapping.CreditHours = sectionDetails.CreditHours;
                             productMapping.SectionCeus = sectionDetails.SectionCeus;
@@ -801,12 +801,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
                             var trainingPlanId = productMapping.NexportSyllabusId.Value;
 
                             var trainingPlanDetails = GetTrainingPlanDetails(trainingPlanId);
-                            var trainingPlanDescription = GetTrainingPlanDescription(trainingPlanId);
+                            //var trainingPlanDescription = GetTrainingPlanDescription(trainingPlanId);
 
-                            product.Name = trainingPlanDetails.Title;
-                            product.FullDescription = trainingPlanDescription.Description;
-                            product.AvailableStartDateTimeUtc = trainingPlanDetails.EnrollmentStart;
-                            product.AvailableEndDateTimeUtc = trainingPlanDetails.EnrollmentEnd;
+                            //product.Name = trainingPlanDetails.Title;
+                            //product.FullDescription = trainingPlanDescription.Description;
+                            //product.AvailableStartDateTimeUtc = trainingPlanDetails.EnrollmentStart;
+                            //product.AvailableEndDateTimeUtc = trainingPlanDetails.EnrollmentEnd;
 
                             productMapping.CreditHours = trainingPlanDetails.CreditHours;
 
@@ -816,16 +816,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
                             goto case NexportProductTypeEnum.Catalog;
                     }
 
-                    _productService.UpdateProduct(product);
+                    //_productService.UpdateProduct(product);
 
                     productMapping.IsSynchronized = true;
                     productMapping.UtcLastSynchronizationDate = DateTime.UtcNow;
 
                     UpdateMapping(productMapping);
 
-                    _customerActivityService.InsertActivity("EditProduct",
-                        string.Format(_localizationService.GetResource("ActivityLog.EditProduct"), product.Name),
-                        product);
+                    //_customerActivityService.InsertActivity("EditProduct",
+                    //    string.Format(_localizationService.GetResource("ActivityLog.EditProduct"), product.Name),
+                    //    product);
 
                     _logger.Information($"Successfully synchronized product {productMapping.NopProductId} with Nexport using the information from mapping {productMapping.Id}.");
                 }
