@@ -44,6 +44,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             services.AddMvc(options =>
             {
                 options.Filters.Add<ProductEditActionFilter>();
+                options.Filters.Add<CheckoutActionFilter>();
             });
 
             services.AddFluentMigratorCore().ConfigureRunner(builder =>
