@@ -899,13 +899,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             catch (Exception ex)
             {
                 var errorMsg =
-                    $"Error occured during the redemption process for the order item invoice {orderInvoiceItem.InvoiceItemId}";
-
+                    "Error occured during the transferring to Nexport. You might not have an active subscription in Nexport Campus. " +
+                    "Please contact customer service for further assistance.";
                 _logger.Error(errorMsg, ex);
-                _notificationService.ErrorNotification(errorMsg);
-            }
 
-            return new EmptyResult();
+                return Content(errorMsg);
+            }
         }
 
         public IActionResult GoToNexportOrg(Guid orgId, Guid userId)
@@ -922,13 +921,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }
             catch (Exception ex)
             {
-                var str =
-                    $"Error occured during transferring to Nexport organization {orgId} for user {userId}";
-                _logger.Error(str, ex);
-                _notificationService.ErrorNotification(str);
-            }
+                var errorMsg =
+                    "Error occured during the transferring to Nexport organization. You might not have an active subscription in Nexport Campus. " +
+                    "Please contact customer service for further assistance.";
+                _logger.Error(errorMsg, ex);
 
-            return new EmptyResult();
+                return Content(errorMsg);
+            }
         }
 
         #endregion

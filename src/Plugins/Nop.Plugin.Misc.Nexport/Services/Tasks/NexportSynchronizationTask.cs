@@ -16,7 +16,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
         private readonly NexportService _nexportService;
         private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
 
-        private int _batchSize = 20;
+        private int _batchSize = 100;
 
         public NexportSynchronizationTask(
             IWidgetPluginManager widgetPluginManager,

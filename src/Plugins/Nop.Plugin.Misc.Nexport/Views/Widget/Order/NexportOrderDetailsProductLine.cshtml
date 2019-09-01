@@ -11,17 +11,19 @@
 
     if (nexportOrderInvoice != null)
     {
+        var popupTitle = "";
         if (nexportOrderInvoice.UtcDateRedemption != null)
         {
             <a href="javascript:void(0);" id="view-redemption-link">(@T("Plugins.Misc.Nexport.Order.ViewRedemption"))</a>
+            popupTitle = T("Plugins.Misc.Nexport.Order.ViewRedemption").Text;
         }
         else
         {
             <a href="javascript:void(0);" id="view-redemption-link">(@T("Plugins.Misc.Nexport.Order.Redeem"))</a>
+            popupTitle = T("Plugins.Misc.Nexport.Order.Redeem").Text;
         }
 
-
-        <div id="redemption-view-popup" title="Redemption" style="display: none;">
+        <div id="redemption-view-popup" title="@popupTitle" style="display: none;">
             @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/_RedeemOrViewOrder.cshtml", nexportOrderInvoice)
         </div>
 

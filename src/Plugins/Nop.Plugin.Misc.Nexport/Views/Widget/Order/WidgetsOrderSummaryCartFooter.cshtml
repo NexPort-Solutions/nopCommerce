@@ -6,10 +6,10 @@
 
 @if (discounts != null)
 {
-    <div style="float: left;">
-        <strong>Note: You are currently receiving these discount(s) for this order:</strong>
-        @if (discounts.Count > 0)
-        {
+    @if (discounts.Count > 0)
+    {
+        <div style="float: left;">
+            <strong>Note: You are currently receiving these discount(s) for this order:</strong>
             <div>
                 <ul style="list-style-type: disc; float: left; margin-left: 25px; font-style: italic;">
                     @foreach (var discount in discounts)
@@ -20,7 +20,8 @@
                     }
                 </ul>
             </div>
-        }
-    </div>
-    <br />
+
+        </div>
+        <br />
+    }
 }
