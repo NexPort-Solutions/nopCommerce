@@ -16,6 +16,7 @@ namespace Nop.Plugin.Misc.Nexport.Data
             builder.Property(m => m.OrderId);
             builder.Property(m => m.OrderItemId);
             builder.Property(m => m.InvoiceItemId);
+            builder.Property(m => m.InvoiceId);
             builder.Property(m => m.UtcDateProcessed);
             builder.Property(m => m.RedeemingUserId);
             builder.Property(m => m.RedemptionEnrollmentId);

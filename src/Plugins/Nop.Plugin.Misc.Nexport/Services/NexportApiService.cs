@@ -325,6 +325,25 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
+        public static NexportGetInvoiceResponseDetails GetNexportInvoice(string url, string accessToken, Guid invoiceId)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                throw new NullReferenceException("Api url cannot be empty");
+            }
+
+            var nexportApi = new PointOfSaleApiApi(url);
+            var response = nexportApi.PointOfSaleApiGetInvoiceWithHttpInfo(invoiceId.ToString(), accessToken);
+
+            var result = new NexportGetInvoiceResponseDetails
+            {
+                Response =  response.Data,
+                StatusCode = response.StatusCode
+            };
+
+            return result;
+        }
+
         public static BeginInvoiceTransactionResponse BeginNexportInvoiceTransaction(string url, string accessToken,
             Guid orgId, Guid purchasingAgentId)
         {
@@ -341,9 +360,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
         }
 
         public static AddInvoiceItemResponse AddNexportInvoiceItem(string url, string accessToken,
-            string invoiceId, Guid productId, CreateInvoiceItemRequest.ProductTypeEnum productType,
+            Guid invoiceId, Guid productId, Enums.ProductTypeEnum productType,
             Guid subscriptionOrgId, List<Guid> groupMembershipIds,
-            decimal cost, string note = null, DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null)
+            decimal cost, string note = null, DateTime? accessExpirationDate = null,
+            string accessExpirationTimeLimit = null)
         {
             if (string.IsNullOrEmpty(url))
             {
@@ -354,7 +374,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var nexportApi = new PointOfSaleApiApi(url);
             var result =
-                nexportApi.PointOfSaleApiAddInvoiceItem(new CreateInvoiceItemRequest(invoiceId, productId.ToString())
+                nexportApi.PointOfSaleApiAddInvoiceItem(new CreateInvoiceItemRequest(invoiceId.ToString(), productId.ToString())
                 {
                     ProductType = productType,
                     SubscriptionOrgId = subscriptionOrgId.ToString(),
@@ -390,7 +410,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         }
 
         public static AddInvoicePaymentResponse AddNexportInvoicePayment(string url, string accessToken,
-            string invoiceId, decimal amount, Guid merchantAccountId,
+            Guid invoiceId, decimal amount, Guid merchantAccountId,
             Guid payeeId, InvoicePaymentRequest.PaymentProcessorEnum paymentProcessor,
             string paymentProcessorTransactionId,
             DateTime dueDate,
@@ -405,7 +425,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var nexportApi = new PointOfSaleApiApi(url);
             var result =
                 nexportApi.PointOfSaleApiAddInvoicePayment(new InvoicePaymentRequest(
-                    invoiceId,
+                    invoiceId.ToString(),
                     merchantAccountId: merchantAccountId.ToString(),
                     payeeId: payeeId.ToString(),
                     paymentProcessor: paymentProcessor,
@@ -420,7 +440,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public static CommitInvoiceResponse CommitNexportInvoiceTransaction(string url, string accessToken, string invoiceId)
+        public static CommitInvoiceResponse CommitNexportInvoiceTransaction(string url, string accessToken,
+            Guid invoiceId)
         {
             if (string.IsNullOrEmpty(url))
             {
@@ -429,7 +450,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var nexportApi = new PointOfSaleApiApi(url);
             var result =
-                nexportApi.PointOfSaleApiCommitInvoiceTransaction(new CommitInvoiceRequest(invoiceId), accessToken);
+                nexportApi.PointOfSaleApiCommitInvoiceTransaction(new CommitInvoiceRequest(invoiceId.ToString()), accessToken);
 
             return result;
         }

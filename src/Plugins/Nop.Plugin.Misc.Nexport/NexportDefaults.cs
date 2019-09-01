@@ -24,7 +24,17 @@ namespace Nop.Plugin.Misc.Nexport
         /// <summary>
         /// Nexport redemption processing interval (in seconds)
         /// </summary>
-        public static int NexportOrderProcessingTaskInterval => 30;
+        public static int NexportOrderProcessingTaskInterval => 5;
+
+        /// <summary>
+        /// Nexport redemption processing default batch size
+        /// </summary>
+        public static int NexportOrderProcessingTaskBatchSize => 100;
+
+        /// <summary>
+        /// Nexport redemption processing batch size setting key
+        /// </summary>
+        public static string NexportOrderProcessingTaskBatchSizeSettingKey => "nexportsettings.tasks.orderprocessing.batchsize";
 
         /// <summary>
         /// Name of the Nexport synchronization schedule task
@@ -40,6 +50,17 @@ namespace Nop.Plugin.Misc.Nexport
         /// Nexport synchronization task interval (in seconds)
         /// </summary>
         public static int NexportSynchronizationTaskInterval => 20 * 60;
+
+        /// <summary>
+        /// Nexport synchronization default batch size
+        /// </summary>
+        public static int NexportSynchronizationTaskBatchSize => 100;
+
+
+        /// <summary>
+        /// Nexport synchronization batch size setting key
+        /// </summary>
+        public static string NexportSynchronizationTaskBatchSizeSettingKey => "nexportsettings.tasks.productsynchronization.batchsize";
 
         /// <summary>
         /// Assembly version key for provisioning

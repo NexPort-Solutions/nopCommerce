@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
+using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Vendors;
 using Nop.Core.Events;
 using Nop.Services.Catalog;
@@ -44,8 +46,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
     [ResponseCache(Duration = 0, NoStore = true)]
     public class NexportIntegrationController : BasePluginController,
         IConsumer<CustomerRegisteredEvent>,
-        IConsumer<EntityInsertedEvent<Order>>, IConsumer<EntityUpdatedEvent<Order>>, IConsumer<OrderPlacedEvent>,
-        IConsumer<EntityUpdatedEvent<Product>>, IConsumer<EntityDeletedEvent<Product>>,
+        IConsumer<EntityUpdatedEvent<Order>>,
+        IConsumer<EntityDeletedEvent<Product>>,
         IConsumer<EntityDeletedEvent<Customer>>
     {
 
@@ -790,11 +792,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             });
         }
 
-        public void HandleEvent(EntityUpdatedEvent<Product> eventMessage)
-        {
-            var product = eventMessage.Entity;
-        }
-
         public void HandleEvent(EntityDeletedEvent<Product> eventMessage)
         {
             var product = eventMessage.Entity;
@@ -806,23 +803,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }
         }
 
-        public void HandleEvent(EntityInsertedEvent<Order> eventMessage)
-        {
-        }
-
         public void HandleEvent(EntityUpdatedEvent<Order> eventMessage)
         {
             var order = eventMessage.Entity;
-            if (order.OrderStatus == OrderStatus.Complete)
-            {
-                ProcessNewRedemption(order);
-            }
-        }
-
-        public void HandleEvent(OrderPlacedEvent eventMessage)
-        {
-            var order = eventMessage.Order;
-            if (order.OrderStatus == OrderStatus.Complete)
+            if (order.OrderStatus == OrderStatus.Processing && order.PaymentStatus == PaymentStatus.Paid)
             {
                 ProcessNewRedemption(order);
             }
@@ -872,6 +856,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     _nexportService.FindNexportOrderInvoiceItemById(orderItemInvoiceId);
 
                 _nexportService.RedeemNexportOrder(nexportOrderInvoiceItem, redeemingUserId.Value);
+
+                var order = _orderService.GetOrderById(nexportOrderInvoiceItem.OrderId);
+                _nexportService.AddOrderNote(order, $"Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} has been redeemed for user {redeemingUserId}", updateOrder: true);
 
                 return Json(nexportOrderInvoiceItem);
             }

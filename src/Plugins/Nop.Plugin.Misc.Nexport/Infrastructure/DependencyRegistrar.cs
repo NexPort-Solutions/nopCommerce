@@ -12,6 +12,7 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Customers;
+using Nop.Services.Orders;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure
 {
@@ -22,6 +23,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
         public void Register(ContainerBuilder builder, ITypeFinder typeFinder, NopConfig config)
         {
             builder.RegisterType<NexportCustomerRegistrationService>().As<ICustomerRegistrationService>().InstancePerLifetimeScope();
+            builder.RegisterType<NexportOrderProcessingService>().As<IOrderProcessingService>().InstancePerLifetimeScope();
+
             builder.RegisterType<NexportService>().AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<NexportPluginService>().AsSelf().InstancePerLifetimeScope();
 

@@ -422,6 +422,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (_nexportOrderProcessingQueueRepository.Table.Any(q => q.OrderId == queueItem.OrderId))
                 return;
 
+            _logger.Information($"Order {queueItem.OrderId} has been added to the processing queue and awaiting to be processed.");
             _nexportOrderProcessingQueueRepository.Insert(queueItem);
 
             //event notification
@@ -438,7 +439,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _eventPublisher.EntityDeleted(queueItem);
         }
 
-        public void InsertNexportOrderInvoiceItem(NexportOrderInvoiceItem item)
+        public void InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item)
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
@@ -671,6 +672,31 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return userId == Guid.Empty
                 ? null
                 : _nexportUserMappingRepository.Table.SingleOrDefault(np => np.NexportUserId == userId);
+        }
+
+        public Guid? FindExistingInvoiceForOrder(int orderId)
+        {
+            return orderId == 0
+                ? null
+                : _nexportOrderInvoiceItemRepository.Table
+                    .FirstOrDefault(i => i.OrderId == orderId)?.InvoiceId;
+        }
+
+        public Guid? FindExistingInvoiceItemForOrderItem(int orderId, int orderItemId)
+        {
+            if (orderId == 0)
+                return null;
+
+            return orderItemId == 0
+                ? null
+                : _nexportOrderInvoiceItemRepository.Table.FirstOrDefault(i =>
+                    i.OrderId == orderId && i.OrderItemId == orderItemId)?.InvoiceItemId;
+
+        }
+
+        public bool HasNexportOrderProcessingQueueItem(int orderId)
+        {
+            return orderId != 0 && _nexportOrderProcessingQueueRepository.Table.Any(q => q.OrderId == orderId);
         }
     }
 }

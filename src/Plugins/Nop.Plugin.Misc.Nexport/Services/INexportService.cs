@@ -58,7 +58,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         void DeleteNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem);
 
-        void InsertNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
+        void InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
         void DeleteNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
@@ -79,5 +79,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
         NexportUserMapping FindUserMappingByCustomerId(int nopCustomerId);
 
         NexportUserMapping FindUserMappingByNexportUserId(Guid userId);
+
+        Guid? FindExistingInvoiceForOrder(int orderId);
+
+        Guid? FindExistingInvoiceItemForOrderItem(int orderId, int orderItemId);
+
+        bool HasNexportOrderProcessingQueueItem(int orderId);
     }
 }

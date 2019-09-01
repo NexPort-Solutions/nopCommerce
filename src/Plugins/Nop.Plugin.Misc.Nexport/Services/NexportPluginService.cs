@@ -1,5 +1,6 @@
 ﻿using System;
 using Nop.Core.Domain.Tasks;
+using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Tasks;
@@ -9,15 +10,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
     public class NexportPluginService
     {
         private readonly IScheduleTaskService _scheduleTaskService;
+        private readonly ISettingService _settingService;
         private readonly ILocalizationService _localizationService;
         private readonly ILogger _logger;
 
         public NexportPluginService(
             IScheduleTaskService scheduleTaskService,
+            ISettingService settingService,
             ILocalizationService localizationService,
             ILogger logger)
         {
             _scheduleTaskService = scheduleTaskService;
+            _settingService = settingService;
             _localizationService = localizationService;
             _logger = logger;
         }
@@ -26,6 +30,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
         {
             try
             {
+                if (_settingService.GetSetting(NexportDefaults.NexportOrderProcessingTaskBatchSizeSettingKey) == null)
+                {
+                    _settingService.SetSetting(NexportDefaults.NexportOrderProcessingTaskBatchSizeSettingKey, NexportDefaults.NexportOrderProcessingTaskBatchSize);
+                }
+
                 if (_scheduleTaskService.GetTaskByType(NexportDefaults.NexportOrderProcessingTask) == null)
                 {
                     var orderProcessingTask = new ScheduleTask
@@ -35,10 +44,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         Name = NexportDefaults.NexportOrderProcessingTaskName,
                         Type = NexportDefaults.NexportOrderProcessingTask
                     };
+
                     _scheduleTaskService.InsertTask(orderProcessingTask);
 
                     var task = new Task(orderProcessingTask);
                     task.Execute(true, false);
+                }
+
+                if (_settingService.GetSetting(NexportDefaults.NexportSynchronizationTaskBatchSizeSettingKey) == null)
+                {
+                    _settingService.SetSetting(NexportDefaults.NexportSynchronizationTaskBatchSizeSettingKey, NexportDefaults.NexportSynchronizationTaskBatchSize);
                 }
 
                 if (_scheduleTaskService.GetTaskByType(NexportDefaults.NexportSynchronizationTask) == null)
@@ -50,6 +65,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         Name = NexportDefaults.NexportSynchronizationTaskName,
                         Type = NexportDefaults.NexportSynchronizationTask
                     };
+
                     _scheduleTaskService.InsertTask(synchronizationTask);
 
                     var task = new Task(synchronizationTask);

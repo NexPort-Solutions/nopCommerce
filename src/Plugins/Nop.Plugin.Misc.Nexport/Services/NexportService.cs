@@ -8,6 +8,7 @@ using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
 using Nop.Services.Catalog;
@@ -550,6 +551,44 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
+        public GetInvoiceResponse GetNexportInvoice(Guid invoiceId)
+        {
+            try
+            {
+                var response = NexportApiService.GetNexportInvoice(_nexportSettings.Url, _nexportSettings.AuthenticationToken, invoiceId);
+
+                if (response.StatusCode == 409)
+                    return null;
+
+                if (response.StatusCode == 200)
+                    return response.Response;
+
+                if (response.StatusCode == 403)
+                {
+                    var message =
+                        $"Nexport plugin access does not have permission to look up the invoice {invoiceId}";
+                    _logger.Error(message);
+                    throw new Exception(message);
+                }
+
+                if (response.StatusCode == 422)
+                {
+                    var message = $"Validation exception occurred when trying to get the invoice {invoiceId}";
+                    _logger.Error(message);
+                    throw new Exception(message);
+                }
+            }
+            catch (ApiException e)
+            {
+                var errMsg = $"Error occured during GetNexportInvoice api call for the invoice {invoiceId}";
+                _logger.Error($"{errMsg}: {e.Message}", e);
+
+                _notificationService.ErrorNotification(errMsg);
+            }
+
+            return null;
+        }
+
         [NotNull]
         public string BeginNexportOrderInvoiceTransaction(Guid orgId, Guid purchasingAgentId)
         {
@@ -560,15 +599,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 return beginOrderResult.InvoiceId;
             }
-            catch (ApiException e)
+            catch (ApiException ex)
             {
-                _logger.Error("Fail to create Nexport order invoice transaction", e);
+                var errMsg =
+                    $"Fail to create Nexport order invoice transaction in organization {orgId} with purchasing agent {purchasingAgentId}";
+                _logger.Error($"{errMsg}: {ex.Message}", ex);
+
                 throw;
             }
         }
 
-        public string AddItemToNexportOrderInvoice(string invoiceId, Guid nexportProductId,
-            CreateInvoiceItemRequest.ProductTypeEnum productType, decimal productCost,
+        public string AddItemToNexportOrderInvoice(Guid invoiceId, Guid nexportProductId,
+            Enums.ProductTypeEnum productType, decimal productCost,
             Guid subscriptionOrgId, List<Guid> groupMembershipIds = null,
             DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null, string note = null)
         {
@@ -581,33 +623,34 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     productType, subscriptionOrgId, groupMembershipIds,
                     productCost, note, accessExpirationDate, accessExpirationTimeLimit);
             }
-            catch (ApiException e)
+            catch (ApiException ex)
             {
-                _logger.Error(e.Message);
+                var errMsg = $"Cannot add the Nexport product {nexportProductId} to the invoice {invoiceId}";
+                _logger.Error($"{errMsg}: {ex.Message}", ex);
             }
 
             return addInvoiceItemResult?.InvoiceItemId;
         }
 
-        public void CommitNexportOrderInvoiceTransaction(string invoiceId)
+        public void CommitNexportOrderInvoiceTransaction(Guid invoiceId)
         {
             try
             {
                 NexportApiService.CommitNexportInvoiceTransaction(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, invoiceId);
             }
-            catch (ApiException e)
+            catch (ApiException ex)
             {
-                _logger.Error(e.Message);
+                var errMsg = $"Cannot commit the Nexport invoice {invoiceId}";
+                _logger.Error($"{errMsg}: {ex.Message}", ex);
             }
         }
 
-        public void AddPaymentToNexportOrderInvoice(string invoiceId, decimal totalCost, Guid payeeId, int nopOrderId, DateTime dueDate)
+        public void AddPaymentToNexportOrderInvoice(Guid invoiceId, decimal totalCost, Guid payeeId, int nopOrderId,
+            DateTime dueDate)
         {
             if (!_nexportSettings.MerchantAccountId.HasValue)
-            {
                 throw new Exception("Merchant account is empty. Cannot processing payment without a merchant account.");
-            }
 
             try
             {
@@ -616,9 +659,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     payeeId, InvoicePaymentRequest.PaymentProcessorEnum.NopCommercePlugin,
                     nopOrderId.ToString(), dueDate, note: "Payment for NopCommerce order");
             }
-            catch (ApiException e)
+            catch (ApiException ex)
             {
-                _logger.Error(e.Message);
+                var errMsg = $"Cannot add payment to the the Nexport invoice {invoiceId} in the order {nopOrderId}";
+                _logger.Error($"{errMsg}: {ex.Message}", ex);
             }
         }
 
@@ -647,9 +691,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     UpdateNexportOrderInvoiceItem(invoiceItem);
                 }
             }
-            catch (ApiException e)
+            catch (ApiException ex)
             {
-                _logger.Error(e.Message);
+                var errMsg =
+                    $"Cannot redeem the Nexport invoice item {invoiceItem.InvoiceItemId} in the order {invoiceItem.OrderId} for user {redeemingUserId}";
+                _logger.Error($"{errMsg}: {ex.Message}", ex);
             }
         }
 
@@ -683,9 +729,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     }
                 }
             }
-            catch (ApiException e)
+            catch (ApiException ex)
             {
-                _logger.Error(e.Message);
+                var errMsg = $"Cannot sign-on the user {invoiceItem.RedeemingUserId} into Nexport through SSO using the invoice item {invoiceItem.InvoiceItemId}";
+                _logger.Error($"{errMsg}: {ex.Message}", ex);
             }
 
             return null;
@@ -707,7 +754,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
             catch (Exception ex)
             {
-                _logger.Error(ex.Message);
+                var errMsg = $"Cannot sign-on the user {userId} into Nexport organization {orgId} through SSO";
+                _logger.Error($"{errMsg}: {ex.Message}", ex);
             }
 
             return null;
@@ -729,12 +777,19 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         var invoiceRedemption = NexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
                             orderInvoiceItem.InvoiceItemId.ToString());
                         if (invoiceRedemption.ApiErrorEntity.ErrorCode == 0)
-                            organizationModelList.Add(new NexportOrganizationModel()
+                        {
+                            var orgModel = new NexportOrganizationModel
                             {
                                 OrgId = Guid.Parse(invoiceRedemption.OrganizationId),
                                 OrgName = invoiceRedemption.OrganizationName,
                                 OrgShortName = invoiceRedemption.OrganizationShortName
-                            });
+                            };
+
+                            if (!organizationModelList.Exists(i => i.OrgId == orgModel.OrgId))
+                            {
+                                organizationModelList.Add(orgModel);
+                            }
+                        }
                     }
                 }
             }
@@ -829,6 +884,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                     _logger.Information($"Successfully synchronized product {productMapping.NopProductId} with Nexport using the information from mapping {productMapping.Id}.");
                 }
+            }
+        }
+
+        public void AddOrderNote(Order order, string note, bool? displayToCustomer = null, DateTime? utcNoteCreationDate = null, bool updateOrder = false)
+        {
+            order.OrderNotes.Add(new OrderNote
+            {
+                Note = note,
+                DisplayToCustomer = displayToCustomer.GetValueOrDefault(false),
+                CreatedOnUtc = utcNoteCreationDate.GetValueOrDefault(DateTime.UtcNow)
+            });
+
+            if (updateOrder)
+            {
+                _orderService.UpdateOrder(order);
             }
         }
     }
