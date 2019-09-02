@@ -777,7 +777,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (_nexportService.FindUserMappingByCustomerId(customer.Id) != null)
                 return;
 
-            var login = CommonHelper.GenerateRandomDigitCode(10);
+            var login = Guid.NewGuid().ToString();
             var password = CommonHelper.GenerateRandomDigitCode(20);
             var firstName = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.FirstNameAttribute);
             var lastName = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.LastNameAttribute);
