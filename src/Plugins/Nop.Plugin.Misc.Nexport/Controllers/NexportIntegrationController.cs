@@ -462,7 +462,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AdminAntiForgery]
-        public IActionResult GetProductMappings(Guid nexportProductId, NexportProductTypeEnum nexportProductType)
+        public IActionResult GetProductMappings([FromForm]NexportProductMappingSearchModel searchModel, Guid nexportProductId, NexportProductTypeEnum nexportProductType)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedDataTablesJson();
@@ -470,7 +470,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedDataTablesJson();
 
-            var model = _nexportPluginModelFactory.PrepareNexportProductMappingListModel(new NexportProductMappingSearchModel(), nexportProductId, nexportProductType);
+            var model = _nexportPluginModelFactory.PrepareNexportProductMappingListModel(searchModel, nexportProductId, nexportProductType);
 
             return Json(model);
         }

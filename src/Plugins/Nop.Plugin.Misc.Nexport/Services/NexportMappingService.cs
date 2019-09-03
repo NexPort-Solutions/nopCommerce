@@ -282,7 +282,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 string.Join(",", _workContext.CurrentCustomer.GetCustomerRoleIds()),
                 showHidden, "", false);
 
-            return _cacheManager.Get(key, () => {
+            return _cacheManager.Get(key, () =>
+            {
                 var query = _nexportProductMappingRepository.Table
                     .Where(np => np.Type == nexportProductType);
 
@@ -293,9 +294,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         break;
 
                     case NexportProductTypeEnum.Section:
-                        break;
-
                     case NexportProductTypeEnum.TrainingPlan:
+                        query = query.Where(np =>
+                            np.NexportCatalogSyllabusLinkId == nexportProductId);
                         break;
 
                     default:
