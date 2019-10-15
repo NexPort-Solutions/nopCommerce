@@ -22,9 +22,9 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 "Admin/NexportIntegration/MapProductPopup",
                 new { controller = "NexportIntegration", action = "MapProductPopup"});
 
-            routeBuilder.MapRoute("Plugin.Misc.Nexport.Customer.MapNexportUser",
-                "customer/nexportusermapping",
-                new { controller = "NexportIntegration", action = "MapNexportUser" });
+            //routeBuilder.MapRoute("Plugin.Misc.Nexport.Customer.MapNexportUser",
+            //    "customer/nexportusermapping",
+            //    new { controller = "NexportIntegration", action = "MapNexportUser" });
             routeBuilder.MapRoute("Plugin.Misc.Nexport.MyTraining",
                 "customer/nexporttraining",
                 new { controller = "NexportIntegration", action = "ViewNexportTraining" });
