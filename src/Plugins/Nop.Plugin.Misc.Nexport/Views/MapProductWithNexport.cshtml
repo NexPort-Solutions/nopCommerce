@@ -1,4 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Routing
+@using Nop.Plugin.Misc.Nexport.Models
 @using Nop.Web.Areas.Admin.Models.Catalog
 @using Nop.Web.Framework.Models.DataTables
 @model Nop.Plugin.Misc.Nexport.Models.NexportProductMappingSearchModel
@@ -110,46 +111,54 @@
                     <div class="panel-body">
                         @await Html.PartialAsync("Table", new DataTablesModel
                         {
-                           Name = "products-grid",
-                           UrlRead = new DataUrl("MapProductPopupList", "NexportIntegration",
-                                    new RouteValueDictionary {
-                                        { "NexportProductType", @Context.Request.Query["nexportProductType"]},
-                                        { "NexportProductId", Context.Request.Query["nexportProductId"]}
-                                    }),
-                                SearchButtonId = "search-products",
-                                Length = Model.PageSize,
-                                LengthMenu = Model.AvailablePageSizes,
-                                Filters = new List<FilterParameter>
+                            Name = "products-grid",
+                            UrlRead = new DataUrl("MapProductPopupList", "NexportIntegration",
+                                new RouteValueDictionary {
+                                    { "NexportProductType", Context.Request.Query["nexportProductType"]},
+                                    { "NexportProductId", Context.Request.Query["nexportProductId"]}
+                                }),
+                            SearchButtonId = "search-products",
+                            Length = Model.PageSize,
+                            LengthMenu = Model.AvailablePageSizes,
+                            Filters = new List<FilterParameter>
+                            {
+                                new FilterParameter(nameof(Model.SearchProductName)),
+                                //new FilterParameter(nameof(Model.SearchCategoryId)),
+                                //new FilterParameter(nameof(Model.SearchManufacturerId)),
+                                new FilterParameter(nameof(Model.SearchStoreId)),
+                                //new FilterParameter(nameof(Model.SearchVendorId)),
+                                //new FilterParameter(nameof(Model.SearchProductTypeId)),
+                            },
+                            ColumnCollection = new List<ColumnProperty>
+                            {
+                                new ColumnProperty(nameof(MappingProductModel.Id))
                                 {
-                                    new FilterParameter(nameof(Model.SearchProductName)),
-                                    //new FilterParameter(nameof(Model.SearchCategoryId)),
-                                    //new FilterParameter(nameof(Model.SearchManufacturerId)),
-                                    new FilterParameter(nameof(Model.SearchStoreId)),
-                                    //new FilterParameter(nameof(Model.SearchVendorId)),
-                                    //new FilterParameter(nameof(Model.SearchProductTypeId)),
+                                    IsMasterCheckBox = true,
+                                    //Render = new RenderCheckBox(nameof(MapProductToNexportProductModel.SelectedProductIds)),
+                                    Render = new RenderCustom("renderMappingProductCheckbox"),
+                                    ClassName = NopColumnClassDefaults.CenterAll,
+                                    Width = "50"
                                 },
-                                ColumnCollection = new List<ColumnProperty>
+                                new ColumnProperty(nameof(MappingProductModel.Name))
                                 {
-                                    new ColumnProperty(nameof(ProductModel.Id))
-                                    {
-                                        IsMasterCheckBox = true,
-                                        Render = new RenderCheckBox(nameof(AddProductToCategoryModel.SelectedProductIds)),
-                                        ClassName = NopColumnClassDefaults.CenterAll,
-                                        Width = "50"
-                                    },
-                                    new ColumnProperty(nameof(ProductModel.Name))
-                                    {
-                                        Title = T("Admin.Catalog.Products.Fields.Name").Text
-                                    },
-                                    new ColumnProperty(nameof(ProductModel.Published))
-                                    {
-                                        Title = T("Admin.Catalog.Products.Fields.Published").Text,
-                                        Width = "100",
-                                        ClassName = NopColumnClassDefaults.CenterAll,
-                                        Render = new RenderBoolean()
-                                    }
+                                    Title = T("Admin.Catalog.Products.Fields.Name").Text
+                                },
+                                new ColumnProperty(nameof(MappingProductModel.Published))
+                                {
+                                    Title = T("Admin.Catalog.Products.Fields.Published").Text,
+                                    Width = "100",
+                                    ClassName = NopColumnClassDefaults.CenterAll,
+                                    Render = new RenderBoolean()
+                                },
+                                new ColumnProperty(nameof(MappingProductModel.HasNexportMapping))
+                                {
+                                    Title = "Nexport Mapping",
+                                    Width = "100",
+                                    ClassName = NopColumnClassDefaults.CenterAll,
+                                    Render = new RenderBoolean()
                                 }
-                          })
+                            }
+                        })
                     </div>
                     <div class="panel-footer">
                         <button type="submit" name="save" class="btn bg-blue">
@@ -162,3 +171,12 @@
         </div>
     </div>
 </form>
+<script>
+    function renderMappingProductCheckbox(data, type, row, meta) {
+        if (row.HasNexportMapping) {
+            return "<input name=\"@nameof(MapProductToNexportProductModel.SelectedProductIds)\" value=\"" + row.Id + "\" type=\"checkbox\" class=\"checkboxGroups\" disabled>";
+        }
+
+        return "<input name=\"@nameof(MapProductToNexportProductModel.SelectedProductIds)\" value=\"" + row.Id + "\" type=\"checkbox\" class=\"checkboxGroups\">";
+    }
+</script>

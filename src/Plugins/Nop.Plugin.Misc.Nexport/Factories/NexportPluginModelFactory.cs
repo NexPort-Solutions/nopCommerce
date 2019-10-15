@@ -8,6 +8,7 @@ using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Tax;
 using Nop.Core.Domain.Vendors;
+using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Services.Catalog;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
@@ -173,13 +174,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return searchModel;
         }
 
-        public MapProductToNexportProductListModel PrepareMapProductToNexportProductListModel(
-            NexportProductMappingSearchModel searchModel)
+        public MapProductToNexportProductListModel PrepareMapProductToNexportProductListModel(NexportProductMappingSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            //get products
+            // Get all all products in the store
             var products = _productService.SearchProducts(showHidden: true,
                 //categoryIds: new List<int> { searchModel.SearchCategoryId },
                 //manufacturerId: searchModel.SearchManufacturerId,
@@ -189,16 +189,19 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 keywords: searchModel.SearchProductName,
                 pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
 
+            // Get the list of Nexport mappings
             var nexportMappings = _nexportService.GetProductMappings();
 
             // Prepare grid model
             var model = new MapProductToNexportProductListModel().PrepareToGrid(searchModel, products, () =>
             {
-                return products.Where(product => nexportMappings.All(m => m.NopProductId != product.Id)).Select(product =>
+                return products.Select(product =>
                 {
-                    // Fill in model values from the entity
-                    var productModel = product.ToModel<ProductModel>();
+                    var productModel = product.ToModel<MappingProductModel>();
                     productModel.SeName = _urlRecordService.GetSeName(product, 0, true, false);
+
+                    if (nexportMappings.Any(m => m.NopProductId == product.Id))
+                        productModel.HasNexportMapping = true;
 
                     return productModel;
                 });

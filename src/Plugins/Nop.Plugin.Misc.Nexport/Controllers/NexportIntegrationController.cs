@@ -462,7 +462,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AdminAntiForgery]
-        public IActionResult GetProductMappings([FromForm]NexportProductMappingSearchModel searchModel, Guid nexportProductId, NexportProductTypeEnum nexportProductType)
+        public IActionResult GetProductMappings(NexportProductMappingSearchModel searchModel, Guid nexportProductId, NexportProductTypeEnum nexportProductType)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedDataTablesJson();
