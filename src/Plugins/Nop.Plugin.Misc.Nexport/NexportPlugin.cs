@@ -8,7 +8,6 @@ using FluentMigrator.Runner;
 using Nop.Core;
 using Nop.Core.Data;
 using Nop.Core.Domain.Cms;
-using Nop.Core.Domain.Tasks;
 using Nop.Core.Infrastructure;
 using Nop.Services.Common;
 using Nop.Services.Configuration;

@@ -31,7 +31,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping)
         {
             if (nexportProductGroupMembershipMapping == null)
-                throw new ArgumentNullException(nameof (nexportProductGroupMembershipMapping));
+                throw new ArgumentNullException(nameof(nexportProductGroupMembershipMapping));
 
             if (_nexportProductGroupMembershipMappingRepository.Table.Any(
                 m => m.NexportProductMappingId == nexportProductGroupMembershipMapping.NexportProductMappingId &&
@@ -63,12 +63,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 //    select np;
 
                 var productQuery = (from p in _productRepository.Table
-                    where !p.Deleted && (showHidden || p.Published)
-                    select p.Id).ToList();
+                                    where !p.Deleted && (showHidden || p.Published)
+                                    select p.Id).ToList();
 
                 var query = from np in _nexportProductMappingRepository.Table
-                    where np.NexportCatalogId == catalogId && productQuery.Contains(np.NopProductId)
-                    select np;
+                            where np.NexportCatalogId == catalogId && productQuery.Contains(np.NopProductId)
+                            select np;
                 //var query = from pc in _productCategoryRepository.Table
                 //            join p in _productRepository.Table on pc.ProductId equals p.Id
                 //            where pc.CategoryId == categoryId &&
@@ -242,7 +242,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         {
             return source.FirstOrDefault(productCatalog => productCatalog.NopProductId == productId &&
                                                            productCatalog.NexportSyllabusId == sectionId &&
-                                                           productCatalog.Type==NexportProductTypeEnum.Section);
+                                                           productCatalog.Type == NexportProductTypeEnum.Section);
         }
 
         public NexportProductMapping FindProductTrainingPlan(IList<NexportProductMapping> source, int productId,
@@ -253,7 +253,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                                            productCatalog.Type == NexportProductTypeEnum.TrainingPlan);
         }
 
-        public IPagedList<NexportProductMapping> GetProductMappings(int pageIndex = 0, int pageSize = Int32.MaxValue, bool showHidden = false)
+        public IPagedList<NexportProductMapping> GetProductMappings(int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
         {
             var key = string.Format(NexportProductDefaults.ProductMappingsAllCacheKey,
                 _storeContext.CurrentStore.Id,
@@ -361,8 +361,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public int FindMappingCountPerSyllabi(Guid syllabusId)
         {
             return (from np in _nexportProductMappingRepository.Table
-                where np.NexportSyllabusId == syllabusId
-                select np.Id).Count();
+                    where np.NexportSyllabusId == syllabusId
+                    select np.Id).Count();
         }
 
         public NexportProductMapping GetProductMappingById(int mappingId)
@@ -406,7 +406,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public void DeleteGroupMembershipMapping(NexportProductGroupMembershipMapping mapping)
         {
             if (mapping == null)
-                throw new ArgumentNullException(nameof (mapping));
+                throw new ArgumentNullException(nameof(mapping));
 
             _nexportProductGroupMembershipMappingRepository.Delete(mapping);
 
@@ -432,7 +432,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public void DeleteNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem)
         {
-            if(queueItem == null)
+            if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
             _nexportOrderProcessingQueueRepository.Delete(queueItem);
@@ -560,7 +560,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         foreach (var product in selectedProducts)
                         {
                             //whether product section with such parameters already exists
-                            if (FindProductSection(existingProductSections, product.Id, model.NexportProductId) != null)
+                            if (FindProductSection(existingProductSections, product.Id, model.NexportSyllabusId.Value) != null)
                                 continue;
 
                             // Insert the new product section mapping
@@ -593,7 +593,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         foreach (var product in selectedProducts)
                         {
                             //whether product section with such parameters already exists
-                            if (FindProductTrainingPlan(existingProductTrainingPlan, product.Id, model.NexportProductId) != null)
+                            if (FindProductTrainingPlan(existingProductTrainingPlan, product.Id, model.NexportSyllabusId.Value) != null)
                                 continue;
 
                             // Insert the new product section mapping

@@ -49,7 +49,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IEventPublisher eventPublisher,
             IGenericAttributeService genericAttributeService,
             IGiftCardService giftCardService,
-            IHttpContextAccessor httpContextAccessor,
             ILanguageService languageService,
             ILocalizationService localizationService,
             ILogger logger,

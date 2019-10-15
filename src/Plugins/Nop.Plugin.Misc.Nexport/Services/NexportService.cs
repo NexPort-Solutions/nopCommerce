@@ -31,7 +31,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
     {
         #region Fields
 
-        private readonly NexportPluginObjectContext _context;
+        private readonly NexportApiService _nexportApiService;
+
         private readonly NexportSettings _nexportSettings;
         private readonly IAclService _aclService;
         private readonly ICacheManager _cacheManager;
@@ -61,7 +62,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         #region Constructors
 
         public NexportService(
-            NexportPluginObjectContext context,
+            NexportApiService nexportApiService,
             NexportSettings nexportSettings,
             IAclService aclService,
             ICacheManager cacheManager,
@@ -86,7 +87,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IStoreContext storeContext,
             ILogger logger)
         {
-            _context = context;
+            _nexportApiService = nexportApiService;
             _nexportSettings = nexportSettings;
             _aclService = aclService;
             _cacheManager = cacheManager;
@@ -126,7 +127,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     tokenExpiration = model.CustomTokenExpirationDate ?? DateTime.UtcNow.AddDays(30);
                 }
 
-                var response = NexportApiService.AuthenticateNexportApi(model.Url, model.Username, model.Password, tokenExpiration).Response;
+                var response = _nexportApiService.AuthenticateNexportApi(model.Url, model.Username, model.Password, tokenExpiration).Response;
 
                 _nexportSettings.AuthenticationToken = response.AccessToken;
                 _nexportSettings.Url = model.Url;
@@ -149,7 +150,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             GetUserResponse result = null;
             try
             {
-                var response = NexportApiService.AuthenticateNexportUser(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                var response = _nexportApiService.AuthenticateNexportUser(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
                     username, password);
 
                 result = response.Response;
@@ -167,7 +168,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         {
             try
             {
-                var response = NexportApiService.GetNexportUserByLogin(_nexportSettings.Url, _nexportSettings.AuthenticationToken, username);
+                var response = _nexportApiService.GetNexportUserByLogin(_nexportSettings.Url, _nexportSettings.AuthenticationToken, username);
 
                 if (response.StatusCode == 409)
                     return null;
@@ -204,7 +205,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         {
             try
             {
-                var response = NexportApiService.CreateNexportUser(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                var response = _nexportApiService.CreateNexportUser(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
                     login, password, firstName, lastName, email, ownerOrgId);
 
                 if (response.StatusCode == 200)
@@ -248,7 +249,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         {
             try
             {
-                var response = NexportApiService.GetNexportUserByUserId(_nexportSettings.Url, _nexportSettings.AuthenticationToken, userId);
+                var response = _nexportApiService.GetNexportUserByUserId(_nexportSettings.Url, _nexportSettings.AuthenticationToken, userId);
 
                 if (response.StatusCode == 409)
                     return null;
@@ -287,7 +288,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 if (_nexportSettings.RootOrganizationId.HasValue)
                 {
-                    var response = NexportApiService.SearchNexportDirectory(_nexportSettings.Url,
+                    var response = _nexportApiService.SearchNexportDirectory(_nexportSettings.Url,
                         _nexportSettings.AuthenticationToken,
                         _nexportSettings.RootOrganizationId.Value, searchTerm, page);
 
@@ -309,7 +310,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                var response = NexportApiService.GetNexportOrganizations(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                var response = _nexportApiService.GetNexportOrganizations(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
                     orgId, 0);
                 if (response.TotalRecord > 0)
                     result = response.OrganizationList.SingleOrDefault(s => s.OrgId == orgId.ToString());
@@ -335,7 +336,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 var remainderItemsCount = 0;
                 do
                 {
-                    var result = NexportApiService.GetNexportOrganizations(_nexportSettings.Url,
+                    var result = _nexportApiService.GetNexportOrganizations(_nexportSettings.Url,
                         _nexportSettings.AuthenticationToken, _nexportSettings.RootOrganizationId.Value, page);
 
                     page++;
@@ -363,7 +364,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     var remainderItemsCount = 0;
                     do
                     {
-                        var result = NexportApiService.GetNexportCatalogs(_nexportSettings.Url,
+                        var result = _nexportApiService.GetNexportCatalogs(_nexportSettings.Url,
                             _nexportSettings.AuthenticationToken, orgId.Value, page);
 
                         page++;
@@ -389,7 +390,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                result = NexportApiService.GetNexportCatalogDetails(_nexportSettings.Url,
+                result = _nexportApiService.GetNexportCatalogDetails(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, catalogId);
             }
             catch (ApiException e)
@@ -406,7 +407,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                result = NexportApiService.GetNexportCatalogDescription(_nexportSettings.Url,
+                result = _nexportApiService.GetNexportCatalogDescription(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, catalogId);
             }
             catch (ApiException e)
@@ -423,7 +424,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                result = NexportApiService.GetNexportCatalogCreditHours(_nexportSettings.Url,
+                result = _nexportApiService.GetNexportCatalogCreditHours(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, catalogId);
             }
             catch (ApiException e)
@@ -446,7 +447,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     var remainderItemsCount = 0;
                     do
                     {
-                        var result = NexportApiService.GetNexportSyllabuses(_nexportSettings.Url,
+                        var result = _nexportApiService.GetNexportSyllabuses(_nexportSettings.Url,
                             _nexportSettings.AuthenticationToken, catalogId.Value, page);
 
                         page++;
@@ -472,7 +473,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                result = NexportApiService.GetNexportSectionDetails(_nexportSettings.Url,
+                result = _nexportApiService.GetNexportSectionDetails(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, sectionId);
             }
             catch (ApiException e)
@@ -489,7 +490,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                result = NexportApiService.GetNexportSectionDescription(_nexportSettings.Url,
+                result = _nexportApiService.GetNexportSectionDescription(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, sectionId);
             }
             catch (ApiException e)
@@ -506,7 +507,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                result = NexportApiService.GetNexportSectionObjectives(_nexportSettings.Url,
+                result = _nexportApiService.GetNexportSectionObjectives(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, sectionId);
             }
             catch (ApiException e)
@@ -523,7 +524,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                result = NexportApiService.GetNexportTrainingPlanDetails(_nexportSettings.Url,
+                result = _nexportApiService.GetNexportTrainingPlanDetails(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, trainingPlanId);
             }
             catch (ApiException e)
@@ -540,7 +541,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                result = NexportApiService.GetNexportTrainingPlanDescription(_nexportSettings.Url,
+                result = _nexportApiService.GetNexportTrainingPlanDescription(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, trainingPlanId);
             }
             catch (ApiException e)
@@ -555,7 +556,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         {
             try
             {
-                var response = NexportApiService.GetNexportInvoice(_nexportSettings.Url, _nexportSettings.AuthenticationToken, invoiceId);
+                var response = _nexportApiService.GetNexportInvoice(_nexportSettings.Url, _nexportSettings.AuthenticationToken, invoiceId);
 
                 if (response.StatusCode == 409)
                     return null;
@@ -594,7 +595,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         {
             try
             {
-                var beginOrderResult = NexportApiService.BeginNexportInvoiceTransaction(_nexportSettings.Url,
+                var beginOrderResult = _nexportApiService.BeginNexportInvoiceTransaction(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, orgId, purchasingAgentId);
 
                 return beginOrderResult.InvoiceId;
@@ -618,7 +619,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                addInvoiceItemResult = NexportApiService.AddNexportInvoiceItem(_nexportSettings.Url,
+                addInvoiceItemResult = _nexportApiService.AddNexportInvoiceItem(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, invoiceId, nexportProductId,
                     productType, subscriptionOrgId, groupMembershipIds,
                     productCost, note, accessExpirationDate, accessExpirationTimeLimit);
@@ -636,7 +637,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         {
             try
             {
-                NexportApiService.CommitNexportInvoiceTransaction(_nexportSettings.Url,
+                _nexportApiService.CommitNexportInvoiceTransaction(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, invoiceId);
             }
             catch (ApiException ex)
@@ -654,7 +655,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                NexportApiService.AddNexportInvoicePayment(_nexportSettings.Url,
+                _nexportApiService.AddNexportInvoicePayment(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, invoiceId, totalCost, _nexportSettings.MerchantAccountId.Value,
                     payeeId, InvoicePaymentRequest.PaymentProcessorEnum.NopCommercePlugin,
                     nopOrderId.ToString(), dueDate, note: "Payment for NopCommerce order");
@@ -676,7 +677,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                var redeemInvoiceResult = NexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
+                var redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId.ToString(), redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption);
 
                 if (redeemInvoiceResult.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.NoError)
@@ -706,20 +707,20 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                var redemption = NexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url,
+                var redemption = _nexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId.ToString());
                 if (redemption.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.NoError)
                 {
                     SsoResponse signInResult;
                     if (invoiceItem.RedemptionEnrollmentId == null)
                     {
-                        signInResult = NexportApiService.NexportSingleSignOn(_nexportSettings.Url,
+                        signInResult = _nexportApiService.NexportSingleSignOn(_nexportSettings.Url,
                             _nexportSettings.AuthenticationToken, redemption.OrganizationId,
                             redemption.RedemptionUserId, _storeContext.CurrentStore.Url);
                     }
                     else
                     {
-                        signInResult = NexportApiService.NexportClassroomSingleSignOn(_nexportSettings.Url,
+                        signInResult = _nexportApiService.NexportClassroomSingleSignOn(_nexportSettings.Url,
                             _nexportSettings.AuthenticationToken, redemption.RedemptionEnrollmentId, _storeContext.CurrentStore.Url);
                     }
 
@@ -745,7 +746,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                var response = NexportApiService.NexportSingleSignOn(_nexportSettings.Url,
+                var response = _nexportApiService.NexportSingleSignOn(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken,
                     orgId.ToString(), userId.ToString(), _storeContext.CurrentStore.Url);
 
@@ -774,7 +775,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     var orderInvoiceItem = FindNexportOrderInvoiceItem(order.Id, orderItem.Id);
                     if (orderInvoiceItem?.UtcDateRedemption != null)
                     {
-                        var invoiceRedemption = NexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                        var invoiceRedemption = _nexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
                             orderInvoiceItem.InvoiceItemId.ToString());
                         if (invoiceRedemption.ApiErrorEntity.ErrorCode == 0)
                         {

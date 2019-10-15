@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using Autofac.Core;
+using NexportApi.Client;
 using Nop.Core.Configuration;
 using Nop.Core.Data;
 using Nop.Core.Infrastructure;
@@ -22,9 +23,14 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
         public void Register(ContainerBuilder builder, ITypeFinder typeFinder, NopConfig config)
         {
+            var apiConfiguration = new Configuration();
+
+            builder.RegisterInstance(apiConfiguration).SingleInstance();
+
             builder.RegisterType<NexportCustomerRegistrationService>().As<ICustomerRegistrationService>().InstancePerLifetimeScope();
             builder.RegisterType<NexportOrderProcessingService>().As<IOrderProcessingService>().InstancePerLifetimeScope();
 
+            builder.RegisterType<NexportApiService>().AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<NexportService>().AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<NexportPluginService>().AsSelf().InstancePerLifetimeScope();
 
