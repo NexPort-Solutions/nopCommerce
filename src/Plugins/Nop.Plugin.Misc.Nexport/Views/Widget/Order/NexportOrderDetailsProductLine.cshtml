@@ -14,26 +14,26 @@
         var popupTitle = "";
         if (nexportOrderInvoice.UtcDateRedemption != null)
         {
-            <a href="javascript:void(0);" id="view-redemption-link">(@T("Plugins.Misc.Nexport.Order.ViewRedemption"))</a>
+            <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">(@T("Plugins.Misc.Nexport.Order.ViewRedemption"))</a>
             popupTitle = T("Plugins.Misc.Nexport.Order.ViewRedemption").Text;
         }
         else
         {
-            <a href="javascript:void(0);" id="view-redemption-link">(@T("Plugins.Misc.Nexport.Order.Redeem"))</a>
+            <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">(@T("Plugins.Misc.Nexport.Order.Redeem"))</a>
             popupTitle = T("Plugins.Misc.Nexport.Order.Redeem").Text;
         }
 
-        <div id="redemption-view-popup" title="@popupTitle" style="display: none;">
+        <div data-id="redemption-view-popup" data-nexport-order-invoice-id="@nexportOrderInvoice.Id" title="@popupTitle" style="display: none;">
             @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/_RedeemOrViewOrder.cshtml", nexportOrderInvoice)
         </div>
 
         <script asp-location="Footer">
             $(document).ready(function () {
-                $("#view-redemption-link").on("click", function () {
+                $("[data-id=view-redemption-link][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").on("click", function () {
                     var targetWidth = 550;
                     var maxHeight = $(window).height() - 20;
 
-                    $("#redemption-view-popup").dialog({
+                    $("[data-id=redemption-view-popup][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").dialog({
                         width: targetWidth,
                         maxHeight: maxHeight
                     });

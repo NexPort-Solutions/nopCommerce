@@ -34,7 +34,6 @@
 
         <script asp-location="Footer">
             $(document).ready(function () {
-                console.log("Init radio");
                 $("input[type=radio][name=redemptionOption]").on("change", function(e) {
                     if (this.value === "redeem") {
                         $("input[name=redemptionUser]").hide();

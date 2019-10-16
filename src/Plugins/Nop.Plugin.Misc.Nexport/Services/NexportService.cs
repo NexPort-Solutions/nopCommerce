@@ -678,7 +678,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             try
             {
                 var redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId.ToString(), redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption);
+                    _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId, redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption);
 
                 if (redeemInvoiceResult.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.NoError)
                 {
@@ -708,15 +708,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
             try
             {
                 var redemption = _nexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId.ToString());
+                    _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId);
                 if (redemption.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.NoError)
                 {
                     SsoResponse signInResult;
                     if (invoiceItem.RedemptionEnrollmentId == null)
                     {
                         signInResult = _nexportApiService.NexportSingleSignOn(_nexportSettings.Url,
-                            _nexportSettings.AuthenticationToken, redemption.OrganizationId,
-                            redemption.RedemptionUserId, _storeContext.CurrentStore.Url);
+                            _nexportSettings.AuthenticationToken, Guid.Parse(redemption.OrganizationId),
+                            Guid.Parse(redemption.RedemptionUserId), _storeContext.CurrentStore.Url);
                     }
                     else
                     {
@@ -748,7 +748,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 var response = _nexportApiService.NexportSingleSignOn(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken,
-                    orgId.ToString(), userId.ToString(), _storeContext.CurrentStore.Url);
+                    orgId, userId, _storeContext.CurrentStore.Url);
 
                 if (response.ApiErrorEntity.ErrorCode == 0)
                     return response.Url;
@@ -776,7 +776,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     if (orderInvoiceItem?.UtcDateRedemption != null)
                     {
                         var invoiceRedemption = _nexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                            orderInvoiceItem.InvoiceItemId.ToString());
+                            orderInvoiceItem.InvoiceItemId);
                         if (invoiceRedemption.ApiErrorEntity.ErrorCode == 0)
                         {
                             var orgModel = new NexportOrganizationModel

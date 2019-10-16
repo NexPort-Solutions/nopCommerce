@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using NexportApi.Api;
 using NexportApi.Client;
 using NexportApi.Model;
@@ -17,12 +18,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _apiConfiguration = apiConfiguration;
         }
 
-        public NexportAuthenticationResponseDetails AuthenticateNexportApi(string url, string username, string password, DateTime? tokenExp)
+        public NexportAuthenticationResponseDetails AuthenticateNexportApi([NotNull]string url, [NotNull]string username, [NotNull]string password, DateTime? tokenExp)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(username))
+                throw new NullReferenceException("User name cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(password))
+                throw new NullReferenceException("Password cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -30,7 +35,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var response = nexportApi.AdminApiAuthenticateWithHttpInfo(new AuthenticationTokenRequest(username, password,
                 "password", utcExpirationDate: tokenExp));
 
-            var result = new NexportAuthenticationResponseDetails()
+            var result = new NexportAuthenticationResponseDetails
             {
                 Response = response.Data,
                 StatusCode = response.StatusCode
@@ -39,75 +44,88 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public NexportGetUserResponseDetails AuthenticateNexportUser(string url, string accessToken, string loginName, string password)
+        public NexportGetUserResponseDetails AuthenticateNexportUser([NotNull]string url, [NotNull]string accessToken, [NotNull]string loginName, [NotNull]string password)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(loginName))
+                throw new NullReferenceException("Login name cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(password))
+                throw new NullReferenceException("Password cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
             var nexportApi = new AdminApiApi(_apiConfiguration);
             var response = nexportApi.AdminApiAuthenticateUserWithHttpInfo(loginName, password, accessToken);
 
-            var result = new NexportGetUserResponseDetails()
+            var result = new NexportGetUserResponseDetails
             {
-                Response =  response.Data,
-                StatusCode =  response.StatusCode
+                Response = response.Data,
+                StatusCode = response.StatusCode
             };
 
             return result;
         }
 
-        public NexportGetUserResponseDetails GetNexportUserByLogin(string url, string accessToken, string loginName)
+        public NexportGetUserResponseDetails GetNexportUserByLogin([NotNull]string url, [NotNull]string accessToken, [NotNull]string loginName)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(loginName))
+                throw new NullReferenceException("Login name cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
             var nexportApi = new AdminApiApi(_apiConfiguration);
             var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, loginName);
 
-            var result = new NexportGetUserResponseDetails()
+            var result = new NexportGetUserResponseDetails
             {
-                Response =  response.Data,
-                StatusCode =  response.StatusCode
+                Response = response.Data,
+                StatusCode = response.StatusCode
             };
 
             return result;
         }
 
-        public NexportGetUserResponseDetails GetNexportUserByUserId(string url, string accessToken, Guid userId)
+        public NexportGetUserResponseDetails GetNexportUserByUserId([NotNull]string url, [NotNull]string accessToken, Guid userId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
             var nexportApi = new AdminApiApi(_apiConfiguration);
             var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, userId: userId.ToString());
 
-            var result = new NexportGetUserResponseDetails()
+            var result = new NexportGetUserResponseDetails
             {
-                Response =  response.Data,
-                StatusCode =  response.StatusCode
+                Response = response.Data,
+                StatusCode = response.StatusCode
             };
 
             return result;
         }
 
-        public NexportUserListResponse GetNexportUsers(string url, string accessToken, string searchTerm, int? page = null)
+        public NexportUserListResponse GetNexportUsers([NotNull]string url, [NotNull]string accessToken, string searchTerm, int? page = null)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -125,14 +143,30 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public NexportCreateUserResponseDetails CreateNexportUser(string url, string accessToken,
-            string login, string password,
-            string firstName, string lastName, string email, Guid ownerOrgId)
+        public NexportCreateUserResponseDetails CreateNexportUser([NotNull]string url, [NotNull]string accessToken,
+            [NotNull]string login, [NotNull]string password,
+            [NotNull]string firstName, [NotNull]string lastName, [NotNull]string email, Guid ownerOrgId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(login))
+                throw new NullReferenceException("Login cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(password))
+                throw new NullReferenceException("Password cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(firstName))
+                throw new NullReferenceException("First name cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(lastName))
+                throw new NullReferenceException("Last name cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(email))
+                throw new NullReferenceException("Email cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -140,21 +174,23 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var response = nexportApi.AdminApiCreateUserWithHttpInfo(
                 new CreateUserRequest(ownerOrgId.ToString(), login, password, firstName, "", lastName, email), accessToken);
 
-            var result = new NexportCreateUserResponseDetails()
+            var result = new NexportCreateUserResponseDetails
             {
-                Response = response.Data, StatusCode = response.StatusCode
+                Response = response.Data,
+                StatusCode = response.StatusCode
             };
 
             return result;
         }
 
-        public NexportDirectoryResponse SearchNexportDirectory(string url, string accessToken,
+        public NexportDirectoryResponse SearchNexportDirectory([NotNull]string url, [NotNull]string accessToken,
             Guid baseOrgId, string searchTerm, int? page = null)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -172,13 +208,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public NexportOrganizationResponse GetNexportOrganizations(string url, string accessToken,
-            Guid rootOrgId, int? page = null)
+        public NexportOrganizationResponse GetNexportOrganizations([NotNull]string url, [NotNull]string accessToken, Guid rootOrgId, int? page = null)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -196,21 +232,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public NexportCatalogResponse GetNexportCatalogs(string url, string accessToken, Guid orgId,
-            int? page = null)
+        public NexportCatalogResponse GetNexportCatalogs([NotNull]string url, [NotNull]string accessToken, Guid orgId, int? page = null)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
             var nexportApi = new LearningApiApi(_apiConfiguration);
             var catalogRequest = new CatalogRequest(orgId.ToString(), CatalogRequest.PublishingModelEnum.ForSaleInMarketPlace, CatalogRequest.CatalogAccessOptionEnum.Owned);
-            var response = nexportApi.LearningApiGetCatalogsWithHttpInfo(catalogRequest, accessToken, page: page);
+            var response = nexportApi.LearningApiGetCatalogsWithHttpInfo(catalogRequest, accessToken, page);
 
-            var result = new NexportCatalogResponse()
+            var result = new NexportCatalogResponse
             {
                 CatalogList = response.Data.Catalogs,
                 TotalRecord = int.Parse(response.Headers["X-Total-Count"]),
@@ -221,12 +257,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public CatalogResponseItem GetNexportCatalogDetails(string url, string accessToken, Guid catalogId)
+        public CatalogResponseItem GetNexportCatalogDetails([NotNull]string url, [NotNull]string accessToken, Guid catalogId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -236,13 +273,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public GetDescriptionResponse GetNexportCatalogDescription(string url, string accessToken,
-            Guid catalogId)
+        public GetDescriptionResponse GetNexportCatalogDescription([NotNull]string url, [NotNull]string accessToken, Guid catalogId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -252,13 +289,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public GetCatalogCreditHoursResponse GetNexportCatalogCreditHours(string url, string accessToken,
-            Guid catalogId)
+        public GetCatalogCreditHoursResponse GetNexportCatalogCreditHours([NotNull]string url, [NotNull]string accessToken, Guid catalogId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -268,20 +305,20 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public NexportSyllabusResponse GetNexportSyllabuses(string url, string accessToken, Guid catalogId,
-            int? page = null)
+        public NexportSyllabusResponse GetNexportSyllabuses([NotNull]string url, [NotNull]string accessToken, Guid catalogId, int? page = null)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
             var nexportApi = new LearningApiApi(_apiConfiguration);
-            var response = nexportApi.LearningApiGetCatalogSyllabiWithHttpInfo(catalogId.ToString(), accessToken, page: page);
+            var response = nexportApi.LearningApiGetCatalogSyllabiWithHttpInfo(catalogId.ToString(), accessToken, page);
 
-            var result = new NexportSyllabusResponse()
+            var result = new NexportSyllabusResponse
             {
                 SyllabusList = response.Data,
                 TotalRecord = int.Parse(response.Headers["X-Total-Count"]),
@@ -292,12 +329,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public SectionResponse GetNexportSectionDetails(string url, string accessToken, Guid sectionId)
+        public SectionResponse GetNexportSectionDetails([NotNull]string url, [NotNull]string accessToken, Guid sectionId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -307,12 +345,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public GetDescriptionResponse GetNexportSectionDescription(string url, string accessToken, Guid sectionId)
+        public GetDescriptionResponse GetNexportSectionDescription([NotNull]string url, [NotNull]string accessToken, Guid sectionId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -322,12 +361,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public GetObjectivesResponse GetNexportSectionObjectives(string url, string accessToken, Guid sectionId)
+        public GetObjectivesResponse GetNexportSectionObjectives([NotNull]string url, [NotNull]string accessToken, Guid sectionId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -337,13 +377,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public TrainingPlanResponse GetNexportTrainingPlanDetails(string url, string accessToken,
-            Guid trainingPlanId)
+        public TrainingPlanResponse GetNexportTrainingPlanDetails([NotNull]string url, [NotNull]string accessToken, Guid trainingPlanId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -353,13 +393,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public GetDescriptionResponse GetNexportTrainingPlanDescription(string url, string accessToken,
-            Guid trainingPlanId)
+        public GetDescriptionResponse GetNexportTrainingPlanDescription([NotNull]string url, [NotNull]string accessToken, Guid trainingPlanId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -369,12 +409,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public NexportGetInvoiceResponseDetails GetNexportInvoice(string url, string accessToken, Guid invoiceId)
+        public NexportGetInvoiceResponseDetails GetNexportInvoice([NotNull]string url, [NotNull]string accessToken, Guid invoiceId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -383,20 +424,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result = new NexportGetInvoiceResponseDetails
             {
-                Response =  response.Data,
+                Response = response.Data,
                 StatusCode = response.StatusCode
             };
 
             return result;
         }
 
-        public BeginInvoiceTransactionResponse BeginNexportInvoiceTransaction(string url, string accessToken,
+        public BeginInvoiceTransactionResponse BeginNexportInvoiceTransaction([NotNull]string url, [NotNull]string accessToken,
             Guid orgId, Guid purchasingAgentId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -407,16 +449,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public AddInvoiceItemResponse AddNexportInvoiceItem(string url, string accessToken,
+        public AddInvoiceItemResponse AddNexportInvoiceItem([NotNull]string url, [NotNull]string accessToken,
             Guid invoiceId, Guid productId, Enums.ProductTypeEnum productType,
             Guid subscriptionOrgId, List<Guid> groupMembershipIds,
             decimal cost, string note = null, DateTime? accessExpirationDate = null,
             string accessExpirationTimeLimit = null)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             var groupMembershipIdList = groupMembershipIds.ConvertAll(x => x.ToString());
 
@@ -438,30 +481,25 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public AddInvoiceScheduledPaymentResponse AddNexportInvoiceScheduledPayment(string url, string accessToken,
-            string invoiceId, decimal amount, string note = null, DateTime? dueDate = null)
+        public AddInvoiceScheduledPaymentResponse AddNexportInvoiceScheduledPayment([NotNull]string url, [NotNull]string accessToken,
+            Guid invoiceId, decimal amount, string note = null, DateTime? dueDate = null)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
             var nexportApi = new PointOfSaleApiApi(_apiConfiguration);
             var result =
-                nexportApi.PointOfSaleApiAddInvoiceScheduledPayment(new InvoiceScheduledPaymentRequest()
-                {
-                    InvoiceId = invoiceId,
-                    AmountUsd = amount,
-                    Note = note,
-                    UtcDueDate = dueDate
-                }, accessToken);
+                nexportApi.PointOfSaleApiAddInvoiceScheduledPayment(new InvoiceScheduledPaymentRequest(invoiceId.ToString(), amount, dueDate, note), accessToken);
 
             return result;
         }
 
-        public AddInvoicePaymentResponse AddNexportInvoicePayment(string url, string accessToken,
+        public AddInvoicePaymentResponse AddNexportInvoicePayment([NotNull]string url, [NotNull]string accessToken,
             Guid invoiceId, decimal amount, Guid merchantAccountId,
             Guid payeeId, InvoicePaymentRequest.PaymentProcessorEnum paymentProcessor,
             string paymentProcessorTransactionId,
@@ -469,10 +507,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
             Guid? paymentCollectorId = null,
             string note = null)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -494,13 +533,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public CommitInvoiceResponse CommitNexportInvoiceTransaction(string url, string accessToken,
-            Guid invoiceId)
+        public CommitInvoiceResponse CommitNexportInvoiceTransaction([NotNull]string url, [NotNull]string accessToken, Guid invoiceId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
@@ -511,89 +550,82 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public InvoiceRedemptionResponse RedeemNexportInvoice(string url, string accessToken, string invoiceItemId,
+        public InvoiceRedemptionResponse RedeemNexportInvoice([NotNull]string url, [NotNull]string accessToken, Guid invoiceItemId,
             Guid redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
             var nexportApi = new PointOfSaleApiApi(_apiConfiguration);
             var result =
                 nexportApi.PointOfSaleApiRedeemInvoiceItem(
-                    new RedeemInvoiceItemRequest(invoiceItemId, redeemingUserId: redeemingUserId.ToString(), redemptionActionType: redemptionAction), accessToken);
+                    new RedeemInvoiceItemRequest(invoiceItemId.ToString(), redeemingUserId: redeemingUserId.ToString(), redemptionActionType: redemptionAction), accessToken);
 
             return result;
         }
 
-        public InvoiceRedemptionResponse GetNexportInvoiceRedemption(string url, string accessToken, string invoiceItemId)
+        public InvoiceRedemptionResponse GetNexportInvoiceRedemption([NotNull]string url, [NotNull]string accessToken, Guid invoiceItemId)
         {
-            if (string.IsNullOrEmpty(url))
-            {
+            if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
             var nexportApi = new PointOfSaleApiApi(_apiConfiguration);
             var result =
-                nexportApi.PointOfSaleApiGetInvoiceRedemption(invoiceItemId, accessToken);
+                nexportApi.PointOfSaleApiGetInvoiceRedemption(invoiceItemId.ToString(), accessToken);
 
             return result;
         }
 
-        public SsoResponse NexportSingleSignOn(string url, string accessToken, string orgId, string userId, string redirectUrl)
-        {
-            if (string.IsNullOrEmpty(url))
-            {
-                throw new NullReferenceException("Api url cannot be empty");
-            }
-
-            _apiConfiguration.BasePath = url;
-
-            var nexportApi = new SsoApiApi(_apiConfiguration);
-            var result =
-                nexportApi.SsoApiSignIn(new SsoRequest()
-                {
-                    Display = SsoRequest.DisplayEnum.Normal,
-                    OrgId = orgId,
-                    RedirectEntityRequest = new RedirectEntityRequest()
-                    {
-                        LogoutUrl = redirectUrl,
-                        ExpiredTokenUrl = redirectUrl,
-                        InvalidTokenUrl = redirectUrl
-                    },
-                    UserId = userId
-                }, accessToken);
-
-            return result;
-        }
-
-        public SsoResponse NexportClassroomSingleSignOn(string url, string accessToken, string enrollmentId, string redirectUrl)
+        public SsoResponse NexportSingleSignOn([NotNull]string url, [NotNull]string accessToken, Guid orgId, Guid userId, string redirectUrl)
         {
             if (string.IsNullOrWhiteSpace(url))
-            {
                 throw new NullReferenceException("Api url cannot be empty");
-            }
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
             var nexportApi = new SsoApiApi(_apiConfiguration);
             var result =
-                nexportApi.SsoApiClassroom(new ClassroomSsoRequest()
-                {
-                    Display = ClassroomSsoRequest.DisplayEnum.Normal,
-                    EnrollmentId = enrollmentId,
-                    RedirectEntityRequest = new RedirectEntityRequest()
-                    {
-                        LogoutUrl = redirectUrl,
-                        ExpiredTokenUrl = redirectUrl,
-                        InvalidTokenUrl = redirectUrl
-                    }
-                }, accessToken);
+                nexportApi.SsoApiSignIn(new SsoRequest(
+                    SsoRequest.DisplayEnum.Normal, userId.ToString(), orgId.ToString(),
+                    redirectEntityRequest: new RedirectEntityRequest(redirectUrl, redirectUrl, redirectUrl)),
+                    accessToken);
+
+            return result;
+        }
+
+        public SsoResponse NexportClassroomSingleSignOn([NotNull]string url, [NotNull]string accessToken, [NotNull]string enrollmentId, string redirectUrl)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new NullReferenceException("Api url cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(enrollmentId))
+                throw new NullReferenceException("Enrollment Id cannot be empty");
+
+            _apiConfiguration.BasePath = url;
+
+            var nexportApi = new SsoApiApi(_apiConfiguration);
+
+            var result =
+                nexportApi.SsoApiClassroom(new ClassroomSsoRequest(
+                    ClassroomSsoRequest.DisplayEnum.Normal, enrollmentId,
+                    new RedirectEntityRequest(redirectUrl, redirectUrl, redirectUrl)),
+                    accessToken);
 
             return result;
         }
