@@ -667,7 +667,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public void RedeemNexportOrder(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId)
+        public void RedeemNexportInvoiceItem(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId)
         {
             if (invoiceItem == null)
                 throw new ArgumentNullException(nameof(invoiceItem));
@@ -680,23 +680,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 var redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId, redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption);
 
-                if (redeemInvoiceResult.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.NoError)
-                {
-                    invoiceItem.RedeemingUserId = redeemingUserId;
-                    invoiceItem.UtcDateRedemption = redeemInvoiceResult.UtcRedemptionDate;
-                    if (!string.IsNullOrEmpty(redeemInvoiceResult.RedemptionEnrollmentId))
-                    {
-                        invoiceItem.RedemptionEnrollmentId = Guid.Parse(redeemInvoiceResult.RedemptionEnrollmentId);
-                    }
+                if (redeemInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
+                    throw new ApiException((int)redeemInvoiceResult.ApiErrorEntity.ErrorCode,
+                        redeemInvoiceResult.ApiErrorEntity.ErrorMessage);
 
-                    UpdateNexportOrderInvoiceItem(invoiceItem);
+                invoiceItem.RedeemingUserId = redeemingUserId;
+                invoiceItem.UtcDateRedemption = redeemInvoiceResult.UtcRedemptionDate;
+
+                if (!string.IsNullOrEmpty(redeemInvoiceResult.RedemptionEnrollmentId))
+                {
+                    invoiceItem.RedemptionEnrollmentId = Guid.Parse(redeemInvoiceResult.RedemptionEnrollmentId);
                 }
+
+                UpdateNexportOrderInvoiceItem(invoiceItem);
             }
-            catch (ApiException ex)
+            catch (Exception ex)
             {
                 var errMsg =
                     $"Cannot redeem the Nexport invoice item {invoiceItem.InvoiceItemId} in the order {invoiceItem.OrderId} for user {redeemingUserId}";
                 _logger.Error($"{errMsg}: {ex.Message}", ex);
+
+                throw;
             }
         }
 

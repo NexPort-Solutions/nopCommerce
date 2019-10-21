@@ -206,10 +206,21 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                             .Select(autoRedeemingInvoiceItemId => _nexportService.FindNexportOrderInvoiceItemById(autoRedeemingInvoiceItemId))
                                             .Where(invoiceItem => invoiceItem != null))
                                         {
-                                            _nexportService.RedeemNexportOrder(invoiceItem, userMapping.NexportUserId);
+                                            try
+                                            {
+                                                _nexportService.RedeemNexportInvoiceItem(invoiceItem, userMapping.NexportUserId);
 
-                                            _nexportService.AddOrderNote(order,
-                                                $"Nexport invoice item {invoiceItem.InvoiceItemId} has been redeemed for user {userMapping.NexportUserId}");
+                                                _nexportService.AddOrderNote(order,
+                                                    $"Nexport invoice item {invoiceItem.InvoiceItemId} has been redeemed for user {userMapping.NexportUserId}");
+                                            }
+                                            catch (Exception e)
+                                            {
+
+                                                _nexportService.AddOrderNote(order,
+                                                    $"Nexport invoice item {invoiceItem.InvoiceItemId} cannot be redeemed for user {userMapping.NexportUserId}", updateOrder: true);
+
+                                                _logger.Error($"Failed to redeem Nexport invoice item {invoiceItem.InvoiceItemId} for user {userMapping.NexportUserId}", e);
+                                            }
                                         }
 
                                         _logger.Information(

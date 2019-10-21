@@ -855,10 +855,27 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 var nexportOrderInvoiceItem =
                     _nexportService.FindNexportOrderInvoiceItemById(orderItemInvoiceId);
 
-                _nexportService.RedeemNexportOrder(nexportOrderInvoiceItem, redeemingUserId.Value);
-
                 var order = _orderService.GetOrderById(nexportOrderInvoiceItem.OrderId);
-                _nexportService.AddOrderNote(order, $"Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} has been redeemed for user {redeemingUserId}", updateOrder: true);
+
+                try
+                {
+                    _nexportService.RedeemNexportInvoiceItem(nexportOrderInvoiceItem, redeemingUserId.Value);
+
+                    _nexportService.AddOrderNote(order,
+                        $"Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} has been redeemed for user {redeemingUserId}", updateOrder: true);
+                }
+                catch (Exception e)
+                {
+                    _nexportService.AddOrderNote(order,
+                        $"Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} cannot be redeemed for user {redeemingUserId}", updateOrder: true);
+
+                    var errorMsg = $"Failed to redeem Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} for user {redeemingUserId}";
+
+                    _logger.Error(errorMsg, e, customer);
+                    _notificationService.ErrorNotification(errorMsg);
+
+                    return new EmptyResult();
+                }
 
                 return Json(nexportOrderInvoiceItem);
             }
