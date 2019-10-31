@@ -8,6 +8,7 @@ using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
@@ -23,6 +24,7 @@ using Nop.Plugin.Misc.Nexport.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Models;
+using Nop.Services.Common;
 using Nop.Services.Orders;
 
 namespace Nop.Plugin.Misc.Nexport.Services
@@ -52,6 +54,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly ICustomerActivityService _customerActivityService;
         private readonly IOrderService _orderService;
         private readonly ISettingService _settingService;
+        private readonly IGenericAttributeService _genericAttributeService;
         private readonly INotificationService _notificationService;
         private readonly IWorkContext _workContext;
         private readonly IStoreContext _storeContext;
@@ -81,6 +84,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             ICustomerActivityService customerActivityService,
             IOrderService orderService,
             ISettingService settingService,
+            IGenericAttributeService genericAttributeService,
             INotificationService notificationService,
             ILocalizationService localizationService,
             IWorkContext workContext,
@@ -107,6 +111,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _customerActivityService = customerActivityService;
             _orderService = orderService;
             _settingService = settingService;
+            _genericAttributeService = genericAttributeService;
             _notificationService = notificationService;
             _localizationService = localizationService;
             _workContext = workContext;
@@ -203,6 +208,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public CreateUserResponse CreateNexportUser(string login, string password,
             string firstName, string lastName, string email, Guid ownerOrgId)
         {
+            if (string.IsNullOrWhiteSpace(login))
+                throw new ArgumentNullException(nameof(login), "Login cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(password))
+                throw new ArgumentNullException(nameof(password), "Password cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(firstName))
+                throw new ArgumentNullException(nameof(login), "First name cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(lastName))
+                throw new ArgumentNullException(nameof(password), "Last name cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentNullException(nameof(email), "Email cannot be empty");
+
             try
             {
                 var response = _nexportApiService.CreateNexportUser(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
@@ -905,6 +925,32 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 _orderService.UpdateOrder(order);
             }
+        }
+
+        public void CreateAndMapNewNexportUser(Customer customer)
+        {
+            if(customer == null)
+                throw new ArgumentNullException(nameof(customer), "Customer cannot be null");
+
+            if (!_nexportSettings.RootOrganizationId.HasValue)
+                return;
+
+            if (FindUserMappingByCustomerId(customer.Id) != null)
+                return;
+
+            var login = Guid.NewGuid().ToString();
+            var password = CommonHelper.GenerateRandomDigitCode(20);
+            var firstName = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.FirstNameAttribute);
+            var lastName = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.LastNameAttribute);
+
+            var nexportUser = CreateNexportUser(login, password, firstName, lastName,
+                customer.Email, _nexportSettings.RootOrganizationId.Value);
+
+            InsertUserMapping(new NexportUserMapping()
+            {
+                NexportUserId = Guid.Parse(nexportUser.UserId),
+                NopUserId = customer.Id
+            });
         }
     }
 }

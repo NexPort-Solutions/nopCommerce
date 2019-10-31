@@ -769,27 +769,14 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         public void HandleEvent(CustomerRegisteredEvent eventMessage)
         {
-            var customer = eventMessage.Customer;
-
-            if (!_nexportSettings.RootOrganizationId.HasValue)
-                return;
-
-            if (_nexportService.FindUserMappingByCustomerId(customer.Id) != null)
-                return;
-
-            var login = Guid.NewGuid().ToString();
-            var password = CommonHelper.GenerateRandomDigitCode(20);
-            var firstName = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.FirstNameAttribute);
-            var lastName = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.LastNameAttribute);
-
-            var nexportUser = _nexportService.CreateNexportUser(login, password, firstName, lastName,
-                customer.Email, _nexportSettings.RootOrganizationId.Value);
-
-            _nexportService.InsertUserMapping(new NexportUserMapping()
+            try
             {
-                NexportUserId = Guid.Parse(nexportUser.UserId),
-                NopUserId = customer.Id
-            });
+                _nexportService.CreateAndMapNewNexportUser(eventMessage.Customer);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Cannot create and map new Nexport user", ex, eventMessage.Customer);
+            }
         }
 
         public void HandleEvent(EntityDeletedEvent<Product> eventMessage)

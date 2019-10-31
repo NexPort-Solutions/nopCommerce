@@ -52,16 +52,10 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 if (hasNexportProduct)
                 {
                     var userMapping = _nexportService.FindUserMappingByCustomerId(_workContext.CurrentCustomer.Id);
-                    // Return the customer to the shopping cart and display error related to missing Nexport user mapping
-                    // Also log the missing mapping information within the customer activity log
+                    // Create new Nexport user and map to this customer if the mapping does not existed
                     if (userMapping == null)
                     {
-                        _customerActivityService.InsertActivity(_workContext.CurrentCustomer, "PublicStore.PlaceOrder",
-                            "Nexport user mapping could not be found. The checkout process cannot be completed.",
-                            _workContext.CurrentCustomer);
-                        _notificationService.ErrorNotification("There are one or several products in your cart that require a user account with Nexport Campus. " +
-                                                               "Please contact customer service for further assistance.");
-                        context.Result = new RedirectToActionResult("Cart", "ShoppingCart", null);
+                        _nexportService.CreateAndMapNewNexportUser(_workContext.CurrentCustomer);
                     }
                 }
             }
