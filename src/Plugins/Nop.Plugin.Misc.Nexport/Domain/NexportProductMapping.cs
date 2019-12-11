@@ -53,5 +53,7 @@ namespace Nop.Plugin.Misc.Nexport.Domain
         public bool IsSynchronized { get; set; }
 
         public bool AutoRedeem { get; set; }
+
+        public bool IsExtensionProduct { get; set; }
     }
 }

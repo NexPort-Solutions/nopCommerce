@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Stores;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Models;
@@ -34,6 +35,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
             CreateMap<MappingProduct, MappingProductModel>();
             CreateMap<Product, MappingProductModel>();
+
+            CreateMap<Store, NexportStoreModel>();
         }
 
         public int Order => 0;

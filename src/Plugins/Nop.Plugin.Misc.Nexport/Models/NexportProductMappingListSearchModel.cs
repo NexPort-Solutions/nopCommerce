@@ -1,4 +1,5 @@
-﻿using Nop.Web.Framework.Models;
+﻿using System;
+using Nop.Web.Framework.Models;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 
 namespace Nop.Plugin.Misc.Nexport.Models
@@ -10,11 +11,11 @@ namespace Nop.Plugin.Misc.Nexport.Models
             SetGridPageSize();
         }
 
-        public string NexportProductId { get; set; }
+        public Guid NexportProductId { get; set; }
 
-        public string NexportCatalogId { get; set; }
+        public Guid NexportCatalogId { get; set; }
 
-        public string NexportSyllabusId { get; set; }
+        public Guid NexportSyllabusId { get; set; }
 
         public NexportProductTypeEnum NexportProductType { get; set; }
     }

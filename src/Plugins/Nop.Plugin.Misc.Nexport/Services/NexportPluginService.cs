@@ -71,6 +71,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     var task = new Task(synchronizationTask);
                     task.Execute(true, false);
                 }
+
+                if (_settingService.GetSetting(NexportDefaults.NexportOrderInvoiceRedemptionTaskBatchSizeSettingKey) == null)
+                {
+                    _settingService.SetSetting(NexportDefaults.NexportOrderInvoiceRedemptionTaskBatchSizeSettingKey, NexportDefaults.NexportOrderInvoiceRedemptionTaskBatchSize);
+                }
+
+                if (_scheduleTaskService.GetTaskByType(NexportDefaults.NexportOrderInvoiceRedemptionTask) == null)
+                {
+                    var synchronizationTask = new ScheduleTask
+                    {
+                        Enabled = true,
+                        Seconds = NexportDefaults.NexportOrderInvoiceRedemptionTaskInterval,
+                        Name = NexportDefaults.NexportOrderInvoiceRedemptionTaskName,
+                        Type = NexportDefaults.NexportOrderInvoiceRedemptionTask
+                    };
+
+                    _scheduleTaskService.InsertTask(synchronizationTask);
+
+                    var task = new Task(synchronizationTask);
+                    task.Execute(true, false);
+                }
             }
             catch (Exception e)
             {
@@ -117,6 +138,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.MerchantAccountId.Hint", "The merchant account that will be used to process order redemptions");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.NexportSubscriptionOrgId", "Nexport subscription organization Id");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.NexportSubscriptionOrgId.Hint", "The Nexport subscription organization that will be used for the store");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SaleModel", "Sale model");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SaleModel.Hint", "The Nexport sale model for the store");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SaleModel.Retail", "Retail");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SaleModel.Wholesale", "Wholesale");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchaseFailedCourses", "Allow repurchasing failed courses");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchaseFailedCourses.Hint", "Allowing users to purchase products that associated with courses in Nexport that they have failed previously");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchasePassedCourses", "Allow repurchasing passed courses");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchasePassedCourses.Hint", "Allowing users to purchase products that associated with courses in Nexport that they have passed previously");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.NexportProductName", "Product name");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.NexportProductName.Hint", "The name of the product in Nexport");

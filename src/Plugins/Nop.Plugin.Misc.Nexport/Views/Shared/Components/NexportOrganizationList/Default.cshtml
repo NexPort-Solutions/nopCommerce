@@ -4,7 +4,7 @@
     var orgs = Model.Organizations.Select(org => new SelectListItem
     {
         Text = $"{org.Name} ({org.ShortName})",
-        Value = org.OrgId
+        Value = org.OrgId.ToString()
     }).ToList();
     orgs.Insert(0, new SelectListItem
     {

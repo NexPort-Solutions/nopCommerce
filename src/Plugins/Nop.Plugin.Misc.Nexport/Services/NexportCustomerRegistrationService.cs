@@ -109,7 +109,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 if (nexportUserResponse.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.AuthenticationError)
                     return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.WrongPassword };
 
-                var nexportUserId = Guid.Parse(nexportUserResponse.UserId);
+                var nexportUserId = nexportUserResponse.UserId;
                 var nexportUserMapping = _nexportService.FindUserMappingByNexportUserId(nexportUserId);
 
                 // Check if Nexport user mapping is existed. If existed, then log the user into the system.

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using NexportApi.Client;
 using NexportApi.Model;
 using Nop.Core;
@@ -9,6 +10,7 @@ using Nop.Core.Caching;
 using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
@@ -45,8 +47,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
         private readonly IRepository<NexportProductGroupMembershipMapping> _nexportProductGroupMembershipMappingRepository;
+        private readonly IRepository<NexportProductStoreMapping> _nexportProductStoreMappingRepository;
         private readonly IRepository<NexportOrderProcessingQueueItem> _nexportOrderProcessingQueueRepository;
         private readonly IRepository<NexportOrderInvoiceItem> _nexportOrderInvoiceItemRepository;
+        private readonly IRepository<NexportOrderInvoiceRedemptionQueueItem> _nexportOrderInvoiceRedemptionQueueRepository;
         private readonly IRepository<NexportUserMapping> _nexportUserMappingRepository;
         private readonly IRepository<StoreMapping> _storeMappingRepository;
         private readonly IStaticCacheManager _staticCacheManager;
@@ -54,6 +58,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly ICustomerActivityService _customerActivityService;
         private readonly IOrderService _orderService;
         private readonly ISettingService _settingService;
+        private readonly IStoreService _storeService;
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly INotificationService _notificationService;
         private readonly IWorkContext _workContext;
@@ -75,8 +80,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<Product> productRepository,
             IRepository<NexportProductMapping> nexportProductMappingRepository,
             IRepository<NexportProductGroupMembershipMapping> nexportProductGroupMembershipMappingRepository,
+            IRepository<NexportProductStoreMapping> nexportProductStoreMappingRepository,
             IRepository<NexportOrderProcessingQueueItem> nexportOrderProcessingQueueRepository,
             IRepository<NexportOrderInvoiceItem> nexportOrderInvoiceItemRepository,
+            IRepository<NexportOrderInvoiceRedemptionQueueItem> nexportOrderInvoiceRedemptionQueueRepository,
             IRepository<NexportUserMapping> nexportUserMappingRepository,
             IRepository<StoreMapping> storeMappingRepository,
             IStaticCacheManager staticCacheManager,
@@ -84,6 +91,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             ICustomerActivityService customerActivityService,
             IOrderService orderService,
             ISettingService settingService,
+            IStoreService storeService,
             IGenericAttributeService genericAttributeService,
             INotificationService notificationService,
             ILocalizationService localizationService,
@@ -102,8 +110,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _productRepository = productRepository;
             _nexportProductMappingRepository = nexportProductMappingRepository;
             _nexportProductGroupMembershipMappingRepository = nexportProductGroupMembershipMappingRepository;
+            _nexportProductStoreMappingRepository = nexportProductStoreMappingRepository;
             _nexportOrderProcessingQueueRepository = nexportOrderProcessingQueueRepository;
             _nexportOrderInvoiceItemRepository = nexportOrderInvoiceItemRepository;
+            _nexportOrderInvoiceRedemptionQueueRepository = nexportOrderInvoiceRedemptionQueueRepository;
             _nexportUserMappingRepository = nexportUserMappingRepository;
             _storeMappingRepository = storeMappingRepository;
             _staticCacheManager = staticCacheManager;
@@ -111,6 +121,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _customerActivityService = customerActivityService;
             _orderService = orderService;
             _settingService = settingService;
+            _storeService = storeService;
             _genericAttributeService = genericAttributeService;
             _notificationService = notificationService;
             _localizationService = localizationService;
@@ -134,7 +145,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 var response = _nexportApiService.AuthenticateNexportApi(model.Url, model.Username, model.Password, tokenExpiration).Response;
 
-                _nexportSettings.AuthenticationToken = response.AccessToken;
+                _nexportSettings.AuthenticationToken = response.AccessToken.ToString();
                 _nexportSettings.Url = model.Url;
                 _nexportSettings.UtcExpirationDate = tokenExpiration;
 
@@ -333,7 +344,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 var response = _nexportApiService.GetNexportOrganizations(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
                     orgId, 0);
                 if (response.TotalRecord > 0)
-                    result = response.OrganizationList.SingleOrDefault(s => s.OrgId == orgId.ToString());
+                    result = response.OrganizationList.SingleOrDefault(s => s.OrgId == orgId);
             }
             catch (ApiException e)
             {
@@ -364,9 +375,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     items.AddRange(result.OrganizationList);
                 } while (remainderItemsCount > -1);
             }
-            catch (ApiException e)
+            catch (Exception e)
             {
-                _logger.Error(e.Message);
+                _logger.Error(e.Message, e);
             }
 
             return items;
@@ -393,9 +404,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         items.AddRange(result.CatalogList);
                     } while (remainderItemsCount > -1);
                 }
-                catch (ApiException e)
+                catch (Exception e)
                 {
-                    _logger.Error(e.Message);
+                    _logger.Error(e.Message, e);
                 }
             }
 
@@ -413,9 +424,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result = _nexportApiService.GetNexportCatalogDetails(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, catalogId);
             }
-            catch (ApiException e)
+            catch (Exception e)
             {
-                _logger.Error(e.Message);
+                _logger.Error(e.Message, e);
             }
 
             return result;
@@ -430,9 +441,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result = _nexportApiService.GetNexportCatalogDescription(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, catalogId);
             }
-            catch (ApiException e)
+            catch (Exception e)
             {
-                _logger.Error(e.Message);
+                _logger.Error(e.Message, e);
             }
 
             return result;
@@ -447,9 +458,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result = _nexportApiService.GetNexportCatalogCreditHours(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, catalogId);
             }
-            catch (ApiException e)
+            catch (Exception e)
             {
-                _logger.Error(e.Message);
+                _logger.Error(e.Message, e);
             }
 
             return result;
@@ -476,9 +487,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         items.AddRange(result.SyllabusList);
                     } while (remainderItemsCount > -1);
                 }
-                catch (ApiException e)
+                catch (Exception e)
                 {
-                    _logger.Error(e.Message);
+                    _logger.Error(e.Message, e);
                 }
             }
 
@@ -496,9 +507,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result = _nexportApiService.GetNexportSectionDetails(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, sectionId);
             }
-            catch (ApiException e)
+            catch (Exception e)
             {
-                _logger.Error(e.Message);
+                _logger.Error(e.Message, e);
             }
 
             return result;
@@ -513,9 +524,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result = _nexportApiService.GetNexportSectionDescription(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, sectionId);
             }
-            catch (ApiException e)
+            catch (Exception e)
             {
-                _logger.Error(e.Message);
+                _logger.Error(e.Message, e);
             }
 
             return result;
@@ -530,9 +541,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result = _nexportApiService.GetNexportSectionObjectives(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, sectionId);
             }
-            catch (ApiException e)
+            catch (Exception e)
             {
-                _logger.Error(e.Message);
+                _logger.Error(e.Message, e);
             }
 
             return result;
@@ -547,9 +558,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result = _nexportApiService.GetNexportTrainingPlanDetails(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, trainingPlanId);
             }
-            catch (ApiException e)
+            catch (Exception e)
             {
-                _logger.Error(e.Message);
+                _logger.Error(e.Message, e);
             }
 
             return result;
@@ -564,9 +575,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result = _nexportApiService.GetNexportTrainingPlanDescription(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, trainingPlanId);
             }
-            catch (ApiException e)
+            catch (Exception e)
             {
-                _logger.Error(e.Message);
+                _logger.Error(e.Message, e);
             }
 
             return result;
@@ -599,7 +610,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     throw new Exception(message);
                 }
             }
-            catch (ApiException e)
+            catch (Exception e)
             {
                 var errMsg = $"Error occured during GetNexportInvoice api call for the invoice {invoiceId}";
                 _logger.Error($"{errMsg}: {e.Message}", e);
@@ -610,8 +621,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        [NotNull]
-        public string BeginNexportOrderInvoiceTransaction(Guid orgId, Guid purchasingAgentId)
+        public Guid BeginNexportOrderInvoiceTransaction(Guid orgId, Guid purchasingAgentId)
         {
             try
             {
@@ -620,7 +630,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 return beginOrderResult.InvoiceId;
             }
-            catch (ApiException ex)
+            catch (Exception ex)
             {
                 var errMsg =
                     $"Fail to create Nexport order invoice transaction in organization {orgId} with purchasing agent {purchasingAgentId}";
@@ -630,12 +640,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public string AddItemToNexportOrderInvoice(Guid invoiceId, Guid nexportProductId,
+        public Guid? AddItemToNexportOrderInvoice(Guid invoiceId, Guid nexportProductId,
             Enums.ProductTypeEnum productType, decimal productCost,
             Guid subscriptionOrgId, List<Guid> groupMembershipIds = null,
             DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null, string note = null)
         {
-            AddInvoiceItemResponse addInvoiceItemResult = null;
+            AddInvoiceItemResponse addInvoiceItemResult;
 
             try
             {
@@ -644,10 +654,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     productType, subscriptionOrgId, groupMembershipIds,
                     productCost, note, accessExpirationDate, accessExpirationTimeLimit);
             }
-            catch (ApiException ex)
+            catch (Exception ex)
             {
                 var errMsg = $"Cannot add the Nexport product {nexportProductId} to the invoice {invoiceId}";
                 _logger.Error($"{errMsg}: {ex.Message}", ex);
+
+                throw;
             }
 
             return addInvoiceItemResult?.InvoiceItemId;
@@ -660,10 +672,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 _nexportApiService.CommitNexportInvoiceTransaction(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, invoiceId);
             }
-            catch (ApiException ex)
+            catch (Exception ex)
             {
                 var errMsg = $"Cannot commit the Nexport invoice {invoiceId}";
                 _logger.Error($"{errMsg}: {ex.Message}", ex);
+
+                throw;
             }
         }
 
@@ -680,10 +694,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     payeeId, InvoicePaymentRequest.PaymentProcessorEnum.NopCommercePlugin,
                     nopOrderId.ToString(), dueDate, note: "Payment for NopCommerce order");
             }
-            catch (ApiException ex)
+            catch (Exception ex)
             {
                 var errMsg = $"Cannot add payment to the the Nexport invoice {invoiceId} in the order {nopOrderId}";
                 _logger.Error($"{errMsg}: {ex.Message}", ex);
+
+                throw;
             }
         }
 
@@ -707,9 +723,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 invoiceItem.RedeemingUserId = redeemingUserId;
                 invoiceItem.UtcDateRedemption = redeemInvoiceResult.UtcRedemptionDate;
 
-                if (!string.IsNullOrEmpty(redeemInvoiceResult.RedemptionEnrollmentId))
+                if (redeemInvoiceResult.RedemptionEnrollmentId != null)
                 {
-                    invoiceItem.RedemptionEnrollmentId = Guid.Parse(redeemInvoiceResult.RedemptionEnrollmentId);
+                    invoiceItem.RedemptionEnrollmentId = redeemInvoiceResult.RedemptionEnrollmentId;
                 }
 
                 UpdateNexportOrderInvoiceItem(invoiceItem);
@@ -735,26 +751,33 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId);
                 if (redemption.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.NoError)
                 {
-                    SsoResponse signInResult;
+                    SsoResponse signInResult = null;
                     if (invoiceItem.RedemptionEnrollmentId == null)
                     {
-                        signInResult = _nexportApiService.NexportSingleSignOn(_nexportSettings.Url,
-                            _nexportSettings.AuthenticationToken, Guid.Parse(redemption.OrganizationId),
-                            Guid.Parse(redemption.RedemptionUserId), _storeContext.CurrentStore.Url);
+                        if (redemption.RedemptionUserId != null)
+                        {
+                            signInResult = _nexportApiService.NexportSingleSignOn(_nexportSettings.Url,
+                                _nexportSettings.AuthenticationToken, redemption.OrganizationId,
+                                redemption.RedemptionUserId.Value, _storeContext.CurrentStore.Url);
+                        }
                     }
                     else
                     {
-                        signInResult = _nexportApiService.NexportClassroomSingleSignOn(_nexportSettings.Url,
-                            _nexportSettings.AuthenticationToken, redemption.RedemptionEnrollmentId, _storeContext.CurrentStore.Url);
+                        if (redemption.RedemptionEnrollmentId != null)
+                        {
+                            signInResult = _nexportApiService.NexportClassroomSingleSignOn(_nexportSettings.Url,
+                                _nexportSettings.AuthenticationToken, redemption.RedemptionEnrollmentId.Value,
+                                _storeContext.CurrentStore.Url);
+                        }
                     }
 
-                    if (signInResult.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.NoError)
+                    if (signInResult != null && signInResult.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.NoError)
                     {
                         return signInResult.Url;
                     }
                 }
             }
-            catch (ApiException ex)
+            catch (Exception ex)
             {
                 var errMsg = $"Cannot sign-on the user {invoiceItem.RedeemingUserId} into Nexport through SSO using the invoice item {invoiceItem.InvoiceItemId}";
                 _logger.Error($"{errMsg}: {ex.Message}", ex);
@@ -805,7 +828,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         {
                             var orgModel = new NexportOrganizationModel
                             {
-                                OrgId = Guid.Parse(invoiceRedemption.OrganizationId),
+                                OrgId = invoiceRedemption.OrganizationId,
                                 OrgName = invoiceRedemption.OrganizationName,
                                 OrgShortName = invoiceRedemption.OrganizationShortName
                             };
@@ -896,18 +919,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
                             goto case NexportProductTypeEnum.Catalog;
                     }
 
-                    //_productService.UpdateProduct(product);
-
                     productMapping.IsSynchronized = true;
                     productMapping.UtcLastSynchronizationDate = DateTime.UtcNow;
 
                     UpdateMapping(productMapping);
 
-                    //_customerActivityService.InsertActivity("EditProduct",
-                    //    string.Format(_localizationService.GetResource("ActivityLog.EditProduct"), product.Name),
-                    //    product);
-
-                    _logger.Information($"Successfully synchronized product {productMapping.NopProductId} with Nexport using the information from mapping {productMapping.Id}.");
+                    _logger.InsertLog(LogLevel.Debug, $"Successfully synchronized product {productMapping.NopProductId} with Nexport using the information from mapping {productMapping.Id}");
                 }
             }
         }
@@ -929,7 +946,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public void CreateAndMapNewNexportUser(Customer customer)
         {
-            if(customer == null)
+            if (customer == null)
                 throw new ArgumentNullException(nameof(customer), "Customer cannot be null");
 
             if (!_nexportSettings.RootOrganizationId.HasValue)
@@ -948,9 +965,115 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             InsertUserMapping(new NexportUserMapping()
             {
-                NexportUserId = Guid.Parse(nexportUser.UserId),
+                NexportUserId = nexportUser.UserId,
                 NopUserId = customer.Id
             });
+        }
+
+        public string VerifyNexportEnrollmentStatus(Product product, Customer customer)
+        {
+            var store = _storeContext.CurrentStore;
+            var storeModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(
+                store, "NexportStoreSaleModel", store.Id);
+            if (storeModel == NexportStoreSaleModel.Retail)
+            {
+                var mapping = GetProductMappingByNopProductId(product.Id);
+                if (mapping != null)
+                {
+                    var userMapping = FindUserMappingByCustomerId(customer.Id);
+
+                    if (userMapping != null)
+                    {
+                        Guid orgId;
+
+                        if (mapping.NexportSubscriptionOrgId != null)
+                        {
+                            orgId = mapping.NexportSubscriptionOrgId.Value;
+                        }
+                        else
+                        {
+                            orgId = _genericAttributeService.GetAttribute<Guid?>(store,
+                                "NexportSubscriptionOrganizationId", store.Id) ?? _nexportSettings.RootOrganizationId.Value;
+                        }
+
+                        if (mapping.Type == NexportProductTypeEnum.Section)
+                        {
+                            var existingEnrollment = _nexportApiService.GetNexportSectionEnrollment(
+                                _nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                                orgId, userMapping.NexportUserId, mapping.NexportSyllabusId.Value);
+
+                            if (existingEnrollment != null)
+                            {
+                                return existingEnrollment.Status;
+                            }
+                        }
+                        //else if (mapping.Type == NexportProductTypeEnum.TrainingPlan)
+                        //{
+                        //    var existingEnrollment = _nexportApiService.GetNexportTrainingPlanEnrollment(
+                        //        _nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                        //        orgId, userMapping.NexportUserId, mapping.NexportSyllabusId.Value);
+
+                        //    if (existingEnrollment != null)
+                        //    {
+                        //        return existingEnrollment.Status;
+                        //    }
+                        //}
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public bool CanRepurchaseNexportProduct(Product product, Customer customer)
+        {
+            var store = _storeContext.CurrentStore;
+            var existingEnrollmentStatus = VerifyNexportEnrollmentStatus(product, customer);
+
+            if (existingEnrollmentStatus != null)
+            {
+                switch (existingEnrollmentStatus)
+                {
+                    case "ActivityResult_Failed":
+                        {
+                            var allowRepurchaseFailedCourses = _genericAttributeService.GetAttribute<bool>(store, "AllowRepurchaseFailedCoursesFromNexport", store.Id);
+                            return allowRepurchaseFailedCourses;
+                        }
+                    case "ActivityResult_Passed":
+                        {
+                            var allowRepurchasePassedCourses = _genericAttributeService.GetAttribute<bool>(store, "AllowRepurchasePassedCoursesFromNexport", store.Id);
+                            return allowRepurchasePassedCourses;
+                        }
+                    case "ActivityPhase_InProgress":
+                        return false;
+                }
+            }
+            else
+            {
+                var mapping = GetProductMappingByNopProductId(product.Id);
+                if (mapping != null && mapping.IsExtensionProduct)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public IList<SelectListItem> PrepareStoreMappingSelectList(IList<int> storeIds)
+        {
+            var availableStores = _storeService.GetAllStores();
+            return availableStores.Select(store => new SelectListItem
+            {
+                Text = store.Name,
+                Value = store.Id.ToString(),
+                Selected = storeIds.Contains(store.Id)
+            }).ToList();
+        }
+
+        public IList<string> GetStoreNames(IList<int> storeIds)
+        {
+            return _storeService.GetAllStores().Where(store => storeIds.Contains(store.Id)).Select(store => store.Name).ToList();
         }
     }
 }

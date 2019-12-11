@@ -21,8 +21,8 @@
     const string hideNexportSectionMappingsBlockAttributeName = "Nexport.Section.HideMappingsBlock";
     var hideMappingsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportSectionMappingsBlockAttributeName);
 
-    var nexportProductId = Context.Request.Query["nexportProductId"];
-    var nexportCatalogId = Context.Request.Query["nexportCatalogId"];
+    var nexportProductId = Guid.Parse(Context.Request.Query["nexportProductId"]);
+    var nexportCatalogId = Guid.Parse(Context.Request.Query["nexportCatalogId"]);
 }
 
 <div class="content-header clearfix">
@@ -95,7 +95,6 @@
                             </div>
                         </div>
                     }
-
                     @if (Model.EnrollmentStart.HasValue)
                     {
                         <div class="form-group">

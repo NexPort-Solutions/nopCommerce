@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using NexportApi.Model;
 using Nop.Core;
+using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Models;
@@ -13,6 +14,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
         void InsertNexportProductMapping(NexportProductMapping nexportProductMapping);
 
         void InsertNexportProductGroupMembershipMapping(NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping);
+
+        void InsertNexportProductStoreMapping(NexportProductStoreMapping nexportProductStoreMapping);
 
         IPagedList<NexportProductMapping> GetProductCatalogsByCatalogId(Guid catalogId,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
@@ -42,6 +45,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         List<Guid> GetProductGroupMembershipIds(int nexportProductMappingId);
 
+        IList<NexportProductStoreMapping> GetProductStoreMappings(int nexportProductMappingId);
+
+        List<int> GetProductStoreIds(int nexportProductMappingId);
+
+        IList<NexportProductStoreMapping> GetProductStoreMappingsByStoreId(int storeId);
+
         Dictionary<Guid, int> FindMappingCountPerSyllabus(IList<GetSyllabiResponseItem> syllabusList);
 
         NexportProductMapping GetProductMappingById(int mappingId);
@@ -54,6 +63,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         void DeleteGroupMembershipMapping(NexportProductGroupMembershipMapping mapping);
 
+        void DeleteStoreMapping(NexportProductStoreMapping mapping);
+
+        void UpdateStoreMapping(NexportProductMapping mapping, IList<int> storeIds);
+
         void InsertNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem);
 
         void DeleteNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem);
@@ -63,6 +76,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
         void DeleteNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
         void UpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
+
+        void InsertNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
+
+        void DeleteNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
+
+        void UpdateNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
 
         NexportOrderInvoiceItem FindNexportOrderInvoiceItem(int orderId, int orderItemId);
 
@@ -85,5 +104,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Guid? FindExistingInvoiceItemForOrderItem(int orderId, int orderItemId);
 
         bool HasNexportOrderProcessingQueueItem(int orderId);
+
+        bool HasNexportProductMapping(Order order);
+
+        bool HasNexportProductMapping(int productId);
     }
 }

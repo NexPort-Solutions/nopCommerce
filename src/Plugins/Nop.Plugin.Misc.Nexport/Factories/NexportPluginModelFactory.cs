@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
@@ -160,6 +161,23 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         #endregion
 
+        public NexportProductMappingModel PrepareNexportProductMappingModel(NexportProductMapping productMapping, bool isEditable)
+        {
+            var model = productMapping.ToModel<NexportProductMappingModel>();
+            model.Editable = isEditable;
+
+            var availableStores = _storeService.GetAllStores();
+            model.SelectedStoreIds = _nexportService.GetProductStoreIds(model.Id);
+            model.StoreMappings = availableStores.Select(store => new SelectListItem
+            {
+                Text = store.Name,
+                Value = store.Id.ToString(),
+                Selected = model.SelectedStoreIds.Contains(store.Id)
+            }).ToList();
+
+            return model;
+        }
+
         public virtual NexportProductMappingSearchModel PrepareNexportProductMappingSearchModel(NexportProductMappingSearchModel searchModel)
         {
             if (searchModel == null)
@@ -227,6 +245,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 {
                     // Fill in model values from the entity
                     var mappingModel = mapping.ToModel<NexportProductMappingModel>();
+                    mappingModel.SelectedStoreIds = _nexportService.GetProductStoreIds(mapping.Id);
+                    mappingModel.StoreMappingNames = _nexportService.GetStoreNames(mappingModel.SelectedStoreIds);
 
                     return mappingModel;
                 });
@@ -288,11 +308,11 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     // Fill in model values from the entity
                     var catalogItemModel = new NexportCatalogResponseItemModel()
                     {
-                        OrgId = Guid.Parse(catalog.OrgId),
-                        CatalogId = Guid.Parse(catalog.CatalogId),
+                        OrgId = catalog.OrgId,
+                        CatalogId = catalog.CatalogId,
                         IsEnabled = catalog.IsEnabled,
                         Name = catalog.Name,
-                        OwnerId = Guid.Parse(catalog.OwnerId),
+                        OwnerId = catalog.OwnerId,
                         PricingModel = catalog.PricingModel,
                         PublishingModel = catalog.PublishingModel,
                         UtcDateCreated = catalog.DateCreated,
@@ -320,13 +340,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 return syllabus.Select(syllabi =>
                 {
                     // Fill in model values from the entity
-                    var syllabiId = Guid.Parse(syllabi.SyllabusId);
+                    var syllabiId = syllabi.SyllabusId;
                     var syllabiItemModel = new NexportSyllabiResponseItemModel()
                     {
                         SyllabusId = syllabiId,
                         Name = syllabi.SyllabusName,
                         Type = syllabi.SyllabusType,
-                        ProductId = Guid.Parse(syllabi.ProductId),
+                        ProductId = syllabi.ProductId.Value,
                         TotalMappings = _nexportService.FindMappingCountPerSyllabi(syllabiId)
                     };
 

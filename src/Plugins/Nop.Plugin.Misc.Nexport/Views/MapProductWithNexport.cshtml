@@ -113,9 +113,10 @@
                         {
                             Name = "products-grid",
                             UrlRead = new DataUrl("MapProductPopupList", "NexportIntegration",
-                                new RouteValueDictionary {
-                                    { "NexportProductType", Context.Request.Query["nexportProductType"]},
-                                    { "NexportProductId", Context.Request.Query["nexportProductId"]}
+                                new RouteValueDictionary
+                                {
+                                    { "NexportProductType", Context.Request.Query["nexportProductType"] },
+                                    { "NexportProductId", Context.Request.Query["nexportProductId"] }
                                 }),
                             SearchButtonId = "search-products",
                             Length = Model.PageSize,

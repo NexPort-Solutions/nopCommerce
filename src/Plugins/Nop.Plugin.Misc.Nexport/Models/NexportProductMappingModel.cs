@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using NexportApi.Model;
 using Nop.Web.Framework.Models;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -11,6 +12,14 @@ namespace Nop.Plugin.Misc.Nexport.Models
 {
     public class NexportProductMappingModel : BaseNopEntityModel, INexportProductMapping
     {
+        public NexportProductMappingModel()
+        {
+            SelectedStoreIds = new List<int>();
+            StoreMappings = new List<SelectListItem>();
+
+            GroupMembershipMappingModels = new List<NexportProductGroupMembershipMappingModel>();
+        }
+
         public int NopProductId { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.NexportProductName")]
@@ -80,6 +89,16 @@ namespace Nop.Plugin.Misc.Nexport.Models
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.AutoRedeem")]
         public bool AutoRedeem { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.StoreMappings")]
+        public IList<int> SelectedStoreIds { get; set; }
+
+        public IList<SelectListItem> StoreMappings { get; set; }
+
+        public IList<string> StoreMappingNames { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.IsExtensionProduct")]
+        public bool IsExtensionProduct { get; set; }
 
         public NexportProductGroupMembershipMappingModel AddGroupMembershipMappingModel { get; set; }
 

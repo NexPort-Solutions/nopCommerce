@@ -1,5 +1,6 @@
 ﻿using System;
 using Nop.Core.Domain.Customers;
+using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Models;
 
@@ -7,6 +8,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 {
     public partial interface INexportPluginModelFactory
     {
+        NexportProductMappingModel PrepareNexportProductMappingModel(NexportProductMapping productMapping, bool isEditable);
+
         NexportProductMappingSearchModel PrepareNexportProductMappingSearchModel(
             NexportProductMappingSearchModel searchModel);
 

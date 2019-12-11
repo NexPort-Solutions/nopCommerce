@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
+using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Vendors;
 using Nop.Core.Events;
 using Nop.Services.Catalog;
@@ -46,9 +48,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
     [ResponseCache(Duration = 0, NoStore = true)]
     public class NexportIntegrationController : BasePluginController,
         IConsumer<CustomerRegisteredEvent>,
+        IConsumer<OrderPlacedEvent>,
         IConsumer<EntityUpdatedEvent<Order>>,
         IConsumer<EntityDeletedEvent<Product>>,
-        IConsumer<EntityDeletedEvent<Customer>>
+        IConsumer<EntityDeletedEvent<Customer>>,
+        IConsumer<EntityInsertedEvent<Store>>,
+        IConsumer<EntityDeletedEvent<Store>>
     {
 
         #region Fields
@@ -328,7 +333,31 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             _genericAttributeService.SaveAttribute(store, "NexportSubscriptionOrganizationId", subOrgId, store.Id);
 
-            _notificationService.SuccessNotification("Success update nexport subscription organization");
+            _notificationService.SuccessNotification("Success update Nexport subscription organization");
+
+            return RedirectToAction("Edit", "Store", new { id = store.Id });
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        [Route("Admin/Store/Edit/{id}")]
+        [HttpPost, ActionName("Edit")]
+        [FormValueRequired("savenexportstoreconfig")]
+        public IActionResult SaveNexportStoreConfiguration(NexportStoreModel model)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageStores))
+                return AccessDeniedView();
+
+            var store = _storeService.GetStoreById(model.Id, false);
+            if (store == null)
+                return RedirectToAction("List", "Store");
+
+            _genericAttributeService.SaveAttribute(store, NexportDefaults.NEXPORT_STORE_SALE_MODEL_SETTING_KEY, model.SaleModel, store.Id);
+            _genericAttributeService.SaveAttribute(store, NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, model.AllowRepurchaseFailedCourses, store.Id);
+            _genericAttributeService.SaveAttribute(store, NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, model.AllowRepurchasePassedCourses, store.Id);
+
+            _notificationService.SuccessNotification("Success update Nexport store configuration");
 
             return RedirectToAction("Edit", "Store", new { id = store.Id });
         }
@@ -452,8 +481,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var productMapping = _nexportService.GetProductMappingById(mappingId);
 
-            var model = productMapping.ToModel<NexportProductMappingModel>();
-            model.Editable = true;
+            var model = _nexportPluginModelFactory.PrepareNexportProductMappingModel(productMapping, true);
 
             return View("~/Plugins/Misc.Nexport/Views/ProductMappingDetailsPopup.cshtml", model);
         }
@@ -489,37 +517,43 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var productMapping = _nexportService.GetProductMappingById(model.Id)
                 ?? throw new ArgumentException("No product mapping found with the specified id");
 
-            // Fill entity from product
-            productMapping = model.ToEntity(productMapping);
-
-            if (productMapping.NexportSubscriptionOrgId.HasValue)
+            if(ModelState.IsValid)
             {
-                if (string.IsNullOrWhiteSpace(model.NexportSubscriptionOrgName))
+                // Fill entity from product
+                productMapping = model.ToEntity(productMapping);
+
+                if (productMapping.NexportSubscriptionOrgId.HasValue)
                 {
-                    var organizationDetails = _nexportService.GetOrganizationDetails(productMapping.NexportSubscriptionOrgId.Value);
-                    productMapping.NexportSubscriptionOrgName = organizationDetails.Name;
-                    productMapping.NexportSubscriptionOrgShortName = organizationDetails.ShortName;
+                    if (string.IsNullOrWhiteSpace(model.NexportSubscriptionOrgName))
+                    {
+                        var organizationDetails = _nexportService.GetOrganizationDetails(productMapping.NexportSubscriptionOrgId.Value);
+                        productMapping.NexportSubscriptionOrgName = organizationDetails.Name;
+                        productMapping.NexportSubscriptionOrgShortName = organizationDetails.ShortName;
+                    }
                 }
+                else
+                {
+                    productMapping.NexportSubscriptionOrgName = null;
+                    productMapping.NexportSubscriptionOrgShortName = null;
+                }
+
+                productMapping.UtcLastModifiedDate = DateTime.UtcNow;
+
+                _nexportService.UpdateMapping(productMapping);
+
+                _nexportService.UpdateStoreMapping(productMapping, model.SelectedStoreIds);
+
+                if (!continueEditing)
+                {
+                    ViewBag.ClosePage = true;
+                }
+
+                ViewBag.RefreshPage = true;
+
+                model.UtcLastModifiedDate = productMapping.UtcLastModifiedDate;
+                model.Editable = true;
+                model.StoreMappings = _nexportService.PrepareStoreMappingSelectList(model.SelectedStoreIds);
             }
-            else
-            {
-                productMapping.NexportSubscriptionOrgName = null;
-                productMapping.NexportSubscriptionOrgShortName = null;
-            }
-
-            productMapping.UtcLastModifiedDate = DateTime.UtcNow;
-
-            _nexportService.UpdateMapping(productMapping);
-
-            if (!continueEditing)
-            {
-                ViewBag.ClosePage = true;
-            }
-
-            ViewBag.RefreshPage = true;
-
-            model.UtcLastModifiedDate = productMapping.UtcLastModifiedDate;
-            model.Editable = true;
 
             return View("~/Plugins/Misc.Nexport/Views/ProductMappingDetailsPopup.cshtml", model);
         }
@@ -779,6 +813,21 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }
         }
 
+        public void HandleEvent(OrderPlacedEvent eventMessage)
+        {
+            var order = eventMessage.Order;
+
+            foreach (var item in order.OrderItems)
+            {
+                var mapping = _nexportService.GetProductMappingByNopProductId(item.ProductId);
+
+                if (mapping != null)
+                {
+                    _genericAttributeService.SaveAttribute(item, $"ProductMapping-{order.Id}-{item.Id}", JsonConvert.SerializeObject(mapping), order.StoreId);
+                }
+            }
+        }
+
         public void HandleEvent(EntityDeletedEvent<Product> eventMessage)
         {
             var product = eventMessage.Entity;
@@ -816,6 +865,31 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 return;
 
             _nexportService.DeleteUserMapping(userMapping);
+        }
+
+        public void HandleEvent(EntityInsertedEvent<Store> eventMessage)
+        {
+            var store = eventMessage.Entity;
+
+            _genericAttributeService.SaveAttribute(store, NexportDefaults.NEXPORT_STORE_SALE_MODEL_SETTING_KEY, NexportStoreSaleModel.Retail, store.Id);
+            _genericAttributeService.SaveAttribute(store, NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, true, store.Id);
+            _genericAttributeService.SaveAttribute(store, NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, false, store.Id);
+        }
+
+        public void HandleEvent(EntityDeletedEvent<Store> eventMessage)
+        {
+            var deletedStore = eventMessage.Entity;
+
+            // Find and remove all generic attributes that associated with this store
+            var storeAttributes = _genericAttributeService.GetAttributesForEntity(deletedStore.Id, "Store");
+            _genericAttributeService.DeleteAttributes(storeAttributes);
+
+            // Find and remove store mappings for this particular store
+            var storeMappings = _nexportService.GetProductStoreMappingsByStoreId(deletedStore.Id);
+            foreach (var storeMapping in storeMappings)
+            {
+                _nexportService.DeleteStoreMapping(storeMapping);
+            }
         }
 
         #endregion

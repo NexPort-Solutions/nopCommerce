@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using FluentMigrator.Runner;
+using FluentMigrator.Runner.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Configuration;
@@ -45,6 +46,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             {
                 options.Filters.Add<ProductEditActionFilter>();
                 options.Filters.Add<CheckoutActionFilter>();
+                options.Filters.Add<ProductDetailsActionFilter>();
+                options.Filters.Add<ShoppingCartActionFilter>();
             });
 
             services.AddFluentMigratorCore().ConfigureRunner(builder =>
@@ -75,7 +78,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
 
                 var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-                var versionSettingValue = settingService.GetSettingByKey<string>(NexportDefaults.AssemblyVersionKey);
+                var versionSettingValue = settingService.GetSettingByKey<string>(NexportDefaults.ASSEMBLY_VERSION_KEY);
                 Version installedAssemblyVersion = null;
 
                 if (!string.IsNullOrEmpty(versionSettingValue))
@@ -86,7 +89,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
                 if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
                 {
-                    settingService.SetSetting(NexportDefaults.AssemblyVersionKey, currentAssemblyVersion.ToString());
+                    settingService.SetSetting(NexportDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
 
                     var nexportPluginService =
                         serviceScope.ServiceProvider.GetRequiredService<NexportPluginService>();
@@ -113,7 +116,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                     {
                         runner.MigrateUp();
                     }
-                    catch (Exception)
+                    catch (MissingMigrationsException)
                     {
                         // ignored
                     }

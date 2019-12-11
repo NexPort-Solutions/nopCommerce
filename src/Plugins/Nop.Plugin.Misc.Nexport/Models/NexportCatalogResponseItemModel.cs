@@ -18,7 +18,7 @@ namespace Nop.Plugin.Misc.Nexport.Models
 
         public CatalogResponseItem.PricingModelEnum? PricingModel { get; set; }
 
-        public Guid OwnerId { get; set; }
+        public Guid? OwnerId { get; set; }
 
         public string OwnerName { get; set; }
 

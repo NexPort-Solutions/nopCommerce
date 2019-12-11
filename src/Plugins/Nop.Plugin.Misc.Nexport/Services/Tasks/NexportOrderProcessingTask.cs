@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 using NexportApi.Model;
 using Nop.Core.Data;
 using Nop.Core.Domain.Orders;
@@ -83,6 +84,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             {
                 foreach (var queueItemId in queueItemIds)
                 {
+                    var completeOrder = false;
+
                     try
                     {
                         _logger.Information($"Begin processing order processing queue item {queueItemId}");
@@ -115,9 +118,9 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     }
 
                                     // Check if there is an existing invoice. If not, begin a new invoice transaction.
-                                    var orderInvoiceId = _nexportService.FindExistingInvoiceForOrder(order.Id) ??
-                                                         Guid.Parse(_nexportService.BeginNexportOrderInvoiceTransaction(orgId,
-                                                             userMapping.NexportUserId));
+                                    var orderInvoiceId =
+                                        _nexportService.FindExistingInvoiceForOrder(order.Id) ??
+                                        _nexportService.BeginNexportOrderInvoiceTransaction(orgId, userMapping.NexportUserId);
 
                                     // Get the invoice details from Nexport (if existing)
                                     var invoiceDetails = _nexportService.GetNexportInvoice(orderInvoiceId);
@@ -133,7 +136,14 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                                         foreach (var orderItem in order.OrderItems)
                                         {
-                                            var mapping = _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
+                                            var mappingInfo = _genericAttributeService.GetAttribute<string>(orderItem,
+                                                $"ProductMapping-{order.Id}-{orderItem.Id}", order.StoreId);
+
+                                            var mapping = mappingInfo != null ?
+                                                JsonConvert.DeserializeObject<NexportProductMapping>(mappingInfo) :
+                                                _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
+
+                                            //var mapping = _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
 
                                             if (mapping != null)
                                             {
@@ -148,9 +158,13 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                                                 // If the invoice item does not existed, then add the order item into the invoice
                                                 if (existingInvoiceItemId == null ||
-                                                    !invoiceDetails.InvoiceItems.Any(i => i.Id == existingInvoiceItemId.ToString()))
+                                                    !invoiceDetails.InvoiceItems.Any(i => i.Id == existingInvoiceItemId))
                                                 {
-                                                    string invoiceItemId;
+                                                    var accessTimeLimit = mapping.AccessTimeLimit != null
+                                                        ? mapping.AccessTimeLimit.ToString()
+                                                        : null;
+
+                                                    Guid? invoiceItemId;
                                                     if (mapping.Type == NexportProductTypeEnum.Catalog)
                                                     {
                                                         invoiceItemId = _nexportService.AddItemToNexportOrderInvoice(
@@ -159,7 +173,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                             Enums.ProductTypeEnum.Catalog, productCost,
                                                             subscriptionOrgId, groupMembershipIds,
                                                             mapping.UtcAccessExpirationDate,
-                                                            mapping.AccessTimeLimit.ToString());
+                                                            accessTimeLimit);
                                                     }
                                                     else
                                                     {
@@ -169,28 +183,34 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                             Enums.ProductTypeEnum.Syllabus, productCost,
                                                             subscriptionOrgId, groupMembershipIds,
                                                             mapping.UtcAccessExpirationDate,
-                                                            mapping.AccessTimeLimit.ToString());
+                                                            accessTimeLimit);
                                                     }
 
-                                                    var nexportOrderInvoiceItem = new NexportOrderInvoiceItem()
+                                                    if (invoiceItemId.HasValue)
                                                     {
-                                                        OrderId = queueItem.OrderId,
-                                                        OrderItemId = orderItem.Id,
-                                                        InvoiceItemId = Guid.Parse(invoiceItemId),
-                                                        InvoiceId = orderInvoiceId,
-                                                        UtcDateProcessed = DateTime.UtcNow
-                                                    };
+                                                        var nexportOrderInvoiceItem = new NexportOrderInvoiceItem()
+                                                        {
+                                                            OrderId = queueItem.OrderId,
+                                                            OrderItemId = orderItem.Id,
+                                                            InvoiceItemId = invoiceItemId.Value,
+                                                            InvoiceId = orderInvoiceId,
+                                                            UtcDateProcessed = DateTime.UtcNow
+                                                        };
 
-                                                    _nexportService.InsertOrUpdateNexportOrderInvoiceItem(nexportOrderInvoiceItem);
+                                                        _nexportService.InsertOrUpdateNexportOrderInvoiceItem(nexportOrderInvoiceItem);
 
-                                                    // Add the invoice item for auto redeeming after committing the invoice if AutoRedeem is set on the mapping
-                                                    if (mapping.AutoRedeem)
-                                                    {
-                                                        autoRedeemingInvoiceItemIds.Add(nexportOrderInvoiceItem.Id);
+                                                        // Add the invoice item for auto redeeming after committing the invoice if AutoRedeem is set on the mapping
+                                                        if (mapping.AutoRedeem)
+                                                        {
+                                                            autoRedeemingInvoiceItemIds.Add(nexportOrderInvoiceItem.Id);
+                                                        }
+
+                                                        invoiceTotalCost += productCost;
                                                     }
-
-                                                    invoiceTotalCost += productCost;
                                                 }
+
+                                                var cleanUpAttributes = _genericAttributeService.GetAttributesForEntity(orderItem.Id, "OrderItem");
+                                                _genericAttributeService.DeleteAttributes(cleanUpAttributes);
                                             }
                                         }
 
@@ -201,33 +221,48 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         // Commit the invoice
                                         _nexportService.CommitNexportOrderInvoiceTransaction(orderInvoiceId);
 
-                                        // Redeem the invoice item that has the AutoRedeem option set on the mapping
-                                        foreach (var invoiceItem in autoRedeemingInvoiceItemIds
-                                            .Select(autoRedeemingInvoiceItemId => _nexportService.FindNexportOrderInvoiceItemById(autoRedeemingInvoiceItemId))
-                                            .Where(invoiceItem => invoiceItem != null))
+                                        if (autoRedeemingInvoiceItemIds.Count > 0)
                                         {
-                                            try
+                                            foreach (var redeemingInvoiceItemId in autoRedeemingInvoiceItemIds)
                                             {
-                                                _nexportService.RedeemNexportInvoiceItem(invoiceItem, userMapping.NexportUserId);
-
-                                                _nexportService.AddOrderNote(order,
-                                                    $"Nexport invoice item {invoiceItem.InvoiceItemId} has been redeemed for user {userMapping.NexportUserId}");
-                                            }
-                                            catch (Exception e)
-                                            {
-
-                                                _nexportService.AddOrderNote(order,
-                                                    $"Nexport invoice item {invoiceItem.InvoiceItemId} cannot be redeemed for user {userMapping.NexportUserId}", updateOrder: true);
-
-                                                _logger.Error($"Failed to redeem Nexport invoice item {invoiceItem.InvoiceItemId} for user {userMapping.NexportUserId}", e);
+                                                _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(new NexportOrderInvoiceRedemptionQueueItem()
+                                                {
+                                                    OrderInvoiceItemId = redeemingInvoiceItemId,
+                                                    RedeemingUserId = userMapping.NexportUserId,
+                                                    UtcDateCreated = DateTime.UtcNow
+                                                });
                                             }
                                         }
+                                        else
+                                        {
+                                            completeOrder = true;
+                                            _nexportService.AddOrderNote(order,
+                                                "Nexport invoice has been successfully processed");
+                                        }
+
+                                        //// Redeem the invoice item that has the AutoRedeem option set on the mapping
+                                        //foreach (var invoiceItem in autoRedeemingInvoiceItemIds
+                                        //    .Select(autoRedeemingInvoiceItemId => _nexportService.FindNexportOrderInvoiceItemById(autoRedeemingInvoiceItemId))
+                                        //    .Where(invoiceItem => invoiceItem != null))
+                                        //{
+                                        //    try
+                                        //    {
+                                        //        _nexportService.RedeemNexportInvoiceItem(invoiceItem, userMapping.NexportUserId);
+
+                                        //        _nexportService.AddOrderNote(order,
+                                        //            $"Nexport invoice item {invoiceItem.InvoiceItemId} has been redeemed for user {userMapping.NexportUserId}");
+                                        //    }
+                                        //    catch (Exception e)
+                                        //    {
+                                        //        _nexportService.AddOrderNote(order,
+                                        //            $"Nexport invoice item {invoiceItem.InvoiceItemId} cannot be redeemed for user {userMapping.NexportUserId}", updateOrder: true);
+
+                                        //        _logger.Error($"Failed to redeem Nexport invoice item {invoiceItem.InvoiceItemId} for user {userMapping.NexportUserId}", e);
+                                        //    }
+                                        //}
 
                                         _logger.Information(
                                             $"Order {queueItem.OrderId} has been successfully processed!");
-
-                                        _nexportService.AddOrderNote(order,
-                                            "Nexport invoice has been successfully processed");
                                     }
                                 }
                                 else
@@ -255,8 +290,11 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                         _logger.Information($"Order processing queue item {queueItemId} has been processed and removed!");
 
-                        // Finish the order process and set the status to Complete
-                        _orderProcessingService.CheckOrderStatus(order);
+                        if (completeOrder)
+                        {
+                            // Finish the order process and set the status to Complete
+                            _orderProcessingService.CheckOrderStatus(order);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -266,7 +304,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             }
             catch (Exception ex)
             {
-                _logger.Error($"Cannot process the NexportRedemptionProcessingQueue item", ex);
+                _logger.Error("Cannot process the NexportRedemptionProcessingQueue", ex);
             }
         }
 

@@ -1,4 +1,6 @@
-﻿namespace Nop.Plugin.Misc.Nexport.Models
+﻿using System.Net;
+
+namespace Nop.Plugin.Misc.Nexport.Models
 {
     public class NexportApiResponseBase
     {

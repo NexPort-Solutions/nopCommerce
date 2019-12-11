@@ -130,7 +130,7 @@
                 @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Syllabus/SyllabusList.cshtml",
                     new NexportSyllabusListSearchModel()
                     {
-                        CatalogId = Guid.Parse(Model.CatalogId)
+                        CatalogId = Model.CatalogId
                     })
             </nop-panel>
         </nop-panels>

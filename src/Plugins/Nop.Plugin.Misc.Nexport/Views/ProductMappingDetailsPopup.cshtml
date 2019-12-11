@@ -93,6 +93,37 @@
                                     <span asp-validation-for="AutoRedeem"></span>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <div class="col-sm-5 col-md-3">
+                                    <nop-label asp-for="SelectedStoreIds" />
+                                </div>
+                                <div class="col-sm-7 col-md-9">
+
+                                    <nop-select asp-for="SelectedStoreIds" asp-items="Model.StoreMappings" asp-multiple="true" />
+                                    <script>
+                                                $(document).ready(function() {
+                                                    var storesIdsInput = $('#@Html.IdFor(model => model.SelectedStoreIds)')
+                                                        .data("kendoMultiSelect");
+                                                    storesIdsInput.setOptions({
+                                                        autoClose: false,
+                                                        filter: "contains"
+                                                    });
+
+                                                    @if (Model.StoreMappings.Count == 0)
+                                                    {
+                                                        <text>
+                                                            storesIdsInput.setOptions({
+                                                                enable: false,
+                                                                placeholder: 'No stores available'
+                                                            });
+                                                            storesIdsInput._placeholder();
+                                                            storesIdsInput._enable();
+                                                        </text>
+                                                    }
+                                                });
+                                    </script>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="panel panel-default panel-popup">
@@ -137,7 +168,7 @@
                                         </div>
                                         <input type="hidden" data-duration="milliseconds" />
                                         <input type="hidden" data-duration="ticks" />
-                                        <input type="hidden" id="AccessTimeLimit" name="AccessTimeLimit" value="@Model.AccessTimeLimit"/>
+                                        <input type="hidden" id="AccessTimeLimit" name="AccessTimeLimit" value="@Model.AccessTimeLimit" />
                                     </div>
                                     <span asp-validation-for="AccessTimeLimit"></span>
                                 </div>

@@ -55,6 +55,11 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
                .InstancePerLifetimeScope();
 
+           builder.RegisterType<EfRepository<NexportProductStoreMapping>>()
+               .As<IRepository<NexportProductStoreMapping>>()
+               .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+               .InstancePerLifetimeScope();
+
            builder.RegisterType<EfRepository<NexportUserMapping>>()
                .As<IRepository<NexportUserMapping>>()
                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
@@ -67,6 +72,11 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
            builder.RegisterType<EfRepository<NexportOrderInvoiceItem>>()
                .As<IRepository<NexportOrderInvoiceItem>>()
+               .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+               .InstancePerLifetimeScope();
+
+           builder.RegisterType<EfRepository<NexportOrderInvoiceRedemptionQueueItem>>()
+               .As<IRepository<NexportOrderInvoiceRedemptionQueueItem>>()
                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
                .InstancePerLifetimeScope();
         }

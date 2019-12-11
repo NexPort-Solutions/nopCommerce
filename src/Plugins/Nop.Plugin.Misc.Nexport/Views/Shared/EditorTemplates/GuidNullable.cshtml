@@ -1,0 +1,2 @@
+@model System.Guid?
+<input id="@Html.IdForModel()" name="@Html.NameForModel()" value="@if (Model.HasValue && Model.Value != Guid.Empty) { <text>@Model.Value</text> }" class="form-control text-box single-line" />

@@ -44,9 +44,9 @@ namespace Nop.Plugin.Misc.Nexport.Components
                 if (nexportUser != null)
                 {
                     model.NexportEmail = nexportUser.InternalEmail;
-                    if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgId))
+                    if (nexportUser.OwnerOrgId != null)
                     {
-                        model.OwnerOrgId = Guid.Parse(nexportUser.OwnerOrgId);
+                        model.OwnerOrgId = nexportUser.OwnerOrgId;
                     }
 
                     if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgShortName))

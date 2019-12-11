@@ -75,8 +75,8 @@ namespace Nop.Plugin.Misc.Nexport {
 
         public void ManageSiteMap(SiteMapNode rootNode)
         {
-            var pluginNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Third party plugins");
-            if (pluginNode == null) return;
+            var pluginNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Nexport");
+            if (pluginNode != null) return;
 
             if (_nexportSettings == null || string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return;
@@ -86,7 +86,7 @@ namespace Nop.Plugin.Misc.Nexport {
                 SystemName = "Nexport",
                 Visible = true,
                 Title = "Nexport Integration",
-                IconClass = "fa-dot-circle-o",
+                IconClass = "fa-plug",
             };
 
             node.ChildNodes.Add(new SiteMapNode()
@@ -96,11 +96,30 @@ namespace Nop.Plugin.Misc.Nexport {
                 SystemName = "Nexport Integration - Product Mappings",
                 ControllerName = "NexportIntegration",
                 ActionName = "ListCatalogs",
-                IconClass = "fa fa-genderless",
-                RouteValues = new RouteValueDictionary() { { "area", "admin" } }
+                IconClass = "fa fa-sitemap"
             });
 
-            pluginNode.ChildNodes.Add(node);
+            node.ChildNodes.Add(new SiteMapNode()
+            {
+                Visible = true,
+                Title = "Configuration",
+                SystemName = "Nexport Integration - Configuration",
+                ControllerName = "NexportIntegration",
+                ActionName = "Configure",
+                IconClass = "fa fa-cog"
+            });
+
+            node.ChildNodes.Add(new SiteMapNode()
+            {
+                Visible = true,
+                Title = "Store Configuration",
+                SystemName = "Nexport Integration - Store Configuration",
+                ControllerName = "Store",
+                ActionName = "List",
+                IconClass = "fa fa-cog"
+            });
+
+            rootNode.ChildNodes.Add(node);
         }
 
         public override string GetConfigurationPageUrl()

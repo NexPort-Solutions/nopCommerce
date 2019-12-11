@@ -1,34 +1,86 @@
-﻿@using Nop.Services.Common
-@using Nop.Services.Stores
-@inject IGenericAttributeService genericAttributeService
-@inject IStoreService storeService
-@model Nop.Web.Areas.Admin.Models.Stores.StoreModel
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@model Nop.Plugin.Misc.Nexport.Models.NexportStoreModel
 
 @if (Model.Id > 0)
 {
     Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
-    var store = storeService.GetStoreById(Model.Id);
 
-    Guid? nexportSubOrgId = null;
-    if (store != null)
-    {
-        nexportSubOrgId = genericAttributeService.GetAttribute<Guid>(store, "NexportSubscriptionOrganizationId", store.Id);
-    }
-
-    <input type="hidden" value="@nexportSubOrgId" />
     <div class="panel panel-default">
+        <div class="panel-heading">
+            Nexport Sale Model Configuration
+        </div>
         <div class="panel-body">
             <div class="form-group">
                 <div class="col-md-3">
-                    <div class="label-wrapper">
-                        <label class="control-label" for="NexportSubscriptionOrgId">@T("Plugins.Misc.Nexport.NexportSubscriptionOrgId")</label>
-                        <div title="@T("Plugins.Misc.Nexport.NexportSubscriptionOrgId.Hint")" data-toggle="tooltip" class="ico-help"><i class="fa fa-question-circle"></i></div>
+                    <nop-label asp-for="SaleModel" />
+                </div>
+                <div class="col-md-9">
+                    <div class="theme-selection-block clearfix">
+                        <div class="checkbox">
+                            <label>
+                                <span>
+                                    <input type="radio" name="@Html.NameFor(x => x.SaleModel)" value="@NexportStoreSaleModel.Retail"
+                                           @if (Model.SaleModel != null & Model.SaleModel == NexportStoreSaleModel.Retail)
+                                           {
+                                               <text> checked</text>}>@T("Plugins.Misc.Nexport.SaleModel.Retail")
+                                </span>
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <span>
+                                    <input type="radio" name="@Html.NameFor(x => x.SaleModel)" value="@NexportStoreSaleModel.Wholesale"
+                                           @if (Model.SaleModel != null & Model.SaleModel == NexportStoreSaleModel.Wholesale)
+                                           {
+                                               <text> checked</text>}>@T("Plugins.Misc.Nexport.SaleModel.Wholesale")
+                                </span>
+                            </label>
+                        </div>
                     </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="AllowRepurchaseFailedCourses" />
+                </div>
+                <div class="col-md-9">
+                    <nop-editor asp-for="AllowRepurchaseFailedCourses" asp-required="false" />
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="AllowRepurchasePassedCourses" />
+                </div>
+                <div class="col-md-9">
+                    <nop-editor asp-for="AllowRepurchasePassedCourses" asp-required="false" />
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3">
+                </div>
+                <div class="col-md-9">
+                    <button id="saveNexportStoreConfig" name="savenexportstoreconfig" class="btn btn-info">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Nexport Organization Subscription
+        </div>
+        <div class="panel-body">
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="NexportSubscriptionOrgId" />
                 </div>
                 <div class="col-md-9">
                     <div class="input-group">
-                        <input class="form-control text-box single-line" id="NexportSubscriptionOrgId" name="NexportSubscriptionOrgId" type="text"
-                               value="@if (nexportSubOrgId != null && nexportSubOrgId != Guid.Empty) { <text>@nexportSubOrgId.Value</text> }">
+                        @*<input type="hidden" value="@Model.NexportSubscriptionOrgId" />*@
+                        <nop-editor asp-for="NexportSubscriptionOrgId" asp-required="false" asp-render-form-control-class="true"
+                                    asp-template="GuidNullable"/>
                         <div class="input-group-btn">
                             <button id="setSubscriptionOrgId" name="setsubscriptionorgid" class="btn btn-info">
                                 Set

@@ -18,9 +18,11 @@ namespace Nop.Plugin.Misc.Nexport.Data
         {
             modelBuilder.ApplyConfiguration(new NexportProductMappingMap());
             modelBuilder.ApplyConfiguration(new NexportProductGroupMembershipMappingMap());
+            modelBuilder.ApplyConfiguration(new NexportProductStoreMappingMap());
             modelBuilder.ApplyConfiguration(new NexportOrderProcessingQueueMap());
             modelBuilder.ApplyConfiguration(new NexportUserMappingMap());
             modelBuilder.ApplyConfiguration(new NexportOrderInvoiceItemMap());
+            modelBuilder.ApplyConfiguration(new NexportOrderInvoiceRedemptionQueueMap());
 
             base.OnModelCreating(modelBuilder);
         }

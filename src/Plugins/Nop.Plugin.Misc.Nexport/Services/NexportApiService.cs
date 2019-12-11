@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using NexportApi.Api;
 using NexportApi.Client;
 using NexportApi.Model;
 using Nop.Plugin.Misc.Nexport.Models;
-using SsoApiApi = NexportApi.Api.SsoApiApi;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -31,14 +31,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApiApi(_apiConfiguration);
+            var nexportApi = new AdminApi(_apiConfiguration);
             var response = nexportApi.AdminApiAuthenticateWithHttpInfo(new AuthenticationTokenRequest(username, password,
                 "password", utcExpirationDate: tokenExp));
 
             var result = new NexportAuthenticationResponseDetails
             {
                 Response = response.Data,
-                StatusCode = response.StatusCode
+                StatusCode = (int) response.StatusCode
             };
 
             return result;
@@ -60,13 +60,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApiApi(_apiConfiguration);
+            var nexportApi = new AdminApi(_apiConfiguration);
             var response = nexportApi.AdminApiAuthenticateUserWithHttpInfo(loginName, password, accessToken);
 
             var result = new NexportGetUserResponseDetails
             {
                 Response = response.Data,
-                StatusCode = response.StatusCode
+                StatusCode = (int) response.StatusCode
             };
 
             return result;
@@ -85,13 +85,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApiApi(_apiConfiguration);
+            var nexportApi = new AdminApi(_apiConfiguration);
             var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, loginName);
 
             var result = new NexportGetUserResponseDetails
             {
                 Response = response.Data,
-                StatusCode = response.StatusCode
+                StatusCode = (int) response.StatusCode
             };
 
             return result;
@@ -107,13 +107,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApiApi(_apiConfiguration);
-            var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, userId: userId.ToString());
+            var nexportApi = new AdminApi(_apiConfiguration);
+            var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, userId: userId);
 
             var result = new NexportGetUserResponseDetails
             {
                 Response = response.Data,
-                StatusCode = response.StatusCode
+                StatusCode = (int) response.StatusCode
             };
 
             return result;
@@ -129,15 +129,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApiApi(_apiConfiguration);
+            var nexportApi = new AdminApi(_apiConfiguration);
             var response = nexportApi.AdminApiGetUsersWithHttpInfo(accessToken, searchTerm, page);
 
             var result = new NexportUserListResponse
             {
                 UserList = response.Data,
-                TotalRecord = int.Parse(response.Headers["X-Total-Count"]),
-                RecordPerPage = int.Parse(response.Headers["X-Per-Page"]),
-                CurrentPage = int.Parse(response.Headers["X-Page"])
+                TotalRecord = int.Parse(response.Headers["X-Total-Count"][0]),
+                RecordPerPage = int.Parse(response.Headers["X-Per-Page"][0]),
+                CurrentPage = int.Parse(response.Headers["X-Page"][0])
             };
 
             return result;
@@ -170,14 +170,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApiApi(url);
-            var response = nexportApi.AdminApiCreateUserWithHttpInfo(
-                new CreateUserRequest(ownerOrgId.ToString(), login, password, firstName, "", lastName, email), accessToken);
+            var nexportApi = new AdminApi(url);
+            var response = nexportApi.AdminApiCreateUserWithHttpInfo(accessToken,
+                new CreateUserRequest(ownerOrgId, login, password, firstName, "", lastName, email));
 
             var result = new NexportCreateUserResponseDetails
             {
                 Response = response.Data,
-                StatusCode = response.StatusCode
+                StatusCode = (int) response.StatusCode
             };
 
             return result;
@@ -194,15 +194,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApiApi(_apiConfiguration);
-            var response = nexportApi.AdminApiSearchDirectoryWithHttpInfo(0, baseOrgId.ToString(), accessToken, searchTerm, searchTerm, page);
+            var nexportApi = new AdminApi(_apiConfiguration);
+            var response = nexportApi.AdminApiSearchDirectoryWithHttpInfo(0, baseOrgId, accessToken, searchTerm, searchTerm, page);
 
             var result = new NexportDirectoryResponse
             {
                 DirectoryList = response.Data,
-                TotalRecord = int.Parse(response.Headers["X-Total-Count"]),
-                RecordPerPage = int.Parse(response.Headers["X-Per-Page"]),
-                CurrentPage = int.Parse(response.Headers["X-Page"])
+                TotalRecord = int.Parse(response.Headers["X-Total-Count"][0]),
+                RecordPerPage = int.Parse(response.Headers["X-Per-Page"][0]),
+                CurrentPage = int.Parse(response.Headers["X-Page"][0])
             };
 
             return result;
@@ -218,15 +218,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApiApi(_apiConfiguration);
-            var response = nexportApi.LearningApiGetOrganizationsWithHttpInfo(accessToken, rootOrgId.ToString(), page: page);
+            var nexportApi = new LearningApi(_apiConfiguration);
+            var response = nexportApi.LearningApiGetOrganizationsWithHttpInfo(accessToken, rootOrgId, page: page);
 
             var result = new NexportOrganizationResponse
             {
                 OrganizationList = response.Data,
-                TotalRecord = int.Parse(response.Headers["X-Total-Count"]),
-                RecordPerPage = int.Parse(response.Headers["X-Per-Page"]),
-                CurrentPage = int.Parse(response.Headers["X-Page"])
+                TotalRecord = int.Parse(response.Headers["X-Total-Count"][0]),
+                RecordPerPage = int.Parse(response.Headers["X-Per-Page"][0]),
+                CurrentPage = int.Parse(response.Headers["X-Page"][0])
             };
 
             return result;
@@ -242,16 +242,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApiApi(_apiConfiguration);
-            var catalogRequest = new CatalogRequest(orgId.ToString(), CatalogRequest.PublishingModelEnum.ForSaleInMarketPlace, CatalogRequest.CatalogAccessOptionEnum.Owned);
-            var response = nexportApi.LearningApiGetCatalogsWithHttpInfo(catalogRequest, accessToken, page);
+            var nexportApi = new LearningApi(_apiConfiguration);
+            var catalogRequest = new CatalogRequest(orgId, CatalogRequest.PublishingModelEnum.ForSaleInMarketPlace, CatalogRequest.CatalogAccessOptionEnum.Owned);
+            var response = nexportApi.LearningApiGetCatalogsWithHttpInfo(accessToken, catalogRequest, page);
 
             var result = new NexportCatalogResponse
             {
                 CatalogList = response.Data.Catalogs,
-                TotalRecord = int.Parse(response.Headers["X-Total-Count"]),
-                RecordPerPage = int.Parse(response.Headers["X-Per-Page"]),
-                CurrentPage = int.Parse(response.Headers["X-Page"])
+                TotalRecord = int.Parse(response.Headers["X-Total-Count"][0]),
+                RecordPerPage = int.Parse(response.Headers["X-Per-Page"][0]),
+                CurrentPage = int.Parse(response.Headers["X-Page"][0])
             };
 
             return result;
@@ -267,8 +267,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApiApi(_apiConfiguration);
-            var result = nexportApi.LearningApiGetCatalog(catalogId.ToString(), accessToken);
+            var nexportApi = new LearningApi(_apiConfiguration);
+            var result = nexportApi.LearningApiGetCatalog(catalogId, accessToken);
 
             return result;
         }
@@ -283,8 +283,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApiApi(_apiConfiguration);
-            var result = nexportApi.LearningApiGetCatalogDescription(catalogId.ToString(), accessToken);
+            var nexportApi = new LearningApi(_apiConfiguration);
+            var result = nexportApi.LearningApiGetCatalogDescription(catalogId, accessToken);
 
             return result;
         }
@@ -299,8 +299,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApiApi(_apiConfiguration);
-            var result = nexportApi.LearningApiGetCatalogCreditHours(catalogId.ToString(), accessToken);
+            var nexportApi = new LearningApi(_apiConfiguration);
+            var result = nexportApi.LearningApiGetCatalogCreditHours(catalogId, accessToken);
 
             return result;
         }
@@ -315,15 +315,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApiApi(_apiConfiguration);
-            var response = nexportApi.LearningApiGetCatalogSyllabiWithHttpInfo(catalogId.ToString(), accessToken, page);
+            var nexportApi = new LearningApi(_apiConfiguration);
+            var response = nexportApi.LearningApiGetCatalogSyllabiWithHttpInfo(catalogId, accessToken, page);
 
             var result = new NexportSyllabusResponse
             {
                 SyllabusList = response.Data,
-                TotalRecord = int.Parse(response.Headers["X-Total-Count"]),
-                RecordPerPage = int.Parse(response.Headers["X-Per-Page"]),
-                CurrentPage = int.Parse(response.Headers["X-Page"])
+                TotalRecord = int.Parse(response.Headers["X-Total-Count"][0]),
+                RecordPerPage = int.Parse(response.Headers["X-Per-Page"][0]),
+                CurrentPage = int.Parse(response.Headers["X-Page"][0])
             };
 
             return result;
@@ -339,8 +339,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApiApi(_apiConfiguration);
-            var result = nexportApi.LearningApiGetSection(sectionId.ToString(), accessToken);
+            var nexportApi = new LearningApi(_apiConfiguration);
+            var result = nexportApi.LearningApiGetSection(accessToken, sectionId);
 
             return result;
         }
@@ -355,8 +355,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApiApi(_apiConfiguration);
-            var result = nexportApi.LearningApiGetSectionDescription(sectionId.ToString(), accessToken);
+            var nexportApi = new LearningApi(_apiConfiguration);
+            var result = nexportApi.LearningApiGetSectionDescription(sectionId, accessToken);
 
             return result;
         }
@@ -371,8 +371,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApiApi(_apiConfiguration);
-            var result = nexportApi.LearningApiGetSectionObjectives(sectionId.ToString(), accessToken);
+            var nexportApi = new LearningApi(_apiConfiguration);
+            var result = nexportApi.LearningApiGetSectionObjectives(sectionId, accessToken);
 
             return result;
         }
@@ -387,8 +387,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApiApi(_apiConfiguration);
-            var result = nexportApi.LearningApiGetTrainingPlan(trainingPlanId.ToString(), accessToken);
+            var nexportApi = new LearningApi(_apiConfiguration);
+            var result = nexportApi.LearningApiGetTrainingPlan(accessToken, trainingPlanId);
 
             return result;
         }
@@ -403,8 +403,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApiApi(_apiConfiguration);
-            var result = nexportApi.LearningApiGetTrainingPlanDescription(trainingPlanId.ToString(), accessToken);
+            var nexportApi = new LearningApi(_apiConfiguration);
+            var result = nexportApi.LearningApiGetTrainingPlanDescription(trainingPlanId, accessToken);
 
             return result;
         }
@@ -419,13 +419,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApiApi(_apiConfiguration);
-            var response = nexportApi.PointOfSaleApiGetInvoiceWithHttpInfo(invoiceId.ToString(), accessToken);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration);
+            var response = nexportApi.PointOfSaleApiGetInvoiceWithHttpInfo(invoiceId, accessToken);
 
             var result = new NexportGetInvoiceResponseDetails
             {
                 Response = response.Data,
-                StatusCode = response.StatusCode
+                StatusCode = (int) response.StatusCode
             };
 
             return result;
@@ -442,9 +442,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApiApi(_apiConfiguration);
-            var result = nexportApi.PointOfSaleApiBeginInvoiceTransaction(
-                new CreateInvoiceMessageRequest(purchasingAgentId.ToString(), orgId.ToString()), accessToken);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration);
+            var result = nexportApi.PointOfSaleApiBeginInvoiceTransaction(accessToken,
+                new CreateInvoiceMessageRequest(purchasingAgentId, orgId));
 
             return result;
         }
@@ -461,28 +461,28 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (string.IsNullOrWhiteSpace(accessToken))
                 throw new NullReferenceException("Access token cannot be empty");
 
-            var groupMembershipIdList = groupMembershipIds.ConvertAll(x => x.ToString());
+            //var groupMembershipIdList = groupMembershipIds.ConvertAll(x => x.ToString());
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApiApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration);
             var result =
-                nexportApi.PointOfSaleApiAddInvoiceItem(new CreateInvoiceItemRequest(invoiceId.ToString(), productId.ToString())
+                nexportApi.PointOfSaleApiAddInvoiceItem(accessToken, new CreateInvoiceItemRequest(invoiceId, productId)
                 {
                     ProductType = productType,
-                    SubscriptionOrgId = subscriptionOrgId.ToString(),
-                    GroupMembershipIds = groupMembershipIdList,
+                    SubscriptionOrgId = subscriptionOrgId,
+                    GroupMembershipIds = groupMembershipIds,
                     Note = note,
                     Cost = cost,
                     UtcAccessExpirationDate = accessExpirationDate,
                     AccessExpirationTimeLimit = accessExpirationTimeLimit
-                }, accessToken);
+                });
 
             return result;
         }
 
         public AddInvoiceScheduledPaymentResponse AddNexportInvoiceScheduledPayment([NotNull]string url, [NotNull]string accessToken,
-            Guid invoiceId, decimal amount, string note = null, DateTime? dueDate = null)
+            Guid invoiceId, decimal amount, DateTime dueDate, string note = null)
         {
             if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
@@ -492,14 +492,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApiApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration);
             var result =
-                nexportApi.PointOfSaleApiAddInvoiceScheduledPayment(new InvoiceScheduledPaymentRequest(invoiceId.ToString(), amount, dueDate, note), accessToken);
+                nexportApi.PointOfSaleApiAddInvoiceScheduledPayment(accessToken, new InvoiceScheduledPaymentRequest(invoiceId, amount, dueDate, note));
 
             return result;
         }
 
-        public AddInvoicePaymentResponse AddNexportInvoicePayment([NotNull]string url, [NotNull]string accessToken,
+        public AddInvoicePaymentResponse AddNexportInvoicePayment([NotNull] string url, [NotNull] string accessToken,
             Guid invoiceId, decimal amount, Guid merchantAccountId,
             Guid payeeId, InvoicePaymentRequest.PaymentProcessorEnum paymentProcessor,
             string paymentProcessorTransactionId,
@@ -515,20 +515,20 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApiApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration);
             var result =
-                nexportApi.PointOfSaleApiAddInvoicePayment(new InvoicePaymentRequest(
-                    invoiceId.ToString(),
-                    merchantAccountId: merchantAccountId.ToString(),
-                    payeeId: payeeId.ToString(),
+                nexportApi.PointOfSaleApiAddInvoicePayment(accessToken, new InvoicePaymentRequest(
+                    invoiceId,
+                    merchantAccountId: merchantAccountId,
+                    payeeId: payeeId,
                     paymentProcessor: paymentProcessor,
                     paymentProcessorTransactionId: paymentProcessorTransactionId,
                     amountUsd: amount,
                     utcPaymentDate: dueDate)
                 {
-                    PaymentCollectorId = paymentCollectorId.HasValue ? paymentCollectorId.ToString() : null,
+                    PaymentCollectorId = paymentCollectorId,
                     Note = note
-                }, accessToken);
+                });
 
             return result;
         }
@@ -543,9 +543,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApiApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration);
             var result =
-                nexportApi.PointOfSaleApiCommitInvoiceTransaction(new CommitInvoiceRequest(invoiceId.ToString()), accessToken);
+                nexportApi.PointOfSaleApiCommitInvoiceTransaction(accessToken, new CommitInvoiceRequest(invoiceId));
 
             return result;
         }
@@ -561,10 +561,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApiApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration);
             var result =
-                nexportApi.PointOfSaleApiRedeemInvoiceItem(
-                    new RedeemInvoiceItemRequest(invoiceItemId.ToString(), redeemingUserId: redeemingUserId.ToString(), redemptionActionType: redemptionAction), accessToken);
+                nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
+                    new RedeemInvoiceItemRequest(invoiceItemId, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction));
 
             return result;
         }
@@ -579,9 +579,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApiApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration);
             var result =
-                nexportApi.PointOfSaleApiGetInvoiceRedemption(invoiceItemId.ToString(), accessToken);
+                nexportApi.PointOfSaleApiGetInvoiceRedemption(invoiceItemId, accessToken);
 
             return result;
         }
@@ -596,17 +596,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new SsoApiApi(_apiConfiguration);
+            var nexportApi = new SsoApi(_apiConfiguration);
             var result =
-                nexportApi.SsoApiSignIn(new SsoRequest(
-                    SsoRequest.DisplayEnum.Normal, userId.ToString(), orgId.ToString(),
-                    redirectEntityRequest: new RedirectEntityRequest(redirectUrl, redirectUrl, redirectUrl)),
-                    accessToken);
+                nexportApi.SsoApiSignIn(accessToken,
+                    new SsoRequest(SsoRequest.DisplayEnum.Normal, userId, orgId,
+                    redirectEntityRequest: new RedirectEntityRequest(redirectUrl, redirectUrl, redirectUrl)));
 
             return result;
         }
 
-        public SsoResponse NexportClassroomSingleSignOn([NotNull]string url, [NotNull]string accessToken, [NotNull]string enrollmentId, string redirectUrl)
+        public SsoResponse NexportClassroomSingleSignOn([NotNull] string url, [NotNull] string accessToken, Guid enrollmentId, string redirectUrl)
         {
             if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
@@ -614,18 +613,51 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (string.IsNullOrWhiteSpace(accessToken))
                 throw new NullReferenceException("Access token cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(enrollmentId))
-                throw new NullReferenceException("Enrollment Id cannot be empty");
+            _apiConfiguration.BasePath = url;
+
+            var nexportApi = new SsoApi(_apiConfiguration);
+
+            var result =
+                nexportApi.SsoApiClassroom(accessToken,
+                    new ClassroomSsoRequest(ClassroomSsoRequest.DisplayEnum.Normal, enrollmentId,
+                    new RedirectEntityRequest(redirectUrl, redirectUrl, redirectUrl)));
+
+            return result;
+        }
+
+        public SectionEnrollmentsResponse GetNexportSectionEnrollment([NotNull] string url, [NotNull] string accessToken, Guid orgId, Guid userId, Guid syllabusId)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new NullReferenceException("Api url cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new SsoApiApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration);
 
             var result =
-                nexportApi.SsoApiClassroom(new ClassroomSsoRequest(
-                    ClassroomSsoRequest.DisplayEnum.Normal, enrollmentId,
-                    new RedirectEntityRequest(redirectUrl, redirectUrl, redirectUrl)),
-                    accessToken);
+                nexportApi.LearningApiGetSectionEnrollments(accessToken, orgId, userId: userId, syllabusId: syllabusId).FirstOrDefault();
+
+            return result;
+        }
+
+        public TrainingPlanEnrollmentsResponse GetNexportTrainingPlanEnrollment([NotNull] string url,
+            [NotNull] string accessToken, Guid orgId, Guid userId, Guid syllabusId)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new NullReferenceException("Api url cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            _apiConfiguration.BasePath = url;
+
+            var nexportApi = new LearningApi(_apiConfiguration);
+
+            var result =
+                nexportApi.LearningApiGetTrainingPlanEnrollments(accessToken, orgId, subscriberId: userId, syllabusId: syllabusId).FirstOrDefault();
 
             return result;
         }

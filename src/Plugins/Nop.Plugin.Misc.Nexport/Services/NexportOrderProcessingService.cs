@@ -208,6 +208,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 if (_nexportService.HasNexportOrderProcessingQueueItem(order.Id))
                 {
                     completed = false;
+
+                    //AddOrderNote(order, "Order is being processed for Nexport invoice");
                 }
             }
 
