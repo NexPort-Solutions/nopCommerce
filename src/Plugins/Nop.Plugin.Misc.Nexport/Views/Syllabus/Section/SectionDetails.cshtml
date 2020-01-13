@@ -132,14 +132,17 @@
             </nop-panel>
             <nop-panel asp-name="nexport-section-mappings" asp-icon="fa fa-paperclip" asp-hide="@hideMappingsBlock"
                        asp-hide-block-attribute-name="@hideNexportSectionMappingsBlockAttributeName" asp-title="Section Mappings" asp-advanced="false">
-                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappings.cshtml",
-                    new NexportProductMappingListSearchModel()
-                    {
-                        NexportProductId = nexportProductId,
-                        NexportCatalogId = nexportCatalogId,
-                        NexportSyllabusId = Model.SyllabusId,
-                        NexportProductType = NexportProductTypeEnum.Section
-                    })
+                <div class="panel-body">
+                    <div class="sub-panel" id="product-mapping-container">
+                        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappingTable.cshtml",
+                            new NexportProductMappingListSearchModel(){
+                            NexportProductId = nexportProductId,
+                            NexportCatalogId = nexportCatalogId,
+                            NexportSyllabusId = Model.SyllabusId,
+                            NexportProductType = NexportProductTypeEnum.Section
+                        })
+                    </div>
+                </div>
             </nop-panel>
         </nop-panels>
     </div>

@@ -15,7 +15,7 @@ namespace Nop.Plugin.Misc.Nexport.Migrations
 
         public override void Down()
         {
-            Delete.Column("CreditHours");
+            Delete.Column("CreditHours").FromTable(TABLE_NAME);
         }
     }
 }

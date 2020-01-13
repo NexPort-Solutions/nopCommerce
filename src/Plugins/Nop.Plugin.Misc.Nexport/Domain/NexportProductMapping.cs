@@ -55,5 +55,7 @@ namespace Nop.Plugin.Misc.Nexport.Domain
         public bool AutoRedeem { get; set; }
 
         public bool IsExtensionProduct { get; set; }
+
+        public int? StoreId { get; set; }
     }
 }

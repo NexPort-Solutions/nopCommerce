@@ -141,15 +141,36 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                                             var mapping = mappingInfo != null ?
                                                 JsonConvert.DeserializeObject<NexportProductMapping>(mappingInfo) :
+                                                _nexportService.GetProductMappingByNopProductId(orderItem.ProductId, order.StoreId) ??
                                                 _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
-
-                                            //var mapping = _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
 
                                             if (mapping != null)
                                             {
                                                 var productCost = orderItem.Product.ProductCost;
                                                 var subscriptionOrgId = mapping.NexportSubscriptionOrgId ?? orgId;
-                                                var groupMembershipIds = _nexportService.GetProductGroupMembershipIds(mapping.Id);
+
+                                                IList<Guid> groupMembershipIds = new List<Guid>();
+
+                                                var groupMembershipMappingInfo = _genericAttributeService
+                                                    .GetAttributesForEntity(orderItem.Id,
+                                                        $"ProductGroupMembershipMapping-{order.Id}-{orderItem.Id}-{mapping.Id}")
+                                                    .Where(a => a.StoreId == order.StoreId).ToList();
+
+                                                if (groupMembershipMappingInfo.Any())
+                                                {
+                                                    foreach (var attribute in groupMembershipMappingInfo)
+                                                    {
+                                                        var groupMembershipMapping = JsonConvert.DeserializeObject<NexportProductGroupMembershipMapping>(attribute.Value);
+                                                        if (groupMembershipMapping != null)
+                                                        {
+                                                            groupMembershipIds.Add(groupMembershipMapping.NexportGroupId);
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    groupMembershipIds = _nexportService.GetProductGroupMembershipIds(mapping.Id);
+                                                }
 
                                                 // Find existing invoice item for the order item
                                                 var existingInvoiceItemId =
@@ -239,27 +260,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                             _nexportService.AddOrderNote(order,
                                                 "Nexport invoice has been successfully processed");
                                         }
-
-                                        //// Redeem the invoice item that has the AutoRedeem option set on the mapping
-                                        //foreach (var invoiceItem in autoRedeemingInvoiceItemIds
-                                        //    .Select(autoRedeemingInvoiceItemId => _nexportService.FindNexportOrderInvoiceItemById(autoRedeemingInvoiceItemId))
-                                        //    .Where(invoiceItem => invoiceItem != null))
-                                        //{
-                                        //    try
-                                        //    {
-                                        //        _nexportService.RedeemNexportInvoiceItem(invoiceItem, userMapping.NexportUserId);
-
-                                        //        _nexportService.AddOrderNote(order,
-                                        //            $"Nexport invoice item {invoiceItem.InvoiceItemId} has been redeemed for user {userMapping.NexportUserId}");
-                                        //    }
-                                        //    catch (Exception e)
-                                        //    {
-                                        //        _nexportService.AddOrderNote(order,
-                                        //            $"Nexport invoice item {invoiceItem.InvoiceItemId} cannot be redeemed for user {userMapping.NexportUserId}", updateOrder: true);
-
-                                        //        _logger.Error($"Failed to redeem Nexport invoice item {invoiceItem.InvoiceItemId} for user {userMapping.NexportUserId}", e);
-                                        //    }
-                                        //}
 
                                         _logger.Information(
                                             $"Order {queueItem.OrderId} has been successfully processed!");

@@ -1,21 +1,20 @@
 ﻿@using Nop.Core
 @using Nop.Services.Common
-@using Nop.Services.Helpers
 @inject IGenericAttributeService genericAttributeService
 @inject IWorkContext workContext
-@inject IDateTimeHelper dateTimeHelper
 
-@model Nop.Plugin.Misc.Nexport.Models.NexportProductMappingModel
+@model Nop.Plugin.Misc.Nexport.Models.NexportProductMappingListSearchModel
 
-@if (Model != null && Model.Id > 0)
-{
+@{
     const string hideNexportMappingsBlockAttributeName = "ProductPage.HideNexportMappingsBlock";
     var hideNexportMappingsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportMappingsBlockAttributeName);
-
-    <nop-panels id="nexport-integration-panels">
-        <nop-panel asp-name="nexport-mapping-list" asp-icon="fa fa-paperclip" asp-title="Nexport Product Mappings"
-                   asp-hide-block-attribute-name="@hideNexportMappingsBlockAttributeName" asp-hide="@hideNexportMappingsBlock" asp-advanced="false">
-            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappingDetails.cshtml", Model)
-        </nop-panel>
-    </nop-panels>
 }
+
+<nop-panel asp-name="nexport-mapping-list" asp-icon="fa fa-paperclip" asp-title="Nexport Product Mappings"
+           asp-hide-block-attribute-name="@hideNexportMappingsBlockAttributeName" asp-hide="@hideNexportMappingsBlock" asp-advanced="false">
+    <div class="panel-body">
+        <div class="sub-panel" id="product-mapping-container">
+            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappingTable.cshtml", Model)
+        </div>
+    </div>
+</nop-panel>

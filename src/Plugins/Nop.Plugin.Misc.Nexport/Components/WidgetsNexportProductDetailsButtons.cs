@@ -45,9 +45,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
             if (productModel == null)
                 return Content("");
 
-            var model = _nexportService.GetProductMappingByNopProductId(productModel.Id);
-
-            return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductDetailsButtons.cshtml", model);
+            return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductDetailsButtons.cshtml", productModel);
         }
     }
 }

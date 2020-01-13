@@ -58,19 +58,16 @@
                             <div class="form-text-row">@Model.CatalogId</div>
                         </div>
                     </div>
-                    @if (Model.DateCreated.HasValue)
-                    {
-                        <div class="form-group">
-                            <div class="col-md-3">
-                                <div class="label-wrapper">
-                                    <label class="control-label">Date Created</label>
-                                </div>
-                            </div>
-                            <div class="col-md-9">
-                                <div class="form-text-row">@dateTimeHelper.ConvertToUserTime(Model.DateCreated.Value).ToString("f")</div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <div class="label-wrapper">
+                                <label class="control-label">Date Created</label>
                             </div>
                         </div>
-                    }
+                        <div class="col-md-9">
+                            <div class="form-text-row">@dateTimeHelper.ConvertToUserTime(Model.DateCreated).ToString("f")</div>
+                        </div>
+                    </div>
                     @if (Model.LastModified.HasValue)
                     {
                         <div class="form-group">
@@ -118,12 +115,16 @@
             </nop-panel>
             <nop-panel asp-name="nexport-catalog-mappings" asp-icon="fa fa-paperclip" asp-hide="@hideMappingsBlock"
                        asp-hide-block-attribute-name="@hideNexportCatalogMappingsBlockAttributeName" asp-title="Catalog Mappings" asp-advanced="false">
-                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappings.cshtml",
-                    new NexportProductMappingListSearchModel()
-                    {
-                        NexportProductId = Model.CatalogId,
-                        NexportProductType = NexportProductTypeEnum.Catalog
-                    })
+                <div class="panel-body">
+                    <div class="sub-panel" id="product-mapping-container">
+                        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappingTable.cshtml",
+                            new NexportProductMappingListSearchModel()
+                            {
+                                NexportProductId = Model.CatalogId,
+                                NexportProductType = NexportProductTypeEnum.Catalog
+                            })
+                    </div>
+                </div>
             </nop-panel>
             <nop-panel asp-name="nexport-catalog-syllabus" asp-icon="fa fa-book" asp-hide="@hideSyllabusesBlock"
                        asp-hide-block-attribute-name="@hideNexportSyllabusesBlockAttributeName" asp-title="Syllabuses" asp-advanced="false">

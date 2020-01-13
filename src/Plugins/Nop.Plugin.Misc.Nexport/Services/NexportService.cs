@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using NexportApi.Client;
 using NexportApi.Model;
 using Nop.Core;
@@ -10,7 +9,6 @@ using Nop.Core.Caching;
 using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
-using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
@@ -22,9 +20,9 @@ using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Security;
 using Nop.Services.Stores;
-using Nop.Plugin.Misc.Nexport.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Services.Common;
 using Nop.Services.Orders;
@@ -47,7 +45,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
         private readonly IRepository<NexportProductGroupMembershipMapping> _nexportProductGroupMembershipMappingRepository;
-        private readonly IRepository<NexportProductStoreMapping> _nexportProductStoreMappingRepository;
         private readonly IRepository<NexportOrderProcessingQueueItem> _nexportOrderProcessingQueueRepository;
         private readonly IRepository<NexportOrderInvoiceItem> _nexportOrderInvoiceItemRepository;
         private readonly IRepository<NexportOrderInvoiceRedemptionQueueItem> _nexportOrderInvoiceRedemptionQueueRepository;
@@ -80,7 +77,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<Product> productRepository,
             IRepository<NexportProductMapping> nexportProductMappingRepository,
             IRepository<NexportProductGroupMembershipMapping> nexportProductGroupMembershipMappingRepository,
-            IRepository<NexportProductStoreMapping> nexportProductStoreMappingRepository,
             IRepository<NexportOrderProcessingQueueItem> nexportOrderProcessingQueueRepository,
             IRepository<NexportOrderInvoiceItem> nexportOrderInvoiceItemRepository,
             IRepository<NexportOrderInvoiceRedemptionQueueItem> nexportOrderInvoiceRedemptionQueueRepository,
@@ -110,7 +106,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _productRepository = productRepository;
             _nexportProductMappingRepository = nexportProductMappingRepository;
             _nexportProductGroupMembershipMappingRepository = nexportProductGroupMembershipMappingRepository;
-            _nexportProductStoreMappingRepository = nexportProductStoreMappingRepository;
             _nexportOrderProcessingQueueRepository = nexportOrderProcessingQueueRepository;
             _nexportOrderInvoiceItemRepository = nexportOrderInvoiceItemRepository;
             _nexportOrderInvoiceRedemptionQueueRepository = nexportOrderInvoiceRedemptionQueueRepository;
@@ -364,7 +359,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             try
             {
                 var page = 0;
-                var remainderItemsCount = 0;
+                int remainderItemsCount;
                 do
                 {
                     var result = _nexportApiService.GetNexportOrganizations(_nexportSettings.Url,
@@ -392,7 +387,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 try
                 {
                     var page = 0;
-                    var remainderItemsCount = 0;
+                    int remainderItemsCount;
                     do
                     {
                         var result = _nexportApiService.GetNexportCatalogs(_nexportSettings.Url,
@@ -475,7 +470,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 try
                 {
                     var page = 0;
-                    var remainderItemsCount = 0;
+                    int remainderItemsCount;
                     do
                     {
                         var result = _nexportApiService.GetNexportSyllabuses(_nexportSettings.Url,
@@ -642,7 +637,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public Guid? AddItemToNexportOrderInvoice(Guid invoiceId, Guid nexportProductId,
             Enums.ProductTypeEnum productType, decimal productCost,
-            Guid subscriptionOrgId, List<Guid> groupMembershipIds = null,
+            Guid subscriptionOrgId, IList<Guid> groupMembershipIds = null,
             DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null, string note = null)
         {
             AddInvoiceItemResponse addInvoiceItemResult;
@@ -924,7 +919,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                     UpdateMapping(productMapping);
 
-                    _logger.InsertLog(LogLevel.Debug, $"Successfully synchronized product {productMapping.NopProductId} with Nexport using the information from mapping {productMapping.Id}");
+                    _logger.Debug($"Successfully synchronized product {productMapping.NopProductId} with Nexport using the information from mapping {productMapping.Id}");
                 }
             }
         }
@@ -970,7 +965,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public string VerifyNexportEnrollmentStatus(Product product, Customer customer)
+        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result)? VerifyNexportEnrollmentStatus(Product product, Customer customer)
         {
             var store = _storeContext.CurrentStore;
             var storeModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(
@@ -1004,20 +999,20 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                             if (existingEnrollment != null)
                             {
-                                return existingEnrollment.Status;
+                                return (existingEnrollment.Phase, existingEnrollment.Result);
                             }
                         }
-                        //else if (mapping.Type == NexportProductTypeEnum.TrainingPlan)
-                        //{
-                        //    var existingEnrollment = _nexportApiService.GetNexportTrainingPlanEnrollment(
-                        //        _nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                        //        orgId, userMapping.NexportUserId, mapping.NexportSyllabusId.Value);
+                        else if (mapping.Type == NexportProductTypeEnum.TrainingPlan)
+                        {
+                            var existingEnrollment = _nexportApiService.GetNexportTrainingPlanEnrollment(
+                                _nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                                orgId, userMapping.NexportUserId, mapping.NexportSyllabusId.Value);
 
-                        //    if (existingEnrollment != null)
-                        //    {
-                        //        return existingEnrollment.Status;
-                        //    }
-                        //}
+                            if (existingEnrollment != null)
+                            {
+                                return (existingEnrollment.Phase, existingEnrollment.Result);
+                            }
+                        }
                     }
                 }
             }
@@ -1034,18 +1029,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 switch (existingEnrollmentStatus)
                 {
-                    case "ActivityResult_Failed":
+                    case var status
+                        when status == (Enums.PhaseEnum.Finished, Enums.ResultEnum.Failing):
                         {
-                            var allowRepurchaseFailedCourses = _genericAttributeService.GetAttribute<bool>(store, "AllowRepurchaseFailedCoursesFromNexport", store.Id);
+                            var allowRepurchaseFailedCourses = _genericAttributeService.GetAttribute<bool>(store,
+                                NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
                             return allowRepurchaseFailedCourses;
                         }
-                    case "ActivityResult_Passed":
+
+                    case var status
+                        when status == (Enums.PhaseEnum.Finished, Enums.ResultEnum.Passing):
                         {
-                            var allowRepurchasePassedCourses = _genericAttributeService.GetAttribute<bool>(store, "AllowRepurchasePassedCoursesFromNexport", store.Id);
+                            var allowRepurchasePassedCourses = _genericAttributeService.GetAttribute<bool>(store,
+                                NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
                             return allowRepurchasePassedCourses;
                         }
-                    case "ActivityPhase_InProgress":
-                        return false;
+
+                    case var status
+                        when status.Value.Phase == Enums.PhaseEnum.InProgress:
+                        {
+                            return false;
+                        }
                 }
             }
             else
@@ -1060,20 +1064,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return true;
         }
 
-        public IList<SelectListItem> PrepareStoreMappingSelectList(IList<int> storeIds)
+        public string GetStoreName(int storeId)
         {
-            var availableStores = _storeService.GetAllStores();
-            return availableStores.Select(store => new SelectListItem
-            {
-                Text = store.Name,
-                Value = store.Id.ToString(),
-                Selected = storeIds.Contains(store.Id)
-            }).ToList();
-        }
-
-        public IList<string> GetStoreNames(IList<int> storeIds)
-        {
-            return _storeService.GetAllStores().Where(store => storeIds.Contains(store.Id)).Select(store => store.Name).ToList();
+            var store = _storeService.GetStoreById(storeId);
+            return store != null ? store.Name : "";
         }
     }
 }

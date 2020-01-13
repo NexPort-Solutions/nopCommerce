@@ -1,42 +1,9 @@
-﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
-@model Nop.Plugin.Misc.Nexport.Domain.NexportProductMapping
-
-<div id="nexport-actions-container">
-    @if (Model != null && Model.Id > 0)
-    {
-        <a id="viewNexportMappingBtn" class="btn bg-purple" style="margin-left: 3px"
-           href="@Url.Action("ShowProductDetails", "NexportIntegration",
-                     new
-                     {
-                         nexportProductId = Model.Type == NexportProductTypeEnum.Catalog ? Model.NexportCatalogId : Model.NexportCatalogSyllabusLinkId,
-                         nexportCatalogId = Model.NexportCatalogId,
-                         nexportSyllabusId = Model.NexportSyllabusId,
-                         nexportProductType = Model.Type
-                     })">
-            <i class="fa fa-eye"></i>
-            View Nexport product
-        </a>
-        <input type="hidden" name="NexportMappingId" value="@Model.Id"/>
-        <button type="submit" id="syncProductBtn" class="btn bg-olive" name="syncnexportproduct">
-            <i class="fa fa-refresh"></i>
-            Synchronize from Nexport
-        </button>
-    } else
-    {
-        @*<button type="button" id="mapProductBtn" class="btn bg-olive" style="margin-left: 3px">
-            <i class="fa fa-plus"></i>
-            Map with Nexport
-        </button>
-
-        <input type="submit" id="btnRefreshMappingDetail" style="display: none">
-
-        <script>
-            $(document).ready(function() {
-                $("#mapProductBtn").on("click",
-                    function (e) {
-                        //TODO: Logic for mapping nexport products
-                    });
-            });
-        </script>*@
-    }
+﻿<div id="nexport-actions-container">
+    @*@if (Model != null && Model.Id > 0)
+        {
+            <button type="submit" id="syncProductBtn" class="btn bg-olive" name="syncnexportproduct">
+                <i class="fa fa-refresh"></i>
+                Synchronize from Nexport
+            </button>
+        }*@
 </div>

@@ -1,8 +1,9 @@
 ﻿using System;
+using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models
 {
-    public class NexportOrganizationModel
+    public class NexportOrganizationModel : BaseNopModel
     {
         public Guid OrgId { get; set; }
 

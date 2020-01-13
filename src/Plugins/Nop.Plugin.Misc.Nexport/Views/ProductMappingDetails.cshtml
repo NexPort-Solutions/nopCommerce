@@ -1,6 +1,8 @@
-﻿@using Nop.Plugin.Misc.Nexport.Extensions
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Extensions
 @using Nop.Services.Helpers
 @inject IDateTimeHelper dateTimeHelper
+
 @model Nop.Plugin.Misc.Nexport.Models.NexportProductMappingModel
 
 @if (Model != null && Model.Id > 0)
@@ -101,7 +103,7 @@
             </div>
         </div>
     }
-    @if (!string.IsNullOrWhiteSpace(Model.SectionCeus))
+    @if (Model.Type == NexportProductTypeEnum.Section)
     {
         <div class="form-group">
             <div class="col-sm-5 col-md-3">
@@ -109,6 +111,25 @@
             </div>
             <div class="col-sm-7 col-md-9">
                 <div class="form-text-row">@Model.SectionCeus</div>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-5 col-md-3">
+                <nop-label asp-for="SectionNumber" />
+            </div>
+            <div class="col-sm-7 col-md-9">
+                <div class="form-text-row">@Model.SectionNumber</div>
+            </div>
+        </div>
+    }
+    @if (Model.Type != NexportProductTypeEnum.Catalog)
+    {
+        <div class="form-group">
+            <div class="col-sm-5 col-md-3">
+                <nop-label asp-for="UniqueName" />
+            </div>
+            <div class="col-sm-7 col-md-9">
+                <div class="form-text-row">@Model.UniqueName</div>
             </div>
         </div>
     }
@@ -234,4 +255,3 @@
         </div>
     }
 }
-

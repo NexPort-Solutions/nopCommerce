@@ -177,14 +177,24 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.EndDate.Hint", "The ending date of the Nexport product");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.CreditHours", "Credit hours");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.CreditHours.Hint", "The credit hours of the Nexport product");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.UniqueName", "Unique name");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.UniqueName.Hint",
+                "The unique name of the Nexport product. This is only applicable for Nexport syllabus items.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SectionCeus", "Section CEUs");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SectionCeus.Hint", "The CEUs for the Nexport section");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SectionNumber", "Section number");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SectionNumber.Hint", "The Nexport section number");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.IsSynchronized", "Synchronized?");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.IsSynchronized.Hint", "Indication of synchronization from Nexport");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.LastSynchronizationDate", "Last synchronization date");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.LastSynchronizationDate.Hint", "The date that the last synchronization occurred");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AutoRedeem", "Auto redeeming purchase");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AutoRedeem.Hint", "Allows customers to redeem the product right after purchasing");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.StoreMapping", "Store");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.StoreMapping.Hint",
+                "The current store that the product is mapped to. If it is empty, this mapping is the default mapping.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.IsExtensionProduct", "Extension product");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.IsExtensionProduct.Hint", "Allows the product to become extension product only");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.ProductAccessExpirationOption", "Access expiration option");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.ProductAccessExpirationOption.Hint",
                 "Specify the access expiration in Nexport. If specified, access expiration date will take priority compared to access expiration time limit.");

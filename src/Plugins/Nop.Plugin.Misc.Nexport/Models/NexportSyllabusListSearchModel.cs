@@ -11,5 +11,9 @@ namespace Nop.Plugin.Misc.Nexport.Models
         }
 
         public Guid CatalogId { get; set; }
+
+        public Guid ProductId { get; set; }
+
+        public int NopProductId { get; set; }
     }
 }

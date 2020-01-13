@@ -14,9 +14,6 @@ namespace Nop.Plugin.Misc.Nexport.Models
     {
         public NexportProductMappingModel()
         {
-            SelectedStoreIds = new List<int>();
-            StoreMappings = new List<SelectListItem>();
-
             GroupMembershipMappingModels = new List<NexportProductGroupMembershipMappingModel>();
         }
 
@@ -81,8 +78,14 @@ namespace Nop.Plugin.Misc.Nexport.Models
         [NopResourceDisplayName("Plugins.Misc.Nexport.CreditHours")]
         public decimal? CreditHours { get; set; }
 
+        [NopResourceDisplayName("Plugins.Misc.Nexport.UniqueName")]
+        public string UniqueName { get; set; }
+
         [NopResourceDisplayName("Plugins.Misc.Nexport.SectionCeus")]
         public string SectionCeus { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.SectionNumber")]
+        public string SectionNumber { get;set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.IsSynchronized")]
         public bool IsSynchronized { get; set; }
@@ -90,12 +93,10 @@ namespace Nop.Plugin.Misc.Nexport.Models
         [NopResourceDisplayName("Plugins.Misc.Nexport.AutoRedeem")]
         public bool AutoRedeem { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.StoreMappings")]
-        public IList<int> SelectedStoreIds { get; set; }
+        public int? StoreId { get; set; }
 
-        public IList<SelectListItem> StoreMappings { get; set; }
-
-        public IList<string> StoreMappingNames { get; set; }
+        [NopResourceDisplayName("Plugins.Misc.Nexport.StoreMapping")]
+        public string StoreName { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.IsExtensionProduct")]
         public bool IsExtensionProduct { get; set; }

@@ -1,0 +1,129 @@
+﻿@{
+    Layout = "_AdminPopupLayout";
+
+    //page title
+    ViewBag.Title = "Map product with Nexport";
+
+    var productId = int.Parse(Context.Request.Query["nopProductId"]);
+    var containerId = Context.Request.Query["containerId"];
+    var refreshMappingBtnId = Context.Request.Query["btnId"];
+}
+
+@if (ViewBag.RefreshPage == true)
+{
+    <script>
+        try {
+            window.opener.$("#@(Context.Request.Query["containerId"]) #@(Context.Request.Query["btnId"])").click();
+        }
+        catch (e) { }
+    </script>
+}
+
+@if (ViewBag.ClosePage == true)
+{
+    <script>
+        window.close();
+    </script>
+}
+
+<form asp-controller="NexportIntegration" asp-action="MapNexportProductPopup"
+      asp-route-nopProductId="@productId"
+      asp-route-storeId="@Context.Request.Query["storeId"];"
+      asp-route-btnId="@refreshMappingBtnId"
+      asp-route-containerId="@containerId" id="map-nexport-product-form">
+    <div class="content-header clearfix">
+        <h1 class="pull-left">
+            Map product
+        </h1>
+        <div class="pull-right">
+        </div>
+    </div>
+    <div class="content">
+        <div class="form-horizontal">
+            <div class="panel-group">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        @await Component.InvokeAsync("NexportOrganizationList")
+                        <div id="nexport-product-container">
+                            <div id="catalog-panel"></div>
+                            <input type="hidden" name="NexportCatalogId" />
+                            <input type="hidden" name="NexportProductId" />
+                            <input type="hidden" name="NexportSyllabusId" />
+                            <input type="hidden" name="NexportProductType" />
+                        </div>
+
+                    </div>
+                    <div class="panel-footer">
+                        <button type="submit" name="save" class="btn bg-blue">
+                            <i class="fa fa-floppy-o"></i>
+                            @*@T("Admin.Common.Save")*@
+                            Create new mapping
+                        </button>
+                        <div id="error-msg-container" style="padding-top: 10px; color: red; display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<script>
+    $(document).ready(function () {
+        $("#nexport-organization-list").on("change",
+            function (e) {
+                var orgId = $(this).val();
+                var url = "@Url.Action("GetCatalogList","NexportIntegration")" + "?orgId=" + orgId + "&nopProductId=@productId";
+
+                $.ajax({
+                    url: url,
+                    type: "GET",
+                    success: function(result) {
+                        $("#catalog-panel").html(result);
+                    }
+                });
+            });
+
+        $("#nexport-organization-list").change();
+
+        $("#map-nexport-product-form").on("submit",
+            function(e) {
+                e.preventDefault();
+
+                $("#error-msg-container").hide();
+
+                var serializedData = $(this).serializeArray();
+                serializedData.push({ name: "save", value: "" });
+                serializedData.push({name:"NopProductId", value: "@productId"})
+                serializedData.push({ name: "StoreId", value: "@Context.Request.Query["storeId"]" });
+                serializedData.push({ name: "BtnId", value: "@refreshMappingBtnId" });
+                serializedData.push({ name: "ContainerId", value: "@containerId" });
+
+                $.ajax({
+                    url: "@Url.Action("MapNexportProductPopup", "NexportIntegration")",
+                    type: "POST",
+                    data: serializedData,
+                    success: function(result) {
+
+                        if (result && result.MappingId) {
+                            try {
+                                window.opener.$("#@(containerId) #@(refreshMappingBtnId)").click();
+                            }
+                            catch (e) { }
+
+                            var url = "@Url.Action("ProductMappingDetailsPopup", "NexportIntegration")";
+                            url += "?mappingId=" + result.MappingId + "&containerId=@(containerId)&btnId=@refreshMappingBtnId";
+
+                            window.location.replace(url);
+                        }
+                    },
+                    error: function(xhr, textStatus, errorThrown) {
+                        var response = xhr.responseJSON;
+                        if (response && response.Error) {
+                            $("#error-msg-container").html(response.Error).show();
+                        }
+                    }
+                });
+            });
+    });
+
+    //# sourceURL=MapNexportProduct.js
+</script>

@@ -4,6 +4,7 @@ using System.Linq;
 using Nop.Core.Data;
 using Nop.Core.Domain.Logging;
 using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Services.Cms;
 using Nop.Services.Logging;
 using Nop.Services.Tasks;
@@ -56,11 +57,11 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             {
                 foreach (var mappingId in mappingIds)
                 {
-                    _logger.InsertLog(LogLevel.Debug, $"Begin synchronization process for product mapping {mappingId}");
+                    _logger.Debug($"Begin synchronization process for product mapping {mappingId}");
 
                     _nexportService.SyncNexportProduct(mappingId);
 
-                    _logger.InsertLog(LogLevel.Debug, $"Synchronization process for product mapping {mappingId} has been completed!");
+                    _logger.Debug($"Synchronization process for product mapping {mappingId} has been completed!");
                 }
             }
             catch (Exception ex)

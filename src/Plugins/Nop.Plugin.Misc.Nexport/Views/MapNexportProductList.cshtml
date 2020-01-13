@@ -1,0 +1,150 @@
+﻿@using Microsoft.AspNetCore.Routing
+@using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Web.Framework.Models.DataTables
+
+@model NexportCatalogSearchModel
+
+@await Html.PartialAsync("Table", new DataTablesModel
+{
+    Name = "nexport-catalog-grid",
+    UrlRead = new DataUrl("CatalogList", "NexportIntegration",
+        new RouteValueDictionary
+        {
+            [nameof(Model.OrgId)] = Model.OrgId,
+            [nameof(Model.NopProductId)] = Model.NopProductId
+        }),
+    PrimaryKeyColumn = nameof(NexportCatalogResponseItemModel.CatalogId),
+    Length = Model.PageSize,
+    LengthMenu = Model.AvailablePageSizes,
+    ColumnCollection = new List<ColumnProperty>
+    {
+        new ColumnProperty(null)
+        {
+            Render = new RenderChildCaret(),
+            Width = "5",
+            Searchable = false,
+            ClassName = NopColumnClassDefaults.ChildControl
+        },
+        new ColumnProperty(nameof(NexportCatalogResponseItemModel.CatalogId))
+        {
+            Width = "5",
+            Render = new RenderCustom("renderCatalogSelection")
+        },
+        new ColumnProperty(nameof(NexportCatalogResponseItemModel.Name))
+        {
+            Title = "Catalog Name",
+            Width = "150"
+        },
+        new ColumnProperty(nameof(NexportCatalogResponseItemModel.UtcDateCreated))
+        {
+            Title = "Created Date",
+            Width = "150",
+            Render = new RenderDate()
+        },
+        new ColumnProperty(nameof(NexportCatalogResponseItemModel.UtcDateLastModified))
+        {
+            Title = "Last Modified Date",
+            Width = "150",
+            Render = new RenderDate()
+        }
+    },
+    ChildTable = new DataTablesModel
+    {
+        Name = "nexport-syllabus-grid",
+        UrlRead = new DataUrl("SyllabusList", "NexportIntegration",
+            new RouteValueDictionary
+            {
+                [nameof(Model.NopProductId)] = Model.NopProductId
+            }),
+        IsChildTable = true,
+        Length = Model.PageSize,
+        LengthMenu = Model.AvailablePageSizes,
+        Filters = new List<FilterParameter>
+        {
+            new FilterParameter(nameof(NexportSyllabiResponseItemModel.CatalogId), nameof(NexportCatalogResponseItemModel.CatalogId), true)
+        },
+        ColumnCollection = new List<ColumnProperty>
+        {
+            new ColumnProperty(nameof(NexportSyllabiResponseItemModel.SyllabusId))
+            {
+                Width = "5",
+                Render = new RenderCustom("renderSyllabusSelection")
+            },
+            new ColumnProperty(nameof(NexportSyllabiResponseItemModel.Name))
+            {
+                Title = "Name",
+                Width = "150"
+            },
+            new ColumnProperty(nameof(NexportSyllabiResponseItemModel.UniqueName))
+            {
+                Title = "Unique Name",
+                Width = "100"
+            },
+            new ColumnProperty(nameof(NexportSyllabiResponseItemModel.SectionNumber))
+            {
+                Title = "Section Number",
+                Width = "100"
+            },
+            new ColumnProperty(nameof(NexportSyllabiResponseItemModel.Type))
+            {
+                Title = "Type",
+                Width = "50",
+                Render = new RenderCustom("renderSyllabusType"),
+                AutoWidth = false
+            },
+            new ColumnProperty(nameof(NexportSyllabiResponseItemModel.ProductId))
+            {
+                Title = "Product Id",
+                Width = "150"
+            }
+        }
+    }
+})
+
+<script>
+    $(document).ready(function() {
+        $("#map-nexport-product-form").on("change", $(":radio"), function() {
+            setMappingInfoRequirement();
+        });
+    });
+
+    function setMappingInfoRequirement() {
+        var selectedNexportProduct = $("[data-control=nexport-product-selection]:checked");
+        if (selectedNexportProduct) {
+            $("#nexport-product-container").find("[name=NexportCatalogId]").val(selectedNexportProduct.data("catalog-id"));
+            $("#nexport-product-container").find("[name=NexportSyllabusId]").val(selectedNexportProduct.data("syllabus-id"));
+            $("#nexport-product-container").find("[name=NexportProductId]").val(selectedNexportProduct.data("product-id"));
+            $("#nexport-product-container").find("[name=NexportProductType]").val(selectedNexportProduct.data("product-type"));
+        }
+    }
+
+    function renderSyllabusType(data, type, row, meta) {
+        if (data === 1) {
+            return "Training Plan";
+        }
+
+        return "Section";
+    }
+
+    function renderCatalogSelection(data, type, row, meta) {
+        var renderControl = "<input type=\"radio\" data-control=\"nexport-product-selection\" name=\"nexport-product-selection\" value=\"" + row.CatalogId +
+            "\" data-catalog-id=\""+ row.CatalogId + "\" data-product-id=\"" + row.CatalogId + "\" data-product-type=\"0\"";
+
+        renderControl += ">";
+
+        return renderControl;
+    }
+
+    function renderSyllabusSelection(data, type, row, meta) {
+        var nexportProductType = +row.Type + 1;
+
+        var renderControl = "<input type=\"radio\" data-control=\"nexport-product-selection\" name=\"nexport-product-selection\" value=\"" + row.SyllabusId +
+            "\" data-catalog-id=\""+ row.CatalogId + "\" data-syllabus-id=\"" + row.SyllabusId + "\" data-product-id=\"" + row.ProductId + "\" data-product-type=\"" + nexportProductType + "\"";
+
+        renderControl += ">";
+
+        return renderControl;
+    }
+
+    //# sourceURL=MapNexportProductList.js
+</script>

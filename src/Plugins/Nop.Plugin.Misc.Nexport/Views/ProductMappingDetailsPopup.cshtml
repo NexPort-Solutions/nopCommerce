@@ -95,33 +95,20 @@
                             </div>
                             <div class="form-group">
                                 <div class="col-sm-5 col-md-3">
-                                    <nop-label asp-for="SelectedStoreIds" />
+                                    <nop-label asp-for="StoreName" />
                                 </div>
                                 <div class="col-sm-7 col-md-9">
-
-                                    <nop-select asp-for="SelectedStoreIds" asp-items="Model.StoreMappings" asp-multiple="true" />
-                                    <script>
-                                                $(document).ready(function() {
-                                                    var storesIdsInput = $('#@Html.IdFor(model => model.SelectedStoreIds)')
-                                                        .data("kendoMultiSelect");
-                                                    storesIdsInput.setOptions({
-                                                        autoClose: false,
-                                                        filter: "contains"
-                                                    });
-
-                                                    @if (Model.StoreMappings.Count == 0)
-                                                    {
-                                                        <text>
-                                                            storesIdsInput.setOptions({
-                                                                enable: false,
-                                                                placeholder: 'No stores available'
-                                                            });
-                                                            storesIdsInput._placeholder();
-                                                            storesIdsInput._enable();
-                                                        </text>
-                                                    }
-                                                });
-                                    </script>
+                                    <input type="hidden" name="StoreId" value="@Model.StoreId" />
+                                    <div class="form-text-row">@Model.StoreName</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-5 col-md-3">
+                                    <nop-label asp-for="IsExtensionProduct" />
+                                </div>
+                                <div class="col-sm-7 col-md-9">
+                                    <nop-editor asp-for="IsExtensionProduct" />
+                                    <span asp-validation-for="IsExtensionProduct"></span>
                                 </div>
                             </div>
                         </div>
@@ -328,7 +315,7 @@
 
             var groupIdInputElement = $("#AddGroupMembership_GroupId");
 
-            var hasExpirationDateValue = @Html.Raw(Json.Serialize(Model.UtcAccessExpirationDate.HasValue));
+            var hasExpirationDateValue = @Json.Serialize(Model.UtcAccessExpirationDate.HasValue);
             if (!hasExpirationDateValue) {
                 $("#UtcAccessExpirationDate").data("kendoDateTimePicker").enable(false);
             } else {
@@ -336,7 +323,7 @@
                 $("#accessExpirationDateOption").removeClass("hidden");
             }
 
-            var hasAccessTimeLimitValue = @Html.Raw(Json.Serialize(Model.AccessTimeLimit.HasValue));
+            var hasAccessTimeLimitValue = @Json.Serialize(Model.AccessTimeLimit.HasValue);
             if (!hasAccessTimeLimitValue) {
                 $("#AccessTimeLimit").prop("disabled", true);
             } else {
@@ -489,5 +476,7 @@
                 });
             });
         });
+
+        //# sourceURL=ProductMappingDetailsPopup.js
     </script>
 }

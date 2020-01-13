@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Nop.Core.Data;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Services.Cms;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
@@ -78,12 +79,12 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 {
                     try
                     {
-                        _logger.Information($"Begin processing order invoice redemption queue item {queueItemId}");
-
                         var queueItem = _nexportOrderInvoiceRedemptionQueueRepository.GetById(queueItemId);
 
                         if (queueItem == null)
                             return;
+
+                        _logger.Debug($"Begin processing order invoice redemption for user {queueItem.RedeemingUserId} with invoice item {queueItem.OrderInvoiceItemId}");
 
                         var invoiceItem =
                             _nexportService.FindNexportOrderInvoiceItemById(queueItem.OrderInvoiceItemId);
@@ -109,7 +110,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                                         _nexportService.DeleteNexportOrderInvoiceRedemptionQueueItem(queueItem);
 
-                                        _logger.Information($"Order invoice redemption queue item {queueItemId} has been processed and removed!");
+                                        _logger.Information($"Order invoice redemption queue item {queueItemId} for order {order.Id} has been processed and removed!");
 
                                         // Finish the order process and set the status to Complete
                                         _orderProcessingService.CheckOrderStatus(order);

@@ -22,6 +22,10 @@ namespace Nop.Plugin.Misc.Nexport.Models
 
         public string OwnerName { get; set; }
 
+        public string OrgName { get; set; }
+
+        public string OrgShortName { get; set; }
+
         public bool? IsEnabled { get; set; }
 
         public CatalogResponseItem.PublishingModelEnum? PublishingModel { get; set; }

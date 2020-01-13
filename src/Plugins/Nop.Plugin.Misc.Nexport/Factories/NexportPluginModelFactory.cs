@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Mvc.Rendering;
+using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
@@ -23,7 +24,6 @@ using Nop.Services.Shipping;
 using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
-using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -165,15 +165,25 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         {
             var model = productMapping.ToModel<NexportProductMappingModel>();
             model.Editable = isEditable;
-
-            var availableStores = _storeService.GetAllStores();
-            model.SelectedStoreIds = _nexportService.GetProductStoreIds(model.Id);
-            model.StoreMappings = availableStores.Select(store => new SelectListItem
+            if (model.StoreId != null)
             {
-                Text = store.Name,
-                Value = store.Id.ToString(),
-                Selected = model.SelectedStoreIds.Contains(store.Id)
-            }).ToList();
+                model.StoreName = _nexportService.GetStoreName(model.StoreId.Value);
+            }
+
+            if (model.NexportSyllabusId != null)
+            {
+                if (model.Type == NexportProductTypeEnum.Section)
+                {
+                    var sectionDetails = _nexportService.GetSectionDetails(model.NexportSyllabusId.Value);
+                    model.SectionNumber = sectionDetails.SectionNumber;
+                    model.UniqueName = sectionDetails.UniqueName;
+                }
+                else if (model.Type == NexportProductTypeEnum.TrainingPlan)
+                {
+                    var trainingPlanDetails = _nexportService.GetTrainingPlanDetails(model.NexportSyllabusId.Value);
+                    model.UniqueName = trainingPlanDetails.UniqueName;
+                }
+            }
 
             return model;
         }
@@ -207,9 +217,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 keywords: searchModel.SearchProductName,
                 pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
 
-            // Get the list of Nexport mappings
-            var nexportMappings = _nexportService.GetProductMappings();
-
             // Prepare grid model
             var model = new MapProductToNexportProductListModel().PrepareToGrid(searchModel, products, () =>
             {
@@ -217,9 +224,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 {
                     var productModel = product.ToModel<MappingProductModel>();
                     productModel.SeName = _urlRecordService.GetSeName(product, 0, true, false);
-
-                    if (nexportMappings.Any(m => m.NopProductId == product.Id))
-                        productModel.HasNexportMapping = true;
 
                     return productModel;
                 });
@@ -229,14 +233,14 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         }
 
         public NexportProductMappingListModel PrepareNexportProductMappingListModel(
-            NexportProductMappingSearchModel searchModel, Guid nexportProductId, NexportProductTypeEnum nexportProductType)
+            NexportProductMappingSearchModel searchModel, Guid nexportProductId,
+            NexportProductTypeEnum nexportProductType)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             var mappings = _nexportService.GetProductMappings(nexportProductId, nexportProductType,
-                pageIndex: searchModel.Page - 1,
-                pageSize: searchModel.PageSize);
+                searchModel.Page - 1, searchModel.PageSize);
 
             // Prepare grid model
             var model = new NexportProductMappingListModel().PrepareToGrid(searchModel, mappings, () =>
@@ -245,8 +249,70 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 {
                     // Fill in model values from the entity
                     var mappingModel = mapping.ToModel<NexportProductMappingModel>();
-                    mappingModel.SelectedStoreIds = _nexportService.GetProductStoreIds(mapping.Id);
-                    mappingModel.StoreMappingNames = _nexportService.GetStoreNames(mappingModel.SelectedStoreIds);
+                    if (mappingModel.StoreId.HasValue)
+                    {
+                        mappingModel.StoreName = _nexportService.GetStoreName(mappingModel.StoreId.Value);
+                    }
+
+                    return mappingModel;
+                });
+            });
+
+            return model;
+        }
+
+        public NexportProductMappingListModel PrepareNexportProductMappingListModel(
+            NexportProductMappingSearchModel searchModel, int nopProductId)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var availableStores = _storeService.GetAllStores();
+            var mappingCollection = new List<NexportProductMapping>();
+            foreach (var store in availableStores)
+            {
+                var mapping = _nexportService.GetProductMappingByNopProductId(nopProductId, store.Id);
+                if (mapping != null)
+                {
+                    mappingCollection.Add(mapping);
+                }
+                else
+                {
+                    mappingCollection.Add(new NexportProductMapping()
+                    {
+                        NexportCatalogId = Guid.Empty,
+                        StoreId = store.Id
+                    });
+                }
+            }
+
+            var defaultMapping = _nexportService.GetProductMappingByNopProductId(nopProductId);
+            if (defaultMapping != null)
+            {
+                mappingCollection.Insert(0, defaultMapping);
+            }
+            else
+            {
+                mappingCollection.Insert(0, new NexportProductMapping()
+                {
+                    NexportCatalogId = Guid.Empty
+                });
+            }
+
+            var mappings = new PagedList<NexportProductMapping>(mappingCollection, searchModel.Page - 1,
+                searchModel.PageSize);
+
+            // Prepare grid model
+            var model = new NexportProductMappingListModel().PrepareToGrid(searchModel, mappings, () =>
+            {
+                return mappings.Select(mapping =>
+                {
+                    // Fill in model values from the entity
+                    var mappingModel = mapping.ToModel<NexportProductMappingModel>();
+                    if (mappingModel.StoreId.HasValue)
+                    {
+                        mappingModel.StoreName = _nexportService.GetStoreName(mappingModel.StoreId.Value);
+                    }
 
                     return mappingModel;
                 });
@@ -312,7 +378,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         CatalogId = catalog.CatalogId,
                         IsEnabled = catalog.IsEnabled,
                         Name = catalog.Name,
-                        OwnerId = catalog.OwnerId,
+                        OwnerName = catalog.OwnerName,
                         PricingModel = catalog.PricingModel,
                         PublishingModel = catalog.PublishingModel,
                         UtcDateCreated = catalog.DateCreated,
@@ -327,7 +393,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportSyllabusListModel PrepareNexportSyllabusListMode(NexportSyllabusListSearchModel searchModel)
+        public NexportSyllabusListModel PrepareNexportSyllabusListModel(NexportSyllabusListSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
@@ -343,12 +409,31 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     var syllabiId = syllabi.SyllabusId;
                     var syllabiItemModel = new NexportSyllabiResponseItemModel()
                     {
+                        CatalogId = searchModel.CatalogId,
                         SyllabusId = syllabiId,
                         Name = syllabi.SyllabusName,
                         Type = syllabi.SyllabusType,
                         ProductId = syllabi.ProductId.Value,
                         TotalMappings = _nexportService.FindMappingCountPerSyllabi(syllabiId)
                     };
+
+                    if (syllabi.SyllabusType == GetSyllabiResponseItem.SyllabusTypeEnum.Section)
+                    {
+                        var sectionDetails = _nexportService.GetSectionDetails(syllabi.SyllabusId);
+                        if (sectionDetails != null)
+                        {
+                            syllabiItemModel.UniqueName = sectionDetails.UniqueName;
+                            syllabiItemModel.SectionNumber = sectionDetails.SectionNumber;
+                        }
+                    }
+                    else if (syllabi.SyllabusType == GetSyllabiResponseItem.SyllabusTypeEnum.TrainingPlan)
+                    {
+                        var trainingPlanDetails = _nexportService.GetTrainingPlanDetails(syllabi.SyllabusId);
+                        if (trainingPlanDetails != null)
+                        {
+                            syllabiItemModel.UniqueName = trainingPlanDetails.UniqueName;
+                        }
+                    }
 
                     return syllabiItemModel;
                 });
@@ -371,7 +456,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         public NexportTrainingListModel PrepareNexportTrainingListModel(Customer customer)
         {
             if (customer == null)
-                throw new ArgumentNullException(nameof (customer));
+                throw new ArgumentNullException(nameof(customer));
 
             var userMapping = _nexportService.FindUserMappingByCustomerId(customer.Id);
             var redemptionOrganizations = _nexportService.FindNexportRedemptionOrganizationsByCustomerId(customer.Id);

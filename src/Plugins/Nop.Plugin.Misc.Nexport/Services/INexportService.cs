@@ -15,8 +15,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         void InsertNexportProductGroupMembershipMapping(NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping);
 
-        void InsertNexportProductStoreMapping(NexportProductStoreMapping nexportProductStoreMapping);
-
         IPagedList<NexportProductMapping> GetProductCatalogsByCatalogId(Guid catalogId,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
@@ -26,30 +24,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
         IPagedList<NexportProductMapping> GetProductTrainingPlansByTrainingPlanId(Guid trainingPlanId,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
-        NexportProductMapping FindProductCatalog(IList<NexportProductMapping> source, int productId, Guid catalogId);
+        NexportProductMapping FindProductCatalog(IList<NexportProductMapping> source, int productId, Guid catalogId, int? storeId = null);
 
-        NexportProductMapping FindProductSection(IList<NexportProductMapping> source, int productId, Guid sectionId);
+        NexportProductMapping FindProductSection(IList<NexportProductMapping> source, int productId, Guid sectionId, int? storeId = null);
 
-        NexportProductMapping FindProductTrainingPlan(IList<NexportProductMapping> source, int productId, Guid trainingPlan);
+        NexportProductMapping FindProductTrainingPlan(IList<NexportProductMapping> source, int productId, Guid trainingPlan, int? storeId = null);
 
-        IPagedList<NexportProductMapping> GetProductMappings(
+        IPagedList<NexportProductMapping> GetProductMappings(int? nopProductId = null,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
         IPagedList<NexportProductMapping> GetProductMappings(Guid nexportProductId, NexportProductTypeEnum nexportProductType,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
-        NexportProductMapping GetProductMappingByNopProductId(int nopProductId);
+        IList<NexportProductMapping> GetProductMappingsByStoreId(int storeId);
+
+        NexportProductMapping GetProductMappingByNopProductId(int nopProductId, int? storeId = null);
+
 
         IPagedList<NexportProductGroupMembershipMapping> GetProductGroupMembershipMappings(int nexportProductMappingId,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
-        List<Guid> GetProductGroupMembershipIds(int nexportProductMappingId);
-
-        IList<NexportProductStoreMapping> GetProductStoreMappings(int nexportProductMappingId);
-
-        List<int> GetProductStoreIds(int nexportProductMappingId);
-
-        IList<NexportProductStoreMapping> GetProductStoreMappingsByStoreId(int storeId);
+        IList<Guid> GetProductGroupMembershipIds(int nexportProductMappingId);
 
         Dictionary<Guid, int> FindMappingCountPerSyllabus(IList<GetSyllabiResponseItem> syllabusList);
 
@@ -62,10 +57,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
         NexportProductGroupMembershipMapping GetProductGroupMembershipMappingById(int mappingId);
 
         void DeleteGroupMembershipMapping(NexportProductGroupMembershipMapping mapping);
-
-        void DeleteStoreMapping(NexportProductStoreMapping mapping);
-
-        void UpdateStoreMapping(NexportProductMapping mapping, IList<int> storeIds);
 
         void InsertNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem);
 
@@ -89,6 +80,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         void MapNexportProduct(MapProductToNexportProductModel model);
 
+        void MapNexportProduct(MapNexportProductModel model);
+
         void InsertUserMapping(NexportUserMapping nexportUserMapping);
 
         void DeleteUserMapping(NexportUserMapping nexportUserMapping);
@@ -108,5 +101,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         bool HasNexportProductMapping(Order order);
 
         bool HasNexportProductMapping(int productId);
+
+        IList<int?> GetStoreIdsPerProductMapping(int productId);
     }
 }

@@ -1,14 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
-using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
-using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
 using Nop.Web.Controllers;
@@ -20,7 +17,6 @@ namespace Nop.Plugin.Misc.Nexport.Filters
         private readonly IProductService _productService;
         private readonly IShoppingCartService _shoppingCartService;
         private readonly INotificationService _notificationService;
-        private readonly ICustomerActivityService _customerActivityService;
         private readonly NexportService _nexportService;
         private readonly IWorkContext _workContext;
         private readonly IStoreContext _storeContext;
@@ -29,7 +25,6 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             IProductService productService,
             IShoppingCartService shoppingCartService,
             INotificationService notificationService,
-            ICustomerActivityService customerActivityService,
             NexportService nexportService,
             IWorkContext workContext,
             IStoreContext storeContext)
@@ -37,7 +32,6 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             _productService = productService;
             _shoppingCartService = shoppingCartService;
             _notificationService = notificationService;
-            _customerActivityService = customerActivityService;
             _nexportService = nexportService;
             _workContext = workContext;
             _storeContext = storeContext;
@@ -55,8 +49,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
 
                 var nexportProductMappings = cart.Select(shoppingCartItem => _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId)).Where(mapping => mapping != null).ToList();
 
-                // Check if there is at least a product in the cart that has Nexport product mapping
-                //var hasNexportProduct = cart.Select(t => _nexportService.GetProductMappingByNopProductId(t.ProductId)).Any(nexportProductMapping => nexportProductMapping != null);
+                // Check if there are products a product in the cart that have Nexport product mappings
                 if (nexportProductMappings.Count > 0)
                 {
                     var userMapping = _nexportService.FindUserMappingByCustomerId(_workContext.CurrentCustomer.Id);
@@ -67,6 +60,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                     }
                 }
 
+                // Verify if the products in the cart are allowed to be purchased
                 foreach (var productMapping in nexportProductMappings)
                 {
                     var product = _productService.GetProductById(productMapping.NopProductId);
@@ -74,12 +68,10 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                     if (!canPurchaseProduct)
                     {
                         var shoppingCartItem = cart.FirstOrDefault(i => i.ProductId == productMapping.NopProductId);
-                        //cart.Remove(shoppingCartItem);
                         if (shoppingCartItem != null)
                         {
                             _shoppingCartService.DeleteShoppingCartItem(shoppingCartItem);
                         }
-
                     }
                 }
 

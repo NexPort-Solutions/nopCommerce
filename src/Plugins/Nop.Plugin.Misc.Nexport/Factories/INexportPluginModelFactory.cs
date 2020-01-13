@@ -17,7 +17,11 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             NexportProductMappingSearchModel searchModel);
 
         NexportProductMappingListModel PrepareNexportProductMappingListModel(
-            NexportProductMappingSearchModel searchModel, Guid nexportProductId, NexportProductTypeEnum nexportProductType);
+            NexportProductMappingSearchModel searchModel, Guid nexportProductId,
+            NexportProductTypeEnum nexportProductType);
+
+        NexportProductMappingListModel PrepareNexportProductMappingListModel(
+            NexportProductMappingSearchModel searchModel, int nopProductId);
 
         NexportProductGroupMembershipMappingListModel PrepareNexportProductMappingGroupMembershipListModel(
             NexportProductGroupMembershipMappingSearchModel searchModel, int nexportProductMappingId);
@@ -26,7 +30,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         NexportCatalogListModel PrepareNexportCatalogListModel(NexportCatalogSearchModel searchModel);
 
-        NexportSyllabusListModel PrepareNexportSyllabusListMode(NexportSyllabusListSearchModel searchModel);
+        NexportSyllabusListModel PrepareNexportSyllabusListModel(NexportSyllabusListSearchModel searchModel);
 
         NexportLoginModel PrepareNexportLoginModel(bool? checkoutAsGuest);
 

@@ -13,7 +13,9 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Customers;
+using Nop.Services.Logging;
 using Nop.Services.Orders;
+using DefaultLogger = Nop.Plugin.Misc.Nexport.Infrastructure.Logging.DefaultLogger;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure
 {
@@ -26,6 +28,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             var apiConfiguration = new Configuration();
 
             builder.RegisterInstance(apiConfiguration).SingleInstance();
+
+            builder.RegisterType<DefaultLogger>().As<ILogger>().InstancePerLifetimeScope();
 
             builder.RegisterType<NexportCustomerRegistrationService>().As<ICustomerRegistrationService>().InstancePerLifetimeScope();
             builder.RegisterType<NexportOrderProcessingService>().As<IOrderProcessingService>().InstancePerLifetimeScope();
@@ -52,11 +56,6 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
            builder.RegisterType<EfRepository<NexportProductGroupMembershipMapping>>()
                .As<IRepository<NexportProductGroupMembershipMapping>>()
-               .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
-               .InstancePerLifetimeScope();
-
-           builder.RegisterType<EfRepository<NexportProductStoreMapping>>()
-               .As<IRepository<NexportProductStoreMapping>>()
                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
                .InstancePerLifetimeScope();
 

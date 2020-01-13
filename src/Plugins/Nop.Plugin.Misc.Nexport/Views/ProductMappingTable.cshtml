@@ -1,0 +1,240 @@
+﻿@using Microsoft.AspNetCore.Routing
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Web.Framework.Models.DataTables
+@using Nop.Services.Helpers
+@inject IDateTimeHelper dateTimeHelper
+
+@model NexportProductMappingListSearchModel
+
+@{
+    var productIdCol = new ColumnProperty(nameof(NexportProductMappingModel.NopProductId))
+    {
+        Title = "Product Id",
+        Width = "50",
+    };
+
+    var viewProductBtnCol = new ColumnProperty(nameof(NexportProductMappingModel.NopProductId))
+    {
+        Title = "View Product",
+        Width = "50",
+        ClassName = NopColumnClassDefaults.Button,
+        Render = new RenderButtonView(new DataUrl("~/Admin/Product/Edit/", nameof(NexportProductMappingModel.NopProductId))),
+        AutoWidth = false
+    };
+
+    var tableColumns = new List<ColumnProperty>
+{
+        new ColumnProperty(nameof(NexportProductMappingModel.StoreName))
+        {
+            Title = "Store",
+            Width = "150",
+            Render = new RenderCustom("renderStoreName")
+        },
+        new ColumnProperty(nameof(NexportProductMappingModel.NexportProductName))
+        {
+            Title = "Nexport Product Name",
+            Width = "150"
+        },
+        productIdCol,
+        new ColumnProperty(nameof(NexportProductMappingModel.Id))
+        {
+            Title = "Subscription Organization",
+            Width = "150",
+            Render = new RenderCustom("renderSubscriptionOrgName")
+        },
+        new ColumnProperty(nameof(NexportProductMappingModel.UtcLastModifiedDate))
+        {
+            Title = "Last Modified Date",
+            Width = "150",
+            Render = new RenderCustom("renderLocalDateForTableEntry")
+        },
+        new ColumnProperty(nameof(NexportProductMappingModel.UtcLastSynchronizationDate))
+        {
+            Title = "Last Synchronized Date",
+            Width = "150",
+            Render = new RenderCustom("renderLocalDateForTableEntry"),
+            AutoWidth = false
+        },
+        viewProductBtnCol,
+        new ColumnProperty(nameof(NexportProductMappingModel.Id))
+        {
+            Width = "100",
+            Render = new RenderCustom("renderViewMappingDetails"),
+            ClassName = NopColumnClassDefaults.Button,
+            AutoWidth = false
+        },
+        new ColumnProperty(nameof(NexportProductMappingModel.Id))
+        {
+            Width = "50",
+            Render = new RenderButtonRemove("Delete mapping"),
+            ClassName = NopColumnClassDefaults.Button,
+            AutoWidth = false
+        }
+    };
+
+    if (Model.NopProductId != null)
+    {
+        tableColumns.Remove(productIdCol);
+        tableColumns.Remove(viewProductBtnCol);
+
+        tableColumns.Insert(2,
+            new ColumnProperty(nameof(NexportProductMappingModel.Type))
+            {
+                Title = "Type",
+                Width = "50",
+                AutoWidth = false,
+                Render = new RenderCustom("renderMappingType")
+            });
+
+        tableColumns.Insert(3,
+            new ColumnProperty(nameof(NexportProductMappingModel.NexportCatalogId))
+            {
+                Title = "Nexport Catalog Id",
+                Width = "150",
+                AutoWidth = false,
+                Render = new RenderCustom("renderCatalogId")
+            });
+
+        tableColumns.Insert(4,
+            new ColumnProperty(nameof(NexportProductMappingModel.NexportSyllabusId))
+            {
+                Title = "Nexport Syllabus Id",
+                Width = "150",
+                AutoWidth = false
+            });
+
+        tableColumns.Insert(5,
+            new ColumnProperty(nameof(NexportProductMappingModel.NexportCatalogSyllabusLinkId))
+            {
+                Title = "Nexport Product Id",
+                Width = "150",
+                AutoWidth = false
+            });
+    }
+}
+
+@await Html.PartialAsync("Table", new DataTablesModel
+{
+    Name = "product-mappings-grid",
+    UrlRead = new DataUrl("GetProductMappings", "NexportIntegration",
+                    new RouteValueDictionary {
+                        { "nexportProductId", Model.NexportProductId },
+                        { "nexportProductType", Model.NexportProductType },
+                        { "nopProductId", Model.NopProductId }
+                    }),
+    UrlDelete = new DataUrl("DeleteMapping", "NexportIntegration", null),
+    UrlUpdate = new DataUrl("EditMapping", "NexportIntegration", null),
+    Length = Model.PageSize,
+    LengthMenu = Model.AvailablePageSizes,
+    ColumnCollection = tableColumns
+})
+
+<input type="submit" id="btnRefreshMappings" style="display: none">
+
+<script>
+    function renderStoreName(data, type, row, meta) {
+        if (data === null) {
+            return "Default";
+        }
+
+        return data;
+    }
+
+    function renderMappingType(data, type, row, meta) {
+        if (row.NexportCatalogId !== "00000000-0000-0000-0000-000000000000") {
+            if (data === +"@((int)NexportProductTypeEnum.Catalog)") {
+                return "Catalog";
+            } else if (data === +"@((int)NexportProductTypeEnum.Section)") {
+                return "Section";
+            } else if (data === +"@((int)NexportProductTypeEnum.TrainingPlan)") {
+                return "Training Plain";
+            }
+        }
+
+        return "";
+    }
+
+    function renderCatalogId(data, type, row, meta) {
+        if (data === "00000000-0000-0000-0000-000000000000") {
+            return "";
+        }
+
+        return data;
+    }
+
+    function renderViewMappingDetails(data, type, row, meta) {
+        var url;
+
+        var renderCreateMapping = row.NexportCatalogId === "00000000-0000-0000-0000-000000000000";
+        var buttonElementName;
+        var nopProductIdAvailable = @Html.Raw(Json.Serialize(Model.NopProductId.HasValue));
+
+        if (nopProductIdAvailable) {
+            buttonElementName = "Create/edit mapping";
+        } else {
+            buttonElementName = "View/edit mapping details";
+        }
+
+        if (renderCreateMapping) {
+            url = "@Url.Action("MapNexportProductPopup", "NexportIntegration")";
+            url += "?nopProductId=@Model.NopProductId";
+            var storeId = row.StoreId;
+            if (storeId) {
+                url += "&storeId=" + storeId;
+            }
+            url += "&containerId=product-mapping-container";
+
+        } else {
+            url = "@Url.Action("ProductMappingDetailsPopup", "NexportIntegration")" + "?mappingId=" + row.Id + "&containerId=";
+
+            var renderInProductPage = @Html.Raw(Json.Serialize(Model.NopProductId.HasValue));
+
+            if (renderInProductPage) {
+                url += "product-mapping-container";
+            } else {
+                if (row.Type === 0) {
+                    url += "nexport-catalog-panels";
+                } else if (row.Type === 1) {
+                    url += "nexport-section-panels";
+                } else {
+                    url += "nexport-training-plan-panels";
+                }
+            }
+        }
+
+        url += "&btnId=btnRefreshMappings";
+
+        var buttonElement = "<button onclick=\"javascript:OpenWindow('" + url + "', 800, 800, true); return false;" +
+            "\" class=\"btn btn-default\"><i class=\"fa fa-info\"></i>" + buttonElementName + "</button>";
+
+        return buttonElement;
+    }
+
+    function renderSubscriptionOrgName(data, type, row, meta) {
+        var subOrgName = row.NexportSubscriptionOrgName;
+        var displayText = subOrgName;
+
+        if (subOrgName !== null) {
+            displayText += " - " + row.NexportSubscriptionOrgShortName;
+        }
+
+        return displayText;
+    }
+
+    function renderLocalDateForTableEntry(data, type, row, meta) {
+        return data ? moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss") : null;
+    }
+
+    $(document).ready(function () {
+        //$.fn.bootstrapTypeahead = $.fn.typeahead.noConflict();
+
+        $("#btnRefreshMappings").click(function () {
+            //refresh grid
+            $("#product-mappings-grid").DataTable().ajax.reload();
+
+            //return false to don't reload a page
+            return false;
+        });
+    });
+</script>

@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Linq;
+using System.Dynamic;
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Nop.Core;
@@ -410,6 +411,47 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
+        public IActionResult GetCatalogList(Guid? orgId, int nopProductId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+                return AccessDeniedDataTablesJson();
+
+            var model = new NexportCatalogSearchModel() { OrgId = orgId, NopProductId = nopProductId };
+
+            model.SetGridPageSize();
+
+            return View("~/Plugins/Misc.Nexport/Views/MapNexportProductList.cshtml", model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AdminAntiForgery]
+        public IActionResult CatalogList(NexportCatalogSearchModel searchModel)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+                return AccessDeniedDataTablesJson();
+
+            var model = _nexportPluginModelFactory.PrepareNexportCatalogListModel(searchModel);
+
+            return Json(model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        public IActionResult SyllabusList(NexportSyllabusListSearchModel searchModel)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+                return AccessDeniedDataTablesJson();
+
+            var model = _nexportPluginModelFactory.PrepareNexportSyllabusListModel(searchModel);
+
+            return Json(model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
         public IActionResult ListCatalogs()
         {
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
@@ -464,7 +506,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedDataTablesJson();
 
-            var model = _nexportPluginModelFactory.PrepareNexportSyllabusListMode(searchModel);
+            var model = _nexportPluginModelFactory.PrepareNexportSyllabusListModel(searchModel);
 
             return Json(model);
         }
@@ -490,7 +532,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AdminAntiForgery]
-        public IActionResult GetProductMappings(NexportProductMappingSearchModel searchModel, Guid nexportProductId, NexportProductTypeEnum nexportProductType)
+        public IActionResult GetProductMappings(NexportProductMappingSearchModel searchModel, Guid? nexportProductId, NexportProductTypeEnum? nexportProductType, int? nopProductId)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedDataTablesJson();
@@ -498,7 +540,16 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedDataTablesJson();
 
-            var model = _nexportPluginModelFactory.PrepareNexportProductMappingListModel(searchModel, nexportProductId, nexportProductType);
+            var model = new NexportProductMappingListModel();
+
+            if (nexportProductId.HasValue)
+            {
+                model = _nexportPluginModelFactory.PrepareNexportProductMappingListModel(searchModel, nexportProductId.Value, nexportProductType.Value);
+            }
+            else if (nopProductId.HasValue)
+            {
+                model = _nexportPluginModelFactory.PrepareNexportProductMappingListModel(searchModel, nopProductId.Value);
+            }
 
             return Json(model);
         }
@@ -517,7 +568,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var productMapping = _nexportService.GetProductMappingById(model.Id)
                 ?? throw new ArgumentException("No product mapping found with the specified id");
 
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 // Fill entity from product
                 productMapping = model.ToEntity(productMapping);
@@ -541,8 +592,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 _nexportService.UpdateMapping(productMapping);
 
-                _nexportService.UpdateStoreMapping(productMapping, model.SelectedStoreIds);
-
                 if (!continueEditing)
                 {
                     ViewBag.ClosePage = true;
@@ -550,9 +599,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 ViewBag.RefreshPage = true;
 
-                model.UtcLastModifiedDate = productMapping.UtcLastModifiedDate;
-                model.Editable = true;
-                model.StoreMappings = _nexportService.PrepareStoreMappingSelectList(model.SelectedStoreIds);
+                model = _nexportPluginModelFactory.PrepareNexportProductMappingModel(productMapping, true);
             }
 
             return View("~/Plugins/Misc.Nexport/Views/ProductMappingDetailsPopup.cshtml", model);
@@ -643,6 +690,55 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
+        public IActionResult MapNexportProductPopup()
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
+                return AccessDeniedView();
+
+            return View("~/Plugins/Misc.Nexport/Views/MapNexportProduct.cshtml");
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [FormValueRequired("save")]
+        [AdminAntiForgery]
+        public IActionResult MapNexportProductPopup(MapNexportProductModel model)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
+                return AccessDeniedView();
+
+            dynamic result = new ExpandoObject();
+
+            try
+            {
+                _nexportService.MapNexportProduct(model);
+
+                ViewBag.RefreshPage = true;
+
+                ViewBag.ClosePage = false;
+
+                var newMapping = _nexportService.GetProductMappingByNopProductId(model.NopProductId, model.StoreId);
+
+                result.MappingId = newMapping.Id;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(
+                    $"Error occured while mapping the product [{model.NexportProductId}] with the Nexport product [{model.NexportProductId}]",
+                    ex, _workContext.CurrentCustomer);
+
+                result.Error = $"Cannot map the product [{model.NexportProductId}]  with the Nexport product [{model.NexportProductId}]";;
+                HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            }
+
+            return Json(result);
+        }
+
+        #endregion
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
         public IActionResult MapProductPopup(Guid nexportProductId, NexportProductTypeEnum nexportProductType)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
@@ -702,8 +798,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             return View("~/Plugins/Misc.Nexport/Views/AddNewNopProductWithMapping.cshtml", model);
         }
-
-        #endregion
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
@@ -819,11 +913,22 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             foreach (var item in order.OrderItems)
             {
-                var mapping = _nexportService.GetProductMappingByNopProductId(item.ProductId);
+                var mapping = _nexportService.GetProductMappingByNopProductId(item.ProductId, order.StoreId) ??
+                    _nexportService.GetProductMappingByNopProductId(item.ProductId);
 
                 if (mapping != null)
                 {
-                    _genericAttributeService.SaveAttribute(item, $"ProductMapping-{order.Id}-{item.Id}", JsonConvert.SerializeObject(mapping), order.StoreId);
+                    _genericAttributeService.SaveAttribute(item,
+                        $"ProductMapping-{order.Id}-{item.Id}",
+                        JsonConvert.SerializeObject(mapping), order.StoreId);
+
+                    var groupMembershipMappings = _nexportService.GetProductGroupMembershipMappings(mapping.Id);
+                    foreach (var groupMembershipMapping in groupMembershipMappings)
+                    {
+                        _genericAttributeService.SaveAttribute(item,
+                            $"ProductGroupMembershipMapping-{order.Id}-{item.Id}-{mapping.Id}",
+                            JsonConvert.SerializeObject(groupMembershipMapping), order.StoreId);
+                    }
                 }
             }
         }
@@ -832,8 +937,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         {
             var product = eventMessage.Entity;
 
-            var mapping = _nexportService.GetProductMappingByNopProductId(product.Id);
-            if (mapping != null)
+            var mappings = _nexportService.GetProductMappings(product.Id);
+            foreach (var mapping in mappings)
             {
                 _nexportService.DeleteMapping(mapping);
             }
@@ -884,11 +989,11 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var storeAttributes = _genericAttributeService.GetAttributesForEntity(deletedStore.Id, "Store");
             _genericAttributeService.DeleteAttributes(storeAttributes);
 
-            // Find and remove store mappings for this particular store
-            var storeMappings = _nexportService.GetProductStoreMappingsByStoreId(deletedStore.Id);
-            foreach (var storeMapping in storeMappings)
+            // Find and remove product mappings that are associated with this store
+            var mappings = _nexportService.GetProductMappingsByStoreId(deletedStore.Id);
+            foreach (var mapping in mappings)
             {
-                _nexportService.DeleteStoreMapping(storeMapping);
+                _nexportService.DeleteMapping(mapping);
             }
         }
 

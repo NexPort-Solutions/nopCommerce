@@ -451,7 +451,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public AddInvoiceItemResponse AddNexportInvoiceItem([NotNull]string url, [NotNull]string accessToken,
             Guid invoiceId, Guid productId, Enums.ProductTypeEnum productType,
-            Guid subscriptionOrgId, List<Guid> groupMembershipIds,
+            Guid subscriptionOrgId, IList<Guid> groupMembershipIds,
             decimal cost, string note = null, DateTime? accessExpirationDate = null,
             string accessExpirationTimeLimit = null)
         {
@@ -471,7 +471,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 {
                     ProductType = productType,
                     SubscriptionOrgId = subscriptionOrgId,
-                    GroupMembershipIds = groupMembershipIds,
+                    GroupMembershipIds = groupMembershipIds.ToList(),
                     Note = note,
                     Cost = cost,
                     UtcAccessExpirationDate = accessExpirationDate,
@@ -599,7 +599,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var nexportApi = new SsoApi(_apiConfiguration);
             var result =
                 nexportApi.SsoApiSignIn(accessToken,
-                    new SsoRequest(SsoRequest.DisplayEnum.Normal, userId, orgId,
+                    new SsoRequest(Enums.DisplayEnum.Normal, userId, orgId,
                     redirectEntityRequest: new RedirectEntityRequest(redirectUrl, redirectUrl, redirectUrl)));
 
             return result;
@@ -619,7 +619,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result =
                 nexportApi.SsoApiClassroom(accessToken,
-                    new ClassroomSsoRequest(ClassroomSsoRequest.DisplayEnum.Normal, enrollmentId,
+                    new ClassroomSsoRequest(Enums.DisplayEnum.Normal, enrollmentId,
                     new RedirectEntityRequest(redirectUrl, redirectUrl, redirectUrl)));
 
             return result;
@@ -657,7 +657,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var nexportApi = new LearningApi(_apiConfiguration);
 
             var result =
-                nexportApi.LearningApiGetTrainingPlanEnrollments(accessToken, orgId, subscriberId: userId, syllabusId: syllabusId).FirstOrDefault();
+                nexportApi.LearningApiGetTrainingPlanEnrollments(accessToken, orgId, userId: userId, syllabusId: syllabusId).FirstOrDefault();
 
             return result;
         }
