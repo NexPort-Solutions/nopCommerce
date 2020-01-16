@@ -7,6 +7,8 @@
     var productId = int.Parse(Context.Request.Query["nopProductId"]);
     var containerId = Context.Request.Query["containerId"];
     var refreshMappingBtnId = Context.Request.Query["btnId"];
+    var updateProductValue = Context.Request.Query["updateProduct"];
+    var updateProduct = !string.IsNullOrWhiteSpace(updateProductValue) && bool.Parse(updateProductValue);
 }
 
 @if (ViewBag.RefreshPage == true)
@@ -33,7 +35,14 @@
       asp-route-containerId="@containerId" id="map-nexport-product-form">
     <div class="content-header clearfix">
         <h1 class="pull-left">
-            Map product
+            @if (updateProduct)
+            {
+                <text>Update product mapping</text>
+            }
+            else
+            {
+                <text>Map product</text>
+            }
         </h1>
         <div class="pull-right">
         </div>
@@ -57,7 +66,14 @@
                         <button type="submit" name="save" class="btn bg-blue">
                             <i class="fa fa-floppy-o"></i>
                             @*@T("Admin.Common.Save")*@
-                            Create new mapping
+                            @if (updateProduct)
+                            {
+                                <text>Update mapping</text>
+                            }
+                            else
+                            {
+                                <text>Create new mapping</text>
+                            }
                         </button>
                         <div id="error-msg-container" style="padding-top: 10px; color: red; display: none;"></div>
                     </div>
@@ -102,7 +118,6 @@
                     type: "POST",
                     data: serializedData,
                     success: function(result) {
-
                         if (result && result.MappingId) {
                             try {
                                 window.opener.$("#@(containerId) #@(refreshMappingBtnId)").click();

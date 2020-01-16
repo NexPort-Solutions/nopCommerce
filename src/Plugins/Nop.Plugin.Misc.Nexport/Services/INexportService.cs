@@ -50,9 +50,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         NexportProductMapping GetProductMappingById(int mappingId);
 
-        void DeleteMapping(NexportProductMapping mapping);
+        void DeleteNexportProductMapping(NexportProductMapping mapping);
 
-        void UpdateMapping(NexportProductMapping mapping);
+        void UpdateNexportProductMapping(NexportProductMapping mapping);
 
         NexportProductGroupMembershipMapping GetProductGroupMembershipMappingById(int mappingId);
 

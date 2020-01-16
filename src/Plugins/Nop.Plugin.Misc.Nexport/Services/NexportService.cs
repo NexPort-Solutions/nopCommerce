@@ -917,7 +917,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     productMapping.IsSynchronized = true;
                     productMapping.UtcLastSynchronizationDate = DateTime.UtcNow;
 
-                    UpdateMapping(productMapping);
+                    UpdateNexportProductMapping(productMapping);
 
                     _logger.Debug($"Successfully synchronized product {productMapping.NopProductId} with Nexport using the information from mapping {productMapping.Id}");
                 }

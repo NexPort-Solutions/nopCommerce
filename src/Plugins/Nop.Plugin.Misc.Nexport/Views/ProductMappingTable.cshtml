@@ -1,4 +1,5 @@
-﻿@using Microsoft.AspNetCore.Routing
+﻿@using System.Net
+@using Microsoft.AspNetCore.Routing
 @using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Models
 @using Nop.Web.Framework.Models.DataTables
@@ -66,8 +67,15 @@
         },
         new ColumnProperty(nameof(NexportProductMappingModel.Id))
         {
+            Width = "100",
+            Render = new RenderCustom("renderModifyProductMapping"),
+            ClassName = NopColumnClassDefaults.Button,
+            AutoWidth = false
+        },
+        new ColumnProperty(nameof(NexportProductMappingModel.Id))
+        {
             Width = "50",
-            Render = new RenderButtonRemove("Delete mapping"),
+            Render = new RenderCustom("renderDeleteMapping"),
             ClassName = NopColumnClassDefaults.Button,
             AutoWidth = false
         }
@@ -130,9 +138,13 @@
     ColumnCollection = tableColumns
 })
 
+<span style="color: red;">* Default mapping cannot be removed once it has been mapped. However, it can be modified to a different product.</span>
+
 <input type="submit" id="btnRefreshMappings" style="display: none">
 
 <script>
+    var hasDefaultMapping = false;
+
     function renderStoreName(data, type, row, meta) {
         if (data === null) {
             return "Default";
@@ -167,13 +179,13 @@
         var url;
 
         var renderCreateMapping = row.NexportCatalogId === "00000000-0000-0000-0000-000000000000";
-        var buttonElementName;
-        var nopProductIdAvailable = @Html.Raw(Json.Serialize(Model.NopProductId.HasValue));
+        var buttonName;
+        var nopProductIdAvailable = @Json.Serialize(Model.NopProductId.HasValue);
 
         if (nopProductIdAvailable) {
-            buttonElementName = "Create/edit mapping";
+            buttonName = "Create/edit mapping";
         } else {
-            buttonElementName = "View/edit mapping details";
+            buttonName = "View/edit mapping details";
         }
 
         if (renderCreateMapping) {
@@ -184,11 +196,10 @@
                 url += "&storeId=" + storeId;
             }
             url += "&containerId=product-mapping-container";
-
         } else {
             url = "@Url.Action("ProductMappingDetailsPopup", "NexportIntegration")" + "?mappingId=" + row.Id + "&containerId=";
 
-            var renderInProductPage = @Html.Raw(Json.Serialize(Model.NopProductId.HasValue));
+            var renderInProductPage = @Json.Serialize(Model.NopProductId.HasValue);
 
             if (renderInProductPage) {
                 url += "product-mapping-container";
@@ -205,8 +216,62 @@
 
         url += "&btnId=btnRefreshMappings";
 
-        var buttonElement = "<button onclick=\"javascript:OpenWindow('" + url + "', 800, 800, true); return false;" +
-            "\" class=\"btn btn-default\"><i class=\"fa fa-info\"></i>" + buttonElementName + "</button>";
+        var buttonFunction = "javascript:OpenWindow('" + url + "', 800, 800, true); return false;";
+
+        if (renderCreateMapping && row.StoreId && !hasDefaultMapping) {
+            return renderCustomButton(buttonFunction, "fa fa-info", buttonName, true);
+        }
+
+        return renderCustomButton(buttonFunction, "fa fa-info", buttonName);;
+    }
+
+    function renderDeleteMapping(data, type, row, meta) {
+        if (!row.StoreId)
+            return "";
+
+        var buttonFunction = "deleteMapping('" + data + "');return false;";
+
+        var buttonElement = +data < 1
+            ? renderCustomButton(buttonFunction, "fa fa-remove", "Delete mapping", true)
+            : renderCustomButton(buttonFunction, "fa fa-remove", "Delete mapping");
+
+        return buttonElement;
+    }
+
+    function renderModifyProductMapping(data, type, row, meta) {
+        var url = "@Url.Action("MapNexportProductPopup", "NexportIntegration")";
+        url += "?nopProductId=@Model.NopProductId";
+        var storeId = row.StoreId;
+        if (storeId) {
+            url += "&storeId=" + storeId;
+        }
+        url += "&updateProduct=true&containerId=product-mapping-container&btnId=btnRefreshMappings";
+
+        var buttonFunction = "javascript:OpenWindow('" + url + "', 800, 800, true); return false;";
+
+        if (+data < 1) {
+            return renderCustomButton(buttonFunction, "fa fa-pencil", "Modify product mapping", true);
+        }
+
+        return renderCustomButton(buttonFunction, "fa fa-pencil", "Modify product mapping");
+    }
+
+    function renderCustomButton(buttonFunction, buttonIconClass, buttonName, renderDisabled) {
+        if (!buttonIconClass) {
+            throw "Button icon class is missing!";
+        }
+
+        if (!buttonName) {
+            throw "Cannot render button without a name!";
+        }
+
+        var buttonElement = "<button class=\"btn btn-default\" onclick=\"" + buttonFunction + "\"";
+
+        if (renderDisabled) {
+            buttonElement += " disabled";
+        }
+
+        buttonElement += "><i class=\""+ buttonIconClass + "\"></i>"+ buttonName + "</button>";
 
         return buttonElement;
     }
@@ -226,15 +291,61 @@
         return data ? moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss") : null;
     }
 
+    function deleteMapping(dataId) {
+        if (dataId < 1) {
+            return false;
+        }
+
+        if (confirm("@T("Admin.Common.DeleteConfirmation")")) {
+            var postData = {
+                id: dataId
+            };
+            addAntiForgeryToken(postData);
+
+            $.ajax({
+                url: "@Url.Action("DeleteMapping","NexportIntegration")",
+                type: "@WebRequestMethods.Http.Post",
+                dataType: "json",
+                data: postData,
+                success: function (data, textStatus, jqXHR) {
+                    // Display error if returned
+                    if (data) {
+                        display_nop_error(data);
+                    }
+                    // Refresh grid
+                    $("#product-mappings-grid").DataTable().draw(false);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+        else {
+            return false;
+        }
+    }
+
     $(document).ready(function () {
-        //$.fn.bootstrapTypeahead = $.fn.typeahead.noConflict();
+        $("#product-mapping-container").on("xhr.dt", "#product-mappings-grid",
+            function(e, settings, json, xhr) {
+                if (json.data) {
+                    if (json.data[0].NopProductId !== 0) {
+                        hasDefaultMapping = true;
+                    } else {
+                        hasDefaultMapping = false;
+                    }
+                }
+            });
+
 
         $("#btnRefreshMappings").click(function () {
-            //refresh grid
-            $("#product-mappings-grid").DataTable().ajax.reload();
+            // Refresh grid
+            $("#product-mappings-grid").DataTable().draw(false);
 
-            //return false to don't reload a page
+            // Return false to don't reload a page
             return false;
         });
     });
+
+    //# sourceURL=ProductMappingTable.js
 </script>

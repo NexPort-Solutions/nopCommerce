@@ -590,7 +590,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 productMapping.UtcLastModifiedDate = DateTime.UtcNow;
 
-                _nexportService.UpdateMapping(productMapping);
+                _nexportService.UpdateNexportProductMapping(productMapping);
 
                 if (!continueEditing)
                 {
@@ -617,7 +617,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var mapping = _nexportService.GetProductMappingById(id) ??
                           throw new Exception($"No nexport mapping found with the specified id {id}");
 
-            _nexportService.DeleteMapping(mapping);
+            _nexportService.DeleteNexportProductMapping(mapping);
 
             return new NullJsonResult();
         }
@@ -940,7 +940,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var mappings = _nexportService.GetProductMappings(product.Id);
             foreach (var mapping in mappings)
             {
-                _nexportService.DeleteMapping(mapping);
+                _nexportService.DeleteNexportProductMapping(mapping);
             }
         }
 
@@ -993,7 +993,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var mappings = _nexportService.GetProductMappingsByStoreId(deletedStore.Id);
             foreach (var mapping in mappings)
             {
-                _nexportService.DeleteMapping(mapping);
+                _nexportService.DeleteNexportProductMapping(mapping);
             }
         }
 

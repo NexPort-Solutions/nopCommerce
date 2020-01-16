@@ -411,7 +411,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return mappingId == 0 ? null : _nexportProductMappingRepository.GetById(mappingId);
         }
 
-        public void DeleteMapping(NexportProductMapping mapping)
+        public void DeleteNexportProductMapping(NexportProductMapping mapping)
         {
             if (mapping == null)
                 throw new ArgumentNullException(nameof(mapping));
@@ -425,7 +425,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _eventPublisher.EntityDeleted(mapping);
         }
 
-        public void UpdateMapping(NexportProductMapping mapping)
+        public void UpdateNexportProductMapping(NexportProductMapping mapping)
         {
             if (mapping == null)
                 throw new ArgumentNullException(nameof(mapping));
@@ -703,12 +703,23 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var product = _productService.GetProductById(model.NopProductId);
             if (product != null)
             {
-                var newProductMapping = new NexportProductMapping()
+                var updateProductMapping = false;
+
+                var productMapping = GetProductMappingByNopProductId(product.Id, model.StoreId);
+                if (productMapping != null)
                 {
-                    NopProductId = product.Id,
-                    DisplayName = product.Name,
-                    Type = model.NexportProductType
-                };
+                    productMapping.Type = model.NexportProductType;
+                    updateProductMapping = true;
+                }
+                else
+                {
+                    productMapping = new NexportProductMapping()
+                    {
+                        NopProductId = product.Id,
+                        DisplayName = product.Name,
+                        Type = model.NexportProductType
+                    };
+                }
 
                 switch (model.NexportProductType)
                 {
@@ -716,16 +727,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         var catalogDetails = GetCatalogDetails(model.NexportProductId);
                         var catalogCreditHours = GetCatalogCreditHours(model.NexportProductId);
 
-                        var existingProductCatalogs = GetProductCatalogsByCatalogId(model.NexportProductId, showHidden: true);
-
-                        if (FindProductCatalog(existingProductCatalogs, product.Id, model.NexportProductId, model.StoreId) != null)
-                            return;
-
-                        newProductMapping.NexportProductName = catalogDetails.Name;
-                        newProductMapping.NexportCatalogId = model.NexportCatalogId;
-                        newProductMapping.PricingModel = catalogDetails.PricingModel;
-                        newProductMapping.PublishingModel = catalogDetails.PublishingModel;
-                        newProductMapping.CreditHours = catalogCreditHours.CreditHours;
+                        productMapping.NexportProductName = catalogDetails.Name;
+                        productMapping.NexportCatalogId = model.NexportCatalogId;
+                        productMapping.PricingModel = catalogDetails.PricingModel;
+                        productMapping.PublishingModel = catalogDetails.PublishingModel;
+                        productMapping.CreditHours = catalogCreditHours.CreditHours;
 
                         break;
 
@@ -735,20 +741,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                         var sectionDetails = GetSectionDetails(model.NexportSyllabusId.Value);
 
-                        var existingProductSections = GetProductSectionsBySectionId(model.NexportSyllabusId.Value, showHidden: true);
-
-                        if (FindProductSection(existingProductSections, product.Id, model.NexportSyllabusId.Value, model.StoreId) != null)
-                            return;
-
-                        newProductMapping.NexportProductName = sectionDetails.Title;
-                        newProductMapping.NexportCatalogId = model.NexportCatalogId;
-                        newProductMapping.NexportSyllabusId = model.NexportSyllabusId;
-                        newProductMapping.NexportCatalogSyllabusLinkId = model.NexportProductId;
-                        newProductMapping.UtcAvailableDate = sectionDetails.EnrollmentStart;
-                        newProductMapping.UtcEndDate = sectionDetails.EnrollmentEnd;
-                        newProductMapping.UtcLastModifiedDate = sectionDetails.UtcDateLastModified;
-                        newProductMapping.CreditHours = sectionDetails.CreditHours;
-                        newProductMapping.SectionCeus = sectionDetails.SectionCeus;
+                        productMapping.NexportProductName = sectionDetails.Title;
+                        productMapping.NexportCatalogId = model.NexportCatalogId;
+                        productMapping.NexportSyllabusId = model.NexportSyllabusId;
+                        productMapping.NexportCatalogSyllabusLinkId = model.NexportProductId;
+                        productMapping.UtcAvailableDate = sectionDetails.EnrollmentStart;
+                        productMapping.UtcEndDate = sectionDetails.EnrollmentEnd;
+                        productMapping.UtcLastModifiedDate = sectionDetails.UtcDateLastModified;
+                        productMapping.CreditHours = sectionDetails.CreditHours;
+                        productMapping.SectionCeus = sectionDetails.SectionCeus;
 
                         break;
 
@@ -758,19 +759,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                         var trainingPlanDetails = GetTrainingPlanDetails(model.NexportSyllabusId.Value);
 
-                        var existingProductTrainingPlan = GetProductTrainingPlansByTrainingPlanId(model.NexportSyllabusId.Value, showHidden: true);
-
-                        if (FindProductTrainingPlan(existingProductTrainingPlan, product.Id, model.NexportSyllabusId.Value, model.StoreId) != null)
-                            return;
-
-                        newProductMapping.NexportProductName = trainingPlanDetails.Name;
-                        newProductMapping.NexportCatalogId = model.NexportCatalogId;
-                        newProductMapping.NexportSyllabusId = model.NexportSyllabusId;
-                        newProductMapping.NexportCatalogSyllabusLinkId = model.NexportProductId;
-                        newProductMapping.UtcAvailableDate = trainingPlanDetails.EnrollmentStart;
-                        newProductMapping.UtcEndDate = trainingPlanDetails.EnrollmentEnd;
-                        newProductMapping.UtcLastModifiedDate = trainingPlanDetails.UtcDateLastModified;
-                        newProductMapping.CreditHours = trainingPlanDetails.CreditHours;
+                        productMapping.NexportProductName = trainingPlanDetails.Name;
+                        productMapping.NexportCatalogId = model.NexportCatalogId;
+                        productMapping.NexportSyllabusId = model.NexportSyllabusId;
+                        productMapping.NexportCatalogSyllabusLinkId = model.NexportProductId;
+                        productMapping.UtcAvailableDate = trainingPlanDetails.EnrollmentStart;
+                        productMapping.UtcEndDate = trainingPlanDetails.EnrollmentEnd;
+                        productMapping.UtcLastModifiedDate = trainingPlanDetails.UtcDateLastModified;
+                        productMapping.CreditHours = trainingPlanDetails.CreditHours;
 
                         break;
 
@@ -780,10 +776,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (model.StoreId.HasValue)
                 {
-                    newProductMapping.StoreId = model.StoreId.Value;
+                    productMapping.StoreId = model.StoreId.Value;
                 }
 
-                InsertNexportProductMapping(newProductMapping);
+                if (updateProductMapping)
+                {
+                    UpdateNexportProductMapping(productMapping);
+                }
+                else
+                {
+                    InsertNexportProductMapping(productMapping);
+                }
             }
         }
 
