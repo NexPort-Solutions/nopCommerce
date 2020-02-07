@@ -1,14 +1,17 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage;
 using Nop.Core;
+using Nop.Core.Data;
 
 namespace Nop.Data.Extensions
 {
@@ -158,7 +161,7 @@ namespace Nop.Data.Extensions
             //try to get the EF database context
             if (!(context is DbContext dbContext))
                 throw new InvalidOperationException("Context does not support operation");
-            
+
             var entityTypeFullName = typeof(TEntity).FullName;
             if (!tableNames.ContainsKey(entityTypeFullName))
             {
@@ -196,7 +199,7 @@ namespace Nop.Data.Extensions
                 var entityType = dbContext.Model.FindEntityType(typeof(TEntity));
 
                 //get property name - max length pairs
-                columnsMaxLength.TryAdd(entityTypeFullName, 
+                columnsMaxLength.TryAdd(entityTypeFullName,
                     entityType.GetProperties().Select(property => (property.Name, property.GetMaxLength())));
             }
 
@@ -260,7 +263,7 @@ namespace Nop.Data.Extensions
             if (!(context is DbContext dbContext))
                 throw new InvalidOperationException("Context does not support operation");
 
-            if (!string.IsNullOrEmpty(databaseName)) 
+            if (!string.IsNullOrEmpty(databaseName))
                 return databaseName;
 
             //get database connection
@@ -301,6 +304,32 @@ namespace Nop.Data.Extensions
                 return;
 
             context.ExecuteSqlScript(File.ReadAllText(filePath));
+        }
+
+        /// <summary>
+        /// Configure Azure access token for the database connection
+        /// </summary>
+        /// <param name="context">Database context</param>
+        public static void ConfigureAzureAccessToken(this IDbContext context)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+
+            //try to get the EF database context
+            if (!(context is DbContext dbContext))
+                throw new InvalidOperationException("Context does not support operation");
+
+            //get database connection
+            var dbConnection = (SqlConnection) dbContext.Database.GetDbConnection();
+
+            var dataSettings = DataSettingsManager.LoadSettings();
+
+            if (dataSettings.UseAzureIntegratedSecurity)
+            {
+                dbConnection.AccessToken = new AzureServiceTokenProvider()
+                    .GetAccessTokenAsync("https://database.windows.net/")
+                    .GetAwaiter().GetResult();
+            }
         }
 
         #endregion

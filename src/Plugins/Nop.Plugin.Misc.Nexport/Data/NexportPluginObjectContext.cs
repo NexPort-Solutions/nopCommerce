@@ -12,6 +12,7 @@ namespace Nop.Plugin.Misc.Nexport.Data
     {
         public NexportPluginObjectContext(DbContextOptions<NexportPluginObjectContext> options) : base(options)
         {
+            this.ConfigureAzureAccessToken();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

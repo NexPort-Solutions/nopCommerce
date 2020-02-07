@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Data;
 using System.Data.Common;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.EntityFrameworkCore;
 using Nop.Core;
+using Nop.Core.Data;
+using Nop.Data.Extensions;
 using Nop.Data.Mapping;
 
 namespace Nop.Data
@@ -18,6 +22,7 @@ namespace Nop.Data
 
         public NopObjectContext(DbContextOptions<NopObjectContext> options) : base(options)
         {
+            this.ConfigureAzureAccessToken();
         }
 
         #endregion
