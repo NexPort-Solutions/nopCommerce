@@ -1,0 +1,21 @@
+﻿@using Nop.Plugin.Sale.CancelPendingOrderRequests.Services
+
+@inject IPendingOrderCancellationRequestService pendingOrderCancellationRequestService
+
+@model Nop.Web.Models.Order.OrderDetailsModel
+
+@{
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Sale.CancelPendingOrderRequests/Content/cancel_pending_order_plugin.css");
+}
+
+<div class="cancellation-request-container">
+    @if (pendingOrderCancellationRequestService.HasCancellationRequestForOrder(Model.Id))
+    {
+        <div class="cancellation-request-notice"><p>@T("CancellationRequests.ActiveNotice")</p></div>
+    }
+    else
+    {
+        <input type="button" value="Request Cancellation" class="button-2 order-cancel-request-button"
+               onclick="setLocation('@Url.RouteUrl("CancelPendingOrderRequest", new {orderId = Model.Id})')">
+    }
+</div>

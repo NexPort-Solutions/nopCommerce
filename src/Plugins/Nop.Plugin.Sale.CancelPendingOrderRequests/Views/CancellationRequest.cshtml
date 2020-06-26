@@ -1,0 +1,57 @@
+﻿@model Nop.Plugin.Sale.CancelPendingOrderRequests.Models.SubmitCancellationRequestModel
+
+@{
+    Layout = "_ColumnsOne";
+
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Sale.CancelPendingOrderRequests/Content/cancel_pending_order_plugin.css");
+
+    Html.AddTitleParts("Request Order Cancellation");
+}
+
+<div class="page cancellation-request-page">
+    <div class="page-title">
+        <h1>@Html.Raw($"Cancel <a href=\"{Url.RouteUrl("OrderDetails", new {orderId = Model.OrderId})}\">order #{Model.OrderId}</a>")</h1>
+    </div>
+    <div class="page-body">
+        @if (!string.IsNullOrEmpty(Model.Result))
+        {
+            <div class="result">
+                @Model.Result
+            </div>
+        }
+        else
+        {
+            <form asp-route="CancellationRequest" method="post">
+                <div class="fieldset">
+                    <div class="title">
+                        <strong>
+                            @T("CancellationRequests.WhyCancelling")
+                        </strong>
+                    </div>
+                    <div class="form-fields">
+                        <div class="inputs">
+                            @{
+                                var reasonsSelectList = Model.AvailableCancelReasons.Select(x => new SelectListItem
+                                {
+                                    Text = x.Name,
+                                    Value = x.Id.ToString()
+                                }).ToList();
+                            }
+                            <label asp-for="CancellationRequestReasonId" asp-postfix=":"></label>
+                            <select asp-for="CancellationRequestReasonId" asp-items="@reasonsSelectList" class="cancel-reasons"></select>
+                        </div>
+                        <div class="inputs">
+                            <label asp-for="Comments" asp-postfix=":"></label>
+                            <textarea asp-for="Comments" class="comment"></textarea>
+                            <span asp-validation-for="Comments"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="buttons">
+                    <input type="submit" name="submit-cancellation-request" class="button-1 submit-cancellation-request-button"
+                           value="@T("CancellationRequests.Submit")" />
+                </div>
+            </form>
+        }
+    </div>
+</div>

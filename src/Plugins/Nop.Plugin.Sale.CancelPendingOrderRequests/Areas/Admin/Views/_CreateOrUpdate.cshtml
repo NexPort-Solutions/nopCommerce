@@ -1,0 +1,95 @@
+﻿@using Nop.Services
+
+@model Nop.Plugin.Sale.CancelPendingOrderRequests.Models.PendingOrderCancellationRequestModel
+
+<div asp-validation-summary="All"></div>
+
+<div class="content">
+    <div class="form-horizontal">
+        <div class="panel-group">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="Id" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.Id</div>
+                            <input asp-for="Id" type="hidden" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="OrderId" />
+                        </div>
+                        <div class="col-md-9">
+                            @if (Model.OrderId > 0)
+                            {
+                                <a asp-controller="Order" asp-action="Edit" asp-route-id="@Model.OrderId">@Model.OrderId</a>
+                                <input asp-for="OrderId" type="hidden" />
+                            }
+                            else
+                            {
+                                <text>Order has been deleted</text>
+                            }
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="CustomerId" />
+                        </div>
+                        <div class="col-md-9">
+                            <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.CustomerId">@Model.CustomerInfo</a>
+                            <input asp-for="CustomerId" type="hidden" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="RequestStatus" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-select asp-for="RequestStatus" asp-items="@(Model.RequestStatus.ToSelectList())" />
+                            <span asp-validation-for="RequestStatus"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="ReasonForCancellation" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="ReasonForCancellation" asp-required="true" />
+                            <span asp-validation-for="ReasonForCancellation"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="CustomerComments" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-textarea asp-for="CustomerComments" />
+                            <span asp-validation-for="CustomerComments"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="StaffNotes" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-textarea asp-for="StaffNotes" />
+                            <span asp-validation-for="StaffNotes"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="UtcCreatedDate" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.UtcCreatedDate</div>
+                            <input asp-for="UtcCreatedDate" type="hidden" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

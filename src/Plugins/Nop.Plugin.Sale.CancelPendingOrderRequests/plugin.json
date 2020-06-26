@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Sale",
+  "FriendlyName": "Cancel pending order requests",
+  "SystemName": "Sale.CancelPendingOrderRequests",
+  "Version": "1.00",
+  "SupportedVersions": [ "4.20" ],
+  "Author": "Nexport Solutions",
+  "DisplayOrder": 1002,
+  "FileName": "Nop.Plugin.Sale.CancelPendingOrderRequests.dll",
+  "Description": "This plugin allows customers to request the cancellation for pending orders and allows administrators to manage those requests"
+}
