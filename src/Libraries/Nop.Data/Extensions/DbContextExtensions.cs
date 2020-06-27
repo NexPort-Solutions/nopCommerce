@@ -306,32 +306,6 @@ namespace Nop.Data.Extensions
             context.ExecuteSqlScript(File.ReadAllText(filePath));
         }
 
-        /// <summary>
-        /// Configure Azure access token for the database connection
-        /// </summary>
-        /// <param name="context">Database context</param>
-        public static void ConfigureAzureAccessToken(this IDbContext context)
-        {
-            if (context == null)
-                throw new ArgumentNullException(nameof(context));
-
-            //try to get the EF database context
-            if (!(context is DbContext dbContext))
-                throw new InvalidOperationException("Context does not support operation");
-
-            //get database connection
-            var dbConnection = (SqlConnection) dbContext.Database.GetDbConnection();
-
-            var dataSettings = DataSettingsManager.LoadSettings();
-
-            if (dataSettings.UseAzureIntegratedSecurity)
-            {
-                dbConnection.AccessToken = new AzureServiceTokenProvider()
-                    .GetAccessTokenAsync("https://database.windows.net/")
-                    .GetAwaiter().GetResult();
-            }
-        }
-
         #endregion
     }
 }

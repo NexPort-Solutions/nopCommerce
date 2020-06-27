@@ -64,9 +64,6 @@ namespace Nop.Core.Data
                             case "DataConnectionString":
                                 dataSettings.DataConnectionString = value;
                                 continue;
-                            case "UseAzureIntegratedSecurity":
-                                dataSettings.UseAzureIntegratedSecurity = value.Equals("true", StringComparison.OrdinalIgnoreCase);
-                                continue;
                             default:
                                 dataSettings.RawDataSettings.Add(key, value);
                                 continue;

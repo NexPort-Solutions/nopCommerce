@@ -22,7 +22,6 @@ namespace Nop.Data
 
         public NopObjectContext(DbContextOptions<NopObjectContext> options) : base(options)
         {
-            this.ConfigureAzureAccessToken();
         }
 
         #endregion
