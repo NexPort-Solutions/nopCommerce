@@ -59,8 +59,11 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
         {
             _cancelPendingOrderRequestsObjectContext.Install();
 
-            _widgetSettings.ActiveWidgetSystemNames.Add(PluginDescriptor.SystemName);
-            _settingService.SaveSetting(_widgetSettings);
+            if (!_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
+            {
+                _widgetSettings.ActiveWidgetSystemNames.Add(PluginDefaults.SystemName);
+                _settingService.SaveSetting(_widgetSettings);
+            }
 
             _cancelCancelPendingOrderRequestsPluginService.AddActivityLogTypes();
             _cancelCancelPendingOrderRequestsPluginService.AddMessageTemplates();
@@ -71,6 +74,12 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
 
         public override void Uninstall()
         {
+            if (_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
+            {
+                _widgetSettings.ActiveWidgetSystemNames.Remove(PluginDefaults.SystemName);
+                _settingService.SaveSetting(_widgetSettings);
+            }
+
             _cancelCancelPendingOrderRequestsPluginService.DeleteMessageTemplates();
             _cancelCancelPendingOrderRequestsPluginService.DeleteActivityLogTypes();
             _cancelCancelPendingOrderRequestsPluginService.DeleteResources();
@@ -96,12 +105,18 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
                 // Ignore
             }
 
+            var versionSetting = _settingService.GetSetting(PluginDefaults.ASSEMBLY_VERSION_KEY);
+            if (versionSetting != null)
+            {
+                _settingService.DeleteSetting(versionSetting);
+            }
+
             _cancelPendingOrderRequestsObjectContext.Uninstall();
 
             base.Uninstall();
         }
 
-        public bool HideInWidgetList => false;
+        public bool HideInWidgetList => true;
 
         public IList<string> GetWidgetZones()
         {

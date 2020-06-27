@@ -2,6 +2,8 @@
 {
     public class PluginDefaults
     {
+        public const string SystemName = "Sale.CancelPendingOrderRequests";
+
         /// <summary>
         /// Assembly version key for provisioning
         /// </summary>

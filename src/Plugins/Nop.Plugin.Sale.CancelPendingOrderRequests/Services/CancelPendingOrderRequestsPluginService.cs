@@ -220,7 +220,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             _localizationService.DeletePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.StoreOwnerNotification");
             _localizationService.DeletePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.CustomerNotification");
             _localizationService.DeletePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.CancellationRequestAccepted.CustomerNotification");
-            _localizationService.DeletePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.CancellationRequestAccepted.CustomerNotification");
+            _localizationService.DeletePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.CancellationRequestRejected.CustomerNotification");
         }
     }
 }
