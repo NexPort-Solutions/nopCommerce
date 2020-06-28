@@ -172,6 +172,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.PendingOrderCancellationRequests.Fields.UtcCreatedDate", "Created on");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.PendingOrderCancellationRequests.Fields.UtcCreatedDate.Hint", "The date/time the request was made");
             _localizationService.AddOrUpdatePluginLocaleResource("ActivityLog.EditCancellationRequest", "Edited a cancellation request (ID = {0})");
+            _localizationService.AddOrUpdatePluginLocaleResource("ActivityLog.DeleteCancellationRequest", "Deleted a cancellation request (ID = {0})");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.StoreOwnerNotification", "This message template is used when a new cancellation request is created. The message is received by a store owner.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.CustomerNotification", "This message template is used to notify a customer about a new cancellation request submitted from his/her account.");
@@ -216,6 +217,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             _localizationService.DeletePluginLocaleResource("Admin.PendingOrderCancellationRequests.Fields.UtcCreatedDate");
             _localizationService.DeletePluginLocaleResource("Admin.PendingOrderCancellationRequests.Fields.UtcCreatedDate.Hint");
             _localizationService.DeletePluginLocaleResource("ActivityLog.EditCancellationRequest");
+            _localizationService.DeletePluginLocaleResource("ActivityLog.DeleteCancellationRequest");
 
             _localizationService.DeletePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.StoreOwnerNotification");
             _localizationService.DeletePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.CustomerNotification");
