@@ -17,6 +17,9 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
             CreateMap<PendingOrderCancellationRequest, PendingOrderCancellationRequestModel>()
                 .ForMember(model => model.CustomerInfo, opts => opts.Ignore());
             CreateMap<PendingOrderCancellationRequestModel, PendingOrderCancellationRequest>();
+
+            CreateMap<PendingOrderCancellationRequestReason, PendingOrderCancellationRequestReasonModel>();
+            CreateMap<PendingOrderCancellationRequestReasonModel, PendingOrderCancellationRequestReason>();
         }
 
         public int Order => 1;

@@ -12,9 +12,7 @@
 @{
     ViewBag.Title = T("Admin.PendingOrderCancellationRequests").Text;
     Html.SetActiveMenuItemSystemName("Cancellation requests");
-}
 
-@{
     const string hideSearchBlockAttributeName = "CancellationRequestsPage.HideSearchBlock";
     var hideSearchBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideSearchBlockAttributeName);
 }
@@ -37,7 +35,6 @@
                     </div>
 
                     <div class="search-body @(hideSearchBlock ? "closed" : "")">
-
                         <div class="row">
                             <div class="col-md-5">
                                 <div class="form-group">
@@ -116,19 +113,19 @@
                             },
                             new ColumnProperty(nameof(PendingOrderCancellationRequestModel.CustomerId))
                             {
-                                Title = "Customer",
+                                Title = T("Admin.PendingOrderCancellationRequests.Fields.Customer").Text,
                                 Width = "350",
                                 Render = new RenderCustom("renderCustomerInfo")
                             },
                             new ColumnProperty(nameof(PendingOrderCancellationRequestModel.RequestStatus))
                             {
-                                Title = "Status",
+                                Title = T("Admin.PendingOrderCancellationRequests.Fields.RequestStatus").Text,
                                 Width = "200",
                                 Render = new RenderCustom("renderStatusInfo")
                             },
                             new ColumnProperty(nameof(PendingOrderCancellationRequestModel.UtcCreatedDate))
                             {
-                                Title = "Created Date",
+                                Title = T("Admin.PendingOrderCancellationRequests.Fields.UtcCreatedDate").Text,
                                 Width = "100",
                                 Render = new RenderDate()
                             },

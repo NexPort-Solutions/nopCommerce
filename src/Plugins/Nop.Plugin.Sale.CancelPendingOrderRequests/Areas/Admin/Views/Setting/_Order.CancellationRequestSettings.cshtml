@@ -1,0 +1,5 @@
+﻿@model Nop.Plugin.Sale.CancelPendingOrderRequests.Models.CancellationRequestSettingsModel
+
+<div class="panel-body">
+    @await Html.PartialAsync("../CancellationRequest/_CancellationRequestReasons.cshtml", Model.CancellationRequestReasonSearchModel)
+</div>

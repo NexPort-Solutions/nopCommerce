@@ -169,6 +169,39 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             return cancellationRequests;
         }
 
+        public void InsertCancellationRequestReason(PendingOrderCancellationRequestReason cancellationRequestReason)
+        {
+            if (cancellationRequestReason == null)
+                throw new ArgumentNullException(nameof(cancellationRequestReason));
+
+            _pendingOrderCancellationRequestReasonRepository.Insert(cancellationRequestReason);
+
+            _eventPublisher.EntityInserted(cancellationRequestReason);
+        }
+
+        public void DeleteCancellationRequestReason(PendingOrderCancellationRequestReason cancellationRequestReason)
+        {
+            if (cancellationRequestReason == null)
+                throw new ArgumentNullException(nameof(cancellationRequestReason));
+
+            if (_pendingOrderCancellationRequestReasonRepository.TableNoTracking.Count() == 1)
+                throw new NopException("You cannot delete cancellation request reason. At least one cancellation request reason is required.");
+
+            _pendingOrderCancellationRequestReasonRepository.Delete(cancellationRequestReason);
+
+            _eventPublisher.EntityDeleted(cancellationRequestReason);
+        }
+
+        public void UpdateCancellationRequestReason(PendingOrderCancellationRequestReason cancellationRequestReason)
+        {
+            if (cancellationRequestReason == null)
+                throw new ArgumentNullException(nameof(cancellationRequestReason));
+
+            _pendingOrderCancellationRequestReasonRepository.Update(cancellationRequestReason);
+
+            _eventPublisher.EntityUpdated(cancellationRequestReason);
+        }
+
         public IList<PendingOrderCancellationRequestReason> GetAllCancellationRequestReasons()
         {
             var query = from reason in _pendingOrderCancellationRequestReasonRepository.Table

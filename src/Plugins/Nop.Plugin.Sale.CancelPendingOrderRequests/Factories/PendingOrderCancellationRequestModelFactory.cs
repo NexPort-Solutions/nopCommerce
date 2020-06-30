@@ -11,6 +11,7 @@ using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Framework.Models.Extensions;
+using Nop.Web.Framework.Factories;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
@@ -20,6 +21,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
 {
     public class PendingOrderCancellationRequestModelFactory : IPendingOrderCancellationRequestModelFactory
     {
+        private readonly ILocalizedModelFactory _localizedModelFactory;
         private readonly ICacheManager _cacheManager;
         private readonly ICustomerService _customerService;
         private readonly ILocalizationService _localizationService;
@@ -28,6 +30,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
         private readonly IWorkContext _workContext;
 
         public PendingOrderCancellationRequestModelFactory(
+            ILocalizedModelFactory localizedModelFactory,
             ICacheManager cacheManager,
             ICustomerService customerService,
             ILocalizationService localizationService,
@@ -35,6 +38,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             IPendingOrderCancellationRequestService pendingOrderCancellationRequestService,
             IWorkContext workContext)
         {
+            _localizedModelFactory = localizedModelFactory;
             _cacheManager = cacheManager;
             _customerService = customerService;
             _localizationService = localizationService;
@@ -88,7 +92,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
                 _pendingOrderCancellationRequestService.SearchCancellationRequests(
                     requestStatus: cancelRequestStatus,
                     createdFromUtc: startDateValue, createdToUtc: endDateValue,
-                    pageIndex: searchModel.Page -1, pageSize: searchModel.PageSize);
+                    pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
 
             var model = new PendingOrderCancellationRequestListModel().PrepareToGrid(searchModel,
                 cancellationRequests, () =>
@@ -167,6 +171,45 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             model.CustomerComments = cancellationRequest.CustomerComments;
             model.StaffNotes = cancellationRequest.StaffNotes;
             model.RequestStatus = cancellationRequest.RequestStatus;
+
+            return model;
+        }
+
+        public PendingOrderCancellationRequestReasonModel PreparePendingOrderCancellationRequestReasonModel(
+            PendingOrderCancellationRequestReasonModel model, PendingOrderCancellationRequestReason cancellationRequestReason, bool excludeProperties = false)
+        {
+            Action<PendingOrderCancellationRequestReasonLocalizedModel, int> localizedModelConfiguration = null;
+
+            if (cancellationRequestReason != null)
+            {
+                model = model ?? cancellationRequestReason.ToModel<PendingOrderCancellationRequestReasonModel>();
+
+                localizedModelConfiguration = (locale, languageId) =>
+                {
+                    locale.Name = _localizationService.GetLocalized(
+                        cancellationRequestReason,
+                        entity => entity.Name,
+                        languageId, false, false);
+                };
+            }
+
+            if (!excludeProperties)
+                model.Locales = _localizedModelFactory.PrepareLocalizedModels(localizedModelConfiguration);
+
+            return model;
+        }
+
+        public PendingOrderCancellationRequestReasonListModel PreparePendingOrderCancellationRequestReasonListModel(PendingOrderCancellationRequestReasonSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var reasons = _pendingOrderCancellationRequestService.GetAllCancellationRequestReasons().ToPagedList(searchModel);
+
+            var model = new PendingOrderCancellationRequestReasonListModel().PrepareToGrid(searchModel, reasons, () =>
+            {
+                return reasons.Select(reason => reason.ToModel<PendingOrderCancellationRequestReasonModel>());
+            });
 
             return model;
         }

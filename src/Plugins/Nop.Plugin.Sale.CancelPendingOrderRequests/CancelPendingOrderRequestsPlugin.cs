@@ -122,7 +122,8 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
         {
             return new List<string>
             {
-                PublicWidgetZones.OrderDetailsPageOverview
+                PublicWidgetZones.OrderDetailsPageOverview,
+                AdminWidgetZones.OrderSettingsDetailsBlock
             };
         }
 
@@ -131,6 +132,11 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
             if (widgetZone == PublicWidgetZones.OrderDetailsPageOverview)
             {
                 return "WidgetsOrderDetailsPageOverview";
+            }
+
+            if (widgetZone == AdminWidgetZones.OrderSettingsDetailsBlock)
+            {
+                return "WidgetsOrderSettingsDetailsBlock";
             }
 
             return "";

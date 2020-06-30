@@ -145,6 +145,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             _localizationService.AddOrUpdatePluginLocaleResource("CancellationRequests.Submitted", "Your cancellation request has been submitted successfully.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.CancellationRequests", "Cancellation requests");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.CancellationRequests.EditCancellationRequestDetails", "Edit cancellation request details");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.CancellationRequests.BackToList", "back to cancellation request list");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.CancellationRequests.SearchCancellationRequestStatus.All", "All");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.CancellationRequests.NotifyCustomer", "Notify customer about status change");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.CancellationRequests.Deleted", "The cancellation request has been deleted successfully.");
@@ -178,6 +179,20 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.CustomerNotification", "This message template is used to notify a customer about a new cancellation request submitted from his/her account.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.CancellationRequestAccepted.CustomerNotification", "This message template is used to notify a customer that the cancellation request has been accepted.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.CancellationRequestRejected.CustomerNotification", "This message template is used to notify a customer that the cancellation request has been rejected.");
+
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestSettings", "Cancellation request settings");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name", "Name");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name.Hint", "The cancellation request reason name");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder", "Display order");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder.Hint", "The cancellation request reason display order. 1 represents the first item in the list.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons", "Cancellation request reasons");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Hint", "List of reasons a customer will be able to choose when submitting a cancellation request.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.AddNew", "Add new cancellation request reason");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.BackToList", "back to cancellation request reason list");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.EditDetails", "Edit cancellation request reason details");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Added", "The new cancellation request reason has been added successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Deleted", "The cancellation request reason has been deleted successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Updated", "The cancellation request reason has been updated successfully.");
         }
 
         public void DeleteResources()
@@ -190,6 +205,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             _localizationService.DeletePluginLocaleResource("CancellationRequests.Submitted");
             _localizationService.DeletePluginLocaleResource("Admin.CancellationRequests");
             _localizationService.DeletePluginLocaleResource("Admin.CancellationRequests.EditCancellationRequestDetails");
+            _localizationService.DeletePluginLocaleResource("Admin.CancellationRequests.BackToList");
             _localizationService.DeletePluginLocaleResource("Admin.CancellationRequests.SearchCancellationRequestStatus.All");
             _localizationService.DeletePluginLocaleResource("Admin.CancellationRequests.NotifyCustomer");
             _localizationService.DeletePluginLocaleResource("Admin.CancellationRequests.Deleted");
@@ -223,6 +239,20 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             _localizationService.DeletePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.CustomerNotification");
             _localizationService.DeletePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.CancellationRequestAccepted.CustomerNotification");
             _localizationService.DeletePluginLocaleResource("Admin.ContentManagement.MessageTemplates.Description.CancellationRequestRejected.CustomerNotification");
+
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestSettings");
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name");
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name.Hint");
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder");
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder.Hint");
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons");
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Hint");
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.AddNew");
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.BackToList");
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.EditDetails");
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Added");
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Deleted");
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Updated");
         }
     }
 }

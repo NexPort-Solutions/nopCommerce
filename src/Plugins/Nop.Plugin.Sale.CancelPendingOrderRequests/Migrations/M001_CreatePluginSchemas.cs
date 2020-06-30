@@ -30,6 +30,12 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Migrations
                 .WithColumn("Id").AsInt32().PrimaryKey().Identity()
                 .WithColumn("Name").AsString(400).NotNullable()
                 .WithColumn("DisplayOrder").AsInt32().NotNullable();
+
+            Insert.IntoTable(PENDING_ORDER_CANCELLATION_REQUEST_REASONS_TABLE_NAME)
+                .Row(new { Name = "Accidentally Purchased", DisplayOrder = 1 });
+
+            Insert.IntoTable(PENDING_ORDER_CANCELLATION_REQUEST_REASONS_TABLE_NAME)
+                .Row(new { Name = "Wrong Product Ordered", DisplayOrder = 2 });
         }
 
         public override void Down()

@@ -15,6 +15,12 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
             int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false);
 
+        void InsertCancellationRequestReason(PendingOrderCancellationRequestReason cancellationRequestReason);
+
+        void DeleteCancellationRequestReason(PendingOrderCancellationRequestReason cancellationRequestReason);
+
+        void UpdateCancellationRequestReason(PendingOrderCancellationRequestReason cancellationRequestReason);
+
         IList<PendingOrderCancellationRequestReason> GetAllCancellationRequestReasons();
 
         PendingOrderCancellationRequestReason GetCancellationRequestReasonById(int reasonId);

@@ -36,12 +36,36 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Areas\Admin\Views\CancellationRequest\CancellationRequestReasonCreate.cshtml" />
+    <None Remove="Areas\Admin\Views\CancellationRequest\CancellationRequestReasonEdit.cshtml" />
+    <None Remove="Areas\Admin\Views\CancellationRequest\_CancellationRequestReasons.cshtml" />
+    <None Remove="Areas\Admin\Views\CancellationRequest\_CreateOrUpdate.CancellationRequestReason.cshtml" />
+    <None Remove="Areas\Admin\Views\Setting\_Order.CancellationRequestSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\Widget\Setting\WidgetsOrderSettingsDetailsBlock.cshtml" />
     <None Remove="Content\cancel_pending_order_plugin.css" />
     <None Remove="logo.jpg" />
     <None Remove="plugin.json" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Areas\Admin\Views\CancellationRequest\CancellationRequestReasonCreate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\CancellationRequest\CancellationRequestReasonEdit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\CancellationRequest\_CancellationRequestReasons.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\CancellationRequest\_CreateOrUpdate.CancellationRequestReason.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Setting\_Order.CancellationRequestSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Widget\Setting\WidgetsOrderSettingsDetailsBlock.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Content\cancel_pending_order_plugin.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -51,13 +75,13 @@
     <Content Include="plugin.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\Edit.cshtml">
+    <Content Include="Areas\Admin\Views\CancellationRequest\Edit.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\List.cshtml">
+    <Content Include="Areas\Admin\Views\CancellationRequest\List.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\_CreateOrUpdate.cshtml">
+    <Content Include="Areas\Admin\Views\CancellationRequest\_CreateOrUpdate.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\_ViewImports.cshtml">

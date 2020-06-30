@@ -1,0 +1,43 @@
+﻿@model Nop.Plugin.Sale.CancelPendingOrderRequests.Models.PendingOrderCancellationRequestReasonModel
+
+@{
+    ViewBag.Title = T("Admin.Configuration.Settings.Order.CancellationRequestReasons.EditDetails").Text;
+    Html.SetActiveMenuItemSystemName("Order settings");
+}
+
+<form asp-controller="CancelPendingOrderRequests" asp-action="CancellationRequestReasonEdit" method="post">
+    <div class="content-header clearfix">
+        <h1 class="pull-left">
+            @T("Admin.Configuration.Settings.Order.CancellationRequestReasons.EditDetails") - @Model.Name
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-controller="CancelPendingOrderRequests" asp-action="CancellationRequestReasonList">
+                    @T("Admin.Configuration.Settings.Order.CancellationRequestReasons.BackToList")
+                </a>
+            </small>
+        </h1>
+        <div class="pull-right">
+            <button type="submit" name="save" class="btn bg-blue">
+                <i class="fa fa-floppy-o"></i>
+                @T("Admin.Common.Save")
+            </button>
+            <button type="submit" name="save-continue" class="btn bg-blue">
+                <i class="fa fa-floppy-o"></i>
+                @T("Admin.Common.SaveContinue")
+            </button>
+            <span id="cancellationrequestreason-delete" class="btn bg-red">
+                <i class="fa fa-trash-o"></i>
+                @T("Admin.Common.Delete")
+            </span>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="form-horizontal">
+            @await Html.PartialAsync("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/_CreateOrUpdate.CancellationRequestReason.cshtml", Model)
+        </div>
+    </div>
+</form>
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="cancellationrequestreason-delete"
+                         asp-controller="CancelPendingOrderRequests"
+                         asp-action="CancellationRequestReasonDelete" />

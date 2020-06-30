@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
@@ -38,8 +36,8 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         private readonly IOrderProcessingService _orderProcessingService;
         private readonly ICustomerActivityService _customerActivityService;
         private readonly ILocalizationService _localizationService;
+        private readonly ILocalizedEntityService _localizedEntityService;
         private readonly INotificationService _notificationService;
-        private readonly IMessageTokenProvider _messageTokenProvider;
         private readonly IWorkContext _workContext;
         private readonly IStoreContext _storeContext;
         private readonly ILogger _logger;
@@ -54,8 +52,8 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
             IPermissionService permissionService,
             ICustomerActivityService customerActivityService,
             ILocalizationService localizationService,
+            ILocalizedEntityService localizedEntityService,
             INotificationService notificationService,
-            IMessageTokenProvider messageTokenProvider,
             IWorkContext workContext,
             IStoreContext storeContext,
             ILogger logger,
@@ -69,13 +67,28 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
             _permissionService = permissionService;
             _customerActivityService = customerActivityService;
             _localizationService = localizationService;
+            _localizedEntityService = localizedEntityService;
             _notificationService = notificationService;
-            _messageTokenProvider = messageTokenProvider;
             _workContext = workContext;
             _storeContext = storeContext;
             _logger = logger;
             _webHelper = webHelper;
         }
+
+        #region Utilities
+
+        protected virtual void UpdateLocales(PendingOrderCancellationRequestReason reason, PendingOrderCancellationRequestReasonModel model)
+        {
+            foreach (var localized in model.Locales)
+            {
+                _localizedEntityService.SaveLocalizedValue(reason,
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
+            }
+        }
+
+        #endregion
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
@@ -87,7 +100,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
             var model = _pendingOrderCancellationRequestModelFactory
                 .PreparePendingOrderCancellationRequestSearchModel(new PendingOrderCancellationRequestSearchModel());
 
-            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/List.cshtml", model);
+            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/List.cshtml", model);
         }
 
         [AuthorizeAdmin]
@@ -119,7 +132,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
 
             var model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestModel(null, returnRequest);
 
-            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/Edit.cshtml", model);
+            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/Edit.cshtml", model);
         }
 
         [AuthorizeAdmin]
@@ -167,7 +180,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
                             model = _pendingOrderCancellationRequestModelFactory
                                 .PreparePendingOrderCancellationRequestModel(model, cancellationRequest, true);
 
-                            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/Edit.cshtml",
+                            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/Edit.cshtml",
                                 model);
                         }
                     }
@@ -190,7 +203,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
 
             model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestModel(model, cancellationRequest, true);
 
-            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/Edit.cshtml", model);
+            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/Edit.cshtml", model);
         }
 
         [AuthorizeAdmin]
@@ -273,6 +286,154 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
             model.Result = _localizationService.GetResource("CancellationRequests.Submitted");
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Views/CancellationRequest.cshtml", model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult CancellationRequestReasonList()
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+                return AccessDeniedView();
+
+            // Select an appropriate panel
+            SaveSelectedPanelName("ordersettings-cancellation-request");
+
+            return RedirectToAction("Order", "Setting");
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        public IActionResult CancellationRequestReasonList(PendingOrderCancellationRequestReasonSearchModel searchModel)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+                return AccessDeniedDataTablesJson();
+
+            var model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestReasonListModel(searchModel);
+
+            return Json(model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult CancellationRequestReasonCreate()
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+                return AccessDeniedView();
+
+            var model = _pendingOrderCancellationRequestModelFactory.
+                PreparePendingOrderCancellationRequestReasonModel(new PendingOrderCancellationRequestReasonModel(), null);
+
+            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/CancellationRequestReasonCreate.cshtml", model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [AdminAntiForgery]
+        [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+        public IActionResult CancellationRequestReasonCreate(PendingOrderCancellationRequestReasonModel model, bool continueEditing)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+                return AccessDeniedView();
+
+            if (ModelState.IsValid)
+            {
+                var cancellationRequestReasonModel = model.ToEntity<PendingOrderCancellationRequestReason>();
+                _pendingOrderCancellationRequestService.InsertCancellationRequestReason(cancellationRequestReasonModel);
+
+                UpdateLocales(cancellationRequestReasonModel, model);
+
+                _notificationService.SuccessNotification(
+                    _localizationService.GetResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Added"));
+
+                return continueEditing
+                    ? RedirectToAction("CancellationRequestReasonEdit", new { id = cancellationRequestReasonModel.Id })
+                    : RedirectToAction("CancellationRequestReasonList");
+            }
+
+            model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestReasonModel(model, null);
+
+            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/CancellationRequestReasonCreate.cshtml", model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult CancellationRequestReasonEdit(int id)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+                return AccessDeniedView();
+
+            var cancellationRequestReason = _pendingOrderCancellationRequestService.GetCancellationRequestReasonById(id);
+            if (cancellationRequestReason == null)
+                return RedirectToAction("CancellationRequestReasonList");
+
+            var model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestReasonModel(null, cancellationRequestReason);
+
+            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/CancellationRequestReasonEdit.cshtml", model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [AdminAntiForgery]
+        [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+        public IActionResult CancellationRequestReasonEdit(PendingOrderCancellationRequestReasonModel model, bool continueEditing)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+                return AccessDeniedView();
+
+            var cancellationRequestReason = _pendingOrderCancellationRequestService.GetCancellationRequestReasonById(model.Id);
+            if (cancellationRequestReason == null)
+                return RedirectToAction("CancellationRequestReasonList");
+
+            if (ModelState.IsValid)
+            {
+                cancellationRequestReason = model.ToEntity(cancellationRequestReason);
+                _pendingOrderCancellationRequestService.UpdateCancellationRequestReason(cancellationRequestReason);
+
+                UpdateLocales(cancellationRequestReason, model);
+
+                _notificationService.SuccessNotification(
+                    _localizationService.GetResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Updated"));
+
+                if (!continueEditing)
+                    return RedirectToAction("CancellationRequestReasonList");
+
+                return RedirectToAction("CancellationRequestReasonEdit", new { id = cancellationRequestReason.Id });
+            }
+
+            model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestReasonModel(model, cancellationRequestReason);
+
+            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/CancellationRequestReasonEdit.cshtml", model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [AdminAntiForgery]
+        [HttpPost]
+        public IActionResult CancellationRequestReasonDelete(int id)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+                return AccessDeniedView();
+
+            var cancellationRequestReason = _pendingOrderCancellationRequestService.GetCancellationRequestReasonById(id)
+                ?? throw new ArgumentException("No cancellation request reason found with the specified id", nameof(id));
+
+            try
+            {
+                _pendingOrderCancellationRequestService.DeleteCancellationRequestReason(cancellationRequestReason);
+
+                _notificationService.SuccessNotification(
+                    _localizationService.GetResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Deleted"));
+
+                return RedirectToAction("CancellationRequestReasonList");
+
+            }
+            catch (Exception ex)
+            {
+                _notificationService.ErrorNotification(ex);
+
+                return RedirectToAction("CancellationRequestReasonEdit", new { id = cancellationRequestReason.Id });
+            }
         }
 
         #endregion

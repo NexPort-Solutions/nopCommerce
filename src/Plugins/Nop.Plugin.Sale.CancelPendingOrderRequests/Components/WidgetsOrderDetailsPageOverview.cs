@@ -10,17 +10,14 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Components
     [ViewComponent(Name = "WidgetsOrderDetailsPageOverview")]
     public class WidgetsOrderDetailsPageOverview : NopViewComponent
     {
-        private readonly IWorkContext _workContext;
         private readonly IStoreContext _storeContext;
         private readonly IOrderService _orderService;
 
         public WidgetsOrderDetailsPageOverview(
             IOrderService orderService,
-            IWorkContext workContext,
             IStoreContext storeContext)
         {
             _orderService = orderService;
-            _workContext = workContext;
             _storeContext = storeContext;
         }
 

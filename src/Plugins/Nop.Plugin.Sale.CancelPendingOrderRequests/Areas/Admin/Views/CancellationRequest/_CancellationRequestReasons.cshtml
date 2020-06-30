@@ -1,0 +1,48 @@
+﻿@using Nop.Web.Framework.Models.DataTables
+@using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains
+@model Nop.Plugin.Sale.CancelPendingOrderRequests.Models.PendingOrderCancellationRequestReasonSearchModel
+
+<div class="panel panel-default sub-panel">
+    <div class="panel-heading">
+        @T("Admin.Configuration.Settings.Order.CancellationRequestReasons")
+    </div>
+    <div class="panel-body">
+        <p>
+            <em>@T("Admin.Configuration.Settings.Order.CancellationRequestReasons.Hint")</em>
+        </p>
+        @await Html.PartialAsync("Table", new DataTablesModel
+        {
+            Name = "cancellationrequestreasons-grid",
+            UrlRead = new DataUrl("CancellationRequestReasonList", "CancelPendingOrderRequests", null),
+            Length = Model.PageSize,
+            LengthMenu = Model.AvailablePageSizes,
+            ColumnCollection = new List<ColumnProperty>
+            {
+                new ColumnProperty(nameof(PendingOrderCancellationRequestReason.Name))
+                {
+                    Title = T("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name").Text,
+                    Width = "300"
+                },
+                new ColumnProperty(nameof(PendingOrderCancellationRequestReason.DisplayOrder))
+                {
+                    Title = T("Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder").Text,
+                    Width = "100",
+                    ClassName =  NopColumnClassDefaults.CenterAll
+                },
+                new ColumnProperty(nameof(PendingOrderCancellationRequestReason.Id))
+                {
+                    Title = T("Admin.Common.Edit").Text,
+                    Width = "100",
+                    ClassName =  NopColumnClassDefaults.Button,
+                    Render = new RenderButtonEdit(new DataUrl("~/Admin/CancelPendingOrderRequests/CancellationRequestReasonEdit/"))
+                }
+            }
+        })
+    </div>
+    <div class="panel-footer">
+        <a asp-action="CancellationRequestReasonCreate" asp-controller="CancelPendingOrderRequests" class="btn btn-primary">
+            <i class="fa fa-plus-square"></i>
+            @T("Admin.Common.AddNew")
+        </a>
+    </div>
+</div>

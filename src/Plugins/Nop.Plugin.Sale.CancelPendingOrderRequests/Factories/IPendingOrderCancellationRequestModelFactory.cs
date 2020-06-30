@@ -16,5 +16,11 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
 
         PendingOrderCancellationRequestModel PreparePendingOrderCancellationRequestModel(
             PendingOrderCancellationRequestModel model, PendingOrderCancellationRequest cancellationRequest, bool excludeProperties = false);
+
+        PendingOrderCancellationRequestReasonModel PreparePendingOrderCancellationRequestReasonModel(
+            PendingOrderCancellationRequestReasonModel model, PendingOrderCancellationRequestReason cancellationRequestReason, bool excludeProperties = false);
+
+        PendingOrderCancellationRequestReasonListModel PreparePendingOrderCancellationRequestReasonListModel(
+            PendingOrderCancellationRequestReasonSearchModel searchModel);
     }
 }
