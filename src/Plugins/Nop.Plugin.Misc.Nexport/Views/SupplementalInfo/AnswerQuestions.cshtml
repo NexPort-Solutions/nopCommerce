@@ -1,0 +1,125 @@
+﻿@using Nop.Core
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Services
+
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoAnswerQuestionModel
+
+@inject IWebHelper webHelper
+@inject NexportService nexportService
+
+@{
+    Layout = "_ColumnsOne";
+
+    var kendoVersion = "2014.1.318";
+    Html.AppendCssFileParts(ResourceLocation.Head, $"~/lib/kendo/{kendoVersion}/kendo.default.min.css");
+    Html.AppendCssFileParts(ResourceLocation.Head, $"~/lib/kendo/{kendoVersion}/kendo.common.min.css");
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
+
+    Html.AppendScriptParts(ResourceLocation.Footer, $"~/lib/kendo/{kendoVersion}/kendo.web.min.js");
+    Html.AddScriptParts(ResourceLocation.Footer, "~/js/public.accordion.js");
+
+    var storeLocation = webHelper.GetStoreLocation();
+
+    Html.AddTitleParts("Answer supplemental info questions");
+}
+
+@if (Model != null)
+{
+    @if (Model.QuestionWithoutAnswerIds.Count > 0)
+    {
+        <div class="page answer-questions-page">
+            <div class="page-title">
+                <h1>Required question(s):</h1>
+            </div>
+            <div class="page-body">
+                <div class="answer-question-content">
+                    <form id="required-question-submission-form" style="text-align: center;">
+                        <div class="answer-question-content-wrapper" style="margin: 0 0 20px;">
+                            @Html.AntiForgeryToken()
+                            @{
+                                var requestIndex = 0;
+
+                                foreach (var questionId in Model.QuestionWithoutAnswerIds)
+                                {
+                                    var question = nexportService.GetNexportSupplementalInfoQuestionById(questionId);
+                                    if (question != null && question.IsActive)
+                                    {
+                                        var options = nexportService.GetNexportSupplementalInfoOptionsByQuestionId(question.Id);
+                                        if (options.Count > 0)
+                                        {
+                                            <div style="padding-bottom: 15px;">
+                                                <input type="hidden" name="answers[@requestIndex].questionId" value="@question.Id" />
+                                                <div>
+                                                    <h2 style="text-decoration: underline;">Question: @question.QuestionText</h2>
+                                                </div>
+                                                <div style="padding-top: 10px;">
+                                                    @{
+                                                        var questionInputName = $"answers[{requestIndex}].options";
+                                                    }
+
+                                                    @if (question.Type == NexportSupplementalInfoQuestionType.SingleOption)
+                                                    {
+                                                        <select name="@questionInputName">
+                                                            @foreach (var option in options)
+                                                            {
+                                                                <option value="@option.Id" data-question-id="@option.QuestionId">
+                                                                    @option.OptionText
+                                                                </option>
+                                                            }
+                                                        </select>
+                                                    }
+                                                    else if (question.Type == NexportSupplementalInfoQuestionType.MultipleOptions)
+                                                    {
+                                                        @foreach (var option in options)
+                                                        {
+                                                            <div style="padding-bottom: 5px;">
+                                                                <input type="checkbox" id="@questionInputName-@(option.Id)"
+                                                                       name="@questionInputName" value="@option.Id">
+                                                                <label for="@questionInputName-@(option.Id)">@option.OptionText</label>
+                                                            </div>
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                    requestIndex++;
+                                }
+                            }
+                        </div>
+                        <div class="buttons">
+                            <input type="button" class="button-1 save-answer-btn" onclick="saveAnswers();" value="Save answers">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function goToCheckoutPage() {
+                window.location.href = "@(storeLocation)checkout";
+            }
+
+            function saveAnswers() {
+                var form = $("#required-question-submission-form");
+
+                var postData = form.serializeArray();
+                addAntiForgeryToken(postData);
+
+                $.ajax({
+                    cache: false,
+                    type: "POST",
+                    url: "@Url.Action("SaveSupplementalInfoAnswer", "NexportIntegration")",
+                    data: postData,
+                    success: function (data, textStatus, jqXHR) {
+                        console.log(data);
+                        window.location.href = "@(storeLocation)@Model.ReturnUrl.TrimStart('/')";
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.error(errorThrown);
+                    }
+                });
+            }
+        </script>
+    }
+}

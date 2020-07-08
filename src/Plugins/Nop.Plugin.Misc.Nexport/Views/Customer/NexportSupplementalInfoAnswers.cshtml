@@ -1,0 +1,80 @@
+﻿@using Nop.Core
+@using Nop.Plugin.Misc.Nexport.Services
+
+@inject IWebHelper webHelper
+@inject NexportService nexportService
+
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportCustomerSupplementalInfoAnswersModel
+
+@{
+    Layout = "_ColumnsTwo";
+
+    Html.AppendPageCssClassParts("html-account-page");
+
+    var kendoVersion = "2014.1.318";
+
+    Html.AppendCssFileParts(ResourceLocation.Head, $"~/lib/kendo/{kendoVersion}/kendo.default.min.css");
+    Html.AppendCssFileParts(ResourceLocation.Head, $"~/lib/kendo/{kendoVersion}/kendo.common.min.css");
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
+
+    Html.AppendScriptParts(ResourceLocation.Footer, $"~/lib/kendo/{kendoVersion}/kendo.web.min.js");
+    Html.AddScriptParts(ResourceLocation.Footer, "~/js/public.accordion.js");
+
+    Html.AddTitleParts(T("Plugins.Misc.Nexport.Navigation.SupplementalInfoAnswers").Text);
+}
+
+@section left
+{
+    @await Component.InvokeAsync("CustomerNavigation", new { selectedTabId = 1002 })
+}
+
+<div class="page account-page supplemental-info-customer-answers-page">
+    <div class="page-title">
+        <h1>@T("Account.MyAccount") - @T("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.PageTitle")</h1>
+    </div>
+    <div class="page-body">
+        @if (Model != null)
+        {
+            @if (Model.QuestionWithAnswersList.Count > 0)
+            {
+                @foreach (var (questionId, answerList) in Model.QuestionWithAnswersList)
+                {
+                    var question = nexportService.GetNexportSupplementalInfoQuestionById(questionId);
+                    if (question != null)
+                    {
+                        <div class="section supplemental-info-customer-answer-item">
+                            <div class="title supplemental-info-question-text">
+                                <strong>Question: <span>@question.QuestionText</span></strong>
+                            </div>
+                            @{
+                                if (answerList.Count > 0)
+                                {
+                                    <div class="info supplemental-info-customer-answers">
+                                        Your answer(s):
+
+                                        @foreach (var option in answerList
+                                          .Select(answerWithOption =>
+                                              nexportService.GetNexportSupplementalInfoAnswerById(answerWithOption.Key))
+                                          .Where(answer => answer != null)
+                                          .Select(answer => nexportService.GetNexportSupplementalInfoOptionById(answer.OptionId))
+                                          .Where(option => option != null))
+                                        {
+                                            <div class="supplemental-info-customer-answer-item">
+                                                <span>@option.OptionText</span>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                            <div class="buttons">
+                                <input type="button" class="button-2 modify-supplemental-info-answer-button"
+                                       onclick="location.href = '/customer/nexportsuplementalinfoanswers/edit/@questionId'"
+                                       value="@T("Plugins.Misc.Nexport.SupplementalInfo.Customer.Edit").Text">
+                            </div>
+                        </div>
+                    }
+                }
+            }
+        }
+    </div>
+</div>

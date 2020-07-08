@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using NexportApi.Model;
 using Nop.Core;
+using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Services.Events;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
-using Nop.Plugin.Misc.Nexport.Models;
+using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -262,7 +262,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                                            productTrainingPlanMapping.StoreId == storeId);
         }
 
-        public IPagedList<NexportProductMapping> GetProductMappings(int? nopProductId = null, int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
+        public IPagedList<NexportProductMapping> GetProductMappingsPagination(int? nopProductId = null,
+            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
         {
             var key = string.Format(NexportProductDefaults.ProductMappingsAllCacheKey,
                 _storeContext.CurrentStore.Id,
@@ -282,7 +283,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public IPagedList<NexportProductMapping> GetProductMappings(Guid nexportProductId, NexportProductTypeEnum nexportProductType,
+        public IPagedList<NexportProductMapping> GetProductMappingsPagination(Guid nexportProductId,
+            NexportProductTypeEnum nexportProductType,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
         {
             if (nexportProductId == Guid.Empty)
@@ -335,13 +337,50 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 _nexportProductMappingRepository.Table.SingleOrDefault(np => np.NopProductId == nopProductId && np.StoreId == storeId);
         }
 
-        public IPagedList<NexportProductGroupMembershipMapping> GetProductGroupMembershipMappings(int nexportProductMappingId,
-            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
+        public IList<NexportProductMapping> GetProductMappings(int? nopProductId = null, int? storeId = null)
         {
-            if (nexportProductMappingId == 0)
+            var key = string.Format(NexportProductDefaults.ProductMappingsAllCacheKey,
+                _storeContext.CurrentStore.Id,
+                string.Join(",", _workContext.CurrentCustomer.GetCustomerRoleIds()),
+                false, "", true);
+
+            return _cacheManager.Get(key, () =>
             {
+                var query = _nexportProductMappingRepository.Table;
+
+                if (nopProductId != null)
+                    query = query.Where(np => np.NopProductId == nopProductId);
+
+                if (storeId != null)
+                    query = query.Where(np => np.StoreId == storeId);
+
+                return query.ToList();
+            });
+        }
+
+        public IList<NexportProductGroupMembershipMapping> GetProductGroupMembershipMappings(
+            int nexportProductMappingId)
+        {
+            if (nexportProductMappingId < 1)
+                return new List<NexportProductGroupMembershipMapping>();
+
+            var key = string.Format(NexportProductDefaults.ProductGroupMembershipMappingsAllCacheKey,
+                _storeContext.CurrentStore.Id,
+                string.Join(",", _workContext.CurrentCustomer.GetCustomerRoleIds()),
+                false, "", false);
+
+            return _cacheManager.Get(key, () =>
+            {
+                return _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
+                    np.NexportProductMappingId == nexportProductMappingId).ToList();
+            });
+        }
+
+        public IPagedList<NexportProductGroupMembershipMapping> GetProductGroupMembershipMappingsPagination(
+            int nexportProductMappingId, int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
+        {
+            if (nexportProductMappingId < 1)
                 return new PagedList<NexportProductGroupMembershipMapping>(new List<NexportProductGroupMembershipMapping>(), pageIndex, pageSize);
-            }
 
             var key = string.Format(NexportProductDefaults.ProductGroupMembershipMappingsAllCacheKey,
                 _storeContext.CurrentStore.Id,
@@ -526,8 +565,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (_nexportOrderInvoiceRedemptionQueueRepository.Table.Any(q => q.OrderInvoiceItemId == queueItem.OrderInvoiceItemId))
                 return;
 
-            _logger.Information($"Invoice redemption {queueItem.OrderInvoiceItemId} for user {queueItem.RedeemingUserId} has been scheduled.");
             _nexportOrderInvoiceRedemptionQueueRepository.Insert(queueItem);
+            _logger.Information($"Invoice redemption {queueItem.OrderInvoiceItemId} for user {queueItem.RedeemingUserId} has been scheduled.");
 
             //event notification
             _eventPublisher.EntityInserted(queueItem);
@@ -650,7 +689,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                 NexportCatalogSyllabusLinkId = model.NexportProductId,
                                 UtcAvailableDate = sectionDetails.EnrollmentStart,
                                 UtcEndDate = sectionDetails.EnrollmentEnd,
-                                UtcLastModifiedDate = sectionDetails.UtcDateLastModified,
                                 Type = model.NexportProductType,
                                 CreditHours = sectionDetails.CreditHours,
                                 SectionCeus = sectionDetails.SectionCeus
@@ -683,7 +721,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                 NexportCatalogSyllabusLinkId = model.NexportProductId,
                                 UtcAvailableDate = trainingPlanDetails.EnrollmentStart,
                                 UtcEndDate = trainingPlanDetails.EnrollmentEnd,
-                                UtcLastModifiedDate = trainingPlanDetails.UtcDateLastModified,
                                 Type = model.NexportProductType,
                                 CreditHours = trainingPlanDetails.CreditHours
                             });
@@ -834,7 +871,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public NexportUserMapping FindUserMappingByCustomerId(int nopCustomerId)
         {
-            return nopCustomerId <= 0 ? null : _nexportUserMappingRepository.Table.SingleOrDefault(np => np.NopUserId == nopCustomerId);
+            return nopCustomerId < 1 ? null : _nexportUserMappingRepository.Table.SingleOrDefault(np => np.NopUserId == nopCustomerId);
         }
 
         public NexportUserMapping FindUserMappingByNexportUserId(Guid userId)
@@ -846,7 +883,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public Guid? FindExistingInvoiceForOrder(int orderId)
         {
-            return orderId <= 0
+            return orderId < 1
                 ? null
                 : _nexportOrderInvoiceItemRepository.Table
                     .FirstOrDefault(i => i.OrderId == orderId)?.InvoiceId;
@@ -854,7 +891,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public Guid? FindExistingInvoiceItemForOrderItem(int orderId, int orderItemId)
         {
-            if (orderId <= 0)
+            if (orderId < 1)
                 return null;
 
             return orderItemId <= 0
@@ -886,10 +923,648 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public IList<int?> GetStoreIdsPerProductMapping(int productId)
         {
-            return productId <= 0
+            return productId < 1
                 ? new List<int?>()
                 : _nexportProductMappingRepository.Table.Where(np => np.NopProductId == productId)
                     .Select(np => np.StoreId).ToList();
+        }
+
+        public void CopyProductMappings(Product originalProduct, Product copyingProduct)
+        {
+            if (originalProduct == null)
+                throw new ArgumentNullException(nameof(originalProduct));
+
+            if (copyingProduct == null)
+                throw new ArgumentNullException(nameof(originalProduct));
+
+            var mappings = GetProductMappings(originalProduct.Id);
+            foreach (var mapping in mappings)
+            {
+                var newMapping = new NexportProductMapping
+                {
+                    NopProductId = copyingProduct.Id,
+                    NexportProductName = mapping.NexportProductName,
+                    DisplayName = mapping.DisplayName,
+                    NexportCatalogId = mapping.NexportCatalogId,
+                    NexportSyllabusId = mapping.NexportSyllabusId,
+                    NexportCatalogSyllabusLinkId = mapping.NexportCatalogSyllabusLinkId,
+                    NexportSubscriptionOrgId = mapping.NexportSubscriptionOrgId,
+                    Type = mapping.Type,
+                    PublishingModel = mapping.PublishingModel,
+                    PricingModel = mapping.PricingModel,
+                    AccessTimeLimit = mapping.AccessTimeLimit,
+                    UtcAvailableDate = mapping.UtcAvailableDate,
+                    UtcEndDate = mapping.UtcEndDate,
+                    //UtcLastModifiedDate = DateTime.UtcNow,
+                    CreditHours = mapping.CreditHours,
+                    SectionCeus = mapping.SectionCeus,
+                    NexportSubscriptionOrgName = mapping.NexportSubscriptionOrgName,
+                    NexportSubscriptionOrgShortName = mapping.NexportSubscriptionOrgShortName,
+                    AutoRedeem = mapping.AutoRedeem,
+                    UtcAccessExpirationDate = mapping.UtcAccessExpirationDate,
+                    StoreId = mapping.StoreId,
+                    AllowExtension = mapping.AllowExtension,
+                    IsExtensionProduct = mapping.IsExtensionProduct,
+                    RenewalWindow = mapping.RenewalWindow
+                };
+
+                InsertNexportProductMapping(newMapping);
+
+                var groupMembershipMappings = GetProductGroupMembershipMappings(mapping.Id);
+                foreach (var groupMembershipMapping in groupMembershipMappings)
+                {
+                    var newGroupMembershipMapping = new NexportProductGroupMembershipMapping
+                    {
+                        NexportGroupId = groupMembershipMapping.NexportGroupId,
+                        NexportGroupName = groupMembershipMapping.NexportGroupName,
+                        NexportGroupShortName = groupMembershipMapping.NexportGroupShortName,
+                        NexportProductMappingId = newMapping.Id
+                    };
+
+                    InsertNexportProductGroupMembershipMapping(newGroupMembershipMapping);
+                }
+            }
+        }
+
+        public IPagedList<NexportSupplementalInfoQuestion> GetAllNexportSupplementalInfoQuestionsPagination(
+            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
+        {
+            var key = string.Format(NexportProductDefaults.SupplementalInfoQuestionAllCacheKey, pageIndex, pageSize);
+            return _cacheManager.Get(key, () =>
+            {
+                var query = from question in _nexportSupplementalInfoQuestionRepository.Table
+                            select question;
+
+                var questions = new PagedList<NexportSupplementalInfoQuestion>(query, pageIndex, pageSize);
+                return questions;
+            });
+        }
+
+        public IList<NexportSupplementalInfoQuestion> GetAllNexportSupplementalInfoQuestions()
+        {
+            return GetAllNexportSupplementalInfoQuestionsPagination().ToList();
+        }
+
+        public NexportSupplementalInfoQuestion GetNexportSupplementalInfoQuestionById(int questionId)
+        {
+            return questionId > 0 ? _nexportSupplementalInfoQuestionRepository.GetById(questionId) : null;
+        }
+
+        public IList<NexportSupplementalInfoQuestion> GetNexportSupplementalInfoQuestionsByIds(int[] questionIds)
+        {
+            if (questionIds == null || questionIds.Length == 0)
+                return new List<NexportSupplementalInfoQuestion>();
+
+            var questions = (
+                from question in _nexportSupplementalInfoQuestionRepository.Table
+                where questionIds.Contains(question.Id)
+                select question).ToList();
+
+            return questionIds
+                .Select(id => questions.Find(x => x.Id == id))
+                .Where(question => question != null).ToList();
+        }
+
+        public void InsertNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question)
+        {
+            if (question == null)
+                throw new ArgumentNullException(nameof(question));
+
+            _nexportSupplementalInfoQuestionRepository.Insert(question);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoQuestionPatternCacheKey);
+
+            _eventPublisher.EntityInserted(question);
+        }
+
+        public void DeleteNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question)
+        {
+            if (question == null)
+                throw new ArgumentNullException(nameof(question));
+
+            _nexportSupplementalInfoQuestionRepository.Delete(question);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoQuestionPatternCacheKey);
+
+            _eventPublisher.EntityDeleted(question);
+        }
+
+        public void DeleteNexportSupplementalInfoQuestions(IList<NexportSupplementalInfoQuestion> questions)
+        {
+            if (questions == null)
+                throw new ArgumentNullException(nameof(questions));
+
+            foreach (var question in questions)
+            {
+                DeleteNexportSupplementalInfoQuestion(question);
+            }
+        }
+
+        public void UpdateNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question)
+        {
+            if (question == null)
+                throw new ArgumentNullException(nameof(question));
+
+            question.UtcDateModified = DateTime.UtcNow;
+
+            _nexportSupplementalInfoQuestionRepository.Update(question);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoQuestionPatternCacheKey);
+
+            _eventPublisher.EntityUpdated(question);
+        }
+
+        public NexportSupplementalInfoOption GetNexportSupplementalInfoOptionById(int optionId)
+        {
+            return optionId > 0 ? _nexportSupplementalInfoOptionRepository.GetById(optionId) : null;
+        }
+
+        public IList<NexportSupplementalInfoOption> GetNexportSupplementalInfoOptionsByQuestionId(int questionId,
+            bool showHidden = false)
+        {
+            if (questionId <= 0)
+                return new List<NexportSupplementalInfoOption>();
+
+            var query = _nexportSupplementalInfoOptionRepository.Table
+                .Where(opt => opt.QuestionId == questionId);
+
+            return showHidden ? query.ToList() : query.Where(opt => !opt.Deleted).ToList();
+        }
+
+        public void InsertNexportSupplementalInfoOption(NexportSupplementalInfoOption option)
+        {
+            if (option == null)
+                throw new ArgumentNullException(nameof(option));
+
+            _nexportSupplementalInfoOptionRepository.Insert(option);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoOptionPatternCacheKey);
+
+            _eventPublisher.EntityInserted(option);
+        }
+
+        public void DeleteNexportSupplementalInfoOption(NexportSupplementalInfoOption option)
+        {
+            if (option == null)
+                throw new ArgumentNullException(nameof(option));
+
+            option.Deleted = true;
+
+            UpdateNexportSupplementalInfoOption(option);
+
+            _eventPublisher.EntityDeleted(option);
+        }
+
+        public void UpdateNexportSupplementalInfoOption(NexportSupplementalInfoOption option)
+        {
+            if (option == null)
+                throw new ArgumentNullException(nameof(option));
+
+            option.UtcDateModified = DateTime.UtcNow;
+
+            _nexportSupplementalInfoOptionRepository.Update(option);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoOptionPatternCacheKey);
+
+            _eventPublisher.EntityUpdated(option);
+        }
+
+        public NexportSupplementalInfoQuestionMapping GetNexportSupplementalInfoQuestionMappingById(int questionMappingId)
+        {
+            return questionMappingId > 0
+                ? _nexportSupplementalInfoQuestionMappingRepository.GetById(questionMappingId)
+                : null;
+        }
+
+        public IList<NexportSupplementalInfoQuestionMapping>
+            GetNexportSupplementalInfoQuestionMappingsByProductMappingId(int nexportProductMappingId)
+        {
+            return nexportProductMappingId > 0
+                ? _nexportSupplementalInfoQuestionMappingRepository.Table.Where(qm =>
+                    qm.ProductMappingId == nexportProductMappingId).ToList()
+                : new List<NexportSupplementalInfoQuestionMapping>();
+        }
+
+        public NexportSupplementalInfoQuestionMapping GetNexportSupplementalInfoQuestionMapping(int nexportProductMappingId,
+            int questionId)
+        {
+            if (nexportProductMappingId < 1 || questionId < 1)
+                return null;
+
+            return _nexportSupplementalInfoQuestionMappingRepository.Table.FirstOrDefault(qm =>
+                    qm.ProductMappingId == nexportProductMappingId && qm.QuestionId == questionId);
+        }
+
+        public void InsertNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping)
+        {
+            if (questionMapping == null)
+                throw new ArgumentNullException(nameof(questionMapping));
+
+            if (_nexportSupplementalInfoQuestionMappingRepository.Table.Any(qm =>
+                qm.QuestionId == questionMapping.QuestionId &&
+                qm.ProductMappingId == questionMapping.ProductMappingId))
+                return;
+
+            _nexportSupplementalInfoQuestionMappingRepository.Insert(questionMapping);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoQuestionMappingPatternCacheKey);
+
+            _eventPublisher.EntityInserted(questionMapping);
+        }
+
+        public void DeleteNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping)
+        {
+            if (questionMapping == null)
+                throw new ArgumentNullException(nameof(questionMapping));
+
+            _nexportSupplementalInfoQuestionMappingRepository.Delete(questionMapping);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoQuestionMappingPatternCacheKey);
+
+            _eventPublisher.EntityDeleted(questionMapping);
+        }
+
+        public void UpdateNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping)
+        {
+            if (questionMapping == null)
+                throw new ArgumentNullException(nameof(questionMapping));
+
+            _nexportSupplementalInfoQuestionMappingRepository.Update(questionMapping);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoQuestionMappingPatternCacheKey);
+
+            _eventPublisher.EntityUpdated(questionMapping);
+        }
+
+        public IPagedList<NexportSupplementalInfoOptionGroupAssociation> GetNexportSupplementalInfoOptionGroupAssociationsPagination(
+            int optionId, int pageIndex = 0, int pageSize = int.MaxValue)
+        {
+            if (optionId < 1)
+                return new PagedList<NexportSupplementalInfoOptionGroupAssociation>(
+                    new List<NexportSupplementalInfoOptionGroupAssociation>(), pageIndex, pageSize);
+
+            var key = string.Format(NexportProductDefaults.SupplementalInfoOptionGroupAssociationsAllCacheKey,
+                _storeContext.CurrentStore.Id);
+
+            return _cacheManager.Get(key, () =>
+            {
+                var query =
+                    _nexportSupplementalInfoOptionGroupAssociationRepository
+                        .Table.Where(ga => ga.OptionId == optionId);
+
+                var groupAssociation =
+                    new PagedList<NexportSupplementalInfoOptionGroupAssociation>(query, pageIndex, pageSize);
+
+                return groupAssociation;
+            });
+        }
+
+        public IList<NexportSupplementalInfoOptionGroupAssociation> GetNexportSupplementalInfoOptionGroupAssociations(
+            int optionId, bool excludeInactive = false)
+        {
+            if (optionId < 1)
+                return new List<NexportSupplementalInfoOptionGroupAssociation>();
+
+            var query = _nexportSupplementalInfoOptionGroupAssociationRepository.Table
+                .Where(a => a.OptionId == optionId);
+
+            if (excludeInactive)
+                query = query.Where(a => a.IsActive);
+
+            return query.ToList();
+        }
+
+        public NexportSupplementalInfoOptionGroupAssociation GetNexportSupplementalInfoOptionGroupAssociationById(
+            int groupAssociationId)
+        {
+            return groupAssociationId < 1
+                ? null
+                : _nexportSupplementalInfoOptionGroupAssociationRepository.GetById(groupAssociationId);
+        }
+
+        public void InsertNexportSupplementalInfoOptionGroupAssociation(NexportSupplementalInfoOptionGroupAssociation groupAssociation)
+        {
+            if (groupAssociation == null)
+                throw new ArgumentNullException(nameof(groupAssociation));
+
+            if (_nexportSupplementalInfoOptionGroupAssociationRepository.Table.Any(ga =>
+                ga.OptionId == groupAssociation.OptionId &&
+                ga.NexportGroupId == groupAssociation.NexportGroupId))
+                return;
+
+            _nexportSupplementalInfoOptionGroupAssociationRepository.Insert(groupAssociation);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoOptionGroupAssociationPatternCacheKey);
+
+            _eventPublisher.EntityInserted(groupAssociation);
+        }
+
+        public void DeleteNexportSupplementalInfoOptionGroupAssociation(NexportSupplementalInfoOptionGroupAssociation groupAssociation)
+        {
+            if (groupAssociation == null)
+                throw new ArgumentNullException(nameof(groupAssociation));
+
+            _nexportSupplementalInfoOptionGroupAssociationRepository.Delete(groupAssociation);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoOptionGroupAssociationPatternCacheKey);
+
+            _eventPublisher.EntityDeleted(groupAssociation);
+        }
+
+        public void UpdateNexportSupplementalInfoOptionGroupAssociation(NexportSupplementalInfoOptionGroupAssociation groupAssociation)
+        {
+            if (groupAssociation == null)
+                throw new ArgumentNullException(nameof(groupAssociation));
+
+            _nexportSupplementalInfoOptionGroupAssociationRepository.Update(groupAssociation);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoOptionGroupAssociationPatternCacheKey);
+
+            _eventPublisher.EntityUpdated(groupAssociation);
+        }
+
+        public void InsertNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer)
+        {
+            if (answer == null)
+                throw new ArgumentNullException(nameof(answer));
+
+            if (_nexportSupplementalInfoAnswerRepository.Table.Any(a =>
+                a.OptionId == answer.OptionId &&
+                a.QuestionId == answer.QuestionId &&
+                a.StoreId == answer.StoreId))
+                return;
+
+            _nexportSupplementalInfoAnswerRepository.Insert(answer);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoAnswerPatternCacheKey);
+
+            _eventPublisher.EntityInserted(answer);
+        }
+
+        public void DeleteNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer)
+        {
+            if (answer == null)
+                throw new ArgumentNullException(nameof(answer));
+
+            _nexportSupplementalInfoAnswerRepository.Delete(answer);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoAnswerPatternCacheKey);
+
+            _eventPublisher.EntityDeleted(answer);
+        }
+
+        public void UpdateNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer)
+        {
+            if (answer == null)
+                throw new ArgumentNullException(nameof(answer));
+
+            _nexportSupplementalInfoAnswerRepository.Update(answer);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoAnswerPatternCacheKey);
+
+            _eventPublisher.EntityUpdated(answer);
+        }
+
+        public IList<NexportSupplementalInfoAnswer> GetNexportSupplementalInfoAnswers(int customerId, int storeId,
+            int? questionId = null)
+        {
+            if (customerId < 1 || storeId < 1)
+                return new List<NexportSupplementalInfoAnswer>();
+
+            var query = _nexportSupplementalInfoAnswerRepository.Table
+                .Where(a => a.CustomerId == customerId && a.StoreId == storeId);
+
+            if (questionId != null)
+            {
+                query = query.Where(a => a.QuestionId == questionId);
+            }
+
+            return query.ToList();
+        }
+
+        public IPagedList<NexportSupplementalInfoAnswer> GetNexportSupplementalInfoAnswersPagination(int customerId, int? questionId = null,
+            int pageIndex = 0, int pageSize = int.MaxValue)
+        {
+            if (customerId < 1)
+                return new PagedList<NexportSupplementalInfoAnswer>(
+                    new List<NexportSupplementalInfoAnswer>(), pageIndex, pageSize);
+
+            return _cacheManager.Get(NexportProductDefaults.SupplementalInfoAnswerAllCacheKey, () =>
+            {
+                var query =
+                    _nexportSupplementalInfoAnswerRepository
+                        .Table.Where(a => a.CustomerId == customerId);
+
+                if (questionId != null)
+                    query = query.Where(a => a.QuestionId == questionId);
+
+                var answers =
+                    new PagedList<NexportSupplementalInfoAnswer>(query, pageIndex, pageSize);
+
+                return answers;
+            });
+        }
+
+        public NexportSupplementalInfoAnswer GetNexportSupplementalInfoAnswerById(int answerId)
+        {
+            return answerId < 1
+                ? null
+                : _nexportSupplementalInfoAnswerRepository.GetById(answerId);
+        }
+
+        public IPagedList<NexportSupplementalInfoQuestion> GetNexportSupplementalInfoAnsweredQuestionsPagination(int customerId, int pageIndex = 0,
+            int pageSize = int.MaxValue)
+        {
+            if (customerId < 1)
+                return new PagedList<NexportSupplementalInfoQuestion>(
+                    new List<NexportSupplementalInfoQuestion>(), pageIndex, pageSize);
+
+            var questionIdsQuery =
+                _nexportSupplementalInfoAnswerRepository.Table
+                    .Where(a => a.CustomerId == customerId)
+                    .Select(x => x.QuestionId);
+            var query = _nexportSupplementalInfoQuestionRepository.Table
+                .Where(q => questionIdsQuery.Contains(q.Id));
+
+            var questions =
+                new PagedList<NexportSupplementalInfoQuestion>(query, pageIndex, pageSize);
+
+            return questions;
+        }
+
+        public void InsertNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership)
+        {
+            if (answerMembership == null)
+                throw new ArgumentNullException(nameof(answerMembership));
+
+            if (_nexportSupplementalInfoAnswerMembershipRepository.Table.Any(am =>
+                am.AnswerId == answerMembership.AnswerId &&
+                am.NexportMembershipId == answerMembership.NexportMembershipId))
+                return;
+
+            _nexportSupplementalInfoAnswerMembershipRepository.Insert(answerMembership);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoAnswerMembershipPatternCacheKey);
+
+            _eventPublisher.EntityInserted(answerMembership);
+        }
+
+        public void DeleteNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership)
+        {
+            if (answerMembership == null)
+                throw new ArgumentNullException(nameof(answerMembership));
+
+            _nexportSupplementalInfoAnswerMembershipRepository.Delete(answerMembership);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoAnswerMembershipPatternCacheKey);
+
+            _eventPublisher.EntityDeleted(answerMembership);
+        }
+
+        public IList<NexportSupplementalInfoAnswerMembership> GetNexportSupplementalInfoAnswerMembershipsByAnswerId(int answerId)
+        {
+            return answerId < 1
+                ? new List<NexportSupplementalInfoAnswerMembership>()
+                : _nexportSupplementalInfoAnswerMembershipRepository.Table
+                    .Where(am => am.AnswerId == answerId).ToList();
+        }
+
+        public NexportSupplementalInfoAnswerMembership GetNexportSupplementalInfoAnswerMembership(
+            Guid nexportMembershipId)
+        {
+            return _nexportSupplementalInfoAnswerMembershipRepository.Table
+                    .FirstOrDefault(am => am.NexportMembershipId == nexportMembershipId);
+        }
+
+        public void InsertNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement)
+        {
+            if (requirement == null)
+                throw new ArgumentNullException(nameof(requirement));
+
+            if (_nexportRequiredSupplementalInfoRepository.Table.Any(r =>
+                r.CustomerId == requirement.CustomerId &&
+                r.StoreId == requirement.StoreId &&
+                r.QuestionId == requirement.QuestionId))
+                return;
+
+            _nexportRequiredSupplementalInfoRepository.Insert(requirement);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoRequiredPatternCacheKey);
+
+            _eventPublisher.EntityInserted(requirement);
+        }
+
+        public void DeleteNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement)
+        {
+            if (requirement == null)
+                throw new ArgumentNullException(nameof(requirement));
+
+            _nexportRequiredSupplementalInfoRepository.Delete(requirement);
+
+            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoRequiredPatternCacheKey);
+
+            _eventPublisher.EntityDeleted(requirement);
+        }
+
+        public IList<NexportRequiredSupplementalInfo> GetNexportRequiredSupplementalInfos(int customerId, int storeId, int? questionId = null)
+        {
+            if (customerId < 1 || storeId < 1)
+                return new List<NexportRequiredSupplementalInfo>();
+
+            var query = _nexportRequiredSupplementalInfoRepository.Table
+                .Where(r => r.CustomerId == customerId && r.StoreId == storeId);
+
+            if (questionId != null)
+                query = query.Where(r => r.QuestionId == questionId);
+
+            return query.ToList();
+        }
+
+        public NexportRequiredSupplementalInfo GetNexportRequiredSupplementalInfoByNopProductId(int customerId, int storeId, int questionId)
+        {
+            if (customerId < 1 || storeId < 1 || questionId < 1)
+                return null;
+
+            return _nexportRequiredSupplementalInfoRepository.Table
+                .FirstOrDefault(r => r.CustomerId == customerId &&
+                                     r.StoreId == storeId && r.QuestionId == questionId);
+        }
+
+        public bool HasRequiredSupplementalInfo(int customerId, int storeId)
+        {
+            if (customerId < 1 || storeId < 1)
+                return false;
+
+            return _nexportRequiredSupplementalInfoRepository.TableNoTracking.Any(r =>
+                r.CustomerId == customerId && r.StoreId == storeId);
+        }
+
+        public bool HasUnprocessedAnswer(int orderId)
+        {
+            if (orderId < 1)
+                return false;
+
+            var order = _orderService.GetOrderById(orderId);
+
+            if (order == null || order.Deleted || order.OrderStatus != OrderStatus.Complete)
+                return false;
+
+            var nexportProductMappings = order.OrderItems
+                .Select(item =>
+                    GetProductMappingByNopProductId(item.ProductId, _storeContext.CurrentStore.Id))
+                .Where(mapping => mapping != null).ToList();
+
+            return nexportProductMappings.Select(t =>
+                    GetNexportSupplementalInfoQuestionMappingsByProductMappingId(t.Id)
+                        .Select(x => x.QuestionId)
+                        .ToList())
+                        .Select(questions =>
+                            GetNexportSupplementalInfoAnswers(order.CustomerId, order.StoreId)
+                                .Where(x =>
+                                    questions.Contains(x.QuestionId))
+                                .Any(x => x.Status == NexportSupplementalInfoAnswerStatus.NotProcessed))
+                                    .FirstOrDefault();
+
+        }
+
+        public void InsertNexportSupplementalInfoAnswerProcessingQueueItem(NexportSupplementalInfoAnswerProcessingQueueItem queueItem)
+        {
+            if (queueItem == null)
+                throw new ArgumentNullException(nameof(queueItem));
+
+            _nexportSupplementalInfoAnswerProcessingQueueRepository.Insert(queueItem);
+
+            _eventPublisher.EntityInserted(queueItem);
+        }
+
+        public void DeleteNexportSupplementalInfoAnswerProcessingQueueItem(NexportSupplementalInfoAnswerProcessingQueueItem queueItem)
+        {
+            if (queueItem == null)
+                throw new ArgumentNullException(nameof(queueItem));
+
+            _nexportSupplementalInfoAnswerProcessingQueueRepository.Delete(queueItem);
+
+            _eventPublisher.EntityDeleted(queueItem);
+        }
+
+        public void InsertNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem)
+        {
+            if (queueItem == null)
+                throw new ArgumentNullException(nameof(queueItem));
+
+            _nexportGroupMembershipRemovalQueueRepository.Insert(queueItem);
+
+            _eventPublisher.EntityInserted(queueItem);
+        }
+
+        public void DeleteNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem)
+        {
+            if (queueItem == null)
+                throw new ArgumentNullException(nameof(queueItem));
+
+            _nexportGroupMembershipRemovalQueueRepository.Delete(queueItem);
+
+            _eventPublisher.EntityDeleted(queueItem);
         }
     }
 }

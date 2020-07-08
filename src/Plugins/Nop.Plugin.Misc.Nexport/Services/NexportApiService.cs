@@ -5,7 +5,13 @@ using JetBrains.Annotations;
 using NexportApi.Api;
 using NexportApi.Client;
 using NexportApi.Model;
+using Nop.Core.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Models;
+using Nop.Plugin.Misc.Nexport.Models.Api;
+using Nop.Plugin.Misc.Nexport.Models.Catalog;
+using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.Organization;
+using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -31,7 +37,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration);
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var response = nexportApi.AdminApiAuthenticateWithHttpInfo(new AuthenticationTokenRequest(username, password,
                 "password", utcExpirationDate: tokenExp));
 
@@ -60,7 +71,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration);
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var response = nexportApi.AdminApiAuthenticateUserWithHttpInfo(loginName, password, accessToken);
 
             var result = new NexportGetUserResponseDetails
@@ -85,7 +101,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration);
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, loginName);
 
             var result = new NexportGetUserResponseDetails
@@ -107,7 +128,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration);
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, userId: userId);
 
             var result = new NexportGetUserResponseDetails
@@ -129,7 +155,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration);
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var response = nexportApi.AdminApiGetUsersWithHttpInfo(accessToken, searchTerm, page);
 
             var result = new NexportUserListResponse
@@ -170,7 +201,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(url);
+            var nexportApi = new AdminApi(url)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var response = nexportApi.AdminApiCreateUserWithHttpInfo(accessToken,
                 new CreateUserRequest(ownerOrgId, login, password, firstName, "", lastName, email));
 
@@ -194,7 +230,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration);
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var response = nexportApi.AdminApiSearchDirectoryWithHttpInfo(0, baseOrgId, accessToken, searchTerm, searchTerm, page);
 
             var result = new NexportDirectoryResponse
@@ -208,7 +249,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public NexportOrganizationResponse GetNexportOrganizations([NotNull]string url, [NotNull]string accessToken, Guid rootOrgId, int? page = null)
+        public NexportOrganizationResponse GetNexportOrganizations([NotNull] string url, [NotNull] string accessToken, Guid orgId, int? page = null)
         {
             if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
@@ -218,8 +259,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
-            var response = nexportApi.LearningApiGetOrganizationsWithHttpInfo(accessToken, rootOrgId, page: page);
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
+            var response = nexportApi.AdminApiGetOrganizationsWithHttpInfo(accessToken, orgId, page: page);
 
             var result = new NexportOrganizationResponse
             {
@@ -242,7 +288,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var catalogRequest = new CatalogRequest(orgId, CatalogRequest.PublishingModelEnum.ForSaleInMarketPlace, CatalogRequest.CatalogAccessOptionEnum.Owned);
             var response = nexportApi.LearningApiGetCatalogsWithHttpInfo(accessToken, catalogRequest, page);
 
@@ -267,7 +318,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result = nexportApi.LearningApiGetCatalog(catalogId, accessToken);
 
             return result;
@@ -283,7 +339,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result = nexportApi.LearningApiGetCatalogDescription(catalogId, accessToken);
 
             return result;
@@ -299,7 +360,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result = nexportApi.LearningApiGetCatalogCreditHours(catalogId, accessToken);
 
             return result;
@@ -315,7 +381,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var response = nexportApi.LearningApiGetCatalogSyllabiWithHttpInfo(catalogId, accessToken, page);
 
             var result = new NexportSyllabusResponse
@@ -339,7 +410,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result = nexportApi.LearningApiGetSection(accessToken, sectionId);
 
             return result;
@@ -355,7 +431,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result = nexportApi.LearningApiGetSectionDescription(sectionId, accessToken);
 
             return result;
@@ -371,7 +452,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result = nexportApi.LearningApiGetSectionObjectives(sectionId, accessToken);
 
             return result;
@@ -387,7 +473,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result = nexportApi.LearningApiGetTrainingPlan(accessToken, trainingPlanId);
 
             return result;
@@ -403,7 +494,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result = nexportApi.LearningApiGetTrainingPlanDescription(trainingPlanId, accessToken);
 
             return result;
@@ -419,7 +515,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var response = nexportApi.PointOfSaleApiGetInvoiceWithHttpInfo(invoiceId, accessToken);
 
             var result = new NexportGetInvoiceResponseDetails
@@ -442,7 +543,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result = nexportApi.PointOfSaleApiBeginInvoiceTransaction(accessToken,
                 new CreateInvoiceMessageRequest(purchasingAgentId, orgId));
 
@@ -465,7 +571,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result =
                 nexportApi.PointOfSaleApiAddInvoiceItem(accessToken, new CreateInvoiceItemRequest(invoiceId, productId)
                 {
@@ -492,7 +603,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result =
                 nexportApi.PointOfSaleApiAddInvoiceScheduledPayment(accessToken, new InvoiceScheduledPaymentRequest(invoiceId, amount, dueDate, note));
 
@@ -515,7 +631,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result =
                 nexportApi.PointOfSaleApiAddInvoicePayment(accessToken, new InvoicePaymentRequest(
                     invoiceId,
@@ -543,7 +664,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result =
                 nexportApi.PointOfSaleApiCommitInvoiceTransaction(accessToken, new CommitInvoiceRequest(invoiceId));
 
@@ -561,7 +687,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result =
                 nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
                     new RedeemInvoiceItemRequest(invoiceItemId, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction));
@@ -579,7 +710,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration);
+            var nexportApi = new PointOfSaleApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result =
                 nexportApi.PointOfSaleApiGetInvoiceRedemption(invoiceItemId, accessToken);
 
@@ -596,7 +732,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new SsoApi(_apiConfiguration);
+            var nexportApi = new SsoApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
             var result =
                 nexportApi.SsoApiSignIn(accessToken,
                     new SsoRequest(Enums.DisplayEnum.Normal, userId, orgId,
@@ -615,7 +756,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new SsoApi(_apiConfiguration);
+            var nexportApi = new SsoApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
 
             var result =
                 nexportApi.SsoApiClassroom(accessToken,
@@ -635,10 +780,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
 
-            var result =
-                nexportApi.LearningApiGetSectionEnrollments(accessToken, orgId, userId: userId, syllabusId: syllabusId).FirstOrDefault();
+            var apiResult =
+                nexportApi.LearningApiGetSectionEnrollments(accessToken, orgId, null, userId, syllabusId);
+
+            var result = apiResult.FirstOrDefault();
 
             return result;
         }
@@ -654,10 +805,58 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration);
+            var nexportApi = new LearningApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
 
             var result =
                 nexportApi.LearningApiGetTrainingPlanEnrollments(accessToken, orgId, userId: userId, syllabusId: syllabusId).FirstOrDefault();
+
+            return result;
+        }
+
+        public CreateMembershipResponse CreateNexportMemberships([NotNull] string url, [NotNull] string accessToken, Guid userId, IList<Guid> groupIds)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new NullReferenceException("Api url cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            _apiConfiguration.BasePath = url;
+
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
+            var result =
+                nexportApi.AdminApiCreateMembership(accessToken, new CreateMembershipRequest(groupIds.ToList(), userId));
+
+            return result;
+        }
+
+        public RemoveMembershipResponse RemoveNexportMemberships([NotNull] string url, [NotNull] string accessToken, IList<Guid> membershipIds)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new NullReferenceException("Api url cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            _apiConfiguration.BasePath = url;
+
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
+            var result =
+                nexportApi.AdminApiRemoveMembership(accessToken, new RemoveMembershipRequest(memberships: membershipIds.ToList()));
 
             return result;
         }

@@ -1,0 +1,15 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.Components.NexportDurationPickerModel
+
+<div class="nex-duration-picker-element col-sm-4">
+    <input class="form-control input-sm" type="number" min="0" data-duration="days">
+    <div class="nex-duration-picker-element-label">days</div>
+</div>
+<div class="nex-duration-picker-element col-sm-4">
+    <input class="form-control input-sm" type="number" min="0" max="23" data-duration="hours">
+    <div class="nex-duration-picker-element-label">hours</div>
+</div>
+<div class="nex-duration-picker-element col-sm-4">
+    <input class="form-control input-sm" type="number" min="0" max="59" data-duration="minutes">
+    <div class="nex-duration-picker-element-label">minutes</div>
+</div>
+<input type="hidden" id="@Model.Name" name="@Model.Name" value="@Model.Value" />

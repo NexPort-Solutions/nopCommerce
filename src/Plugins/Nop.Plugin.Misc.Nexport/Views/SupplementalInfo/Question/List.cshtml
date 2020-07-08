@@ -1,0 +1,118 @@
+﻿@using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Web.Framework.Models.DataTables
+@using Nop.Plugin.Misc.Nexport
+@using Microsoft.AspNetCore.Routing
+@using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+@model NexportSupplementalInfoQuestionSearchModel
+
+@{
+    Layout = "_AdminLayout";
+
+    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
+
+    ViewBag.Title = "Nexport Supplemental Info Questions";
+    Html.SetActiveMenuItemSystemName(NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME);
+}
+
+<nop-antiforgery-token />
+<div class="content-header clearfix">
+    <h1 class="pull-left">
+        Supplemental Questions
+    </h1>
+    <div class="pull-right">
+        <a asp-action="AddSupplementalInfoQuestion" asp-controller="NexportIntegration" class="btn bg-blue">
+            <i class="fa fa-plus-square"></i>
+            @T("Admin.Common.AddNew")
+        </a>
+        <button type="button" id="delete-selected" class="btn bg-red">
+            <i class="fa fa-trash-o"></i>
+            @T("Admin.Common.Delete.Selected")
+        </button>
+        <nop-action-confirmation asp-button-id="delete-selected" asp-action="DeleteSelectedSupplementalInfoQuestion" />
+    </div>
+</div>
+<div class="content">
+    <div class="form-horizontal">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <p>
+                    Supplemental question list
+                </p>
+                @await Html.PartialAsync("Table", new NexportDataTablesModel
+                {
+                   Name = "nexport-supplemental-questions-grid",
+                   UrlRead = new DataUrl("ListSupplementalInfoQuestion", "NexportIntegration", null),
+                   Length = Model.PageSize,
+                   LengthMenu = Model.AvailablePageSizes,
+                   ColumnCollection = new List<ColumnProperty>
+                        {
+                            new ColumnProperty(nameof(NexportSupplementalInfoQuestionModel.Id))
+                            {
+                                IsMasterCheckBox = true,
+                                Render = new RenderCheckBox("checkbox_supplemental_info_question"),
+                                ClassName =  NopColumnClassDefaults.CenterAll,
+                                Width = "50",
+                            },
+                            new ColumnProperty(nameof(NexportSupplementalInfoQuestionModel.QuestionText))
+                            {
+                                Title = "Question",
+                                Width = "200"
+                            },
+                            new ColumnProperty(nameof(NexportSupplementalInfoQuestionModel.Description))
+                            {
+                                Title = "Description",
+                                Width = "200"
+                            },
+                            new ColumnProperty(nameof(NexportSupplementalInfoQuestionModel.UtcDateModified))
+                            {
+                                Title = "Modified Date",
+                                Width = "100",
+                                Render = new RenderCustom("renderLocalDateForTableEntry")
+                            },
+                            new ColumnProperty(nameof(NexportSupplementalInfoQuestionModel.IsActive))
+                            {
+                                Title = "Active",
+                                Width = "50",
+                                ClassName = NopColumnClassDefaults.CenterAll,
+                                Render = new RenderBoolean()
+                            },
+                            new ColumnProperty(nameof(NexportSupplementalInfoQuestionModel.Id))
+                            {
+                                Title = "Edit",
+                                Width = "100",
+                                ClassName = NopColumnClassDefaults.Button,
+                                Render = new RenderButtonEdit(new DataUrl("EditSupplementalInfoQuestion"))
+                            }
+                        }
+                })
+
+                <script>
+                    $(document).ready(function () {
+                        $("#delete-selected-action-confirmation-submit-button").bind("click", function () {
+                            var postData = {
+                                selectedIds: selectedIds
+                            };
+                            addAntiForgeryToken(postData);
+                            $.ajax({
+                                cache: false,
+                                type: "POST",
+                                url: "@Url.Action("DeleteSelectedSupplementalInfoQuestion", "NexportIntegration")",
+                                data: postData,
+                                error: function (jqXHR, textStatus, errorThrown) {
+                                    $("#deleteSelectedFailed-info").text(errorThrown);
+                                    $("#deleteSelectedFailed").click();
+                                },
+                                complete: function (jqXHR, textStatus) {
+                                    updateTable("#nexport-supplemental-questions-grid");
+                                }
+                            });
+                            $("#delete-selected-action-confirmation").modal("toggle");
+                            return false;
+                        });
+                    });
+                </script>
+                <nop-alert asp-alert-id="deleteSelectedFailed" />
+            </div>
+        </div>
+    </div>
+</div>

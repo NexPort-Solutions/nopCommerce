@@ -44,7 +44,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             if (!(context.ActionDescriptor is ControllerActionDescriptor actionDescriptor))
                 return;
             if (actionDescriptor.ControllerTypeInfo == typeof(ProductController) &&
-                actionDescriptor.ActionName == "ProductDetails")
+                actionDescriptor.ActionName == nameof(ProductController.ProductDetails))
             {
                 var customer = _workContext.CurrentCustomer;
                 if (customer != null && customer.IsRegistered())

@@ -1,0 +1,112 @@
+﻿@using Microsoft.AspNetCore.Routing
+@using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+@using Nop.Web.Framework.Models.DataTables
+@using System.Net
+
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoOptionGroupAssociationListSearchModel
+
+@await Html.PartialAsync("Table", new DataTablesModel
+{
+    Name = "supplemental-info-option-group-memberships-grid",
+    UrlRead = new DataUrl("GetSupplementalInfoOptionGroupAssociations", "NexportIntegration",
+        new RouteValueDictionary {
+            { "optionId", Model.OptionId }
+        }),
+    UrlDelete = new DataUrl("DeleteSupplementalInfoOptionGroupAssociation", "NexportIntegration", null),
+    Length = Model.PageSize,
+    LengthMenu = Model.AvailablePageSizes,
+    ColumnCollection = new List<ColumnProperty>
+    {
+        new ColumnProperty(nameof(NexportSupplementalInfoOptionGroupAssociationModel.NexportGroupId))
+        {
+            Title = "Group Id",
+            Width = "250",
+        },
+        new ColumnProperty(nameof(NexportSupplementalInfoOptionGroupAssociationModel.Id))
+        {
+            Title = "Group",
+            Width = "200",
+            Render = new RenderCustom("renderGroupName")
+        },
+        new ColumnProperty(nameof(NexportSupplementalInfoOptionGroupAssociationModel.IsActive))
+        {
+            Title = "Active",
+            Width = "50",
+            ClassName = NopColumnClassDefaults.CenterAll,
+            Render = new RenderBoolean()
+        },
+        new ColumnProperty(nameof(NexportSupplementalInfoOptionGroupAssociationModel.Id))
+        {
+            Width = "50",
+            Render = new RenderButtonRemove(T("Admin.Common.Delete").Text),
+            ClassName = NopColumnClassDefaults.Button,
+            AutoWidth = false
+        },
+        new ColumnProperty(nameof(NexportSupplementalInfoOptionGroupAssociationModel.Id))
+        {
+            Width = "50",
+            Render = new RenderCustom("renderChangeStatus"),
+            ClassName = NopColumnClassDefaults.Button,
+            AutoWidth = false
+        }
+    }
+})
+
+<input type="submit" id="btnRefreshGroupMembershipMappings" style="display: none">
+
+<script>
+    function renderGroupName(data, type, row, meta) {
+        var textRenderer = $.fn.dataTable.render.text().display;
+        var groupName = row.NexportGroupName;
+        var displayText = groupName;
+
+        if (groupName !== null) {
+            displayText += " - " + row.NexportGroupShortName;
+        }
+
+        return textRenderer(displayText);
+    }
+
+    function renderChangeStatus(data, type, row, meta) {
+        if (!row.Id)
+            return "";
+
+        var buttonFunction = "changeGroupAssociationStatus('" + data + "'); return false;";
+
+        return renderCustomButton(buttonFunction, "fa fa-pencil", "Change status");;
+    }
+
+    function changeGroupAssociationStatus(dataId) {
+        if (dataId < 1) {
+            return false;
+        }
+
+        if (confirm("Do you want to change the status of this group association?")) {
+            var postData = {
+                id: dataId
+            };
+            addAntiForgeryToken(postData);
+
+            $.ajax({
+                url: "@Url.Action("ChangeSupplementalInfoOptionGroupAssociationStatus", "NexportIntegration")",
+                type: "@WebRequestMethods.Http.Post",
+                dataType: "json",
+                data: postData,
+                success: function (data, textStatus, jqXHR) {
+                    // Display error if returned
+                    if (data) {
+                        display_nop_error(data);
+                    }
+                    // Refresh grid
+                    $("#supplemental-info-option-group-memberships-grid").DataTable().draw(false);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+        else {
+            return false;
+        }
+    }
+</script>

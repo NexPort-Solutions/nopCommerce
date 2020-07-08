@@ -80,7 +80,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 return;
 
             if (actionDescriptor.ControllerTypeInfo == typeof(ShoppingCartController) &&
-                (actionDescriptor.ActionName == nameof(ShoppingCartController.AddProductToCart_Details) || actionDescriptor.ActionName == nameof(ShoppingCartController.AddProductToCart_Catalog)))
+                (actionDescriptor.ActionName == nameof(ShoppingCartController.AddProductToCart_Details) ||
+                 actionDescriptor.ActionName == nameof(ShoppingCartController.AddProductToCart_Catalog)))
             {
                 if (_workContext.CurrentCustomer.IsRegistered())
                 {

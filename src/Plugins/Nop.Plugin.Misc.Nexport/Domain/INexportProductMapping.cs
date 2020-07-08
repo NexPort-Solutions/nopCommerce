@@ -36,7 +36,7 @@ namespace Nop.Plugin.Misc.Nexport.Domain
 
         DateTime? UtcAccessExpirationDate { get; set; }
 
-        long? AccessTimeLimit { get; set; }
+        string AccessTimeLimit { get; set; }
 
         decimal? CreditHours { get; set; }
     }

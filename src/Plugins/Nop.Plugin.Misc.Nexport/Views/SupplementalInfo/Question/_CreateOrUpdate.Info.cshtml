@@ -1,0 +1,42 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoQuestionModel
+<input asp-for="UtcDateCreated" type="hidden" />
+<input asp-for="UtcDateModified" type="hidden" />
+
+<div class="panel-body">
+    <div class="form-group">
+        <div class="col-md-3">
+            <nop-label asp-for="QuestionText" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="QuestionText" asp-required="true" />
+            <span asp-validation-for="QuestionText"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-3">
+            <nop-label asp-for="Description" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="Description" />
+            <span asp-validation-for="Description"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-3">
+            <nop-label asp-for="Type" />
+        </div>
+        <div class="col-md-9">
+            <nop-select asp-for="Type" asp-items="Model.AvailableQuestionTypes" />
+            <span asp-validation-for="Type"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-3">
+            <nop-label asp-for="IsActive" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="IsActive" />
+            <span asp-validation-for="IsActive"></span>
+        </div>
+    </div>
+</div>

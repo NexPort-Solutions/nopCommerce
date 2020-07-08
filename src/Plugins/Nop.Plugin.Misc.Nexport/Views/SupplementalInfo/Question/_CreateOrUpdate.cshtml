@@ -1,0 +1,34 @@
+﻿@using Nop.Core
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoQuestionModel
+
+@inject Nop.Services.Common.IGenericAttributeService genericAttributeService
+@inject IWorkContext workContext
+
+@{
+
+    const string hideInfoBlockAttributeName = "SupplementalInfo.Question.HideInfoBlock";
+    var hideInfoBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideInfoBlockAttributeName);
+
+    const string hideOptionsBlockAttributeName = "SupplementalInfo.Question.HideOptionsBlock";
+    var hideOptionsBlock = genericAttributeService.GetAttribute(workContext.CurrentCustomer, hideOptionsBlockAttributeName, defaultValue: true);
+}
+
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
+
+<div class="content">
+    <div class="form-horizontal">
+        <div id="supplemental-info-question-edit">
+            <nop-panels id="supplemental-info-question-panels">
+                <nop-panel asp-name="supplemental-info-question-info" asp-icon="fa fa-info" asp-title="Info"
+                           asp-hide-block-attribute-name="@hideInfoBlockAttributeName" asp-hide="@hideInfoBlock" asp-advanced="false">
+                    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Question/_CreateOrUpdate.Info.cshtml", Model)
+                </nop-panel>
+                <nop-panel asp-name="supplemental-info-question-options" asp-icon="fa fa-check-square-o" asp-title="Options"
+                           asp-hide-block-attribute-name="@hideOptionsBlockAttributeName" asp-hide="@hideOptionsBlock" asp-advanced="false">
+                    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Question/_CreateOrUpdate.QuestionOptions.cshtml", Model)
+                </nop-panel>
+            </nop-panels>
+        </div>
+    </div>
+</div>

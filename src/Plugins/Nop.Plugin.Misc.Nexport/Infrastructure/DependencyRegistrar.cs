@@ -14,6 +14,7 @@ using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Customers;
 using Nop.Services.Logging;
+using Nop.Services.Messages;
 using Nop.Services.Orders;
 using DefaultLogger = Nop.Plugin.Misc.Nexport.Infrastructure.Logging.DefaultLogger;
 
@@ -26,8 +27,12 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
         public void Register(ContainerBuilder builder, ITypeFinder typeFinder, NopConfig config)
         {
             var apiConfiguration = new Configuration();
-
             builder.RegisterInstance(apiConfiguration).SingleInstance();
+
+            builder.Register(c => new ApiClient(apiConfiguration.BasePath)).As<ISynchronousClient>()
+                .InstancePerDependency();
+            builder.Register(c => new ApiClient(apiConfiguration.BasePath)).As<IAsynchronousClient>()
+                .InstancePerDependency();
 
             builder.RegisterType<DefaultLogger>().As<ILogger>().InstancePerLifetimeScope();
 
@@ -49,35 +54,80 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
                 .InstancePerLifetimeScope();
 
-           builder.RegisterType<EfRepository<NexportProductMapping>>()
-               .As<IRepository<NexportProductMapping>>()
-               .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
-               .InstancePerLifetimeScope();
+            builder.RegisterType<EfRepository<NexportProductMapping>>()
+                .As<IRepository<NexportProductMapping>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
 
-           builder.RegisterType<EfRepository<NexportProductGroupMembershipMapping>>()
-               .As<IRepository<NexportProductGroupMembershipMapping>>()
-               .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
-               .InstancePerLifetimeScope();
+            builder.RegisterType<EfRepository<NexportProductGroupMembershipMapping>>()
+                .As<IRepository<NexportProductGroupMembershipMapping>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
 
-           builder.RegisterType<EfRepository<NexportUserMapping>>()
-               .As<IRepository<NexportUserMapping>>()
-               .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
-               .InstancePerLifetimeScope();
+            builder.RegisterType<EfRepository<NexportUserMapping>>()
+                .As<IRepository<NexportUserMapping>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
 
-           builder.RegisterType<EfRepository<NexportOrderProcessingQueueItem>>()
-               .As<IRepository<NexportOrderProcessingQueueItem>>()
-               .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
-               .InstancePerLifetimeScope();
+            builder.RegisterType<EfRepository<NexportOrderProcessingQueueItem>>()
+                .As<IRepository<NexportOrderProcessingQueueItem>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
 
-           builder.RegisterType<EfRepository<NexportOrderInvoiceItem>>()
-               .As<IRepository<NexportOrderInvoiceItem>>()
-               .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
-               .InstancePerLifetimeScope();
+            builder.RegisterType<EfRepository<NexportOrderInvoiceItem>>()
+                .As<IRepository<NexportOrderInvoiceItem>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
 
-           builder.RegisterType<EfRepository<NexportOrderInvoiceRedemptionQueueItem>>()
-               .As<IRepository<NexportOrderInvoiceRedemptionQueueItem>>()
-               .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
-               .InstancePerLifetimeScope();
+            builder.RegisterType<EfRepository<NexportOrderInvoiceRedemptionQueueItem>>()
+                .As<IRepository<NexportOrderInvoiceRedemptionQueueItem>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportSupplementalInfoQuestion>>()
+                .As<IRepository<NexportSupplementalInfoQuestion>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportSupplementalInfoQuestionMapping>>()
+                .As<IRepository<NexportSupplementalInfoQuestionMapping>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportSupplementalInfoOption>>()
+                .As<IRepository<NexportSupplementalInfoOption>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportSupplementalInfoOptionGroupAssociation>>()
+                .As<IRepository<NexportSupplementalInfoOptionGroupAssociation>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportSupplementalInfoAnswer>>()
+                .As<IRepository<NexportSupplementalInfoAnswer>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportSupplementalInfoAnswerMembership>>()
+                .As<IRepository<NexportSupplementalInfoAnswerMembership>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportRequiredSupplementalInfo>>()
+                .As<IRepository<NexportRequiredSupplementalInfo>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportSupplementalInfoAnswerProcessingQueueItem>>()
+                .As<IRepository<NexportSupplementalInfoAnswerProcessingQueueItem>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportGroupMembershipRemovalQueueItem>>()
+                .As<IRepository<NexportGroupMembershipRemovalQueueItem>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
         }
 
         public int Order => 1000;

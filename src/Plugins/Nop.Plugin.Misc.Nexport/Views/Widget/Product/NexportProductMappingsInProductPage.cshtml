@@ -3,7 +3,7 @@
 @inject IGenericAttributeService genericAttributeService
 @inject IWorkContext workContext
 
-@model Nop.Plugin.Misc.Nexport.Models.NexportProductMappingListSearchModel
+@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingListSearchModel
 
 @{
     const string hideNexportMappingsBlockAttributeName = "ProductPage.HideNexportMappingsBlock";
@@ -14,6 +14,7 @@
            asp-hide-block-attribute-name="@hideNexportMappingsBlockAttributeName" asp-hide="@hideNexportMappingsBlock" asp-advanced="false">
     <div class="panel-body">
         <div class="sub-panel" id="product-mapping-container">
+            @* ReSharper disable once Mvc.PartialViewNotResolved *@
             @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappingTable.cshtml", Model)
         </div>
     </div>

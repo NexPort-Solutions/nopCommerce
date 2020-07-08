@@ -1,24 +1,42 @@
 ﻿@using Nop.Core
 @using Nop.Plugin.Misc.Nexport
 @using Nop.Services.Common
+@using Nop.Web.Framework.Models.DataTables
+@using Microsoft.AspNetCore.Routing
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Extensions
+@using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+@using System.Net
+@using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Services.Stores
 
 @inject IGenericAttributeService genericAttributeService
 @inject IWorkContext workContext
 @inject NexportSettings _nexportSettings
+@inject IStoreService storeService
 
-@model Nop.Plugin.Misc.Nexport.Models.NexportUserMappingModel
+@model Nop.Plugin.Misc.Nexport.Models.Customer.NexportCustomerAdditionalInfoModel
+
+@{
+    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
+    Html.AppendScriptParts("~/Plugins/Misc.Nexport/Scripts/dataTables.rowGroup.min.js");
+    Html.AddCssFileParts("~/Plugins/Misc.Nexport/Content/rowGroup.dataTables.min.css");
+}
 
 @if (Model != null && Model.Editable)
 {
     const string hideNexportCustomerDetailsBlockAttributeName = "CustomerPage.HideNexportCustomerDetailsBlock";
     var hideNexportCustomerDetailsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportCustomerDetailsBlockAttributeName);
 
+    const string hideNexportSupplementalInfoAnswersBlockAttributeName = "CustomerPage.HideNexportSupplementalInfoAnswersBlock";
+    var hideNexportSupplementalInfoAnswersBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportSupplementalInfoAnswersBlockAttributeName);
+
     <nop-panel asp-name="nexport-customer-details" asp-icon="fa fa-sticky-note-o" asp-title="Nexport Customer Info"
                asp-hide-block-attribute-name="@hideNexportCustomerDetailsBlockAttributeName" asp-hide="@hideNexportCustomerDetailsBlock" asp-advanced="false">
         <div class="panel-body">
             <div class="form-group">
                 <div class="col-md-3">
-                    <nop-label asp-for="NexportUserId"></nop-label>
+                    <nop-label asp-for="NexportUserId" />
                 </div>
                 <div class="col-md-9">
                     <div class="input-group">
@@ -64,7 +82,7 @@
                     </div>
                 }
                 var userInfoUrlCreated = Uri.TryCreate(new Uri(_nexportSettings.Url.TrimEnd('/')), $"Account/Info.nex?user={Model.NexportUserId}", out var userInfoUrl);
-                if(userInfoUrlCreated && userInfoUrl != null)
+                if (userInfoUrlCreated && userInfoUrl != null)
                 {
                     <div class="form-group">
                         <div class="col-md-3">
@@ -75,6 +93,211 @@
                     </div>
                 }
             }
+        </div>
+    </nop-panel>
+    <nop-panel asp-name="nexport-customer-supplemental-info-answers" asp-icon="fa fa-sticky-note-o"
+               asp-title="Nexport Supplemental Info Answers"
+               asp-hide-block-attribute-name="@hideNexportSupplementalInfoAnswersBlockAttributeName"
+               asp-hide="@hideNexportSupplementalInfoAnswersBlock" asp-advanced="false">
+        <div class="panel-body">
+            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel()
+            {
+               Name = "nexport-customer-supplemental-info-questions",
+               UrlRead = new DataUrl("GetCustomerSupplementalInfoQuestions", "NexportIntegration",
+                        new RouteValueDictionary {
+                            {
+                                "customerId", Model.CustomerId
+                            }}),
+               Length = Model.NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel.PageSize,
+               LengthMenu = Model.NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel.AvailablePageSizes,
+               PrimaryKeyColumn = nameof(NexportCustomerSupplementalInfoAnsweredQuestionModel.Id),
+               ColumnCollection = new List<ColumnProperty>
+               {
+                    new ColumnProperty(null)
+                    {
+                        Render = new RenderChildCaret(),
+                        Width = "5px",
+                        Searchable = false,
+                        ClassName = NopColumnClassDefaults.ChildControl,
+                        AutoWidth = false
+                    },
+                    new ColumnProperty(nameof(NexportCustomerSupplementalInfoAnsweredQuestionModel.QuestionText))
+                    {
+                        Title = "Question",
+                        Width = "100"
+                    },
+                    new ColumnProperty(nameof(NexportCustomerSupplementalInfoAnsweredQuestionModel.QuestionText))
+                    {
+                        Title = "Question",
+                        Width = "100"
+                    }
+                },
+                ChildTable = new NexportDataTablesModel
+                {
+                    Name = "nexport-customer-supplemental-info-answers-list",
+                    UrlRead = new DataUrl("GetCustomerSupplementalInfoAnswers", "NexportIntegration",
+                                new RouteValueDictionary {
+                                    { "customerId", Model.CustomerId }
+                                }),
+                    IsChildTable = true,
+                    Length = Model.NexportSupplementalInfoAnswerListSearchModel.PageSize,
+                    LengthMenu = Model.NexportSupplementalInfoAnswerListSearchModel.AvailablePageSizes,
+                    Filters = new List<FilterParameter>
+                    {
+                        new FilterParameter(nameof(NexportSupplementalInfoAnswerModel.QuestionId),
+                            nameof(NexportCustomerSupplementalInfoAnsweredQuestionModel.Id), true)
+                    },
+                    RowGrouping = true,
+                    RowGroupingColumn = nameof(NexportSupplementalInfoAnswerModel.StoreName),
+                    CustomRowStartRender = "renderCustomGroupingRow",
+                    ColumnCollection = new List<ColumnProperty>
+                    {
+                        new ColumnProperty(nameof(NexportSupplementalInfoAnswerModel.OptionText))
+                        {
+                            Title = "Option",
+                            Width = "100"
+                        },
+                        new ColumnProperty(nameof(NexportSupplementalInfoAnswerModel.Status))
+                        {
+                            Title = "Status",
+                            Width = "50",
+                            Render = new RenderCustom("renderAnswerStatusInfo")
+                        },
+                        new ColumnProperty(nameof(NexportSupplementalInfoAnswerModel.NexportMemberships))
+                        {
+                            Title = "Membership Id",
+                            Width = "100"
+                        },
+                        new ColumnProperty(nameof(NexportSupplementalInfoAnswerModel.UtcDateModified))
+                        {
+                            Title = "Modified Date",
+                            Width = "100",
+                            Render = new RenderCustom("renderLocalDateForTableEntry")
+                        },
+                        new ColumnProperty(nameof(NexportSupplementalInfoAnswerModel.UtcDateCreated))
+                        {
+                            Title = "Created Date",
+                            Width = "100",
+                            Render = new RenderCustom("renderLocalDateForTableEntry")
+                        },
+                        new ColumnProperty(nameof(NexportCustomerSupplementalInfoAnsweredQuestionModel.Id))
+                        {
+                            Width = "50",
+                            Render = new RenderCustom("renderDeleteCustomerAnswer"),
+                            ClassName = NopColumnClassDefaults.Button,
+                            AutoWidth = false
+                        }
+                    }
+                }
+            })
+
+            <input type="submit" id="btnRefreshAnswerList" style="display: none">
+
+            <script>
+                $(document).ready(function() {
+                    $("#btnRefreshAnswerList").click(function () {
+                        // Refresh child grid
+                        $("table[id*=nexport-customer-supplemental-info-answers-list]").DataTable().draw(false);
+
+                        // Return false to don't reload a page
+                        return false;
+                    });
+                });
+
+                function renderAnswerStatusInfo(data, type, row, meta) {
+                    if (data === +"@((int) NexportSupplementalInfoAnswerStatus.NotProcessed)") {
+                        return "@NexportSupplementalInfoAnswerStatus.NotProcessed.GetDisplayName()";
+                    } else if (data === +"@((int) NexportSupplementalInfoAnswerStatus.Processed)") {
+                        return "@NexportSupplementalInfoAnswerStatus.Processed.GetDisplayName()";
+                    } else if (data === +"@((int) NexportSupplementalInfoAnswerStatus.Modified)") {
+                        return "@NexportSupplementalInfoAnswerStatus.Modified.GetDisplayName()";
+                    } else {
+                        return "";
+                    }
+                }
+
+                function renderCustomGroupingRow(rows, group, level) {
+                    var rowData = rows.data();
+                    if (rowData.count() < 1)
+                        return "";
+
+                    var questionId = rowData.pluck("QuestionId")[0];
+                    var storeId = rowData.pluck("StoreId")[0];
+
+                    var buttonFunction = "editCustomerQuestion('" + questionId + "'" + ", '" + storeId + "');return false;";
+
+                    var element = "Store - " + rowData.pluck("StoreName")[0] + "<button class=\"btn btn-default\" style=\"margin-left: 5px; margin-top: 1px; margin-bottom: 1px; padding: 5px 12px;\"" +
+                        " onclick=\"" + buttonFunction + "\"";
+                    element += "><i class=\"fa fa-pencil\"></i>Edit</button>";
+
+                    return element;
+                }
+
+                function editCustomerQuestion(questionId, storeId) {
+                    if (questionId < 1) {
+                        alert("Invalid question Id");
+                        return;
+                    }
+
+                    if (storeId < 1) {
+                        alert("Invalid store Id");
+                        return;
+                    }
+
+                    var url = "@Url.Action("EditCustomerSupplementalInfoAnsweredQuestion", "NexportIntegration")";
+                    url += "?customerId=@Model.CustomerId";
+                    url += "&questionId=" + questionId;
+                    url += "&storeId=" + storeId;
+                    url += "&containerId=nexport-customer-supplemental-info-answers&btnId=btnRefreshAnswerList";
+
+                    OpenWindow(url, 800, 800, true);
+                }
+
+                function renderDeleteCustomerAnswer(data, type, row, meta) {
+                    if (!row.Id)
+                        return "";
+
+                    var buttonFunction = "deleteCustomerAnswer('" + data + "');return false;";
+
+                    return renderCustomButton(buttonFunction, "fa fa-delete", "Delete");
+                }
+
+                function deleteCustomerAnswer(answerId) {
+                    if (answerId < 1) {
+                        alert("Invalid answer Id");
+                        return;
+                    }
+
+                    if (confirm("@T("Admin.Common.DeleteConfirmation")")) {
+                        var postData = {
+                            answerId: answerId
+                        };
+                        addAntiForgeryToken(postData);
+
+                        $.ajax({
+                            url: "@Url.Action("DeleteCustomerSupplementalInfoAnswer", "NexportIntegration")",
+                            type: "@WebRequestMethods.Http.Post",
+                            dataType: "json",
+                            data: postData,
+                            success: function(data, textStatus, jqXHR) {
+                                // Display error if returned
+                                if (data) {
+                                    display_nop_error(data);
+                                }
+                                // Refresh grid
+                                $("table[id*=nexport-customer-supplemental-info-answers-list]").DataTable().draw(false);
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                alert(errorThrown);
+                            }
+                        });
+                    }
+
+                    return;
+                }
+
+                //# sourceURL=nexport_customer_details.js
+            </script>
         </div>
     </nop-panel>
 }

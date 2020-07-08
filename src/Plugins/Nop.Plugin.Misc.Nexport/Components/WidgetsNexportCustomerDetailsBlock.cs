@@ -1,12 +1,7 @@
-﻿using System;
-using Microsoft.AspNetCore.Mvc;
-using Nop.Core;
-using Nop.Core.Caching;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Domain.Customers;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
-using Nop.Services.Configuration;
-using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Web.Framework.Components;
@@ -34,7 +29,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
             if (customerModel.Id == 0)
                 return Content("");
 
-            var model = _nexportPluginModelFactory.PrepareNexportUserMappingModel(customerModel.ToEntity<Customer>());
+            var model = _nexportPluginModelFactory.PrepareNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
 
             var mapping = _nexportService.FindUserMappingByCustomerId(customerModel.Id);
             if (mapping != null)

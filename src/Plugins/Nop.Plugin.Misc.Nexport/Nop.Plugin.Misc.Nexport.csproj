@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <TieredCompilation>true</TieredCompilation>
+    <LangVersion>latest</LangVersion>
     <ApplicationIcon />
     <Authors>Nexport Solutions</Authors>
     <Company>Nexport Solutions</Company>
@@ -15,9 +16,8 @@
     You need to set this parameter to true if your plugin has a nuget package
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>1.0.0.6</AssemblyVersion>
-    <FileVersion>1.0.0.6</FileVersion>
-    <LangVersion>latest</LangVersion>
+    <AssemblyVersion>1.0.0.7</AssemblyVersion>
+    <FileVersion>1.0.0.7</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,23 +27,30 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentMigrator" Version="3.2.1" />
-    <PackageReference Include="FluentMigrator.Runner" Version="3.2.1" />
-    <PackageReference Include="JetBrains.Annotations" Version="2019.1.3" />
-    <PackageReference Include="NexportApi" Version="1.0.23" />
-    <PackageReference Include="RestSharp" Version="106.10.1" />
+    <PackageReference Include="FluentMigrator" Version="3.2.7" />
+    <PackageReference Include="FluentMigrator.Runner" Version="3.2.7" />
+    <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
+    <PackageReference Include="NexportApi" Version="1.0.24" />
+    <PackageReference Include="RestSharp" Version="106.11.4" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Areas\Admin\Views\Product\Edit.cshtml" />
+    <None Remove="Areas\Admin\Views\_ViewImports.cshtml" />
+    <None Remove="Areas\Admin\Views\_ViewStart.cshtml" />
     <None Remove="Content\nexport-admin.css" />
     <None Remove="Content\nexport-store.css" />
     <None Remove="Content\nexport.css" />
+    <None Remove="Content\rowGroup.dataTables.min.css" />
     <None Remove="logo.jpg" />
     <None Remove="plugin.json" />
     <None Remove="Scripts\bootstrap3-typeahead.js" />
+    <None Remove="Scripts\dataTables.rowGroup.min.js" />
+    <None Remove="Scripts\nexport_plugin_common.js" />
     <None Remove="Views\Configure.cshtml" />
+    <None Remove="Views\Customer\EditNexportSupplementalInfoAnswer.cshtml" />
     <None Remove="Views\Customer\Login.cshtml" />
-    <None Remove="Views\Customer\NexportUserMapping.cshtml" />
+    <None Remove="Views\Customer\NexportSupplementalInfoAnswers.cshtml" />
     <None Remove="Views\MapNexportProduct.cshtml" />
     <None Remove="Views\MapNexportProductList.cshtml" />
     <None Remove="Views\MapProductWithNexport.cshtml" />
@@ -54,12 +61,26 @@
     <None Remove="Views\ProductMappingGroupMembership.cshtml" />
     <None Remove="Views\ProductMappingTable.cshtml" />
     <None Remove="Views\Product\_AddToCart.cshtml" />
+    <None Remove="Views\Shared\Components\TagHelpers\NexportDurationPicker\Default.cshtml" />
     <None Remove="Views\Shared\GuidNullable.cshtml" />
+    <None Remove="Views\Shared\Table.cshtml" />
+    <None Remove="Views\SupplementalInfo\AddQuestion.cshtml" />
+    <None Remove="Views\SupplementalInfo\EditCustomerSupplementalInfoAnsweredQuestion.cshtml" />
+    <None Remove="Views\SupplementalInfo\EditQuestion.cshtml" />
+    <None Remove="Views\SupplementalInfo\List.cshtml" />
+    <None Remove="Views\SupplementalInfo\Option\Create.cshtml" />
+    <None Remove="Views\SupplementalInfo\Option\Edit.cshtml" />
+    <None Remove="Views\SupplementalInfo\Option\GroupAssociation.cshtml" />
+    <None Remove="Views\SupplementalInfo\Option\_CreateOrUpdate.Option.cshtml" />
+    <None Remove="Views\SupplementalInfo\Question\_CreateOrUpdate.Info.cshtml" />
+    <None Remove="Views\SupplementalInfo\Question\_CreateOrUpdate.QuestionOptions.cshtml" />
+    <None Remove="Views\SupplementalInfo\_CreateOrUpdate.Question.cshtml" />
     <None Remove="Views\Syllabus\SyllabusList.cshtml" />
     <None Remove="Views\ViewOrder.cshtml" />
     <None Remove="Views\Widget\Customer\NexportCustomerDetails.cshtml" />
     <None Remove="Views\Widget\Customer\NexportSettingNavigation.cshtml" />
     <None Remove="Views\Widget\Order\NexportOrderDetailsProductLine.cshtml" />
+    <None Remove="Views\Widget\Order\WidgetsOrderDetailsPageOverview.cshtml" />
     <None Remove="Views\Widget\Order\WidgetsOrderSummaryCartFooter.cshtml" />
     <None Remove="Views\Widget\Product\WidgetsProductDetailsOverviewTop.cshtml" />
     <None Remove="Views\Widget\WidgetsHeaderLinksBefore.cshtml" />
@@ -69,6 +90,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Areas\Admin\Views\_ViewImports.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\_ViewStart.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Content\nexport-admin.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -76,6 +103,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\nexport.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\rowGroup.dataTables.min.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="logo.jpg">
@@ -87,10 +117,19 @@
     <Content Include="Scripts\bootstrap3-typeahead.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Scripts\dataTables.rowGroup.min.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\nexport_plugin_common.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Customer\EditNexportSupplementalInfoAnswer.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\Customer\Login.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\Customer\NexportUserMapping.cshtml">
+    <Content Include="Views\Customer\NexportSupplementalInfoAnswers.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\MapNexportProduct.cshtml">
@@ -115,16 +154,47 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Product\_AddToCart.cshtml">
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Shared\EditorTemplates\GuidNullable.cshtml">
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
+    <Content Include="Views\Shared\Table.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\SupplementalInfo\AnswerQuestions.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\SupplementalInfo\EditCustomerSupplementalInfoAnsweredQuestion.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\SupplementalInfo\Option\Create.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\SupplementalInfo\Option\Edit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\SupplementalInfo\Option\GroupAssociation.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\SupplementalInfo\Option\_CreateOrUpdate.Option.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\SupplementalInfo\Question\Add.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\SupplementalInfo\Question\Edit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\SupplementalInfo\Question\_CreateOrUpdate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\SupplementalInfo\Question\_CreateOrUpdate.Info.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\SupplementalInfo\Question\_CreateOrUpdate.QuestionOptions.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\Syllabus\SyllabusList.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -194,10 +264,19 @@
     <Content Include="Views\_RedeemOrViewOrder.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="Views\ProductMappingTable.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Widget\Order\WidgetsOrderDetailsPageOverview.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Product\Edit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\Components\TagHelpers\NexportDurationPicker\Default.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\SupplementalInfo\Question\List.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

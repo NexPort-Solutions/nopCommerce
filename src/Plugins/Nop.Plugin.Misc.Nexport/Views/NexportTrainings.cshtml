@@ -1,4 +1,4 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.NexportTrainingListModel
+﻿@model Nop.Plugin.Misc.Nexport.Models.Customer.NexportTrainingListModel
 
 @{
     Layout = "_ColumnsTwo";
@@ -21,15 +21,13 @@
         @if (Model?.RedemptionOrganizations != null && Model.RedemptionOrganizations.Count > 0)
         {
             <div class="nexport-training-list">
+                <input id="userId" type="hidden" value="@Model.UserId" />
                 @foreach (var org in Model.RedemptionOrganizations)
                 {
                     <div class="section nexport-training-item">
                         <div class="title">
-                            <a href="@Url.Action("GoToNexportOrg", "NexportIntegration",
-                                         new {
-                                             orgId = org.OrgId,
-                                             userId = Model.UserId
-                                         })" target="_blank" class="button-2 order-details-button" style="font-size: 1em;">@org.OrgName (@org.OrgShortName)</a>
+                           <a href="javascript:void(0);" data-org-id="@org.OrgId" onclick="navigateToNexport(this); return false;"
+                               class="button-2 order-details-button" style="font-size: 1em;">@org.OrgName (@org.OrgShortName)</a>
                         </div>
                     </div>
                 }
@@ -37,3 +35,29 @@
         }
     </div>
 </div>
+<script asp-location="Footer">
+    function navigateToNexport(element) {
+        var orgId = $(element).data("org-id");
+        var userId = $("#userId").val();
+        if (orgId && userId) {
+            var url = "@Url.Action("GoToNexportOrg", "NexportIntegration")";
+            url += "?orgId=" + orgId + "&userId=" + userId;
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                success: function(result) {
+                    if (result && result.RedirectUrl) {
+                        window.open(result.RedirectUrl, "_blank");
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    var response = xhr.responseJSON;
+                    if (response && response.Error) {
+                        displayBarNotification(response.Error, "error");
+                    }
+                }
+            });
+        }
+    }
+</script>

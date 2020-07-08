@@ -83,5 +83,34 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public static string ProductStoreMappingPatternCacheKey => "Nop.nexport.mapping.store.";
 
         public static string UserMappingPatternCacheKey => "Nop.nexport.user.mapping.";
+
+        /// <summary>
+        /// Gets a key for caching
+        /// </summary>
+        /// <remarks>
+        /// {0} : page index
+        /// {1} : page size
+        /// </remarks>
+        public static string SupplementalInfoQuestionAllCacheKey => "Nop.nexport.supplementalinfo.question.all-{0}-{1}";
+
+        public static string SupplementalInfoQuestionAllNoPaginationCacheKey => "Nop.nexport.supplementalinfo.question.all";
+
+        public static string SupplementalInfoQuestionPatternCacheKey => "Nop.nexport.supplementalinfo.question.";
+
+        public static string SupplementalInfoOptionPatternCacheKey => "Nop.nexport.supplementalinfo.option.";
+
+        public static string SupplementalInfoQuestionMappingPatternCacheKey => "Nop.nexport.supplementalinfo.question.mapping.";
+
+        public static string SupplementalInfoOptionGroupAssociationsAllCacheKey => "Nop.nexport.supplementalinfo.option.groupassociation.all-{0}";
+
+        public static string SupplementalInfoOptionGroupAssociationPatternCacheKey => "Nop.nexport.supplementalinfo.option.groupassociation.";
+
+        public static string SupplementalInfoAnswerAllCacheKey => "Nop.nexport.supplementalinfo.answer.all";
+
+        public static string SupplementalInfoAnswerPatternCacheKey => "Nop.nexport.supplementalinfo.answer.";
+
+        public static string SupplementalInfoAnswerMembershipPatternCacheKey => "Nop.nexport.supplementalinfo.answermembership.";
+
+        public static string SupplementalInfoRequiredPatternCacheKey => "Nop.nexport.supplementalinfo.required.";
     }
 }

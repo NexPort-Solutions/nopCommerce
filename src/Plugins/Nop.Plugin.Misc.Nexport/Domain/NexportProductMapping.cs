@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using NexportApi.Model;
 using Nop.Core;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -44,7 +45,7 @@ namespace Nop.Plugin.Misc.Nexport.Domain
 
         public DateTime? UtcAccessExpirationDate { get; set; }
 
-        public long? AccessTimeLimit { get; set; }
+        public string AccessTimeLimit { get; set; }
 
         public decimal? CreditHours { get; set; }
 
@@ -54,7 +55,11 @@ namespace Nop.Plugin.Misc.Nexport.Domain
 
         public bool AutoRedeem { get; set; }
 
+        public bool AllowExtension { get; set; }
+
         public bool IsExtensionProduct { get; set; }
+
+        public string RenewalWindow { get; set; }
 
         public int? StoreId { get; set; }
     }

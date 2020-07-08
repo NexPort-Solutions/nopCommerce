@@ -28,6 +28,12 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             routeBuilder.MapRoute("Plugin.Misc.Nexport.MyTraining",
                 "customer/nexporttraining",
                 new { controller = "NexportIntegration", action = "ViewNexportTraining" });
+            routeBuilder.MapRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers",
+                "customer/nexportsuplementalinfoanswers",
+                new { controller = "NexportIntegration", action = "ViewSupplementalInfoAnswers" });
+            routeBuilder.MapRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers.CustomerEdit",
+                "customer/nexportsuplementalinfoanswers/edit/{questionId:min(0)}",
+                new { controller = "NexportIntegration", action = "EditSupplementalInfoAnswers" });
             routeBuilder.MapRoute("Plugin.Misc.Nexport.RedeemOrder",
                 "customer/redeem",
                 new { controller = "NexportIntegration", action = "RedeemNexportOrderInvoiceItem" });

@@ -3,7 +3,7 @@
 @using Nop.Services.Helpers
 @inject IDateTimeHelper dateTimeHelper
 
-@model Nop.Plugin.Misc.Nexport.Models.NexportProductMappingModel
+@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingModel
 
 @if (Model != null && Model.Id > 0)
 {
@@ -135,7 +135,7 @@
     }
     @if (!Model.Editable)
     {
-        if (Model.AccessTimeLimit.HasValue)
+        if (!string.IsNullOrWhiteSpace(Model.AccessTimeLimit))
         {
             <div class="form-group">
                 <div class="col-sm-5 col-md-3">

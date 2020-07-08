@@ -3,6 +3,7 @@ using Nop.Core.Caching;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Components;
 using Nop.Plugin.Misc.Nexport.Models;
+using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Services;
 
 namespace Nop.Plugin.Misc.Nexport.Components

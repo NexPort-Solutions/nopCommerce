@@ -1,10 +1,12 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models
 {
+    [SuppressMessage("ReSharper", "Mvc.TemplateNotResolved")]
     public class ConfigurationModel : BaseNopModel
     {
         [DataType(DataType.Url)]

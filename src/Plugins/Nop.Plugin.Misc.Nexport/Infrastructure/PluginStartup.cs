@@ -2,6 +2,8 @@
 using System.Reflection;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Exceptions;
+using FluentMigrator.Runner.Initialization;
+using FluentMigrator.Runner.Processors;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Configuration;
@@ -28,8 +30,6 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
         /// <param name="configuration">Configuration of the application</param>
         public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
-            var dataSettings = DataSettingsManager.LoadSettings();
-
             // Add object context
             services.AddDbContext<NexportPluginObjectContext>(optionsBuilder =>
             {
@@ -48,16 +48,32 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 options.Filters.Add<CheckoutActionFilter>();
                 options.Filters.Add<ProductDetailsActionFilter>();
                 options.Filters.Add<ShoppingCartActionFilter>();
+                options.Filters.Add<OrderDetailsActionFilter>();
             });
+        }
 
-            services.AddFluentMigratorCore().ConfigureRunner(builder =>
-            {
-                builder.AddSqlServer()
-                    .WithGlobalConnectionString(dataSettings.DataConnectionString)
-                    .WithVersionTable(new NexportPluginMigrationVersionTable())
-                    .ScanIn(typeof(M001_CreatePluginSchemas).Assembly)
-                    .For.Migrations();
-            }).AddLogging(lb => lb.AddEventSourceLogger());
+        private static IServiceProvider CreateFluentMigratorRunnerService()
+        {
+            var dataSettings = DataSettingsManager.LoadSettings();
+
+            return new ServiceCollection()
+                // Add common FluentMigrator services
+                .AddFluentMigratorCore().ConfigureRunner(builder =>
+                {
+                    builder.AddSqlServer()
+                        .WithGlobalConnectionString(dataSettings.DataConnectionString)
+                        .WithVersionTable(new NexportPluginMigrationVersionTable())
+                        .ScanIn(typeof(Nop.Plugin.Misc.Nexport.Migrations.M001_CreatePluginSchemas).Assembly)
+                        .For.Migrations()
+                        .For.VersionTableMetaData();
+                })
+                .AddLogging(lb => lb.AddEventSourceLogger())
+                .Configure<RunnerOptions>(opt =>
+                {
+                    opt.Tags = new[] { "", "NexportPluginMigration" };
+                })
+                // Build the service provider
+                .BuildServiceProvider(false);
         }
 
         /// <inheritdoc />
@@ -95,6 +111,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                         serviceScope.ServiceProvider.GetRequiredService<NexportPluginService>();
 
                     nexportPluginService.InstallScheduledTask();
+                    nexportPluginService.AddActivityLogTypes();
                     nexportPluginService.AddOrUpdateResources();
                 }
             }
@@ -108,8 +125,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
         {
             try
             {
-                using (var serviceScope =
-                    application.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+                var migratorRunnerService = CreateFluentMigratorRunnerService();
+                using (var serviceScope = migratorRunnerService.CreateScope())
                 {
                     var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
                     try

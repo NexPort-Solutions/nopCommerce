@@ -119,6 +119,16 @@ namespace Nop.Plugin.Misc.Nexport {
                 IconClass = "fa fa-cog"
             });
 
+            node.ChildNodes.Add(new SiteMapNode()
+            {
+                Visible = true,
+                Title = "Supplemental Info",
+                SystemName = NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME,
+                ControllerName = "NexportIntegration",
+                ActionName = "ListSupplementalInfoQuestion",
+                IconClass = "fa fa-cog"
+            });
+
             rootNode.ChildNodes.Add(node);
         }
 
@@ -134,10 +144,15 @@ namespace Nop.Plugin.Misc.Nexport {
             var settings = new NexportSettings();
             _settingService.SaveSetting(settings);
 
-            _widgetSettings.ActiveWidgetSystemNames.Add(PluginDescriptor.SystemName);
-            _settingService.SaveSetting(_widgetSettings);
+            if (!_widgetSettings.ActiveWidgetSystemNames.Contains(NexportDefaults.SystemName))
+            {
+                _widgetSettings.ActiveWidgetSystemNames.Add(NexportDefaults.SystemName);
+                _settingService.SaveSetting(_widgetSettings);
+            }
 
             _nexportPluginService.InstallScheduledTask();
+
+            _nexportPluginService.AddActivityLogTypes();
 
             _nexportPluginService.AddOrUpdateResources();
 
@@ -146,9 +161,17 @@ namespace Nop.Plugin.Misc.Nexport {
 
         public override void Uninstall()
         {
+            if (_widgetSettings.ActiveWidgetSystemNames.Contains(NexportDefaults.SystemName))
+            {
+                _widgetSettings.ActiveWidgetSystemNames.Remove(NexportDefaults.SystemName);
+                _settingService.SaveSetting(_widgetSettings);
+            }
+
             _settingService.DeleteSetting<NexportSettings>();
 
             _nexportPluginService.UninstallScheduledTask();
+
+            _nexportPluginService.DeleteActivityLogTypes();
 
             _nexportPluginService.DeleteResources();
 
@@ -169,7 +192,7 @@ namespace Nop.Plugin.Misc.Nexport {
             base.Uninstall();
         }
 
-        public bool HideInWidgetList => false;
+        public bool HideInWidgetList => true;
 
         public IList<string> GetWidgetZones()
         {
@@ -183,7 +206,7 @@ namespace Nop.Plugin.Misc.Nexport {
                 PublicWidgetZones.AccountNavigationAfter,
                 PublicWidgetZones.HeaderLinksBefore,
                 PublicWidgetZones.OrderSummaryCartFooter,
-                PublicWidgetZones.ProductDetailsOverviewTop
+                PublicWidgetZones.ProductDetailsOverviewTop,
             };
         }
 

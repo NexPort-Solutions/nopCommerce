@@ -1,0 +1,102 @@
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportCustomerSupplementalInfoAnswerEditModel
+
+@{
+    Layout = "_AdminPopupLayout";
+
+    ViewBag.Title = "Edit customer supplemental info question answers";
+}
+
+@if (ViewBag.RefreshPage == true)
+{
+    <script>
+        try {
+            window.opener.$("#@(Context.Request.Query["containerId"]) #@(Context.Request.Query["btnId"])").click();
+        }
+        catch (e) { }
+    </script>
+}
+
+@if (ViewBag.ClosePage == true)
+{
+    <script>
+        window.close();
+    </script>
+}
+
+@if (Model?.Question != null && Model.Options != null && Model.Options.Count > 0)
+{
+    <form id="edit-customer-question-form" method="post"
+          asp-action="EditCustomerSupplementalInfoAnsweredQuestion"
+          asp-controller="NexportIntegration"
+          asp-route-customerId="@Context.Request.Query["customerId"]"
+          asp-route-storeId="@Context.Request.Query["storeId"]"
+          asp-route-containerId="@Context.Request.Query["containerId"]"
+          asp-route-btnId="@Context.Request.Query["btnId"]">
+        <div class="content-header clearfix">
+            <div class="pull-right">
+                <button type="submit" name="save" class="btn bg-blue">
+                    <i class="fa fa-floppy-o"></i>
+                    @T("Admin.Common.Save")
+                </button>
+            </div>
+        </div>
+        <div class="content">
+            <div class="form-horizontal">
+                <div class="panel-group">
+                    <div class="panel panel-default panel-popup">
+                        <div class="panel-body">
+                            <div style="text-align: center;">
+                                @Html.AntiForgeryToken()
+                                <div>
+                                    <input type="hidden" name="questionId" value="@Model.Question.Id" />
+                                    <div>
+                                        <h2 style="text-decoration: underline;">Question: @Model.Question.QuestionText</h2>
+                                    </div>
+                                    <div style="padding-top: 10px;">
+                                        @for (var i = 0; i < Model.Answers.Count; i++)
+                                        {
+                                            var answered = Model.Answers[i];
+                                            <input type="hidden" value="@answered.AnswerId" name="PreviousAnswers[@i].AnswerId" />
+                                            <input type="hidden" value="@answered.OptionId" name="PreviousAnswers[@i].OptionId" />
+                                        }
+
+                                        @{
+                                            var questionInputName = "OptionIds";
+                                        }
+                                        @if (Model.Question.Type == NexportSupplementalInfoQuestionType.SingleOption)
+                                        {
+                                            <div class="center-block col-xs-4" style="float: none !important;">
+                                                <select name="@questionInputName" class="form-control">
+                                                    @foreach (var option in Model.Options)
+                                                    {
+                                                        <option value="@option.Id" data-question-id="@option.QuestionId"
+                                                                selected="@(Model.Answers.FirstOrDefault(x => x.OptionId == option.Id) != null)">
+                                                            @option.OptionText
+                                                        </option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        }
+                                        else if (Model.Question.Type == NexportSupplementalInfoQuestionType.MultipleOptions)
+                                        {
+                                            @foreach (var option in Model.Options)
+                                            {
+                                                <div style="padding-bottom: 5px;">
+                                                    <input type="checkbox" id="@questionInputName-@(option.Id)"
+                                                           name="@questionInputName" value="@option.Id"
+                                                           checked="@(Model.Answers.FirstOrDefault(x => x.OptionId == option.Id) != null)">
+                                                    <label for="@questionInputName-@(option.Id)">@option.OptionText</label>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+}

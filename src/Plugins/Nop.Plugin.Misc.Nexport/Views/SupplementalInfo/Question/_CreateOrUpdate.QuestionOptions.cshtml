@@ -1,0 +1,106 @@
+﻿@using Nop.Web.Framework.Models.DataTables
+@using Microsoft.AspNetCore.Routing
+@using Nop.Plugin.Misc.Nexport.Models
+
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoQuestionModel
+
+@{
+    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
+}
+
+@if (Model.Id > 0)
+{
+    <div class="panel-body">
+        <p>
+            Question options
+        </p>
+        @await Html.PartialAsync("Table", new NexportDataTablesModel
+        {
+            Name = "supplemental-info-question-options-grid",
+            UrlRead = new DataUrl(
+                "SupplementalInfoOptionList",
+                "NexportIntegration",
+                new RouteValueDictionary
+                {
+                    [nameof(Model.NexportSupplementalInfoOptionSearchModel.QuestionId)] = Model.NexportSupplementalInfoOptionSearchModel.QuestionId
+                }),
+            UrlDelete = new DataUrl(
+                "DeleteSupplementalInfoOption",
+                "NexportIntegration", null),
+            Length = Model.NexportSupplementalInfoOptionSearchModel.PageSize,
+            LengthMenu = Model.NexportSupplementalInfoOptionSearchModel.AvailablePageSizes,
+            ColumnCollection = new List<ColumnProperty>
+            {
+                new ColumnProperty(nameof(NexportSupplementalInfoOptionModel.OptionText))
+                {
+                    Title = "Option",
+                    Width = "200"
+                },
+                new ColumnProperty(nameof(NexportSupplementalInfoOptionModel.UtcDateCreated))
+                {
+                    Title = "Date Created",
+                    Width = "200",
+                    Render = new RenderCustom("renderLocalDateForTableEntry")
+                },
+                new ColumnProperty(nameof(NexportSupplementalInfoOptionModel.UtcDateModified))
+                {
+                    Title = "Date Modified",
+                    Width = "200",
+                    Render = new RenderCustom("renderLocalDateForTableEntry")
+                },
+                new ColumnProperty(nameof(NexportSupplementalInfoOptionModel.Id))
+                {
+                    Title = "Edit",
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.Button,
+                    Render = new RenderCustom("renderEditSupplementalInfoOption")
+                },
+                new ColumnProperty(nameof(NexportSupplementalInfoOptionModel.Id))
+                {
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.Button,
+                    Render = new RenderButtonRemove("Delete")
+                }
+            }
+        })
+
+    <script>
+        function renderEditSupplementalInfoOption(data, type, row, meta) {
+            var url = "@Url.Action("SupplementalInfoOptionEditPopup", "NexportIntegration")";
+            url += "?optionId=" + data;
+            url += "&formId=edit-supplemental-info-question-form&btnId=btnRefresh";
+
+            var buttonFunction = "javascript:OpenWindow('" + url + "', 800, 800, true); return false;";
+            return renderCustomButton(buttonFunction, "fa fa-pencil", "@T("Admin.Common.Edit")");
+        }
+    </script>
+    </div>
+    <div class="panel-footer">
+        <button type="submit" id="btnAddNewQuestionOption"
+                onclick="javascript:OpenWindow('@(Url.Action("SupplementalInfoOptionCreatePopup",
+                                                    "NexportIntegration",
+                                                    new {
+                                                        questionId = Model.Id,
+                                                        btnId = "btnRefresh",
+                                                        formId = "edit-supplemental-info-question-form" }))',
+                                                800, 550, true); return false;" class="btn btn-primary">
+            Add a new option
+        </button>
+        <input type="submit" id="btnRefresh" style="display: none;" />
+        <script>
+            $(document).ready(function () {
+                $('#btnRefresh').click(function () {
+                    updateTable("#supplemental-info-question-options-grid");
+
+                    return false;
+                });
+            });
+        </script>
+    </div>
+}
+else
+{
+    <div class="panel-body">
+        You need to save the supplemental info question before you can add its options.
+    </div>
+}

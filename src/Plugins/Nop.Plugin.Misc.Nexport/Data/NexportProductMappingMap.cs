@@ -35,7 +35,9 @@ namespace Nop.Plugin.Misc.Nexport.Data
             builder.Property(m => m.SectionCeus).HasMaxLength(64);
             builder.Property(m => m.IsSynchronized);
             builder.Property(m => m.AutoRedeem);
+            builder.Property(m => m.AllowExtension);
             builder.Property(m => m.IsExtensionProduct);
+            builder.Property(m => m.RenewalWindow);
             builder.Property(m => m.StoreId);
 
             base.Configure(builder);

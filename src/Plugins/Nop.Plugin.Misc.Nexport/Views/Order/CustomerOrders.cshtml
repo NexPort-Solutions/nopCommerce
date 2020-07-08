@@ -39,7 +39,8 @@
                                 <col />
                                 @if (canRetryRecurringOrders)
                                 {
-                                    <col /> }
+                                    <col />
+}
                                 <col />
                             </colgroup>
                             <thead>
@@ -117,18 +118,18 @@
                     </div>
                 </form>
             </div>
-                        if (Model.RecurringPaymentErrors.Any())
+            if (Model.RecurringPaymentErrors.Any())
+            {
+                <div class="message-error">
+                    <ul>
+                        @foreach (var error in Model.RecurringPaymentErrors)
                         {
-                            <div class="message-error">
-                                <ul>
-                                    @foreach (var error in Model.RecurringPaymentErrors)
-                                    {
-                                        <li>@error</li>
-                                    }
-                                </ul>
-                            </div>
-                            }
+                            <li>@error</li>
                         }
+                    </ul>
+                </div>
+            }
+        }
 
         @if (Model.Orders.Count > 0)
         {
@@ -152,7 +153,7 @@
                             <input type="button" value="@T("Account.CustomerOrders.OrderDetails")" class="button-2 order-details-button" onclick="setLocation('@Url.RouteUrl("OrderDetails", new { orderId = order.Id })')" />
                         </div>
                         <div>
-                            @await Component.InvokeAsync("Widget", new {widgetZone = "CustomerOrderItemBottom", additionalData = order})
+                            @await Component.InvokeAsync("Widget", new { widgetZone = "CustomerOrderItemBottom", additionalData = order })
                         </div>
                     </div>
                 }

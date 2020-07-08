@@ -12,6 +12,7 @@ namespace Nop.Plugin.Misc.Nexport.Data
     {
         public NexportPluginObjectContext(DbContextOptions<NexportPluginObjectContext> options) : base(options)
         {
+
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -22,6 +23,15 @@ namespace Nop.Plugin.Misc.Nexport.Data
             modelBuilder.ApplyConfiguration(new NexportUserMappingMap());
             modelBuilder.ApplyConfiguration(new NexportOrderInvoiceItemMap());
             modelBuilder.ApplyConfiguration(new NexportOrderInvoiceRedemptionQueueMap());
+            modelBuilder.ApplyConfiguration(new NexportSupplementalInfoQuestionMap());
+            modelBuilder.ApplyConfiguration(new NexportSupplementalInfoQuestionMappingMap());
+            modelBuilder.ApplyConfiguration(new NexportSupplementalInfoOptionMap());
+            modelBuilder.ApplyConfiguration(new NexportSupplementalInfoOptionGroupAssociationMap());
+            modelBuilder.ApplyConfiguration(new NexportSupplementalInfoAnswerMap());
+            modelBuilder.ApplyConfiguration(new NexportSupplementalInfoAnswerMembershipMap());
+            modelBuilder.ApplyConfiguration(new NexportRequiredSupplementalInfoMap());
+            modelBuilder.ApplyConfiguration(new NexportSupplementalInfoAnswerProcessingQueueMap());
+            modelBuilder.ApplyConfiguration(new NexportGroupMembershipRemovalQueueMap());
 
             base.OnModelCreating(modelBuilder);
         }

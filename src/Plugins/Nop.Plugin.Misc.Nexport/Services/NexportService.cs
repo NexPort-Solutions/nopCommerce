@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Newtonsoft.Json;
 using NexportApi.Client;
 using NexportApi.Model;
 using Nop.Core;
@@ -24,6 +26,7 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
+using Nop.Plugin.Misc.Nexport.Models.Organization;
 using Nop.Services.Common;
 using Nop.Services.Orders;
 
@@ -49,6 +52,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<NexportOrderInvoiceItem> _nexportOrderInvoiceItemRepository;
         private readonly IRepository<NexportOrderInvoiceRedemptionQueueItem> _nexportOrderInvoiceRedemptionQueueRepository;
         private readonly IRepository<NexportUserMapping> _nexportUserMappingRepository;
+        private readonly IRepository<NexportSupplementalInfoQuestion> _nexportSupplementalInfoQuestionRepository;
+        private readonly IRepository<NexportSupplementalInfoOption> _nexportSupplementalInfoOptionRepository;
+        private readonly IRepository<NexportSupplementalInfoQuestionMapping> _nexportSupplementalInfoQuestionMappingRepository;
+        private readonly IRepository<NexportSupplementalInfoAnswer> _nexportSupplementalInfoAnswerRepository;
+        private readonly IRepository<NexportSupplementalInfoOptionGroupAssociation> _nexportSupplementalInfoOptionGroupAssociationRepository;
+        private readonly IRepository<NexportSupplementalInfoAnswerMembership> _nexportSupplementalInfoAnswerMembershipRepository;
+        private readonly IRepository<NexportRequiredSupplementalInfo> _nexportRequiredSupplementalInfoRepository;
+        private readonly IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> _nexportSupplementalInfoAnswerProcessingQueueRepository;
+        private readonly IRepository<NexportGroupMembershipRemovalQueueItem> _nexportGroupMembershipRemovalQueueRepository;
         private readonly IRepository<StoreMapping> _storeMappingRepository;
         private readonly IStaticCacheManager _staticCacheManager;
         private readonly IStoreMappingService _storeMappingService;
@@ -81,6 +93,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<NexportOrderInvoiceItem> nexportOrderInvoiceItemRepository,
             IRepository<NexportOrderInvoiceRedemptionQueueItem> nexportOrderInvoiceRedemptionQueueRepository,
             IRepository<NexportUserMapping> nexportUserMappingRepository,
+            IRepository<NexportSupplementalInfoQuestion> nexportSupplementalInfoQuestionRepository,
+            IRepository<NexportSupplementalInfoOption> nexportSupplementalInfoOptionRepository,
+            IRepository<NexportSupplementalInfoQuestionMapping> nexportSupplementalInfoQuestionMappingRepository,
+            IRepository<NexportSupplementalInfoAnswer> nexportSupplementalInfoAnswerRepository,
+            IRepository<NexportSupplementalInfoOptionGroupAssociation> nexportSupplementalInfoOptionGroupAssociationRepository,
+            IRepository<NexportSupplementalInfoAnswerMembership> nexportSupplementalInfoAnswerMembershipRepository,
+            IRepository<NexportRequiredSupplementalInfo> nexportRequiredSupplementalInfoRepository,
+            IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> nexportSupplementalInfoAnswerProcessingQueueRepository,
+            IRepository<NexportGroupMembershipRemovalQueueItem> nexportGroupMembershipRemovalQueueRepository,
             IRepository<StoreMapping> storeMappingRepository,
             IStaticCacheManager staticCacheManager,
             IStoreMappingService storeMappingService,
@@ -110,6 +131,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportOrderInvoiceItemRepository = nexportOrderInvoiceItemRepository;
             _nexportOrderInvoiceRedemptionQueueRepository = nexportOrderInvoiceRedemptionQueueRepository;
             _nexportUserMappingRepository = nexportUserMappingRepository;
+            _nexportSupplementalInfoQuestionRepository = nexportSupplementalInfoQuestionRepository;
+            _nexportSupplementalInfoOptionRepository = nexportSupplementalInfoOptionRepository;
+            _nexportSupplementalInfoQuestionMappingRepository = nexportSupplementalInfoQuestionMappingRepository;
+            _nexportSupplementalInfoAnswerRepository = nexportSupplementalInfoAnswerRepository;
+            _nexportSupplementalInfoOptionGroupAssociationRepository = nexportSupplementalInfoOptionGroupAssociationRepository;
+            _nexportSupplementalInfoAnswerMembershipRepository = nexportSupplementalInfoAnswerMembershipRepository;
+            _nexportRequiredSupplementalInfoRepository = nexportRequiredSupplementalInfoRepository;
+            _nexportSupplementalInfoAnswerProcessingQueueRepository = nexportSupplementalInfoAnswerProcessingQueueRepository;
+            _nexportGroupMembershipRemovalQueueRepository = nexportGroupMembershipRemovalQueueRepository;
             _storeMappingRepository = storeMappingRepository;
             _staticCacheManager = staticCacheManager;
             _storeMappingService = storeMappingService;
@@ -169,7 +199,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             catch (ApiException e)
             {
                 _logger.Error(e.Message);
-                _notificationService.ErrorNotification(e.ErrorContent);
+                _notificationService.ErrorNotification((string)e.ErrorContent);
             }
 
             return result;
@@ -205,7 +235,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             catch (ApiException e)
             {
                 _logger.Error(e.Message);
-                _notificationService.ErrorNotification(e.ErrorContent);
+                _notificationService.ErrorNotification((string)e.ErrorContent);
             }
 
             return null;
@@ -265,7 +295,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             catch (ApiException e)
             {
                 _logger.Error(e.Message);
-                _notificationService.ErrorNotification(e.ErrorContent);
+                _notificationService.ErrorNotification((string)e.ErrorContent);
             }
 
             return null;
@@ -324,7 +354,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             catch (ApiException e)
             {
                 _logger.Error(e.Message);
-                _notificationService.ErrorNotification(e.ErrorContent);
+                _notificationService.ErrorNotification((string)e.ErrorContent);
             }
 
             return null;
@@ -698,7 +728,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public void RedeemNexportInvoiceItem(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId)
+        public void RedeemNexportInvoiceItem(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId,
+            RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction = RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
         {
             if (invoiceItem == null)
                 throw new ArgumentNullException(nameof(invoiceItem));
@@ -709,7 +740,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             try
             {
                 var redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId, redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption);
+                    _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId, redeemingUserId, redemptionAction);
 
                 if (redeemInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
                     throw new ApiException((int)redeemInvoiceResult.ApiErrorEntity.ErrorCode,
@@ -776,6 +807,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 var errMsg = $"Cannot sign-on the user {invoiceItem.RedeemingUserId} into Nexport through SSO using the invoice item {invoiceItem.InvoiceItemId}";
                 _logger.Error($"{errMsg}: {ex.Message}", ex);
+
+                throw;
             }
 
             return null;
@@ -799,9 +832,78 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 var errMsg = $"Cannot sign-on the user {userId} into Nexport organization {orgId} through SSO";
                 _logger.Error($"{errMsg}: {ex.Message}", ex);
+
+                throw;
             }
 
             return null;
+        }
+
+        public List<MemberShipInfo> AddNexportMemberships(Guid userId, IList<Guid> groupIds)
+        {
+            if (userId == Guid.Empty)
+                throw new ArgumentException("User Id cannot be an empty identifier", nameof(userId));
+
+            try
+            {
+                var createMembershipResult = _nexportApiService.CreateNexportMemberships(_nexportSettings.Url,
+                    _nexportSettings.AuthenticationToken, userId, groupIds);
+
+                if (createMembershipResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
+                    throw new ApiException((int)createMembershipResult.ApiErrorEntity.ErrorCode,
+                        createMembershipResult.ApiErrorEntity.ErrorMessage);
+
+                return createMembershipResult.Memberships;
+            }
+            catch (Exception ex)
+            {
+                var errMsg = $"Cannot add new memberships for user {userId}";
+                _logger.Error($"{errMsg}: {ex.Message}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<CreateMembershipResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode,
+                            errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+        }
+
+        public List<RemovedMembershipInfo> RemoveNexportMemberships(IList<Guid> membershipIds)
+        {
+            try
+            {
+                var removeMembershipResult = _nexportApiService.RemoveNexportMemberships(_nexportSettings.Url,
+                    _nexportSettings.AuthenticationToken, membershipIds);
+
+                if (removeMembershipResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
+                    throw new ApiException((int)removeMembershipResult.ApiErrorEntity.ErrorCode,
+                        removeMembershipResult.ApiErrorEntity.ErrorMessage);
+
+                return removeMembershipResult.Memberships;
+            }
+            catch (Exception ex)
+            {
+                var errMsg = $"Cannot remove Nexport memberships";
+                _logger.Error($"{errMsg}: {ex.Message}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<RemoveMembershipResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode,
+                            errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
         }
 
         public List<NexportOrganizationModel> FindNexportRedemptionOrganizationsByCustomerId(int customerId)
@@ -817,20 +919,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     var orderInvoiceItem = FindNexportOrderInvoiceItem(order.Id, orderItem.Id);
                     if (orderInvoiceItem?.UtcDateRedemption != null)
                     {
-                        var invoiceRedemption = _nexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                        var invoiceRedemption = _nexportApiService.GetNexportInvoiceRedemption(
+                            _nexportSettings.Url, _nexportSettings.AuthenticationToken,
                             orderInvoiceItem.InvoiceItemId);
                         if (invoiceRedemption.ApiErrorEntity.ErrorCode == 0)
                         {
-                            var orgModel = new NexportOrganizationModel
+                            if (!organizationModelList.Exists(i => i.OrgId == invoiceRedemption.OrganizationId))
                             {
-                                OrgId = invoiceRedemption.OrganizationId,
-                                OrgName = invoiceRedemption.OrganizationName,
-                                OrgShortName = invoiceRedemption.OrganizationShortName
-                            };
+                                var org = _nexportApiService.GetNexportOrganizations(
+                                        _nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                                        invoiceRedemption.OrganizationId)
+                                    .OrganizationList.FirstOrDefault(o => o.OrgId == invoiceRedemption.OrganizationId);
 
-                            if (!organizationModelList.Exists(i => i.OrgId == orgModel.OrgId))
-                            {
-                                organizationModelList.Add(orgModel);
+                                if (org != null)
+                                {
+                                    organizationModelList.Add(new NexportOrganizationModel
+                                    {
+                                        OrgId = org.OrgId,
+                                        OrgName = org.Name,
+                                        OrgShortName = org.ShortName
+                                    });
+                                }
                             }
                         }
                     }
@@ -965,56 +1074,76 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result)? VerifyNexportEnrollmentStatus(Product product, Customer customer)
+        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollementExpirationDate)? VerifyNexportEnrollmentStatus(Product product,
+            Customer customer, int? storeId = null)
         {
-            var store = _storeContext.CurrentStore;
-            var storeModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(
-                store, "NexportStoreSaleModel", store.Id);
-            if (storeModel == NexportStoreSaleModel.Retail)
+            var mapping = GetProductMappingByNopProductId(product.Id, storeId);
+            if (mapping != null)
             {
-                var mapping = GetProductMappingByNopProductId(product.Id);
-                if (mapping != null)
+                var userMapping = FindUserMappingByCustomerId(customer.Id);
+
+                if (userMapping != null)
                 {
-                    var userMapping = FindUserMappingByCustomerId(customer.Id);
+                    return VerifyNexportEnrollmentStatus(mapping, userMapping);
+                }
+            }
 
-                    if (userMapping != null)
+            return null;
+        }
+
+        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollmentExpirationDate)? VerifyNexportEnrollmentStatus(NexportProductMapping productMapping, NexportUserMapping nexportUserMapping)
+        {
+            if (productMapping == null)
+                throw new ArgumentNullException(nameof(productMapping), "Product mapping cannot be null!");
+
+            if (nexportUserMapping == null)
+                throw new ArgumentNullException(nameof(nexportUserMapping), "Nexport user mapping cannot be null!");
+
+            try
+            {
+                var store = _storeContext.CurrentStore;
+
+                Guid orgId;
+
+                if (productMapping.NexportSubscriptionOrgId != null)
+                {
+                    orgId = productMapping.NexportSubscriptionOrgId.Value;
+                }
+                else
+                {
+                    orgId = _genericAttributeService.GetAttribute<Guid?>(store,
+                        "NexportSubscriptionOrganizationId", store.Id) ?? _nexportSettings.RootOrganizationId.Value;
+                }
+
+                if (productMapping.Type == NexportProductTypeEnum.Section)
+                {
+                    var existingEnrollment = _nexportApiService.GetNexportSectionEnrollment(
+                        _nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                        orgId, nexportUserMapping.NexportUserId, productMapping.NexportSyllabusId.Value);
+
+                    if (existingEnrollment != null)
                     {
-                        Guid orgId;
-
-                        if (mapping.NexportSubscriptionOrgId != null)
-                        {
-                            orgId = mapping.NexportSubscriptionOrgId.Value;
-                        }
-                        else
-                        {
-                            orgId = _genericAttributeService.GetAttribute<Guid?>(store,
-                                "NexportSubscriptionOrganizationId", store.Id) ?? _nexportSettings.RootOrganizationId.Value;
-                        }
-
-                        if (mapping.Type == NexportProductTypeEnum.Section)
-                        {
-                            var existingEnrollment = _nexportApiService.GetNexportSectionEnrollment(
-                                _nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                                orgId, userMapping.NexportUserId, mapping.NexportSyllabusId.Value);
-
-                            if (existingEnrollment != null)
-                            {
-                                return (existingEnrollment.Phase, existingEnrollment.Result);
-                            }
-                        }
-                        else if (mapping.Type == NexportProductTypeEnum.TrainingPlan)
-                        {
-                            var existingEnrollment = _nexportApiService.GetNexportTrainingPlanEnrollment(
-                                _nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                                orgId, userMapping.NexportUserId, mapping.NexportSyllabusId.Value);
-
-                            if (existingEnrollment != null)
-                            {
-                                return (existingEnrollment.Phase, existingEnrollment.Result);
-                            }
-                        }
+                        return (existingEnrollment.Phase, existingEnrollment.Result, existingEnrollment.ExpirationDate);
                     }
                 }
+                else if (productMapping.Type == NexportProductTypeEnum.TrainingPlan)
+                {
+                    var existingEnrollment = _nexportApiService.GetNexportTrainingPlanEnrollment(
+                        _nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                        orgId, nexportUserMapping.NexportUserId, productMapping.NexportSyllabusId.Value);
+
+                    if (existingEnrollment != null)
+                    {
+                        return (existingEnrollment.Phase, existingEnrollment.Result, existingEnrollment.ExpirationDate);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var errMsg = $"Cannot verify nexport enrollment status of the product {productMapping.NexportProductName} [{productMapping.NexportSyllabusId.Value}] for user {nexportUserMapping.NexportUserId}";
+                _logger.Error($"{errMsg}: {ex.Message}", ex);
+
+                throw;
             }
 
             return null;
@@ -1023,14 +1152,24 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public bool CanRepurchaseNexportProduct(Product product, Customer customer)
         {
             var store = _storeContext.CurrentStore;
-            var existingEnrollmentStatus = VerifyNexportEnrollmentStatus(product, customer);
+            var storeModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(
+                store, "NexportStoreSaleModel", store.Id);
+
+            if (storeModel != NexportStoreSaleModel.Retail)
+                return true;
+
+            var existingEnrollmentStatus = VerifyNexportEnrollmentStatus(product, customer, store.Id);
+            var mapping = GetProductMappingByNopProductId(product.Id);
 
             if (existingEnrollmentStatus != null)
             {
+                if (mapping != null && mapping.IsExtensionProduct)
+                    return true;
+
                 switch (existingEnrollmentStatus)
                 {
                     case var status
-                        when status == (Enums.PhaseEnum.Finished, Enums.ResultEnum.Failing):
+                        when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Failing:
                         {
                             var allowRepurchaseFailedCourses = _genericAttributeService.GetAttribute<bool>(store,
                                 NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
@@ -1038,7 +1177,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         }
 
                     case var status
-                        when status == (Enums.PhaseEnum.Finished, Enums.ResultEnum.Passing):
+                        when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Passing:
                         {
                             var allowRepurchasePassedCourses = _genericAttributeService.GetAttribute<bool>(store,
                                 NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
@@ -1048,16 +1187,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     case var status
                         when status.Value.Phase == Enums.PhaseEnum.InProgress:
                         {
+                            if (mapping != null && mapping.AllowExtension &&
+                                mapping.UtcAccessExpirationDate.HasValue
+                                && status.Value.enrollementExpirationDate.HasValue
+                                && mapping.UtcAccessExpirationDate.Value > status.Value.enrollementExpirationDate
+                                && !string.IsNullOrWhiteSpace(mapping.RenewalWindow))
+                            {
+                                var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
+                                if (DateTime.UtcNow >= mapping.UtcAccessExpirationDate.Value - renewalWindowTimeSpan)
+                                {
+                                    return true;
+                                }
+                            }
+
                             return false;
                         }
-                }
-            }
-            else
-            {
-                var mapping = GetProductMappingByNopProductId(product.Id);
-                if (mapping != null && mapping.IsExtensionProduct)
-                {
-                    return false;
                 }
             }
 
@@ -1068,6 +1212,29 @@ namespace Nop.Plugin.Misc.Nexport.Services
         {
             var store = _storeService.GetStoreById(storeId);
             return store != null ? store.Name : "";
+        }
+
+        public List<SelectListItem> GetSupplementalInfoQuestionList()
+        {
+            var supplementalInfoQuestions = GetAllNexportSupplementalInfoQuestions();
+            var listItems = supplementalInfoQuestions.Select(s => new SelectListItem
+            {
+                Text = s.QuestionText,
+                Value = s.Id.ToString()
+            });
+
+            return listItems.Select(item => new SelectListItem { Text = item.Text, Value = item.Value }).ToList();
+        }
+
+        public List<int> GetUnansweredQuestions(int customerId, int storeId, List<int> questionIds)
+        {
+            var currentAnswers = GetNexportSupplementalInfoAnswers(customerId, storeId);
+            var currentAnswered = currentAnswers.Where(x => questionIds.Contains(x.QuestionId)).ToList();
+            var questionWithAnswerIds = currentAnswered.Count > 0
+                ? currentAnswered.Select(x => x.QuestionId).ToList()
+                : new List<int>();
+
+            return questionIds.Except(questionWithAnswerIds).ToList();
         }
     }
 }

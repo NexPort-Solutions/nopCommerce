@@ -12,7 +12,10 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
-            viewLocations = new[] { "/Plugins/Misc.Nexport/Views/{1}/{0}.cshtml" }.Concat(viewLocations);
+            viewLocations = new[] {
+                "/Plugins/Misc.Nexport/Views/{1}/{0}.cshtml",
+                "/Plugins/Misc.Nexport/Areas/Admin/Views/{1}/{0}.cshtml"
+            }.Concat(viewLocations);
 
             return viewLocations;
         }

@@ -1,0 +1,31 @@
+﻿@using Nop.Plugin.Misc.Nexport
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoQuestionModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewBag.Title = "Add new supplemental info question";
+    Html.SetActiveMenuItemSystemName(NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME);
+}
+
+<form asp-controller="NexportIntegration" asp-action="AddSupplementalInfoQuestion" method="post" id="add-supplemental-info-question-form">
+    <div class="content-header clearfix">
+        <h1 class="pull-left">
+            Add new supplemental info question
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="ListSupplementalInfoQuestion">back to list</a>
+            </small>
+        </h1>
+        <div class="pull-right">
+            <button type="submit" name="save" class="btn bg-blue">
+                <i class="fa fa-floppy-o"></i>
+                @T("Admin.Common.Save")
+            </button>
+            <button type="submit" name="save-continue" class="btn bg-blue">
+                <i class="fa fa-floppy-o"></i>
+                @T("Admin.Common.SaveContinue")
+            </button>
+        </div>
+    </div>
+    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Question/_CreateOrUpdate.cshtml", Model)
+</form>

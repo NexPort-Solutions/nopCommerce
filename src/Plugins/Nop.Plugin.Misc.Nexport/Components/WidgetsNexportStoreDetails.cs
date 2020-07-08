@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Caching;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Models;
+using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Stores;
@@ -46,12 +47,16 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
             var model = store.ToModel<NexportStoreModel>();
 
-            model.NexportSubscriptionOrgId = _genericAttributeService.GetAttribute<Guid?>(store, NexportDefaults.NEXPORT_SUBSCRIPTION_ORGANIZATION_ID_SETTING_KEY, store.Id);
-            model.SaleModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(store, NexportDefaults.NEXPORT_STORE_SALE_MODEL_SETTING_KEY, store.Id);
-            model.AllowRepurchaseFailedCourses =
-                _genericAttributeService.GetAttribute<bool>(store, NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
-            model.AllowRepurchasePassedCourses =
-                _genericAttributeService.GetAttribute<bool>(store, NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
+            model.NexportSubscriptionOrgId = _genericAttributeService.GetAttribute<Guid?>(store,
+                NexportDefaults.NEXPORT_SUBSCRIPTION_ORGANIZATION_ID_SETTING_KEY, store.Id);
+            model.HideSectionCEUsInProductPage = _genericAttributeService.GetAttribute<bool>(store,
+                NexportDefaults.HIDE_SECTION_CEUS_IN_PRODUCT_PAGE_SETTING_KEY, store.Id);
+            model.SaleModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(store,
+                NexportDefaults.NEXPORT_STORE_SALE_MODEL_SETTING_KEY, store.Id);
+            model.AllowRepurchaseFailedCourses = _genericAttributeService.GetAttribute<bool>(store,
+                    NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
+            model.AllowRepurchasePassedCourses = _genericAttributeService.GetAttribute<bool>(store,
+                NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Store/NexportStoreDetails.cshtml", model);
         }

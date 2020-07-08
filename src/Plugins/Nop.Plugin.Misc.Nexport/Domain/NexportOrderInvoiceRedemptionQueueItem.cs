@@ -9,6 +9,10 @@ namespace Nop.Plugin.Misc.Nexport.Domain
 
         public Guid RedeemingUserId { get; set; }
 
+        public int ProductMappingId { get; set; }
+
+        public int OrderItemId { get; set; }
+
         public DateTime UtcDateCreated { get; set; }
 
         public DateTime? UtcLastFailedDate { get; set; }

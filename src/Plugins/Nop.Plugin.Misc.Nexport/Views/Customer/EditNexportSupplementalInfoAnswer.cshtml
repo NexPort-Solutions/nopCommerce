@@ -1,0 +1,104 @@
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportCustomerSupplementalInfoAnswerEditModel
+
+@{
+    Layout = "_ColumnsTwo";
+
+    Html.AppendPageCssClassParts("html-account-page");
+
+    var kendoVersion = "2014.1.318";
+    Html.AppendCssFileParts(ResourceLocation.Head, $"~/lib/kendo/{kendoVersion}/kendo.default.min.css");
+    Html.AppendCssFileParts(ResourceLocation.Head, $"~/lib/kendo/{kendoVersion}/kendo.common.min.css");
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
+
+    Html.AppendScriptParts(ResourceLocation.Footer, $"~/lib/kendo/{kendoVersion}/kendo.web.min.js");
+    Html.AddScriptParts(ResourceLocation.Footer, "~/js/public.accordion.js");
+
+    Html.AddTitleParts(T("Plugins.Misc.Nexport.Navigation.SupplementalInfoAnswers").Text);
+}
+
+@section left
+{
+    @await Component.InvokeAsync("CustomerNavigation", new { selectedTabId = 1002 })
+}
+
+<div class="page account-page supplemental-info-customer-modify-answers">
+    <div class="page-title">
+        <h1>@T("Account.MyAccount") - @T("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.Edit.PageTitle")</h1>
+    </div>
+    <div class="page-body">
+        @if (Model?.Question != null && Model.Options != null && Model.Options.Count > 0)
+        {
+            <form id="modify-answers-form" method="post" asp-action="EditSupplementalInfoAnswers" asp-controller="NexportIntegration">
+                <div class="modify-answers-container">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="questionId" value="@Model.Question.Id" />
+                    <div class="modify-answers-question-text">
+                        <h2>Question: @Model.Question.QuestionText</h2>
+                    </div>
+                    <div class="modify-answers-content">
+                        @for (var i = 0; i < Model.Answers.Count; i++)
+                        {
+                            var answered = Model.Answers[i];
+                            <input type="hidden" value="@answered.AnswerId" name="PreviousAnswers[@i].AnswerId" />
+                            <input type="hidden" value="@answered.OptionId" name="PreviousAnswers[@i].OptionId" />
+                        }
+
+                        @{
+                            var questionInputName = "OptionIds";
+                        }
+                        @if (Model.Question.Type == NexportSupplementalInfoQuestionType.SingleOption)
+                        {
+                            <select name="@questionInputName">
+                                @foreach (var option in Model.Options)
+                                {
+                                    <option value="@option.Id" data-question-id="@option.QuestionId"
+                                            selected="@(Model.Answers.FirstOrDefault(a => a.OptionId == option.Id) != null)">
+                                        @option.OptionText
+                                    </option>
+                                }
+                            </select>
+                        }
+                        else if (Model.Question.Type == NexportSupplementalInfoQuestionType.MultipleOptions)
+                        {
+                            @foreach (var option in Model.Options)
+                            {
+                                <div class="modify-answers-multiple-options-item">
+                                    <input type="checkbox" id="@questionInputName-@(option.Id)"
+                                           name="@questionInputName" value="@option.Id"
+                                           checked="@(Model.Answers.FirstOrDefault(a => a.OptionId == option.Id) != null)">
+                                    <label for="@questionInputName-@(option.Id)">@option.OptionText</label>
+                                </div>
+                            }
+                            <span id="selection-validation-error" class="field-validation-error" data-valmsg-for="@questionInputName"></span>
+                            <script asp-location="Footer">
+                                    $(document).ready(function () {
+                                        $("#modify-answers-form").validate({
+                                            rules: {
+                                                "OptionIds": {
+                                                    required: true,
+                                                    minlength: 1
+                                                }
+                                            },
+                                            onclick: function(){
+                                                $("#modify-answers-form").valid();
+                                            },
+                                            errorPlacement: function (error, element) {
+                                                error.appendTo($("#selection-validation-error[data-valmsg-for=@questionInputName]"));
+                                            },
+                                            messages: {
+                                                "OptionIds": "At least one option must be selected"
+                                            }
+                                        });
+                                    });
+                            </script>
+                        }
+                    </div>
+                </div>
+                <div class="buttons">
+                    <input type="submit" class="button-1 save-answer-btn" value="@T("Common.Save")" />
+                </div>
+            </form>
+        }
+    </div>
+</div>

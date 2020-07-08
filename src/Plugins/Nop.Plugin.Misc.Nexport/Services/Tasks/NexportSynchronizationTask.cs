@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Nop.Core.Data;
-using Nop.Core.Domain.Logging;
-using Nop.Plugin.Misc.Nexport.Domain;
-using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Services.Cms;
 using Nop.Services.Logging;
 using Nop.Services.Tasks;
+using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Plugin.Misc.Nexport.Extensions;
 
 namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 {

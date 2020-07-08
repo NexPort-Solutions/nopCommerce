@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
+using NexportApi.Model;
 using Nop.Core.Data;
 using Nop.Core.Domain.Orders;
-using Nop.Plugin.Misc.Nexport.Domain;
-using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Services.Cms;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
@@ -14,6 +12,9 @@ using Nop.Services.Logging;
 using Nop.Services.Orders;
 using Nop.Services.Stores;
 using Nop.Services.Tasks;
+using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Extensions;
 
 namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 {
@@ -26,6 +27,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
         private readonly IOrderService _orderService;
         private readonly IOrderProcessingService _orderProcessingService;
         private readonly ISettingService _settingService;
+        private readonly IStoreService _storeService;
+        private readonly IGenericAttributeService _genericAttributeService;
 
         private int _batchSize;
         private const int MAX_RETRY_COUNT = 5;
@@ -36,6 +39,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             IOrderService orderService,
             IOrderProcessingService orderProcessingService,
             ISettingService settingService,
+            IStoreService storeService,
+            IGenericAttributeService genericAttributeService,
             IRepository<NexportOrderInvoiceRedemptionQueueItem> nexportOrderInvoiceRedemptionQueueRepository,
             NexportService nexportService)
         {
@@ -44,6 +49,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             _orderService = orderService;
             _orderProcessingService = orderProcessingService;
             _settingService = settingService;
+            _storeService = storeService;
+            _genericAttributeService = genericAttributeService;
             _nexportOrderInvoiceRedemptionQueueRepository = nexportOrderInvoiceRedemptionQueueRepository;
             _nexportService = nexportService;
         }
@@ -102,18 +109,106 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                 {
                                     try
                                     {
-                                        _nexportService.RedeemNexportInvoiceItem(invoiceItem,
-                                            queueItem.RedeemingUserId);
+                                        var orderItem = _orderService.GetOrderItemById(queueItem.OrderItemId);
+                                        if (orderItem != null)
+                                        {
+                                            var store = _storeService.GetStoreById(order.StoreId);
+                                            var storeModelInfo = _genericAttributeService.GetAttribute<string>(orderItem,
+                                                $"StoreModel-{order.Id}-{orderItem.Id}", order.StoreId);
+                                            var storeModel = storeModelInfo != null ?
+                                                JsonConvert.DeserializeObject<NexportStoreSaleModel>(storeModelInfo) :
+                                                _genericAttributeService.GetAttribute<NexportStoreSaleModel>(store, "NexportStoreSaleModel", store.Id);
+                                            if (storeModel == NexportStoreSaleModel.Retail)
+                                            {
+                                                var mappingInfo = _genericAttributeService.GetAttribute<string>(orderItem,
+                                                $"ProductMapping-{order.Id}-{orderItem.Id}", order.StoreId);
 
-                                        _nexportService.AddOrderNote(order,
-                                            $"Nexport invoice item {invoiceItem.InvoiceItemId} has been redeemed for user {queueItem.RedeemingUserId}");
+                                                var productMapping = mappingInfo != null ?
+                                                    JsonConvert.DeserializeObject<NexportProductMapping>(mappingInfo) :
+                                                    _nexportService.GetProductMappingById(queueItem.ProductMappingId);
 
-                                        _nexportService.DeleteNexportOrderInvoiceRedemptionQueueItem(queueItem);
+                                                var nexportUserMapping =
+                                                    _nexportService.FindUserMappingByNexportUserId(queueItem.RedeemingUserId);
 
-                                        _logger.Information($"Order invoice redemption queue item {queueItemId} for order {order.Id} has been processed and removed!");
+                                                if (productMapping != null)
+                                                {
+                                                    var userMapping = _nexportService.FindUserMappingByNexportUserId(queueItem.RedeemingUserId);
+                                                    if (userMapping != null)
+                                                    {
+                                                        //TODO: Verify invoice state before verifying enrollment status
 
-                                        // Finish the order process and set the status to Complete
-                                        _orderProcessingService.CheckOrderStatus(order);
+
+
+                                                        var existingEnrollmentStatus = _nexportService.VerifyNexportEnrollmentStatus(productMapping, userMapping);
+
+                                                        if (existingEnrollmentStatus != null)
+                                                        {
+                                                            switch (existingEnrollmentStatus)
+                                                            {
+                                                                case var status
+                                                                    when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Failing:
+                                                                    {
+                                                                        _nexportService.RedeemNexportInvoiceItem(invoiceItem, queueItem.RedeemingUserId,
+                                                                            RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
+                                                                        break;
+                                                                    }
+
+                                                                case var status
+                                                                    when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Passing:
+                                                                    {
+                                                                        _nexportService.RedeemNexportInvoiceItem(invoiceItem, queueItem.RedeemingUserId,
+                                                                            RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
+                                                                        break;
+                                                                    }
+
+                                                                case var status
+                                                                    when status.Value.Phase == Enums.PhaseEnum.InProgress:
+                                                                    {
+                                                                        _nexportService.RedeemNexportInvoiceItem(invoiceItem, queueItem.RedeemingUserId,
+                                                                            RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption);
+                                                                        break;
+                                                                    }
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            _nexportService.RedeemNexportInvoiceItem(invoiceItem, queueItem.RedeemingUserId);
+                                                        }
+
+                                                        _nexportService.AddOrderNote(order,
+                                                            $"Nexport invoice item {invoiceItem.InvoiceItemId} has been redeemed for user {queueItem.RedeemingUserId}");
+
+                                                        var questionIds = _nexportService.GetNexportSupplementalInfoQuestionMappingsByProductMappingId(productMapping.Id)
+                                                                .Select(x => x.QuestionId).ToList();
+
+                                                        var questionWithoutAnswerIds =
+                                                            _nexportService.GetUnansweredQuestions(
+                                                                nexportUserMapping.NopUserId, store.Id, questionIds);
+
+                                                        foreach (var questionId in questionWithoutAnswerIds)
+                                                        {
+                                                            _nexportService.InsertNexportRequiredSupplementalInfo(
+                                                                new NexportRequiredSupplementalInfo
+                                                                {
+                                                                    CustomerId = nexportUserMapping.NopUserId,
+                                                                    StoreId = store.Id,
+                                                                    QuestionId = questionId,
+                                                                    UtcDateCreated = DateTime.UtcNow
+                                                                });
+                                                        }
+
+                                                        _nexportService.DeleteNexportOrderInvoiceRedemptionQueueItem(queueItem);
+
+                                                        _logger.Information($"Order invoice redemption queue item {queueItemId} for order {order.Id} has been processed and removed!");
+
+                                                        // Finish the order process and set the status to Complete
+                                                        _orderProcessingService.CheckOrderStatus(order);
+
+                                                        CleanUpStoredMappingInfo(orderItem.Id);
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                     catch (Exception ex)
                                     {
@@ -132,6 +227,9 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         else
                                         {
                                             DeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem, invoiceItem);
+                                            CleanUpStoredMappingInfo(queueItem.OrderItemId);
+
+                                            _orderProcessingService.CheckOrderStatus(order);
                                         }
                                     }
                                 }
@@ -156,6 +254,12 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                 "However, this invoice item can still be manually redeem by the user in the order history page.", updateOrder: true);
 
             _nexportService.DeleteNexportOrderInvoiceRedemptionQueueItem(queueItem);
+        }
+
+        private void CleanUpStoredMappingInfo(int orderItemId)
+        {
+            var cleanUpAttributes = _genericAttributeService.GetAttributesForEntity(orderItemId, "OrderItem");
+            _genericAttributeService.DeleteAttributes(cleanUpAttributes);
         }
     }
 }

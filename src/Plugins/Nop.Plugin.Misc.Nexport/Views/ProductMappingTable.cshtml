@@ -2,11 +2,12 @@
 @using Microsoft.AspNetCore.Routing
 @using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Plugin.Misc.Nexport.Models.ProductMappings
 @using Nop.Web.Framework.Models.DataTables
 @using Nop.Services.Helpers
 @inject IDateTimeHelper dateTimeHelper
 
-@model NexportProductMappingListSearchModel
+@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingListSearchModel
 
 @{
     var productIdCol = new ColumnProperty(nameof(NexportProductMappingModel.NopProductId))
@@ -122,7 +123,7 @@
     }
 }
 
-@await Html.PartialAsync("Table", new DataTablesModel
+@await Html.PartialAsync("Table", new NexportDataTablesModel
 {
     Name = "product-mappings-grid",
     UrlRead = new DataUrl("GetProductMappings", "NexportIntegration",

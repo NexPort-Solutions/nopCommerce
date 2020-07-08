@@ -1,7 +1,8 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Plugin.Misc.Nexport.Models.ProductMappings
 @inject IJsonHelper Json
 
-@model Nop.Plugin.Misc.Nexport.Models.NexportProductMappingModel
+@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingModel
 
 @{
     Layout = "_AdminPopupLayout";
@@ -111,6 +112,24 @@
                                     <span asp-validation-for="IsExtensionProduct"></span>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <div class="col-sm-5 col-md-3">
+                                    <nop-label asp-for="AllowExtension" />
+                                </div>
+                                <div class="col-sm-7 col-md-9">
+                                    <nop-editor asp-for="AllowExtension" />
+                                    <span asp-validation-for="AllowExtension"></span>
+                                </div>
+                            </div>
+                            <div class="form-group hidden" id="renewalWindowOption">
+                                <div class="col-sm-5 col-md-3">
+                                    <nop-label asp-for="RenewalWindow" />
+                                </div>
+                                <div class="col-sm-7 col-md-9">
+                                    <nex-duration-picker asp-for="RenewalWindow" asp-value="@Model.RenewalWindow" asp-id="renewal-window-duration-picker" />
+                                    <span asp-validation-for="RenewalWindow"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="panel panel-default panel-popup">
@@ -138,25 +157,7 @@
                                     <nop-label asp-for="AccessTimeLimit" />
                                 </div>
                                 <div class="col-sm-7 col-md-9">
-                                    @*<nop-editor asp-for="AccessTimeLimit" asp-render-form-control-class="true" asp-disabled="true" />*@
-
-                                    <div id="access-time-limit-duration-picker" class="nex-duration-picker">
-                                        <div class="nex-duration-picker-element col-sm-4">
-                                            <input class="form-control input-sm" type="number" min="0" data-duration="days">
-                                            <div class="nex-duration-picker-element-label">days</div>
-                                        </div>
-                                        <div class="nex-duration-picker-element col-sm-4">
-                                            <input class="form-control input-sm" type="number" min="0" max="23" data-duration="hours">
-                                            <div class="nex-duration-picker-element-label">hours</div>
-                                        </div>
-                                        <div class="nex-duration-picker-element col-sm-4">
-                                            <input class="form-control input-sm" type="number" min="0" max="59" data-duration="minutes">
-                                            <div class="nex-duration-picker-element-label">minutes</div>
-                                        </div>
-                                        <input type="hidden" data-duration="milliseconds" />
-                                        <input type="hidden" data-duration="ticks" />
-                                        <input type="hidden" id="AccessTimeLimit" name="AccessTimeLimit" value="@Model.AccessTimeLimit" />
-                                    </div>
+                                    <nex-duration-picker asp-for="AccessTimeLimit" asp-value="@Model.AccessTimeLimit" asp-id="access-time-limit-duration-picker" />
                                     <span asp-validation-for="AccessTimeLimit"></span>
                                 </div>
                             </div>
@@ -225,12 +226,73 @@
                             </div>
                         </div>
                     }
+                    <div class="panel panel-default panel-popup">
+                        <div class="panel-heading">
+                            Supplemental Info Question
+                        </div>
+                        <div class="panel-body">
+                            <div class="form-group">
+                                <div class="col-md-3">
+                                    <nop-label asp-for="SupplementalInfoQuestionIds" />
+                                </div>
+                                <div class="col-md-9">
+                                    <nop-select asp-for="SupplementalInfoQuestionIds" asp-items="Model.AvailableSupplementalInfoQuestions" asp-multiple="true" />
+                                    <script>
+                                        $(document).ready(function() {
+                                            var supplementalInfoQuestionIds = $("#@Html.IdFor(model => model.SupplementalInfoQuestionIds)")
+                                                .data("kendoMultiSelect");
+                                            supplementalInfoQuestionIds.setOptions({
+                                                autoClose: false,
+                                                filter: "contains"
+                                            });
+
+                                            @if (Model.AvailableSupplementalInfoQuestions.Count == 0)
+                                            {
+                                                <text>
+                                                    supplementalInfoQuestionIds.setOptions({
+                                                        enable: false,
+                                                        placeholder: "No supplemental info question is available"
+                                                    });
+                                                    supplementalInfoQuestionIds._placeholder();
+                                                    supplementalInfoQuestionIds._enable();
+                                                </text>
+                                            }
+                                        });
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+                </div>
         </div>
     </form>
 
     <script>
+        function convertTimeSpan(ts) {
+            var days, hours, minutes;
+            days = 0;
+            hours = 0;
+            minutes = 0;
+            var timeSpanComponents = ts.split(":");
+
+            if (timeSpanComponents.length === 3) {
+                var daysAndHoursParts = timeSpanComponents[0].split(".");
+                if (daysAndHoursParts.length === 2) {
+                    days = daysAndHoursParts[0];
+                    hours = daysAndHoursParts[1];
+                }
+
+                minutes = timeSpanComponents[1];
+            }
+
+            return {
+                days: days,
+                hours: hours,
+                minutes: minutes
+            };
+        }
+
         function initTypeAhead(element, appendToElement, customMatcher, afterSelectionCallbackFunction) {
             $(element).bootstrapTypeahead({
                 source: function(query, process) {
@@ -246,17 +308,17 @@
 
                     var url = "@Url.Action("SearchNexportDirectory", "NexportIntegration")";
                     searching = setTimeout(function() {
-                            return $.getJSON(
-                                url,
-                                { searchTerm: query },
-                                function(data) {
-                                    // save result to cache, remove next line if you don't want to use cache
-                                    query_cache[query] = data;
-                                    // only search if stop typing for 300ms aka fast typers
-                                    return process(data);
-                                }
-                            );
-                        }, 300);
+                        return $.getJSON(
+                            url,
+                            { searchTerm: query },
+                            function(data) {
+                                // save result to cache, remove next line if you don't want to use cache
+                                query_cache[query] = data;
+                                // only search if stop typing for 300ms aka fast typers
+                                return process(data);
+                            }
+                        );
+                    }, 300);
                 },
                 autoSelect: false,
                 fitToElement: true,
@@ -276,8 +338,12 @@
         function organizationTypeAheadMatcher(item, query, type) {
             type = type || 0;
 
-            if (item.type !== type)
+            if (!item.type && type === 1) {
                 return false;
+            } else {
+                if (item.type && item.type !== type)
+                    return false;
+            }
 
             var orgName = item.name;
             var orgShortName = item.short_name;
@@ -288,24 +354,48 @@
             return ~orgShortName.toLowerCase().indexOf(query.toLowerCase());
         }
 
-        function durationPickerChanged(container) {
+        function durationPickerChanged(container, submitInputElement) {
+            console.log(container);
+
             var days = parseInt(container.find("input[data-duration=days]").val(), 10) || 0;
             var hours = parseInt(container.find("input[data-duration=hours]").val(), 10) || 0;
             var minutes = parseInt(container.find("input[data-duration=minutes]").val(), 10) || 0;
 
-            var duration = moment.duration({
-                minutes: minutes,
-                hours: hours,
-                days: days
+            var duration = +days + "." + +hours + ":" + +minutes + ":00";
+            container.find(submitInputElement).val(duration);
+        }
+
+        function initDurationPicker(container, submitInputElement, value) {
+            var touchSpinConfig = {
+                decimals: 0,
+                verticalbuttons: true,
+                verticalupclass: "glyphicon glyphicon-chevron-up",
+                verticaldownclass: "glyphicon glyphicon-chevron-down",
+                buttondown_class: "btn",
+                buttonup_class: "btn"
+            };
+
+            var durationPickerDaysElement = container.find("input[data-duration=days]");
+            durationPickerDaysElement.TouchSpin($.extend({ min: 0, max: 10000 }, touchSpinConfig)).change(function () {
+                durationPickerChanged(container, submitInputElement);
             });
 
-            var durationAsMilliseconds = duration.asMilliseconds();
-            // Convert milliseconds to ticks for .Net: There are 10000 ticks in a millisecond
-            var ticks = durationAsMilliseconds * 10000;
+            var durationPickerHoursElement = container.find("input[data-duration=hours]");
+            durationPickerHoursElement.TouchSpin($.extend({ min: 0, max: 23 }, touchSpinConfig)).change(function () {
+                durationPickerChanged(container, submitInputElement);
+            });
 
-            container.find("input[data-duration=milliseconds]").val(durationAsMilliseconds);
-            container.find("input[data-duration=ticks]").val(ticks);
-            container.find("#AccessTimeLimit").val(ticks);
+            var durationPickerMinutesElement = container.find("input[data-duration=minutes]");
+            durationPickerMinutesElement.TouchSpin($.extend({ min: 0, max: 59 }, touchSpinConfig)).change(function () {
+                durationPickerChanged(container, submitInputElement);
+            });
+
+            if (value && value.indexOf(":") !== -1) {
+                var duration = convertTimeSpan(value);
+                durationPickerDaysElement.val(duration.days);
+                durationPickerHoursElement.val(duration.hours);
+                durationPickerMinutesElement.val(duration.minutes);
+            }
         }
 
         $(document).ready(function () {
@@ -323,7 +413,7 @@
                 $("#accessExpirationDateOption").removeClass("hidden");
             }
 
-            var hasAccessTimeLimitValue = @Json.Serialize(Model.AccessTimeLimit.HasValue);
+            var hasAccessTimeLimitValue = @Json.Serialize(!string.IsNullOrWhiteSpace(Model.AccessTimeLimit));
             if (!hasAccessTimeLimitValue) {
                 $("#AccessTimeLimit").prop("disabled", true);
             } else {
@@ -354,56 +444,30 @@
                     }
                 });
 
-            var durationPicker = $("#access-time-limit-duration-picker");
+            var accessTimeLimitDurationPicker = $("#access-time-limit-duration-picker");
+            var accessTimeLimitDuration = hasAccessTimeLimitValue ? "@Model.AccessTimeLimit" : null;
+            initDurationPicker(accessTimeLimitDurationPicker, $("#@Html.IdFor(model => model.AccessTimeLimit)"), accessTimeLimitDuration);
 
-            var durationPickerDaysElement = durationPicker.find("input[data-duration=days]");
-            durationPickerDaysElement.TouchSpin({
-                min: 0,
-                decimals: 0,
-                verticalbuttons: true,
-                verticalupclass: "glyphicon glyphicon-chevron-up",
-                verticaldownclass: "glyphicon glyphicon-chevron-down",
-                buttondown_class: "btn",
-                buttonup_class: "btn"
-            }).change(function() {
-                durationPickerChanged(durationPicker);
-            });
+            var renewalWindowDurationPicker = $("#renewal-window-duration-picker");
 
-            var durationPickerHoursElement = durationPicker.find("input[data-duration=hours]");
-            durationPickerHoursElement.TouchSpin({
-                min: 0,
-                max: 23,
-                decimals: 0,
-                verticalbuttons: true,
-                verticalupclass: "glyphicon glyphicon-chevron-up",
-                verticaldownclass: "glyphicon glyphicon-chevron-down",
-                buttondown_class: "btn",
-                buttonup_class: "btn"
-            }).change(function() {
-                durationPickerChanged(durationPicker);
-            });
+            $("#@Html.IdFor(model => model.AllowExtension)").on("change",
+                function(e) {
+                    if (this.checked) {
+                        $("#renewalWindowOption").removeClass("hidden");
+                    } else {
+                        $("#renewalWindowOption").addClass("hidden");
+                    }
+                });
 
-            var durationPickerMinutesElement = durationPicker.find("input[data-duration=minutes]");
-            durationPickerMinutesElement.TouchSpin({
-                min: 0,
-                max: 59,
-                decimals: 0,
-                verticalbuttons: true,
-                verticalupclass: "glyphicon glyphicon-chevron-up",
-                verticaldownclass: "glyphicon glyphicon-chevron-down",
-                buttondown_class: "btn",
-                buttonup_class: "btn"
-            }).change(function() {
-                durationPickerChanged(durationPicker);
-            });
-
-            var accessTimeLimitDuration = hasAccessTimeLimitValue ? parseInt("@Model.AccessTimeLimit") : null;
-            if (accessTimeLimitDuration !== null) {
-                var duration = moment.duration(accessTimeLimitDuration / 10000);
-                durationPickerMinutesElement.val(duration.minutes());
-                durationPickerHoursElement.val(duration.hours());
-                durationPickerDaysElement.val(duration.days());
+            var allowExtensionValue = @Json.Serialize(Model.AllowExtension);
+            if (!allowExtensionValue) {
+                $("#renewalWindowOption").addClass("hidden");
+            } else {
+                $("#renewalWindowOption").removeClass("hidden");
             }
+
+            var renewalWindowDuration =  @Json.Serialize(!string.IsNullOrWhiteSpace(Model.RenewalWindow)) ? "@Model.RenewalWindow" : null;
+            initDurationPicker(renewalWindowDurationPicker, $("#@Html.IdFor(model => model.RenewalWindow)"), renewalWindowDuration);
 
             initTypeAhead($("#NexportSubscriptionOrgId"), $("#NexportSubscriptionOrgId").parent(),
                 function(item, query) {

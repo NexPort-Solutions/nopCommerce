@@ -1,0 +1,223 @@
+﻿@using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+@model Nop.Plugin.Misc.Nexport.Models.NexportSupplementalInfoOptionModel
+
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
+<input asp-for="QuestionId" type="hidden" />
+<input asp-for="UtcDateCreated" type="hidden" />
+@if (ViewBag.RefreshPage == true)
+{
+    <script>
+        try {
+            window.opener.document.forms["@(Context.Request.Query["formId"])"].@(Context.Request.Query["btnId"]).click();
+        }
+        catch (e) {}
+        window.close();
+    </script>
+}
+
+<div class="content">
+    <div class="form-horizontal">
+        <div class="panel-group">
+            <div class="panel panel-default panel-popup">
+                <div class="panel-heading">
+                    Option info
+                </div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <div class="col-sm-3">
+                            <nop-label asp-for="OptionText" />
+                        </div>
+                        <div class="col-sm-9">
+                            <nop-editor asp-for="OptionText" asp-required="true" />
+                            <span asp-validation-for="OptionText"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @if (Model != null && Model.Id > 0)
+            {
+                Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
+
+                <div class="panel panel-default panel-popup">
+                    <div class="panel-heading">
+                        Group membership associations
+                    </div>
+                    <div class="panel-body">
+                        <div class="sub-panel">
+                            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Option/GroupAssociation.cshtml", new NexportSupplementalInfoOptionGroupAssociationListSearchModel { OptionId = Model.Id })
+                        </div>
+                        <div class="panel panel-default" style="margin-top: 0.5em;">
+                            <div class="panel-heading">
+                                Add new group membership
+                            </div>
+                            <div class="panel-body">
+                                <div class="form-group">
+                                    <div class="col-sm-5 col-md-3">
+                                        <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupId" />
+                                    </div>
+                                    <div class="col-sm-7 col-md-9">
+                                        <input class="form-control text-box single-line" id="AddGroupMembership_GroupId" type="text">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-5 col-md-3">
+                                        <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupName" />
+                                    </div>
+                                    <div class="col-sm-7 col-md-9">
+                                        <input type="hidden" id="AddGroupMembership_GroupName" />
+                                        <div class="form-text-row" id="AddGroupMembership_GroupName_Display"></div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-5 col-md-3">
+                                        <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupShortName" />
+                                    </div>
+                                    <div class="col-sm-7 col-md-9">
+                                        <input type="hidden" id="AddGroupMembership_GroupShortName" />
+                                        <div class="form-text-row" id="AddGroupMembership_GroupShortName_Display"></div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-7 col-md-9 col-sm-offset-5 col-md-offset-3">
+                                        <button type="button" id="addGroupMembership" class="btn btn-primary" disabled>Add group membership</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    function initTypeAhead(element, appendToElement, customMatcher, afterSelectionCallbackFunction) {
+                        $(element).bootstrapTypeahead({
+                            source: function(query, process) {
+                                if (query_cache[query]) {
+                                    process(query_cache[query]);
+                                    return;
+                                }
+
+                                if (typeof searching != "undefined") {
+                                    clearTimeout(searching);
+                                    process([]);
+                                }
+
+                                var url = "@Url.Action("SearchNexportDirectory", "NexportIntegration")";
+                                searching = setTimeout(function() {
+                                    return $.getJSON(
+                                        url,
+                                        { searchTerm: query },
+                                        function(data) {
+                                            // save result to cache, remove next line if you don't want to use cache
+                                            query_cache[query] = data;
+                                            // only search if stop typing for 300ms aka fast typers
+                                            return process(data);
+                                        }
+                                    );
+                                }, 300);
+                            },
+                            autoSelect: false,
+                            fitToElement: true,
+                            appendTo: appendToElement,
+                            matcher: function(item) {
+                                return customMatcher(item, this.query);
+                            },
+                            displayText: function(item) {
+                                return item.name;
+                            },
+                            afterSelect: function(selectedItem) {
+                                afterSelectionCallbackFunction(selectedItem);
+                            }
+                        });
+                    }
+
+                    function organizationTypeAheadMatcher(item, query, type) {
+                        type = type || 0;
+
+                        if (!item.type && type === 1) {
+                            return false;
+                        } else {
+                            if (item.type && item.type !== type)
+                                return false;
+                        }
+
+                        var orgName = item.name;
+                        var orgShortName = item.short_name;
+                        var isMatch = orgName.toLowerCase().indexOf(query.toLowerCase());
+                        if (~isMatch)
+                            return true;
+
+                        return ~orgShortName.toLowerCase().indexOf(query.toLowerCase());
+                    }
+
+                    $(document).ready(function () {
+                        $.fn.bootstrapTypeahead = $.fn.typeahead.noConflict();
+
+                        window.query_cache = {};
+
+                        var groupIdInputElement = $("#AddGroupMembership_GroupId");
+
+                        initTypeAhead(groupIdInputElement, groupIdInputElement.parent(),
+                            function(item, query) {
+                                return organizationTypeAheadMatcher(item, query, 1);
+                            },
+                            function(selectedItem) {
+                                $("#addGroupMembership").attr("disabled", false);
+
+                                groupIdInputElement.val(selectedItem.id);
+                                $("#AddGroupMembership_GroupName_Display").html(selectedItem.name);
+                                $("#AddGroupMembership_GroupName").val(selectedItem.name);
+                                $("#AddGroupMembership_GroupShortName_Display").html(selectedItem.short_name);
+                                $("#AddGroupMembership_GroupShortName").val(selectedItem.short_name);
+                            });
+
+                        $("#addGroupMembership").click(function() {
+                            var groupId = groupIdInputElement.val();
+                            var groupName = $("#AddGroupMembership_GroupName").val();
+                            var groupShortName = $("#AddGroupMembership_GroupShortName").val();
+
+                            if (groupId === null || groupId === "00000000-0000-0000-0000-000000000000") {
+                                return;
+                            }
+
+                            $("#addGroupMembership").attr('disabled', true);
+
+                            var postData = {
+                                nexportGroupId: groupId,
+                                nexportGroupName: groupName,
+                                nexportGroupShortName: groupShortName,
+                                optionId: '@Model.Id'
+                            };
+                            addAntiForgeryToken(postData);
+
+                            $.ajax({
+                                cache: false,
+                                type: "POST",
+                                url: "@(Url.Action("AddSupplementalInfoOptionGroupAssociation", "NexportIntegration"))",
+                                data: postData,
+                                success: function (data, textStatus, jqXHR) {
+                                    if (!data.Result) {
+                                        return;
+                                    }
+                                    updateTable("#supplemental-info-option-group-memberships-grid");
+                                },
+                                error: function (jqXHR, textStatus, errorThrown) {
+                                    console.error(errorThrown);
+                                },
+                                complete: function (jqXHR, textStatus) {
+                                    //$("#addGroupMembership").attr("disabled", false);
+
+                                    groupIdInputElement.val("");
+                                    $("#AddGroupMembership_GroupName_Display").empty();
+                                    $("#AddGroupMembership_GroupName").val("");
+                                    $("#AddGroupMembership_GroupShortName_Display").empty();
+                                    $("#AddGroupMembership_GroupShortName").val("");
+                                }
+                            });
+                        });
+                    });
+                </script>
+            }
+        </div>
+    </div>
+</div>

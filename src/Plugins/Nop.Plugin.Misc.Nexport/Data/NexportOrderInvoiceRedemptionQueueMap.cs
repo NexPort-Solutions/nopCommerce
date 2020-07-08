@@ -15,6 +15,7 @@ namespace Nop.Plugin.Misc.Nexport.Data
 
             builder.Property(m => m.OrderInvoiceItemId);
             builder.Property(m => m.RedeemingUserId);
+            builder.Property(m => m.ProductMappingId);
             builder.Property(m => m.UtcDateCreated);
             builder.Property(m => m.UtcLastFailedDate);
             builder.Property(m => m.RetryCount);

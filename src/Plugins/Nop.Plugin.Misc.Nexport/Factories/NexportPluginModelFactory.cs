@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Caching;
@@ -8,6 +9,7 @@ using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Security;
+using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Tax;
 using Nop.Core.Domain.Vendors;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -27,7 +29,13 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
+using Nop.Plugin.Misc.Nexport.Models.Catalog;
+using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
+using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
@@ -161,7 +169,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         #endregion
 
-        public NexportProductMappingModel PrepareNexportProductMappingModel(NexportProductMapping productMapping, bool isEditable)
+        public virtual NexportProductMappingModel PrepareNexportProductMappingModel(NexportProductMapping productMapping, bool isEditable)
         {
             var model = productMapping.ToModel<NexportProductMappingModel>();
             model.Editable = isEditable;
@@ -185,6 +193,22 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 }
             }
 
+            model.SupplementalInfoQuestionIds =
+                _nexportService.GetNexportSupplementalInfoQuestionMappingsByProductMappingId(productMapping.Id)
+                    .Select(x => x.QuestionId).ToList();
+
+            var availableSupplementalInfoQuestions = _nexportService.GetSupplementalInfoQuestionList();
+            foreach (var questionItem in availableSupplementalInfoQuestions)
+            {
+                model.AvailableSupplementalInfoQuestions.Add(questionItem);
+            }
+
+            foreach (var questionItem in model.AvailableSupplementalInfoQuestions)
+            {
+                questionItem.Selected = int.TryParse(questionItem.Value, out var questionId) &&
+                                        model.SupplementalInfoQuestionIds.Contains(questionId);
+            }
+
             return model;
         }
 
@@ -202,7 +226,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return searchModel;
         }
 
-        public MapProductToNexportProductListModel PrepareMapProductToNexportProductListModel(NexportProductMappingSearchModel searchModel)
+        public virtual MapProductToNexportProductListModel PrepareMapProductToNexportProductListModel(NexportProductMappingSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
@@ -232,14 +256,14 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportProductMappingListModel PrepareNexportProductMappingListModel(
+        public virtual NexportProductMappingListModel PrepareNexportProductMappingListModel(
             NexportProductMappingSearchModel searchModel, Guid nexportProductId,
             NexportProductTypeEnum nexportProductType)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var mappings = _nexportService.GetProductMappings(nexportProductId, nexportProductType,
+            var mappings = _nexportService.GetProductMappingsPagination(nexportProductId, nexportProductType,
                 searchModel.Page - 1, searchModel.PageSize);
 
             // Prepare grid model
@@ -261,7 +285,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportProductMappingListModel PrepareNexportProductMappingListModel(
+        public virtual NexportProductMappingListModel PrepareNexportProductMappingListModel(
             NexportProductMappingSearchModel searchModel, int nopProductId)
         {
             if (searchModel == null)
@@ -321,13 +345,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportProductGroupMembershipMappingListModel PrepareNexportProductMappingGroupMembershipListModel(
+        public virtual NexportProductGroupMembershipMappingListModel PrepareNexportProductMappingGroupMembershipListModel(
             NexportProductGroupMembershipMappingSearchModel searchModel, int nexportProductMappingId)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var groupMembershipMappings = _nexportService.GetProductGroupMembershipMappings(nexportProductMappingId,
+            var groupMembershipMappings = _nexportService.GetProductGroupMembershipMappingsPagination(nexportProductMappingId,
                 searchModel.Page - 1,
                 searchModel.PageSize);
 
@@ -344,22 +368,39 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportUserMappingModel PrepareNexportUserMappingModel(Customer customer)
+        public virtual NexportCustomerAdditionalInfoModel PrepareNexportAdditionalInfoModel(Customer customer)
         {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
 
-            var model = new NexportUserMappingModel();
+            var model = new NexportCustomerAdditionalInfoModel { CustomerId = customer.Id };
             var nexportUserMapping = _nexportService.FindUserMappingByCustomerId(customer.Id);
             if (nexportUserMapping != null)
             {
                 model.NexportUserId = nexportUserMapping.NexportUserId;
             }
 
+            var availableStores = _storeService.GetAllStores();
+
+            model.NexportSupplementalInfoAnswerListSearchModel = new NexportSupplementalInfoAnswerListSearchModel
+            {
+                CustomerId = customer.Id,
+                AvailableStores = availableStores.Select(store => new SelectListItem
+                {
+                    Text = store.Name,
+                    Value = store.Id.ToString()
+                }).ToList()
+            };
+
+            model.NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel = new NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel
+            {
+                CustomerId = customer.Id
+            };
+
             return model;
         }
 
-        public NexportCatalogListModel PrepareNexportCatalogListModel(NexportCatalogSearchModel searchModel)
+        public virtual NexportCatalogListModel PrepareNexportCatalogListModel(NexportCatalogSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
@@ -393,7 +434,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportSyllabusListModel PrepareNexportSyllabusListModel(NexportSyllabusListSearchModel searchModel)
+        public virtual NexportSyllabusListModel PrepareNexportSyllabusListModel(NexportSyllabusListSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
@@ -442,7 +483,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportLoginModel PrepareNexportLoginModel(bool? checkoutAsGuest)
+        public virtual NexportLoginModel PrepareNexportLoginModel(bool? checkoutAsGuest)
         {
             return new NexportLoginModel()
             {
@@ -453,7 +494,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             };
         }
 
-        public NexportTrainingListModel PrepareNexportTrainingListModel(Customer customer)
+        public virtual NexportTrainingListModel PrepareNexportTrainingListModel(Customer customer)
         {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
@@ -468,6 +509,305 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 model.RedemptionOrganizations = redemptionOrganizations;
                 model.UserId = userMapping.NexportUserId;
             }
+
+            return model;
+        }
+
+        public NexportCustomerSupplementalInfoAnswersModel PrepareNexportCustomerSupplementalInfoAnswersModel(Customer customer, Store store)
+        {
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            if (store == null)
+                throw new ArgumentNullException(nameof(store));
+
+            var model = new NexportCustomerSupplementalInfoAnswersModel();
+
+            var answers = _nexportService.GetNexportSupplementalInfoAnswers(customer.Id, store.Id);
+            var questionIds = answers.Select(a => a.QuestionId).Distinct().ToList();
+
+            foreach (var questionId in questionIds)
+            {
+                var answerWithOptionsList = answers.Where(a => a.QuestionId == questionId);
+                var answerWithOptionsDictionary = answerWithOptionsList.ToDictionary(
+                    answerAndOption => answerAndOption.Id,
+                    answerAndOption => answerAndOption.OptionId);
+                model.QuestionWithAnswersList.Add(questionId, answerWithOptionsDictionary);
+            }
+
+            return model;
+        }
+
+        public NexportCustomerSupplementalInfoAnswerEditModel PrepareNexportCustomerSupplementalInfoAnswersEditModel(
+            Customer customer, Store store, NexportSupplementalInfoQuestion question)
+        {
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            if (store == null)
+                throw new ArgumentNullException(nameof(store));
+
+            if (question == null)
+                throw new ArgumentNullException(nameof(question));
+
+            var currentAnswers = _nexportService.GetNexportSupplementalInfoAnswers(customer.Id, store.Id, question.Id)
+                .Select(currentAnswer => new EditSupplementInfoAnswerRequest()
+                {
+                    AnswerId = currentAnswer.Id,
+                    OptionId = currentAnswer.OptionId
+                }).ToList();
+
+            var model = new NexportCustomerSupplementalInfoAnswerEditModel
+            {
+                Question = question,
+                Options = _nexportService.GetNexportSupplementalInfoOptionsByQuestionId(question.Id, true),
+                Answers = currentAnswers
+            };
+
+            return model;
+        }
+
+        public NexportCustomerSupplementalInfoAnsweredQuestionListModel PrepareNexportSupplementalInfoQuestionListModel(
+            NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var customerSupplementalInfoAnsweredQuestions = _nexportService.GetNexportSupplementalInfoAnsweredQuestionsPagination(searchModel.CustomerId,
+                searchModel.Page - 1,
+                searchModel.PageSize);
+
+            var model = new NexportCustomerSupplementalInfoAnsweredQuestionListModel().PrepareToGrid(searchModel, customerSupplementalInfoAnsweredQuestions, () =>
+            {
+                return customerSupplementalInfoAnsweredQuestions.Select(question =>
+                {
+                    var questionModel = question.ToModel<NexportCustomerSupplementalInfoAnsweredQuestionModel>();
+
+                    return questionModel;
+                });
+            });
+
+            return model;
+        }
+
+        public NexportSupplementalInfoAnswerListModel PrepareNexportSupplementalInfoAnswerListModel(
+            NexportSupplementalInfoAnswerListSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var customerSupplementalInfoAnswers = _nexportService.GetNexportSupplementalInfoAnswersPagination(
+                searchModel.CustomerId,
+                searchModel.QuestionId,
+                searchModel.Page - 1,
+                searchModel.PageSize);
+
+            var model = new NexportSupplementalInfoAnswerListModel().PrepareToGrid(searchModel, customerSupplementalInfoAnswers, () =>
+            {
+                return customerSupplementalInfoAnswers.Select(answer =>
+                {
+                    var answerModel = answer.ToModel<NexportSupplementalInfoAnswerModel>();
+
+                    answerModel.StoreName = _storeService.GetStoreById(answer.StoreId).Name;
+                    answerModel.OptionText =
+                        _nexportService.GetNexportSupplementalInfoOptionById(answer.OptionId).OptionText;
+                    answerModel.NexportMemberships = _nexportService
+                        .GetNexportSupplementalInfoAnswerMembershipsByAnswerId(answer.Id)
+                        .Select(am => am.NexportMembershipId).ToList();
+
+                    return answerModel;
+                }).OrderBy(a=>a.StoreName);
+            });
+
+            return model;
+        }
+
+        public virtual NexportSupplementalInfoQuestionSearchModel PrepareNexportSupplementalInfoQuestionSearchModel(
+            NexportSupplementalInfoQuestionSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            // Prepare page parameters
+            searchModel.SetGridPageSize();
+
+            return searchModel;
+        }
+
+        public virtual NexportSupplementalInfoQuestionListModel PrepareNexportSupplementalInfoQuestionListModel(
+            NexportSupplementalInfoQuestionSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            // Get all available supplemental info questions
+            var supplementalInfoQuestions =
+                _nexportService.GetAllNexportSupplementalInfoQuestionsPagination(pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
+
+            // Prepare the list model
+            var model = new NexportSupplementalInfoQuestionListModel().PrepareToGrid(searchModel,
+                supplementalInfoQuestions, () =>
+                {
+                    return supplementalInfoQuestions.Select(question =>
+                    {
+                        //fill in model values from the entity
+                        var requestModel = question.ToModel<NexportSupplementalInfoQuestionModel>();
+                        return requestModel;
+                    });
+                });
+
+            return model;
+        }
+
+        public virtual NexportSupplementalInfoQuestionModel PrepareNexportSupplementalInfoQuestionModel(
+            NexportSupplementalInfoQuestionModel model, NexportSupplementalInfoQuestion question)
+        {
+            if (question != null)
+            {
+                model = model ?? question.ToModel<NexportSupplementalInfoQuestionModel>();
+
+                PrepareNexportSupplementalInfoOptionSearchModel(model.NexportSupplementalInfoOptionSearchModel, question);
+            }
+
+            var availableQuestionTypes = new List<SelectListItem>
+            {
+                new SelectListItem
+                {
+                    Text = NexportSupplementalInfoQuestionType.SingleOption.GetDisplayName(),
+                    Value = ((int)NexportSupplementalInfoQuestionType.SingleOption).ToString(),
+                    Selected = true
+                },
+                new SelectListItem
+                {
+                    Text = NexportSupplementalInfoQuestionType.MultipleOptions.GetDisplayName(),
+                    Value = ((int)NexportSupplementalInfoQuestionType.MultipleOptions).ToString()
+                }
+            };
+
+            foreach (var type in availableQuestionTypes)
+                model.AvailableQuestionTypes.Add(type);
+
+            return model;
+        }
+
+        public virtual NexportSupplementalInfoOptionSearchModel PrepareNexportSupplementalInfoOptionSearchModel(
+            NexportSupplementalInfoOptionSearchModel searchModel, NexportSupplementalInfoQuestion question)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            if (question == null)
+                throw new ArgumentNullException(nameof(question));
+
+            searchModel.QuestionId = question.Id;
+
+            searchModel.SetGridPageSize();
+
+            return searchModel;
+        }
+
+        public virtual NexportSupplementalInfoOptionListModel PrepareNexportSupplementalInfoOptionListModel(
+            NexportSupplementalInfoOptionSearchModel searchModel, NexportSupplementalInfoQuestion question)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            if (question == null)
+                throw new ArgumentNullException(nameof(question));
+
+            var options = _nexportService.GetNexportSupplementalInfoOptionsByQuestionId(question.Id)
+                .ToPagedList(searchModel);
+
+            //prepare list model
+            var model = new NexportSupplementalInfoOptionListModel().PrepareToGrid(searchModel, options, () =>
+            {
+                return options.Select(option =>
+                {
+                    //fill in model values from the entity
+                    var optionModel = option.ToModel<NexportSupplementalInfoOptionModel>();
+
+                    return optionModel;
+                });
+            });
+
+            return model;
+        }
+
+        public virtual NexportSupplementalInfoOptionModel PrepareNexportSupplementalInfoOptionModel(
+            NexportSupplementalInfoOptionModel model, NexportSupplementalInfoQuestion question,
+            NexportSupplementalInfoOption option)
+        {
+            if (question == null)
+                throw new ArgumentNullException(nameof(question));
+
+            if (option != null)
+            {
+                //fill in model values from the entity
+                model = model ?? option.ToModel<NexportSupplementalInfoOptionModel>();
+            }
+
+            model.QuestionId = question.Id;
+
+            return model;
+        }
+
+        public NexportSupplementalInfoOptionGroupAssociationListModel PrepareNexportSupplementalInfoOptionGroupAssociationListModel(
+            NexportSupplementalInfoOptionGroupAssociationSearchModel searchModel, int optionId)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var groupAssociations =
+                _nexportService.GetNexportSupplementalInfoOptionGroupAssociationsPagination(optionId,
+                    searchModel.Page - 1, searchModel.PageSize);
+
+            var model = new NexportSupplementalInfoOptionGroupAssociationListModel().PrepareToGrid(searchModel, groupAssociations, () =>
+            {
+                return groupAssociations.Select(mapping =>
+                {
+                    var mappingModel = mapping.ToModel<NexportSupplementalInfoOptionGroupAssociationModel>();
+
+                    return mappingModel;
+                });
+            });
+
+            return model;
+        }
+
+        public NexportSupplementalInfoAnswerQuestionModel PrepareNexportSupplementalInfoAnswerQuestionModel(
+            IList<int> questionIds, Customer customer, Store store)
+        {
+            if (questionIds == null)
+                throw new ArgumentNullException(nameof(questionIds));
+
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            if (store == null)
+                throw new ArgumentNullException(nameof(store));
+
+            var model = new NexportSupplementalInfoAnswerQuestionModel();
+
+            var questionWithoutAnswerIds = new List<int>();
+
+            var answeredQuestions = new Dictionary<int, string>();
+
+            var answers = _nexportService.GetNexportSupplementalInfoAnswers(customer.Id, store.Id);
+            var answered = answers.Where(x => questionIds.Contains(x.QuestionId)).ToList();
+
+            var questionWithAnswerIds = answered.Count > 0
+                ? answered.Select(x => x.QuestionId).ToList()
+                : new List<int>();
+
+            questionWithoutAnswerIds.AddRange(questionIds.Except(questionWithAnswerIds));
+
+            foreach (var answer in answered.Where(answer => !answeredQuestions.ContainsKey(answer.Id)))
+            {
+                answeredQuestions.Add(answer.Id, $"{answer.QuestionId},{answer.OptionId}");
+            }
+
+            model.QuestionIds = questionIds.Distinct().ToList();
+            model.QuestionWithoutAnswerIds = questionWithoutAnswerIds;
 
             return model;
         }

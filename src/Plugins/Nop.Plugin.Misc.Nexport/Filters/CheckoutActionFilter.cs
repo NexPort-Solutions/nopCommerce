@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
+using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Messages;
@@ -14,6 +15,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
 {
     public class CheckoutActionFilter : ActionFilterAttribute
     {
+        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
         private readonly IProductService _productService;
         private readonly IShoppingCartService _shoppingCartService;
         private readonly INotificationService _notificationService;
@@ -22,6 +24,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
         private readonly IStoreContext _storeContext;
 
         public CheckoutActionFilter(
+            INexportPluginModelFactory nexportPluginModelFactory,
             IProductService productService,
             IShoppingCartService shoppingCartService,
             INotificationService notificationService,
@@ -29,6 +32,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             IWorkContext workContext,
             IStoreContext storeContext)
         {
+            _nexportPluginModelFactory = nexportPluginModelFactory;
             _productService = productService;
             _shoppingCartService = shoppingCartService;
             _notificationService = notificationService;
@@ -42,12 +46,16 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             if (!(context.ActionDescriptor is ControllerActionDescriptor actionDescriptor))
                 return;
 
-            if (actionDescriptor.ControllerTypeInfo == typeof(CheckoutController) &&
-                actionDescriptor.ActionName == "Index")
+            if (actionDescriptor.ControllerTypeInfo == typeof(CheckoutController)
+                && (actionDescriptor.ActionName == nameof(CheckoutController.Index)
+                    || actionDescriptor.ActionName == nameof(CheckoutController.OnePageCheckout)))
             {
                 var cart = _shoppingCartService.GetShoppingCart(_workContext.CurrentCustomer, ShoppingCartType.ShoppingCart, _storeContext.CurrentStore.Id);
 
-                var nexportProductMappings = cart.Select(shoppingCartItem => _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId)).Where(mapping => mapping != null).ToList();
+                var nexportProductMappings =
+                    cart.Select(shoppingCartItem =>
+                        _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId, _storeContext.CurrentStore.Id))
+                        .Where(mapping => mapping != null).ToList();
 
                 // Check if there are products a product in the cart that have Nexport product mappings
                 if (nexportProductMappings.Count > 0)

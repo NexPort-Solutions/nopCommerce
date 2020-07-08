@@ -1,4 +1,10 @@
-﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+﻿@using Nop.Core
+@using Nop.Plugin.Misc.Nexport
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Services.Common
+@inject IStoreContext storeContext
+@inject IGenericAttributeService genericAttributeService
+
 @model Nop.Plugin.Misc.Nexport.Domain.NexportProductMapping
 
 @if (Model != null && Model.Id > 0)
@@ -12,8 +18,14 @@
 
     if (Model.Type == NexportProductTypeEnum.Section)
     {
-        <div style="margin: 0 0 25px;">
-            Section CEUs: <span>@Model.SectionCeus</span>
-        </div>
+        var hideSectionCEUs = genericAttributeService.GetAttribute<bool>(storeContext.CurrentStore,
+            NexportDefaults.HIDE_SECTION_CEUS_IN_PRODUCT_PAGE_SETTING_KEY, storeContext.CurrentStore.Id);
+
+        if (!hideSectionCEUs)
+        {
+            <div style="margin: 0 0 25px;">
+                Section CEUs: <span>@Model.SectionCeus</span>
+            </div>
+        }
     }
 }

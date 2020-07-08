@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Tasks;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
@@ -12,17 +14,20 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IScheduleTaskService _scheduleTaskService;
         private readonly ISettingService _settingService;
         private readonly ILocalizationService _localizationService;
+        private readonly ICustomerActivityService _customerActivityService;
         private readonly ILogger _logger;
 
         public NexportPluginService(
             IScheduleTaskService scheduleTaskService,
             ISettingService settingService,
             ILocalizationService localizationService,
+            ICustomerActivityService customerActivityService,
             ILogger logger)
         {
             _scheduleTaskService = scheduleTaskService;
             _settingService = settingService;
             _localizationService = localizationService;
+            _customerActivityService = customerActivityService;
             _logger = logger;
         }
 
@@ -32,17 +37,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 if (_settingService.GetSetting(NexportDefaults.NexportOrderProcessingTaskBatchSizeSettingKey) == null)
                 {
-                    _settingService.SetSetting(NexportDefaults.NexportOrderProcessingTaskBatchSizeSettingKey, NexportDefaults.NexportOrderProcessingTaskBatchSize);
+                    _settingService.SetSetting(NexportDefaults.NexportOrderProcessingTaskBatchSizeSettingKey,
+                        NexportDefaults.NexportOrderProcessingTaskBatchSize);
                 }
 
-                if (_scheduleTaskService.GetTaskByType(NexportDefaults.NexportOrderProcessingTask) == null)
+                if (_scheduleTaskService.GetTaskByType(NexportDefaults.NexportOrderProcessingTaskType) == null)
                 {
                     var orderProcessingTask = new ScheduleTask
                     {
                         Enabled = true,
                         Seconds = NexportDefaults.NexportOrderProcessingTaskInterval,
                         Name = NexportDefaults.NexportOrderProcessingTaskName,
-                        Type = NexportDefaults.NexportOrderProcessingTask
+                        Type = NexportDefaults.NexportOrderProcessingTaskType
                     };
 
                     _scheduleTaskService.InsertTask(orderProcessingTask);
@@ -53,17 +59,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (_settingService.GetSetting(NexportDefaults.NexportSynchronizationTaskBatchSizeSettingKey) == null)
                 {
-                    _settingService.SetSetting(NexportDefaults.NexportSynchronizationTaskBatchSizeSettingKey, NexportDefaults.NexportSynchronizationTaskBatchSize);
+                    _settingService.SetSetting(NexportDefaults.NexportSynchronizationTaskBatchSizeSettingKey,
+                        NexportDefaults.NexportSynchronizationTaskBatchSize);
                 }
 
-                if (_scheduleTaskService.GetTaskByType(NexportDefaults.NexportSynchronizationTask) == null)
+                if (_scheduleTaskService.GetTaskByType(NexportDefaults.NexportSynchronizationTaskType) == null)
                 {
                     var synchronizationTask = new ScheduleTask
                     {
                         Enabled = true,
                         Seconds = NexportDefaults.NexportSynchronizationTaskInterval,
                         Name = NexportDefaults.NexportSynchronizationTaskName,
-                        Type = NexportDefaults.NexportSynchronizationTask
+                        Type = NexportDefaults.NexportSynchronizationTaskType
                     };
 
                     _scheduleTaskService.InsertTask(synchronizationTask);
@@ -74,22 +81,61 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (_settingService.GetSetting(NexportDefaults.NexportOrderInvoiceRedemptionTaskBatchSizeSettingKey) == null)
                 {
-                    _settingService.SetSetting(NexportDefaults.NexportOrderInvoiceRedemptionTaskBatchSizeSettingKey, NexportDefaults.NexportOrderInvoiceRedemptionTaskBatchSize);
+                    _settingService.SetSetting(NexportDefaults.NexportOrderInvoiceRedemptionTaskBatchSizeSettingKey,
+                        NexportDefaults.NexportOrderInvoiceRedemptionTaskBatchSize);
                 }
 
-                if (_scheduleTaskService.GetTaskByType(NexportDefaults.NexportOrderInvoiceRedemptionTask) == null)
+                if (_scheduleTaskService.GetTaskByType(NexportDefaults.NexportOrderInvoiceRedemptionTaskType) == null)
                 {
-                    var synchronizationTask = new ScheduleTask
+                    var invoiceRedemptionTask = new ScheduleTask
                     {
                         Enabled = true,
                         Seconds = NexportDefaults.NexportOrderInvoiceRedemptionTaskInterval,
                         Name = NexportDefaults.NexportOrderInvoiceRedemptionTaskName,
-                        Type = NexportDefaults.NexportOrderInvoiceRedemptionTask
+                        Type = NexportDefaults.NexportOrderInvoiceRedemptionTaskType
                     };
 
-                    _scheduleTaskService.InsertTask(synchronizationTask);
+                    _scheduleTaskService.InsertTask(invoiceRedemptionTask);
 
-                    var task = new Task(synchronizationTask);
+                    var task = new Task(invoiceRedemptionTask);
+                    task.Execute(true, false);
+                }
+
+                if (_settingService.GetSetting(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSizeSettingKey) == null)
+                {
+                    _settingService.SetSetting(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSizeSettingKey,
+                        NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSize);
+                }
+
+                if (_scheduleTaskService.GetTaskByType(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskType) == null)
+                {
+                    var supplementalInfoAnswerProcessingTask = new ScheduleTask
+                    {
+                        Enabled = true,
+                        Seconds = NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskInterval,
+                        Name = NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskName,
+                        Type = NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskType
+                    };
+
+                    _scheduleTaskService.InsertTask(supplementalInfoAnswerProcessingTask);
+
+                    var task = new Task(supplementalInfoAnswerProcessingTask);
+                    task.Execute(true, false);
+                }
+
+                if (_scheduleTaskService.GetTaskByType(NexportDefaults.NexportGroupMembershipRemovalTaskType) == null)
+                {
+                    var groupMembershipRemovalTask = new ScheduleTask
+                    {
+                        Enabled = true,
+                        Seconds = NexportDefaults.NexportGroupMembershipRemovalTaskInterval,
+                        Name = NexportDefaults.NexportGroupMembershipRemovalTaskName,
+                        Type = NexportDefaults.NexportGroupMembershipRemovalTaskType
+                    };
+
+                    _scheduleTaskService.InsertTask(groupMembershipRemovalTask);
+
+                    var task = new Task(groupMembershipRemovalTask);
                     task.Execute(true, false);
                 }
             }
@@ -105,11 +151,63 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             foreach (var task in tasks)
             {
-                if (task.Type.Equals(NexportDefaults.NexportOrderProcessingTask) ||
-                    task.Type.Equals(NexportDefaults.NexportSynchronizationTask))
+                if (task.Type.Equals(NexportDefaults.NexportOrderProcessingTaskType) ||
+                    task.Type.Equals(NexportDefaults.NexportSynchronizationTaskType) ||
+                    task.Type.Equals(NexportDefaults.NexportOrderInvoiceRedemptionTaskType) ||
+                    task.Type.Equals(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskType) ||
+                    task.Type.Equals(NexportDefaults.NexportGroupMembershipRemovalTaskType))
                 {
                     _scheduleTaskService.DeleteTask(task);
                 }
+            }
+        }
+
+        public void AddActivityLogTypes()
+        {
+            var customerActivityLogTypes = _customerActivityService.GetAllActivityTypes()
+                .Where(x => x.SystemKeyword.Contains("Nexport")).ToArray();
+
+            if (!customerActivityLogTypes.Any(x =>
+                x.SystemKeyword.Equals(NexportDefaults.NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE)))
+            {
+                _customerActivityService.InsertActivityType(new ActivityLogType
+                {
+                    Name = "Processing Nexport supplemental info group associations",
+                    SystemKeyword = NexportDefaults.NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE,
+                    Enabled = true
+                });
+            }
+
+            if (!customerActivityLogTypes.Any(x =>
+                x.SystemKeyword.Equals(NexportDefaults.EDIT_CUSTOMER_NEXPORT_SUPPLEMENTAL_INFO_ANSWER_ACTIVITY_LOG_TYPE)))
+            {
+                _customerActivityService.InsertActivityType(new ActivityLogType
+                {
+                    Name = "Edit customer Nexport supplemental info answer",
+                    SystemKeyword = NexportDefaults.EDIT_CUSTOMER_NEXPORT_SUPPLEMENTAL_INFO_ANSWER_ACTIVITY_LOG_TYPE,
+                    Enabled = true
+                });
+            }
+
+            if (!customerActivityLogTypes.Any(x =>
+                x.SystemKeyword.Equals(NexportDefaults.DELETE_CUSTOMER_NEXPORT_SUPPLEMENTAL_INFO_ANSWER_ACTIVITY_LOG_TYPE)))
+            {
+                _customerActivityService.InsertActivityType(new ActivityLogType
+                {
+                    Name = "Delete customer Nexport supplemental info answer",
+                    SystemKeyword = NexportDefaults.DELETE_CUSTOMER_NEXPORT_SUPPLEMENTAL_INFO_ANSWER_ACTIVITY_LOG_TYPE,
+                    Enabled = true
+                });
+            }
+        }
+
+        public void DeleteActivityLogTypes()
+        {
+            var customerActivityLogTypes = _customerActivityService.GetAllActivityTypes()
+                .Where(x => x.SystemKeyword.Contains("Nexport"));
+            foreach (var type in customerActivityLogTypes)
+            {
+                _customerActivityService.DeleteActivityType(type);
             }
         }
 
@@ -210,6 +308,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.GroupName.Hint", "The name of the group in Nexport");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.GroupShortName", "Group short name");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.GroupShortName.Hint", "The short name of the group in Nexport");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowExtension", "Allow extension");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowExtension.Hint", "Allows customers to purchase the product as extension product");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow", "Renewal window");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow.Hint", "The time period that customers can purchase the product to extend the expiration on the Nexport product");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.UserId", "Nexport user Id");
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.UserId.Hint", "The user Id in Nexport");
@@ -226,6 +328,23 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Order.ViewRedemption", "Launch this training");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Order.Redeem", "Redeem");
+
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.Text", "Question text");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.Text.Hint", "The question text");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.Description", "Description");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.Description.Hint", "The description of the question");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.Type", "Type");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.Type.Hint", "The type of the question");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.IsActive", "Active?");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.IsActive.Hint", "Allows the question to be active");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Option.Text", "Option text");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Option.Text.Hint", "The question option text");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Customer.Edit", "Modify");
+
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Navigation.SupplementalInfoAnswers", "Supplemental info answers");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.PageTitle", "Supplemental info answers");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.Edit.PageTitle", "Modify your answer(s)");
+
         }
 
         public void DeleteResources()
@@ -297,6 +416,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.GroupName.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.GroupShortName");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.GroupShortName.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.AllowExtension");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.AllowExtension.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow.Hint");
 
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.UserId");
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.UserId.Hint");
@@ -313,6 +436,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Order.ViewRedemption");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Order.Redeem");
+
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.Text");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.Text.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.Description");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.Description.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.Type");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.Type.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.IsActive");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Question.IsActive.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Option.Text");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Option.Text.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Customer.Edit");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Navigation.SupplementalInfoAnswers");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.PageTitle");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.Edit.PageTitle");
         }
     }
 }
