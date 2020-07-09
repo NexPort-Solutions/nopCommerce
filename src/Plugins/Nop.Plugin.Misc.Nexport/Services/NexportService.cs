@@ -1159,49 +1159,67 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return true;
 
             var existingEnrollmentStatus = VerifyNexportEnrollmentStatus(product, customer, store.Id);
-            var mapping = GetProductMappingByNopProductId(product.Id);
+            var mapping = GetProductMappingByNopProductId(product.Id, store.Id);
 
-            if (existingEnrollmentStatus != null)
+            if (mapping != null)
             {
-                if (mapping != null && mapping.IsExtensionProduct)
-                    return true;
-
-                switch (existingEnrollmentStatus)
+                if (existingEnrollmentStatus != null)
                 {
-                    case var status
-                        when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Failing:
-                        {
-                            var allowRepurchaseFailedCourses = _genericAttributeService.GetAttribute<bool>(store,
-                                NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
-                            return allowRepurchaseFailedCourses;
-                        }
-
-                    case var status
-                        when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Passing:
-                        {
-                            var allowRepurchasePassedCourses = _genericAttributeService.GetAttribute<bool>(store,
-                                NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
-                            return allowRepurchasePassedCourses;
-                        }
-
-                    case var status
-                        when status.Value.Phase == Enums.PhaseEnum.InProgress:
-                        {
-                            if (mapping != null && mapping.AllowExtension &&
-                                mapping.UtcAccessExpirationDate.HasValue
-                                && status.Value.enrollementExpirationDate.HasValue
-                                && mapping.UtcAccessExpirationDate.Value > status.Value.enrollementExpirationDate
-                                && !string.IsNullOrWhiteSpace(mapping.RenewalWindow))
+                    switch (existingEnrollmentStatus)
+                    {
+                        case var status
+                            when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Failing:
                             {
-                                var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
-                                if (DateTime.UtcNow >= mapping.UtcAccessExpirationDate.Value - renewalWindowTimeSpan)
-                                {
-                                    return true;
-                                }
+                                var allowRepurchaseFailedCourses = _genericAttributeService.GetAttribute<bool>(store,
+                                    NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
+                                return allowRepurchaseFailedCourses;
                             }
 
-                            return false;
-                        }
+                        case var status
+                            when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Passing:
+                            {
+                                var allowRepurchasePassedCourses = _genericAttributeService.GetAttribute<bool>(store,
+                                    NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
+                                return allowRepurchasePassedCourses;
+                            }
+
+                        case var status
+                            when status.Value.Phase == Enums.PhaseEnum.InProgress:
+                            {
+                                var currentEnrollmentExpirationDate = status.Value.enrollementExpirationDate;
+
+                                if (currentEnrollmentExpirationDate.HasValue)
+                                {
+                                    if (mapping.AllowExtension)
+                                    {
+                                        if (mapping.UtcAccessExpirationDate.HasValue)
+                                        {
+                                            if (mapping.UtcAccessExpirationDate.Value > currentEnrollmentExpirationDate.Value)
+                                            {
+                                                if (!string.IsNullOrWhiteSpace(mapping.RenewalWindow))
+                                                {
+                                                    var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
+                                                    return DateTime.UtcNow >= mapping.UtcAccessExpirationDate.Value - renewalWindowTimeSpan;
+                                                }
+
+                                                return true;
+                                            }
+
+                                            return false;
+                                        }
+
+                                        return true;
+                                    }
+                                }
+
+                                return false;
+                            }
+                    }
+                }
+                else
+                {
+                    if (mapping.IsExtensionProduct)
+                        return false;
                 }
             }
 
