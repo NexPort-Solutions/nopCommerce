@@ -116,7 +116,6 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
 
         public IList<NexportProductGroupMembershipMappingModel> GroupMembershipMappingModels { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.SupplementalInfo.Question")]
         public IList<int> SupplementalInfoQuestionIds { get; set; }
 
         public IList<SelectListItem> AvailableSupplementalInfoQuestions { get; set; }

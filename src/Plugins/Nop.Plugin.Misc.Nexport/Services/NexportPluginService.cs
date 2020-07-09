@@ -244,6 +244,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchaseFailedCourses.Hint", "Allowing users to purchase products that associated with courses in Nexport that they have failed previously");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchasePassedCourses", "Allow repurchasing passed courses");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchasePassedCourses.Hint", "Allowing users to purchase products that associated with courses in Nexport that they have passed previously");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.HideSectionCEUsInProductPage", "Hide Nexport section CEUs");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.HideSectionCEUsInProductPage.Hint", "Hide Nexport section CEUs information in the product page");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.NexportProductName", "Product name");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.NexportProductName.Hint", "The name of the product in Nexport");
@@ -355,6 +357,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Username.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Password");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Password.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.AutoRenewToken");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.AutoRenewToken.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.TokenNeverExpired");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.TokenNeverExpired.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.CustomTokenExpirationDate");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.CustomTokenExpirationDate.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Token");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.UtcExpirationDate");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.UtcExpirationDate.Hint");
@@ -365,6 +373,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.MerchantAccountId.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.NexportSubscriptionOrgId");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.NexportSubscriptionOrgId.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SaleModel");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SaleModel.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SaleModel.Retail");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SaleModel.Wholesale");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchaseFailedCourses");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchaseFailedCourses.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchasePassedCourses");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchasePassedCourses.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.HideSectionCEUsInProductPage");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.HideSectionCEUsInProductPage.Hint");
 
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.NexportProductName");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.NexportProductName.Hint");
@@ -396,14 +414,22 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.EndDate.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.CreditHours");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.CreditHours.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.UniqueName");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.UniqueName.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SectionCeus");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SectionCeus.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SectionNumber");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SectionNumber.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.IsSynchronized");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.IsSynchronized.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.LastSynchronizationDate");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.LastSynchronizationDate.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.AutoRedeem");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.AutoRedeem.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.StoreMapping");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.StoreMapping.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.IsExtensionProduct");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.IsExtensionProduct.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.ProductAccessExpirationOption");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.ProductAccessExpirationOption.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.UtcAccessExpirationDate");
@@ -448,6 +474,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Option.Text");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Option.Text.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.SupplementalInfo.Customer.Edit");
+
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Navigation.SupplementalInfoAnswers");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.PageTitle");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.Edit.PageTitle");
