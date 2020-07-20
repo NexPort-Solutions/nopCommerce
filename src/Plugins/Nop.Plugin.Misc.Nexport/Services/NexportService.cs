@@ -388,7 +388,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                var page = 0;
+                var page = 1;
                 int remainderItemsCount;
                 do
                 {
