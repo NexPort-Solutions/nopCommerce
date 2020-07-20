@@ -404,11 +404,21 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             if (nexportUserId != Guid.Empty)
             {
-                _nexportService.InsertUserMapping(new NexportUserMapping
+                var currentUserMapping = _nexportService.FindUserMappingByCustomerId(customer.Id);
+                if (currentUserMapping == null)
                 {
-                    NexportUserId = nexportUserId,
-                    NopUserId = customer.Id
-                });
+                    _nexportService.InsertUserMapping(new NexportUserMapping
+                    {
+                        NexportUserId = nexportUserId,
+                        NopUserId = customer.Id
+                    });
+                }
+                else
+                {
+                    currentUserMapping.NexportUserId = nexportUserId;
+
+                    _nexportService.UpdateUserMapping(currentUserMapping);
+                }
 
                 _notificationService.SuccessNotification("Success update Nexport user mapping");
             }

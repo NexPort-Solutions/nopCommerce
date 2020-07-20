@@ -832,6 +832,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (nexportUserMapping == null)
                 throw new ArgumentNullException(nameof(nexportUserMapping));
 
+            if (_nexportUserMappingRepository.Table.Any(user => user.NopUserId == nexportUserMapping.NopUserId))
+                return;
+
             _nexportUserMappingRepository.Insert(nexportUserMapping);
 
             //cache
