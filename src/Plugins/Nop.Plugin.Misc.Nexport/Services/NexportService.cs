@@ -390,10 +390,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 {
                     var result = _nexportApiService.GetNexportOrganizations(_nexportSettings.Url,
                         _nexportSettings.AuthenticationToken, baseOrgId, page);
-
-                    page++;
-                    remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
                     items.AddRange(result.OrganizationList);
+
+                    remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+                    page++;
                 } while (remainderItemsCount > -1);
             }
             catch (Exception e)
