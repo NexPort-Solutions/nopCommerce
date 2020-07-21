@@ -23,7 +23,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
         {
             var model = new NexportOrganizationListModel
             {
-                Organizations = _nexportService.FindAllOrganizations()
+                Organizations = _nexportService.FindAllOrganizationsUnderRootOrganization()
             };
 
             if (model.Organizations.Count < 1)

@@ -366,10 +366,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                var response = _nexportApiService.GetNexportOrganizations(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                    orgId, 0);
-                if (response.TotalRecord > 0)
-                    result = response.OrganizationList.SingleOrDefault(s => s.OrgId == orgId);
+                var availableOrganizations = FindAllOrganizations(orgId);
+
+                result = availableOrganizations.SingleOrDefault(s => s.OrgId == orgId);
             }
             catch (ApiException e)
             {
@@ -379,12 +378,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public IList<OrganizationResponseItem> FindAllOrganizations()
+        public IList<OrganizationResponseItem> FindAllOrganizations(Guid baseOrgId)
         {
             var items = new List<OrganizationResponseItem>();
-
-            if (!_nexportSettings.RootOrganizationId.HasValue)
-                throw new NullReferenceException("Root organization has not been set");
 
             try
             {
@@ -393,7 +389,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 do
                 {
                     var result = _nexportApiService.GetNexportOrganizations(_nexportSettings.Url,
-                        _nexportSettings.AuthenticationToken, _nexportSettings.RootOrganizationId.Value, page);
+                        _nexportSettings.AuthenticationToken, baseOrgId, page);
 
                     page++;
                     remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
@@ -406,6 +402,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
 
             return items;
+        }
+
+        public IList<OrganizationResponseItem> FindAllOrganizationsUnderRootOrganization()
+        {
+            if (!_nexportSettings.RootOrganizationId.HasValue)
+                throw new NullReferenceException("Root organization has not been set");
+
+            return FindAllOrganizations(_nexportSettings.RootOrganizationId.Value);
         }
 
         public IPagedList<CatalogResponseItem> FindAllCatalogs(Guid? orgId, int pageIndex = 0, int pageSize = int.MaxValue)
@@ -926,10 +930,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         {
                             if (!organizationModelList.Exists(i => i.OrgId == invoiceRedemption.OrganizationId))
                             {
-                                var org = _nexportApiService.GetNexportOrganizations(
-                                        _nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                                        invoiceRedemption.OrganizationId)
-                                    .OrganizationList.FirstOrDefault(o => o.OrgId == invoiceRedemption.OrganizationId);
+                                var availableOrganizations = FindAllOrganizations(invoiceRedemption.OrganizationId);
+
+                                var org = availableOrganizations
+                                    .FirstOrDefault(o =>
+                                        o.OrgId == invoiceRedemption.OrganizationId);
 
                                 if (org != null)
                                 {
