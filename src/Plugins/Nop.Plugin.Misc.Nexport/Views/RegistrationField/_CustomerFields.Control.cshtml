@@ -46,11 +46,13 @@
                         if (options.Count > 0)
                         {
                             <select name="@(controlId)" id="@(controlId)">
-                                var options = nexportService.GetNexportRegistrationFieldOptions(Model.Id);
-                                if (options.Count > 0)
                                 @if (!Model.IsRequired)
                                 {
                                     <option value="0">---</option>
+                                }
+                                else
+                                {
+                                    <option value="0">Please select</option>
                                 }
                                 @foreach (var option in options)
                                 {
@@ -117,10 +119,18 @@
                 <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
                 <script asp-location="Footer">
                     $(document).ready(function() {
-                        $("input[name=@(controlId)]").rules("add",
+                        $("[name=@(controlId)]").rules("add",
                             {
                                 required: true,
+                                @if (Model.Type == NexportRegistrationFieldType.SelectDropDown)
+                                {
+                                    <text>min: 1,</text>
+                                }
                                 messages: {
+                                    @if (Model.Type == NexportRegistrationFieldType.SelectDropDown)
+                                    {
+                                        <text>min: "@Model.Name is a required field",</text>
+                                    }
                                     required: "@Model.Name is a required field"
                                 }
                             });

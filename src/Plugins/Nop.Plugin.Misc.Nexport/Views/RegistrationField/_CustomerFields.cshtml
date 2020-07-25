@@ -52,15 +52,13 @@
         $(document).ready(function() {
 
             $(".registration-page").find("form").validate({
-                            onclick: function(){
-                                $(".registration-page").find("form").valid();
-                            },
-                            errorPlacement: function (error, element) {
-                                //if (element.siblings(".field-validation-error"))
-                                error.appendTo(element.parents(".custom-attributes").find(".field-validation-error"));
-                                @*//error.appendTo($(".field-validation-error [data-valmsg-for=@(controlId)]"));*@
-                            }
-                        });
+                onclick: function(){
+                    $(".registration-page").find("form").valid();
+                },
+                errorPlacement: function (error, element) {
+                    error.appendTo(element.parents(".custom-attributes").find(".field-validation-error"));
+                }
+            });
         });
     </script>
 }
