@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using NexportApi.Model;
 using Nop.Core.Data;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
@@ -82,6 +83,33 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                             }
                             else
                             {
+                                try
+                                {
+                                    var customer = _customerService.GetCustomerById(syncItem.CustomerId);
+                                    var currentBillingAddress = customer?.BillingAddress;
+                                    if (currentBillingAddress != null)
+                                    {
+                                        var updatedInfo = new UserContactInfoRequest(apiErrorEntity: new ApiErrorEntity())
+                                        {
+                                            AddressLine1 = currentBillingAddress.Address1,
+                                            AddressLine2 = currentBillingAddress.Address2,
+                                            City = currentBillingAddress.City,
+                                            State = currentBillingAddress.StateProvince.Name,
+                                            Country = currentBillingAddress.Country.Name,
+                                            PostalCode = currentBillingAddress.ZipPostalCode,
+                                            Phone = currentBillingAddress.PhoneNumber,
+                                            Fax = currentBillingAddress.FaxNumber
+                                        };
+
+                                        _nexportService.UpdateNexportUserContactInfo(userMapping.NexportUserId,
+                                            updatedInfo);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.Error($"Cannot update contact information for customer {userMapping.NopUserId} in Nexport", ex);
+                                }
+
                                 var registrationFields =
                                     _nexportService.GetNexportRegistrationFieldAnswers(userMapping.NopUserId);
 

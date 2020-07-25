@@ -31,6 +31,7 @@ using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
+using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
 using Nop.Services.Helpers;
 
@@ -358,6 +359,50 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 var errMsg = $"Error occurred during GetUser api call for Nexport user {userId}";
                 _logger.Error($"{errMsg}: {e.Message}", e);
                 _notificationService.ErrorNotification(errMsg);
+            }
+
+            return null;
+        }
+
+        public EditUserResponse UpdateNexportUserContactInfo(Guid userId, UserContactInfoRequest updatedInfo)
+        {
+            if (updatedInfo == null)
+                throw new ArgumentNullException(nameof(updatedInfo), "Updated information be empty");
+
+            try
+            {
+                var response = _nexportApiService.EditNexportUserContactInfo(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                    userId, updatedInfo);
+
+                if (response.StatusCode == 200)
+                    return response.Response;
+
+                if (response.StatusCode == 403)
+                {
+                    var message = $"Nexport plugin access does not have permission to edit user {userId}";
+                    _logger.Error(message);
+                    throw new Exception(message);
+                }
+
+                if (response.StatusCode == 409)
+                {
+                    var message = $"Cannot find user with the Id of {userId}";
+                    _logger.Error(message);
+                    throw new Exception(message);
+                }
+
+                if (response.StatusCode == 422)
+                {
+                    var message =
+                        $"Validation exception occurred when trying to edit user with the Id {userId}";
+                    _logger.Error(message);
+                    throw new Exception(message);
+                }
+            }
+            catch (ApiException e)
+            {
+                _logger.Error(e.Message);
+                _notificationService.ErrorNotification((string)e.ErrorContent);
             }
 
             return null;

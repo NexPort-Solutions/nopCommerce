@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
 using JetBrains.Annotations;
-
 using NexportApi.Api;
 using NexportApi.Client;
 using NexportApi.Model;
-
 using Nop.Core.Infrastructure;
-using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Api;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
@@ -215,6 +211,38 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 new CreateUserRequest(ownerOrgId, login, password, firstName, "", lastName, email));
 
             var result = new NexportCreateUserResponseDetails
+            {
+                Response = response.Data,
+                StatusCode = (int)response.StatusCode
+            };
+
+            return result;
+        }
+
+        public NexportEditUserResponseDetails EditNexportUserContactInfo([NotNull] string url, [NotNull] string accessToken,
+            Guid userId, UserContactInfoRequest updatedInfo)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new NullReferenceException("Api url cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            if (updatedInfo == null)
+                throw new NullReferenceException("Updated information cannot be empty");
+
+            _apiConfiguration.BasePath = url;
+
+            var nexportApi = new AdminApi(url)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
+            var response =
+                nexportApi.AdminApiEditUserWithHttpInfo(accessToken, new EditUserRequest(userId, contactInfo: updatedInfo));
+
+            var result = new NexportEditUserResponseDetails()
             {
                 Response = response.Data,
                 StatusCode = (int)response.StatusCode
