@@ -2148,6 +2148,20 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var registrationField = _nexportService.GetNexportRegistrationFieldById(id);
             _nexportService.DeleteNexportRegistrationField(registrationField);
 
+            // Delete the option of the registration field
+            var registrationFieldOptions = _nexportService.GetNexportRegistrationFieldOptions(id);
+            foreach (var fieldOption in registrationFieldOptions)
+            {
+                _nexportService.DeleteNexportRegistrationFieldOption(fieldOption);
+            }
+
+            // Delete the store mappings of the registration field
+            var registrationFieldStoreMappings = _nexportService.GetNexportRegistrationFieldStoreMappings(id);
+            foreach (var fieldStoreMapping in registrationFieldStoreMappings)
+            {
+                _nexportService.DeleteNexportRegistrationFieldStoreMapping(fieldStoreMapping);
+            }
+
             _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Customers.Nexport.RegistrationField.Fields.Deleted"));
 
             return RedirectToAction("ListRegistrationField");
