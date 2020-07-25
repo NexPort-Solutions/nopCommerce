@@ -1976,6 +1976,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var registrationFieldCategory = _nexportService.GetNexportRegistrationFieldCategoryById(id);
             _nexportService.DeleteNexportRegistrationFieldCategory(registrationFieldCategory);
 
+            var registrationFieldsWithCategory = _nexportService.GetNexportRegistrationFieldsByCategoryId(id);
+            foreach (var field in registrationFieldsWithCategory)
+            {
+                field.FieldCategoryId = null;
+                _nexportService.UpdateNexportRegistrationField(field);
+            }
+
             _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Customers.Nexport.RegistrationField.Categories.Deleted"));
 
             return RedirectToAction("ListRegistrationFieldCategory");

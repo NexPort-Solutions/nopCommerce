@@ -228,6 +228,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         IList<NexportRegistrationField> GetNexportRegistrationFields(int storeId);
 
+        IList<NexportRegistrationField> GetNexportRegistrationFieldsByCategoryId(int categoryId);
+
         IPagedList<NexportRegistrationField> GetNexportRegistrationFieldsPagination(
             int pageIndex = 0, int pageSize = int.MaxValue);
 

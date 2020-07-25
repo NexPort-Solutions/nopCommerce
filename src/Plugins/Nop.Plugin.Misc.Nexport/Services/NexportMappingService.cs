@@ -1605,6 +1605,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return fields.ToList();
         }
 
+        public IList<NexportRegistrationField> GetNexportRegistrationFieldsByCategoryId(int categoryId)
+        {
+            return categoryId < 1
+                ? new List<NexportRegistrationField>()
+                : _nexportRegistrationFieldRepository.TableNoTracking
+                    .Where(f => f.FieldCategoryId == categoryId).ToList();
+        }
+
         public IPagedList<NexportRegistrationField> GetNexportRegistrationFieldsPagination(int pageIndex = 0, int pageSize = int.MaxValue)
         {
             return _cacheManager.Get(NexportIntegrationDefaults.RegistrationFieldAllCacheKey, () =>
