@@ -13,8 +13,8 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
             viewLocations = context.AreaName == "Admin" ?
-                new[] { $"/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/{context.ControllerName}/{context.ViewName}.cshtml" }.Concat(viewLocations) :
-                new[] { $"/Plugins/Sale.CancelPendingOrderRequests/Views/{context.ControllerName}/{context.ViewName}.cshtml" }.Concat(viewLocations);
+                new[] { "/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/{1}/{0}.cshtml" }.Concat(viewLocations) :
+                new[] { "/Plugins/Sale.CancelPendingOrderRequests/Views/{1}/{0}.cshtml" }.Concat(viewLocations);
 
             return viewLocations;
         }
