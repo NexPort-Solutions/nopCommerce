@@ -10,6 +10,7 @@ using Nop.Web.Framework.Infrastructure.Extensions;
 using Nop.Plugin.Misc.Nexport.Controllers;
 using Nop.Plugin.Misc.Nexport.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Customers;
@@ -126,6 +127,36 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
             builder.RegisterType<EfRepository<NexportGroupMembershipRemovalQueueItem>>()
                 .As<IRepository<NexportGroupMembershipRemovalQueueItem>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportRegistrationField>>()
+                .As<IRepository<NexportRegistrationField>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportRegistrationFieldOption>>()
+                .As<IRepository<NexportRegistrationFieldOption>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportRegistrationFieldCategory>>()
+                .As<IRepository<NexportRegistrationFieldCategory>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportRegistrationFieldStoreMapping>>()
+                .As<IRepository<NexportRegistrationFieldStoreMapping>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportRegistrationFieldAnswer>>()
+                .As<IRepository<NexportRegistrationFieldAnswer>>()
+                .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<EfRepository<NexportRegistrationFieldSynchronizationQueueItem>>()
+                .As<IRepository<NexportRegistrationFieldSynchronizationQueueItem>>()
                 .WithParameter(ResolvedParameter.ForNamed<IDbContext>(NEXPORT_PLUGIN_CONTEXT_NAME))
                 .InstancePerLifetimeScope();
         }

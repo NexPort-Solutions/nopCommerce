@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
-    public static partial class NexportProductDefaults
+    public static partial class NexportIntegrationDefaults
     {
         public static string GetProductMappingCatalogAllByCatalogIdCacheKey(bool showHidden, Guid catalogId,
             int pageIndex, int pageSize, int customerId, int storeId)
@@ -112,5 +112,19 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public static string SupplementalInfoAnswerMembershipPatternCacheKey => "Nop.nexport.supplementalinfo.answermembership.";
 
         public static string SupplementalInfoRequiredPatternCacheKey => "Nop.nexport.supplementalinfo.required.";
+
+        public static string RegistrationFieldAllCacheKey => "Nop.nexport.registrationfield.all";
+
+        public static string RegistrationFieldOptionAllCacheKey => "Nop.nexport.registrationfield.option.all";
+
+        public static string RegistrationFieldPatternCacheKey => "Nop.nexport.registrationfield.";
+
+        public static string RegistrationFieldCategoryAllCacheKey => "Nop.nexport.registrationfield.category.all";
+
+        public static string RegistrationFieldCategoryPatternCacheKey => "Nop.nexport.registrationfield.category.";
+
+        public static string RegistrationFieldAnswerAllCacheKey => "Nop.nexport.registrationfield.answer.all";
+
+        public static string RegistrationFieldAnswerPatternCacheKey => "Nop.nexport.registrationfield.answer.";
     }
 }

@@ -4,8 +4,10 @@ using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 
@@ -65,15 +67,6 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 .ForMember(model => model.CustomerId, opts => opts.Ignore());
             CreateMap<NexportSupplementalInfoOptionModel, NexportSupplementalInfoOption>();
 
-
-            //CreateMap<NexportSupplementalInfoOptionModel, NexportSupplementalInfoOption>()
-            //    .ForAllMembers(opts => opts.Ignore());
-            //CreateMap<NexportSupplementalInfoOptionModel, NexportSupplementalInfoOption>()
-            //    .ForMember(model => model.OptionText, opts =>
-            //        opts.MapFrom(model => model.OptionText))
-            //    .ForMember(model => model.QuestionId, opts =>
-            //        opts.MapFrom(model => model.QuestionId));
-
             CreateMap<NexportSupplementalInfoOptionGroupAssociation, NexportSupplementalInfoOptionGroupAssociationModel>();
             CreateMap<NexportSupplementalInfoOptionGroupAssociationModel, NexportSupplementalInfoOptionGroupAssociation>();
 
@@ -85,6 +78,23 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             CreateMap<Product, MappingProductModel>();
 
             CreateMap<Store, NexportStoreModel>();
+
+            CreateMap<NexportRegistrationField, NexportRegistrationFieldModel>()
+                .ForMember(model => model.FieldCategoryName, opts => opts.Ignore())
+                .ForMember(model => model.StoreMappings, opts => opts.Ignore())
+                .ForMember(model => model.AvailableFieldTypes, opts => opts.Ignore())
+                .ForMember(model => model.AvailableFieldCategory, opts => opts.Ignore())
+                .ForMember(model => model.AvailableStores, opts => opts.Ignore())
+                .ForMember(model => model.StoreMappingIds, opts => opts.Ignore())
+                .ForMember(model => model.RegistrationFieldOptionSearchModel, opts => opts.Ignore());
+
+            CreateMap<NexportRegistrationFieldModel, NexportRegistrationField>();
+
+            CreateMap<NexportRegistrationFieldOption, NexportRegistrationFieldOptionModel>();
+            CreateMap<NexportRegistrationFieldOptionModel, NexportRegistrationFieldOption>();
+
+            CreateMap<NexportRegistrationFieldCategory, NexportRegistrationFieldCategoryModel>();
+            CreateMap<NexportRegistrationFieldCategoryModel, NexportRegistrationFieldCategory>();
         }
 
         public int Order => 0;

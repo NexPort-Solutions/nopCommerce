@@ -29,11 +29,14 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
@@ -380,17 +383,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 model.NexportUserId = nexportUserMapping.NexportUserId;
             }
 
-            var availableStores = _storeService.GetAllStores();
-
             model.NexportSupplementalInfoAnswerListSearchModel = new NexportSupplementalInfoAnswerListSearchModel
             {
                 CustomerId = customer.Id,
-                AvailableStores = availableStores.Select(store => new SelectListItem
-                {
-                    Text = store.Name,
-                    Value = store.Id.ToString()
-                }).ToList()
             };
+
+            _baseAdminModelFactory.PrepareStores(model.NexportSupplementalInfoAnswerListSearchModel.AvailableStores);
 
             model.NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel = new NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel
             {
@@ -616,7 +614,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         .Select(am => am.NexportMembershipId).ToList();
 
                     return answerModel;
-                }).OrderBy(a=>a.StoreName);
+                }).OrderBy(a => a.StoreName);
             });
 
             return model;
@@ -808,6 +806,206 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             model.QuestionIds = questionIds.Distinct().ToList();
             model.QuestionWithoutAnswerIds = questionWithoutAnswerIds;
+
+            return model;
+        }
+
+        public NexportCustomerAdditionalSettingsModel PrepareNexportCustomerAdditionalSettingsModel()
+        {
+            var model = new NexportCustomerAdditionalSettingsModel();
+
+            return model;
+        }
+
+        public NexportRegistrationFieldCategoryListModel PrepareNexportRegistrationFieldCategoryListModel(
+            NexportRegistrationFieldCategorySearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var registrationFields =
+                _nexportService.GetNexportRegistrationFieldCategoriesPagination(searchModel.Page - 1, searchModel.PageSize);
+
+            var model = new NexportRegistrationFieldCategoryListModel().PrepareToGrid(searchModel,
+                registrationFields, () =>
+                {
+                    return registrationFields.Select(field =>
+                    {
+                        var fieldModel = field.ToModel<NexportRegistrationFieldCategoryModel>();
+                        return fieldModel;
+                    });
+                });
+
+            return model;
+        }
+
+        public NexportRegistrationFieldCategoryModel PrepareNexportRegistrationFieldCategoryModel(
+            NexportRegistrationFieldCategoryModel model, NexportRegistrationFieldCategory registrationFieldCategory)
+        {
+            if (registrationFieldCategory != null)
+            {
+                model = model ?? registrationFieldCategory.ToModel<NexportRegistrationFieldCategoryModel>();
+            }
+
+            return model;
+        }
+
+        public NexportRegistrationFieldOptionSearchModel PrepareNexportRegistrationFieldOptionSearchModel(
+            NexportRegistrationFieldOptionSearchModel searchModel, NexportRegistrationField registrationField)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            if (registrationField == null)
+                throw new ArgumentNullException(nameof(registrationField));
+
+            searchModel.RegistrationFieldId = registrationField.Id;
+
+            searchModel.SetGridPageSize();
+
+            return searchModel;
+        }
+
+        public NexportRegistrationFieldListModel PrepareNexportRegistrationFieldListModel(
+            NexportRegistrationFieldSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var registrationFields =
+                _nexportService.GetNexportRegistrationFieldsPagination(searchModel.Page - 1, searchModel.PageSize);
+
+            var model = new NexportRegistrationFieldListModel().PrepareToGrid(searchModel,
+                registrationFields, () =>
+                {
+                    return registrationFields.Select(field =>
+                    {
+                        var fieldModel = field.ToModel<NexportRegistrationFieldModel>();
+
+                        if (fieldModel.FieldCategoryId.HasValue)
+                            fieldModel.FieldCategoryName = _nexportService.GetNexportRegistrationFieldCategoryById(
+                                    fieldModel.FieldCategoryId.Value).Title;
+
+                        var storeMappings = _nexportService
+                            .GetNexportRegistrationFieldStoreMappings(fieldModel.Id);
+
+                        for (var i = 0; i < storeMappings.Count; i++)
+                        {
+                            if (i < storeMappings.Count - 1)
+                                fieldModel.StoreMappings += $"{_storeService.GetStoreById(storeMappings[i].StoreId).Name}, ";
+                            else
+                                fieldModel.StoreMappings += $"{_storeService.GetStoreById(storeMappings[i].StoreId).Name}";
+
+                        }
+
+                        return fieldModel;
+                    });
+                });
+
+            return model;
+        }
+
+        public NexportRegistrationFieldModel PrepareNexportRegistrationFieldModel(NexportRegistrationFieldModel model,
+            NexportRegistrationField registrationField, bool excludeProperties = false)
+        {
+            Action<NexportRegistrationFieldLocalizedModel, int> localizedModelConfiguration = null;
+
+            if (registrationField != null)
+            {
+                model = model ?? registrationField.ToModel<NexportRegistrationFieldModel>();
+
+                model.StoreMappingIds = _nexportService.GetNexportRegistrationFieldStoreMappings(registrationField.Id)
+                    .Select(s => s.StoreId).ToList();
+
+                PrepareNexportRegistrationFieldOptionSearchModel(model.RegistrationFieldOptionSearchModel, registrationField);
+
+                localizedModelConfiguration = (locale, languageId) =>
+                {
+                    locale.Name = _localizationService.GetLocalized(registrationField,
+                        entity => entity.Name, languageId,
+                        false, false);
+                };
+            }
+
+            if (!excludeProperties)
+                model.Locales = _localizedModelFactory.PrepareLocalizedModels(localizedModelConfiguration);
+
+            model.AvailableFieldCategory = _nexportService.GetRegistrationFieldCategoryList();
+
+            var availableStores = _storeService.GetAllStores();
+            model.AvailableStores = availableStores.Select(store => new SelectListItem
+            {
+                Text = store.Name,
+                Value = store.Id.ToString(),
+                Selected = model.StoreMappingIds.Contains(store.Id)
+            }).ToList();
+
+            return model;
+        }
+
+        public NexportRegistrationFieldOptionListModel PrepareNexportRegistrationFieldOptionListModel(
+            NexportRegistrationFieldOptionSearchModel searchModel, NexportRegistrationField registrationField)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var registrationFieldOptions =
+                _nexportService.GetNexportRegistrationFieldOptionsPagination(registrationField.Id,
+                    searchModel.Page - 1, searchModel.PageSize);
+
+            var model = new NexportRegistrationFieldOptionListModel().PrepareToGrid(searchModel,
+                registrationFieldOptions, () =>
+                {
+                    return registrationFieldOptions.Select(fieldOption =>
+                    {
+                        var fieldOptionModel = fieldOption.ToModel<NexportRegistrationFieldOptionModel>();
+                        return fieldOptionModel;
+                    });
+                });
+
+            return model;
+        }
+
+        public NexportRegistrationFieldOptionModel PrepareNexportRegistrationFieldOptionModel(
+            NexportRegistrationFieldOptionModel model, NexportRegistrationField registrationField,
+            NexportRegistrationFieldOption registrationFieldOption)
+        {
+            if (registrationFieldOption != null)
+            {
+                model = model ?? registrationFieldOption.ToModel<NexportRegistrationFieldOptionModel>();
+            }
+
+            return model;
+        }
+
+        public NexportCustomerRegistrationFieldsModel PrepareNexportCustomerRegistrationFieldsModel(Store store)
+        {
+            var model = new NexportCustomerRegistrationFieldsModel();
+
+            var availableFields = _nexportService.GetNexportRegistrationFields(store.Id);
+
+            var fieldsWithCategory = availableFields.Where(x => x.FieldCategoryId != null)
+                .GroupBy(x =>
+                {
+                    var fieldCategory = _nexportService.GetNexportRegistrationFieldCategoryById(x.FieldCategoryId.Value);
+                    return fieldCategory;
+                })
+                .ToDictionary(x => x.Key.ToModel<NexportRegistrationFieldCategoryModel>(),
+                    x => x
+                        .Select(f =>
+                            f.ToModel<NexportRegistrationFieldModel>()).ToList())
+                .OrderBy(x => x.Key.DisplayOrder)
+                .ThenBy(x => x.Key.Title);
+
+            model.RegistrationFieldsWithCategory = fieldsWithCategory.ToDictionary(
+                x => x.Key,
+                x => x.Value);
+
+            model.RegistrationFieldsWithoutCategory = availableFields
+                .Where(x => x.FieldCategoryId == null)
+                .OrderBy(x => x.DisplayOrder)
+                .Select(x => x.ToModel<NexportRegistrationFieldModel>())
+                .ToList();
 
             return model;
         }

@@ -202,60 +202,50 @@ namespace Nop.Plugin.Misc.Nexport {
                 AdminWidgetZones.ProductDetailsButtons,
                 AdminWidgetZones.ProductDetailsBlock,
                 AdminWidgetZones.CustomerDetailsBlock,
+                AdminWidgetZones.CustomerUserDetailsBlock,
                 PublicWidgetZones.OrderDetailsProductLine,
                 PublicWidgetZones.AccountNavigationAfter,
                 PublicWidgetZones.HeaderLinksBefore,
                 PublicWidgetZones.OrderSummaryCartFooter,
                 PublicWidgetZones.ProductDetailsOverviewTop,
+                NexportDefaults.NexportRegistrationFieldsZone
             };
         }
 
         public string GetWidgetViewComponentName(string widgetZone)
         {
             if (widgetZone == AdminWidgetZones.StoreDetailsBottom)
-            {
                 return "WidgetsNexportStoreDetails";
-            }
 
             if(widgetZone == AdminWidgetZones.ProductDetailsBlock)
-            {
                 return "WidgetsNexportProductMappingsInProductPage";
-            }
 
             if (widgetZone == AdminWidgetZones.ProductDetailsButtons)
-            {
                 return "WidgetsNexportProductDetailsButtons";
-            }
 
             if (widgetZone == AdminWidgetZones.CustomerDetailsBlock)
-            {
                 return "WidgetsNexportCustomerDetailsBlock";
-            }
+
+            if (widgetZone == AdminWidgetZones.CustomerUserDetailsBlock)
+                return "WidgetsNexportCustomerUserDetailsBlock";
 
             if (widgetZone == PublicWidgetZones.OrderDetailsProductLine)
-            {
                 return "WidgetsNexportOrderDetailsProductLine";
-            }
 
             if (widgetZone == PublicWidgetZones.AccountNavigationAfter)
-            {
                 return "WidgetsAccountNavigationAfter";
-            }
 
             if (widgetZone == PublicWidgetZones.HeaderLinksBefore)
-            {
                 return "WidgetsHeaderLinksBefore";
-            }
 
             if (widgetZone == PublicWidgetZones.OrderSummaryCartFooter)
-            {
                 return "WidgetsOrderSummaryCartFooter";
-            }
 
             if (widgetZone == PublicWidgetZones.ProductDetailsOverviewTop)
-            {
                 return "WidgetsProductDetailsOverviewTop";
-            }
+
+            if (widgetZone == NexportDefaults.NexportRegistrationFieldsZone)
+                return "WidgetsNexportRegistrationFields";
 
             return "";
         }

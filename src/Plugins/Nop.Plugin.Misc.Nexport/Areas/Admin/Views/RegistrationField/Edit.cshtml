@@ -1,0 +1,37 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
+
+@{
+    ViewBag.Title = T("Admin.Customers.Nexport.RegistrationField.Fields.EditFieldDetails").Text;
+    Html.SetActiveMenuItemSystemName("Customer and user settings");
+}
+
+<form asp-controller="NexportIntegration" asp-action="EditRegistrationField" method="post" id="registrationfield-form">
+    <div class="content-header clearfix">
+        <h1 class="pull-left">
+            @T("Admin.Customers.Nexport.RegistrationField.Fields.EditFieldDetails") - @Model.Name
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="ListRegistrationField" asp-controller="NexportIntegration">
+                    @T("Admin.Customers.Nexport.RegistrationField.Fields.BackToList")
+                </a>
+            </small>
+        </h1>
+        <div class="pull-right">
+            <button type="submit" name="save" class="btn bg-blue">
+                <i class="fa fa-floppy-o"></i>
+                @T("Admin.Common.Save")
+            </button>
+            <button type="submit" name="save-continue" class="btn bg-blue">
+                <i class="fa fa-floppy-o"></i>
+                @T("Admin.Common.SaveContinue")
+            </button>
+            <span id="registrationfield-delete" class="btn bg-red">
+                <i class="fa fa-trash-o"></i>
+                @T("Admin.Common.Delete")
+            </span>
+        </div>
+    </div>
+    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/RegistrationField/_CreateOrUpdate.cshtml", Model)
+</form>
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="registrationfield-delete"
+                         asp-controller="NexportIntegration" asp-action="DeleteRegistrationField" />

@@ -1,0 +1,31 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
+
+@{
+    const string hideRegistrationFieldInfoBlockAttributeName = "NexportRegistrationField.HideInfoBlock";
+    var hideInfoBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideRegistrationFieldInfoBlockAttributeName);
+
+    const string hideRegistrationFieldOptionsBlockAttributeName = "NexportRegistrationField.HideOptionsBlock";
+    var hideOptionsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideRegistrationFieldOptionsBlockAttributeName);
+}
+
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
+
+<div class="content">
+    <div class="form-horizontal">
+        <nop-panels id="registrationfield-panels">
+            <nop-panel asp-name="registrationfield-info" asp-icon="fa fa-info"
+                       asp-title="@T("Plugins.Misc.Nexport.RegistrationField.Field.Info")"
+                       asp-hide-block-attribute-name="@hideRegistrationFieldInfoBlockAttributeName"
+                       asp-hide="@hideInfoBlock" asp-advanced="false">
+                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/RegistrationField/_CreateOrUpdate.Info.cshtml", Model)
+            </nop-panel>
+            <nop-panel asp-name="registrationfield-options" asp-icon="fa fa-check-square-o"
+                       asp-title="@T("Plugins.Misc.Nexport.RegistrationField.Field.OptionValues")"
+                       asp-hide-block-attribute-name="@hideRegistrationFieldOptionsBlockAttributeName"
+                       asp-hide="@hideOptionsBlock" asp-advanced="true">
+                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/RegistrationField/_CreateOrUpdate.Options.cshtml", Model)
+            </nop-panel>
+        </nop-panels>
+    </div>
+</div>

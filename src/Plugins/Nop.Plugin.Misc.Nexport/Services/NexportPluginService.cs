@@ -138,6 +138,22 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     var task = new Task(groupMembershipRemovalTask);
                     task.Execute(true, false);
                 }
+
+                if (_scheduleTaskService.GetTaskByType(NexportDefaults.NexportRegistrationFieldSynchronizationTaskType) == null)
+                {
+                    var registrationFieldSynchronizationTask = new ScheduleTask
+                    {
+                        Enabled = true,
+                        Seconds = NexportDefaults.NexportRegistrationFieldSynchronizationTaskInterval,
+                        Name = NexportDefaults.NexportRegistrationFieldSynchronizationTaskName,
+                        Type = NexportDefaults.NexportRegistrationFieldSynchronizationTaskType
+                    };
+
+                    _scheduleTaskService.InsertTask(registrationFieldSynchronizationTask);
+
+                    var task = new Task(registrationFieldSynchronizationTask);
+                    task.Execute(true, false);
+                }
             }
             catch (Exception e)
             {
@@ -155,7 +171,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     task.Type.Equals(NexportDefaults.NexportSynchronizationTaskType) ||
                     task.Type.Equals(NexportDefaults.NexportOrderInvoiceRedemptionTaskType) ||
                     task.Type.Equals(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskType) ||
-                    task.Type.Equals(NexportDefaults.NexportGroupMembershipRemovalTaskType))
+                    task.Type.Equals(NexportDefaults.NexportGroupMembershipRemovalTaskType) ||
+                    task.Type.Equals(NexportDefaults.NexportRegistrationFieldSynchronizationTaskType))
                 {
                     _scheduleTaskService.DeleteTask(task);
                 }
@@ -347,6 +364,61 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.PageTitle", "Supplemental info answers");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.Edit.PageTitle", "Modify your answer(s)");
 
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Configuration.Settings.CustomerUser.Nexport.RegistrationFields", "Nexport registration fields");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationFields.Description", "You can create and manage the registration fields and its categories available during registration below.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories", "Registration field categories");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.Description", "You can create and manage the categories for registration fields below.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields", "Registration fields");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Description", "You can create and manage the registration fields below.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.AddNew", "Add a new registration field");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.EditFieldDetails", "Edit registration field details");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.BackToList", "back to registration field list");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Added", "The new registration field has been added successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Updated", "The registration field has been updated successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Deleted", "The registration field has been deleted successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.AddNew", "Add a new registration field category");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.EditCategoryDetails", "Edit registration field category details");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.BackToList", "back to registration field category list");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.Added", "The new registration field category has been added successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.Updated", "The registration field category has been updated successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.Deleted", "The registration field category has been deleted successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.SaveBeforeEdit", "You need to save the registration field before you can add its options. Only \"Select Dropdown\" and \"Select Checkbox\" field have additional field options.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.AddNew", "Add a new option value");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.EditOptionValueDetails", "Edit option value");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.Added", "The new registration field option value has been added successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.Updated", "The registration field option value has been updated successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.Deleted", "The registration field option value has been deleted successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Title", "Title");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Title.Hint", "The name of the registration field category");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Description", "Description");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Description.Hint", "Description of the registration field category");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.DisplayOrder", "Display order");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.DisplayOrder.Hint", "The registration field category display order. 1 represents the first item in the list.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Name", "Name");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Name.Hint", "The name of the registration field.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Type", "Type");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Type.Hint", "Choose how to display your registration field.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.CustomProfileFieldKey", "Nexport custom profile field key");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.CustomProfileFieldKey.Hint", "The custom profile field key in Nexport that will be used to synchronize the field.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Required", "Required");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Required.Hint", "When the registration field is required, the customer must choose appropriate value before they can continues.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Active", "Active");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Active.Hint", "If the registration field is not active, it will not be displayed.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Category", "Field category");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Category.Hint", "The category that the registration field will be displayed within.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Validation", "Validate before submitting");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Validation.Hint", "Use custom validation to validate the registration field before submitting it.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex", "Custom validation");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex.Hint", "Regular expression that will be used to validate the field before submitting.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.StoreMappings", "Stores");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Stores", "Stores");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Stores.Hint", "Option to limit display the registration field to a certain store");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder", "Display order");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder.Hint", "The registration field display order. 1 represents the first item in the list.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Info", "Registration field info");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.OptionValues", "Registration field option values");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value", "Option value");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value.Hint", "The value of the option");
         }
 
         public void DeleteResources()
@@ -478,6 +550,62 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Navigation.SupplementalInfoAnswers");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.PageTitle");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.Edit.PageTitle");
+
+            _localizationService.DeletePluginLocaleResource("Admin.Configuration.Settings.CustomerUser.Nexport.RegistrationFields");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationFields.Description");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.Description");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Description");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.AddNew");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.EditFieldDetails");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.BackToList");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Added");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Updated");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Deleted");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.AddNew");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.EditCategoryDetails");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.BackToList");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.Added");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.Updated");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.Deleted");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.SaveBeforeEdit");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.AddNew");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.EditOptionValueDetails");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.Added");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.Updated");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.Deleted");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Title");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Title.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Description");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Description.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.DisplayOrder");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.DisplayOrder.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Name");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Name.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Type");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Type.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.CustomProfileFieldKey");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.CustomProfileFieldKey.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Required");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Required.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Active");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Active.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Category");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Category.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Validation");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Validation.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.StoreMappings");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Stores");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Stores.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Info");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.OptionValues");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value.Hint");
         }
     }
 }

@@ -1,0 +1,133 @@
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Services
+@using Nop.Services.Helpers
+
+@inject NexportService nexportService
+@inject IUserAgentHelper userAgentHelper
+
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
+
+@if (Model.IsActive)
+{
+    var controlId = $"NexportCustomProfile-{Model.Id}";
+
+    <text>
+        <div class="inputs custom-attributes">
+            <label>@Model.Name:</label>
+            @switch (Model.Type)
+            {
+                case NexportRegistrationFieldType.Text:
+                    <input name="@(controlId)" type="text" class="textbox" id="@(controlId)" />
+                    break;
+                case NexportRegistrationFieldType.Numeric:
+                    <input name="@(controlId)" type="number" class="textbox" id="@(controlId)" />
+                    break;
+                case NexportRegistrationFieldType.SelectCheckbox:
+                    {
+                        var options = nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                        if (options.Count > 0)
+                        {
+                            <ul class="option-list">
+                                @foreach (var option in options)
+                                {
+                                    <li>
+                                        <input id="@(controlId)_@(option.Id)" type="radio" name="@(controlId)" value="@option.Id" />
+                                        <label for="@(controlId)_@(option.Id)">@option.OptionValue</label>
+                                    </li>
+                                }
+                            </ul>
+                        }
+
+                        break;
+                    }
+                case NexportRegistrationFieldType.SelectDropDown:
+                    {
+                        var options = nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                        if (options.Count > 0)
+                        {
+                            <select name="@(controlId)" id="@(controlId)">
+                                var options = nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                                if (options.Count > 0)
+                                @if (!Model.IsRequired)
+                                {
+                                    <option value="0">---</option>
+                                }
+                                @foreach (var option in options)
+                                {
+                                    <option value="@option.Id">@option.OptionValue</option>
+                                }
+                            </select>
+                        }
+
+                        break;
+                    }
+                case NexportRegistrationFieldType.Email:
+                    <input name="@(controlId)" type="email" class="textbox" id="@(controlId)" />
+                    break;
+                case NexportRegistrationFieldType.Boolean:
+                    <ul class="option-list">
+                        <li>
+                            <input id="@(controlId)_Yes" type="radio" name="@(controlId)" value="True" />
+                            <label for="@(controlId)_Yes">Yes</label>
+                        </li>
+                        <li>
+                            <input id="@(controlId)_No" type="radio" name="@(controlId)" value="False" />
+                            <label for="@(controlId)_No">No</label>
+                        </li>
+                    </ul>
+                    break;
+                case NexportRegistrationFieldType.DateOnly:
+                    {
+                        const string datePickerFormat = "mm/dd/yy";
+                        var isMobileDevice = userAgentHelper.IsMobileDevice();
+
+                        <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker"
+                               @if (isMobileDevice) { <text> readonly</text> } />
+                        <script asp-location="Footer">
+                            $(document).ready(function () {
+                                $("#@(controlId)").datepicker({ dateFormat: "@datePickerFormat" });
+                            });
+                        </script>
+                    }
+                    break;
+                case NexportRegistrationFieldType.DateTime:
+                    {
+                        //const string datePickerFormat = "mm/dd/yy";
+                        var isMobileDevice = userAgentHelper.IsMobileDevice();
+
+                        <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker"
+                               @if (isMobileDevice) { <text> readonly</text> } />
+                        <script asp-location="Footer">
+                            $(document).ready(function () {
+                                $("#@(controlId)").datetimepicker({
+                                    controlType: 'select',
+                                    oneLine: true
+                                });
+                            });
+                        </script>
+                    }
+                    break;
+                case NexportRegistrationFieldType.None:
+                    break;
+            }
+
+            @if (Model.IsRequired)
+            {
+                <nop-required />
+                <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
+                <script asp-location="Footer">
+                    $(document).ready(function() {
+                        $("input[name=@(controlId)]").rules("add",
+                            {
+                                required: true,
+                                messages: {
+                                    required: "@Model.Name is a required field"
+                                }
+                            });
+
+                    });
+                </script>
+            }
+        </div>
+        </text>
+    }

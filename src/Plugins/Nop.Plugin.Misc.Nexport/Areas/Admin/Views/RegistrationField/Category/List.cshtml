@@ -1,0 +1,54 @@
+﻿@using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Plugin.Misc.Nexport.Models.RegistrationField
+
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldCategorySearchModel
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        @T("Admin.Customers.Nexport.RegistrationField.Categories")
+    </div>
+    <div class="panel-body">
+        <p>
+            <em>@T("Admin.Customers.Nexport.RegistrationField.Categories.Description")</em>
+        </p>
+        @await Html.PartialAsync("Table", new NexportDataTablesModel
+        {
+            Name = "nexport-registrationfield-categories-grid",
+            UrlRead = new DataUrl("ListRegistrationFieldCategory", "NexportIntegration", null),
+            Length = Model.PageSize,
+            LengthMenu = Model.AvailablePageSizes,
+            ColumnCollection = new List<ColumnProperty>
+            {
+                new ColumnProperty(nameof(NexportRegistrationFieldCategoryModel.Title))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Category.Title").Text,
+                    Width = "200"
+                },
+                new ColumnProperty(nameof(NexportRegistrationFieldCategoryModel.Description))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Category.Description").Text,
+                    Width = "200"
+                },
+                new ColumnProperty(nameof(NexportRegistrationFieldCategoryModel.DisplayOrder))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Category.DisplayOrder").Text,
+                    Width = "100",
+                    ClassName =  NopColumnClassDefaults.CenterAll
+                },
+                new ColumnProperty(nameof(NexportRegistrationFieldCategoryModel.Id))
+                {
+                    Title = T("Admin.Common.Edit").Text,
+                    Width = "100",
+                    ClassName =  NopColumnClassDefaults.Button,
+                    Render = new RenderButtonEdit(new DataUrl("~/Admin/NexportIntegration/EditRegistrationFieldCategory/"))
+                }
+            }
+        })
+    </div>
+    <div class="panel-footer">
+        <a class="btn btn-primary" href="@Url.Action("CreateRegistrationFieldCategory", "NexportIntegration")">
+            <i class="fa fa-plus-square"></i>
+            @T("Admin.Common.AddNew")
+        </a>
+    </div>
+</div>

@@ -1,0 +1,39 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldOptionModel
+
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
+<input asp-for="FieldId" type="hidden" />
+
+@if (ViewBag.RefreshPage == true)
+{
+    <script>
+        try {
+            window.opener.document.forms['@(Context.Request.Query["formId"])'].@(Context.Request.Query["btnId"]).click();
+        } catch (e) {
+        }
+
+        window.close();
+    </script>
+}
+
+<div class="content">
+    <div class="form-horizontal">
+        <div class="panel-group">
+            <div class="panel panel-default panel-popup">
+                <div class="panel-body">
+                    <div>
+                        <div class="form-group">
+                            <div class="col-sm-3">
+                                <nop-label asp-for="OptionValue" />
+                            </div>
+                            <div class="col-sm-9">
+                                <nop-editor asp-for="OptionValue" asp-required="true" />
+                                <span asp-validation-for="OptionValue"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

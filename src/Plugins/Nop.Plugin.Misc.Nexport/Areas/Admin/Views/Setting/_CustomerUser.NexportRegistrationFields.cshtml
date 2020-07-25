@@ -1,0 +1,12 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.Customer.NexportCustomerAdditionalSettingsModel
+
+<div class="panel-group">
+    <div class="panel panel-body">
+        <p>
+            <em>@T("Admin.Customers.Nexport.RegistrationFields.Description")</em>
+        </p>
+
+        @await Html.PartialAsync("../RegistrationField/Category/List.cshtml", Model.NexportRegistrationFieldCategorySearchModel)
+        @await Html.PartialAsync("../RegistrationField/List.cshtml", Model.NexportRegistrationFieldSearchModel)
+    </div>
+</div>

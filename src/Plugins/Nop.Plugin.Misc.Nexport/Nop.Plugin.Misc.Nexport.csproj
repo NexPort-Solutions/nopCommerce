@@ -36,8 +36,23 @@
 
   <ItemGroup>
     <None Remove="Areas\Admin\Views\Product\Edit.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Category\Create.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Category\Edit.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Category\List.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Category\_CreateOrUpdate.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Create.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Edit.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\List.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Option\Create.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Option\Edit.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Option\_CreateOrUpdate.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Info.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Options.cshtml" />
+    <None Remove="Areas\Admin\Views\Setting\_CustomerUser.NexportRegistrationFields.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewImports.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewStart.cshtml" />
+    <None Remove="Content\jquery-ui-timepicker-addon.min.css" />
     <None Remove="Content\nexport-admin.css" />
     <None Remove="Content\nexport-store.css" />
     <None Remove="Content\nexport.css" />
@@ -46,11 +61,13 @@
     <None Remove="plugin.json" />
     <None Remove="Scripts\bootstrap3-typeahead.js" />
     <None Remove="Scripts\dataTables.rowGroup.min.js" />
+    <None Remove="Scripts\jquery-ui-timepicker-addon.min.js" />
     <None Remove="Scripts\nexport_plugin_common.js" />
     <None Remove="Views\Configure.cshtml" />
-    <None Remove="Views\Customer\EditNexportSupplementalInfoAnswer.cshtml" />
-    <None Remove="Views\Customer\Login.cshtml" />
-    <None Remove="Views\Customer\NexportSupplementalInfoAnswers.cshtml" />
+    <None Remove="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml" />
+    <None Remove="Views\NexportCustomer\Login.cshtml" />
+    <None Remove="Views\NexportCustomer\NexportSupplementalInfoAnswers.cshtml" />
+    <None Remove="Views\NexportCustomer\Register.cshtml" />
     <None Remove="Views\MapNexportProduct.cshtml" />
     <None Remove="Views\MapNexportProductList.cshtml" />
     <None Remove="Views\MapProductWithNexport.cshtml" />
@@ -61,6 +78,8 @@
     <None Remove="Views\ProductMappingGroupMembership.cshtml" />
     <None Remove="Views\ProductMappingTable.cshtml" />
     <None Remove="Views\Product\_AddToCart.cshtml" />
+    <None Remove="Views\RegistrationField\_CustomerFields.Control.cshtml" />
+    <None Remove="Views\RegistrationField\_CustomerFields.cshtml" />
     <None Remove="Views\Shared\Components\TagHelpers\NexportDurationPicker\Default.cshtml" />
     <None Remove="Views\Shared\GuidNullable.cshtml" />
     <None Remove="Views\Shared\Table.cshtml" />
@@ -78,6 +97,8 @@
     <None Remove="Views\Syllabus\SyllabusList.cshtml" />
     <None Remove="Views\ViewOrder.cshtml" />
     <None Remove="Views\Widget\Customer\NexportCustomerDetails.cshtml" />
+    <None Remove="Views\Widget\Customer\NexportCustomerUserSettings.cshtml" />
+    <None Remove="Views\Widget\Customer\NexportRegistrationFields.cshtml" />
     <None Remove="Views\Widget\Customer\NexportSettingNavigation.cshtml" />
     <None Remove="Views\Widget\Order\NexportOrderDetailsProductLine.cshtml" />
     <None Remove="Views\Widget\Order\WidgetsOrderDetailsPageOverview.cshtml" />
@@ -90,10 +111,61 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Areas\Admin\Views\RegistrationField\Option\_CreateOrUpdate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Option\Create.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Areas\Admin\Views\RegistrationField\Category\Create.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Category\Edit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Areas\Admin\Views\RegistrationField\Category\List.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Category\_CreateOrUpdate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Create.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Edit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\List.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Option\Edit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Info.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Options.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Setting\_CustomerUser.NexportRegistrationFields.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Areas\Admin\Views\_ViewImports.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\_ViewStart.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\jquery-ui-timepicker-addon.min.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\nexport-admin.css">
@@ -120,17 +192,24 @@
     <Content Include="Scripts\dataTables.rowGroup.min.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Scripts\jquery-ui-timepicker-addon.min.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Scripts\nexport_plugin_common.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\Customer\EditNexportSupplementalInfoAnswer.cshtml">
+    <Content Include="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\Customer\Login.cshtml">
+    <Content Include="Views\NexportCustomer\Login.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\Customer\NexportSupplementalInfoAnswers.cshtml">
+    <Content Include="Views\NexportCustomer\NexportSupplementalInfoAnswers.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportCustomer\Register.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="Views\MapNexportProduct.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -154,6 +233,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Product\_AddToCart.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\RegistrationField\_CustomerFields.Control.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\RegistrationField\_CustomerFields.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Shared\EditorTemplates\GuidNullable.cshtml">
@@ -205,6 +290,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Widget\Customer\NexportCustomerDetails.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Widget\Setting\NexportCustomerUserSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Widget\Customer\NexportRegistrationFields.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Widget\Customer\NexportSettingNavigation.cshtml">

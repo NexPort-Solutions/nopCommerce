@@ -9,6 +9,7 @@ using Nop.Core.Domain.Orders;
 using Nop.Services.Events;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 
 namespace Nop.Plugin.Misc.Nexport.Services
@@ -28,7 +29,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportProductMappingRepository.Insert(nexportProductMapping);
 
             //cache
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.ProductMappingPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.ProductMappingPatternCacheKey);
 
             //event notification
             _eventPublisher.EntityInserted(nexportProductMapping);
@@ -47,7 +48,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportProductGroupMembershipMappingRepository.Insert(nexportProductGroupMembershipMapping);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.ProductGroupMembershipMappingPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.ProductGroupMembershipMappingPatternCacheKey);
 
             _eventPublisher.EntityInserted(nexportProductGroupMembershipMapping);
         }
@@ -60,7 +61,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
             }
 
-            var key = NexportProductDefaults.GetProductMappingCatalogAllByCatalogIdCacheKey(
+            var key = NexportIntegrationDefaults.GetProductMappingCatalogAllByCatalogIdCacheKey(
                 showHidden, catalogId, pageIndex, pageSize, _workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id);
             return _cacheManager.Get(key, () =>
             {
@@ -121,7 +122,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public IPagedList<NexportProductMapping> GetProductSectionsBySectionId(Guid sectionId, int pageIndex = 0, int pageSize = Int32.MaxValue,
+        public IPagedList<NexportProductMapping> GetProductSectionsBySectionId(Guid sectionId, int pageIndex = 0, int pageSize = int.MaxValue,
             bool showHidden = false)
         {
             if (sectionId == Guid.Empty)
@@ -129,7 +130,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
             }
 
-            var key = NexportProductDefaults.GetProductMappingSectionAllBySectionIdCacheKey(
+            var key = NexportIntegrationDefaults.GetProductMappingSectionAllBySectionIdCacheKey(
                 showHidden, sectionId, pageIndex, pageSize, _workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id);
             return _cacheManager.Get(key, () =>
             {
@@ -180,7 +181,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public IPagedList<NexportProductMapping> GetProductTrainingPlansByTrainingPlanId(Guid trainingPlanId, int pageIndex = 0, int pageSize = Int32.MaxValue,
+        public IPagedList<NexportProductMapping> GetProductTrainingPlansByTrainingPlanId(Guid trainingPlanId, int pageIndex = 0, int pageSize = int.MaxValue,
             bool showHidden = false)
         {
             if (trainingPlanId == Guid.Empty)
@@ -188,7 +189,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
             }
 
-            var key = NexportProductDefaults.GetProductMappingTrainingPlanAllByTrainingPlanIdCacheKey(
+            var key = NexportIntegrationDefaults.GetProductMappingTrainingPlanAllByTrainingPlanIdCacheKey(
                 showHidden, trainingPlanId, pageIndex, pageSize, _workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id);
             return _cacheManager.Get(key, () =>
             {
@@ -265,7 +266,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public IPagedList<NexportProductMapping> GetProductMappingsPagination(int? nopProductId = null,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
         {
-            var key = string.Format(NexportProductDefaults.ProductMappingsAllCacheKey,
+            var key = string.Format(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
                 _storeContext.CurrentStore.Id,
                 string.Join(",", _workContext.CurrentCustomer.GetCustomerRoleIds()),
                 showHidden, "", true);
@@ -292,7 +293,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
             }
 
-            var key = string.Format(NexportProductDefaults.ProductMappingsAllCacheKey,
+            var key = string.Format(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
                 _storeContext.CurrentStore.Id,
                 string.Join(",", _workContext.CurrentCustomer.GetCustomerRoleIds()),
                 showHidden, "", false);
@@ -339,7 +340,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public IList<NexportProductMapping> GetProductMappings(int? nopProductId = null, int? storeId = null)
         {
-            var key = string.Format(NexportProductDefaults.ProductMappingsAllCacheKey,
+            var key = string.Format(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
                 _storeContext.CurrentStore.Id,
                 string.Join(",", _workContext.CurrentCustomer.GetCustomerRoleIds()),
                 false, "", true);
@@ -364,7 +365,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (nexportProductMappingId < 1)
                 return new List<NexportProductGroupMembershipMapping>();
 
-            var key = string.Format(NexportProductDefaults.ProductGroupMembershipMappingsAllCacheKey,
+            var key = string.Format(NexportIntegrationDefaults.ProductGroupMembershipMappingsAllCacheKey,
                 _storeContext.CurrentStore.Id,
                 string.Join(",", _workContext.CurrentCustomer.GetCustomerRoleIds()),
                 false, "", false);
@@ -382,7 +383,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (nexportProductMappingId < 1)
                 return new PagedList<NexportProductGroupMembershipMapping>(new List<NexportProductGroupMembershipMapping>(), pageIndex, pageSize);
 
-            var key = string.Format(NexportProductDefaults.ProductGroupMembershipMappingsAllCacheKey,
+            var key = string.Format(NexportIntegrationDefaults.ProductGroupMembershipMappingsAllCacheKey,
                 _storeContext.CurrentStore.Id,
                 string.Join(",", _workContext.CurrentCustomer.GetCustomerRoleIds()),
                 showHidden, "", false);
@@ -458,7 +459,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportProductMappingRepository.Delete(mapping);
 
             //cache
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.ProductMappingPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.ProductMappingPatternCacheKey);
 
             //event notification
             _eventPublisher.EntityDeleted(mapping);
@@ -472,7 +473,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportProductMappingRepository.Update(mapping);
 
             //cache
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.ProductMappingPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.ProductMappingPatternCacheKey);
 
             //event notification
             _eventPublisher.EntityUpdated(mapping);
@@ -490,7 +491,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportProductGroupMembershipMappingRepository.Delete(mapping);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.ProductGroupMembershipMappingPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.ProductGroupMembershipMappingPatternCacheKey);
 
             _eventPublisher.EntityDeleted(mapping);
         }
@@ -838,7 +839,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportUserMappingRepository.Insert(nexportUserMapping);
 
             //cache
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.UserMappingPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.UserMappingPatternCacheKey);
 
             //event notification
             _eventPublisher.EntityInserted(nexportUserMapping);
@@ -852,7 +853,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportUserMappingRepository.Delete(nexportUserMapping);
 
             //cache
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.UserMappingPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.UserMappingPatternCacheKey);
 
             //event notification
             _eventPublisher.EntityDeleted(nexportUserMapping);
@@ -866,7 +867,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportUserMappingRepository.Update(nexportUserMapping);
 
             //cache
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.UserMappingPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.UserMappingPatternCacheKey);
 
             //event notification
             _eventPublisher.EntityUpdated(nexportUserMapping);
@@ -992,7 +993,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public IPagedList<NexportSupplementalInfoQuestion> GetAllNexportSupplementalInfoQuestionsPagination(
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
         {
-            var key = string.Format(NexportProductDefaults.SupplementalInfoQuestionAllCacheKey, pageIndex, pageSize);
+            var key = string.Format(NexportIntegrationDefaults.SupplementalInfoQuestionAllCacheKey, pageIndex, pageSize);
             return _cacheManager.Get(key, () =>
             {
                 var query = from question in _nexportSupplementalInfoQuestionRepository.Table
@@ -1035,7 +1036,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoQuestionRepository.Insert(question);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoQuestionPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoQuestionPatternCacheKey);
 
             _eventPublisher.EntityInserted(question);
         }
@@ -1047,7 +1048,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoQuestionRepository.Delete(question);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoQuestionPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoQuestionPatternCacheKey);
 
             _eventPublisher.EntityDeleted(question);
         }
@@ -1072,7 +1073,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoQuestionRepository.Update(question);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoQuestionPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoQuestionPatternCacheKey);
 
             _eventPublisher.EntityUpdated(question);
         }
@@ -1101,7 +1102,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoOptionRepository.Insert(option);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoOptionPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoOptionPatternCacheKey);
 
             _eventPublisher.EntityInserted(option);
         }
@@ -1127,7 +1128,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoOptionRepository.Update(option);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoOptionPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoOptionPatternCacheKey);
 
             _eventPublisher.EntityUpdated(option);
         }
@@ -1170,7 +1171,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoQuestionMappingRepository.Insert(questionMapping);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoQuestionMappingPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoQuestionMappingPatternCacheKey);
 
             _eventPublisher.EntityInserted(questionMapping);
         }
@@ -1182,7 +1183,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoQuestionMappingRepository.Delete(questionMapping);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoQuestionMappingPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoQuestionMappingPatternCacheKey);
 
             _eventPublisher.EntityDeleted(questionMapping);
         }
@@ -1194,7 +1195,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoQuestionMappingRepository.Update(questionMapping);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoQuestionMappingPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoQuestionMappingPatternCacheKey);
 
             _eventPublisher.EntityUpdated(questionMapping);
         }
@@ -1206,7 +1207,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return new PagedList<NexportSupplementalInfoOptionGroupAssociation>(
                     new List<NexportSupplementalInfoOptionGroupAssociation>(), pageIndex, pageSize);
 
-            var key = string.Format(NexportProductDefaults.SupplementalInfoOptionGroupAssociationsAllCacheKey,
+            var key = string.Format(NexportIntegrationDefaults.SupplementalInfoOptionGroupAssociationsAllCacheKey,
                 _storeContext.CurrentStore.Id);
 
             return _cacheManager.Get(key, () =>
@@ -1257,7 +1258,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoOptionGroupAssociationRepository.Insert(groupAssociation);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoOptionGroupAssociationPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoOptionGroupAssociationPatternCacheKey);
 
             _eventPublisher.EntityInserted(groupAssociation);
         }
@@ -1269,7 +1270,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoOptionGroupAssociationRepository.Delete(groupAssociation);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoOptionGroupAssociationPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoOptionGroupAssociationPatternCacheKey);
 
             _eventPublisher.EntityDeleted(groupAssociation);
         }
@@ -1281,7 +1282,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoOptionGroupAssociationRepository.Update(groupAssociation);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoOptionGroupAssociationPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoOptionGroupAssociationPatternCacheKey);
 
             _eventPublisher.EntityUpdated(groupAssociation);
         }
@@ -1299,7 +1300,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoAnswerRepository.Insert(answer);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoAnswerPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoAnswerPatternCacheKey);
 
             _eventPublisher.EntityInserted(answer);
         }
@@ -1311,7 +1312,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoAnswerRepository.Delete(answer);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoAnswerPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoAnswerPatternCacheKey);
 
             _eventPublisher.EntityDeleted(answer);
         }
@@ -1323,7 +1324,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoAnswerRepository.Update(answer);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoAnswerPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoAnswerPatternCacheKey);
 
             _eventPublisher.EntityUpdated(answer);
         }
@@ -1352,7 +1353,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return new PagedList<NexportSupplementalInfoAnswer>(
                     new List<NexportSupplementalInfoAnswer>(), pageIndex, pageSize);
 
-            return _cacheManager.Get(NexportProductDefaults.SupplementalInfoAnswerAllCacheKey, () =>
+            return _cacheManager.Get(NexportIntegrationDefaults.SupplementalInfoAnswerAllCacheKey, () =>
             {
                 var query =
                     _nexportSupplementalInfoAnswerRepository
@@ -1407,7 +1408,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoAnswerMembershipRepository.Insert(answerMembership);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoAnswerMembershipPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoAnswerMembershipPatternCacheKey);
 
             _eventPublisher.EntityInserted(answerMembership);
         }
@@ -1419,7 +1420,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportSupplementalInfoAnswerMembershipRepository.Delete(answerMembership);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoAnswerMembershipPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoAnswerMembershipPatternCacheKey);
 
             _eventPublisher.EntityDeleted(answerMembership);
         }
@@ -1452,7 +1453,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportRequiredSupplementalInfoRepository.Insert(requirement);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoRequiredPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoRequiredPatternCacheKey);
 
             _eventPublisher.EntityInserted(requirement);
         }
@@ -1464,7 +1465,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _nexportRequiredSupplementalInfoRepository.Delete(requirement);
 
-            _cacheManager.RemoveByPrefix(NexportProductDefaults.SupplementalInfoRequiredPatternCacheKey);
+            _cacheManager.RemoveByPrefix(NexportIntegrationDefaults.SupplementalInfoRequiredPatternCacheKey);
 
             _eventPublisher.EntityDeleted(requirement);
         }
@@ -1568,6 +1569,359 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportGroupMembershipRemovalQueueRepository.Delete(queueItem);
 
             _eventPublisher.EntityDeleted(queueItem);
+        }
+
+        public NexportRegistrationField GetNexportRegistrationFieldById(int fieldId, int? categoryId = null)
+        {
+            if (fieldId < 1)
+                return null;
+
+            var query = _nexportRegistrationFieldRepository.Table.Where(rf => rf.Id == fieldId);
+
+            if (categoryId != null)
+                query = query.Where(rf => rf.FieldCategoryId == categoryId);
+
+            return query.FirstOrDefault();
+        }
+
+        public IList<NexportRegistrationField> GetNexportRegistrationFields(int storeId)
+        {
+            if (storeId < 1)
+                return new List<NexportRegistrationField>();
+
+            var fieldStoreMappingsForCurrentStore = _nexportRegistrationFieldStoreMappingRepository.TableNoTracking
+                .Where(rfs => rfs.StoreId == storeId)
+                .Select(rfs => rfs.FieldId).ToList();
+
+            var fieldOStoreMappingsForOtherStores = _nexportRegistrationFieldStoreMappingRepository.TableNoTracking
+                .Where(rfs => rfs.StoreId != storeId)
+                .Select(rfs => rfs.FieldId).ToList();
+
+            var fields = _nexportRegistrationFieldRepository.TableNoTracking
+                .Where(f => f.IsActive &&
+                            (fieldStoreMappingsForCurrentStore.Contains(f.Id) ||
+                             !fieldOStoreMappingsForOtherStores.Contains(f.Id)));
+
+            return fields.ToList();
+        }
+
+        public IPagedList<NexportRegistrationField> GetNexportRegistrationFieldsPagination(int pageIndex = 0, int pageSize = int.MaxValue)
+        {
+            return _cacheManager.Get(NexportIntegrationDefaults.RegistrationFieldAllCacheKey, () =>
+            {
+                var query = _nexportRegistrationFieldRepository.Table;
+
+                var fields = new PagedList<NexportRegistrationField>(query, pageIndex, pageSize);
+
+                return fields;
+            });
+        }
+
+        public void InsertNexportRegistrationField(NexportRegistrationField registrationField)
+        {
+            if (registrationField == null)
+                throw new ArgumentNullException(nameof(registrationField));
+
+            _nexportRegistrationFieldRepository.Insert(registrationField);
+
+            _eventPublisher.EntityInserted(registrationField);
+        }
+
+        public void DeleteNexportRegistrationField(NexportRegistrationField registrationField)
+        {
+            if (registrationField == null)
+                throw new ArgumentNullException(nameof(registrationField));
+
+            _nexportRegistrationFieldRepository.Delete(registrationField);
+
+            _eventPublisher.EntityDeleted(registrationField);
+        }
+
+        public void UpdateNexportRegistrationField(NexportRegistrationField registrationField)
+        {
+            if (registrationField == null)
+                throw new ArgumentNullException(nameof(registrationField));
+
+            _nexportRegistrationFieldRepository.Update(registrationField);
+
+            _eventPublisher.EntityUpdated(registrationField);
+        }
+
+        public NexportRegistrationFieldOption GetNexportRegistrationFieldOptionById(int fieldOptionId, int? fieldId = null)
+        {
+            if (fieldOptionId < 1)
+                return null;
+
+            if (fieldId != null)
+                return _nexportRegistrationFieldOptionRepository.TableNoTracking.SingleOrDefault(rfo =>
+                    rfo.Id == fieldOptionId && rfo.FieldId == fieldId);
+
+            return _nexportRegistrationFieldOptionRepository.GetById(fieldOptionId);
+        }
+
+        public IList<NexportRegistrationFieldOption> GetNexportRegistrationFieldOptions(int? fieldId = null)
+        {
+            var query = _nexportRegistrationFieldOptionRepository.Table;
+
+            if (fieldId != null)
+                query = query.Where(rfo => rfo.FieldId == fieldId);
+
+            return query.ToList();
+        }
+
+        public IPagedList<NexportRegistrationFieldOption> GetNexportRegistrationFieldOptionsPagination(int fieldId,
+            int pageIndex = 0, int pageSize = int.MaxValue)
+        {
+            if (fieldId < 1)
+                return new PagedList<NexportRegistrationFieldOption>(new List<NexportRegistrationFieldOption>(), pageIndex, pageSize);
+
+            return _cacheManager.Get(NexportIntegrationDefaults.RegistrationFieldOptionAllCacheKey, () =>
+            {
+                var query = _nexportRegistrationFieldOptionRepository.Table
+                    .Where(rfo => rfo.FieldId == fieldId);
+
+                var fields = new PagedList<NexportRegistrationFieldOption>(query, pageIndex, pageSize);
+
+                return fields;
+            });
+        }
+
+        public void InsertNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
+        {
+            if (registrationFieldOption == null)
+                throw new ArgumentNullException(nameof(registrationFieldOption));
+
+            _nexportRegistrationFieldOptionRepository.Insert(registrationFieldOption);
+
+            _eventPublisher.EntityInserted(registrationFieldOption);
+        }
+
+        public void DeleteNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
+        {
+            if (registrationFieldOption == null)
+                throw new ArgumentNullException(nameof(registrationFieldOption));
+
+            _nexportRegistrationFieldOptionRepository.Delete(registrationFieldOption);
+
+            _eventPublisher.EntityDeleted(registrationFieldOption);
+        }
+
+        public void UpdateNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
+        {
+            if (registrationFieldOption == null)
+                throw new ArgumentNullException(nameof(registrationFieldOption));
+
+            _nexportRegistrationFieldOptionRepository.Update(registrationFieldOption);
+
+            _eventPublisher.EntityUpdated(registrationFieldOption);
+        }
+
+        public NexportRegistrationFieldCategory GetNexportRegistrationFieldCategoryById(int fieldCategoryId)
+        {
+            return fieldCategoryId < 1
+                ? null
+                : _nexportRegistrationFieldCategoryRepository.GetById(fieldCategoryId);
+        }
+
+        public IList<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategories()
+        {
+            var query = from s in
+                    _nexportRegistrationFieldCategoryRepository.Table
+                        orderby s.DisplayOrder, s.Id
+                        select s;
+
+            return query.ToList();
+        }
+
+        public IList<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategories(IList<int> fieldCategoryIds)
+        {
+            return fieldCategoryIds.Select(GetNexportRegistrationFieldCategoryById).ToList();
+        }
+
+        public IPagedList<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategoriesPagination(
+            int pageIndex = 0, int pageSize = int.MaxValue)
+        {
+            return _cacheManager.Get(NexportIntegrationDefaults.RegistrationFieldCategoryAllCacheKey, () =>
+            {
+                var query = _nexportRegistrationFieldCategoryRepository.Table;
+
+                var fields = new PagedList<NexportRegistrationFieldCategory>(query, pageIndex, pageSize);
+
+                return fields;
+            });
+        }
+
+        public void InsertNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
+        {
+            if (registrationFieldCategory == null)
+                throw new ArgumentNullException(nameof(registrationFieldCategory));
+
+            _nexportRegistrationFieldCategoryRepository.Insert(registrationFieldCategory);
+
+            _eventPublisher.EntityInserted(registrationFieldCategory);
+        }
+
+        public void DeleteNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
+        {
+            if (registrationFieldCategory == null)
+                throw new ArgumentNullException(nameof(registrationFieldCategory));
+
+            _nexportRegistrationFieldCategoryRepository.Delete(registrationFieldCategory);
+
+            _eventPublisher.EntityInserted(registrationFieldCategory);
+        }
+
+        public void UpdateNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
+        {
+            if (registrationFieldCategory == null)
+                throw new ArgumentNullException(nameof(registrationFieldCategory));
+
+            _nexportRegistrationFieldCategoryRepository.Update(registrationFieldCategory);
+
+            _eventPublisher.EntityUpdated(registrationFieldCategory);
+        }
+
+        public NexportRegistrationFieldStoreMapping GetNexportRegistrationFieldStoreMappingById(int fieldStoreMappingId)
+        {
+            return fieldStoreMappingId < 1
+                ? null
+                : _nexportRegistrationFieldStoreMappingRepository.GetById(fieldStoreMappingId);
+        }
+
+        public IList<NexportRegistrationFieldStoreMapping> GetNexportRegistrationFieldStoreMappings(int fieldId)
+        {
+            if (fieldId < 1)
+                return new List<NexportRegistrationFieldStoreMapping>();
+
+            return _nexportRegistrationFieldStoreMappingRepository.TableNoTracking
+                .Where(rf => rf.FieldId == fieldId).ToList();
+        }
+
+        public void InsertNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping)
+        {
+            if (registrationFieldStoreMapping == null)
+                throw new ArgumentNullException(nameof(registrationFieldStoreMapping));
+
+            if (_nexportRegistrationFieldStoreMappingRepository.Table.Any(sm =>
+                sm.FieldId == registrationFieldStoreMapping.FieldId && sm.StoreId == registrationFieldStoreMapping.StoreId))
+                return;
+
+            _nexportRegistrationFieldStoreMappingRepository.Insert(registrationFieldStoreMapping);
+
+            _eventPublisher.EntityInserted(registrationFieldStoreMapping);
+        }
+
+        public void DeleteNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping)
+        {
+            if (registrationFieldStoreMapping == null)
+                throw new ArgumentNullException(nameof(registrationFieldStoreMapping));
+
+            _nexportRegistrationFieldStoreMappingRepository.Delete(registrationFieldStoreMapping);
+
+            _eventPublisher.EntityDeleted(registrationFieldStoreMapping);
+        }
+
+        public NexportRegistrationFieldAnswer GetNexportRegistrationFieldAnswerById(int fieldAnswerId)
+        {
+            return fieldAnswerId < 1 ? null : _nexportRegistrationFieldAnswerRepository.GetById(fieldAnswerId);
+        }
+
+        public IList<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswers(int customerId)
+        {
+            if (customerId < 1)
+                return new List<NexportRegistrationFieldAnswer>();
+
+            return _nexportRegistrationFieldAnswerRepository.TableNoTracking
+                .Where(fa => fa.CustomerId == customerId).ToList();
+        }
+
+        public IPagedList<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswersPagination(int customerId,
+            int pageIndex = 0, int pageSize = int.MaxValue)
+        {
+            return _cacheManager.Get(NexportIntegrationDefaults.RegistrationFieldAnswerAllCacheKey, () =>
+            {
+                var query = _nexportRegistrationFieldAnswerRepository.TableNoTracking.Where(fa => fa.CustomerId == customerId);
+
+                var fields = new PagedList<NexportRegistrationFieldAnswer>(query, pageIndex, pageSize);
+
+                return fields;
+            });
+        }
+
+        public void InsertNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)
+        {
+            if (registrationFieldAnswer == null)
+                throw new ArgumentNullException(nameof(registrationFieldAnswer));
+
+            if (registrationFieldAnswer.FieldOptionId.HasValue)
+            {
+                if (_nexportRegistrationFieldAnswerRepository.TableNoTracking.Any(fa =>
+                    fa.CustomerId == registrationFieldAnswer.CustomerId &&
+                    fa.FieldId == registrationFieldAnswer.FieldOptionId &&
+                    fa.FieldOptionId == registrationFieldAnswer.FieldOptionId))
+                    return;
+            }
+            else
+            {
+                if (_nexportRegistrationFieldAnswerRepository.TableNoTracking.Any(fa =>
+                    fa.CustomerId == registrationFieldAnswer.CustomerId &&
+                    fa.FieldId == registrationFieldAnswer.FieldOptionId))
+                    return;
+            }
+
+            _nexportRegistrationFieldAnswerRepository.Insert(registrationFieldAnswer);
+
+            _eventPublisher.EntityInserted(registrationFieldAnswer);
+        }
+
+        public void DeleteNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)
+        {
+            if (registrationFieldAnswer == null)
+                throw new ArgumentNullException(nameof(registrationFieldAnswer));
+
+            _nexportRegistrationFieldAnswerRepository.Delete(registrationFieldAnswer);
+
+            _eventPublisher.EntityDeleted(registrationFieldAnswer);
+        }
+
+        public void UpdateNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)
+        {
+            if (registrationFieldAnswer == null)
+                throw new ArgumentNullException(nameof(registrationFieldAnswer));
+
+            _nexportRegistrationFieldAnswerRepository.Update(registrationFieldAnswer);
+
+            _eventPublisher.EntityUpdated(registrationFieldAnswer);
+        }
+
+        public void InsertNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem)
+        {
+            if (queueItem == null)
+                throw new ArgumentNullException(nameof(queueItem));
+
+            _nexportRegistrationFieldSynchronizationQueueRepository.Insert(queueItem);
+
+            _eventPublisher.EntityInserted(queueItem);
+        }
+
+        public void DeleteNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem)
+        {
+            if (queueItem == null)
+                throw new ArgumentNullException(nameof(queueItem));
+
+            _nexportRegistrationFieldSynchronizationQueueRepository.Delete(queueItem);
+
+            _eventPublisher.EntityDeleted(queueItem);
+        }
+
+        public void UpdateNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem)
+        {
+            if (queueItem == null)
+                throw new ArgumentNullException(nameof(queueItem));
+
+            _nexportRegistrationFieldSynchronizationQueueRepository.Update(queueItem);
+
+            _eventPublisher.EntityUpdated(queueItem);
         }
     }
 }

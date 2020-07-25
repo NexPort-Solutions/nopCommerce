@@ -14,6 +14,7 @@ using Nop.Services.Stores;
 using Nop.Services.Tasks;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 
 namespace Nop.Plugin.Misc.Nexport.Services.Tasks
@@ -137,8 +138,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                     {
                                                         //TODO: Verify invoice state before verifying enrollment status
 
-
-
                                                         var existingEnrollmentStatus = _nexportService.VerifyNexportEnrollmentStatus(productMapping, userMapping);
 
                                                         if (existingEnrollmentStatus != null)
@@ -205,6 +204,13 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                         _orderProcessingService.CheckOrderStatus(order);
 
                                                         CleanUpStoredMappingInfo(orderItem.Id);
+
+                                                        _nexportService.InsertNexportRegistrationFieldSynchronizationQueueItem(
+                                                            new NexportRegistrationFieldSynchronizationQueueItem
+                                                            {
+                                                                CustomerId = nexportUserMapping.NopUserId,
+                                                                UtcDateCreated = DateTime.UtcNow
+                                                            });
                                                     }
                                                 }
                                             }

@@ -1,0 +1,66 @@
+﻿@using Nop.Plugin.Misc.Nexport.Services
+@using Nop.Plugin.Misc.Nexport.Factories
+
+@inject NexportService nexportService
+@inject INexportPluginModelFactory nexportPluginModelFactory
+
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer.NexportCustomerRegistrationFieldsModel
+
+@{
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
+
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/jquery-ui-timepicker-addon.min.css");
+    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/jquery-ui-timepicker-addon.min.js");
+}
+
+@if (Model != null)
+{
+    foreach (var registrationFieldAndCategory in Model.RegistrationFieldsWithCategory)
+    {
+        <text>
+            <div class="fieldset">
+                <div class="title">
+                    <strong>@registrationFieldAndCategory.Key.Title</strong>
+                </div>
+                <div class="form-fields">
+                    @foreach (var registrationFieldModel in registrationFieldAndCategory.Value)
+                    {
+                        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/RegistrationField/_CustomerFields.Control.cshtml",
+                            registrationFieldModel)
+                    }
+                </div>
+            </div>
+        </text>
+    }
+
+    if (Model.RegistrationFieldsWithoutCategory.Count > 0)
+    {
+        <text>
+            <div class="fieldset">
+                <div class="form-fields">
+                    @foreach (var registrationFieldNoCategoryModel in Model.RegistrationFieldsWithoutCategory)
+                    {
+                        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/RegistrationField/_CustomerFields.Control.cshtml",
+                            registrationFieldNoCategoryModel)
+                    }
+                </div>
+            </div>
+        </text>
+    }
+
+    <script asp-location="Footer">
+        $(document).ready(function() {
+
+            $(".registration-page").find("form").validate({
+                            onclick: function(){
+                                $(".registration-page").find("form").valid();
+                            },
+                            errorPlacement: function (error, element) {
+                                //if (element.siblings(".field-validation-error"))
+                                error.appendTo(element.parents(".custom-attributes").find(".field-validation-error"));
+                                @*//error.appendTo($(".field-validation-error [data-valmsg-for=@(controlId)]"));*@
+                            }
+                        });
+        });
+    </script>
+}

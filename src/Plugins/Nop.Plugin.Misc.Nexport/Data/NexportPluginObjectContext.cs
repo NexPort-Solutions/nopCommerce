@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Nop.Core;
 using Nop.Data;
 using Nop.Data.Extensions;
+using Nop.Plugin.Misc.Nexport.Data.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Domain;
 
 namespace Nop.Plugin.Misc.Nexport.Data
@@ -32,6 +33,12 @@ namespace Nop.Plugin.Misc.Nexport.Data
             modelBuilder.ApplyConfiguration(new NexportRequiredSupplementalInfoMap());
             modelBuilder.ApplyConfiguration(new NexportSupplementalInfoAnswerProcessingQueueMap());
             modelBuilder.ApplyConfiguration(new NexportGroupMembershipRemovalQueueMap());
+            modelBuilder.ApplyConfiguration(new NexportRegistrationFieldMap());
+            modelBuilder.ApplyConfiguration(new NexportRegistrationFieldOptionMap());
+            modelBuilder.ApplyConfiguration(new NexportRegistrationFieldCategoryMap());
+            modelBuilder.ApplyConfiguration(new NexportRegistrationFieldStoreMappingMap());
+            modelBuilder.ApplyConfiguration(new NexportRegistrationFieldAnswerMap());
+            modelBuilder.ApplyConfiguration(new NexportRegistrationFieldSynchronizationQueueMap());
 
             base.OnModelCreating(modelBuilder);
         }

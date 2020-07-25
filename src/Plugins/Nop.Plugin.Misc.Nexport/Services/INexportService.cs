@@ -6,6 +6,7 @@ using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 
 namespace Nop.Plugin.Misc.Nexport.Services
@@ -112,6 +113,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         void CopyProductMappings(Product originalProduct, Product copyingProduct);
 
+        #region Supplemental Info
+
         IPagedList<NexportSupplementalInfoQuestion> GetAllNexportSupplementalInfoQuestionsPagination(
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
@@ -216,5 +219,79 @@ namespace Nop.Plugin.Misc.Nexport.Services
         void InsertNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem);
 
         void DeleteNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem);
+
+        #endregion
+
+        #region Registration Field
+
+        NexportRegistrationField GetNexportRegistrationFieldById(int fieldId, int? categoryId = null);
+
+        IList<NexportRegistrationField> GetNexportRegistrationFields(int storeId);
+
+        IPagedList<NexportRegistrationField> GetNexportRegistrationFieldsPagination(
+            int pageIndex = 0, int pageSize = int.MaxValue);
+
+        void InsertNexportRegistrationField(NexportRegistrationField registrationField);
+
+        void DeleteNexportRegistrationField(NexportRegistrationField registrationField);
+
+        void UpdateNexportRegistrationField(NexportRegistrationField registrationField);
+
+        NexportRegistrationFieldOption GetNexportRegistrationFieldOptionById(int fieldOptionId, int? fieldId = null);
+
+        IList<NexportRegistrationFieldOption> GetNexportRegistrationFieldOptions(int? fieldId = null);
+
+        IPagedList<NexportRegistrationFieldOption> GetNexportRegistrationFieldOptionsPagination(int fieldId,
+            int pageIndex = 0, int pageSize = int.MaxValue);
+
+        void InsertNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption);
+
+        void DeleteNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption);
+
+        void UpdateNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption);
+
+        NexportRegistrationFieldCategory GetNexportRegistrationFieldCategoryById(int fieldCategoryId);
+
+        IList<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategories();
+
+        IList<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategories(IList<int> fieldCategoryIds);
+
+        IPagedList<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategoriesPagination(
+            int pageIndex = 0, int pageSize = int.MaxValue);
+
+        void InsertNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory);
+
+        void DeleteNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory);
+
+        void UpdateNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory);
+
+        NexportRegistrationFieldStoreMapping GetNexportRegistrationFieldStoreMappingById(int fieldStoreMappingId);
+
+        IList<NexportRegistrationFieldStoreMapping> GetNexportRegistrationFieldStoreMappings(int fieldId);
+
+        void InsertNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping);
+
+        void DeleteNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping);
+
+        NexportRegistrationFieldAnswer GetNexportRegistrationFieldAnswerById(int fieldAnswerId);
+
+        IList<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswers(int customerId);
+
+        IPagedList<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswersPagination(int customerId,
+            int pageIndex = 0, int pageSize = int.MaxValue);
+
+        void InsertNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
+
+        void DeleteNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
+
+        void UpdateNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
+
+        void InsertNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
+
+        void DeleteNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
+
+        void UpdateNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
+
+        #endregion
     }
 }

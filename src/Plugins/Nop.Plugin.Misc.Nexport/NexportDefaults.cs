@@ -141,6 +141,31 @@ namespace Nop.Plugin.Misc.Nexport
         public static string NexportGroupMembershipRemovalTaskBatchSizeSettingKey => "nexportsettings.tasks.groupmembershipremoval.batchsize";
 
         /// <summary>
+        /// Name of the Nexport registration field synchronization schedule task
+        /// </summary>
+        public static string NexportRegistrationFieldSynchronizationTaskName => "Synchronize registration fields with Nexport";
+
+        /// <summary>
+        /// Type of the Nexport registration field synchronization schedule task
+        /// </summary>
+        public static string NexportRegistrationFieldSynchronizationTaskType => $"{typeof(NexportRegistrationFieldSynchronizationTask).Namespace}.{nameof(NexportRegistrationFieldSynchronizationTask)}";
+
+        /// <summary>
+        /// Nexport registration field synchronization task interval (in seconds)
+        /// </summary>
+        public static int NexportRegistrationFieldSynchronizationTaskInterval => 20 * 60;
+
+        /// <summary>
+        /// Nexport registration field  synchronization default batch size
+        /// </summary>
+        public static int NexportRegistrationFieldSynchronizationTaskBatchSize => 100;
+
+        /// <summary>
+        /// Nexport registration field synchronization batch size setting key
+        /// </summary>
+        public static string NexportRegistrationFieldSynchronizationTaskBatchSizeSettingKey => "nexportsettings.tasks.registrationfieldsynchronization.batchsize";
+
+        /// <summary>
         /// Assembly version key for provisioning
         /// </summary>
         public const string ASSEMBLY_VERSION_KEY = "nexportsettings.plugins.nexport.version";
@@ -161,5 +186,7 @@ namespace Nop.Plugin.Misc.Nexport
 
         public const string NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE =
             "Nexport.ProcessingSupplementalInfoGroupAssociations";
+
+        public static string NexportRegistrationFieldsZone = "nexport_registration_fields";
     }
 }

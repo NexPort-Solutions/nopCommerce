@@ -4,17 +4,13 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Nop.Plugin.Misc.Nexport.Extensions
 {
     public static class Extensions
     {
-        /// <summary>
-        /// Get the display text for an enum
-        /// </summary>
-        /// <param name="enumValue">The enum</param>
-        /// <returns>Returns the enum display text if existed</returns>
-        public static string GetDisplayName(this Enum enumValue)
+        public static string GetDisplayName<TEnum>(this TEnum enumValue)
         {
             return enumValue
                 .GetType()
@@ -60,6 +56,21 @@ namespace Nop.Plugin.Misc.Nexport.Extensions
         {
             var tryCreateResult = Uri.TryCreate(url, UriKind.Absolute, out var uriResult);
             return tryCreateResult && uriResult != null;
+        }
+
+        public static SelectList ToNexportSelectList<TEnum>(this TEnum enumObj,
+            bool markCurrentAsSelected = true, int[] valuesToExclude = null) where TEnum : struct
+        {
+            if (!typeof(TEnum).IsEnum)
+                throw new ArgumentException("An Enumeration type is required.", nameof(enumObj));
+
+            var values = from TEnum enumValue in Enum.GetValues(typeof(TEnum))
+                where valuesToExclude == null || !valuesToExclude.Contains(Convert.ToInt32(enumValue))
+                select new { ID = Convert.ToInt32(enumValue), Name = GetDisplayName(enumValue) };
+            object selectedValue = null;
+            if (markCurrentAsSelected)
+                selectedValue = Convert.ToInt32(enumObj);
+            return new SelectList(values, "ID", "Name", selectedValue);
         }
     }
 }

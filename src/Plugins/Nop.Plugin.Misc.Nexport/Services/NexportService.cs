@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using NexportApi.Client;
 using NexportApi.Model;
@@ -22,13 +24,15 @@ using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Security;
 using Nop.Services.Stores;
+using Nop.Services.Common;
+using Nop.Services.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
-using Nop.Services.Common;
-using Nop.Services.Orders;
+using Nop.Services.Helpers;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -61,6 +65,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<NexportRequiredSupplementalInfo> _nexportRequiredSupplementalInfoRepository;
         private readonly IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> _nexportSupplementalInfoAnswerProcessingQueueRepository;
         private readonly IRepository<NexportGroupMembershipRemovalQueueItem> _nexportGroupMembershipRemovalQueueRepository;
+        private readonly IRepository<NexportRegistrationField> _nexportRegistrationFieldRepository;
+        private readonly IRepository<NexportRegistrationFieldOption> _nexportRegistrationFieldOptionRepository;
+        private readonly IRepository<NexportRegistrationFieldCategory> _nexportRegistrationFieldCategoryRepository;
+        private readonly IRepository<NexportRegistrationFieldStoreMapping> _nexportRegistrationFieldStoreMappingRepository;
+        private readonly IRepository<NexportRegistrationFieldAnswer> _nexportRegistrationFieldAnswerRepository;
+        private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
         private readonly IRepository<StoreMapping> _storeMappingRepository;
         private readonly IStaticCacheManager _staticCacheManager;
         private readonly IStoreMappingService _storeMappingService;
@@ -70,6 +80,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IStoreService _storeService;
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly INotificationService _notificationService;
+        private readonly IDateTimeHelper _dateTimeHelper;
         private readonly IWorkContext _workContext;
         private readonly IStoreContext _storeContext;
         private readonly ILogger _logger;
@@ -102,6 +113,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<NexportRequiredSupplementalInfo> nexportRequiredSupplementalInfoRepository,
             IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> nexportSupplementalInfoAnswerProcessingQueueRepository,
             IRepository<NexportGroupMembershipRemovalQueueItem> nexportGroupMembershipRemovalQueueRepository,
+            IRepository<NexportRegistrationField> nexportRegistrationFieldRepository,
+            IRepository<NexportRegistrationFieldOption> nexportRegistrationFieldOptionRepository,
+            IRepository<NexportRegistrationFieldCategory> nexportRegistrationFieldCategoryRepository,
+            IRepository<NexportRegistrationFieldStoreMapping> nexportRegistrationFieldStoreMappingRepository,
+            IRepository<NexportRegistrationFieldAnswer> nexportRegistrationFieldAnswerRepository,
+            IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
             IRepository<StoreMapping> storeMappingRepository,
             IStaticCacheManager staticCacheManager,
             IStoreMappingService storeMappingService,
@@ -112,6 +129,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IGenericAttributeService genericAttributeService,
             INotificationService notificationService,
             ILocalizationService localizationService,
+            IDateTimeHelper dateTimeHelper,
             IWorkContext workContext,
             IStoreContext storeContext,
             ILogger logger)
@@ -140,6 +158,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportRequiredSupplementalInfoRepository = nexportRequiredSupplementalInfoRepository;
             _nexportSupplementalInfoAnswerProcessingQueueRepository = nexportSupplementalInfoAnswerProcessingQueueRepository;
             _nexportGroupMembershipRemovalQueueRepository = nexportGroupMembershipRemovalQueueRepository;
+            _nexportRegistrationFieldRepository = nexportRegistrationFieldRepository;
+            _nexportRegistrationFieldOptionRepository = nexportRegistrationFieldOptionRepository;
+            _nexportRegistrationFieldCategoryRepository = nexportRegistrationFieldCategoryRepository;
+            _nexportRegistrationFieldStoreMappingRepository = nexportRegistrationFieldStoreMappingRepository;
+            _nexportRegistrationFieldAnswerRepository = nexportRegistrationFieldAnswerRepository;
+            _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
             _storeMappingRepository = storeMappingRepository;
             _staticCacheManager = staticCacheManager;
             _storeMappingService = storeMappingService;
@@ -150,6 +174,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _genericAttributeService = genericAttributeService;
             _notificationService = notificationService;
             _localizationService = localizationService;
+            _dateTimeHelper = dateTimeHelper;
             _workContext = workContext;
             _storeContext = storeContext;
             _logger = logger;
@@ -330,7 +355,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
             catch (ApiException e)
             {
-                var errMsg = $"Error occured during GetUser api call for Nexport user {userId}";
+                var errMsg = $"Error occurred during GetUser api call for Nexport user {userId}";
                 _logger.Error($"{errMsg}: {e.Message}", e);
                 _notificationService.ErrorNotification(errMsg);
             }
@@ -412,6 +437,49 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return FindAllOrganizations(_nexportSettings.RootOrganizationId.Value);
         }
 
+        public IList<SubscriptionResponse> FindAllSubscriptions(Guid userId)
+        {
+            var items = new List<SubscriptionResponse>();
+
+            try
+            {
+                var page = 1;
+                int remainderItemsCount;
+                do
+                {
+                    var result = _nexportApiService.GetNexportSubscriptions(_nexportSettings.Url,
+                        _nexportSettings.AuthenticationToken, userId, page);
+                    items.AddRange(result.Subscriptions);
+
+                    remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+                    page++;
+                } while (remainderItemsCount > -1);
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e.Message, e);
+            }
+
+            return items;
+        }
+
+        public SetCustomProfileFieldValuesResponse SetCustomProfileFieldValues(Guid subscriberId, Dictionary<string, string> profileFields)
+        {
+            SetCustomProfileFieldValuesResponse result = null;
+
+            try
+            {
+                result = _nexportApiService.SetNexportCustomerProfileFieldValues(_nexportSettings.Url,
+                    _nexportSettings.AuthenticationToken, subscriberId, profileFields);
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e.Message, e);
+            }
+
+            return result;
+        }
+
         public IPagedList<CatalogResponseItem> FindAllCatalogs(Guid? orgId, int pageIndex = 0, int pageSize = int.MaxValue)
         {
             var items = new List<CatalogResponseItem>();
@@ -420,17 +488,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 try
                 {
-                    var page = 0;
+                    var page = 1;
                     int remainderItemsCount;
                     do
                     {
                         var result = _nexportApiService.GetNexportCatalogs(_nexportSettings.Url,
                             _nexportSettings.AuthenticationToken, orgId.Value, page);
 
-                        page++;
-                        remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
-
                         items.AddRange(result.CatalogList);
+
+                        remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+                        page++;
                     } while (remainderItemsCount > -1);
                 }
                 catch (Exception e)
@@ -503,17 +571,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 try
                 {
-                    var page = 0;
+                    var page = 1;
                     int remainderItemsCount;
                     do
                     {
                         var result = _nexportApiService.GetNexportSyllabuses(_nexportSettings.Url,
                             _nexportSettings.AuthenticationToken, catalogId.Value, page);
 
-                        page++;
-                        remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
-
                         items.AddRange(result.SyllabusList);
+
+                        remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+                        page++;
                     } while (remainderItemsCount > -1);
                 }
                 catch (Exception e)
@@ -1258,6 +1326,166 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 : new List<int>();
 
             return questionIds.Except(questionWithAnswerIds).ToList();
+        }
+
+        public List<SelectListItem> GetRegistrationFieldCategoryList()
+        {
+            var registrationFieldCategories = GetNexportRegistrationFieldCategories();
+            var listItems = registrationFieldCategories.Select(s => new SelectListItem
+            {
+                Text = s.Title,
+                Value = s.Id.ToString()
+            });
+
+            var result = listItems.Select(item => new SelectListItem { Text = item.Text, Value = item.Value }).ToList();
+
+            result.Insert(0, new SelectListItem { Text = "None", Value = "" });
+
+            return result;
+        }
+
+        public Dictionary<int, string> ParseRegistrationFields(IFormCollection form)
+        {
+            if (form == null)
+                throw new ArgumentNullException(nameof(form));
+
+            var result = new Dictionary<int, string>();
+
+            var registrationFields = GetNexportRegistrationFields(_storeContext.CurrentStore.Id);
+            foreach (var field in registrationFields)
+            {
+                if (!field.IsActive)
+                    continue;
+
+                var controlId = $"NexportCustomProfile-{field.Id}";
+                var controlValue = form[controlId];
+                if (!StringValues.IsNullOrEmpty(controlValue))
+                {
+                    result.Add(field.Id, controlValue.ToString().Trim());
+                }
+            }
+
+            return result;
+        }
+
+        public IList<string> GetRegistrationFieldWarnings(Dictionary<int, string> fields)
+        {
+            var warnings = new List<string>();
+
+            foreach (var field in fields)
+            {
+                var registrationField = GetNexportRegistrationFieldById(field.Key);
+
+                if (!registrationField.IsRequired)
+                    continue;
+
+                var emptyValue = string.IsNullOrWhiteSpace(field.Value);
+
+                if (!emptyValue)
+                    continue;
+
+                var notFoundWarning = $"Field {registrationField.Name} value is empty";
+
+                warnings.Add(notFoundWarning);
+            }
+
+            return warnings;
+        }
+
+        public void SaveNexportRegistrationFields(Customer customer, Dictionary<int, string> fields)
+        {
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            foreach (var field in fields)
+            {
+                var registrationField = GetNexportRegistrationFieldById(field.Key);
+                if (registrationField != null)
+                {
+                    var newAnswer = new NexportRegistrationFieldAnswer
+                    {
+                        CustomerId = customer.Id,
+                        FieldId = registrationField.Id
+                    };
+
+                    switch (registrationField.Type)
+                    {
+                        case NexportRegistrationFieldType.Text:
+                        case NexportRegistrationFieldType.Email:
+                            newAnswer.TextValue = field.Value;
+                            break;
+
+                        case NexportRegistrationFieldType.Numeric:
+                            newAnswer.NumericValue = int.Parse(field.Value);
+                            break;
+
+                        case NexportRegistrationFieldType.Boolean:
+                            newAnswer.BooleanValue = bool.Parse(field.Value);
+                            break;
+
+                        case NexportRegistrationFieldType.DateOnly:
+                        case NexportRegistrationFieldType.DateTime:
+                            var value = DateTime.Parse(field.Value);
+                            newAnswer.DateTimeValue = _dateTimeHelper.ConvertToUtcTime(value);
+                            break;
+
+                        case NexportRegistrationFieldType.SelectCheckbox:
+                        case NexportRegistrationFieldType.SelectDropDown:
+                            newAnswer.FieldOptionId = int.Parse(field.Value);
+                            break;
+
+                        case NexportRegistrationFieldType.None:
+                            break;
+
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+
+                    newAnswer.UtcDateCreated = DateTime.UtcNow;
+
+                    InsertNexportRegistrationFieldAnswer(newAnswer);
+                }
+            }
+        }
+
+        public Dictionary<string, string> ConvertToSubmissionProfileFields(IList<NexportRegistrationFieldAnswer> fieldAnswers)
+        {
+            var result = new Dictionary<string, string>();
+
+            foreach (var answer in fieldAnswers)
+            {
+                var field = GetNexportRegistrationFieldById(answer.FieldId);
+
+                if (field == null || string.IsNullOrWhiteSpace(field.NexportCustomProfileFieldKey))
+                    continue;
+
+                var fieldValue = "";
+
+                if (!string.IsNullOrEmpty(answer.TextValue))
+                {
+                    fieldValue = answer.TextValue;
+                }
+                else if (answer.NumericValue.HasValue)
+                {
+                    fieldValue = answer.NumericValue.ToString();
+                }
+                else if (answer.BooleanValue.HasValue)
+                {
+                    fieldValue = answer.BooleanValue.ToString();
+                }
+                else if (answer.DateTimeValue.HasValue)
+                {
+                    fieldValue = answer.DateTimeValue.Value.ToString("MM/dd/yyyy HH:mm:ss");
+                }
+                else if (answer.FieldOptionId.HasValue)
+                {
+                    fieldValue = answer.FieldOptionId.ToString();
+                }
+
+                result.Add(field.NexportCustomProfileFieldKey, fieldValue);
+            }
+
+            return result;
         }
     }
 }

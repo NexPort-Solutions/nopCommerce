@@ -4,10 +4,13 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 
@@ -76,10 +79,33 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         NexportSupplementalInfoOptionGroupAssociationListModel PrepareNexportSupplementalInfoOptionGroupAssociationListModel(
             NexportSupplementalInfoOptionGroupAssociationSearchModel searchModel, int optionId);
 
-        //NexportSupplementalInfoAnswerQuestionModel PrepareNexportSupplementalInfoAnswerQuestionModel(
-        //    IList<int> productMappingIds, int customerId, int storeId);
-
         NexportSupplementalInfoAnswerQuestionModel PrepareNexportSupplementalInfoAnswerQuestionModel(
             IList<int> questionIds, Customer customer, Store store);
+
+        NexportCustomerAdditionalSettingsModel PrepareNexportCustomerAdditionalSettingsModel();
+
+        NexportRegistrationFieldCategoryListModel PrepareNexportRegistrationFieldCategoryListModel(
+            NexportRegistrationFieldCategorySearchModel searchModel);
+
+        NexportRegistrationFieldCategoryModel PrepareNexportRegistrationFieldCategoryModel(NexportRegistrationFieldCategoryModel model,
+            NexportRegistrationFieldCategory registrationFieldCategory);
+
+        NexportRegistrationFieldListModel PrepareNexportRegistrationFieldListModel(
+            NexportRegistrationFieldSearchModel searchModel);
+
+        NexportRegistrationFieldModel PrepareNexportRegistrationFieldModel(NexportRegistrationFieldModel model,
+            NexportRegistrationField registrationField, bool excludeProperties = false);
+
+        NexportRegistrationFieldOptionSearchModel PrepareNexportRegistrationFieldOptionSearchModel(
+            NexportRegistrationFieldOptionSearchModel searchModel, NexportRegistrationField registrationField);
+
+        NexportRegistrationFieldOptionListModel PrepareNexportRegistrationFieldOptionListModel(
+            NexportRegistrationFieldOptionSearchModel searchModel, NexportRegistrationField registrationField);
+
+        NexportRegistrationFieldOptionModel PrepareNexportRegistrationFieldOptionModel(
+            NexportRegistrationFieldOptionModel model, NexportRegistrationField registrationField,
+            NexportRegistrationFieldOption registrationFieldOption);
+
+        NexportCustomerRegistrationFieldsModel PrepareNexportCustomerRegistrationFieldsModel(Store store);
     }
 }
