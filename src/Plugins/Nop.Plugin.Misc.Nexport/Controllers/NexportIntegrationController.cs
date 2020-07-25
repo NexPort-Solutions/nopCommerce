@@ -905,7 +905,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             {
                 var model = _nexportPluginModelFactory.PrepareNexportTrainingListModel(_workContext.CurrentCustomer);
 
-                return View("~/Plugins/Misc.Nexport/Views/NexportTrainings.cshtml", model);
+                var myTrainingViewLocationSetting =
+                    _settingService.GetSetting("nexport.mytraining.view", _storeContext.CurrentStore.Id, true);
+
+                return View(myTrainingViewLocationSetting != null
+                    ? myTrainingViewLocationSetting.Value
+                    : "~/Plugins/Misc.Nexport/Views/NexportTrainings.cshtml",
+                    model);
             }
             catch (Exception ex)
             {
