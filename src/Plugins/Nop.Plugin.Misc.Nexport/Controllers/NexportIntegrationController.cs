@@ -46,6 +46,7 @@ using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Infrastructure.ModelState;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
+using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
@@ -90,6 +91,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         private readonly IDiscountService _discountService;
         private readonly ICopyProductService _copyProductService;
         private readonly IShoppingCartService _shoppingCartService;
+        private readonly ICategoryService _categoryService;
 
         private readonly ISettingService _settingService;
         private readonly IPermissionService _permissionService;
@@ -124,6 +126,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             IProductService productService,
             IStoreService storeService,
             IOrderService orderService,
+            ICategoryService categoryService,
             ICustomerService customerService,
             IDiscountService discountService,
             ICopyProductService copyProductService,
@@ -154,6 +157,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _productService = productService;
             _storeService = storeService;
             _orderService = orderService;
+            _categoryService = categoryService;
             _customerService = customerService;
             _discountService = discountService;
             _copyProductService = copyProductService;
@@ -1170,6 +1174,38 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 return RedirectToAction("Edit", "Product", new { id = copyModel.Id });
             }
         }
+
+        #endregion
+
+        #region Category Management Actions
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        [Route("/Admin/Category/Edit/{id}")]
+        [HttpPost, ActionName("Edit")]
+        [FormValueRequired("savenexportcategoryoptions")]
+        public IActionResult SaveNexportCategoryOptions(NexportCategoryModel model)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCategories))
+                return AccessDeniedView();
+
+            var category = _categoryService.GetCategoryById(model.Id);
+            if (category == null)
+                return RedirectToAction("List", "Category");
+
+            _genericAttributeService.SaveAttribute(category, NexportDefaults.LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY,
+                model.LimitSingleProductPurchase);
+
+            _genericAttributeService.SaveAttribute(category, NexportDefaults.AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY,
+                model.AutoSwapProductPurchase);
+
+            _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Catalog.Categories.Updated"));
+
+            return RedirectToAction("Edit", "Category", new { id = category.Id });
+        }
+
+        #endregion
 
         #region Supplemental Question
 

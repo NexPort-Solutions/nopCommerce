@@ -76,6 +76,44 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                     }
                 }
             }
+            //} else if (actionDescriptor.ControllerTypeInfo == typeof(CatalogController) &&
+            //           actionDescriptor.ActionName == nameof(CatalogController.Category))
+            //{
+            //    var customer = _workContext.CurrentCustomer;
+            //    if (customer != null && customer.IsRegistered())
+            //    {
+            //        if (context.Result is ViewResult result && result.Model is CategoryModel categoryModel)
+            //        {
+            //            var store = _storeContext.CurrentStore;
+            //            var storeModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(
+            //                store, "NexportStoreSaleModel", store.Id);
+
+            //            if (storeModel == NexportStoreSaleModel.Retail)
+            //            {
+            //                var productModels = categoryModel.Products;
+
+            //                foreach (var productModel in productModels)
+            //                {
+            //                    var items = _shoppingCartService.GetShoppingCart(customer, ShoppingCartType.ShoppingCart,
+            //                        _storeContext.CurrentStore.Id, productModel.Id);
+
+            //                    if (items.Count > 0)
+            //                    {
+            //                        productModel.ProductPrice.DisableBuyButton = true;
+            //                    }
+            //                    else
+            //                    {
+            //                        var product = _productService.GetProductById(productModel.Id);
+            //                        var canPurchaseProduct =
+            //                            _nexportService.CanRepurchaseNexportProduct(product, customer);
+
+            //                        productModel.ProductPrice.DisableBuyButton = !canPurchaseProduct;
+            //                    }
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
 
             base.OnResultExecuting(context);
         }

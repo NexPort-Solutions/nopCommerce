@@ -6,6 +6,7 @@ using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models;
+using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
@@ -95,6 +96,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
             CreateMap<NexportRegistrationFieldCategory, NexportRegistrationFieldCategoryModel>();
             CreateMap<NexportRegistrationFieldCategoryModel, NexportRegistrationFieldCategory>();
+
+            CreateMap<Category, NexportCategoryModel>();
         }
 
         public int Order => 0;

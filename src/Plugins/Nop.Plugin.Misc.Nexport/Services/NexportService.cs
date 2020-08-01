@@ -77,8 +77,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IStoreMappingService _storeMappingService;
         private readonly ICustomerActivityService _customerActivityService;
         private readonly IOrderService _orderService;
+        private readonly ICategoryService _categoryService;
         private readonly ISettingService _settingService;
         private readonly IStoreService _storeService;
+        private readonly IShoppingCartService _shoppingCartService;
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly INotificationService _notificationService;
         private readonly IDateTimeHelper _dateTimeHelper;
@@ -125,8 +127,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IStoreMappingService storeMappingService,
             ICustomerActivityService customerActivityService,
             IOrderService orderService,
+            ICategoryService categoryService,
             ISettingService settingService,
             IStoreService storeService,
+            IShoppingCartService shoppingCartService,
             IGenericAttributeService genericAttributeService,
             INotificationService notificationService,
             ILocalizationService localizationService,
@@ -170,8 +174,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _storeMappingService = storeMappingService;
             _customerActivityService = customerActivityService;
             _orderService = orderService;
+            _categoryService = categoryService;
             _settingService = settingService;
             _storeService = storeService;
+            _shoppingCartService = shoppingCartService;
             _genericAttributeService = genericAttributeService;
             _notificationService = notificationService;
             _localizationService = localizationService;
@@ -1342,6 +1348,35 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
 
             return true;
+        }
+
+        public (ShoppingCartItem, Category) CanPurchaseProductInNexportCategory(Product product)
+        {
+            var productCategories = _categoryService.GetProductCategoriesByProductId(product.Id, _storeContext.CurrentStore.Id);
+            var shoppingCartItemsExceptCurrentProduct = _shoppingCartService
+                .GetShoppingCart(_workContext.CurrentCustomer, ShoppingCartType.ShoppingCart, _storeContext.CurrentStore.Id)
+                .Where(x => x.ProductId != product.Id)
+                .ToList();
+
+            foreach (var productCategory in productCategories)
+            {
+                var limitSinglePurchase = _genericAttributeService.GetAttribute<bool>(productCategory.Category,
+                            NexportDefaults.LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY);
+
+                if (limitSinglePurchase)
+                {
+                    var productInSameCategory =
+                        shoppingCartItemsExceptCurrentProduct.FirstOrDefault(itemProduct =>
+                            _categoryService
+                                .GetProductCategoriesByProductId(itemProduct.ProductId,
+                                    _storeContext.CurrentStore.Id)
+                                .Any(x => x.CategoryId == productCategory.CategoryId));
+
+                    return (productInSameCategory, productCategory.Category);
+                }
+            }
+
+            return (null, null);
         }
 
         public string GetStoreName(int storeId)

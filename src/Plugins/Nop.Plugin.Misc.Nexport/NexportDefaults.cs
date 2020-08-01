@@ -180,6 +180,10 @@ namespace Nop.Plugin.Misc.Nexport
 
         public const string ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY = "AllowRepurchasePassedCoursesFromNexport";
 
+        public const string LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY = "LimitSingleProductPurchaseInCategory";
+
+        public const string AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY = "AutoSwapProductPurchaseInCategory";
+
         public const string EDIT_CUSTOMER_NEXPORT_SUPPLEMENTAL_INFO_ANSWER_ACTIVITY_LOG_TYPE = "Nexport.EditCustomerSupplementalInfoAnswer";
 
         public const string DELETE_CUSTOMER_NEXPORT_SUPPLEMENTAL_INFO_ANSWER_ACTIVITY_LOG_TYPE = "Nexport.DeleteCustomerSupplementalInfoAnswer";

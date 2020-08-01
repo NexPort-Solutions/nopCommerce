@@ -1,0 +1,47 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.Category.NexportCategoryModel
+
+@if (Model.Id > 0)
+{
+    <script>
+        $(document).ready(function() {
+            $("#@Html.IdFor(model => model.LimitSingleProductPurchase)").click(toggleLimitProductPurchaseSettings);
+            toggleLimitProductPurchaseSettings();
+        });
+
+        function toggleLimitProductPurchaseSettings() {
+            if ($("#@Html.IdFor(model => model.LimitSingleProductPurchase)").is(":checked")) {
+                $("#limitSingleProductPurchaseSettingContainer").show();
+            } else {
+                $("#limitSingleProductPurchaseSettingContainer").hide();
+            }
+        }
+    </script>
+
+    <div class="form-group">
+        <div class="col-md-3">
+            <nop-label asp-for="LimitSingleProductPurchase" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="LimitSingleProductPurchase" asp-required="false" />
+        </div>
+    </div>
+    <nop-nested-setting asp-for="LimitSingleProductPurchase">
+        <div class="form-group" id="limitSingleProductPurchaseSettingContainer">
+            <div class="col-md-3">
+                <nop-label asp-for="AutoSwapProductPurchase" />
+            </div>
+            <div class="col-md-9">
+                <nop-editor asp-for="AutoSwapProductPurchase" />
+            </div>
+        </div>
+    </nop-nested-setting>
+    <div class="form-group">
+        <div class="col-md-3">
+        </div>
+        <div class="col-md-9">
+            <button id="saveNexportCategoryOptions" name="savenexportcategoryoptions" class="btn bg-blue">
+                @T("Admin.Common.Save")
+            </button>
+        </div>
+    </div>
+}

@@ -419,6 +419,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.OptionValues", "Registration field option values");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value", "Option value");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value.Hint", "The value of the option");
+
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.Options", "Additional options");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.LimitSingleProductPurchase", "Limit single product purchase");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.LimitSingleProductPurchase.Hint", "Allowing customers to purchase single product within the category");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.AutoSwapProductPurchase", "Auto swapping between individual product");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.AutoSwapProductPurchase.Hint", "When customers select a different product within the category, the current product in the shopping cart will be replaced automatically with that new product item.");
+
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.FailedToRedirectToNexport", "Error occurred during the transferring to Nexport. You might not have an active subscription in Nexport Campus. Please contact customer service for further assistance.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.FailedToRedeemForUser", "Failed to redeem Nexport invoice item {0} for user {1}");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.RedemptionProcessFailure", "Error occurred during the redemption process for the order item invoice {0}");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.ProductItemWilBeRemoved", "This item cannot be purchased at this time and will be removed at checkout!");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.DuplicatedProduct", "Cannot add duplicated product to the cart due to store restriction.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowed", "Cannot purchase more than one for this product due to store restriction.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.SingleProductInCatalog", "You can only purchase single product within the same catalog.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart", "Cannot purchase more than one for some products in this shopping cart due to store restriction");
         }
 
         public void DeleteResources()
@@ -606,6 +621,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.OptionValues");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value.Hint");
+
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Category.Options");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Category.LimitSingleProductPurchase");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Category.LimitSingleProductPurchase.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Category.AutoSwapProductPurchase");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Category.AutoSwapProductPurchase.Hint");
+
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.FailedToRedirectToNexport");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.FailedToRedeemForUser");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.RedemptionProcessFailure");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.ProductItemWilBeRemoved");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.DuplicatedProduct");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowed");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.SingleProductInCatalog");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart");
         }
     }
 }

@@ -203,6 +203,7 @@ namespace Nop.Plugin.Misc.Nexport {
                 AdminWidgetZones.ProductDetailsBlock,
                 AdminWidgetZones.CustomerDetailsBlock,
                 AdminWidgetZones.CustomerUserDetailsBlock,
+                AdminWidgetZones.CategoryDetailsBlock,
                 PublicWidgetZones.OrderDetailsProductLine,
                 PublicWidgetZones.AccountNavigationAfter,
                 PublicWidgetZones.HeaderLinksBefore,
@@ -228,6 +229,9 @@ namespace Nop.Plugin.Misc.Nexport {
 
             if (widgetZone == AdminWidgetZones.CustomerUserDetailsBlock)
                 return "WidgetsNexportCustomerUserDetailsBlock";
+
+            if (widgetZone == AdminWidgetZones.CategoryDetailsBlock)
+                return "WidgetsNexportCategoryDetailsBlock";
 
             if (widgetZone == PublicWidgetZones.OrderDetailsProductLine)
                 return "WidgetsNexportOrderDetailsProductLine";
