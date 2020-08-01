@@ -1,15 +1,28 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Primitives;
 
 namespace Nop.Plugin.Misc.Nexport.Extensions
 {
     public static class Extensions
     {
+        public static NameValueCollection AsNameValueCollection(this IDictionary<string, StringValues> collection)
+        {
+            var values = new NameValueCollection();
+            foreach (var pair in collection)
+            {
+                values.Add(pair.Key, pair.Value.First());
+            }
+            return values;
+        }
+
         public static string GetDisplayName<TEnum>(this TEnum enumValue)
         {
             return enumValue
