@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Services.Logging;
 using Nop.Web.Framework.Components;
-using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
 using Nop.Plugin.Misc.Nexport.Services;
 

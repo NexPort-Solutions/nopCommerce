@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Caching;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
-using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Services.Common;
 using Nop.Services.Configuration;

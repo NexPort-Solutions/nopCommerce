@@ -25,7 +25,7 @@
                 <div class="form-fields">
                     @foreach (var registrationFieldModel in registrationFieldAndCategory.Value)
                     {
-                        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/RegistrationField/_CustomerFields.Control.cshtml",
+                        @await Html.PartialAsync("../RegistrationField/_CustomerFields.Control.cshtml",
                             registrationFieldModel)
                     }
                 </div>
@@ -40,7 +40,7 @@
                 <div class="form-fields">
                     @foreach (var registrationFieldNoCategoryModel in Model.RegistrationFieldsWithoutCategory)
                     {
-                        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/RegistrationField/_CustomerFields.Control.cshtml",
+                        @await Html.PartialAsync("../RegistrationField/_CustomerFields.Control.cshtml",
                             registrationFieldNoCategoryModel)
                     }
                 </div>
