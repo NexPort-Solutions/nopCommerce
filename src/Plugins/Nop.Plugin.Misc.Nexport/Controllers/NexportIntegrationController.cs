@@ -1175,8 +1175,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }
         }
 
-        #endregion
-
         #region Category Management Actions
 
         [Area(AreaNames.Admin)]
