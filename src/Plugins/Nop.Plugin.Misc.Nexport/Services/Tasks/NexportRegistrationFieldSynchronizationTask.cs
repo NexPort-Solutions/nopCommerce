@@ -7,6 +7,7 @@ using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Services.Cms;
 using Nop.Services.Customers;
+using Nop.Services.Directory;
 using Nop.Services.Logging;
 using Nop.Services.Tasks;
 
@@ -17,6 +18,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
         private readonly ILogger _logger;
         private readonly IWidgetPluginManager _widgetPluginManager;
         private readonly ICustomerService _customerService;
+        private readonly IStateProvinceService _stateProvinceService;
+        private readonly ICountryService _countryService;
         private readonly NexportService _nexportService;
         private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
 
@@ -26,12 +29,16 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
         public NexportRegistrationFieldSynchronizationTask(
             IWidgetPluginManager widgetPluginManager,
             ICustomerService customerService,
+            IStateProvinceService stateProvinceService,
+            ICountryService countryService,
             ILogger logger,
             IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
             NexportService nexportService)
         {
             _widgetPluginManager = widgetPluginManager;
             _customerService = customerService;
+            _stateProvinceService = stateProvinceService;
+            _countryService = countryService;
             _logger = logger;
             _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
             _nexportService = nexportService;
@@ -89,13 +96,24 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     var currentBillingAddress = customer?.BillingAddress;
                                     if (currentBillingAddress != null)
                                     {
+                                        var customerStateProvince =
+                                            _stateProvinceService.GetStateProvinceById(currentBillingAddress
+                                                .StateProvinceId.GetValueOrDefault(0));
+
+                                        var customerAddressState = customerStateProvince != null ? customerStateProvince.Name : "";
+
+                                        var customerCountry =
+                                            _countryService.GetCountryById(currentBillingAddress.CountryId.GetValueOrDefault(0));
+
+                                        var customerAddressCountry = customerCountry != null ? customerCountry.Name : "";
+
                                         var updatedInfo = new UserContactInfoRequest(apiErrorEntity: new ApiErrorEntity())
                                         {
                                             AddressLine1 = currentBillingAddress.Address1,
                                             AddressLine2 = currentBillingAddress.Address2,
                                             City = currentBillingAddress.City,
-                                            State = currentBillingAddress.StateProvince.Name,
-                                            Country = currentBillingAddress.Country.Name,
+                                            State = customerAddressState,
+                                            Country = customerAddressCountry,
                                             PostalCode = currentBillingAddress.ZipPostalCode,
                                             Phone = currentBillingAddress.PhoneNumber,
                                             Fax = currentBillingAddress.FaxNumber
@@ -103,6 +121,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                                         _nexportService.UpdateNexportUserContactInfo(userMapping.NexportUserId,
                                             updatedInfo);
+
+                                        _logger.Information($"Successfully update contact information in Nexport for customer {userMapping.NopUserId}");
                                     }
                                 }
                                 catch (Exception ex)
