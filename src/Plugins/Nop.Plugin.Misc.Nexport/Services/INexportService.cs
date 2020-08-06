@@ -294,6 +294,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         void UpdateNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
 
+        bool HasCustomRegistrationFieldRender(int fieldId, string customFieldRender);
+
         #endregion
     }
 }

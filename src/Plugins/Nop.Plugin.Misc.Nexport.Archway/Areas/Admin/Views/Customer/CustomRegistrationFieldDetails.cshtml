@@ -1,0 +1,152 @@
+﻿@using System.Net
+@using System.Reflection
+@using Nop.Services.Common
+@using Nop.Services.Localization
+@using Nop.Web.Framework.Mvc.ModelBinding
+
+@inject IGenericAttributeService genericAttributeService
+@inject ILocalizationService localizationService
+@inject IWorkContext workContext
+
+@model Nop.Plugin.Misc.Nexport.Archway.Models.ArchwayStudentEmployeeRegistrationFieldOptionModel
+
+@if (Model != null)
+{
+    var allowedFileExtensions = "'csv'";
+
+    <input type="hidden" value="@Model.FieldId" data-id="registrationFieldId" />
+
+    foreach (var prop in Model.GetType().GetProperties())
+    {
+        var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+        if (type == typeof(string))
+        {
+            <div class="form-group">
+                <div class="col-md-3">
+                    <div class="label-wrapper">
+                        @{
+                            var resourceDisplayName = prop.GetCustomAttribute<NopResourceDisplayNameAttribute>();
+                            if (resourceDisplayName != null)
+                            {
+                                var langId = workContext.WorkingLanguage.Id;
+                                var hintResource = localizationService.GetResource(
+                                    resourceDisplayName.ResourceKey + ".Hint", langId, returnEmptyIfNotFound: true,
+                                    logIfNotFound: false);
+
+                                <label class="control-label" for="@prop.Name">@WebUtility.HtmlEncode(resourceDisplayName.DisplayName)</label>
+
+                                if (!string.IsNullOrEmpty(hintResource))
+                                {
+                                    <div title="@WebUtility.HtmlEncode(hintResource)" data-toggle="tooltip" class="ico-help">
+                                        <i class="fa fa-question-circle"></i>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <label class="control-label" for="@prop.Name">@prop.Name</label>
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="col-md-9 ">
+                    <input class="form-control text-box single-line valid" id="@prop.Name"
+                           name="@prop.Name" type="text" value="@prop.GetValue(Model, null)" />
+                </div>
+            </div>
+        }
+    }
+
+    <div class="form-group">
+        <div class="col-md-3">
+            <div class="label-wrapper">
+                <label class="control-label">@T("Plugins.Misc.Nexport.Archway.Fields.Options.UploadStoreData")</label>
+                <div title="@T("Plugins.Misc.Nexport.Archway.Fields.Options.UploadStoreData.Hint")" data-toggle="tooltip" class="ico-help"><i class="fa fa-question-circle"></i></div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="upload-button-container">
+                <div id="uploadStoreData-uploader">
+                    <noscript>
+                        <p>Please enable JavaScript to use file uploader.</p>
+                    </noscript>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/template" id="uploadStoreData-qq-template">
+        <div class="qq-uploader-selector qq-uploader">
+            <div class="qq-upload-drop-area-selector qq-upload-drop-area" qq-hide-dropzone>
+                <span>@T("Common.FileUploader.DropFiles")</span>
+            </div>
+            <div class="qq-upload-button-selector qq-upload-button">
+                <div>@T("Common.FileUploader.Upload")</div>
+            </div>
+            <span class="qq-drop-processing-selector qq-drop-processing">
+                <span>@T("Common.FileUploader.Processing")</span>
+                <span class="qq-drop-processing-spinner-selector qq-drop-processing-spinner"></span>
+            </span>
+            <ul class="qq-upload-list-selector qq-upload-list">
+                <li>
+                    <div class="qq-progress-bar-container-selector">
+                        <div class="qq-progress-bar-selector qq-progress-bar"></div>
+                    </div>
+                    <span class="qq-upload-spinner-selector qq-upload-spinner"></span>
+                    <span class="qq-edit-filename-icon-selector qq-edit-filename-icon"></span>
+                    <span class="qq-upload-file-selector qq-upload-file"></span>
+                    <input class="qq-edit-filename-selector qq-edit-filename" tabindex="0" type="text">
+                    <span class="qq-upload-size-selector qq-upload-size"></span>
+                    <a class="qq-upload-cancel-selector qq-upload-cancel" href="#">@T("Common.FileUploader.Cancel")</a>
+                    <a class="qq-upload-retry-selector qq-upload-retry" href="#">@T("Common.FileUploader.Retry")</a>
+                    <a class="qq-upload-delete-selector qq-upload-delete" href="#">@T("Common.FileUploader.Delete")</a>
+                    <span class="qq-upload-status-text-selector qq-upload-status-text"></span>
+                </li>
+            </ul>
+        </div>
+    </script>
+    <script>
+        $(document).ready(function() {
+            $("#uploadStoreData-uploader").fineUploader({
+                request: {
+                    endpoint: "@Url.Action("AsyncUploadStoreData", "ArchwayEmployeeRegistrationField")"
+                },
+                template: "uploadStoreData-qq-template",
+                multiple: false,
+                validation: {
+                    @{
+                        if (!string.IsNullOrEmpty(allowedFileExtensions))
+                        {
+                            @Html.Raw("allowedExtensions: [" + allowedFileExtensions + "]")
+                            ;
+                        }
+                    }
+                }
+            }).on("complete", function(event, id, name, responseJSON, xhr) {
+                if(responseJSON) {
+                    if (responseJSON.success) {
+                        console.log(responseJSON);
+                    }
+
+                    if (responseJSON.message) {
+                        var errorMsg = responseJSON.message;
+                        if(responseJSON.exception) {
+                            errorMsg += "\n Exception: " + responseJSON.exception;
+                        }
+
+                        alert(errorMsg);
+                    }
+                }
+            });
+        });
+    </script>
+
+    <div class="form-group">
+        <div class="col-md-3">
+        </div>
+        <div class="col-md-9 ">
+            <input type="submit" id="savecustomregistrationfield_@(Model.FieldId)" name="savecustomregistrationfield_archway"
+                   class="btn btn-primary" value="@T("Admin.Common.Save")" />
+        </div>
+    </div>
+}

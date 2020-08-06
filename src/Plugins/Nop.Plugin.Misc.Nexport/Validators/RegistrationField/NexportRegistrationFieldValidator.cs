@@ -1,11 +1,9 @@
 ﻿using FluentValidation;
-using Nop.Data;
 using Nop.Web.Framework.Validators;
 using Nop.Services.Localization;
-using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 
-namespace Nop.Plugin.Misc.Nexport.Validators
+namespace Nop.Plugin.Misc.Nexport.Validators.RegistrationField
 {
     public class NexportRegistrationFieldValidator : BaseNopValidator<NexportRegistrationFieldModel>
     {

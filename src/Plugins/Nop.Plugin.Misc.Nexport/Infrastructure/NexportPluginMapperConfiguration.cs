@@ -86,7 +86,9 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 .ForMember(model => model.AvailableFieldTypes, opts => opts.Ignore())
                 .ForMember(model => model.AvailableFieldCategory, opts => opts.Ignore())
                 .ForMember(model => model.AvailableStores, opts => opts.Ignore())
+                .ForMember(model => model.AvailableCustomFieldRenders, opts => opts.Ignore())
                 .ForMember(model => model.StoreMappingIds, opts => opts.Ignore())
+                .ForMember(model => model.CustomFieldRenderDescription, opts => opts.Ignore())
                 .ForMember(model => model.RegistrationFieldOptionSearchModel, opts => opts.Ignore());
 
             CreateMap<NexportRegistrationFieldModel, NexportRegistrationField>();

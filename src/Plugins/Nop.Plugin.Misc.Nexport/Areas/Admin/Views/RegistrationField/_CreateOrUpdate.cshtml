@@ -6,6 +6,9 @@
 
     const string hideRegistrationFieldOptionsBlockAttributeName = "NexportRegistrationField.HideOptionsBlock";
     var hideOptionsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideRegistrationFieldOptionsBlockAttributeName);
+
+    const string hideRegistrationFieldCustomBlockAttributeName = "NexportRegistrationField.HideCustomBlock";
+    var hideCustomBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideRegistrationFieldCustomBlockAttributeName);
 }
 
 <div asp-validation-summary="All"></div>
@@ -25,6 +28,12 @@
                        asp-hide-block-attribute-name="@hideRegistrationFieldOptionsBlockAttributeName"
                        asp-hide="@hideOptionsBlock" asp-advanced="true">
                 @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/RegistrationField/_CreateOrUpdate.Options.cshtml", Model)
+            </nop-panel>
+            <nop-panel asp-name="registrationfield-custom" asp-icon="fa fa-check-square-o"
+                       asp-title="@T("Plugins.Misc.Nexport.RegistrationField.Field.Custom")"
+                       asp-hide-block-attribute-name="@hideRegistrationFieldCustomBlockAttributeName"
+                       asp-hide="@hideCustomBlock" asp-advanced="true">
+                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/RegistrationField/_CreateOrUpdate.CustomRender.cshtml", Model)
             </nop-panel>
         </nop-panels>
     </div>

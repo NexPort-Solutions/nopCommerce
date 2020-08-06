@@ -27,8 +27,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentMigrator" Version="3.2.7" />
-    <PackageReference Include="FluentMigrator.Runner" Version="3.2.7" />
+    <PackageReference Include="CsvHelper" Version="15.0.5" />
+    <PackageReference Include="FluentMigrator" Version="3.2.8" />
+    <PackageReference Include="FluentMigrator.Runner" Version="3.2.8" />
     <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
     <PackageReference Include="NexportApi" Version="1.0.24" />
     <PackageReference Include="RestSharp" Version="106.11.4" />
@@ -48,6 +49,7 @@
     <None Remove="Areas\Admin\Views\RegistrationField\Option\Edit.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Option\_CreateOrUpdate.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.CustomRender.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Info.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Options.cshtml" />
     <None Remove="Areas\Admin\Views\Setting\_CustomerUser.NexportRegistrationFields.cshtml" />
@@ -153,6 +155,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.CustomRender.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Info.cshtml">

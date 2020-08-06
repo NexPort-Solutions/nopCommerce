@@ -7,6 +7,7 @@
 @model Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer.NexportCustomerRegistrationFieldsModel
 
 @{
+    Html.AppendScriptParts("~/lib/datatables/moment-with-locales-2.22.2.min.js");
     Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
 
     Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/jquery-ui-timepicker-addon.min.css");
@@ -49,16 +50,29 @@
     }
 
     <script asp-location="Footer">
-        $(document).ready(function() {
-
+        $(document).ready(function () {
             $(".registration-page").find("form").validate({
-                onclick: function(){
+                onclick: function () {
                     $(".registration-page").find("form").valid();
                 },
                 errorPlacement: function (error, element) {
                     error.appendTo(element.parents(".custom-attributes").find(".field-validation-error"));
                 }
             });
+
+            jQuery.validator.addMethod("validate-datetime", function (value, element, params) {
+                var options = params ||
+                {
+                    format: "MM/DD/YYYY HH:mm",
+                    required: false
+                };
+
+                if (this.optional(element))
+                    return true;
+
+                if (options.required || value)
+                    return moment(value, options.format, true).isValid();
+            }, "Please enter a valid datetime value");
         });
     </script>
 }

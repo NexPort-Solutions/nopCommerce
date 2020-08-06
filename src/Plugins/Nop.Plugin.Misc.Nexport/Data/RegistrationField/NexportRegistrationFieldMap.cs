@@ -22,6 +22,7 @@ namespace Nop.Plugin.Misc.Nexport.Data.RegistrationField
             builder.Property(m => m.ValidationRegex).HasMaxLength(1000);
             builder.Property(m => m.FieldCategoryId);
             builder.Property(m => m.DisplayOrder);
+            builder.Property(m => m.CustomFieldRender);
 
             base.Configure(builder);
         }

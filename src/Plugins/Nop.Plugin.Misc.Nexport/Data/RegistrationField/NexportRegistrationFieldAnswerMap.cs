@@ -20,6 +20,7 @@ namespace Nop.Plugin.Misc.Nexport.Data.RegistrationField
             builder.Property(m => m.DateTimeValue);
             builder.Property(m => m.BooleanValue);
             builder.Property(m => m.FieldOptionId);
+            builder.Property(m => m.IsCustomField);
             builder.Property(m => m.UtcDateCreated);
             builder.Property(m => m.UtcDateModified);
 

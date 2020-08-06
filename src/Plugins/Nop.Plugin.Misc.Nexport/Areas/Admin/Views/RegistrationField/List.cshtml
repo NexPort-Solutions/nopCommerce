@@ -70,6 +70,12 @@
                     Width = "100",
                     ClassName =  NopColumnClassDefaults.CenterAll
                 },
+                new ColumnProperty(nameof(NexportRegistrationFieldModel.CustomFieldRenderDescription))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Field.CustomRender").Text,
+                    Width = "100",
+                    ClassName =  NopColumnClassDefaults.CenterAll
+                },
                 new ColumnProperty(nameof(NexportRegistrationFieldModel.Id))
                 {
                     Title = T("Admin.Common.Edit").Text,
@@ -98,6 +104,8 @@
                 return "@NexportRegistrationFieldType.DateOnly.GetDisplayName()";
             } else if (data === +"@((int) NexportRegistrationFieldType.SelectCheckbox)") {
                 return "@NexportRegistrationFieldType.SelectCheckbox.GetDisplayName()";
+            } else if (data === +"@((int) NexportRegistrationFieldType.CustomType)") {
+                return "@NexportRegistrationFieldType.CustomType.GetDisplayName()";
             } else if (data === +"@((int) NexportRegistrationFieldType.None)") {
                 return "None";
             } else {

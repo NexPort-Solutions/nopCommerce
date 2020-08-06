@@ -1931,5 +1931,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             _eventPublisher.EntityUpdated(queueItem);
         }
+
+        public bool HasCustomRegistrationFieldRender(int fieldId, string customFieldRender)
+        {
+            return !string.IsNullOrWhiteSpace(customFieldRender) &&
+                   _nexportRegistrationFieldRepository.TableNoTracking
+                       .Any(f => f.CustomFieldRender == customFieldRender);
+        }
     }
 }

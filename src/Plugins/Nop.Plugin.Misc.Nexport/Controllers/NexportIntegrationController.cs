@@ -14,6 +14,7 @@ using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Vendors;
 using Nop.Core.Events;
+using Nop.Data.Extensions;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
@@ -53,6 +54,7 @@ using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Plugins;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
@@ -67,9 +69,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         IConsumer<EntityDeletedEvent<Store>>
     {
         #region Fields
-
-        private static string NexportPluginViewBasePath = "~/Plugins/Misc.Nexport/Views/";
-        private static string NexportPluginAdminViewBasePath = "~/Plugins/Misc.Nexport/Areas/Admin/Views/";
 
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<NexportProductMapping> _nexportProductRepository;
@@ -102,6 +101,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly IUrlRecordService _urlRecordService;
         private readonly IProductTagService _productTagService;
+        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
 
         private readonly ILogger _logger;
         private readonly IWebHelper _webHelper;
@@ -140,6 +140,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             IGenericAttributeService genericAttributeService,
             IUrlRecordService urlRecordService,
             IProductTagService productTagService,
+            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
             ILogger logger,
             IWebHelper webHelper,
             VendorSettings vendorSettings)
@@ -174,6 +175,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _genericAttributeService = genericAttributeService;
             _urlRecordService = urlRecordService;
             _productTagService = productTagService;
+            _registrationFieldCustomRenderPluginManager = registrationFieldCustomRenderPluginManager;
 
             _logger = logger;
             _webHelper = webHelper;
@@ -455,6 +457,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         #endregion
 
+        #region Product Mapping Actions
+
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         public IActionResult GetCatalogList(Guid? orgId, int nopProductId)
@@ -556,8 +560,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             return Json(model);
         }
-
-        #region Mapping Actions
 
         [AuthorizeAdmin]
         [Area("Admin")]
@@ -815,8 +817,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(result);
         }
 
-        #endregion
-
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         public IActionResult MapProductPopup(Guid nexportProductId, NexportProductTypeEnum nexportProductType)
@@ -916,198 +916,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }
         }
 
-        [HttpsRequirement(SslRequirement.Yes)]
-        public IActionResult ViewNexportOrderRedemption(NexportOrderInvoiceItem model)
-        {
-            return View("~/Plugins/Misc.Nexport/Views/ViewOrder.cshtml", model);
-        }
+        #endregion
 
-        [HttpsRequirement(SslRequirement.Yes)]
-        public IActionResult ViewNexportTraining()
-        {
-            if (!_workContext.CurrentCustomer.IsRegistered())
-                return Challenge();
-
-            try
-            {
-                var model = _nexportPluginModelFactory.PrepareNexportTrainingListModel(_workContext.CurrentCustomer);
-
-                var myTrainingViewLocationSetting =
-                    _settingService.GetSetting("nexport.mytraining.view", _storeContext.CurrentStore.Id, true);
-
-                return View(myTrainingViewLocationSetting != null
-                    ? myTrainingViewLocationSetting.Value
-                    : "~/Plugins/Misc.Nexport/Views/NexportTrainings.cshtml",
-                    model);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex.Message, ex, _workContext.CurrentCustomer);
-                _notificationService.ErrorNotification(ex.Message);
-            }
-
-            return new EmptyResult();
-        }
-
-        [HttpsRequirement(SslRequirement.Yes)]
-        public IActionResult ViewSupplementalInfoAnswers()
-        {
-            if (!_workContext.CurrentCustomer.IsRegistered())
-                return Challenge();
-
-            try
-            {
-                var model = _nexportPluginModelFactory.PrepareNexportCustomerSupplementalInfoAnswersModel(
-                    _workContext.CurrentCustomer, _storeContext.CurrentStore);
-
-                return View("~/Plugins/Misc.Nexport/Views/NexportCustomer/NexportSupplementalInfoAnswers.cshtml", model);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex.Message, ex, _workContext.CurrentCustomer);
-                _notificationService.ErrorNotification(ex.Message);
-            }
-
-            return new EmptyResult();
-        }
-
-        [HttpsRequirement(SslRequirement.Yes)]
-        public IActionResult EditSupplementalInfoAnswers(int questionId)
-        {
-            if (!_workContext.CurrentCustomer.IsRegistered())
-                return Challenge();
-
-            var question = _nexportService.GetNexportSupplementalInfoQuestionById(questionId);
-
-            if (question == null)
-                return RedirectToRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers");
-
-            var model = _nexportPluginModelFactory.PrepareNexportCustomerSupplementalInfoAnswersEditModel(
-                _workContext.CurrentCustomer, _storeContext.CurrentStore, question);
-
-            return View("~/Plugins/Misc.Nexport/Views/NexportCustomer/EditNexportSupplementalInfoAnswer.cshtml", model);
-        }
-
-        [HttpPost]
-        [PublicAntiForgery]
-        public IActionResult EditSupplementalInfoAnswers(EditSupplementInfoAnswerRequestModel editModel)
-        {
-            if (!_workContext.CurrentCustomer.IsRegistered())
-                return Challenge();
-
-            if (editModel.OptionIds == null || editModel.OptionIds.Count == 0)
-                throw new Exception("List of submission options cannot be null or empty.");
-
-            var question = _nexportService.GetNexportSupplementalInfoQuestionById(editModel.QuestionId);
-
-            if (question == null)
-                return RedirectToRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers");
-
-            var answers = _nexportService.GetNexportSupplementalInfoAnswers(
-                _workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id, editModel.QuestionId);
-
-            if (answers == null || answers.Count == 0)
-                return RedirectToRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers");
-
-            if (ModelState.IsValid)
-            {
-                if (question.Type == NexportSupplementalInfoQuestionType.SingleOption)
-                {
-                    if (editModel.OptionIds.Count > 1)
-                        return RedirectToRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers");
-
-                    var updatingAnswer = answers.First();
-                    var newOption = editModel.OptionIds[0];
-                    if (updatingAnswer.OptionId != newOption)
-                    {
-                        var memberships =
-                            _nexportService.GetNexportSupplementalInfoAnswerMembershipsByAnswerId(updatingAnswer.Id);
-
-                        updatingAnswer.OptionId = newOption;
-                        updatingAnswer.Status = NexportSupplementalInfoAnswerStatus.Modified;
-                        updatingAnswer.UtcDateModified = DateTime.UtcNow;
-
-                        _nexportService.UpdateNexportSupplementalInfoAnswer(updatingAnswer);
-
-                        _nexportService.InsertNexportSupplementalInfoAnswerProcessingQueueItem(
-                            new NexportSupplementalInfoAnswerProcessingQueueItem
-                            {
-                                AnswerId = updatingAnswer.Id,
-                                UtcDateCreated = DateTime.UtcNow
-                            });
-
-                        foreach (var membership in memberships)
-                        {
-                            _nexportService.InsertNexportGroupMembershipRemovalQueueItem(
-                                new NexportGroupMembershipRemovalQueueItem
-                                {
-                                    CustomerId = _workContext.CurrentCustomer.Id,
-                                    NexportMembershipId = membership.NexportMembershipId,
-                                    UtcDateCreated = DateTime.UtcNow
-                                });
-                        }
-                    }
-                }
-                else if (question.Type == NexportSupplementalInfoQuestionType.MultipleOptions)
-                {
-                    if (editModel.OptionIds.Count < 1)
-                        return RedirectToRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers");
-
-                    foreach (var newOption in editModel.OptionIds)
-                    {
-                        var newAnswer = answers.FirstOrDefault(a => a.OptionId == newOption);
-                        if (newAnswer == null)
-                        {
-                            newAnswer = new NexportSupplementalInfoAnswer
-                            {
-                                CustomerId = _workContext.CurrentCustomer.Id,
-                                StoreId = _storeContext.CurrentStore.Id,
-                                OptionId = newOption,
-                                QuestionId = editModel.QuestionId,
-                                Status = NexportSupplementalInfoAnswerStatus.NotProcessed,
-                                UtcDateCreated = DateTime.UtcNow
-                            };
-
-                            _nexportService.InsertNexportSupplementalInfoAnswer(newAnswer);
-
-                            _nexportService.InsertNexportSupplementalInfoAnswerProcessingQueueItem(
-                                new NexportSupplementalInfoAnswerProcessingQueueItem
-                                {
-                                    AnswerId = newAnswer.Id,
-                                    UtcDateCreated = DateTime.UtcNow
-                                });
-                        }
-                    }
-
-                    var removingAnswers = answers.Where(a => !editModel.OptionIds.Contains(a.OptionId));
-                    foreach (var removingAnswer in removingAnswers)
-                    {
-                        var memberships =
-                            _nexportService.GetNexportSupplementalInfoAnswerMembershipsByAnswerId(removingAnswer.Id);
-
-                        _nexportService.DeleteNexportSupplementalInfoAnswer(removingAnswer);
-
-                        foreach (var membership in memberships)
-                        {
-                            _nexportService.InsertNexportGroupMembershipRemovalQueueItem(
-                                new NexportGroupMembershipRemovalQueueItem
-                                {
-                                    CustomerId = _workContext.CurrentCustomer.Id,
-                                    NexportMembershipId = membership.NexportMembershipId,
-                                    UtcDateCreated = DateTime.UtcNow
-                                });
-                        }
-                    }
-                }
-
-                return RedirectToRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers");
-            }
-
-            var model = _nexportPluginModelFactory.PrepareNexportCustomerSupplementalInfoAnswersEditModel(
-                _workContext.CurrentCustomer, _storeContext.CurrentStore, question);
-
-            return View("~/Plugins/Misc.Nexport/Views/NexportCustomer/EditNexportSupplementalInfoAnswer.cshtml", model);
-        }
+        #region Product Management Actions
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
@@ -1174,6 +985,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 return RedirectToAction("Edit", "Product", new { id = copyModel.Id });
             }
         }
+
+        #endregion
 
         #region Category Management Actions
 
@@ -1925,7 +1738,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldCategoryModel(
                 new NexportRegistrationFieldCategoryModel(), null);
 
-            return View($"{NexportPluginAdminViewBasePath}RegistrationField/Category/Create.cshtml", model);
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Category/Create.cshtml", model);
         }
 
         [Area(AreaNames.Admin)]
@@ -1953,7 +1766,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldCategoryModel(
                 new NexportRegistrationFieldCategoryModel(), null);
 
-            return View($"{NexportPluginAdminViewBasePath}RegistrationField/Category/Create.cshtml", model);
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Category/Create.cshtml", model);
         }
 
         [Area(AreaNames.Admin)]
@@ -1969,7 +1782,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldCategoryModel(null, registrationFieldCategory);
 
-            return View($"{NexportPluginAdminViewBasePath}RegistrationField/Category/Edit.cshtml", model);
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Category/Edit.cshtml", model);
         }
 
         [Area(AreaNames.Admin)]
@@ -1986,7 +1799,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 return RedirectToAction("ListRegistrationFieldCategory");
 
             if (!ModelState.IsValid)
-                return View($"{NexportPluginAdminViewBasePath}RegistrationField/Category/Edit.cshtml", model);
+                return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Category/Edit.cshtml", model);
 
             registrationFieldCategory = model.ToEntity(registrationFieldCategory);
             _nexportService.UpdateNexportRegistrationFieldCategory(registrationFieldCategory);
@@ -2059,7 +1872,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldModel(new NexportRegistrationFieldModel(), null);
 
-            return View($"{NexportPluginAdminViewBasePath}RegistrationField/Create.cshtml", model);
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Create.cshtml", model);
         }
 
         [Area(AreaNames.Admin)]
@@ -2099,7 +1912,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldModel(
                 new NexportRegistrationFieldModel(), null, true);
 
-            return View($"{NexportPluginAdminViewBasePath}RegistrationField/Create.cshtml", model);
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Create.cshtml", model);
         }
 
         [Area(AreaNames.Admin)]
@@ -2115,14 +1928,14 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldModel(null, registrationField);
 
-            return View($"{NexportPluginAdminViewBasePath}RegistrationField/Edit.cshtml", model);
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Edit.cshtml", model);
         }
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
         [AdminAntiForgery]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
-        public virtual IActionResult EditRegistrationField(NexportRegistrationFieldModel model, bool continueEditing)
+        public IActionResult EditRegistrationField(NexportRegistrationFieldModel model, bool continueEditing)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
@@ -2132,10 +1945,33 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 return RedirectToAction("ListRegistrationField");
 
             if (!ModelState.IsValid)
-                return View($"{NexportPluginAdminViewBasePath}RegistrationField/Edit.cshtml", model);
+                return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Edit.cshtml", model);
+
+            if (model.Type == NexportRegistrationFieldType.CustomType && registrationField.CustomFieldRender != model.CustomFieldRender)
+            {
+                if (_nexportService.HasCustomRegistrationFieldRender(registrationField.Id, model.CustomFieldRender))
+                {
+                    _notificationService.ErrorNotification(_localizationService.GetResource("Admin.Customers.Nexport.RegistrationField.Fields.SupportOnlySingleFieldPerCustomRender"));
+
+                    return RedirectToAction("EditRegistrationField", new { id = registrationField.Id });
+                }
+            }
 
             registrationField = model.ToEntity(registrationField);
+
             _nexportService.UpdateNexportRegistrationField(registrationField);
+            if (model.Type == NexportRegistrationFieldType.SelectCheckbox ||
+                model.Type == NexportRegistrationFieldType.SelectDropDown)
+            {
+                if (model.Type == NexportRegistrationFieldType.SelectCheckbox)
+                {
+                    _genericAttributeService.SaveAttribute(registrationField,
+                        nameof(model.AllowMultipleSelection), model.AllowMultipleSelection);
+                }
+
+                _genericAttributeService.SaveAttribute(registrationField,
+                    nameof(model.DisplayOptionByAscendingOrder), model.DisplayOptionByAscendingOrder);
+            }
 
             var storeMappings = _nexportService.GetNexportRegistrationFieldStoreMappings(registrationField.Id);
 
@@ -2174,12 +2010,15 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
         [HttpPost]
-        public virtual IActionResult DeleteRegistrationField(int id)
+        public IActionResult DeleteRegistrationField(int id)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
 
             var registrationField = _nexportService.GetNexportRegistrationFieldById(id);
+            var registrationFieldOptionSettings = _genericAttributeService.GetAttributesForEntity(registrationField.Id,
+                registrationField.GetUnproxiedEntityType().Name);
+
             _nexportService.DeleteNexportRegistrationField(registrationField);
 
             // Delete the option of the registration field
@@ -2195,6 +2034,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             {
                 _nexportService.DeleteNexportRegistrationFieldStoreMapping(fieldStoreMapping);
             }
+
+            // Delete related extra settings of the registration field
+            _genericAttributeService.DeleteAttributes(registrationFieldOptionSettings);
 
             _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Customers.Nexport.RegistrationField.Fields.Deleted"));
 
@@ -2232,7 +2074,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldOptionModel(
                 new NexportRegistrationFieldOptionModel(), registrationField, null);
 
-            return View($"{NexportPluginAdminViewBasePath}RegistrationField/Option/Create.cshtml", model);
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Create.cshtml", model);
         }
 
         [Area(AreaNames.Admin)]
@@ -2257,13 +2099,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 ViewBag.RefreshPage = true;
 
-                return View($"{NexportPluginAdminViewBasePath}RegistrationField/Option/Create.cshtml", model);
+                return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Create.cshtml", model);
             }
 
             model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldOptionModel(
                 new NexportRegistrationFieldOptionModel(), registrationField, null);
 
-            return View($"{NexportPluginAdminViewBasePath}RegistrationField/Option/Create.cshtml", model);
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Create.cshtml", model);
         }
 
         [Area(AreaNames.Admin)]
@@ -2283,14 +2125,14 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldOptionModel(null, registrationField, registrationFieldOption);
 
-            return View($"{NexportPluginAdminViewBasePath}RegistrationField/Option/Edit.cshtml", model);
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Edit.cshtml", model);
         }
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
         [AdminAntiForgery]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
-        public virtual IActionResult EditRegistrationFieldOption(NexportRegistrationFieldOptionModel model, bool continueEditing)
+        public IActionResult EditRegistrationFieldOption(NexportRegistrationFieldOptionModel model, bool continueEditing)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
@@ -2312,18 +2154,18 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 ViewBag.RefreshPage = true;
 
-                return View($"{NexportPluginAdminViewBasePath}RegistrationField/Option/Edit.cshtml", model);
+                return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Edit.cshtml", model);
             }
 
             model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldOptionModel(null, registrationField, registrationFieldOption);
 
-            return View($"{NexportPluginAdminViewBasePath}RegistrationField/Option/Edit.cshtml", model);
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Edit.cshtml", model);
         }
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
         [HttpPost]
-        public virtual IActionResult DeleteRegistrationFieldOption(int id)
+        public IActionResult DeleteRegistrationFieldOption(int id)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
@@ -2336,6 +2178,37 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Customers.Nexport.RegistrationField.Options.Deleted"));
 
             return new NullJsonResult();
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        public IActionResult GetRegistrationFieldCustomRenderOptionUrl(string systemName, int fieldId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+                return AccessDeniedView();
+
+            if (string.IsNullOrEmpty(systemName))
+                throw new ArgumentNullException(nameof(systemName));
+
+            var registrationFieldCustomRender = _registrationFieldCustomRenderPluginManager.LoadPluginBySystemName(systemName)
+                                                ?? throw new ArgumentException("Registration field custom render could not be loaded");
+
+            var url = registrationFieldCustomRender.GetRenderOptionUrl(fieldId);
+
+            return Json(new { url });
+        }
+
+        public IActionResult GetRegistrationFieldCustomRenderUrl(string systemName, int fieldId)
+        {
+            if (string.IsNullOrEmpty(systemName))
+                throw new ArgumentNullException(nameof(systemName));
+
+            var registrationFieldCustomRender = _registrationFieldCustomRenderPluginManager.LoadPluginBySystemName(systemName)
+                                                ?? throw new ArgumentException("Registration field custom render could not be loaded");
+
+            var url = registrationFieldCustomRender.GetCustomRenderUrl(fieldId);
+
+            return Json(new { url });
         }
 
         #endregion
@@ -2461,6 +2334,203 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         #endregion
 
+        #region Customer Actions
+
+        [HttpsRequirement(SslRequirement.Yes)]
+        public IActionResult ViewNexportOrderRedemption(NexportOrderInvoiceItem model)
+        {
+            return View("~/Plugins/Misc.Nexport/Views/ViewOrder.cshtml", model);
+        }
+
+        [HttpsRequirement(SslRequirement.Yes)]
+        public IActionResult ViewNexportTraining()
+        {
+            if (!_workContext.CurrentCustomer.IsRegistered())
+                return Challenge();
+
+            try
+            {
+                var model = _nexportPluginModelFactory.PrepareNexportTrainingListModel(_workContext.CurrentCustomer);
+
+                var myTrainingViewLocationSetting =
+                    _settingService.GetSetting("nexport.mytraining.view", _storeContext.CurrentStore.Id, true);
+
+                return View(myTrainingViewLocationSetting != null
+                    ? myTrainingViewLocationSetting.Value
+                    : "~/Plugins/Misc.Nexport/Views/NexportTrainings.cshtml",
+                    model);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message, ex, _workContext.CurrentCustomer);
+                _notificationService.ErrorNotification(ex.Message);
+            }
+
+            return new EmptyResult();
+        }
+
+        [HttpsRequirement(SslRequirement.Yes)]
+        public IActionResult ViewSupplementalInfoAnswers()
+        {
+            if (!_workContext.CurrentCustomer.IsRegistered())
+                return Challenge();
+
+            try
+            {
+                var model = _nexportPluginModelFactory.PrepareNexportCustomerSupplementalInfoAnswersModel(
+                    _workContext.CurrentCustomer, _storeContext.CurrentStore);
+
+                return View("~/Plugins/Misc.Nexport/Views/NexportCustomer/NexportSupplementalInfoAnswers.cshtml", model);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message, ex, _workContext.CurrentCustomer);
+                _notificationService.ErrorNotification(ex.Message);
+            }
+
+            return new EmptyResult();
+        }
+
+        [HttpsRequirement(SslRequirement.Yes)]
+        public IActionResult EditSupplementalInfoAnswers(int questionId)
+        {
+            if (!_workContext.CurrentCustomer.IsRegistered())
+                return Challenge();
+
+            var question = _nexportService.GetNexportSupplementalInfoQuestionById(questionId);
+
+            if (question == null)
+                return RedirectToRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers");
+
+            var model = _nexportPluginModelFactory.PrepareNexportCustomerSupplementalInfoAnswersEditModel(
+                _workContext.CurrentCustomer, _storeContext.CurrentStore, question);
+
+            return View("~/Plugins/Misc.Nexport/Views/NexportCustomer/EditNexportSupplementalInfoAnswer.cshtml", model);
+        }
+
+        [HttpPost]
+        [PublicAntiForgery]
+        public IActionResult EditSupplementalInfoAnswers(EditSupplementInfoAnswerRequestModel editModel)
+        {
+            if (!_workContext.CurrentCustomer.IsRegistered())
+                return Challenge();
+
+            if (editModel.OptionIds == null || editModel.OptionIds.Count == 0)
+                throw new Exception("List of submission options cannot be null or empty.");
+
+            var question = _nexportService.GetNexportSupplementalInfoQuestionById(editModel.QuestionId);
+
+            if (question == null)
+                return RedirectToRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers");
+
+            var answers = _nexportService.GetNexportSupplementalInfoAnswers(
+                _workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id, editModel.QuestionId);
+
+            if (answers == null || answers.Count == 0)
+                return RedirectToRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers");
+
+            if (ModelState.IsValid)
+            {
+                if (question.Type == NexportSupplementalInfoQuestionType.SingleOption)
+                {
+                    if (editModel.OptionIds.Count > 1)
+                        return RedirectToRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers");
+
+                    var updatingAnswer = answers.First();
+                    var newOption = editModel.OptionIds[0];
+                    if (updatingAnswer.OptionId != newOption)
+                    {
+                        var memberships =
+                            _nexportService.GetNexportSupplementalInfoAnswerMembershipsByAnswerId(updatingAnswer.Id);
+
+                        updatingAnswer.OptionId = newOption;
+                        updatingAnswer.Status = NexportSupplementalInfoAnswerStatus.Modified;
+                        updatingAnswer.UtcDateModified = DateTime.UtcNow;
+
+                        _nexportService.UpdateNexportSupplementalInfoAnswer(updatingAnswer);
+
+                        _nexportService.InsertNexportSupplementalInfoAnswerProcessingQueueItem(
+                            new NexportSupplementalInfoAnswerProcessingQueueItem
+                            {
+                                AnswerId = updatingAnswer.Id,
+                                UtcDateCreated = DateTime.UtcNow
+                            });
+
+                        foreach (var membership in memberships)
+                        {
+                            _nexportService.InsertNexportGroupMembershipRemovalQueueItem(
+                                new NexportGroupMembershipRemovalQueueItem
+                                {
+                                    CustomerId = _workContext.CurrentCustomer.Id,
+                                    NexportMembershipId = membership.NexportMembershipId,
+                                    UtcDateCreated = DateTime.UtcNow
+                                });
+                        }
+                    }
+                }
+                else if (question.Type == NexportSupplementalInfoQuestionType.MultipleOptions)
+                {
+                    if (editModel.OptionIds.Count < 1)
+                        return RedirectToRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers");
+
+                    foreach (var newOption in editModel.OptionIds)
+                    {
+                        var newAnswer = answers.FirstOrDefault(a => a.OptionId == newOption);
+                        if (newAnswer == null)
+                        {
+                            newAnswer = new NexportSupplementalInfoAnswer
+                            {
+                                CustomerId = _workContext.CurrentCustomer.Id,
+                                StoreId = _storeContext.CurrentStore.Id,
+                                OptionId = newOption,
+                                QuestionId = editModel.QuestionId,
+                                Status = NexportSupplementalInfoAnswerStatus.NotProcessed,
+                                UtcDateCreated = DateTime.UtcNow
+                            };
+
+                            _nexportService.InsertNexportSupplementalInfoAnswer(newAnswer);
+
+                            _nexportService.InsertNexportSupplementalInfoAnswerProcessingQueueItem(
+                                new NexportSupplementalInfoAnswerProcessingQueueItem
+                                {
+                                    AnswerId = newAnswer.Id,
+                                    UtcDateCreated = DateTime.UtcNow
+                                });
+                        }
+                    }
+
+                    var removingAnswers = answers.Where(a => !editModel.OptionIds.Contains(a.OptionId));
+                    foreach (var removingAnswer in removingAnswers)
+                    {
+                        var memberships =
+                            _nexportService.GetNexportSupplementalInfoAnswerMembershipsByAnswerId(removingAnswer.Id);
+
+                        _nexportService.DeleteNexportSupplementalInfoAnswer(removingAnswer);
+
+                        foreach (var membership in memberships)
+                        {
+                            _nexportService.InsertNexportGroupMembershipRemovalQueueItem(
+                                new NexportGroupMembershipRemovalQueueItem
+                                {
+                                    CustomerId = _workContext.CurrentCustomer.Id,
+                                    NexportMembershipId = membership.NexportMembershipId,
+                                    UtcDateCreated = DateTime.UtcNow
+                                });
+                        }
+                    }
+                }
+
+                return RedirectToRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers");
+            }
+
+            var model = _nexportPluginModelFactory.PrepareNexportCustomerSupplementalInfoAnswersEditModel(
+                _workContext.CurrentCustomer, _storeContext.CurrentStore, question);
+
+            return View("~/Plugins/Misc.Nexport/Views/NexportCustomer/EditNexportSupplementalInfoAnswer.cshtml", model);
+        }
+
+        #endregion
+
         #region Redeeming Product Actions
 
         [HttpPost]
@@ -2497,7 +2567,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     _nexportService.AddOrderNote(order,
                         $"Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} cannot be redeemed for user {redeemingUserId}", updateOrder: true);
 
-                    var errorMsg = $"Failed to redeem Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} for user {redeemingUserId}";
+                    var errorMsg = string.Format(_localizationService.GetResource("Plugins.Misc.Nexport.Errors.FailedToRedeemForUser"),
+                        nexportOrderInvoiceItem.InvoiceItemId, redeemingUserId);
 
                     _logger.Error(errorMsg, e, customer);
                     _notificationService.ErrorNotification(errorMsg);
@@ -2509,8 +2580,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }
             catch (Exception ex)
             {
-                var errorMsg =
-                    $"Error occured during the redemption process for the order item invoice {orderItemInvoiceId}";
+                var errorMsg = string.Format(_localizationService.GetResource("Plugins.Misc.Nexport.Errors.RedemptionProcessFailure"), orderItemInvoiceId);
 
                 _logger.Error(errorMsg, ex);
                 _notificationService.ErrorNotification(errorMsg);
@@ -2539,19 +2609,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             try
             {
-                //var signInUrl = _nexportService.SignInNexport(orderInvoiceItem);
-
-                //return RedirectPermanent(signInUrl);
                 result.RedirectUrl = _nexportService.SignInNexport(orderInvoiceItem);
             }
             catch (Exception ex)
             {
-                var errorMsg =
-                    "Error occured during the transferring to Nexport. You might not have an active subscription in Nexport Campus. " +
-                    "Please contact customer service for further assistance.";
+                var errorMsg = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.FailedToRedirectToNexport");
                 _logger.Error(errorMsg, ex, _workContext.CurrentCustomer);
-
-                //return Content(errorMsg);
 
                 result.Error = errorMsg;
                 HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
@@ -2573,17 +2636,11 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             try
             {
                 result.RedirectUrl = _nexportService.SignInNexport(orgId, userId);
-
-                //return RedirectPermanent(_nexportService.SignInNexport(orgId, userId));
             }
             catch (Exception ex)
             {
-                var errorMsg =
-                    "Error occured during the transferring to Nexport organization. You might not have an active subscription in Nexport Campus. " +
-                    "Please contact customer service for further assistance.";
+                var errorMsg = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.FailedToRedirectToNexport");
                 _logger.Error(errorMsg, ex, _workContext.CurrentCustomer);
-
-                //return Content(errorMsg);
 
                 result.Error = errorMsg;
                 HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;

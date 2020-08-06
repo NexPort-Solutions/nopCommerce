@@ -9,6 +9,7 @@ using Nop.Services.Cms;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Logging;
+using Nop.Services.Plugins;
 using Nop.Services.Tasks;
 
 namespace Nop.Plugin.Misc.Nexport.Services.Tasks
@@ -17,6 +18,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
     {
         private readonly ILogger _logger;
         private readonly IWidgetPluginManager _widgetPluginManager;
+        private readonly IPluginManager<IRegistrationFieldCustomRender> _pluginManager;
         private readonly ICustomerService _customerService;
         private readonly IStateProvinceService _stateProvinceService;
         private readonly ICountryService _countryService;
@@ -28,6 +30,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
         public NexportRegistrationFieldSynchronizationTask(
             IWidgetPluginManager widgetPluginManager,
+            IPluginManager<IRegistrationFieldCustomRender> pluginManager,
             ICustomerService customerService,
             IStateProvinceService stateProvinceService,
             ICountryService countryService,
@@ -36,6 +39,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             NexportService nexportService)
         {
             _widgetPluginManager = widgetPluginManager;
+            _pluginManager = pluginManager;
             _customerService = customerService;
             _stateProvinceService = stateProvinceService;
             _countryService = countryService;
@@ -138,39 +142,53 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     var nexportSubscriptions =
                                         _nexportService.FindAllSubscriptions(userMapping.NexportUserId);
 
-                                    foreach (var subscription in nexportSubscriptions)
+                                    if (nexportSubscriptions.Count > 0)
                                     {
                                         var profileFields =
-                                            _nexportService.ConvertToSubmissionProfileFields(registrationFields);
+                                            _nexportService.ConvertFieldAnswersToSubmissionProfileFields(
+                                                registrationFields.Where(x => !x.IsCustomField).ToList());
 
-                                        try
+                                        var customFields =
+                                            _nexportService.ConvertCustomFieldAnswersToSubmissionProfileFields(
+                                                registrationFields.Where(x => x.IsCustomField).ToList());
+
+                                        var finalFields = profileFields.Concat(customFields)
+                                            .ToDictionary(x => x.Key,
+                                                x => x.Value);
+
+                                        foreach (var subscription in nexportSubscriptions)
                                         {
-                                            var result = _nexportService.SetCustomProfileFieldValues(subscription.SubscriptionId, profileFields);
-
-                                            if (!string.IsNullOrEmpty(result.Message))
+                                            try
                                             {
-                                                _logger.Error($"Error occurred when setting custom profile fields for customer {userMapping.NopUserId}: {result.Message}");
+                                                var result = _nexportService.SetCustomProfileFieldValues(subscription.SubscriptionId, finalFields);
+
+                                                if (!string.IsNullOrEmpty(result.Message))
+                                                {
+                                                    _logger.Error($"Error occurred when setting custom profile fields for customer {userMapping.NopUserId}: {result.Message}");
+                                                }
+
+                                                _logger.Information($"Successfully synchronize custom profile fields for customer {userMapping.NopUserId} with the subscriber Id {subscription.SubscriptionId}");
                                             }
-
-                                            _logger.Information($"Successfully synchronize custom profile fields for customer {userMapping.NopUserId} with the subscriber Id {subscription.SubscriptionId}");
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            _logger.Error($"Cannot set custom profile fields for customer {userMapping.NopUserId} in Nexport", ex);
-
-                                            syncItem.Attempt++;
-
-                                            if (syncItem.Attempt <= MAX_ATTEMPT_COUNT)
+                                            catch (Exception ex)
                                             {
-                                                _nexportService.UpdateNexportRegistrationFieldSynchronizationQueueItem(syncItem);
+                                                _logger.Error($"Cannot set custom profile fields for customer {userMapping.NopUserId} in Nexport", ex);
+
+                                                syncItem.Attempt++;
+
+                                                if (syncItem.Attempt <= MAX_ATTEMPT_COUNT)
+                                                {
+                                                    _nexportService.UpdateNexportRegistrationFieldSynchronizationQueueItem(syncItem);
+                                                }
                                             }
                                         }
+
+                                        _logger.Information($"Successfully synchronize all custom profile fields for customer {userMapping.NopUserId}");
                                     }
-
-                                    _logger.Information($"Successfully synchronize all custom profile fields for customer {userMapping.NopUserId}");
                                 }
 
                                 _nexportRegistrationFieldSynchronizationQueueRepository.Delete(syncItem);
+
+                                _logger.Debug("Synchronize custom profile fields in Nexport completed.");
                             }
                         }
                     }

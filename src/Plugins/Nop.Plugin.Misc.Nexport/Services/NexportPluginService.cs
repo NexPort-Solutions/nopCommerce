@@ -376,6 +376,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Added", "The new registration field has been added successfully.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Updated", "The registration field has been updated successfully.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Deleted", "The registration field has been deleted successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.SupportOnlySingleFieldPerCustomRender", "Only one registration field per custom render supported.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.AddNew", "Add a new registration field category");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.EditCategoryDetails", "Edit registration field category details");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.BackToList", "back to registration field category list");
@@ -388,6 +389,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.Added", "The new registration field option value has been added successfully.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.Updated", "The registration field option value has been updated successfully.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.Deleted", "The registration field option value has been deleted successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Customs.SaveBeforeEdit", "You need to save the registration field before you can select its custom render.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Title", "Title");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Title.Hint", "The name of the registration field category");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Description", "Description");
@@ -415,10 +417,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Stores.Hint", "Option to limit display the registration field to a certain store");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder", "Display order");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder.Hint", "The registration field display order. 1 represents the first item in the list.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.CustomRender", "Custom field render");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.CustomRender.Hint", "Choose which custom display will be used to render this registration field.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.AllowMultipleSelection", "Allow multiple option selections");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.AllowMultipleSelection.Hint", "Allow custom to select multiple options instead of single selection.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOptionValueByAscendingOrder", "Display options in ascending order");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOptionValueByAscendingOrder.Hint", "Display the options in ascending order based on their values.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Info", "Registration field info");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.OptionValues", "Registration field option values");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Custom", "Registration field custom option");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value", "Option value");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value.Hint", "The value of the option");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value.Required", "The value for option is required");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.Options", "Additional options");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.LimitSingleProductPurchase", "Limit single product purchase");
@@ -578,6 +588,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Added");
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Updated");
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Deleted");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.SupportOnlySingleFieldPerCustomRender");
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.AddNew");
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.EditCategoryDetails");
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.BackToList");
@@ -590,6 +601,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.Added");
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.Updated");
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Options.Deleted");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Customs.SaveBeforeEdit");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Title");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Title.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Category.Description");
@@ -617,8 +629,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Stores.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.CustomRender");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.CustomRender.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.AllowMultipleSelection");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.AllowMultipleSelection.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOptionValueByAscendingOrder");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOptionValueByAscendingOrder.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Info");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.OptionValues");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Custom");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value.Hint");
 

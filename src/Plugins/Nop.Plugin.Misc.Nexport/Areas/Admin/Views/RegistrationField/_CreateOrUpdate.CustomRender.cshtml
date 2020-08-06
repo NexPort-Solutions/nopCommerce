@@ -1,0 +1,70 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
+
+@if (Model.Id > 0)
+{
+    Html.AddCssFileParts("~/lib/fineuploader/fine-uploader.min.css");
+    Html.AddScriptParts("~/lib/fineuploader/jquery.fine-uploader.min.js");
+
+    <script>
+        $(document).ready(function() {
+            $("#@Html.IdFor(model => model.AvailableCustomFieldRenders)").change(loadNewCustomFieldRender);
+
+            loadNewCustomFieldRender();
+        });
+
+        function loadNewCustomFieldRender() {
+            var customFieldSystemName = $("#@Html.IdFor(model => model.CustomFieldRender)").val();
+            if (customFieldSystemName) {
+                $.ajax({
+                    cache: false,
+                    url: "@Url.Action("GetRegistrationFieldCustomRenderOptionUrl", "NexportIntegration")",
+                    data: {
+                        "systemName": customFieldSystemName,
+                        "fieldId": @Model.Id
+                    },
+                    success: function(data, textStatus, jqXHR) {
+                        loadCustomFieldRenderOption(data.url, "#customerFieldPlaceholder");
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        $("#customerFieldPlaceholder").html("Failed to load custom field render option");
+                    }
+                });
+            } else {
+                $('#customerFieldPlaceholder').html("");
+            }
+        };
+
+        function loadCustomFieldRenderOption(url, placeholderName) {
+            $.ajax({
+                cache: false,
+                url: url,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $(placeholderName).html(data);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $(placeholderName).html("Failed to custom field render option content.");
+                }
+            });
+        }
+    </script>
+    <div class="panel-body">
+        <div class="form-group">
+            <div class="col-md-3">
+                <nop-label asp-for="CustomFieldRender" />
+            </div>
+            <div class="col-md-9">
+                <nop-select asp-for="CustomFieldRender" asp-items="@Model.AvailableCustomFieldRenders" />
+                <span asp-validation-for="CustomFieldRender"></span>
+            </div>
+        </div>
+
+        <div id="customerFieldPlaceholder"></div>
+    </div>
+}
+else
+{
+    <div class="panel-body">
+        @T("Admin.Customers.Nexport.RegistrationField.Customs.SaveBeforeEdit")
+    </div>
+}

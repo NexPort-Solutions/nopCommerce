@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Primitives;
 
@@ -71,6 +72,20 @@ namespace Nop.Plugin.Misc.Nexport.Extensions
             return tryCreateResult && uriResult != null;
         }
 
+        public static bool IsValidDateFormat(this string dateStr, string format)
+        {
+            return DateTime.TryParseExact(dateStr, format, CultureInfo.InvariantCulture,
+                DateTimeStyles.None, out _);
+        }
+
+        public static string TruncateAtWord(this string input, int length)
+        {
+            if (input == null || input.Length < length)
+                return input;
+            var nextSpaceIndex = input.LastIndexOf(" ", length, StringComparison.Ordinal);
+            return $"{input.Substring(0, (nextSpaceIndex > 0) ? nextSpaceIndex : length).Trim()}…";
+        }
+
         public static SelectList ToNexportSelectList<TEnum>(this TEnum enumObj,
             bool markCurrentAsSelected = true, int[] valuesToExclude = null) where TEnum : struct
         {
@@ -78,8 +93,8 @@ namespace Nop.Plugin.Misc.Nexport.Extensions
                 throw new ArgumentException("An Enumeration type is required.", nameof(enumObj));
 
             var values = from TEnum enumValue in Enum.GetValues(typeof(TEnum))
-                where valuesToExclude == null || !valuesToExclude.Contains(Convert.ToInt32(enumValue))
-                select new { ID = Convert.ToInt32(enumValue), Name = GetDisplayName(enumValue) };
+                         where valuesToExclude == null || !valuesToExclude.Contains(Convert.ToInt32(enumValue))
+                         select new { ID = Convert.ToInt32(enumValue), Name = GetDisplayName(enumValue) };
             object selectedValue = null;
             if (markCurrentAsSelected)
                 selectedValue = Convert.ToInt32(enumObj);

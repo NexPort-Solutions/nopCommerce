@@ -276,3 +276,21 @@
     padding-left: 5px;
     padding-right: 5px;
   }
+
+.nexport-option-list > div:not(:last-child) {
+  margin: 0 0 5px 0;
+}
+
+.nexport-custom-attributes-option-list-item {
+  padding: 5px 0;
+}
+
+span.required {
+  vertical-align: middle;
+}
+
+.nexport-yes-no-field span {
+  display: inline-block;
+  margin: 0 10px 0 0;
+  line-height: 32px;
+}

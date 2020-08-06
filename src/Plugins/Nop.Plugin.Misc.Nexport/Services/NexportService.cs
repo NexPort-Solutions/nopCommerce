@@ -31,9 +31,10 @@ using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
-using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
 using Nop.Services.Helpers;
+using Nop.Services.Plugins;
+using StackExchange.Profiling.Internal;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -83,6 +84,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IShoppingCartService _shoppingCartService;
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly INotificationService _notificationService;
+        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomerRenderPluginManager;
         private readonly IDateTimeHelper _dateTimeHelper;
         private readonly IWorkContext _workContext;
         private readonly IStoreContext _storeContext;
@@ -134,6 +136,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IGenericAttributeService genericAttributeService,
             INotificationService notificationService,
             ILocalizationService localizationService,
+            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomerRenderPluginManager,
             IDateTimeHelper dateTimeHelper,
             IWorkContext workContext,
             IStoreContext storeContext,
@@ -181,6 +184,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _genericAttributeService = genericAttributeService;
             _notificationService = notificationService;
             _localizationService = localizationService;
+            _registrationFieldCustomerRenderPluginManager = registrationFieldCustomerRenderPluginManager;
             _dateTimeHelper = dateTimeHelper;
             _workContext = workContext;
             _storeContext = storeContext;
@@ -1431,13 +1435,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result = new Dictionary<int, string>();
 
-            var registrationFields = GetNexportRegistrationFields(_storeContext.CurrentStore.Id);
+            var registrationFields = GetNexportRegistrationFields(_storeContext.CurrentStore.Id)
+                .Where(f => f.Type != NexportRegistrationFieldType.CustomType);
+
             foreach (var field in registrationFields)
             {
                 if (!field.IsActive)
                     continue;
 
-                var controlId = $"NexportCustomProfile-{field.Id}";
+                var controlId = $"{NexportDefaults.NexportRegistrationFieldPrefix}-{field.Id}";
                 var controlValue = form[controlId];
                 if (!StringValues.IsNullOrEmpty(controlValue))
                 {
@@ -1448,13 +1454,58 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public IList<string> GetRegistrationFieldWarnings(Dictionary<int, string> fields)
+        public Dictionary<int, Dictionary<string, string>> ParseCustomRegistrationFields(IFormCollection form)
+        {
+            if (form == null)
+                throw new ArgumentNullException(nameof(form));
+
+            var result = new Dictionary<int, Dictionary<string, string>>();
+
+            var registrationFields = GetNexportRegistrationFields(_storeContext.CurrentStore.Id)
+                .Where(f => f.Type == NexportRegistrationFieldType.CustomType);
+
+            foreach (var field in registrationFields)
+            {
+                if (!field.IsActive)
+                    continue;
+
+                var customRender = _registrationFieldCustomerRenderPluginManager.LoadPluginBySystemName(field.CustomFieldRender);
+
+                if (customRender != null)
+                {
+                    var parseResult = customRender.ParseCustomRegistrationFields(field.Id, form);
+                    result.Add(field.Id, parseResult);
+                }
+            }
+
+            return result;
+        }
+
+        public virtual IList<string> GetRegistrationFieldWarnings(Dictionary<int, string> fields)
         {
             var warnings = new List<string>();
 
             foreach (var field in fields)
             {
                 var registrationField = GetNexportRegistrationFieldById(field.Key);
+
+                var fieldNameTruncated = registrationField.Name.TruncateAtWord(5);
+
+                if (registrationField.Type == NexportRegistrationFieldType.Email)
+                {
+                    if (!string.IsNullOrWhiteSpace(field.Value) && !field.Value.IsValidEmail())
+                        warnings.Add($"Field {fieldNameTruncated} value is not a valid email");
+                }
+                else if (registrationField.Type == NexportRegistrationFieldType.DateOnly)
+                {
+                    if (!string.IsNullOrWhiteSpace(field.Value) && !field.Value.IsValidDateFormat("MM/dd/yyyy"))
+                        warnings.Add($"Field {fieldNameTruncated} value is not a valid date format");
+                }
+                else if (registrationField.Type == NexportRegistrationFieldType.DateTime)
+                {
+                    if (!string.IsNullOrWhiteSpace(field.Value) && !field.Value.IsValidDateFormat("MM/dd/yyyy HH:mm"))
+                        warnings.Add($"Field {fieldNameTruncated} value is not a valid date time format");
+                }
 
                 if (!registrationField.IsRequired)
                     continue;
@@ -1464,7 +1515,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 if (!emptyValue)
                     continue;
 
-                var notFoundWarning = $"Field {registrationField.Name} value is empty";
+                var notFoundWarning = $"Field {fieldNameTruncated} value is empty";
 
                 warnings.Add(notFoundWarning);
             }
@@ -1472,7 +1523,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return warnings;
         }
 
-        public void SaveNexportRegistrationFields(Customer customer, Dictionary<int, string> fields)
+        public virtual IList<string> GetCustomRegistrationFieldWarnings(Dictionary<int, Dictionary<string, string>> fields)
+        {
+            var warnings = new List<string>();
+
+            //foreach (var customField in fields)
+            //{
+            //}
+
+            return warnings;
+        }
+
+        public virtual void SaveNexportRegistrationFields(Customer customer, Dictionary<int, string> fields)
         {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
@@ -1482,53 +1544,129 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 var registrationField = GetNexportRegistrationFieldById(field.Key);
                 if (registrationField != null)
                 {
-                    var newAnswer = new NexportRegistrationFieldAnswer
+                    if (registrationField.Type == NexportRegistrationFieldType.SelectCheckbox)
                     {
-                        CustomerId = customer.Id,
-                        FieldId = registrationField.Id
-                    };
+                        var optionIds = field.Value.Split(",");
+                        foreach (var optionId in optionIds)
+                        {
+                            var newAnswer = new NexportRegistrationFieldAnswer
+                            {
+                                CustomerId = customer.Id,
+                                FieldId = registrationField.Id,
+                                UtcDateCreated = DateTime.UtcNow,
+                                FieldOptionId = int.TryParse(optionId, out var selectionResult) ? selectionResult : default(int?)
+                            };
 
-                    switch (registrationField.Type)
-                    {
-                        case NexportRegistrationFieldType.Text:
-                        case NexportRegistrationFieldType.Email:
-                            newAnswer.TextValue = field.Value;
-                            break;
-
-                        case NexportRegistrationFieldType.Numeric:
-                            newAnswer.NumericValue = int.Parse(field.Value);
-                            break;
-
-                        case NexportRegistrationFieldType.Boolean:
-                            newAnswer.BooleanValue = bool.Parse(field.Value);
-                            break;
-
-                        case NexportRegistrationFieldType.DateOnly:
-                        case NexportRegistrationFieldType.DateTime:
-                            var value = DateTime.Parse(field.Value);
-                            newAnswer.DateTimeValue = _dateTimeHelper.ConvertToUtcTime(value);
-                            break;
-
-                        case NexportRegistrationFieldType.SelectCheckbox:
-                        case NexportRegistrationFieldType.SelectDropDown:
-                            newAnswer.FieldOptionId = int.Parse(field.Value);
-                            break;
-
-                        case NexportRegistrationFieldType.None:
-                            break;
-
-                        default:
-                            throw new ArgumentOutOfRangeException();
+                            InsertNexportRegistrationFieldAnswer(newAnswer);
+                        }
                     }
+                    else
+                    {
+                        var newAnswer = new NexportRegistrationFieldAnswer
+                        {
+                            CustomerId = customer.Id,
+                            FieldId = registrationField.Id
+                        };
+                        switch (registrationField.Type)
+                        {
+                            case NexportRegistrationFieldType.Text:
+                            case NexportRegistrationFieldType.Email:
+                                newAnswer.TextValue = field.Value;
+                                break;
 
-                    newAnswer.UtcDateCreated = DateTime.UtcNow;
+                            case NexportRegistrationFieldType.Numeric:
+                                newAnswer.NumericValue = int.TryParse(field.Value, out var intResult) ? intResult : default(int?);
+                                break;
 
-                    InsertNexportRegistrationFieldAnswer(newAnswer);
+                            case NexportRegistrationFieldType.Boolean:
+                                newAnswer.BooleanValue = bool.TryParse(field.Value, out var booleanResult) ? booleanResult : default(bool?);
+                                break;
+
+                            case NexportRegistrationFieldType.DateOnly:
+                            case NexportRegistrationFieldType.DateTime:
+                                var fieldValue = DateTime.TryParse(field.Value, out var dateTimeResult) ? dateTimeResult : default(DateTime?);
+                                newAnswer.DateTimeValue = fieldValue.HasValue ? _dateTimeHelper.ConvertToUtcTime(fieldValue.Value) : default(DateTime?);
+                                break;
+
+                            case NexportRegistrationFieldType.SelectDropDown:
+                                newAnswer.FieldOptionId = int.TryParse(field.Value, out var selectionResult) ? selectionResult : default(int?);
+                                break;
+
+                            case NexportRegistrationFieldType.None:
+                                break;
+
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
+
+                        newAnswer.UtcDateCreated = DateTime.UtcNow;
+
+                        InsertNexportRegistrationFieldAnswer(newAnswer);
+                    }
                 }
             }
         }
 
-        public Dictionary<string, string> ConvertToSubmissionProfileFields(IList<NexportRegistrationFieldAnswer> fieldAnswers)
+        public virtual Dictionary<string, string> ConvertFieldAnswersToSubmissionProfileFields(IList<NexportRegistrationFieldAnswer> fieldAnswers)
+        {
+            var result = new Dictionary<string, string>();
+
+            var fieldAnswersByFieldId = fieldAnswers
+                .GroupBy(x => x.FieldId)
+                .ToDictionary(x => x.Key, x => x.ToList());
+
+            foreach (var item in fieldAnswersByFieldId)
+            {
+                var field = GetNexportRegistrationFieldById(item.Key);
+
+                if (field == null ||
+                    (string.IsNullOrWhiteSpace(field.NexportCustomProfileFieldKey) && field.Type == NexportRegistrationFieldType.CustomType))
+                    continue;
+
+                var fieldValue = "";
+
+                if (field.Type == NexportRegistrationFieldType.SelectCheckbox ||
+                    field.Type == NexportRegistrationFieldType.SelectDropDown)
+                {
+                    var answerValues = item.Value.Where(answer => answer.FieldOptionId.HasValue)
+                        .Select(answer => GetNexportRegistrationFieldOptionById(answer.FieldOptionId.Value))
+                        .Where(fieldOption => fieldOption != null)
+                        .Select(fieldOption => fieldOption.OptionValue).ToList();
+
+                    fieldValue = string.Join(", ", answerValues.ToArray());
+                }
+                else
+                {
+                    var answer = item.Value.FirstOrDefault();
+                    if (answer != null)
+                    {
+                        if (!string.IsNullOrEmpty(answer.TextValue))
+                        {
+                            fieldValue = answer.TextValue;
+                        }
+                        else if (answer.NumericValue.HasValue)
+                        {
+                            fieldValue = answer.NumericValue.ToString();
+                        }
+                        else if (answer.BooleanValue.HasValue)
+                        {
+                            fieldValue = answer.BooleanValue.ToString();
+                        }
+                        else if (answer.DateTimeValue.HasValue)
+                        {
+                            fieldValue = answer.DateTimeValue.Value.ToString("MM/dd/yyyy HH:mm:ss");
+                        }
+                    }
+                }
+
+                if(!string.IsNullOrWhiteSpace(field.NexportCustomProfileFieldKey))
+                    result.Add(field.NexportCustomProfileFieldKey, fieldValue);
+            }
+
+            return result;
+        }
+
+        public Dictionary<string, string> ConvertCustomFieldAnswersToSubmissionProfileFields(IList<NexportRegistrationFieldAnswer> fieldAnswers)
         {
             var result = new Dictionary<string, string>();
 
@@ -1536,34 +1674,62 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 var field = GetNexportRegistrationFieldById(answer.FieldId);
 
-                if (field == null || string.IsNullOrWhiteSpace(field.NexportCustomProfileFieldKey))
+                if (field == null || field.Type != NexportRegistrationFieldType.CustomType)
                     continue;
 
-                var fieldValue = "";
-
-                if (!string.IsNullOrEmpty(answer.TextValue))
+                var customRender =
+                    _registrationFieldCustomerRenderPluginManager.LoadPluginBySystemName(field.CustomFieldRender);
+                var processResult = customRender?.ProcessCustomRegistrationFields(answer.CustomerId, field.Id);
+                if (processResult != null)
                 {
-                    fieldValue = answer.TextValue;
+                    result = result.Concat(processResult)
+                        .ToDictionary(x => x.Key,
+                            x => x.Value);
                 }
-                else if (answer.NumericValue.HasValue)
-                {
-                    fieldValue = answer.NumericValue.ToString();
-                }
-                else if (answer.BooleanValue.HasValue)
-                {
-                    fieldValue = answer.BooleanValue.ToString();
-                }
-                else if (answer.DateTimeValue.HasValue)
-                {
-                    fieldValue = answer.DateTimeValue.Value.ToString("MM/dd/yyyy HH:mm:ss");
-                }
-                else if (answer.FieldOptionId.HasValue)
-                {
-                    fieldValue = answer.FieldOptionId.ToString();
-                }
-
-                result.Add(field.NexportCustomProfileFieldKey, fieldValue);
             }
+
+            return result;
+        }
+
+        public IList<NexportRegistrationFieldCustomRender> GetNexportRegistrationFieldCustomRenders()
+        {
+            var availablePlugins = _registrationFieldCustomerRenderPluginManager.LoadAllPlugins().ToList();
+
+            var list = new List<NexportRegistrationFieldCustomRender>();
+
+            foreach (var plugin in availablePlugins)
+            {
+                var pluginAttr = plugin.PluginDescriptor.PluginType.GetCustomAttributes(typeof(CustomRegistrationFieldRenderAttribute), false);
+
+                if (pluginAttr.Length > 0)
+                {
+                    list.Add(new NexportRegistrationFieldCustomRender
+                    {
+                        Name = plugin.PluginDescriptor.FriendlyName,
+                        RenderAssembly = plugin.PluginDescriptor.SystemName
+                    });
+                }
+            }
+
+            return list;
+        }
+
+        public List<SelectListItem> GetCustomRegistrationFieldRenders()
+        {
+            var customRegistrationFieldRenders = GetNexportRegistrationFieldCustomRenders();
+            var listItems = customRegistrationFieldRenders.Select(s => new SelectListItem
+            {
+                Text = s.Name,
+                Value = s.RenderAssembly.ToString()
+            });
+
+            var result = listItems.Select(item => new SelectListItem { Text = item.Text, Value = item.Value }).ToList();
+
+            result.Insert(0, new SelectListItem
+            {
+                Text = "Select",
+                Value = ""
+            });
 
             return result;
         }

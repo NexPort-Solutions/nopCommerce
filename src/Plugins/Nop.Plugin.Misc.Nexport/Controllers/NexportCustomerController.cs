@@ -16,7 +16,6 @@ using Nop.Core.Domain.Media;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Tax;
-using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Services.Authentication;
 using Nop.Services.Authentication.External;
 using Nop.Services.Catalog;
@@ -31,16 +30,18 @@ using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Media;
 using Nop.Services.Messages;
+using Nop.Services.Plugins;
 using Nop.Services.Orders;
 using Nop.Services.Tax;
 using Nop.Web.Controllers;
 using Nop.Web.Factories;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Framework.Security;
-using Nop.Plugin.Misc.Nexport.Models.Customer;
-using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Services;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
@@ -91,7 +92,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         private readonly MediaSettings _mediaSettings;
         private readonly StoreInformationSettings _storeInformationSettings;
         private readonly TaxSettings _taxSettings;
-
+        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomerRenderPluginManager;
         private readonly INexportPluginModelFactory _nexportPluginModelFactory;
         private readonly NexportService _nexportService;
 
@@ -143,6 +144,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             MediaSettings mediaSettings,
             StoreInformationSettings storeInformationSettings,
             TaxSettings taxSettings,
+            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomerRenderPluginManager,
             INexportPluginModelFactory nexportPluginModelFactory,
             NexportService nexportService)
         {
@@ -188,6 +190,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _mediaSettings = mediaSettings;
             _storeInformationSettings = storeInformationSettings;
             _taxSettings = taxSettings;
+            _registrationFieldCustomerRenderPluginManager = registrationFieldCustomerRenderPluginManager;
             _nexportPluginModelFactory = nexportPluginModelFactory;
             _nexportService = nexportService;
         }
@@ -519,10 +522,21 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 ModelState.AddModelError("", error);
             }
 
+            // Parse Nexport registration fields and check for errors
             var nexportRegistrationFields = _nexportService.ParseRegistrationFields(form);
             var nexportRegistrationFieldWarnings =
                 _nexportService.GetRegistrationFieldWarnings(nexportRegistrationFields);
             foreach (var error in nexportRegistrationFieldWarnings)
+            {
+                ModelState.AddModelError("", error);
+            }
+
+            // Parse Nexport registration fields with custom type and check for errors
+            var customRegistrationFields = _nexportService.ParseCustomRegistrationFields(form);
+            var customRegistrationFieldsWarnings =
+                _nexportService.GetCustomRegistrationFieldWarnings(customRegistrationFields);
+
+            foreach (var error in customRegistrationFieldsWarnings)
             {
                 ModelState.AddModelError("", error);
             }
@@ -682,6 +696,19 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                     // Save Nexport registration fields
                     _nexportService.SaveNexportRegistrationFields(customer, nexportRegistrationFields);
+
+                    // Save Nexport custom registration fields
+                    foreach (var customField in customRegistrationFields)
+                    {
+                        var registrationField = _nexportService.GetNexportRegistrationFieldById(customField.Key);
+                        if (registrationField != null)
+                        {
+                            var customRender =
+                                _registrationFieldCustomerRenderPluginManager.LoadPluginBySystemName(registrationField
+                                    .CustomFieldRender);
+                            customRender?.SaveCustomRegistrationFields(registrationField.Id, customField.Value);
+                        }
+                    }
 
                     //login customer now
                     if (isApproved)

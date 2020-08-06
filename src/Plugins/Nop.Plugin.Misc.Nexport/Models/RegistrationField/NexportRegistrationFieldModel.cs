@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
@@ -27,6 +28,12 @@ namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
         public NexportRegistrationFieldType Type { get; set; }
 
         public IList<SelectListItem> AvailableFieldTypes { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.AllowMultipleSelection")]
+        public bool AllowMultipleSelection { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOptionValueByAscendingOrder")]
+        public bool DisplayOptionByAscendingOrder { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.CustomProfileFieldKey")]
         public string NexportCustomProfileFieldKey { get; set; }
@@ -60,6 +67,13 @@ namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder")]
         public int DisplayOrder { get; set; }
+
+        public IList<SelectListItem> AvailableCustomFieldRenders { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.CustomRender")]
+        public string CustomFieldRender { get; set; }
+
+        public string CustomFieldRenderDescription { get; set; }
 
         public IList<NexportRegistrationFieldLocalizedModel> Locales { get; set; }
 

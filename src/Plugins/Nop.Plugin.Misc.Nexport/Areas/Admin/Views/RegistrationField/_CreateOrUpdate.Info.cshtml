@@ -1,7 +1,6 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Extensions
 @using Nop.Plugin.Misc.Nexport.Models.RegistrationField
-@using Nop.Services
 
 @model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
 
@@ -19,9 +18,28 @@
 
         if (selectedAttributeControlTypeId === @(((int) NexportRegistrationFieldType.SelectCheckbox).ToString()) ||
             selectedAttributeControlTypeId === @(((int) NexportRegistrationFieldType.SelectDropDown).ToString())) {
+            if (selectedAttributeControlTypeId === @(((int) NexportRegistrationFieldType.SelectCheckbox).ToString())) {
+                $("#allowMultipleSelectionSettingContainer").show();
+            } else {
+                $("#allowMultipleSelectionSettingContainer").hide();
+            }
+
+            $("#displayOptionByAscendingOrderSettingContainer").show();
             $("#registrationfield-options").show();
         } else {
+            $("#allowMultipleSelectionSettingContainer").hide();
+            $("#displayOptionByAscendingOrderSettingContainer").hide();
             $("#registrationfield-options").hide();
+        }
+
+        if (selectedAttributeControlTypeId === @(((int) NexportRegistrationFieldType.CustomType).ToString())) {
+            $("#@Html.IdFor(model => model.NexportCustomProfileFieldKey)").val("");
+            $("#nexportCustomProfileFieldKeySettingContainer").hide();
+
+            $("#registrationfield-custom").show();
+        } else{
+            $("#registrationfield-custom").hide();
+            $("#nexportCustomProfileFieldKeySettingContainer").show();
         }
     }
 
@@ -29,7 +47,7 @@
         if ($("#@Html.IdFor(model => model.Validation)").is(":checked")) {
             $("#validationRegexSettingContainer").show();
         } else {
-            $("#validationRegexSettingContainer").val("");
+            $("#@Html.IdFor(model => model.ValidationRegex)").val("");
             $("#validationRegexSettingContainer").hide();
         }
     }
@@ -95,7 +113,7 @@
             <span asp-validation-for="Type"></span>
         </div>
     </div>
-    <div class="form-group">
+    <div class="form-group" id="nexportCustomProfileFieldKeySettingContainer">
         <div class="col-md-3">
             <nop-label asp-for="NexportCustomProfileFieldKey" />
         </div>

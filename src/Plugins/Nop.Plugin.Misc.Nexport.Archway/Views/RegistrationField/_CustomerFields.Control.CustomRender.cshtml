@@ -1,0 +1,259 @@
+﻿@using Nop.Plugin.Misc.Nexport.Services
+@using Nop.Services.Helpers
+
+@inject NexportService nexportService
+@inject IUserAgentHelper userAgentHelper
+
+@model Nop.Plugin.Misc.Nexport.Archway.Models.ArchwayStudentEmployeeRegistrationFieldModel
+
+@if (Model != null)
+{
+    var registrationField = nexportService.GetNexportRegistrationFieldById(Model.FieldId);
+
+    if (registrationField != null)
+    {
+        <text>
+            <div class="inputs custom-attributes">
+                <label asp-for="StoreLocationState"></label>
+                <select asp-for="StoreLocationState" asp-items="Model.AvailableStates"
+                        data-trigger="store-location-state-select"
+                        data-url="@(Url.RouteUrl("GetArchwayStoreCitiesByState"))"
+                        data-storelocation-city="#@Html.IdFor(model => model.StoreLocationCity)"
+                        data-loading="#cities-loading-progress"></select>
+                @if (registrationField.IsRequired)
+                {
+                    <nop-required />
+                }
+                <span asp-validation-for="@Model.StoreLocationState"></span>
+            </div>
+            <div class="inputs custom-attributes">
+                <label asp-for="StoreLocationCity" asp-postfix=":"></label>
+                <select asp-for="StoreLocationCity" asp-items="Model.AvailableCities"
+                        data-trigger="store-location-city-select"
+                        data-url="@(Url.RouteUrl("GetArchwayStoreAddressesByCity"))"
+                        data-storelocation-address="#@Html.IdFor(model => model.StoreLocationAddress)"
+                        data-loading="#addresses-loading-progress"></select>
+                <span id="cities-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+                @if (registrationField.IsRequired)
+                {
+                    <nop-required />
+                }
+                <span asp-validation-for="StoreLocationCity"></span>
+            </div>
+            <div class="inputs custom-attributes">
+                <label asp-for="StoreLocationAddress" asp-postfix=":"></label>
+                <select asp-for="StoreLocationAddress" asp-items="Model.AvailableAddresses"
+                        data-trigger="store-location-address-select"
+                        data-url="@(Url.RouteUrl("GetArchwayEmployeePositionsByStore"))"
+                        data-storelocation-employeeposition="#@Html.IdFor(model => model.EmployeePosition)"
+                        data-loading="#employee-positions-loading-progress"></select>
+                <span id="addresses-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+                @if (registrationField.IsRequired)
+                {
+                    <nop-required />
+                }
+                <span asp-validation-for="StoreLocationAddress"></span>
+            </div>
+            <input type="hidden" asp-for="StoreType" />
+            <input type="hidden" asp-for="StoreNumber" />
+            <div class="inputs custom-attributes">
+                <label asp-for="EmployeePosition" asp-postfix=":"></label>
+                <select asp-for="EmployeePosition" asp-items="Model.AvailableEmployeePositions"></select>
+                <span id="employee-positions-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+                @if (registrationField.IsRequired)
+                {
+                    <nop-required />
+                }
+                <span asp-validation-for="EmployeePosition"></span>
+            </div>
+            <div class="inputs custom-attributes" id="storeEmployeeIdContainer">
+                <label asp-for="EmployeeId" asp-postfix=":"></label>
+                <nop-editor asp-for="EmployeeId" />
+                <span asp-validation-for="EmployeeId"></span>
+            </div>
+            <script>
+                function resetHiddenInputFields() {
+                    $("#storeEmployeeIdContainer").hide();
+
+                    $("#@Html.IdFor(model => model.EmployeeId)").val("");
+                    $("#@Html.IdFor(model => model.StoreType)").val("");
+                    $("#@Html.IdFor(model => model.StoreNumber)").val("");
+                }
+
+                $(document).ready(function() {
+                    $("#storeEmployeeIdContainer").hide();
+
+                    if ($(document).has("[data-trigger=\"store-location-state-select\"]")) {
+                        $("select[data-trigger=\"store-location-state-select\"]").change(function(e) {
+                            resetHiddenInputFields();
+
+                            $("select[id=\"@Html.IdFor(model => model.StoreLocationAddress)\"]").html("");
+                            $("select[id=\"@Html.IdFor(model => model.EmployeePosition)\"]").html("");
+
+                            storeLocationStateSelectHandler(e);
+                        });
+                    }
+
+                    if ($(document).has("[data-trigger=\"store-location-city-select\"]")) {
+                        $("select[data-trigger=\"store-location-city-select\"]").change(function(e) {
+                            resetHiddenInputFields();
+
+                            $("select[id=\"@Html.IdFor(model => model.EmployeePosition)\"]").html("");
+
+                            storeLocationCitySelectHandler(e);
+                        });
+                    }
+
+                    if ($(document).has("[data-trigger=\"store-location-address-select\"]")) {
+                        $("select[data-trigger=\"store-location-address-select\"]").change(function(e) {
+                            resetHiddenInputFields();
+
+                            storeLocationAddressSelectHandler(e);
+                        });
+                    }
+
+                    if ($(document).has("#@Html.IdFor(model => model.EmployeePosition)")) {
+                        $("#@Html.IdFor(model => model.EmployeePosition)").change(function(e) {
+                            if ($("#@Html.IdFor(model => model.StoreType)").val() === "MCD") {
+                                $("#@Html.IdFor(model => model.EmployeeId)").val("");
+                                $("#@Html.IdFor(model => model.EmployeeId)").rules("add", {
+                                        required: true,
+                                        min: 1,
+                                        messages: {
+                                            required: "This is a required field",
+                                            min: "Id must be greater than 0"
+                                        }
+                                    });
+                                $("#storeEmployeeIdContainer").show();
+                            } else {
+                                $("#@Html.IdFor(model => model.EmployeeId)").rules("remove");
+                                $("#storeEmployeeIdContainer").hide();
+                                $("#@Html.IdFor(model => model.EmployeeId)").val("");
+                            }
+                        });
+                    }
+
+                    @if (registrationField.IsRequired)
+                    {
+                        <text>
+                            $("#@Html.IdFor(model => model.StoreLocationState), #@Html.IdFor(model => model.StoreLocationCity), #@Html.IdFor(model => model.StoreLocationAddress), #@Html.IdFor(model => model.EmployeePosition)")
+                                .each(function() {
+                                    $(this).rules("add", {
+                                        required: true,
+                                        messages: {
+                                            required: "This is a required field"
+                                        }
+                                    });
+                                });
+                        </text>
+                    }
+                });
+
+                function archwayStoreSelectionHandler(element, selectionElementId, ajaxData, renderFunction, errorMessage) {
+                    var selectionElement = $(element.data(selectionElementId));
+                    var loading = $(element.data("loading"));
+                    loading.show();
+                    $.ajax({
+                        cache: false,
+                        type: "GET",
+                        url: element.data("url"),
+                        data: ajaxData,
+                        success: function(data, textStatus, jqXHR) {
+                            selectionElement.html("");
+                            if (data.length > 0) {
+                                renderFunction(selectionElement, data);
+                            }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            if (errorMessage) {
+                                alert(errorMessage);
+                            } else {
+                                alert("Failed to retrieve data.");
+                            }
+                        },
+                        complete: function(jqXHR, textStatus) {
+                            loading.hide();
+                        }
+                    });
+                }
+
+                function storeLocationStateSelectHandler(e) {
+                    var handler = $(e.target);
+                    var selectedItem = handler.val();
+                    var ajaxData = {
+                        "state": selectedItem,
+                        "addSelectCityItem": "true"
+                    }
+
+                    archwayStoreSelectionHandler(handler,
+                        "storelocation-city",
+                        ajaxData,
+                        function(selectionElement, data) {
+                            selectionElement.append($("<option></option>").val("").html("Select"));
+                            $.each(data,
+                                function(id, option) {
+                                    selectionElement.append($("<option></option>").val(option.name).html(option.name));
+                                });
+                        }, "Failed to retrieve states.");
+                }
+
+                function storeLocationCitySelectHandler(e) {
+                    var handler = $(e.target);
+                    var selectedItem = handler.val();
+                    var ajaxData = {
+                        "city": selectedItem,
+                        "addSelectAddressItem": "true"
+                    }
+
+                    archwayStoreSelectionHandler(handler,
+                        "storelocation-address",
+                        ajaxData,
+                        function(selectionElement, data) {
+                            selectionElement.append($("<option></option>").val("").html("Select"));
+                            $.each(data,
+                                function(id, option) {
+                                    selectionElement.append(
+                                        $("<option></option>")
+                                        .attr("data-store-type", option.storeType)
+                                        .attr("data-store-number", option.storeNumber)
+                                        .val(option.name).html(option.name));
+                                });
+                        }, "Failed to retrieve addresses.");
+                }
+
+                function storeLocationAddressSelectHandler(e) {
+                    var handler = $(e.target);
+
+                    var selectedItem = handler.find("option:selected");
+                    if (selectedItem) {
+                        var storeType = selectedItem.data("store-type");
+                        if (storeType) {
+                            $("#@Html.IdFor(model => model.StoreType)").val(storeType);
+                        }
+
+                        var storeNumber = selectedItem.data("store-number");
+                        if(storeNumber) {
+                            $("#@Html.IdFor(model => model.StoreNumber)").val(storeNumber);
+                        }
+
+                        var storeNumber = selectedItem.data("store-number");
+                        var ajaxData = {
+                            "storeNumber": storeNumber,
+                            "addSelectPositionItem": "true"
+                        }
+
+                        archwayStoreSelectionHandler(handler,
+                            "storelocation-employeeposition",
+                            ajaxData,
+                            function (selectionElement, data) {
+                                selectionElement.append($("<option></option>").val("").html("Select"));
+                                $.each(data, function (id, option) {
+                                    selectionElement.append($("<option></option>").val(option.name).html(option.name));
+                                });
+                            }, "Failed to retrieve employee positions.");
+                    }
+                }
+            </script>
+            </text>
+        }
+    }

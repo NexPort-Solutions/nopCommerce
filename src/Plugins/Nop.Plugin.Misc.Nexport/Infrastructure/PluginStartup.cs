@@ -3,7 +3,6 @@ using System.Reflection;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Exceptions;
 using FluentMigrator.Runner.Initialization;
-using FluentMigrator.Runner.Processors;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Configuration;
@@ -17,6 +16,7 @@ using Nop.Plugin.Misc.Nexport.Data;
 using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Plugin.Misc.Nexport.Migrations;
 using Nop.Plugin.Misc.Nexport.Services;
+using ILogger = Nop.Services.Logging.ILogger;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure
 {
@@ -123,6 +123,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
         /// <param name="application"></param>
         private void ApplyMigration(IApplicationBuilder application)
         {
+            var logger = EngineContext.Current.Resolve<ILogger>();
+
             try
             {
                 var migratorRunnerService = CreateFluentMigratorRunnerService();
@@ -139,9 +141,9 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // ignored
+                logger.Error($"Error occurred during database migration process: {ex.Message}", ex);
             }
         }
 

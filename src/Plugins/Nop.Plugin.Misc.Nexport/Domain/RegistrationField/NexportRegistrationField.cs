@@ -4,7 +4,7 @@ using Nop.Plugin.Misc.Nexport.Domain.Enums;
 
 namespace Nop.Plugin.Misc.Nexport.Domain.RegistrationField
 {
-    public class NexportRegistrationField: BaseEntity, ILocalizedEntity
+    public class NexportRegistrationField : BaseEntity, ILocalizedEntity
     {
         public string Name { get; set; }
 
@@ -23,5 +23,7 @@ namespace Nop.Plugin.Misc.Nexport.Domain.RegistrationField
         public int? FieldCategoryId { get; set; }
 
         public int DisplayOrder { get; set; }
+
+        public string CustomFieldRender { get; set; }
     }
 }

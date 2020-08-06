@@ -40,6 +40,8 @@ using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Common;
+using Nop.Services.Plugins;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -59,6 +61,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly IDiscountSupportedModelFactory _discountSupportedModelFactory;
         private readonly ILocalizationService _localizationService;
         private readonly ILocalizedModelFactory _localizedModelFactory;
+        private readonly IGenericAttributeService _genericAttributeService;
         private readonly IManufacturerService _manufacturerService;
         private readonly IMeasureService _measureService;
         private readonly IOrderService _orderService;
@@ -78,6 +81,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly IStoreMappingSupportedModelFactory _storeMappingSupportedModelFactory;
         private readonly IStoreService _storeService;
         private readonly IUrlRecordService _urlRecordService;
+        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
         private readonly IWorkContext _workContext;
         private readonly MeasureSettings _measureSettings;
         private readonly TaxSettings _taxSettings;
@@ -103,6 +107,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             IDiscountSupportedModelFactory discountSupportedModelFactory,
             ILocalizationService localizationService,
             ILocalizedModelFactory localizedModelFactory,
+            IGenericAttributeService genericAttributeService,
             IManufacturerService manufacturerService,
             IMeasureService measureService,
             IOrderService orderService,
@@ -122,6 +127,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             IStoreMappingSupportedModelFactory storeMappingSupportedModelFactory,
             IStoreService storeService,
             IUrlRecordService urlRecordService,
+            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
             IWorkContext workContext,
             MeasureSettings measureSettings,
             TaxSettings taxSettings,
@@ -143,6 +149,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _discountSupportedModelFactory = discountSupportedModelFactory;
             _localizationService = localizationService;
             _localizedModelFactory = localizedModelFactory;
+            _genericAttributeService = genericAttributeService;
             _manufacturerService = manufacturerService;
             _measureService = measureService;
             _measureSettings = measureSettings;
@@ -162,6 +169,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _storeMappingSupportedModelFactory = storeMappingSupportedModelFactory;
             _storeService = storeService;
             _urlRecordService = urlRecordService;
+            _registrationFieldCustomRenderPluginManager = registrationFieldCustomRenderPluginManager;
             _workContext = workContext;
             _taxSettings = taxSettings;
             _vendorSettings = vendorSettings;
@@ -814,6 +822,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         {
             var model = new NexportCustomerAdditionalSettingsModel();
 
+            model.NexportRegistrationFieldCategorySearchModel.SetGridPageSize();
+            model.NexportRegistrationFieldSearchModel.SetGridPageSize();
+
             return model;
         }
 
@@ -866,7 +877,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return searchModel;
         }
 
-        public NexportRegistrationFieldListModel PrepareNexportRegistrationFieldListModel(
+        public virtual NexportRegistrationFieldListModel PrepareNexportRegistrationFieldListModel(
             NexportRegistrationFieldSearchModel searchModel)
         {
             if (searchModel == null)
@@ -895,7 +906,14 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                 fieldModel.StoreMappings += $"{_storeService.GetStoreById(storeMappings[i].StoreId).Name}, ";
                             else
                                 fieldModel.StoreMappings += $"{_storeService.GetStoreById(storeMappings[i].StoreId).Name}";
+                        }
 
+                        if (!string.IsNullOrWhiteSpace(fieldModel.CustomFieldRender))
+                        {
+                            var customRenderPlugin =
+                                _registrationFieldCustomRenderPluginManager.LoadPluginBySystemName(fieldModel
+                                    .CustomFieldRender);
+                            fieldModel.CustomFieldRenderDescription = customRenderPlugin?.PluginDescriptor.FriendlyName;
                         }
 
                         return fieldModel;
@@ -905,7 +923,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportRegistrationFieldModel PrepareNexportRegistrationFieldModel(NexportRegistrationFieldModel model,
+        public virtual NexportRegistrationFieldModel PrepareNexportRegistrationFieldModel(NexportRegistrationFieldModel model,
             NexportRegistrationField registrationField, bool excludeProperties = false)
         {
             Action<NexportRegistrationFieldLocalizedModel, int> localizedModelConfiguration = null;
@@ -913,6 +931,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             if (registrationField != null)
             {
                 model = model ?? registrationField.ToModel<NexportRegistrationFieldModel>();
+
+                model.AllowMultipleSelection = _genericAttributeService.GetAttribute(registrationField,
+                    nameof(model.AllowMultipleSelection), defaultValue: false);
+
+                model.DisplayOptionByAscendingOrder = _genericAttributeService.GetAttribute(registrationField,
+                    nameof(model.DisplayOptionByAscendingOrder), defaultValue: false);
 
                 model.StoreMappingIds = _nexportService.GetNexportRegistrationFieldStoreMappings(registrationField.Id)
                     .Select(s => s.StoreId).ToList();
@@ -940,10 +964,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 Selected = model.StoreMappingIds.Contains(store.Id)
             }).ToList();
 
+            model.AvailableCustomFieldRenders = _nexportService.GetCustomRegistrationFieldRenders();
+
             return model;
         }
 
-        public NexportRegistrationFieldOptionListModel PrepareNexportRegistrationFieldOptionListModel(
+        public virtual NexportRegistrationFieldOptionListModel PrepareNexportRegistrationFieldOptionListModel(
             NexportRegistrationFieldOptionSearchModel searchModel, NexportRegistrationField registrationField)
         {
             if (searchModel == null)
@@ -993,7 +1019,21 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 .ToDictionary(x => x.Key.ToModel<NexportRegistrationFieldCategoryModel>(),
                     x => x
                         .Select(f =>
-                            f.ToModel<NexportRegistrationFieldModel>()).ToList())
+                            {
+                                var fieldModel = f.ToModel<NexportRegistrationFieldModel>();
+                                if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox ||
+                                    fieldModel.Type == NexportRegistrationFieldType.SelectDropDown)
+                                {
+                                    if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox)
+                                        fieldModel.AllowMultipleSelection = _genericAttributeService.GetAttribute(f,
+                                            nameof(fieldModel.AllowMultipleSelection), defaultValue: false);
+
+                                    fieldModel.DisplayOptionByAscendingOrder = _genericAttributeService.GetAttribute(f,
+                                        nameof(fieldModel.DisplayOptionByAscendingOrder), defaultValue: false);
+                                }
+
+                                return fieldModel;
+                            }).OrderBy(f => f.DisplayOrder).ToList())
                 .OrderBy(x => x.Key.DisplayOrder)
                 .ThenBy(x => x.Key.Title);
 

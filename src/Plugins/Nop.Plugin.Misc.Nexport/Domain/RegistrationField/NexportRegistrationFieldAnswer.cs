@@ -19,6 +19,8 @@ namespace Nop.Plugin.Misc.Nexport.Domain.RegistrationField
 
         public int? FieldOptionId { get; set; }
 
+        public bool IsCustomField { get; set; }
+
         public DateTime UtcDateCreated { get; set; }
 
         public DateTime? UtcDateModified { get; set; }

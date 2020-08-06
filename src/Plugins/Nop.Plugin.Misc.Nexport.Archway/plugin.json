@@ -1,0 +1,12 @@
+﻿{
+  "Group": "Misc",
+  "FriendlyName": "Archway custom registration field",
+  "SystemName": "Misc.Nexport.Archway",
+  "Version": "1.0",
+  "SupportedVersions": [ "4.20" ],
+  "Author": "Nexport Solutions",
+  "DisplayOrder": 1003,
+  "FileName": "Nop.Plugin.Misc.Nexport.Archway.dll",
+  "Description": "This plugin allows to gather student employee information for Archway store during registration process",
+  "DependsOnSystemNames": [ "Misc.Nexport" ]
+}

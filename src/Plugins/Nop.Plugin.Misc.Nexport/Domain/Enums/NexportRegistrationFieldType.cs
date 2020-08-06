@@ -28,6 +28,9 @@ namespace Nop.Plugin.Misc.Nexport.Domain.Enums
         DateOnly = 7,
 
         [Display(Name = "Select Checkbox Field")]
-        SelectCheckbox = 8
+        SelectCheckbox = 8,
+
+        [Display(Name = "Custom Field")]
+        CustomType = 1000
     }
 }

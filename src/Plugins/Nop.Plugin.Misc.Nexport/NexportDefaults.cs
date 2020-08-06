@@ -6,14 +6,11 @@ namespace Nop.Plugin.Misc.Nexport
     {
         public const string SystemName = "Misc.Nexport";
 
-        public const string ProviderSystemName = "ExternalAuth.Nexport";
-
         public const string SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME = "Nexport Integration - Supplemental Info";
 
-        /// <summary>
-        /// Name of the view component to display plugin in public store
-        /// </summary>
-        public const string ViewComponentName = "NexportAuthentication";
+        public static string NexportPluginViewBasePath = "~/Plugins/Misc.Nexport/Views/";
+
+        public static string NexportPluginAdminViewBasePath = "~/Plugins/Misc.Nexport/Areas/Admin/Views/";
 
         /// <summary>
         /// Name of the Nexport redemption processing schedule task
@@ -192,5 +189,9 @@ namespace Nop.Plugin.Misc.Nexport
             "Nexport.ProcessingSupplementalInfoGroupAssociations";
 
         public static string NexportRegistrationFieldsZone = "nexport_registration_fields";
+
+        public static string NexportCustomRegistrationFieldZone = "admin_nexport_custom_registration_field";
+
+        public static string NexportRegistrationFieldPrefix = "NexportCustomProfile";
     }
 }
