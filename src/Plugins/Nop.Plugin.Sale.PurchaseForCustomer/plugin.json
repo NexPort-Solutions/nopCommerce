@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Sale",
+  "FriendlyName": "Purchase for customer",
+  "SystemName": "Sale.PurchaseForCustomer",
+  "Version": "1.00",
+  "SupportedVersions": [ "4.20" ],
+  "Author": "Nexport Solutions",
+  "DisplayOrder": 1002,
+  "FileName": "Nop.Plugin.Sale.PurchaseForCustomer.dll",
+  "Description": "This plugin allows site administrator to manually purchase products on behalf of the customers"
+}

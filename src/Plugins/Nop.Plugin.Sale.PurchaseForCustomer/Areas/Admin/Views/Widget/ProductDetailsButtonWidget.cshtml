@@ -1,0 +1,14 @@
+﻿@using Nop.Web.Areas.Admin.Models.Catalog
+
+@model ProductModel
+
+@if (Model.Id > 0)
+{
+    <div class="purchase-for-customer-widget-container" style="margin-left: 3px;">
+        <button type="submit" id="purchaseForCustomerBtn" class="btn bg-green" name="purchaseforcustomer"
+                onclick="javascript:OpenWindow('@Url.Action("PurchaseDetails", "PurchaseForCustomer", new { productId = Model.Id })', 800, 600, true);return false;">
+            <i class="fa fa-shopping-cart"></i>
+                @T("Admin.Catalog.Products.PurchaseForCustomer")
+        </button>
+    </div>
+}

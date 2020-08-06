@@ -1,0 +1,107 @@
+﻿@model Nop.Plugin.Sale.PurchaseForCustomer.Models.PurchaseForCustomerOrderModel
+
+@{
+    Layout = "_AdminPopupLayout";
+
+    ViewBag.Title = "Purchase product for customers";
+}
+
+@if (ViewBag.RefreshPage == true)
+{
+    var orderMessage = ViewBag.OrderResultMessage as string;
+    <script>
+        @if (!string.IsNullOrWhiteSpace(orderMessage))
+        {
+            <text>alert("@orderMessage");</text>
+        }
+
+        window.close();
+    </script>
+}
+else
+{
+    <form asp-controller="PurchaseForCustomer" asp-action="PurchaseForCustomer"
+          asp-route-productId="@Context.Request.Query["productId"]">
+        <div class="content-header clearfix">
+            <h1 class="pull-left">
+                Purchase for customers
+            </h1>
+            <div class="pull-right">
+                <button type="submit" name="purchase" class="btn bg-blue">
+                    <i class="fa fa-floppy-o"></i>
+                    Purchase
+                </button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="form-horizontal">
+                <div class="panel-group">
+                    <div class="panel panel-default panel-popup">
+                        <div class="panel-body">
+                            <div>
+                                <div class="form-group">
+                                    <div class="col-sm-3">
+                                        <nop-label asp-for="CustomerIds" />
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <nop-select asp-for="CustomerIds" asp-items="Model.AvailableCustomers" asp-multiple="true" asp-required="true" />
+                                        <script>
+                                            $(document).ready(function() {
+                                                var customerIdsInput = $("#@Html.IdFor(model => model.CustomerIds)")
+                                                    .data("kendoMultiSelect");
+                                                customerIdsInput.setOptions({
+                                                    autoClose: false,
+                                                    filter: "contains"
+                                                });
+
+                                                @if (Model.AvailableCustomers.Count == 0)
+                                                {
+                                                    <text>
+                                                        customerIdsInput.setOptions({
+                                                            enable: false,
+                                                            placeholder: "No customer available"
+                                                        });
+                                                        customerIdsInput._placeholder();
+                                                        customerIdsInput._enable();
+                                                    </text>
+                                                }
+                                            });
+                                        </script>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-3">
+                                        <nop-label asp-for="StoreId" />
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <nop-select asp-for="StoreId" asp-items="Model.AvailableStores" asp-required="true" />
+                                        <span asp-validation-for="StoreId"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-3">
+                                        <nop-label asp-for="MarkOrderAsPaid" />
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <nop-editor asp-for="MarkOrderAsPaid" />
+                                        <span asp-validation-for="MarkOrderAsPaid"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-3">
+                                        <nop-label asp-for="NotifyCustomer" />
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <nop-editor asp-for="NotifyCustomer" />
+                                        <span asp-validation-for="NotifyCustomer"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+}
