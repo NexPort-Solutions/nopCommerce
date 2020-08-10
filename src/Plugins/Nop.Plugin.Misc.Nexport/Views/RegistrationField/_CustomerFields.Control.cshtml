@@ -20,12 +20,10 @@
                 {
                     case NexportRegistrationFieldType.Text:
                         <input name="@(controlId)" type="text" class="textbox" id="@(controlId)" />
-                        <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
 
                         break;
                     case NexportRegistrationFieldType.Numeric:
                         <input name="@(controlId)" type="number" class="textbox" id="@(controlId)" />
-                        <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
 
                         break;
                     case NexportRegistrationFieldType.SelectCheckbox:
@@ -92,7 +90,6 @@
                         }
                     case NexportRegistrationFieldType.Email:
                         <input name="@(controlId)" type="email" class="textbox" id="@(controlId)" />
-                        <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
                         <script asp-location="Footer">
                             $(document).ready(function () {
                                 $("#@(controlId)").rules("add", {
@@ -113,7 +110,6 @@
                                 <label for="@(controlId)_No">No</label>
                             </span>
                         </div>
-                        <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
 
                         break;
                     case NexportRegistrationFieldType.DateOnly:
@@ -123,6 +119,10 @@
 
                             <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker"
                                    @if (isMobileDevice) { <text> readonly</text> } />
+                            @if (Model.IsRequired)
+                            {
+                                <nop-required />
+                            }
                             <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
                             <script asp-location="Footer">
                                 $(document).ready(function () {
@@ -151,6 +151,10 @@
 
                             <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker"
                                    @if (isMobileDevice) { <text> readonly</text> } />
+                            @if (Model.IsRequired)
+                            {
+                                <nop-required />
+                            }
                             <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
                             <script asp-location="Footer">
                                 $(document).ready(function () {
@@ -180,10 +184,10 @@
                 }
                 @if (Model.IsRequired)
                 {
-                    <nop-required />
-                    if (Model.Type == NexportRegistrationFieldType.SelectCheckbox ||
-                        Model.Type == NexportRegistrationFieldType.SelectDropDown)
+                    if (Model.Type != NexportRegistrationFieldType.DateOnly &&
+                        Model.Type != NexportRegistrationFieldType.DateTime)
                     {
+                        <nop-required />
                         <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
                     }
                     <script asp-location="Footer">
