@@ -1,6 +1,6 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models
+namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
     public class NexportSupplementalInfoQuestionMappingModel : BaseNopEntityModel
     {

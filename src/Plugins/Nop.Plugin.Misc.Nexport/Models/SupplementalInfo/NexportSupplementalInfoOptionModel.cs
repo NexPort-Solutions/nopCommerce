@@ -5,7 +5,7 @@ using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
-namespace Nop.Plugin.Misc.Nexport.Models
+namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
     public class NexportSupplementalInfoOptionModel : BaseNopEntityModel
     {
