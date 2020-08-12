@@ -376,7 +376,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Added", "The new registration field has been added successfully.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Updated", "The registration field has been updated successfully.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Deleted", "The registration field has been deleted successfully.");
-            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.SupportOnlySingleFieldPerCustomRender", "Only one registration field per custom render supported.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.CustomRenderStoreLimit", "The selected custom render cannot be used for this registration field under the selected store(s).");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.AddNew", "Add a new registration field category");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.EditCategoryDetails", "Edit registration field category details");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.BackToList", "back to registration field category list");
@@ -588,7 +588,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Added");
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Updated");
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.Deleted");
-            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.SupportOnlySingleFieldPerCustomRender");
+            _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Fields.CustomRenderStoreLimit");
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.AddNew");
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.EditCategoryDetails");
             _localizationService.DeletePluginLocaleResource("Admin.Customers.Nexport.RegistrationField.Categories.BackToList");

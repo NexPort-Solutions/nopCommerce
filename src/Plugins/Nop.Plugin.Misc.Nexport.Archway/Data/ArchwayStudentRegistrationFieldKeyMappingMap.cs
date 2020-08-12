@@ -13,7 +13,6 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Data
 
             builder.HasKey(m => m.Id);
 
-            builder.Property(m => m.FieldId);
             builder.Property(m => m.FieldControlName);
             builder.Property(m => m.FieldKey);
 

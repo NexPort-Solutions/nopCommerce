@@ -14,7 +14,7 @@
     {
         <text>
             <div class="inputs custom-attributes">
-                <label asp-for="StoreLocationState"></label>
+                <label asp-for="StoreLocationState" asp-postfix=":"></label>
                 <select asp-for="StoreLocationState" asp-items="Model.AvailableStates"
                         data-trigger="store-location-state-select"
                         data-url="@(Url.RouteUrl("GetArchwayStoreCitiesByState"))"

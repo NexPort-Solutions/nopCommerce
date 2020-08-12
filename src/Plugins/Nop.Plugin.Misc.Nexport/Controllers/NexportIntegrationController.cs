@@ -1947,11 +1947,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!ModelState.IsValid)
                 return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Edit.cshtml", model);
 
-            if (model.Type == NexportRegistrationFieldType.CustomType && registrationField.CustomFieldRender != model.CustomFieldRender)
+            if (model.Type == NexportRegistrationFieldType.CustomType)
             {
-                if (_nexportService.HasCustomRegistrationFieldRender(registrationField.Id, model.CustomFieldRender))
+                if (_nexportService.HasCustomRegistrationFieldRenderForStores(registrationField.Id, model.StoreMappingIds, model.CustomFieldRender))
                 {
-                    _notificationService.ErrorNotification(_localizationService.GetResource("Admin.Customers.Nexport.RegistrationField.Fields.SupportOnlySingleFieldPerCustomRender"));
+                    _notificationService.ErrorNotification(
+                        _localizationService.GetResource("Admin.Customers.Nexport.RegistrationField.Fields.CustomRenderStoreLimit"));
 
                     return RedirectToAction("EditRegistrationField", new { id = registrationField.Id });
                 }

@@ -1932,11 +1932,42 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _eventPublisher.EntityUpdated(queueItem);
         }
 
-        public bool HasCustomRegistrationFieldRender(int fieldId, string customFieldRender)
+        public bool HasCustomRegistrationFieldRenderForStores(int fieldId, IList<int> storeIds, string customFieldRender)
         {
-            return !string.IsNullOrWhiteSpace(customFieldRender) &&
-                   _nexportRegistrationFieldRepository.TableNoTracking
-                       .Any(f => f.CustomFieldRender == customFieldRender);
+            var fieldWithCustomFieldRenders = _nexportRegistrationFieldRepository.TableNoTracking
+                .Where(x => x.CustomFieldRender == customFieldRender);
+
+            if (storeIds.Count > 0)
+            {
+                // Find fields that have same custom field render
+                var fieldWithCustomFieldRenderIds = fieldWithCustomFieldRenders
+                    .Where(x => x.Id != fieldId).Select(x => x.Id);
+
+                foreach (var id in fieldWithCustomFieldRenderIds)
+                {
+                    if (storeIds.Any(storeId =>
+                        _nexportRegistrationFieldStoreMappingRepository.TableNoTracking
+                            .Any(x => x.FieldId == id && x.StoreId == storeId)))
+                        return true;
+                }
+            }
+            else
+            {
+                var availableStoreIds = _storeService.GetAllStores().Select(x => x.Id).ToList();
+
+                var fieldWithCustomFieldRenderIds = fieldWithCustomFieldRenders
+                    .Select(x => x.Id);
+
+                foreach (var id in fieldWithCustomFieldRenderIds)
+                {
+                    if (availableStoreIds.Any(storeId =>
+                        _nexportRegistrationFieldStoreMappingRepository.TableNoTracking
+                            .Any(x => x.FieldId == id && x.StoreId == storeId)))
+                        return true;
+                }
+            }
+
+            return false;
         }
     }
 }

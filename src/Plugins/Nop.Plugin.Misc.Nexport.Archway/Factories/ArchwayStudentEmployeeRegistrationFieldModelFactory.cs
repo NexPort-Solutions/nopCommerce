@@ -74,7 +74,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
                     {
                         var keyMapping =
                             _archwayStudentEmployeeRegistrationFieldService
-                                .GetArchwayStudentRegistrationFieldKeyMapping(fieldId, propAttribute.ControlName);
+                                .GetArchwayStudentRegistrationFieldKeyMapping(propAttribute.ControlName);
                         if (!string.IsNullOrWhiteSpace(keyMapping?.FieldKey))
                         {
                             prop.SetValue(model, keyMapping.FieldKey, null);

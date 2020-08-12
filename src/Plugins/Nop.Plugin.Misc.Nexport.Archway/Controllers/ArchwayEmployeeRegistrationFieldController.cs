@@ -105,7 +105,6 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
                                 .InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(
                                     new ArchwayStudentRegistrationFieldKeyMapping
                                     {
-                                        FieldId = model.FieldId,
                                         FieldControlName = propAttribute.ControlName,
                                         FieldKey = prop.GetValue(model, null)?.ToString()
                                     });

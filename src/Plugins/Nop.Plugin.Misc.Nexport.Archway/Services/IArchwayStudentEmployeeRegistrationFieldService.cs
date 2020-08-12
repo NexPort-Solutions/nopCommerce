@@ -29,7 +29,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
 
         void DeleteArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position);
 
-        ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMapping(int fieldId, string fieldControlName);
+        ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMapping(string fieldControlName);
 
         void InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping);
 

@@ -238,15 +238,15 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             _archwayStoreEmployeePositionRepository.Delete(position);
         }
 
-        public ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMapping(int fieldId, string fieldControlName)
+        public ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMapping(
+            string fieldControlName)
         {
-            if (fieldId < 1 || string.IsNullOrWhiteSpace(fieldControlName))
+            if (string.IsNullOrWhiteSpace(fieldControlName))
                 return null;
 
             return _archwayStudentRegistrationFieldKeyMappingRepository
                 .TableNoTracking
-                .FirstOrDefault(x =>
-                    x.FieldId == fieldId && x.FieldControlName == fieldControlName);
+                .FirstOrDefault(x => x.FieldControlName == fieldControlName);
         }
 
         public void InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(
@@ -256,8 +256,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                 throw new ArgumentNullException(nameof(fieldKeyMapping));
 
             var currentMapping = _archwayStudentRegistrationFieldKeyMappingRepository
-                .Table.FirstOrDefault(x => x.FieldId == fieldKeyMapping.FieldId &&
-                    x.FieldControlName == fieldKeyMapping.FieldControlName);
+                .Table.FirstOrDefault(x => x.FieldControlName == fieldKeyMapping.FieldControlName);
 
             if (currentMapping != null)
             {
@@ -363,7 +362,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
 
             foreach (var field in fields)
             {
-                var fieldKeyMapping = GetArchwayStudentRegistrationFieldKeyMapping(fieldId, field.Key);
+                var fieldKeyMapping = GetArchwayStudentRegistrationFieldKeyMapping(field.Key);
                 if (fieldKeyMapping != null)
                 {
                     InsertArchwayStudentRegistrationFieldAnswer(
