@@ -18,5 +18,9 @@
         public static string ArchwayStoreRecordAllNoPaginationCacheKey => "Nop.nexport.archway.storerecord.all";
 
         public static string ArchwayStoreEmployeePositionAllNoPaginationCacheKey => "Nop.nexport.archway.employeeposition.all";
+
+        public static string CustomEnrollmentRouteSettingKey = "nexport.archway.enrollment.route";
+
+        public static string CustomEnrollmentRouteControlSettingKey = "nexport.archway.enrollment.route.enabled";
     }
 }

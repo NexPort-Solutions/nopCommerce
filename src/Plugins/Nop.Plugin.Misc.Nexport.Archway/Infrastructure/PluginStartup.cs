@@ -5,6 +5,7 @@ using FluentMigrator.Runner.Exceptions;
 using FluentMigrator.Runner.Initialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -119,6 +120,18 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
                         serviceScope.ServiceProvider.GetRequiredService<ArchwayPluginService>();
 
                     pluginService.AddOrUpdateResources();
+                }
+
+                var customEnrollmentRouteControl =
+                    settingService.GetSettingByKey<bool>(PluginDefaults.CustomEnrollmentRouteControlSettingKey);
+                if (customEnrollmentRouteControl)
+                {
+                    var customEnrollmentRoute = settingService.GetSettingByKey<string>(PluginDefaults.CustomEnrollmentRouteSettingKey);
+                    if (!string.IsNullOrWhiteSpace(customEnrollmentRoute))
+                    {
+                        var options = new RewriteOptions().AddRedirect("cart", customEnrollmentRoute);
+                        application.UseRewriter(options);
+                    }
                 }
             }
         }

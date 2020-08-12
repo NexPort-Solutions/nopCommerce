@@ -34,13 +34,13 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
 
             if (settingService != null && storeContext != null)
             {
-                var customEnrollmentRouteSetting = settingService.GetSetting("nexport.archway.enrollment.route",
+                var customEnrollmentRouteSetting = settingService.GetSetting(PluginDefaults.CustomEnrollmentRouteSettingKey,
                     storeContext.CurrentStore.Id, true);
                 if (customEnrollmentRouteSetting != null)
                 {
                     var customEnrollmentRoute = !string.IsNullOrWhiteSpace(customEnrollmentRouteSetting.Value)
                         ? customEnrollmentRouteSetting.Value
-                        : "enroll/";
+                        : "enroll";
 
                     routeBuilder.MapLocalizedRoute("ArchwayCustomEnrollmentRoute", customEnrollmentRoute,
                         new {controller = "ShoppingCart", action = "Cart"});
