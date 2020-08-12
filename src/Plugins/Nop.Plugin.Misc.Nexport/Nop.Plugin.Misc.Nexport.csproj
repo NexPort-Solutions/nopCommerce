@@ -391,4 +391,9 @@
     <MSBuild Projects="@(ClearPluginAssemblies)" Properties="PluginPath=$(MSBuildProjectDirectory)\$(OutDir)" Targets="NopClear" />
   </Target>
 
+  <Target Name="CleanUpExtra" AfterTargets="NopTarget">
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\$(OutDir)\de-DE" />
+    <Delete Files="$(MSBuildProjectDirectory)\$(OutDir)\e_sqlite3.dll" />
+  </Target>
+
 </Project>
