@@ -13,6 +13,7 @@ using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Tax;
+using Nop.Core.Infrastructure;
 using Nop.Services.Affiliates;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
@@ -479,16 +480,15 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
                     var order = SaveOrderDetails(processPaymentRequest, processPaymentResult, details);
                     result.PlacedOrder = order;
 
-                    //move shopping cart items to order items
+                    // Move temporarily shopping cart items to order items
                     MoveTempShoppingCartItemToOrderItems(details, order);
 
                     if (notifyCustomer)
                         SendNotificationsToCustomerAndSaveNotes(order);
 
-                    //check order status
-                    CheckOrderStatus(order);
+                    // Check order status using the correct order processing service
+                    EngineContext.Current.Resolve<IOrderProcessingService>().CheckOrderStatus(order);
 
-                    //raise event
                     _eventPublisher.Publish(new OrderPlacedEvent(order));
 
                     if (order.PaymentStatus == PaymentStatus.Paid)

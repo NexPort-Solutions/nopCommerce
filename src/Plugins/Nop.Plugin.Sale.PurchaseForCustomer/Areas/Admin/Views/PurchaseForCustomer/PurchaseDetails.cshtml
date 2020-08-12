@@ -1,9 +1,14 @@
-﻿@model Nop.Plugin.Sale.PurchaseForCustomer.Models.PurchaseForCustomerOrderModel
+﻿@using Nop.Services.Catalog
+@model Nop.Plugin.Sale.PurchaseForCustomer.Models.PurchaseForCustomerOrderModel
+
+@inject IProductService productService
 
 @{
     Layout = "_AdminPopupLayout";
 
     ViewBag.Title = "Purchase product for customers";
+
+    var product = productService.GetProductById(Model.ProductId);
 }
 
 @if (ViewBag.RefreshPage == true)
@@ -79,15 +84,18 @@ else
                                         <span asp-validation-for="StoreId"></span>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <div class="col-sm-3">
-                                        <nop-label asp-for="MarkOrderAsPaid" />
+                                @if (product.Price > 0.0M)
+                                {
+                                    <div class="form-group">
+                                        <div class="col-sm-3">
+                                            <nop-label asp-for="MarkOrderAsPaid" />
+                                        </div>
+                                        <div class="col-sm-9">
+                                            <nop-editor asp-for="MarkOrderAsPaid" />
+                                            <span asp-validation-for="MarkOrderAsPaid"></span>
+                                        </div>
                                     </div>
-                                    <div class="col-sm-9">
-                                        <nop-editor asp-for="MarkOrderAsPaid" />
-                                        <span asp-validation-for="MarkOrderAsPaid"></span>
-                                    </div>
-                                </div>
+                                }
                                 <div class="form-group">
                                     <div class="col-sm-3">
                                         <nop-label asp-for="NotifyCustomer" />
