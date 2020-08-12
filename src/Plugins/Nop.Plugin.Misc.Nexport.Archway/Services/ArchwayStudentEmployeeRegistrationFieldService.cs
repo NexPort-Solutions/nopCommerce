@@ -62,8 +62,9 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             try
             {
                 var fileExtension = _fileProvider.GetFileExtension(storeDataFile.FileName);
-                if (!fileExtension?.Equals(".csv", StringComparison.InvariantCultureIgnoreCase) ?? true)
-                    throw new Exception("Only csv files are supported");
+                if (fileExtension == null || (!fileExtension.Equals(".csv", StringComparison.InvariantCultureIgnoreCase) &&
+                                              !fileExtension.Equals(".txt", StringComparison.InvariantCultureIgnoreCase)))
+                    throw new Exception("Only csv or txt files are supported");
 
                 var archwayStoreDataPath = _fileProvider.GetAbsolutePath(PluginDefaults.UploadPath);
 

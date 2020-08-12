@@ -12,7 +12,7 @@
 
 @if (Model != null)
 {
-    var allowedFileExtensions = "'csv'";
+    var allowedFileExtensions = "'csv', 'txt'";
 
     <input type="hidden" value="@Model.FieldId" data-id="registrationFieldId" />
 
@@ -118,7 +118,6 @@
                         if (!string.IsNullOrEmpty(allowedFileExtensions))
                         {
                             @Html.Raw("allowedExtensions: [" + allowedFileExtensions + "]")
-                            ;
                         }
                     }
                 }
