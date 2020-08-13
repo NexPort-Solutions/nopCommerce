@@ -1293,6 +1293,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 throw new ArgumentNullException(nameof(answer));
 
             if (_nexportSupplementalInfoAnswerRepository.Table.Any(a =>
+                a.CustomerId == answer.CustomerId &&
                 a.OptionId == answer.OptionId &&
                 a.QuestionId == answer.QuestionId &&
                 a.StoreId == answer.StoreId))
