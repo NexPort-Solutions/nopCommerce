@@ -129,7 +129,8 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
                     var customEnrollmentRoute = settingService.GetSettingByKey<string>(PluginDefaults.CustomEnrollmentRouteSettingKey);
                     if (!string.IsNullOrWhiteSpace(customEnrollmentRoute))
                     {
-                        var options = new RewriteOptions().AddRedirect("cart", customEnrollmentRoute);
+                        var options = new RewriteOptions().AddRedirect("^cart$", customEnrollmentRoute);
+
                         application.UseRewriter(options);
                     }
                 }
