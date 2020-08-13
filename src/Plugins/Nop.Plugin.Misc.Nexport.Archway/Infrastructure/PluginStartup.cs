@@ -14,6 +14,7 @@ using Nop.Core.Infrastructure;
 using Nop.Services.Configuration;
 using Nop.Web.Framework.Infrastructure.Extensions;
 using Nop.Plugin.Misc.Nexport.Archway.Data;
+using Nop.Plugin.Misc.Nexport.Archway.Infrastructure.RoutingRule;
 using Nop.Plugin.Misc.Nexport.Archway.Migrations;
 using Nop.Plugin.Misc.Nexport.Archway.Services;
 using ILogger = Nop.Services.Logging.ILogger;
@@ -129,8 +130,8 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
                     var customEnrollmentRoute = settingService.GetSettingByKey<string>(PluginDefaults.CustomEnrollmentRouteSettingKey);
                     if (!string.IsNullOrWhiteSpace(customEnrollmentRoute))
                     {
-                        var options = new RewriteOptions().AddRedirect("^cart$", customEnrollmentRoute);
-
+                        var customShoppingCartRoutingRule = new CustomShoppingCartRoutingRule(customEnrollmentRoute);
+                        var options = new RewriteOptions().Add(customShoppingCartRoutingRule);
                         application.UseRewriter(options);
                     }
                 }
