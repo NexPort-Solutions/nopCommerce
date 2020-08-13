@@ -46,6 +46,7 @@
             $.ajax({
                 url: url,
                 type: "GET",
+                async: false,
                 success: function(result) {
                     if (result && result.RedirectUrl) {
                         window.open(result.RedirectUrl, "_blank");
