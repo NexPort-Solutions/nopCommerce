@@ -263,6 +263,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchasePassedCourses.Hint", "Allowing users to purchase products that associated with courses in Nexport that they have passed previously");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.HideSectionCEUsInProductPage", "Hide Nexport section CEUs");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.HideSectionCEUsInProductPage.Hint", "Hide Nexport section CEUs information in the product page");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.HideAddToCartForIneligibleProducts","Hide Add to cart for ineligible product");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.HideAddToCartForIneligibleProducts.Hint", "Hide Add to cart button for any product that customers are not allowed to purchase");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.NexportProductName", "Product name");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.NexportProductName.Hint", "The name of the product in Nexport");
@@ -435,6 +437,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.LimitSingleProductPurchase.Hint", "Allowing customers to purchase single product within the category");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.AutoSwapProductPurchase", "Auto swapping between individual product");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.AutoSwapProductPurchase.Hint", "When customers select a different product within the category, the current product in the shopping cart will be replaced automatically with that new product item.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.AllowProductPurchaseInCategoryDuringEnrollment", "Allow customers with existing enrollments to purchase the product");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.AllowProductPurchaseInCategoryDuringEnrollment.Hint", "Allowing customers that current have enrollments in Nexport to purchase the product in this category");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.FailedToRedirectToNexport", "Error occurred during the transferring to Nexport. You might not have an active subscription in Nexport Campus. Please contact customer service for further assistance.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.FailedToRedeemForUser", "Failed to redeem Nexport invoice item {0} for user {1}");
@@ -443,7 +447,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.DuplicatedProduct", "Cannot add duplicated product to the cart due to store restriction.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowed", "Cannot purchase more than one for this product due to store restriction.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.SingleProductInCatalog", "You can only purchase single product within the same catalog.");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart", "Cannot purchase more than one for some products in this shopping cart due to store restriction");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart", "Cannot purchase more than one for some products in this shopping cart due to store restriction.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase", "Cannot purchase this product.");
         }
 
         public void DeleteResources()
@@ -480,6 +485,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.AllowRepurchasePassedCourses.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.HideSectionCEUsInProductPage");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.HideSectionCEUsInProductPage.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.HideAddToCartForIneligibleProducts");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.HideAddToCartForIneligibleProducts.Hint");
 
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.NexportProductName");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.NexportProductName.Hint");
@@ -646,6 +653,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Category.LimitSingleProductPurchase.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Category.AutoSwapProductPurchase");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Category.AutoSwapProductPurchase.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Category.AllowProductPurchaseInCategoryDuringEnrollment");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Category.AllowProductPurchaseInCategoryDuringEnrollment.Hint");
 
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.FailedToRedirectToNexport");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.FailedToRedeemForUser");
@@ -655,6 +664,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowed");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.SingleProductInCatalog");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase");
         }
     }
 }

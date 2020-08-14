@@ -1,5 +1,4 @@
 ﻿using Nop.Web.Areas.Admin.Models.Catalog;
-using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Category
@@ -11,5 +10,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.Category
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.Category.AutoSwapProductPurchase")]
         public bool AutoSwapProductPurchase { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.Category.AllowProductPurchaseInCategoryDuringEnrollment")]
+        public bool AllowProductPurchaseInCategoryDuringEnrollment { get; set; }
     }
 }

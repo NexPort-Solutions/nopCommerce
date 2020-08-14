@@ -204,24 +204,42 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                             var product = _productService.GetProductById(productId);
                             if (product != null)
                             {
-                                var productInTheSameCategory =
-                                    _nexportService.CanPurchaseProductInNexportCategory(product);
-
-                                if (productInTheSameCategory.Item1 != null)
+                                var customer = _workContext.CurrentCustomer;
+                                if (customer.IsRegistered())
                                 {
-                                    var autoSwapProduct = _genericAttributeService.GetAttribute<bool>(
-                                        productInTheSameCategory.Item2, NexportDefaults.AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY);
-                                    if (autoSwapProduct)
-                                    {
-                                        _shoppingCartService.DeleteShoppingCartItem(productInTheSameCategory.Item1);
-                                    }
-                                    else
+                                    var canPurchaseProduct =
+                                        _nexportService.CanRepurchaseNexportProduct(product, _workContext.CurrentCustomer);
+
+                                    if (!canPurchaseProduct)
                                     {
                                         context.Result = new JsonResult(new
                                         {
                                             success = false,
-                                            message = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.SingleProductInCatalog")
+                                            message = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase")
                                         });
+                                    }
+                                }
+                                else
+                                {
+                                    var productInTheSameCategory =
+                                        _nexportService.CanPurchaseProductInNexportCategory(product, store.Id);
+
+                                    if (productInTheSameCategory.Item1 != null)
+                                    {
+                                        var autoSwapProduct = _genericAttributeService.GetAttribute<bool>(
+                                            productInTheSameCategory.Item2, NexportDefaults.AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY);
+                                        if (autoSwapProduct)
+                                        {
+                                            _shoppingCartService.DeleteShoppingCartItem(productInTheSameCategory.Item1);
+                                        }
+                                        else
+                                        {
+                                            context.Result = new JsonResult(new
+                                            {
+                                                success = false,
+                                                message = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.SingleProductInCatalog")
+                                            });
+                                        }
                                     }
                                 }
                             }

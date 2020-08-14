@@ -62,7 +62,11 @@ namespace Nop.Plugin.Misc.Nexport.Filters
 
                             if (items.Count > 0)
                             {
-                                productDetailsModel.AddToCart.DisableBuyButton = true;
+                                if (_genericAttributeService.GetAttribute<bool>(store,
+                                    NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
+                                {
+                                    productDetailsModel.AddToCart.DisableBuyButton = true;
+                                }
                             }
                             else
                             {
@@ -70,7 +74,11 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                                 var canPurchaseProduct =
                                     _nexportService.CanRepurchaseNexportProduct(product, customer);
 
-                                productDetailsModel.AddToCart.DisableBuyButton = !canPurchaseProduct;
+                                if (_genericAttributeService.GetAttribute<bool>(store,
+                                    NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
+                                {
+                                    productDetailsModel.AddToCart.DisableBuyButton = !canPurchaseProduct;
+                                }
                             }
                         }
                     }

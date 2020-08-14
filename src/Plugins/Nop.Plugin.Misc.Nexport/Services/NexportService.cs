@@ -34,7 +34,6 @@ using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
 using Nop.Services.Helpers;
 using Nop.Services.Plugins;
-using StackExchange.Profiling.Internal;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -1202,6 +1201,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
+        [CanBeNull]
         public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollementExpirationDate)? VerifyNexportEnrollmentStatus(Product product,
             Customer customer, int? storeId = null)
         {
@@ -1268,7 +1268,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
             catch (Exception ex)
             {
-                var errMsg = $"Cannot verify nexport enrollment status of the product {productMapping.NexportProductName} [{productMapping.NexportSyllabusId.Value}] for user {nexportUserMapping.NexportUserId}";
+                var errMsg = $"Cannot verify Nexport enrollment status of the product {productMapping.NexportProductName} [{productMapping.NexportSyllabusId.Value}] for user {nexportUserMapping.NexportUserId}";
                 _logger.Error($"{errMsg}: {ex.Message}", ex);
 
                 throw;
@@ -1279,6 +1279,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public bool CanRepurchaseNexportProduct(Product product, Customer customer)
         {
+            if (product == null)
+                throw new ArgumentNullException(nameof(product));
+
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
             var store = _storeContext.CurrentStore;
             var storeModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(
                 store, "NexportStoreSaleModel", store.Id);
@@ -1338,9 +1344,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                                         return true;
                                     }
+
+                                    return CanRepurchaseProductInNexportCategory(product, customer, store.Id);
                                 }
 
-                                return false;
+                                return CanRepurchaseProductInNexportCategory(product, customer, store.Id);
+                            }
+
+                        case var status
+                            when status.Value.Phase == Enums.PhaseEnum.NotStarted:
+                            {
+                                return CanRepurchaseProductInNexportCategory(product, customer, store.Id);
                             }
                     }
                 }
@@ -1354,11 +1368,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return true;
         }
 
-        public (ShoppingCartItem, Category) CanPurchaseProductInNexportCategory(Product product)
+        public (ShoppingCartItem, Category) CanPurchaseProductInNexportCategory(Product product, int storeId)
         {
-            var productCategories = _categoryService.GetProductCategoriesByProductId(product.Id, _storeContext.CurrentStore.Id);
+            if (product == null)
+                throw new ArgumentNullException(nameof(product));
+
+            if (storeId < 1)
+                return (null, null);
+
+            var productCategories = _categoryService.GetProductCategoriesByProductId(product.Id, storeId);
             var shoppingCartItemsExceptCurrentProduct = _shoppingCartService
-                .GetShoppingCart(_workContext.CurrentCustomer, ShoppingCartType.ShoppingCart, _storeContext.CurrentStore.Id)
+                .GetShoppingCart(_workContext.CurrentCustomer, ShoppingCartType.ShoppingCart, storeId)
                 .Where(x => x.ProductId != product.Id)
                 .ToList();
 
@@ -1381,6 +1401,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
 
             return (null, null);
+        }
+
+        public bool CanRepurchaseProductInNexportCategory(Product product, Customer customer, int storeId)
+        {
+            if (product == null)
+                throw new ArgumentNullException(nameof(product));
+
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            if (storeId < 1)
+                return false;
+
+            var productCategories = _categoryService.GetProductCategoriesByProductId(product.Id, storeId);
+
+            return productCategories.Select(productCategory =>
+                _genericAttributeService.GetAttribute(
+                    productCategory.Category,
+                    NexportDefaults.ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT,
+                    defaultValue: false))
+                .FirstOrDefault();
         }
 
         public string GetStoreName(int storeId)

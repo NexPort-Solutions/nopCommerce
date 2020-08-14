@@ -50,6 +50,8 @@ namespace Nop.Plugin.Misc.Nexport.Components
                 NexportDefaults.NEXPORT_SUBSCRIPTION_ORGANIZATION_ID_SETTING_KEY, store.Id);
             model.HideSectionCEUsInProductPage = _genericAttributeService.GetAttribute<bool>(store,
                 NexportDefaults.HIDE_SECTION_CEUS_IN_PRODUCT_PAGE_SETTING_KEY, store.Id);
+            model.HideAddToCartForIneligibleProducts = _genericAttributeService.GetAttribute<bool>(store,
+                NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id);
             model.SaleModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(store,
                 NexportDefaults.NEXPORT_STORE_SALE_MODEL_SETTING_KEY, store.Id);
             model.AllowRepurchaseFailedCourses = _genericAttributeService.GetAttribute<bool>(store,

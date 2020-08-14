@@ -23,5 +23,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.Stores
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.HideSectionCEUsInProductPage")]
         public bool HideSectionCEUsInProductPage { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.HideAddToCartForIneligibleProducts")]
+        public bool HideAddToCartForIneligibleProducts { get; set; }
     }
 }

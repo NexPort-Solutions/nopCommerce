@@ -173,6 +173,8 @@ namespace Nop.Plugin.Misc.Nexport
 
         public const string HIDE_SECTION_CEUS_IN_PRODUCT_PAGE_SETTING_KEY = "HideSectionCEUsInProductPage";
 
+        public const string HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY = "HideAddToCartForIneligibleProducts";
+
         public const string ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY = "AllowRepurchaseFailedCoursesFromNexport";
 
         public const string ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY = "AllowRepurchasePassedCoursesFromNexport";
@@ -180,6 +182,8 @@ namespace Nop.Plugin.Misc.Nexport
         public const string LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY = "LimitSingleProductPurchaseInCategory";
 
         public const string AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY = "AutoSwapProductPurchaseInCategory";
+
+        public const string ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT = "AllowProductPurchaseInCategoryDuringEnrollment";
 
         public const string EDIT_CUSTOMER_NEXPORT_SUPPLEMENTAL_INFO_ANSWER_ACTIVITY_LOG_TYPE = "Nexport.EditCustomerSupplementalInfoAnswer";
 

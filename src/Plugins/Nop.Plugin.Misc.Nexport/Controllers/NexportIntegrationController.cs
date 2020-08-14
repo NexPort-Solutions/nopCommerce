@@ -1011,6 +1011,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _genericAttributeService.SaveAttribute(category, NexportDefaults.AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY,
                 model.AutoSwapProductPurchase);
 
+            _genericAttributeService.SaveAttribute(category, NexportDefaults.ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT,
+                model.AllowProductPurchaseInCategoryDuringEnrollment);
+
             _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Catalog.Categories.Updated"));
 
             return RedirectToAction("Edit", "Category", new { id = category.Id });

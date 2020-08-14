@@ -45,8 +45,11 @@ namespace Nop.Plugin.Misc.Nexport.Components
             model.LimitSingleProductPurchase = _genericAttributeService.GetAttribute<bool>(category,
                 NexportDefaults.LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY);
 
-            model.AutoSwapProductPurchase = _genericAttributeService.GetAttribute<bool>(category,
+            model.AutoSwapProductPurchase = _genericAttributeService.GetAttribute(category,
                 NexportDefaults.AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY, defaultValue: true);
+
+            model.AllowProductPurchaseInCategoryDuringEnrollment = _genericAttributeService.GetAttribute<bool>(category,
+                NexportDefaults.ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT);
 
             return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Category/NexportCategoryDetails.cshtml", model);
         }

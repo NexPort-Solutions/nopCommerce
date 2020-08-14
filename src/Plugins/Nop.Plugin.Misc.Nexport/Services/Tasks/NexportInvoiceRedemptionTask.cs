@@ -167,6 +167,16 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                                             RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption);
                                                                         break;
                                                                     }
+
+                                                                case var status
+                                                                    when status.Value.Phase == Enums.PhaseEnum.NotStarted &&
+                                                                        status.Value.enrollmentExpirationDate.HasValue &&
+                                                                        DateTime.UtcNow > status.Value.enrollmentExpirationDate.Value:
+                                                                    {
+                                                                        _nexportService.RedeemNexportInvoiceItem(invoiceItem, queueItem.RedeemingUserId,
+                                                                            RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption);
+                                                                        break;
+                                                                    }
                                                             }
                                                         }
                                                         else
