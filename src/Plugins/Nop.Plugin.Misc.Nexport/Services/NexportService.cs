@@ -352,16 +352,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                var page = 0;
-                var remainderItemsCount = 0;
+                var page = 1;
+                int remainderItemsCount;
                 do
                 {
                     var result = _nexportApiService.GetNexportOrganizations(_nexportSettings.Url,
                         _nexportSettings.AuthenticationToken, _nexportSettings.RootOrganizationId.Value, page);
-
-                    page++;
-                    remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
                     items.AddRange(result.OrganizationList);
+
+                    remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+                    page++;
                 } while (remainderItemsCount > -1);
             }
             catch (ApiException e)
@@ -380,17 +380,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 try
                 {
-                    var page = 0;
-                    var remainderItemsCount = 0;
+                    var page = 1;
+                    int remainderItemsCount;
                     do
                     {
                         var result = _nexportApiService.GetNexportCatalogs(_nexportSettings.Url,
                             _nexportSettings.AuthenticationToken, orgId.Value, page);
 
-                        page++;
-                        remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
-
                         items.AddRange(result.CatalogList);
+
+                        remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+                        page++;
                     } while (remainderItemsCount > -1);
                 }
                 catch (ApiException e)
@@ -463,17 +463,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 try
                 {
-                    var page = 0;
-                    var remainderItemsCount = 0;
+                    var page = 1;
+                    int remainderItemsCount;
                     do
                     {
                         var result = _nexportApiService.GetNexportSyllabuses(_nexportSettings.Url,
                             _nexportSettings.AuthenticationToken, catalogId.Value, page);
 
-                        page++;
-                        remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
-
                         items.AddRange(result.SyllabusList);
+
+                        remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+                        page++;
                     } while (remainderItemsCount > -1);
                 }
                 catch (ApiException e)
