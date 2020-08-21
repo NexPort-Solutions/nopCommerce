@@ -406,6 +406,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 model.AllowRepurchasePassedCourses, store.Id);
             _genericAttributeService.SaveAttribute(store, NexportDefaults.HIDE_SECTION_CEUS_IN_PRODUCT_PAGE_SETTING_KEY,
                 model.HideSectionCEUsInProductPage, store.Id);
+            _genericAttributeService.SaveAttribute(store, NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY,
+                model.HideAddToCartForIneligibleProducts, store.Id);
 
             _notificationService.SuccessNotification("Success update Nexport store configuration");
 
