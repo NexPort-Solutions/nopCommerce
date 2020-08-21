@@ -165,11 +165,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result = new NexportUserListResponse
             {
-                UserList = response.Data,
-                TotalRecord = int.Parse(response.Headers["X-Total-Count"][0]),
-                RecordPerPage = int.Parse(response.Headers["X-Per-Page"][0]),
-                CurrentPage = int.Parse(response.Headers["X-Page"][0])
+                UserList = response.Data
             };
+
+            if (response.Headers.ContainsKey("X-Total-Count"))
+                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Per-Page"))
+                result.TotalRecord = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Page"))
+                result.TotalRecord = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }
@@ -272,11 +278,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result = new NexportDirectoryResponse
             {
-                DirectoryList = response.Data,
-                TotalRecord = int.Parse(response.Headers["X-Total-Count"][0]),
-                RecordPerPage = int.Parse(response.Headers["X-Per-Page"][0]),
-                CurrentPage = int.Parse(response.Headers["X-Page"][0])
+                DirectoryList = response.Data
             };
+
+            if (response.Headers.ContainsKey("X-Total-Count"))
+                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Per-Page"))
+                result.TotalRecord = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Page"))
+                result.TotalRecord = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }
@@ -301,11 +313,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result = new NexportOrganizationResponse
             {
-                OrganizationList = response.Data,
-                TotalRecord = int.Parse(response.Headers["X-Total-Count"][0]),
-                RecordPerPage = int.Parse(response.Headers["X-Per-Page"][0]),
-                CurrentPage = int.Parse(response.Headers["X-Page"][0])
+                OrganizationList = response.Data
             };
+
+            if (response.Headers.ContainsKey("X-Total-Count"))
+                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Per-Page"))
+                result.TotalRecord = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Page"))
+                result.TotalRecord = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }
@@ -330,11 +348,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result = new NexportSubscriptionsResponse
             {
-                Subscriptions = response.Data,
-                TotalRecord = int.Parse(response.Headers["X-Total-Count"][0]),
-                RecordPerPage = int.Parse(response.Headers["X-Per-Page"][0]),
-                CurrentPage = int.Parse(response.Headers["X-Page"][0])
+                Subscriptions = response.Data
             };
+
+            if (response.Headers.ContainsKey("X-Total-Count"))
+                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Per-Page"))
+                result.TotalRecord = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Page"))
+                result.TotalRecord = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }
@@ -360,11 +384,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result = new NexportCatalogResponse
             {
-                CatalogList = response.Data.Catalogs,
-                TotalRecord = int.Parse(response.Headers["X-Total-Count"][0]),
-                RecordPerPage = int.Parse(response.Headers["X-Per-Page"][0]),
-                CurrentPage = int.Parse(response.Headers["X-Page"][0])
+                CatalogList = response.Data.Catalogs
             };
+
+            if (response.Headers.ContainsKey("X-Total-Count"))
+                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Per-Page"))
+                result.TotalRecord = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Page"))
+                result.TotalRecord = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }
@@ -452,11 +482,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result = new NexportSyllabusResponse
             {
-                SyllabusList = response.Data,
-                TotalRecord = int.Parse(response.Headers["X-Total-Count"][0]),
-                RecordPerPage = int.Parse(response.Headers["X-Per-Page"][0]),
-                CurrentPage = int.Parse(response.Headers["X-Page"][0])
+                SyllabusList = response.Data
             };
+
+            if (response.Headers.ContainsKey("X-Total-Count"))
+                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Per-Page"))
+                result.TotalRecord = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Page"))
+                result.TotalRecord = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }

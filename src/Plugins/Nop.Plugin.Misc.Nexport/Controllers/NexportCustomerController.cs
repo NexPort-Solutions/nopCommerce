@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using NexportApi.Client;
 using Nop.Core;
 using Nop.Core.Domain;
 using Nop.Core.Domain.Catalog;
@@ -403,15 +404,18 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             if (ModelState.IsValid)
             {
-                var validationResult = (_customerRegistrationService as NexportCustomerRegistrationService)?.ValidateNexportCustomer(model.EmailOrUsername, model.Password);
-
-                if (validationResult != null)
+                try
                 {
-                    var loginResult = validationResult.LoginResult;
+                    var validationResult = (_customerRegistrationService as NexportCustomerRegistrationService)?
+                        .ValidateNexportCustomer(model.EmailOrUsername, model.Password);
 
-                    switch (loginResult)
+                    if (validationResult != null)
                     {
-                        case CustomerLoginResults.Successful:
+                        var loginResult = validationResult.LoginResult;
+
+                        switch (loginResult)
+                        {
+                            case CustomerLoginResults.Successful:
                             {
                                 Customer customer;
 
@@ -444,26 +448,38 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                                 return Redirect(returnUrl);
                             }
-                        case CustomerLoginResults.CustomerNotExist:
-                            ModelState.AddModelError("", _localizationService.GetResource("Account.Login.WrongCredentials.CustomerNotExist"));
-                            break;
-                        case CustomerLoginResults.Deleted:
-                            ModelState.AddModelError("", _localizationService.GetResource("Account.Login.WrongCredentials.Deleted"));
-                            break;
-                        case CustomerLoginResults.NotActive:
-                            ModelState.AddModelError("", _localizationService.GetResource("Account.Login.WrongCredentials.NotActive"));
-                            break;
-                        case CustomerLoginResults.NotRegistered:
-                            ModelState.AddModelError("", _localizationService.GetResource("Account.Login.WrongCredentials.NotRegistered"));
-                            break;
-                        case CustomerLoginResults.LockedOut:
-                            ModelState.AddModelError("", _localizationService.GetResource("Account.Login.WrongCredentials.LockedOut"));
-                            break;
-                        case CustomerLoginResults.WrongPassword:
-                        default:
-                            ModelState.AddModelError("", _localizationService.GetResource("Account.Login.WrongCredentials"));
-                            break;
+                            case CustomerLoginResults.CustomerNotExist:
+                                ModelState.AddModelError("", _localizationService.GetResource("Account.Login.WrongCredentials.CustomerNotExist"));
+                                break;
+                            case CustomerLoginResults.Deleted:
+                                ModelState.AddModelError("", _localizationService.GetResource("Account.Login.WrongCredentials.Deleted"));
+                                break;
+                            case CustomerLoginResults.NotActive:
+                                ModelState.AddModelError("", _localizationService.GetResource("Account.Login.WrongCredentials.NotActive"));
+                                break;
+                            case CustomerLoginResults.NotRegistered:
+                                ModelState.AddModelError("", _localizationService.GetResource("Account.Login.WrongCredentials.NotRegistered"));
+                                break;
+                            case CustomerLoginResults.LockedOut:
+                                ModelState.AddModelError("", _localizationService.GetResource("Account.Login.WrongCredentials.LockedOut"));
+                                break;
+                            default:
+                                ModelState.AddModelError("", _localizationService.GetResource("Account.Login.WrongCredentials"));
+                                break;
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    var errorMsg = $"Cannot sign in customer with the given email/username {model.EmailOrUsername}.";
+
+                    if (ex is ApiException exception)
+                    {
+                        errorMsg += $" ({exception.Message})";
+                    }
+
+                    _logger.Error(errorMsg, ex);
+                    ModelState.AddModelError("", errorMsg);
                 }
             }
 

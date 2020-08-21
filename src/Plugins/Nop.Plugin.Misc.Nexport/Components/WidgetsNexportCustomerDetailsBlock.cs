@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using Microsoft.AspNetCore.Mvc;
+using NexportApi.Client;
 using Nop.Core.Domain.Customers;
-using Nop.Plugin.Misc.Nexport.Factories;
-using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Logging;
+using Nop.Services.Messages;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Web.Framework.Components;
+using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Services;
 
 namespace Nop.Plugin.Misc.Nexport.Components
 {
@@ -13,13 +17,19 @@ namespace Nop.Plugin.Misc.Nexport.Components
     {
         private readonly NexportService _nexportService;
         private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+        private readonly INotificationService _notificationService;
+        private readonly ILogger _logger;
 
         public WidgetsNexportCustomerDetailsBlock(
             NexportService nexportService,
-            INexportPluginModelFactory nexportPluginModelFactory)
+            INexportPluginModelFactory nexportPluginModelFactory,
+            INotificationService notificationService,
+            ILogger logger)
         {
             _nexportService = nexportService;
             _nexportPluginModelFactory = nexportPluginModelFactory;
+            _notificationService = notificationService;
+            _logger = logger;
         }
 
         public IViewComponentResult Invoke(string widgetZone, object additionalData)
@@ -29,31 +39,49 @@ namespace Nop.Plugin.Misc.Nexport.Components
             if (customerModel.Id == 0)
                 return Content("");
 
-            var model = _nexportPluginModelFactory.PrepareNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
-
-            var mapping = _nexportService.FindUserMappingByCustomerId(customerModel.Id);
-            if (mapping != null)
+            try
             {
-                var nexportUser = _nexportService.GetNexportUser(mapping.NexportUserId);
+                var model =
+                    _nexportPluginModelFactory.PrepareNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
 
-                if (nexportUser != null)
+                var mapping = _nexportService.FindUserMappingByCustomerId(customerModel.Id);
+                if (mapping != null)
                 {
-                    model.NexportEmail = nexportUser.InternalEmail;
-                    if (nexportUser.OwnerOrgId != null)
-                    {
-                        model.OwnerOrgId = nexportUser.OwnerOrgId;
-                    }
+                    var nexportUser = _nexportService.GetNexportUser(mapping.NexportUserId);
 
-                    if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgShortName))
+                    if (nexportUser != null)
                     {
-                        model.OwnerOrgShortName = nexportUser.OwnerOrgShortName;
+                        model.NexportEmail = nexportUser.InternalEmail;
+                        if (nexportUser.OwnerOrgId != null)
+                        {
+                            model.OwnerOrgId = nexportUser.OwnerOrgId;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgShortName))
+                        {
+                            model.OwnerOrgShortName = nexportUser.OwnerOrgShortName;
+                        }
                     }
                 }
+
+                model.Editable = true;
+
+                return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportCustomerDetails.cshtml", model);
             }
+            catch (Exception ex)
+            {
+                var errorMsg = $"Unable to retrieve user details from Nexport for customer {customerModel.Id}";
 
-            model.Editable = true;
+                if (ex is ApiException exception)
+                {
+                    errorMsg += $" ({exception.Message})";
+                }
 
-            return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportCustomerDetails.cshtml", model);
+                _logger.Error(errorMsg, ex);
+                _notificationService.ErrorNotification(errorMsg);
+
+                return Content("");
+            }
         }
     }
 }

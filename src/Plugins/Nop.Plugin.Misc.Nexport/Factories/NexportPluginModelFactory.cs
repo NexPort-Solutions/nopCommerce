@@ -194,13 +194,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 if (model.Type == NexportProductTypeEnum.Section)
                 {
                     var sectionDetails = _nexportService.GetSectionDetails(model.NexportSyllabusId.Value);
-                    model.SectionNumber = sectionDetails.SectionNumber;
-                    model.UniqueName = sectionDetails.UniqueName;
+                    model.SectionNumber = sectionDetails?.SectionNumber;
+                    model.UniqueName = sectionDetails?.UniqueName;
                 }
                 else if (model.Type == NexportProductTypeEnum.TrainingPlan)
                 {
                     var trainingPlanDetails = _nexportService.GetTrainingPlanDetails(model.NexportSyllabusId.Value);
-                    model.UniqueName = trainingPlanDetails.UniqueName;
+                    model.UniqueName = trainingPlanDetails?.UniqueName;
                 }
             }
 

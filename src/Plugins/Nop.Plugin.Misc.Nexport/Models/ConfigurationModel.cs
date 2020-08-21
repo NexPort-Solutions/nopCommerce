@@ -9,7 +9,7 @@ namespace Nop.Plugin.Misc.Nexport.Models
     [SuppressMessage("ReSharper", "Mvc.TemplateNotResolved")]
     public class ConfigurationModel : BaseNopModel
     {
-        [DataType(DataType.Url)]
+        //[DataType(DataType.Url)]
         [NopResourceDisplayName("Plugins.Misc.Nexport.Url")]
         public string Url { get; set; }
 

@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using NexportApi.Client;
 using NexportApi.Model;
+
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -106,7 +105,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 if (nexportUserResponse == null)
                     throw new Exception($"Cannot authenticate the user with the login {usernameOrEmail}");
 
-                if (nexportUserResponse.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.AuthenticationError)
+                if (nexportUserResponse.ApiErrorEntity.ErrorCode ==
+                    ApiErrorEntity.ErrorCodeEnum.AuthenticationError)
                     return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.WrongPassword };
 
                 var nexportUserId = nexportUserResponse.UserId;
@@ -120,8 +120,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 }
                 else
                 {
-                    var registrationIsApproved = _customerSettings.UserRegistrationType == UserRegistrationType.Standard ||
-                                                 (_customerSettings.UserRegistrationType == UserRegistrationType.EmailValidation);
+                    var registrationIsApproved =
+                        _customerSettings.UserRegistrationType == UserRegistrationType.Standard ||
+                        (_customerSettings.UserRegistrationType == UserRegistrationType.EmailValidation);
 
                     customer = _workContext.CurrentCustomer;
 
@@ -136,8 +137,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     if (!registrationResult.Success)
                         return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.NotRegistered };
 
-                    _genericAttributeService.SaveAttribute(customer, NopCustomerDefaults.FirstNameAttribute, nexportUserResponse.FirstName);
-                    _genericAttributeService.SaveAttribute(customer, NopCustomerDefaults.LastNameAttribute, nexportUserResponse.LastName);
+                    _genericAttributeService.SaveAttribute(customer, NopCustomerDefaults.FirstNameAttribute,
+                        nexportUserResponse.FirstName);
+                    _genericAttributeService.SaveAttribute(customer, NopCustomerDefaults.LastNameAttribute,
+                        nexportUserResponse.LastName);
 
                     _nexportService.InsertUserMapping(new NexportUserMapping()
                     {
@@ -145,7 +148,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         NopUserId = customer.Id
                     });
 
-                    _logger.Information($"Successfully create new customer for Nexport user {nexportUserId}.", customer: customer);
+                    _logger.Information($"Successfully create new customer for Nexport user {nexportUserId}.",
+                        customer: customer);
                 }
 
                 //update login details
@@ -156,8 +160,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 _customerService.UpdateCustomer(customer);
 
-                return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.Successful, NopUserId = customer.Id };
+                return new NexportCustomerLoginResults
+                {
+                    LoginResult = CustomerLoginResults.Successful,
+                    NopUserId = customer.Id
+                };
             }
+
 
             if (customer.Deleted)
                 return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.Deleted };

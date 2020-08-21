@@ -5,6 +5,8 @@ using System.Linq;
 using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using NexportApi.Client;
+using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
@@ -26,6 +28,7 @@ using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
+using Nop.Services.Plugins;
 using Nop.Services.Security;
 using Nop.Services.Seo;
 using Nop.Services.Stores;
@@ -54,7 +57,6 @@ using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
-using Nop.Services.Plugins;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
@@ -213,9 +215,26 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return Configure();
 
-            var result = _nexportService.SearchNexportDirectory(searchTerm, page);
+            JsonResult jsonResult = null;
 
-            return new JsonResult(result);
+            try
+            {
+                var result = _nexportService.SearchNexportDirectory(searchTerm, page);
+                jsonResult = new JsonResult(result);
+            }
+            catch (Exception ex)
+            {
+                var errorMsg = "Cannot search the Nexport directory.";
+
+                if (ex is ApiException exception)
+                {
+                    errorMsg += $" ({exception.Message})";
+                }
+
+                _logger.Error(errorMsg, ex);
+            }
+
+            return jsonResult;
         }
 
         #endregion
@@ -257,7 +276,22 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             if (!string.IsNullOrWhiteSpace(model.Password))
             {
-                _nexportService.GenerateNewNexportToken(model);
+                try
+                {
+                    _nexportService.GenerateNewNexportToken(model);
+                }
+                catch (Exception ex)
+                {
+                    var errorMsg = "Cannot generate new Nexport authentication token!";
+
+                    if (ex is ApiException exception)
+                    {
+                        errorMsg += $" ({exception.Message})";
+                    }
+
+                    _logger.Error(errorMsg, ex);
+                    _notificationService.ErrorNotification(errorMsg);
+                }
             }
 
             return RedirectToAction("Configure");
@@ -620,63 +654,81 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             if (ModelState.IsValid)
             {
-                // Fill entity from product
-                productMapping = model.ToEntity(productMapping);
-
-                if (productMapping.NexportSubscriptionOrgId.HasValue)
+                try
                 {
-                    if (string.IsNullOrWhiteSpace(model.NexportSubscriptionOrgName))
+                    // Fill entity from product
+                    productMapping = model.ToEntity(productMapping);
+
+                    if (productMapping.NexportSubscriptionOrgId.HasValue)
                     {
-                        var organizationDetails = _nexportService.GetOrganizationDetails(productMapping.NexportSubscriptionOrgId.Value);
-                        productMapping.NexportSubscriptionOrgName = organizationDetails.Name;
-                        productMapping.NexportSubscriptionOrgShortName = organizationDetails.ShortName;
+                        if (string.IsNullOrWhiteSpace(model.NexportSubscriptionOrgName))
+                        {
+                            var organizationDetails = _nexportService.GetOrganizationDetails(productMapping.NexportSubscriptionOrgId.Value);
+                            if (organizationDetails != null)
+                            {
+                                productMapping.NexportSubscriptionOrgName = organizationDetails.Name;
+                                productMapping.NexportSubscriptionOrgShortName = organizationDetails.ShortName;
+                            }
+                        }
                     }
-                }
-                else
-                {
-                    productMapping.NexportSubscriptionOrgName = null;
-                    productMapping.NexportSubscriptionOrgShortName = null;
-                }
-
-                productMapping.UtcLastModifiedDate = DateTime.UtcNow;
-
-                _nexportService.UpdateNexportProductMapping(productMapping);
-
-                var questionMappings =
-                    _nexportService.GetNexportSupplementalInfoQuestionMappingsByProductMappingId(productMapping.Id);
-
-                var currentQuestionIds = questionMappings.Select(x => x.QuestionId).ToList();
-                var removalQuestionIds = currentQuestionIds.Except(model.SupplementalInfoQuestionIds);
-                var additionalQuestionIds = model.SupplementalInfoQuestionIds.Except(currentQuestionIds);
-
-                foreach (var questionId in additionalQuestionIds)
-                {
-                    _nexportService.InsertNexportSupplementalInfoQuestionMapping(
-                                new NexportSupplementalInfoQuestionMapping
-                                {
-                                    ProductMappingId = productMapping.Id,
-                                    QuestionId = questionId,
-                                    UtcDateCreated = DateTime.UtcNow
-                                });
-                }
-
-                foreach (var questionId in removalQuestionIds)
-                {
-                    var deletingMapping = questionMappings.FirstOrDefault(x => x.QuestionId == questionId);
-                    if (deletingMapping != null)
+                    else
                     {
-                        _nexportService.DeleteNexportSupplementalInfoQuestionMapping(deletingMapping);
+                        productMapping.NexportSubscriptionOrgName = null;
+                        productMapping.NexportSubscriptionOrgShortName = null;
                     }
-                }
 
-                if (!continueEditing)
+                    productMapping.UtcLastModifiedDate = DateTime.UtcNow;
+
+                    _nexportService.UpdateNexportProductMapping(productMapping);
+
+                    var questionMappings =
+                        _nexportService.GetNexportSupplementalInfoQuestionMappingsByProductMappingId(productMapping.Id);
+
+                    var currentQuestionIds = questionMappings.Select(x => x.QuestionId).ToList();
+                    var removalQuestionIds = currentQuestionIds.Except(model.SupplementalInfoQuestionIds);
+                    var additionalQuestionIds = model.SupplementalInfoQuestionIds.Except(currentQuestionIds);
+
+                    foreach (var questionId in additionalQuestionIds)
+                    {
+                        _nexportService.InsertNexportSupplementalInfoQuestionMapping(
+                                    new NexportSupplementalInfoQuestionMapping
+                                    {
+                                        ProductMappingId = productMapping.Id,
+                                        QuestionId = questionId,
+                                        UtcDateCreated = DateTime.UtcNow
+                                    });
+                    }
+
+                    foreach (var questionId in removalQuestionIds)
+                    {
+                        var deletingMapping = questionMappings.FirstOrDefault(x => x.QuestionId == questionId);
+                        if (deletingMapping != null)
+                        {
+                            _nexportService.DeleteNexportSupplementalInfoQuestionMapping(deletingMapping);
+                        }
+                    }
+
+                    if (!continueEditing)
+                    {
+                        ViewBag.ClosePage = true;
+                    }
+
+                    ViewBag.RefreshPage = true;
+
+                    model = _nexportPluginModelFactory.PrepareNexportProductMappingModel(productMapping, true);
+                }
+                catch (Exception ex)
                 {
-                    ViewBag.ClosePage = true;
+                    var errorMsg = $"Cannot save the edited product mapping {model.Id} for product {model.NopProductId}.";
+
+                    if (ex is ApiException exception)
+                    {
+                        errorMsg += $" ({exception.Message})";
+                    }
+
+                    _logger.Error(errorMsg, ex);
+                    _notificationService.ErrorNotification(errorMsg);
                 }
-
-                ViewBag.RefreshPage = true;
-
-                model = _nexportPluginModelFactory.PrepareNexportProductMappingModel(productMapping, true);
             }
 
             return View("~/Plugins/Misc.Nexport/Views/ProductMappingDetailsPopup.cshtml", model);
@@ -793,25 +845,42 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             dynamic result = new ExpandoObject();
 
-            try
+            if (ModelState.IsValid)
             {
-                _nexportService.MapNexportProduct(model);
+                try
+                {
+                    _nexportService.MapNexportProduct(model);
 
-                ViewBag.RefreshPage = true;
+                    ViewBag.RefreshPage = true;
 
-                ViewBag.ClosePage = false;
+                    ViewBag.ClosePage = false;
 
-                var newMapping = _nexportService.GetProductMappingByNopProductId(model.NopProductId, model.StoreId);
+                    var newMapping = _nexportService.GetProductMappingByNopProductId(model.NopProductId, model.StoreId);
 
-                result.MappingId = newMapping.Id;
+                    result.MappingId = newMapping.Id;
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(
+                        $"Error occurred while mapping the product [{model.NopProductId}] with the Nexport product [{model.NexportProductId}]",
+                        ex, _workContext.CurrentCustomer);
+
+                    result.Error = $"Cannot map the product [{model.NopProductId}] with the Nexport product [{model.NexportProductId}].";
+
+                    if (ex is ApiException exception)
+                    {
+                        if (exception.ErrorCode == (int)ApiErrorEntity.ErrorCodeEnum.UnknownError)
+                        {
+                            result.InnerError = $"Product [{model.NexportProductId}] is missing in Nexport.";
+                        }
+                    }
+
+                    HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                }
             }
-            catch (Exception ex)
+            else
             {
-                _logger.Error(
-                    $"Error occurred while mapping the product [{model.NexportProductId}] with the Nexport product [{model.NexportProductId}]",
-                    ex, _workContext.CurrentCustomer);
-
-                result.Error = $"Cannot map the product [{model.NexportProductId}]  with the Nexport product [{model.NexportProductId}]";
+                result.Error = $"Cannot map the product [{model.NopProductId}] with the Nexport product [{model.NexportProductId}]";
 
                 HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
@@ -819,6 +888,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(result);
         }
 
+        [Obsolete("Will be removed shortly")]
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         public IActionResult MapProductPopup(Guid nexportProductId, NexportProductTypeEnum nexportProductType)
@@ -832,6 +902,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return View("~/Plugins/Misc.Nexport/Views/MapProductWithNexport.cshtml", model);
         }
 
+        [Obsolete("Will be removed shortly")]
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
@@ -866,19 +937,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(model);
         }
 
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        public IActionResult MapNewProductPopup(Guid nexportProductId, NexportProductTypeEnum nexportProductType)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
-                return AccessDeniedView();
-
-            // Prepare model
-            var model = _productModelFactory.PrepareProductModel(new ProductModel(), null);
-
-            return View("~/Plugins/Misc.Nexport/Views/AddNewNopProductWithMapping.cshtml", model);
-        }
-
+        [Obsolete("Will be removed shortly")]
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         public IActionResult ShowProductDetails(Guid nexportProductId, Guid nexportCatalogId, Guid? nexportSyllabusId, NexportProductTypeEnum nexportProductType)
@@ -2229,7 +2288,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }
             catch (Exception ex)
             {
-                _logger.Error("Cannot create and map new Nexport user", ex, eventMessage.Customer);
+                _logger.Error($"Cannot create and map new Nexport user for customer {eventMessage.Customer.Id}", ex, eventMessage.Customer);
             }
         }
 
@@ -2368,8 +2427,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }
             catch (Exception ex)
             {
-                _logger.Error(ex.Message, ex, _workContext.CurrentCustomer);
-                _notificationService.ErrorNotification(ex.Message);
+                var errorMsg = "Cannot display training details.";
+                _logger.Error(errorMsg, ex, _workContext.CurrentCustomer);
+                _notificationService.ErrorNotification(errorMsg);
             }
 
             return new EmptyResult();

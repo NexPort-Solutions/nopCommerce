@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using NexportApi.Model;
+
 using Nop.Core.Data;
+using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Services.Cms;
@@ -82,8 +85,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                         if (syncItem == null)
                             return;
 
-                        _logger.Debug(
-                            $"Begin registration field synchronization for customer {syncItem.CustomerId}");
+                        _logger.Debug($"Begin contact information and registration fields synchronization for customer {syncItem.CustomerId}");
 
                         var userMapping = _nexportService.FindUserMappingByCustomerId(syncItem.CustomerId);
                         if (userMapping != null)
@@ -94,101 +96,31 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                             }
                             else
                             {
+                                // Synchronize customer contact information with Nexport
+                                SynchronizeCustomerContactInformation(syncItem, userMapping);
+
                                 try
                                 {
-                                    var customer = _customerService.GetCustomerById(syncItem.CustomerId);
-                                    var currentBillingAddress = customer?.BillingAddress;
-                                    if (currentBillingAddress != null)
+                                    // Synchronize customer custom profile fields with Nexport
+                                    SynchronizeRegistrationFields(syncItem, userMapping);
+
+                                    _nexportRegistrationFieldSynchronizationQueueRepository.Delete(syncItem);
+                                }
+                                catch (Exception)
+                                {
+                                    syncItem.Attempt++;
+
+                                    if (syncItem.Attempt <= MAX_ATTEMPT_COUNT)
                                     {
-                                        var customerStateProvince =
-                                            _stateProvinceService.GetStateProvinceById(currentBillingAddress
-                                                .StateProvinceId.GetValueOrDefault(0));
-
-                                        var customerAddressState = customerStateProvince != null ? customerStateProvince.Name : "";
-
-                                        var customerCountry =
-                                            _countryService.GetCountryById(currentBillingAddress.CountryId.GetValueOrDefault(0));
-
-                                        var customerAddressCountry = customerCountry != null ? customerCountry.Name : "";
-
-                                        var updatedInfo = new UserContactInfoRequest(apiErrorEntity: new ApiErrorEntity())
-                                        {
-                                            AddressLine1 = currentBillingAddress.Address1,
-                                            AddressLine2 = currentBillingAddress.Address2,
-                                            City = currentBillingAddress.City,
-                                            State = customerAddressState,
-                                            Country = customerAddressCountry,
-                                            PostalCode = currentBillingAddress.ZipPostalCode,
-                                            Phone = currentBillingAddress.PhoneNumber,
-                                            Fax = currentBillingAddress.FaxNumber
-                                        };
-
-                                        _nexportService.UpdateNexportUserContactInfo(userMapping.NexportUserId,
-                                            updatedInfo);
-
-                                        _logger.Information($"Successfully update contact information in Nexport for customer {userMapping.NopUserId}");
+                                        _nexportService.UpdateNexportRegistrationFieldSynchronizationQueueItem(syncItem);
                                     }
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.Error($"Cannot update contact information for customer {userMapping.NopUserId} in Nexport", ex);
-                                }
-
-                                var registrationFields =
-                                    _nexportService.GetNexportRegistrationFieldAnswers(userMapping.NopUserId);
-
-                                if (registrationFields.Count > 0)
-                                {
-                                    var nexportSubscriptions =
-                                        _nexportService.FindAllSubscriptions(userMapping.NexportUserId);
-
-                                    if (nexportSubscriptions.Count > 0)
+                                    else
                                     {
-                                        var profileFields =
-                                            _nexportService.ConvertFieldAnswersToSubmissionProfileFields(
-                                                registrationFields.Where(x => !x.IsCustomField).ToList());
-
-                                        var customFields =
-                                            _nexportService.ConvertCustomFieldAnswersToSubmissionProfileFields(
-                                                registrationFields.Where(x => x.IsCustomField).ToList());
-
-                                        var finalFields = profileFields.Concat(customFields)
-                                            .ToDictionary(x => x.Key,
-                                                x => x.Value);
-
-                                        foreach (var subscription in nexportSubscriptions)
-                                        {
-                                            try
-                                            {
-                                                var result = _nexportService.SetCustomProfileFieldValues(subscription.SubscriptionId, finalFields);
-
-                                                if (!string.IsNullOrEmpty(result.Message))
-                                                {
-                                                    _logger.Error($"Error occurred when setting custom profile fields for customer {userMapping.NopUserId}: {result.Message}");
-                                                }
-
-                                                _logger.Information($"Successfully synchronize custom profile fields for customer {userMapping.NopUserId} with the subscriber Id {subscription.SubscriptionId}");
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                _logger.Error($"Cannot set custom profile fields for customer {userMapping.NopUserId} in Nexport", ex);
-
-                                                syncItem.Attempt++;
-
-                                                if (syncItem.Attempt <= MAX_ATTEMPT_COUNT)
-                                                {
-                                                    _nexportService.UpdateNexportRegistrationFieldSynchronizationQueueItem(syncItem);
-                                                }
-                                            }
-                                        }
-
-                                        _logger.Information($"Successfully synchronize all custom profile fields for customer {userMapping.NopUserId}");
+                                        _nexportRegistrationFieldSynchronizationQueueRepository.Delete(syncItem);
                                     }
                                 }
 
-                                _nexportRegistrationFieldSynchronizationQueueRepository.Delete(syncItem);
-
-                                _logger.Debug("Synchronize custom profile fields in Nexport completed.");
+                                _logger.Debug("Synchronize contact information and registration fields in Nexport completed.");
                             }
                         }
                     }
@@ -201,6 +133,119 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             catch (Exception ex)
             {
                 _logger.Error("Cannot synchronize registration field with Nexport", ex);
+            }
+        }
+
+        private void SynchronizeCustomerContactInformation(NexportRegistrationFieldSynchronizationQueueItem syncItem, NexportUserMapping userMapping)
+        {
+            if (syncItem == null)
+                throw new ArgumentNullException(nameof(syncItem));
+
+            if (userMapping == null)
+                throw new ArgumentNullException(nameof(userMapping));
+
+            try
+            {
+                var customer = _customerService.GetCustomerById(syncItem.CustomerId);
+                var currentBillingAddress = customer?.BillingAddress;
+                if (currentBillingAddress != null)
+                {
+                    var customerStateProvince =
+                        _stateProvinceService.GetStateProvinceById(currentBillingAddress
+                            .StateProvinceId.GetValueOrDefault(0));
+
+                    var customerAddressState = customerStateProvince != null ? customerStateProvince.Name : "";
+
+                    var customerCountry =
+                        _countryService.GetCountryById(currentBillingAddress.CountryId.GetValueOrDefault(0));
+
+                    var customerAddressCountry = customerCountry != null ? customerCountry.Name : "";
+
+                    var updatedInfo = new UserContactInfoRequest(apiErrorEntity: new ApiErrorEntity())
+                    {
+                        AddressLine1 = currentBillingAddress.Address1,
+                        AddressLine2 = currentBillingAddress.Address2,
+                        City = currentBillingAddress.City,
+                        State = customerAddressState,
+                        Country = customerAddressCountry,
+                        PostalCode = currentBillingAddress.ZipPostalCode,
+                        Phone = currentBillingAddress.PhoneNumber,
+                        Fax = currentBillingAddress.FaxNumber
+                    };
+
+                    _nexportService.UpdateNexportUserContactInfo(userMapping.NexportUserId,
+                        updatedInfo);
+
+                    _logger.Information($"Successfully update contact information in Nexport for customer {userMapping.NopUserId}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Cannot update contact information for customer {userMapping.NopUserId} in Nexport", ex);
+            }
+        }
+
+        private void SynchronizeRegistrationFields(NexportRegistrationFieldSynchronizationQueueItem syncItem,
+            NexportUserMapping userMapping)
+        {
+            if (syncItem == null)
+                throw new ArgumentNullException(nameof(syncItem));
+
+            if (userMapping == null)
+                throw new ArgumentNullException(nameof(userMapping));
+
+            var registrationFields = _nexportService.GetNexportRegistrationFieldAnswers(userMapping.NopUserId);
+
+            if (registrationFields.Count > 0)
+            {
+                List<SubscriptionResponse> nexportSubscriptions;
+
+                try
+                {
+                    nexportSubscriptions = _nexportService.FindAllSubscriptions(userMapping.NexportUserId).ToList();
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Cannot retrieve subscriptions for customer {userMapping.NopUserId} in Nexport", ex);
+                    throw;
+                }
+
+                if (nexportSubscriptions.Count > 0)
+                {
+                    var profileFields =
+                        _nexportService.ConvertFieldAnswersToSubmissionProfileFields(
+                            registrationFields.Where(x => !x.IsCustomField).ToList());
+
+                    var customFields =
+                        _nexportService.ConvertCustomFieldAnswersToSubmissionProfileFields(
+                            registrationFields.Where(x => x.IsCustomField).ToList());
+
+                    var finalFields = profileFields.Concat(customFields)
+                        .ToDictionary(x => x.Key,
+                            x => x.Value);
+
+                    foreach (var subscription in nexportSubscriptions)
+                    {
+                        try
+                        {
+                            var result = _nexportService.SetCustomProfileFieldValues(subscription.SubscriptionId, finalFields);
+
+                            if (result != null && !string.IsNullOrEmpty(result.Message))
+                            {
+                                _logger.Error($"Error occurred when setting custom profile fields for customer {userMapping.NopUserId}: {result.Message}");
+                            }
+
+                            _logger.Information($"Successfully synchronize custom profile fields for customer {userMapping.NopUserId} with the subscriber Id {subscription.SubscriptionId}");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error($"Cannot set custom profile fields for customer {userMapping.NopUserId} in Nexport", ex);
+                            throw;
+                        }
+                    }
+
+                    _logger.Information($"Successfully synchronize all custom profile fields for customer {userMapping.NopUserId}");
+                }
             }
         }
     }

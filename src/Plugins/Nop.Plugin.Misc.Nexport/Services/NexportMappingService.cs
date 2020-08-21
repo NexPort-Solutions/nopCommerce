@@ -627,6 +627,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return orderInvoiceItemId < 1 ? null : _nexportOrderInvoiceItemRepository.GetById(orderInvoiceItemId);
         }
 
+        [Obsolete("Will be removed shortly")]
         public void MapNexportProduct(MapProductToNexportProductModel model)
         {
             //get selected products
@@ -645,10 +646,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
                             //whether product catalog with such parameters already exists
                             if (FindProductCatalog(existingProductCatalogs, product.Id, model.NexportProductId) != null)
                                 continue;
-
-                            //int? accessLimit = null;
-                            //if (!string.IsNullOrEmpty(catalogDetails.AccessTimeLimit))
-                            //    accessLimit = int.Parse(catalogDetails.AccessTimeLimit);
 
                             // Insert the new product catalog mapping
                             InsertNexportProductMapping(new NexportProductMapping
@@ -716,14 +713,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
                             {
                                 NopProductId = product.Id,
                                 DisplayName = product.Name,
-                                NexportProductName = trainingPlanDetails.Name,
+                                NexportProductName = trainingPlanDetails?.Name,
                                 NexportCatalogId = model.NexportCatalogId,
                                 NexportSyllabusId = model.NexportSyllabusId,
                                 NexportCatalogSyllabusLinkId = model.NexportProductId,
-                                UtcAvailableDate = trainingPlanDetails.EnrollmentStart,
-                                UtcEndDate = trainingPlanDetails.EnrollmentEnd,
+                                UtcAvailableDate = trainingPlanDetails?.EnrollmentStart,
+                                UtcEndDate = trainingPlanDetails?.EnrollmentEnd,
                                 Type = model.NexportProductType,
-                                CreditHours = trainingPlanDetails.CreditHours
+                                CreditHours = trainingPlanDetails?.CreditHours
                             });
                         }
 
@@ -765,11 +762,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         var catalogDetails = GetCatalogDetails(model.NexportProductId);
                         var catalogCreditHours = GetCatalogCreditHours(model.NexportProductId);
 
-                        productMapping.NexportProductName = catalogDetails.Name;
+                        productMapping.NexportProductName = catalogDetails?.Name;
                         productMapping.NexportCatalogId = model.NexportCatalogId;
-                        productMapping.PricingModel = catalogDetails.PricingModel;
-                        productMapping.PublishingModel = catalogDetails.PublishingModel;
-                        productMapping.CreditHours = catalogCreditHours.CreditHours;
+                        productMapping.PricingModel = catalogDetails?.PricingModel;
+                        productMapping.PublishingModel = catalogDetails?.PublishingModel;
+                        productMapping.CreditHours = catalogCreditHours?.CreditHours;
 
                         break;
 
@@ -779,15 +776,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                         var sectionDetails = GetSectionDetails(model.NexportSyllabusId.Value);
 
-                        productMapping.NexportProductName = sectionDetails.Title;
+                        productMapping.NexportProductName = sectionDetails?.Title;
                         productMapping.NexportCatalogId = model.NexportCatalogId;
                         productMapping.NexportSyllabusId = model.NexportSyllabusId;
                         productMapping.NexportCatalogSyllabusLinkId = model.NexportProductId;
-                        productMapping.UtcAvailableDate = sectionDetails.EnrollmentStart;
-                        productMapping.UtcEndDate = sectionDetails.EnrollmentEnd;
-                        productMapping.UtcLastModifiedDate = sectionDetails.UtcDateLastModified;
-                        productMapping.CreditHours = sectionDetails.CreditHours;
-                        productMapping.SectionCeus = sectionDetails.SectionCeus;
+                        productMapping.UtcAvailableDate = sectionDetails?.EnrollmentStart;
+                        productMapping.UtcEndDate = sectionDetails?.EnrollmentEnd;
+                        productMapping.UtcLastModifiedDate = sectionDetails?.UtcDateLastModified;
+                        productMapping.CreditHours = sectionDetails?.CreditHours;
+                        productMapping.SectionCeus = sectionDetails?.SectionCeus;
 
                         break;
 
@@ -797,14 +794,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                         var trainingPlanDetails = GetTrainingPlanDetails(model.NexportSyllabusId.Value);
 
-                        productMapping.NexportProductName = trainingPlanDetails.Name;
+                        productMapping.NexportProductName = trainingPlanDetails?.Name;
                         productMapping.NexportCatalogId = model.NexportCatalogId;
                         productMapping.NexportSyllabusId = model.NexportSyllabusId;
                         productMapping.NexportCatalogSyllabusLinkId = model.NexportProductId;
-                        productMapping.UtcAvailableDate = trainingPlanDetails.EnrollmentStart;
-                        productMapping.UtcEndDate = trainingPlanDetails.EnrollmentEnd;
-                        productMapping.UtcLastModifiedDate = trainingPlanDetails.UtcDateLastModified;
-                        productMapping.CreditHours = trainingPlanDetails.CreditHours;
+                        productMapping.UtcAvailableDate = trainingPlanDetails?.EnrollmentStart;
+                        productMapping.UtcEndDate = trainingPlanDetails?.EnrollmentEnd;
+                        productMapping.UtcLastModifiedDate = trainingPlanDetails?.UtcDateLastModified;
+                        productMapping.CreditHours = trainingPlanDetails?.CreditHours;
 
                         break;
 

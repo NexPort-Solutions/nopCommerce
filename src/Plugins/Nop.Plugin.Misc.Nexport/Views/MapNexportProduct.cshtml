@@ -133,7 +133,12 @@
                     error: function(xhr, textStatus, errorThrown) {
                         var response = xhr.responseJSON;
                         if (response && response.Error) {
-                            $("#error-msg-container").html(response.Error).show();
+                            var innerContainer = $("<div />");
+                            innerContainer.append($("<p />").html(response.Error));
+                            if (response.InnerError) {
+                                innerContainer.append($("<p />").html(response.InnerError));
+                            }
+                            $("#error-msg-container").html(innerContainer.html()).show();
                         }
                     }
                 });

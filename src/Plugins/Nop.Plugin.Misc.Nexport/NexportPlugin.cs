@@ -92,16 +92,6 @@ namespace Nop.Plugin.Misc.Nexport {
             node.ChildNodes.Add(new SiteMapNode()
             {
                 Visible = true,
-                Title = "Product Mappings",
-                SystemName = "Nexport Integration - Product Mappings",
-                ControllerName = "NexportIntegration",
-                ActionName = "ListCatalogs",
-                IconClass = "fa fa-sitemap"
-            });
-
-            node.ChildNodes.Add(new SiteMapNode()
-            {
-                Visible = true,
                 Title = "Configuration",
                 SystemName = "Nexport Integration - Configuration",
                 ControllerName = "NexportIntegration",

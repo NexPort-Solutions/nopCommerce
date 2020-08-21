@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
@@ -213,17 +214,28 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
             }
-            catch (ApiException e)
+            catch (Exception ex)
             {
-                var errMsg = "Cannot generate new Nexport authentication token!";
-                _logger.Error($"{errMsg}: {e.Message}", e);
-                _notificationService.ErrorNotification(errMsg);
+                var errorMsg = $"Error occurred during Web API call Authenticate for username {model.Username}";
+                _logger.Error($"{errorMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<AuthenticationTokenResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
         }
 
+        [CanBeNull]
         public GetUserResponse AuthenticateUser(string username, string password)
         {
-            GetUserResponse result = null;
+            GetUserResponse result;
             try
             {
                 var response = _nexportApiService.AuthenticateNexportUser(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
@@ -231,15 +243,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 result = response.Response;
             }
-            catch (ApiException e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message);
-                _notificationService.ErrorNotification((string)e.ErrorContent);
+                var errorMsg = $"Error occurred during Web API call AuthenticateUser for username {username}";
+                _logger.Error($"{errorMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<GetUserResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return result;
         }
 
+        [CanBeNull]
         public GetUserResponse ValidateUser(string username)
         {
             try
@@ -254,28 +278,41 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (response.StatusCode == 403)
                 {
-                    var message =
-                        $"Nexport plugin access does not have permission to look up the user with login {username}";
+                    var message = $"Nexport plugin access does not have permission to look up the user with login {username}";
                     _logger.Error(message);
-                    throw new Exception(message);
+
+                    throw new ApiException(response.StatusCode, message);
                 }
 
                 if (response.StatusCode == 422)
                 {
                     var message = $"Validation exception occurred when trying to get a user with login {username}";
                     _logger.Error(message);
-                    throw new Exception(message);
+
+                    throw new ApiException(response.StatusCode, message);
                 }
             }
-            catch (ApiException e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message);
-                _notificationService.ErrorNotification((string)e.ErrorContent);
+                var errorMsg = $"Error occurred during Web API call GetUser for username {username}";
+                _logger.Error($"{errorMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<GetUserResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return null;
         }
 
+        [CanBeNull]
         public CreateUserResponse CreateNexportUser(string login, string password,
             string firstName, string lastName, string email, Guid ownerOrgId)
         {
@@ -286,10 +323,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 throw new ArgumentNullException(nameof(password), "Password cannot be empty");
 
             if (string.IsNullOrWhiteSpace(firstName))
-                throw new ArgumentNullException(nameof(login), "First name cannot be empty");
+                throw new ArgumentNullException(nameof(firstName), "First name cannot be empty");
 
             if (string.IsNullOrWhiteSpace(lastName))
-                throw new ArgumentNullException(nameof(password), "Last name cannot be empty");
+                throw new ArgumentNullException(nameof(lastName), "Last name cannot be empty");
 
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentNullException(nameof(email), "Email cannot be empty");
@@ -307,7 +344,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     var message =
                         $"Nexport plugin access does not have permission to create new user with login {login} in the organization {ownerOrgId}";
                     _logger.Error(message);
-                    throw new Exception(message);
+
+                    throw new ApiException(response.StatusCode, message);
                 }
 
                 if (response.StatusCode == 409)
@@ -316,7 +354,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         $"Cannot create new user with {login} in the organization {ownerOrgId} because of duplication" :
                         $"Cannot find any organization with the Id of {ownerOrgId}";
                     _logger.Error(message);
-                    throw new Exception(message);
+
+                    throw new ApiException(response.StatusCode, message);
                 }
 
                 if (response.StatusCode == 422)
@@ -324,18 +363,31 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     var message =
                         $"Validation exception occurred when trying to create new user with login {login} in organization {ownerOrgId}";
                     _logger.Error(message);
-                    throw new Exception(message);
+
+                    throw new ApiException(response.StatusCode, message);
                 }
             }
-            catch (ApiException e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message);
-                _notificationService.ErrorNotification((string)e.ErrorContent);
+                var errorMsg = $"Error occurred during Web API call CreateUser for login {login} (Name: {firstName} {lastName})";
+                _logger.Error($"{errorMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<CreateUserResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return null;
         }
 
+        [CanBeNull]
         public GetUserResponse GetNexportUser(Guid userId)
         {
             try
@@ -350,29 +402,41 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (response.StatusCode == 403)
                 {
-                    var message =
-                        $"Nexport plugin access does not have permission to look up the user with Id {userId}";
+                    var message = $"Nexport plugin access does not have permission to look up the user with Id {userId}";
                     _logger.Error(message);
-                    throw new Exception(message);
+
+                    throw new ApiException(response.StatusCode, message);
                 }
 
                 if (response.StatusCode == 422)
                 {
                     var message = $"Validation exception occurred when trying to get a user with Id {userId}";
                     _logger.Error(message);
-                    throw new Exception(message);
+
+                    throw new ApiException(response.StatusCode, message);
                 }
             }
-            catch (ApiException e)
+            catch (Exception ex)
             {
                 var errMsg = $"Error occurred during GetUser api call for Nexport user {userId}";
-                _logger.Error($"{errMsg}: {e.Message}", e);
-                _notificationService.ErrorNotification(errMsg);
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<GetUserResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return null;
         }
 
+        [CanBeNull]
         public EditUserResponse UpdateNexportUserContactInfo(Guid userId, UserContactInfoRequest updatedInfo)
         {
             if (updatedInfo == null)
@@ -390,14 +454,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 {
                     var message = $"Nexport plugin access does not have permission to edit user {userId}";
                     _logger.Error(message);
-                    throw new Exception(message);
+
+                    throw new ApiException(response.StatusCode, message);
                 }
 
                 if (response.StatusCode == 409)
                 {
                     var message = $"Cannot find user with the Id of {userId}";
                     _logger.Error(message);
-                    throw new Exception(message);
+
+                    throw new ApiException(response.StatusCode, message);
                 }
 
                 if (response.StatusCode == 422)
@@ -405,13 +471,25 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     var message =
                         $"Validation exception occurred when trying to edit user with the Id {userId}";
                     _logger.Error(message);
-                    throw new Exception(message);
+
+                    throw new ApiException(response.StatusCode, message);
                 }
             }
-            catch (ApiException e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message);
-                _notificationService.ErrorNotification((string)e.ErrorContent);
+                var errMsg = $"Error occurred during EditUser api call for Nexport user {userId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<EditUserResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return null;
@@ -430,31 +508,24 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     return response.DirectoryList.ToList();
                 }
             }
-            catch (ApiException e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message);
-                _notificationService.ErrorNotification((string)e.ErrorContent);
+                var errMsg = $"Error occurred during SearchDirectory api call with the given search term {searchTerm}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<DirectoryResponseItem>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return null;
-        }
-
-        public OrganizationResponseItem GetOrganizationDetails(Guid orgId)
-        {
-            OrganizationResponseItem result = null;
-
-            try
-            {
-                var availableOrganizations = FindAllOrganizations(orgId);
-
-                result = availableOrganizations.SingleOrDefault(s => s.OrgId == orgId);
-            }
-            catch (ApiException e)
-            {
-                _logger.Error(e.Message);
-            }
-
-            return result;
         }
 
         public IList<OrganizationResponseItem> FindAllOrganizations(Guid baseOrgId)
@@ -475,9 +546,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     page++;
                 } while (remainderItemsCount > -1);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message, e);
+                var errMsg = $"Error occurred during Web API call GetOrganizations with the parameter: org_id - {baseOrgId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<OrganizationResponseItem>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return items;
@@ -489,6 +572,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 throw new NullReferenceException("Root organization has not been set");
 
             return FindAllOrganizations(_nexportSettings.RootOrganizationId.Value);
+        }
+
+        [CanBeNull]
+        public OrganizationResponseItem GetOrganizationDetails(Guid orgId)
+        {
+            var availableOrganizations = FindAllOrganizations(orgId);
+            var result = availableOrganizations.SingleOrDefault(s => s.OrgId == orgId);
+
+            return result;
         }
 
         public IList<SubscriptionResponse> FindAllSubscriptions(Guid userId)
@@ -509,26 +601,51 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     page++;
                 } while (remainderItemsCount > -1);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message, e);
+                var errMsg = $"Error occurred during Web API call GetSubscriptions for user {userId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<SubscriptionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return items;
         }
 
+        [CanBeNull]
         public SetCustomProfileFieldValuesResponse SetCustomProfileFieldValues(Guid subscriberId, Dictionary<string, string> profileFields)
         {
-            SetCustomProfileFieldValuesResponse result = null;
+            SetCustomProfileFieldValuesResponse result;
 
             try
             {
                 result = _nexportApiService.SetNexportCustomerProfileFieldValues(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, subscriberId, profileFields);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message, e);
+                var errMsg = $"Error occurred during Web API call SetCustomProfileFieldValues for subscriber {subscriberId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<SetCustomEnrollmentFieldValuesResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return result;
@@ -555,9 +672,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         page++;
                     } while (remainderItemsCount > -1);
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    _logger.Error(e.Message, e);
+                    var errMsg = $"Error occurred during Web API call GetCatalogs for organization {orgId}";
+                    _logger.Error($"{errMsg}", ex);
+
+                    if (ex is ApiException exception)
+                    {
+                        var errorResponse = JsonConvert.DeserializeObject<ApiResponseBase>(exception.ErrorContent.ToString());
+                        if (errorResponse != null)
+                        {
+                            throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                        }
+                    }
+
+                    throw;
                 }
             }
 
@@ -566,52 +695,91 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return pagedItems;
         }
 
+        [CanBeNull]
         public CatalogResponseItem GetCatalogDetails(Guid catalogId)
         {
-            CatalogResponseItem result = null;
+            CatalogResponseItem result;
 
             try
             {
                 result = _nexportApiService.GetNexportCatalogDetails(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, catalogId);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message, e);
+                var errMsg = $"Error occurred during Web API call GetCatalog for catalog {catalogId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<ApiResponseBase>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return result;
         }
 
+        [CanBeNull]
         public GetDescriptionResponse GetCatalogDescription(Guid catalogId)
         {
-            GetDescriptionResponse result = null;
+            GetDescriptionResponse result;
 
             try
             {
                 result = _nexportApiService.GetNexportCatalogDescription(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, catalogId);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message, e);
+                var errMsg = $"Error occurred during Web API call GetCatalogDescription for catalog {catalogId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<GetDescriptionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return result;
         }
 
+        [CanBeNull]
         public GetCatalogCreditHoursResponse GetCatalogCreditHours(Guid catalogId)
         {
-            GetCatalogCreditHoursResponse result = null;
+            GetCatalogCreditHoursResponse result;
 
             try
             {
                 result = _nexportApiService.GetNexportCatalogCreditHours(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, catalogId);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message, e);
+                var errMsg = $"Error occurred during Web API call GetCatalogCreditHours for catalog {catalogId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<GetCatalogCreditHoursResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return result;
@@ -638,9 +806,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         page++;
                     } while (remainderItemsCount > -1);
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    _logger.Error(e.Message, e);
+                    var errMsg = $"Error occurred during Web API call GetCatalogSyllabi for catalog {catalogId}";
+                    _logger.Error($"{errMsg}", ex);
+
+                    if (ex is ApiException exception)
+                    {
+                        var errorResponse = JsonConvert.DeserializeObject<GetSyllabiResponseItem>(exception.ErrorContent.ToString());
+                        if (errorResponse != null)
+                        {
+                            throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                        }
+                    }
+
+                    throw;
                 }
             }
 
@@ -649,91 +829,157 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return pagedItems;
         }
 
+        [CanBeNull]
         public SectionResponse GetSectionDetails(Guid sectionId)
         {
-            SectionResponse result = null;
+            SectionResponse result;
 
             try
             {
                 result = _nexportApiService.GetNexportSectionDetails(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, sectionId);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message, e);
+                var errMsg = $"Error occurred during Web API call GetSection for section {sectionId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<SectionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return result;
         }
 
+        [CanBeNull]
         public GetDescriptionResponse GetSectionDescription(Guid sectionId)
         {
-            GetDescriptionResponse result = null;
+            GetDescriptionResponse result;
 
             try
             {
                 result = _nexportApiService.GetNexportSectionDescription(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, sectionId);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message, e);
+                var errMsg = $"Error occurred during Web API call GetSectionDescription for section {sectionId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<GetSectionsResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return result;
         }
 
+        [CanBeNull]
         public GetObjectivesResponse GetSectionObjectives(Guid sectionId)
         {
-            GetObjectivesResponse result = null;
+            GetObjectivesResponse result;
 
             try
             {
                 result = _nexportApiService.GetNexportSectionObjectives(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, sectionId);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message, e);
+                var errMsg = $"Error occurred during Web API call GetSectionObjectives for section {sectionId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<GetObjectivesResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return result;
         }
 
+        [CanBeNull]
         public TrainingPlanResponse GetTrainingPlanDetails(Guid trainingPlanId)
         {
-            TrainingPlanResponse result = null;
+            TrainingPlanResponse result;
 
             try
             {
                 result = _nexportApiService.GetNexportTrainingPlanDetails(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, trainingPlanId);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message, e);
+                var errMsg = $"Error occurred during Web API call GetTrainingPlan for training plan {trainingPlanId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<TrainingPlanResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return result;
         }
 
+        [CanBeNull]
         public GetDescriptionResponse GetTrainingPlanDescription(Guid trainingPlanId)
         {
-            GetDescriptionResponse result = null;
+            GetDescriptionResponse result;
 
             try
             {
                 result = _nexportApiService.GetNexportTrainingPlanDescription(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, trainingPlanId);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.Error(e.Message, e);
+                var errMsg = $"Error occurred during Web API call GetTrainingPlanDescription for training plan {trainingPlanId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<GetDescriptionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return result;
         }
 
+        [CanBeNull]
         public GetInvoiceResponse GetNexportInvoice(Guid invoiceId)
         {
             try
@@ -748,25 +994,35 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (response.StatusCode == 403)
                 {
-                    var message =
-                        $"Nexport plugin access does not have permission to look up the invoice {invoiceId}";
+                    var message = $"Nexport plugin access does not have permission to look up the invoice {invoiceId}";
                     _logger.Error(message);
-                    throw new Exception(message);
+
+                    throw new ApiException(response.StatusCode, message);
                 }
 
                 if (response.StatusCode == 422)
                 {
                     var message = $"Validation exception occurred when trying to get the invoice {invoiceId}";
                     _logger.Error(message);
-                    throw new Exception(message);
+
+                    throw new ApiException(response.StatusCode, message);
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                var errMsg = $"Error occured during GetNexportInvoice api call for the invoice {invoiceId}";
-                _logger.Error($"{errMsg}: {e.Message}", e);
+                var errMsg = $"Error occurred during GetNexportInvoice api call for the invoice {invoiceId}";
+                _logger.Error($"{errMsg}", ex);
 
-                _notificationService.ErrorNotification(errMsg);
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<GetInvoiceResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
             }
 
             return null;
@@ -784,13 +1040,23 @@ namespace Nop.Plugin.Misc.Nexport.Services
             catch (Exception ex)
             {
                 var errMsg =
-                    $"Fail to create Nexport order invoice transaction in organization {orgId} with purchasing agent {purchasingAgentId}";
-                _logger.Error($"{errMsg}: {ex.Message}", ex);
+                    $"Error occurred during BeginInvoiceTransaction api call with the parameters: org_id - {orgId}, purchasing_agent_id - {purchasingAgentId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<BeginInvoiceTransactionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
 
                 throw;
             }
         }
 
+        [CanBeNull]
         public Guid? AddItemToNexportOrderInvoice(Guid invoiceId, Guid nexportProductId,
             Enums.ProductTypeEnum productType, decimal productCost,
             Guid subscriptionOrgId, IList<Guid> groupMembershipIds = null,
@@ -807,8 +1073,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
             catch (Exception ex)
             {
-                var errMsg = $"Cannot add the Nexport product {nexportProductId} to the invoice {invoiceId}";
-                _logger.Error($"{errMsg}: {ex.Message}", ex);
+                var errMsg =
+                    $"Error occurred during AddInvoiceItem api call with the parameters: invoice_id - {invoiceId}, product_id - {nexportProductId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<AddInvoiceItemResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
 
                 throw;
             }
@@ -825,8 +1101,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
             catch (Exception ex)
             {
-                var errMsg = $"Cannot commit the Nexport invoice {invoiceId}";
-                _logger.Error($"{errMsg}: {ex.Message}", ex);
+                var errMsg =
+                    $"Error occurred during CommitInvoiceTransaction api call for the invoice {invoiceId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<CommitInvoiceResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
 
                 throw;
             }
@@ -847,8 +1133,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
             catch (Exception ex)
             {
-                var errMsg = $"Cannot add payment to the the Nexport invoice {invoiceId} in the order {nopOrderId}";
-                _logger.Error($"{errMsg}: {ex.Message}", ex);
+                var errMsg =
+                    $"Error occurred during AddInvoicePayment api call with the parameters: invoice_id - {invoiceId}, payee_id - {payeeId}, payment_processor_transaction_id: {nopOrderId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<AddInvoicePaymentResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
 
                 throw;
             }
@@ -885,8 +1181,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             catch (Exception ex)
             {
                 var errMsg =
-                    $"Cannot redeem the Nexport invoice item {invoiceItem.InvoiceItemId} in the order {invoiceItem.OrderId} for user {redeemingUserId}";
-                _logger.Error($"{errMsg}: {ex.Message}", ex);
+                    $"Error occurred during RedeemInvoiceItem api call with the parameters: invoice_item_id - {invoiceItem.InvoiceItemId}, redeeming_user_id - {redeemingUserId}, redemption_action_type - {redemptionAction}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<InvoiceRedemptionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
 
                 throw;
             }
@@ -897,11 +1202,35 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (invoiceItem == null)
                 throw new ArgumentNullException(nameof(invoiceItem));
 
+            InvoiceRedemptionResponse redemption;
+
             try
             {
-                var redemption = _nexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url,
+                redemption = _nexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId);
-                if (redemption.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.NoError)
+
+            }
+            catch (Exception ex)
+            {
+                var errMsg =
+                    $"Error occurred during GetInvoiceRedemption api call with the invoice item {invoiceItem.InvoiceItemId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<InvoiceRedemptionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+
+            try
+            {
+                if (redemption != null && redemption.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.NoError)
                 {
                     SsoResponse signInResult = null;
                     if (invoiceItem.RedemptionEnrollmentId == null)
@@ -923,7 +1252,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         }
                     }
 
-                    if (signInResult != null && signInResult.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.NoError)
+                    if (signInResult != null &&
+                        signInResult.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.NoError)
                     {
                         return signInResult.Url;
                     }
@@ -931,8 +1261,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
             catch (Exception ex)
             {
-                var errMsg = $"Cannot sign-on the user {invoiceItem.RedeemingUserId} into Nexport through SSO using the invoice item {invoiceItem.InvoiceItemId}";
-                _logger.Error($"{errMsg}: {ex.Message}", ex);
+                var errMsg = "Error occurred during SingleSignOn api call";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<SsoResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
 
                 throw;
             }
@@ -956,8 +1295,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
             catch (Exception ex)
             {
-                var errMsg = $"Cannot sign-on the user {userId} into Nexport organization {orgId} through SSO";
-                _logger.Error($"{errMsg}: {ex.Message}", ex);
+                var errMsg = $"Error occurred during SignIn api call for user {userId} in organization {orgId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<SsoResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
 
                 throw;
             }
@@ -983,8 +1331,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
             catch (Exception ex)
             {
-                var errMsg = $"Cannot add new memberships for user {userId}";
-                _logger.Error($"{errMsg}: {ex.Message}", ex);
+                var errMsg = $"Error occurred during CreateMembership api call for user {userId}";
+                _logger.Error($"{errMsg}", ex);
 
                 if (ex is ApiException exception)
                 {
@@ -1015,8 +1363,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
             catch (Exception ex)
             {
-                var errMsg = $"Cannot remove Nexport memberships";
-                _logger.Error($"{errMsg}: {ex.Message}", ex);
+                var errMsg = "Error occurred during RemoveMembership api call";
+                _logger.Error($"{errMsg}", ex);
 
                 if (ex is ApiException exception)
                 {
@@ -1098,7 +1446,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                             //product.Name = catalogDetails.Name;
                             //product.FullDescription = catalogDescription.Description;
-                            productMapping.CreditHours = catalogCreditHours.CreditHours;
+                            productMapping.CreditHours = catalogCreditHours?.CreditHours;
 
                             break;
 
@@ -1121,8 +1469,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                             //product.AvailableStartDateTimeUtc = sectionDetails.EnrollmentStart;
                             //product.AvailableEndDateTimeUtc = sectionDetails.EnrollmentEnd;
 
-                            productMapping.CreditHours = sectionDetails.CreditHours;
-                            productMapping.SectionCeus = sectionDetails.SectionCeus;
+                            productMapping.CreditHours = sectionDetails?.CreditHours;
+                            productMapping.SectionCeus = sectionDetails?.SectionCeus;
 
                             break;
 
@@ -1142,7 +1490,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                             //product.AvailableStartDateTimeUtc = trainingPlanDetails.EnrollmentStart;
                             //product.AvailableEndDateTimeUtc = trainingPlanDetails.EnrollmentEnd;
 
-                            productMapping.CreditHours = trainingPlanDetails.CreditHours;
+                            productMapping.CreditHours = trainingPlanDetails?.CreditHours;
 
                             break;
 
@@ -1194,16 +1542,19 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var nexportUser = CreateNexportUser(login, password, firstName, lastName,
                 customer.Email, _nexportSettings.RootOrganizationId.Value);
 
-            InsertUserMapping(new NexportUserMapping()
+            if (nexportUser != null)
             {
-                NexportUserId = nexportUser.UserId,
-                NopUserId = customer.Id
-            });
+                InsertUserMapping(new NexportUserMapping
+                {
+                    NexportUserId = nexportUser.UserId,
+                    NopUserId = customer.Id
+                });
+            }
         }
 
         [CanBeNull]
-        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollementExpirationDate)? VerifyNexportEnrollmentStatus(Product product,
-            Customer customer, int? storeId = null)
+        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollementExpirationDate)?
+            VerifyNexportEnrollmentStatus(Product product, Customer customer, int? storeId = null)
         {
             var mapping = GetProductMappingByNopProductId(product.Id, storeId);
             if (mapping != null)
@@ -1219,13 +1570,20 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollmentExpirationDate)? VerifyNexportEnrollmentStatus(NexportProductMapping productMapping, NexportUserMapping nexportUserMapping)
+        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollmentExpirationDate)?
+            VerifyNexportEnrollmentStatus(NexportProductMapping productMapping, NexportUserMapping nexportUserMapping)
         {
             if (productMapping == null)
                 throw new ArgumentNullException(nameof(productMapping), "Product mapping cannot be null!");
 
             if (nexportUserMapping == null)
                 throw new ArgumentNullException(nameof(nexportUserMapping), "Nexport user mapping cannot be null!");
+
+            if (!_nexportSettings.RootOrganizationId.HasValue)
+                throw new NullReferenceException("Root organization Id is currently empty");
+
+            if (!productMapping.NexportSyllabusId.HasValue)
+                return null;
 
             try
             {
@@ -1269,7 +1627,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             catch (Exception ex)
             {
                 var errMsg = $"Cannot verify Nexport enrollment status of the product {productMapping.NexportProductName} [{productMapping.NexportSyllabusId.Value}] for user {nexportUserMapping.NexportUserId}";
-                _logger.Error($"{errMsg}: {ex.Message}", ex);
+                _logger.Error($"{errMsg}", ex);
 
                 throw;
             }
@@ -1700,7 +2058,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     }
                 }
 
-                if(!string.IsNullOrWhiteSpace(field.NexportCustomProfileFieldKey))
+                if (!string.IsNullOrWhiteSpace(field.NexportCustomProfileFieldKey))
                     result.Add(field.NexportCustomProfileFieldKey, fieldValue);
             }
 
