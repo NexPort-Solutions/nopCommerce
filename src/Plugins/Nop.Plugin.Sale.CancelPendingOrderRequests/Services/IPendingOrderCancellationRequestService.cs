@@ -43,5 +43,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
 
         IList<int> SendCancellationRequestCustomerNotification(PendingOrderCancellationRequest cancellationRequest,
             Order order, int languageId, string template);
+
+        void VoidCancelledOrder(Order order);
     }
 }

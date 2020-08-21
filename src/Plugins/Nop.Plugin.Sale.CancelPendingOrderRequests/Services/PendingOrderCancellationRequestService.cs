@@ -6,11 +6,15 @@ using Nop.Core.Data;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
+using Nop.Core.Domain.Payments;
 using Nop.Core.Html;
 using Nop.Services.Events;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
+using Nop.Services.Logging;
 using Nop.Services.Messages;
+using Nop.Services.Orders;
+using Nop.Services.Payments;
 using Nop.Services.Stores;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
@@ -26,6 +30,9 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
 
         private readonly IWorkflowMessageService _workflowMessageService;
         private readonly ICustomerService _customerService;
+        private readonly IOrderService _orderService;
+        private readonly IOrderProcessingService _orderProcessingService;
+        private readonly IPaymentService _paymentService;
         private readonly IStoreService _storeService;
         private readonly ILanguageService _languageService;
         private readonly ILocalizationService _localizationService;
@@ -34,6 +41,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
         private readonly IEmailAccountService _emailAccountService;
         private readonly IMessageTokenProvider _messageTokenProvider;
         private readonly IEventPublisher _eventPublisher;
+        private readonly ILogger _logger;
 
         public PendingOrderCancellationRequestService(
             EmailAccountSettings emailAccountSettings,
@@ -41,6 +49,9 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             IRepository<PendingOrderCancellationRequestReason> pendingOrderCancellationRequestReasonRepository,
             IWorkflowMessageService workflowMessageService,
             ICustomerService customerService,
+            IOrderService orderService,
+            IOrderProcessingService orderProcessingService,
+            IPaymentService paymentService,
             IStoreService storeService,
             ILanguageService languageService,
             ILocalizationService localizationService,
@@ -48,13 +59,17 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             IMessageTemplateService messageTemplateService,
             IEmailAccountService emailAccountService,
             IMessageTokenProvider messageTokenProvider,
-            IEventPublisher eventPublisher)
+            IEventPublisher eventPublisher,
+            ILogger logger)
         {
             _emailAccountSettings = emailAccountSettings;
             _pendingOrderCancellationRequestRepository = pendingOrderCancellationRequestRepository;
             _pendingOrderCancellationRequestReasonRepository = pendingOrderCancellationRequestReasonRepository;
             _workflowMessageService = workflowMessageService;
             _customerService = customerService;
+            _orderService = orderService;
+            _orderProcessingService = orderProcessingService;
+            _paymentService = paymentService;
             _storeService = storeService;
             _languageService = languageService;
             _localizationService = localizationService;
@@ -63,6 +78,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             _emailAccountService = emailAccountService;
             _messageTokenProvider = messageTokenProvider;
             _eventPublisher = eventPublisher;
+            _logger = logger;
         }
 
         #region Utilities
@@ -388,6 +404,75 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
 
                 return _workflowMessageService.SendNotification(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
             }).ToList();
+        }
+
+        public void VoidCancelledOrder(Order order)
+        {
+            if (order == null)
+                throw new ArgumentNullException(nameof(order));
+
+            if (order.OrderTotal == decimal.Zero)
+                throw new NopException("You can't void this order");
+
+            if (order.PaymentStatus == PaymentStatus.Authorized)
+            {
+                if (_paymentService.SupportVoid(order.PaymentMethodSystemName))
+                {
+                    var request = new VoidPaymentRequest();
+                    try
+                    {
+                        request.Order = order;
+                        var result = _paymentService.Void(request);
+
+                        if (result.Success)
+                        {
+                            order.PaymentStatus = result.NewPaymentStatus;
+                            _orderService.UpdateOrder(order);
+
+                            order.OrderNotes.Add(new OrderNote
+                            {
+                                Note = "Order has been voided",
+                                DisplayToCustomer = false,
+                                CreatedOnUtc = DateTime.UtcNow
+                            });
+
+                            _orderService.UpdateOrder(order);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Error: {ex.Message}", ex);
+                    }
+                }
+                else
+                {
+                    order.PaymentStatusId = (int)PaymentStatus.Voided;
+                    _orderService.UpdateOrder(order);
+
+                    order.OrderNotes.Add(new OrderNote
+                    {
+                        Note = "Order has been voided",
+                        DisplayToCustomer = false,
+                        CreatedOnUtc = DateTime.UtcNow
+                    });
+
+                    _orderService.UpdateOrder(order);
+                }
+            }
+            else if (order.PaymentStatus == PaymentStatus.Pending)
+            {
+                order.PaymentStatusId = (int)PaymentStatus.Voided;
+                _orderService.UpdateOrder(order);
+
+                order.OrderNotes.Add(new OrderNote
+                {
+                    Note = "Order has been voided",
+                    DisplayToCustomer = false,
+                    CreatedOnUtc = DateTime.UtcNow
+                });
+
+                _orderService.UpdateOrder(order);
+            }
         }
     }
 }

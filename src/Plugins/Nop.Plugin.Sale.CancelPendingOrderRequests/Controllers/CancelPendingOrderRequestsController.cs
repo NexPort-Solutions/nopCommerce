@@ -152,53 +152,63 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
 
             if (ModelState.IsValid)
             {
-                cancellationRequest = model.ToEntity(cancellationRequest);
-                cancellationRequest.UtcLastModifiedDate = DateTime.UtcNow;
-
-                _pendingOrderCancellationRequestService.UpdateCancellationRequest(cancellationRequest);
-
-                var order = _orderService.GetOrderById(cancellationRequest.OrderId);
-                if (order != null)
+                if (cancellationRequest.RequestStatus == PendingOrderCancellationRequestStatus.Received)
                 {
-                    if (cancellationRequest.RequestStatus == PendingOrderCancellationRequestStatus.Accepted)
+                    cancellationRequest = model.ToEntity(cancellationRequest);
+                    cancellationRequest.UtcLastModifiedDate = DateTime.UtcNow;
+
+                    _pendingOrderCancellationRequestService.UpdateCancellationRequest(cancellationRequest);
+
+                    var order = _orderService.GetOrderById(cancellationRequest.OrderId);
+                    if (order != null)
                     {
-                        _pendingOrderCancellationRequestService.SendCancellationRequestCustomerNotification(
-                            cancellationRequest, order, order.CustomerLanguageId,
-                            PluginDefaults.CANCELLATION_REQUEST_ACCEPTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE);
-
-                        try
+                        if (cancellationRequest.RequestStatus == PendingOrderCancellationRequestStatus.Accepted)
                         {
-                            _orderProcessingService.CancelOrder(order, true);
-                            _customerActivityService.InsertActivity("EditOrder",
-                                string.Format(_localizationService.GetResource("ActivityLog.EditOrder"),
-                                    order.CustomOrderNumber), order);
+                            _pendingOrderCancellationRequestService.SendCancellationRequestCustomerNotification(
+                                cancellationRequest, order, order.CustomerLanguageId,
+                                PluginDefaults.CANCELLATION_REQUEST_ACCEPTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE);
+
+                            try
+                            {
+                                _orderProcessingService.CancelOrder(order, true);
+
+                                _pendingOrderCancellationRequestService.VoidCancelledOrder(order);
+
+                                _customerActivityService.InsertActivity("EditOrder",
+                                    string.Format(_localizationService.GetResource("ActivityLog.EditOrder"),
+                                        order.CustomOrderNumber), order);
+                            }
+                            catch (Exception ex)
+                            {
+                                _notificationService.ErrorNotification(ex);
+
+                                model = _pendingOrderCancellationRequestModelFactory
+                                    .PreparePendingOrderCancellationRequestModel(model, cancellationRequest, true);
+
+                                return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/Edit.cshtml",
+                                    model);
+                            }
                         }
-                        catch (Exception ex)
+                        else if (cancellationRequest.RequestStatus == PendingOrderCancellationRequestStatus.Rejected)
                         {
-                            _notificationService.ErrorNotification(ex);
-
-                            model = _pendingOrderCancellationRequestModelFactory
-                                .PreparePendingOrderCancellationRequestModel(model, cancellationRequest, true);
-
-                            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/Edit.cshtml",
-                                model);
+                            _pendingOrderCancellationRequestService.SendCancellationRequestCustomerNotification(
+                                cancellationRequest, order, order.CustomerLanguageId,
+                                PluginDefaults.CANCELLATION_REQUEST_REJECTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE);
                         }
                     }
-                    else if (cancellationRequest.RequestStatus == PendingOrderCancellationRequestStatus.Rejected)
-                    {
-                        _pendingOrderCancellationRequestService.SendCancellationRequestCustomerNotification(
-                            cancellationRequest, order, order.CustomerLanguageId,
-                            PluginDefaults.CANCELLATION_REQUEST_REJECTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE);
-                    }
+
+                    _customerActivityService.InsertActivity(PluginDefaults.EDIT_CANCELLATION_REQUEST_ACTIVITY_LOG_TYPE,
+                            string.Format(_localizationService.GetResource("ActivityLog.EditCancellationRequest"), cancellationRequest.Id),
+                            cancellationRequest);
+
+                    _notificationService.SuccessNotification(_localizationService.GetResource("Admin.CancellationRequests.Updated"));
+
+                    return continueEditing ? RedirectToAction("Edit", new { id = cancellationRequest.Id }) : RedirectToAction("List");
                 }
 
-                _customerActivityService.InsertActivity(PluginDefaults.EDIT_CANCELLATION_REQUEST_ACTIVITY_LOG_TYPE,
-                        string.Format(_localizationService.GetResource("ActivityLog.EditCancellationRequest"), cancellationRequest.Id),
-                        cancellationRequest);
+                _notificationService.WarningNotification(_localizationService.GetResource("Admin.CancellationRequests.CannotModified"));
 
-                _notificationService.SuccessNotification(_localizationService.GetResource("Admin.CancellationRequests.Updated"));
-
-                return continueEditing ? RedirectToAction("Edit", new { id = cancellationRequest.Id }) : RedirectToAction("List");
+                return RedirectToAction("List");
             }
 
             model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestModel(model, cancellationRequest, true);

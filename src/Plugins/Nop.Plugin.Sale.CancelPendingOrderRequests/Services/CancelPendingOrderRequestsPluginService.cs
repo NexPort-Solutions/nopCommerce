@@ -150,6 +150,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.CancellationRequests.NotifyCustomer", "Notify customer about status change");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.CancellationRequests.Deleted", "The cancellation request has been deleted successfully.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.CancellationRequests.Updated", "The cancellation request has been updated successfully.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Admin.CancellationRequests.CannotModified", "This cancellation request has been processed and cannot be modified.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.PendingOrderCancellationRequests", "Pending order cancellation requests");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.PendingOrderCancellationRequests.Description", "The cancellation request feature enables customers to request cancellation for any pending order. Here you can find all submitted cancellation requests.");
             _localizationService.AddOrUpdatePluginLocaleResource("Admin.PendingOrderCancellationRequests.SearchStartDate", "Start date");
@@ -210,6 +211,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             _localizationService.DeletePluginLocaleResource("Admin.CancellationRequests.NotifyCustomer");
             _localizationService.DeletePluginLocaleResource("Admin.CancellationRequests.Deleted");
             _localizationService.DeletePluginLocaleResource("Admin.CancellationRequests.Updated");
+            _localizationService.DeletePluginLocaleResource("Admin.CancellationRequests.CannotModified");
             _localizationService.DeletePluginLocaleResource("Admin.PendingOrderCancellationRequests");
             _localizationService.DeletePluginLocaleResource("Admin.PendingOrderCancellationRequests.Description");
             _localizationService.DeletePluginLocaleResource("Admin.PendingOrderCancellationRequests.SearchStartDate");

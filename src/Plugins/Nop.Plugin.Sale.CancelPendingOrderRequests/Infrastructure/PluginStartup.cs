@@ -15,6 +15,7 @@ using Nop.Web.Framework.Infrastructure.Extensions;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Data;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Migrations;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
+using ILogger = Nop.Services.Logging.ILogger;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
 {
@@ -76,8 +77,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
 
                 if (!string.IsNullOrEmpty(versionSettingValue))
                 {
-                    installedAssemblyVersion =
-                        Version.Parse(versionSettingValue);
+                    installedAssemblyVersion = Version.Parse(versionSettingValue);
                 }
 
                 if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
@@ -100,6 +100,8 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
         /// <param name="application"></param>
         private void ApplyMigration(IApplicationBuilder application)
         {
+            var logger = EngineContext.Current.Resolve<ILogger>();
+
             try
             {
                 var migratorRunnerService = CreateFluentMigratorRunnerService();
@@ -118,7 +120,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
             }
             catch (Exception ex)
             {
-                // ignored
+                logger.Error($"Error occurred during database migration process: {ex.Message}", ex);
             }
         }
 
