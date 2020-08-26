@@ -172,10 +172,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
 
             if (response.Headers.ContainsKey("X-Per-Page"))
-                result.TotalRecord = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
 
             if (response.Headers.ContainsKey("X-Page"))
-                result.TotalRecord = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }
@@ -285,10 +285,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
 
             if (response.Headers.ContainsKey("X-Per-Page"))
-                result.TotalRecord = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
 
             if (response.Headers.ContainsKey("X-Page"))
-                result.TotalRecord = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }
@@ -320,10 +320,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
 
             if (response.Headers.ContainsKey("X-Per-Page"))
-                result.TotalRecord = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
 
             if (response.Headers.ContainsKey("X-Page"))
-                result.TotalRecord = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }
@@ -355,10 +355,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
 
             if (response.Headers.ContainsKey("X-Per-Page"))
-                result.TotalRecord = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
 
             if (response.Headers.ContainsKey("X-Page"))
-                result.TotalRecord = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }
@@ -391,10 +391,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
 
             if (response.Headers.ContainsKey("X-Per-Page"))
-                result.TotalRecord = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
 
             if (response.Headers.ContainsKey("X-Page"))
-                result.TotalRecord = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }
@@ -489,10 +489,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
 
             if (response.Headers.ContainsKey("X-Per-Page"))
-                result.TotalRecord = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
 
             if (response.Headers.ContainsKey("X-Page"))
-                result.TotalRecord = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }
