@@ -6,7 +6,6 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Primitives;
 
@@ -19,7 +18,7 @@ namespace Nop.Plugin.Misc.Nexport.Extensions
             var values = new NameValueCollection();
             foreach (var pair in collection)
             {
-                values.Add(pair.Key, pair.Value.First());
+                values.Add(pair.Key, pair.Value);
             }
             return values;
         }

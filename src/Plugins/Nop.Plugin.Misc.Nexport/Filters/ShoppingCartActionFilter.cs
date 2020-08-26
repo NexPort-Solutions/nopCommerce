@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Primitives;
 using Nop.Core;
+using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Services.Catalog;
@@ -218,29 +219,14 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                                             message = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase")
                                         });
                                     }
+                                    else
+                                    {
+                                        CheckNexportCategoryPurchaseEligibility(context, product, store.Id);
+                                    }
                                 }
                                 else
                                 {
-                                    var productInTheSameCategory =
-                                        _nexportService.CanPurchaseProductInNexportCategory(product, store.Id);
-
-                                    if (productInTheSameCategory.Item1 != null)
-                                    {
-                                        var autoSwapProduct = _genericAttributeService.GetAttribute<bool>(
-                                            productInTheSameCategory.Item2, NexportDefaults.AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY);
-                                        if (autoSwapProduct)
-                                        {
-                                            _shoppingCartService.DeleteShoppingCartItem(productInTheSameCategory.Item1);
-                                        }
-                                        else
-                                        {
-                                            context.Result = new JsonResult(new
-                                            {
-                                                success = false,
-                                                message = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.SingleProductInCatalog")
-                                            });
-                                        }
-                                    }
+                                    CheckNexportCategoryPurchaseEligibility(context, product, store.Id);
                                 }
                             }
 
@@ -262,6 +248,36 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                             }
                         }
                     }
+                }
+            }
+        }
+
+        private void CheckNexportCategoryPurchaseEligibility(ActionExecutingContext context, Product product, int storeId)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+
+            if (product == null)
+                throw new ArgumentNullException(nameof(product));
+
+            var productInTheSameCategory =
+                _nexportService.CanPurchaseProductInNexportCategory(product, storeId);
+
+            if (productInTheSameCategory.Item1 != null)
+            {
+                var autoSwapProduct = _genericAttributeService.GetAttribute<bool>(
+                    productInTheSameCategory.Item2, NexportDefaults.AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY);
+                if (autoSwapProduct)
+                {
+                    _shoppingCartService.DeleteShoppingCartItem(productInTheSameCategory.Item1);
+                }
+                else
+                {
+                    context.Result = new JsonResult(new
+                    {
+                        success = false,
+                        message = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.SingleProductInCatalog")
+                    });
                 }
             }
         }
