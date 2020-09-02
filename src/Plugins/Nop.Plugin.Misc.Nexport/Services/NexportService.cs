@@ -1747,7 +1747,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         case var status
                             when status.Value.Phase == Enums.PhaseEnum.NotStarted:
                             {
-                                return CanRepurchaseProductInNexportCategory(product, customer, store.Id);
+                                return false;
                             }
                     }
                 }
