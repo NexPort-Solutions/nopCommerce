@@ -42,7 +42,7 @@
                     <div class="input-group">
                         <nop-editor asp-for="NexportUserId" asp-render-form-control-class="true" />
                         <div class="input-group-btn">
-                            <button id="setNexportUserId" name="setnexportuserid" class="btn btn-info">
+                            <button id="setNexportUserId" class="btn btn-info">
                                 Set user Id
                             </button>
                         </div>
@@ -195,14 +195,59 @@
 
             <script>
                 $(document).ready(function() {
-                    $("#btnRefreshAnswerList").click(function () {
+                    jQuery.validator.addMethod("dotnet-guid",
+                        function(value, element) {
+                            return this.optional(element) || /[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}/i.test(value);
+                        },
+                        "Please input the correct GUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx");
+
+                    $("#@Html.IdFor(model => model.NexportUserId)").rules("add",
+                        {
+                            "dotnet-guid": true
+                        });
+
+                    $("#btnRefreshAnswerList").click(function() {
                         // Refresh child grid
                         $("table[id*=nexport-customer-supplemental-info-answers-list]").DataTable().draw(false);
 
                         // Return false to don't reload a page
                         return false;
                     });
+
+                    $("#setNexportUserId").on("click",
+                        function() {
+                            setNexportUserId();
+                        });
                 });
+
+                function setNexportUserId() {
+                    var userId = $("#@Html.IdFor(model => model.NexportUserId)").val();
+                    if (confirm("Are you sure you want to assign the user Id " + userId + " for this customer?")) {
+                        var postData = {
+
+                            customerId: @Model.CustomerId,
+                            nexportUserId: userId
+                        };
+                        addAntiForgeryToken(postData);
+
+                        $.ajax({
+                            url: "@Url.Action("SetNexportUser", "NexportIntegration")",
+                            type: "POST",
+                            dataType: "json",
+                            data: postData,
+                            success: function(data, textStatus, jqXHR) {
+                                if (data.redirectUrl) {
+                                    window.location.href = data.redirectUrl;
+                                }
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                alert(errorThrown);
+                            }
+                        });
+                    } else {
+                        return false;
+                    }
+                }
 
                 function renderAnswerStatusInfo(data, type, row, meta) {
                     if (data === +"@((int) NexportSupplementalInfoAnswerStatus.NotProcessed)") {

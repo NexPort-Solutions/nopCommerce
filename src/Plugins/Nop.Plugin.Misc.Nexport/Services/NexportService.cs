@@ -13,6 +13,7 @@ using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
@@ -33,6 +34,7 @@ using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
+using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Helpers;
 using Nop.Services.Plugins;
@@ -77,6 +79,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<StoreMapping> _storeMappingRepository;
         private readonly IStaticCacheManager _staticCacheManager;
         private readonly IStoreMappingService _storeMappingService;
+        private readonly ICustomerService _customerService;
         private readonly ICustomerActivityService _customerActivityService;
         private readonly IOrderService _orderService;
         private readonly ICategoryService _categoryService;
@@ -130,6 +133,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<StoreMapping> storeMappingRepository,
             IStaticCacheManager staticCacheManager,
             IStoreMappingService storeMappingService,
+            ICustomerService customerService,
             ICustomerActivityService customerActivityService,
             IOrderService orderService,
             ICategoryService categoryService,
@@ -180,6 +184,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _storeMappingRepository = storeMappingRepository;
             _staticCacheManager = staticCacheManager;
             _storeMappingService = storeMappingService;
+            _customerService = customerService;
             _customerActivityService = customerActivityService;
             _orderService = orderService;
             _categoryService = categoryService;
@@ -431,6 +436,55 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 if (ex is ApiException exception)
                 {
                     var errorResponse = JsonConvert.DeserializeObject<GetUserResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+
+            return null;
+        }
+
+        [CanBeNull]
+        public UserContactInfoResponse GetNexportUserContactInfo(Guid userId)
+        {
+            try
+            {
+                var response = _nexportApiService.GetNexportUserContactInfo(_nexportSettings.Url, _nexportSettings.AuthenticationToken, userId);
+
+                if (response.StatusCode == 409)
+                    return null;
+
+                if (response.StatusCode == 200)
+                    return response.Response;
+
+                if (response.StatusCode == 403)
+                {
+                    var message = $"Nexport plugin access does not have permission to look up the contact info for user with Id {userId}";
+                    _logger.Error(message);
+
+                    throw new ApiException(response.StatusCode, message);
+                }
+
+                if (response.StatusCode == 422)
+                {
+                    var message = $"Validation exception occurred when trying to get the contact info for user with Id {userId}";
+                    _logger.Error(message);
+
+                    throw new ApiException(response.StatusCode, message);
+                }
+            }
+            catch (Exception ex)
+            {
+                var errMsg = $"Error occurred during GetUserContactInformation api call for Nexport user {userId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<UserContactInfoResponse>(exception.ErrorContent.ToString());
                     if (errorResponse != null)
                     {
                         throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
@@ -1584,6 +1638,59 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     NexportUserId = nexportUser.UserId,
                     NopUserId = customer.Id
                 });
+            }
+        }
+
+        public void SynchronizeContactInfoFromNexport(Customer customer, Guid nexportUserId)
+        {
+            var userContactInfo = GetNexportUserContactInfo(nexportUserId);
+
+            if (userContactInfo != null)
+            {
+                var customerStateProvince =
+                    _stateProvinceService.GetStateProvinces()
+                        .FirstOrDefault(x =>
+                            x.Name.Contains(userContactInfo.State) ||
+                            x.Abbreviation.Contains(userContactInfo.State));
+
+                var customerCountry =
+                    _countryService.GetAllCountries()
+                        .FirstOrDefault(x =>
+                            x.Name.Contains(userContactInfo.Country) ||
+                            x.ThreeLetterIsoCode.Contains(userContactInfo.Country) ||
+                            x.TwoLetterIsoCode.Contains(userContactInfo.Country));
+
+                var customerFirstName = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.FirstNameAttribute);
+                var customerLastName = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.LastNameAttribute);
+
+                var address = new Address
+                {
+                    FirstName = customerFirstName,
+                    LastName = customerLastName,
+                    Address1 = userContactInfo.AddressLine1,
+                    Address2 = userContactInfo.AddressLine2,
+                    City = userContactInfo.City,
+                    StateProvinceId = customerStateProvince?.Id,
+                    CountryId = customerCountry?.Id,
+                    ZipPostalCode = userContactInfo.PostalCode,
+                    Email = customer.Email,
+                    PhoneNumber = userContactInfo.Phone,
+                    FaxNumber = userContactInfo.Fax,
+                    CreatedOnUtc = DateTime.UtcNow
+                };
+
+                if (address.CountryId == 0)
+                    address.CountryId = null;
+                if (address.StateProvinceId == 0)
+                    address.StateProvinceId = null;
+
+                customer.CustomerAddressMappings.Add(new CustomerAddressMapping { Address = address });
+                _customerService.UpdateCustomer(customer);
+
+                customer.BillingAddressId = address.Id;
+                customer.ShippingAddressId = address.Id;
+
+                _customerService.UpdateCustomer(customer);
             }
         }
 

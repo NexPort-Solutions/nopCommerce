@@ -10,6 +10,7 @@ using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
@@ -453,8 +454,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         #region User Configuration Actions
 
         [Area(AreaNames.Admin)]
-        [HttpPost]
-        [PublicAntiForgery]
+        [AdminAntiForgery]
         [Route("Admin/Customer/Edit/{id}")]
         [HttpPost, ActionName("Edit")]
         [FormValueRequired("setnexportuserid")]
@@ -485,10 +485,72 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     _nexportService.UpdateUserMapping(currentUserMapping);
                 }
 
+                try
+                {
+                    _nexportService.SynchronizeContactInfoFromNexport(customer, nexportUserId);
+                }
+                catch (Exception ex)
+                {
+                    var errMsg = $"Cannot synchronize the contact info for customer {customer.Id} with Nexport user {nexportUserId}";
+                    _logger.Error(errMsg, ex);
+                }
+
                 _notificationService.SuccessNotification("Success update Nexport user mapping");
             }
 
             return RedirectToAction("Edit", "Customer", new { id = customer.Id });
+        }
+
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AdminAntiForgery]
+        public IActionResult SetNexportUser(int customerId, Guid nexportUserId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return ErrorJson(_localizationService.GetResource("Admin.AccessDenied.Description"));
+
+            var customer = _customerService.GetCustomerById(customerId);
+            if (customer == null)
+                return Json(new
+                {
+                    redirectUrl = Url.Action("List", "Customer")
+                });
+
+            if (nexportUserId != Guid.Empty)
+            {
+                var currentUserMapping = _nexportService.FindUserMappingByCustomerId(customer.Id);
+                if (currentUserMapping == null)
+                {
+                    _nexportService.InsertUserMapping(new NexportUserMapping
+                    {
+                        NexportUserId = nexportUserId,
+                        NopUserId = customer.Id
+                    });
+                }
+                else
+                {
+                    currentUserMapping.NexportUserId = nexportUserId;
+
+                    _nexportService.UpdateUserMapping(currentUserMapping);
+                }
+
+                try
+                {
+                    _nexportService.SynchronizeContactInfoFromNexport(customer, nexportUserId);
+                }
+                catch (Exception ex)
+                {
+                    var errMsg = $"Cannot synchronize the contact info for customer {customer.Id} with Nexport user {nexportUserId}";
+                    _logger.Error(errMsg, ex);
+                }
+
+                _notificationService.SuccessNotification("Success update Nexport user mapping");
+            }
+
+            return Json(new
+            {
+                redirectUrl = Url.Action("Edit", "Customer", new { id = customer.Id })
+            });
         }
 
         #endregion

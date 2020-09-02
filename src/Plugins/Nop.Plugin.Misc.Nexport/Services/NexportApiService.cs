@@ -145,6 +145,34 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
+        public NexportUserContactInfoResponseDetails GetNexportUserContactInfo([NotNull] string url, [NotNull] string accessToken,
+            Guid userId)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new NullReferenceException("Api url cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            _apiConfiguration.BasePath = url;
+
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
+            var response = nexportApi.AdminApiGetUserContactInformationWithHttpInfo(accessToken, userId);
+
+            var result = new NexportUserContactInfoResponseDetails
+            {
+                Response = response.Data,
+                StatusCode = (int)response.StatusCode
+            };
+
+            return result;
+        }
+
         public NexportUserListResponse GetNexportUsers([NotNull] string url, [NotNull] string accessToken, string searchTerm, int? page = null)
         {
             if (string.IsNullOrWhiteSpace(url))
