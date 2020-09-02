@@ -8,6 +8,8 @@ using Nop.Core.Domain.Orders;
 using Nop.Services.Cms;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
+using Nop.Services.Customers;
+using Nop.Services.Directory;
 using Nop.Services.Logging;
 using Nop.Services.Orders;
 using Nop.Services.Stores;
@@ -26,6 +28,9 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
         private readonly IOrderService _orderService;
         private readonly IOrderProcessingService _orderProcessingService;
         private readonly IStoreService _storeService;
+        private readonly ICustomerService _customerService;
+        private readonly IStateProvinceService _stateProvinceService;
+        private readonly ICountryService _countryService;
         private readonly ISettingService _settingService;
         private readonly NexportSettings _nexportSettings;
         private readonly IGenericAttributeService _genericAttributeService;
@@ -47,6 +52,9 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             IOrderService orderService,
             IOrderProcessingService orderProcessingService,
             IStoreService storeService,
+            ICustomerService customerService,
+            IStateProvinceService stateProvinceService,
+            ICountryService countryService,
             ISettingService settingService,
             IGenericAttributeService genericAttributeService,
             IRepository<NexportOrderProcessingQueueItem> nexportOrderProcessingQueueRepository,
@@ -58,8 +66,11 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             _orderService = orderService;
             _orderProcessingService = orderProcessingService;
             _storeService = storeService;
-            _genericAttributeService = genericAttributeService;
+            _customerService = customerService;
+            _stateProvinceService = stateProvinceService;
+            _countryService = countryService;
             _settingService = settingService;
+            _genericAttributeService = genericAttributeService;
             _nexportOrderProcessingQueueRepository = nexportOrderProcessingQueueRepository;
             _nexportService = nexportService;
             _nexportSettings = nexportSettings;
@@ -115,6 +126,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                             if (userMapping != null)
                             {
+                                SynchronizeCustomerContactInformation(userMapping);
+
                                 var store = _storeService.GetStoreById(order.StoreId);
 
                                 if (store != null)
@@ -329,6 +342,52 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             catch (Exception ex)
             {
                 _logger.Error("Cannot process the NexportRedemptionProcessingQueue", ex);
+            }
+        }
+
+        private void SynchronizeCustomerContactInformation(NexportUserMapping userMapping)
+        {
+            if (userMapping == null)
+                throw new ArgumentNullException(nameof(userMapping));
+
+            try
+            {
+                var customer = _customerService.GetCustomerById(userMapping.NopUserId);
+                var currentBillingAddress = customer?.BillingAddress;
+                if (currentBillingAddress != null)
+                {
+                    var customerStateProvince =
+                        _stateProvinceService.GetStateProvinceById(currentBillingAddress
+                            .StateProvinceId.GetValueOrDefault(0));
+
+                    var customerAddressState = customerStateProvince != null ? customerStateProvince.Name : "";
+
+                    var customerCountry =
+                        _countryService.GetCountryById(currentBillingAddress.CountryId.GetValueOrDefault(0));
+
+                    var customerAddressCountry = customerCountry != null ? customerCountry.Name : "";
+
+                    var updatedInfo = new UserContactInfoRequest(apiErrorEntity: new ApiErrorEntity())
+                    {
+                        AddressLine1 = currentBillingAddress.Address1,
+                        AddressLine2 = currentBillingAddress.Address2,
+                        City = currentBillingAddress.City,
+                        State = customerAddressState,
+                        Country = customerAddressCountry,
+                        PostalCode = currentBillingAddress.ZipPostalCode,
+                        Phone = currentBillingAddress.PhoneNumber,
+                        Fax = currentBillingAddress.FaxNumber
+                    };
+
+                    _nexportService.UpdateNexportUserContactInfo(userMapping.NexportUserId,
+                        updatedInfo);
+
+                    _logger.Information($"Successfully update contact information in Nexport for customer {userMapping.NopUserId}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Cannot update contact information for customer {userMapping.NopUserId} in Nexport", ex);
             }
         }
 

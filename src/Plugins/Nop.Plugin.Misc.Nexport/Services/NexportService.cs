@@ -33,6 +33,7 @@ using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
+using Nop.Services.Directory;
 using Nop.Services.Helpers;
 using Nop.Services.Plugins;
 
@@ -82,6 +83,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly ISettingService _settingService;
         private readonly IStoreService _storeService;
         private readonly IShoppingCartService _shoppingCartService;
+        private readonly ICountryService _countryService;
+        private readonly IStateProvinceService _stateProvinceService;
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly INotificationService _notificationService;
         private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomerRenderPluginManager;
@@ -133,6 +136,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             ISettingService settingService,
             IStoreService storeService,
             IShoppingCartService shoppingCartService,
+            ICountryService countryService,
+            IStateProvinceService stateProvinceService,
             IGenericAttributeService genericAttributeService,
             INotificationService notificationService,
             ILocalizationService localizationService,
@@ -181,6 +186,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _settingService = settingService;
             _storeService = storeService;
             _shoppingCartService = shoppingCartService;
+            _countryService = countryService;
+            _stateProvinceService = stateProvinceService;
             _genericAttributeService = genericAttributeService;
             _notificationService = notificationService;
             _localizationService = localizationService;
@@ -314,7 +321,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         [CanBeNull]
         public CreateUserResponse CreateNexportUser(string login, string password,
-            string firstName, string lastName, string email, Guid ownerOrgId)
+            string firstName, string lastName, string email, Guid ownerOrgId, UserContactInfoRequest contactInfo = null)
         {
             if (string.IsNullOrWhiteSpace(login))
                 throw new ArgumentNullException(nameof(login), "Login cannot be empty");
@@ -334,7 +341,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             try
             {
                 var response = _nexportApiService.CreateNexportUser(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                    login, password, firstName, lastName, email, ownerOrgId);
+                    login, password, firstName, lastName, email, ownerOrgId, contactInfo);
 
                 if (response.StatusCode == 200)
                     return response.Response;
@@ -1539,8 +1546,36 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var firstName = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.FirstNameAttribute);
             var lastName = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.LastNameAttribute);
 
+            UserContactInfoRequest contactInfo = null;
+
+            var currentBillingAddress = customer.BillingAddress;
+            if (currentBillingAddress != null)
+            {
+                var customerStateProvince =
+                    _stateProvinceService.GetStateProvinceById(currentBillingAddress.StateProvinceId.GetValueOrDefault(0));
+
+                var customerAddressState = customerStateProvince != null ? customerStateProvince.Name : "";
+
+                var customerCountry =
+                    _countryService.GetCountryById(currentBillingAddress.CountryId.GetValueOrDefault(0));
+
+                var customerAddressCountry = customerCountry != null ? customerCountry.Name : "";
+
+                contactInfo = new UserContactInfoRequest(apiErrorEntity: new ApiErrorEntity())
+                {
+                    AddressLine1 = currentBillingAddress.Address1,
+                    AddressLine2 = currentBillingAddress.Address2,
+                    City = currentBillingAddress.City,
+                    State = customerAddressState,
+                    Country = customerAddressCountry,
+                    PostalCode = currentBillingAddress.ZipPostalCode,
+                    Phone = currentBillingAddress.PhoneNumber,
+                    Fax = currentBillingAddress.FaxNumber
+                };
+            }
+
             var nexportUser = CreateNexportUser(login, password, firstName, lastName,
-                customer.Email, _nexportSettings.RootOrganizationId.Value);
+                customer.Email, _nexportSettings.RootOrganizationId.Value, contactInfo);
 
             if (nexportUser != null)
             {

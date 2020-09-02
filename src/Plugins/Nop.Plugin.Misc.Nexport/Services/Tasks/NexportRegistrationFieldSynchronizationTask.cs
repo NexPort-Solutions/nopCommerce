@@ -21,10 +21,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
     {
         private readonly ILogger _logger;
         private readonly IWidgetPluginManager _widgetPluginManager;
-        private readonly IPluginManager<IRegistrationFieldCustomRender> _pluginManager;
-        private readonly ICustomerService _customerService;
-        private readonly IStateProvinceService _stateProvinceService;
-        private readonly ICountryService _countryService;
         private readonly NexportService _nexportService;
         private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
 
@@ -33,19 +29,11 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
         public NexportRegistrationFieldSynchronizationTask(
             IWidgetPluginManager widgetPluginManager,
-            IPluginManager<IRegistrationFieldCustomRender> pluginManager,
-            ICustomerService customerService,
-            IStateProvinceService stateProvinceService,
-            ICountryService countryService,
             ILogger logger,
             IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
             NexportService nexportService)
         {
             _widgetPluginManager = widgetPluginManager;
-            _pluginManager = pluginManager;
-            _customerService = customerService;
-            _stateProvinceService = stateProvinceService;
-            _countryService = countryService;
             _logger = logger;
             _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
             _nexportService = nexportService;
@@ -85,7 +73,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                         if (syncItem == null)
                             return;
 
-                        _logger.Debug($"Begin contact information and registration fields synchronization for customer {syncItem.CustomerId}");
+                        _logger.Debug($"Begin registration fields synchronization for customer {syncItem.CustomerId}");
 
                         var userMapping = _nexportService.FindUserMappingByCustomerId(syncItem.CustomerId);
                         if (userMapping != null)
@@ -96,9 +84,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                             }
                             else
                             {
-                                // Synchronize customer contact information with Nexport
-                                SynchronizeCustomerContactInformation(syncItem, userMapping);
-
                                 try
                                 {
                                     // Synchronize customer custom profile fields with Nexport
@@ -120,7 +105,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     }
                                 }
 
-                                _logger.Debug("Synchronize contact information and registration fields in Nexport completed.");
+                                _logger.Debug("Synchronize registration fields in Nexport completed.");
                             }
                         }
                     }
@@ -133,55 +118,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             catch (Exception ex)
             {
                 _logger.Error("Cannot synchronize registration field with Nexport", ex);
-            }
-        }
-
-        private void SynchronizeCustomerContactInformation(NexportRegistrationFieldSynchronizationQueueItem syncItem, NexportUserMapping userMapping)
-        {
-            if (syncItem == null)
-                throw new ArgumentNullException(nameof(syncItem));
-
-            if (userMapping == null)
-                throw new ArgumentNullException(nameof(userMapping));
-
-            try
-            {
-                var customer = _customerService.GetCustomerById(syncItem.CustomerId);
-                var currentBillingAddress = customer?.BillingAddress;
-                if (currentBillingAddress != null)
-                {
-                    var customerStateProvince =
-                        _stateProvinceService.GetStateProvinceById(currentBillingAddress
-                            .StateProvinceId.GetValueOrDefault(0));
-
-                    var customerAddressState = customerStateProvince != null ? customerStateProvince.Name : "";
-
-                    var customerCountry =
-                        _countryService.GetCountryById(currentBillingAddress.CountryId.GetValueOrDefault(0));
-
-                    var customerAddressCountry = customerCountry != null ? customerCountry.Name : "";
-
-                    var updatedInfo = new UserContactInfoRequest(apiErrorEntity: new ApiErrorEntity())
-                    {
-                        AddressLine1 = currentBillingAddress.Address1,
-                        AddressLine2 = currentBillingAddress.Address2,
-                        City = currentBillingAddress.City,
-                        State = customerAddressState,
-                        Country = customerAddressCountry,
-                        PostalCode = currentBillingAddress.ZipPostalCode,
-                        Phone = currentBillingAddress.PhoneNumber,
-                        Fax = currentBillingAddress.FaxNumber
-                    };
-
-                    _nexportService.UpdateNexportUserContactInfo(userMapping.NexportUserId,
-                        updatedInfo);
-
-                    _logger.Information($"Successfully update contact information in Nexport for customer {userMapping.NopUserId}");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Cannot update contact information for customer {userMapping.NopUserId} in Nexport", ex);
             }
         }
 

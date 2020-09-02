@@ -182,7 +182,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public NexportCreateUserResponseDetails CreateNexportUser([NotNull] string url, [NotNull] string accessToken,
             [NotNull] string login, [NotNull] string password,
-            [NotNull] string firstName, [NotNull] string lastName, [NotNull] string email, Guid ownerOrgId)
+            [NotNull] string firstName, [NotNull] string lastName, [NotNull] string email, Guid ownerOrgId, UserContactInfoRequest contactInfo = null)
         {
             if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
@@ -214,7 +214,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             };
 
             var response = nexportApi.AdminApiCreateUserWithHttpInfo(accessToken,
-                new CreateUserRequest(ownerOrgId, login, password, firstName, "", lastName, email));
+                new CreateUserRequest(ownerOrgId, login, password, firstName, "", lastName, email, contactInfo: contactInfo));
 
             var result = new NexportCreateUserResponseDetails
             {
