@@ -1720,6 +1720,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 {
                     if (mapping.IsExtensionProduct)
                         return false;
+
+                    if (!CanRepurchaseProductInNexportCategory(product, customer, store.Id, true))
+                        return false;
                 }
             }
 
@@ -1761,7 +1764,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return (null, null);
         }
 
-        public bool CanRepurchaseProductInNexportCategory(Product product, Customer customer, int storeId)
+        public bool CanRepurchaseProductInNexportCategory(Product product, Customer customer, int storeId, bool checkOtherProductWithinCategory = false)
         {
             if (product == null)
                 throw new ArgumentNullException(nameof(product));
@@ -1774,12 +1777,37 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var productCategories = _categoryService.GetProductCategoriesByProductId(product.Id, storeId);
 
-            return productCategories.Select(productCategory =>
-                _genericAttributeService.GetAttribute(
+            foreach (var productCategory in productCategories)
+            {
+                var allowPurchaseDuringEnrollment = _genericAttributeService.GetAttribute(
                     productCategory.Category,
                     NexportDefaults.ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT,
-                    defaultValue: false))
-                .FirstOrDefault();
+                    defaultValue: false);
+
+                if (!checkOtherProductWithinCategory)
+                    return allowPurchaseDuringEnrollment;
+
+                if (!allowPurchaseDuringEnrollment)
+                {
+                    var productsCategoryInSameCategory =
+                        _categoryService.GetProductCategoriesByCategoryId(productCategory.CategoryId, showHidden: false);
+
+                    foreach (var otherProductCategory in productsCategoryInSameCategory)
+                    {
+                        var productMapping = GetProductMappingByNopProductId(otherProductCategory.ProductId);
+                        if (productMapping != null)
+                        {
+                            var existingEnrollmentStatus = VerifyNexportEnrollmentStatus(otherProductCategory.Product, customer, storeId);
+                            if (existingEnrollmentStatus != null)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return true;
         }
 
         public string GetStoreName(int storeId)
