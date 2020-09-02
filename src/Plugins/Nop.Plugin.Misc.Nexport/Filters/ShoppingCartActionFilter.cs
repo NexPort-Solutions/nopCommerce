@@ -128,6 +128,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                         foreach (var shoppingCartItem in cart)
                         {
                             var nexportProductMapping =
+                                _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId, store.Id) ??
                                 _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId);
                             if (nexportProductMapping == null)
                                 continue;
@@ -199,6 +200,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                     if (storeModel == NexportStoreSaleModel.Retail)
                     {
                         var nexportProductMapping =
+                            _nexportService.GetProductMappingByNopProductId(productId, store.Id) ??
                             _nexportService.GetProductMappingByNopProductId(productId);
                         if (nexportProductMapping != null)
                         {

@@ -1513,7 +1513,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var nexportProductMappings = order.OrderItems
                 .Select(item =>
-                    GetProductMappingByNopProductId(item.ProductId, _storeContext.CurrentStore.Id))
+                    GetProductMappingByNopProductId(item.ProductId, order.StoreId) ??
+                    GetProductMappingByNopProductId(item.ProductId))
                 .Where(mapping => mapping != null).ToList();
 
             return nexportProductMappings.Select(t =>

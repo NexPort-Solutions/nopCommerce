@@ -33,7 +33,8 @@ namespace Nop.Plugin.Misc.Nexport.Components
             if (productDetailsModel == null)
                 return Content("");
 
-            var model = _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id);
+            var model = _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id, _storeContext.CurrentStore.Id) ??
+                        _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id);
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Product/WidgetsProductDetailsOverviewTop.cshtml", model);
         }

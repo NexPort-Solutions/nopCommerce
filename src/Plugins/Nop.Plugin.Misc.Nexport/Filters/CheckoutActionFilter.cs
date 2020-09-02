@@ -4,12 +4,12 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
-using Nop.Plugin.Misc.Nexport.Factories;
-using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
 using Nop.Web.Controllers;
+using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Services;
 
 namespace Nop.Plugin.Misc.Nexport.Filters
 {
@@ -54,7 +54,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
 
                 var nexportProductMappings =
                     cart.Select(shoppingCartItem =>
-                        _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId, _storeContext.CurrentStore.Id))
+                        _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId, _storeContext.CurrentStore.Id) ??
+                        _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId))
                         .Where(mapping => mapping != null).ToList();
 
                 // Check if there are products a product in the cart that have Nexport product mappings

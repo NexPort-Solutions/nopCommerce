@@ -99,7 +99,8 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours
             var shoppingCartItems = _shoppingCartService.GetShoppingCart(request.Customer, ShoppingCartType.ShoppingCart, request.Store.Id);
             foreach (var cartItem in shoppingCartItems)
             {
-                var mapping = _nexportService.GetProductMappingByNopProductId(cartItem.ProductId, cartItem.StoreId);
+                var mapping = _nexportService.GetProductMappingByNopProductId(cartItem.ProductId, cartItem.StoreId) ??
+                              _nexportService.GetProductMappingByNopProductId(cartItem.ProductId);
                 if (mapping?.CreditHours != null)
                 {
                     totalHours += mapping.CreditHours.Value * cartItem.Quantity;

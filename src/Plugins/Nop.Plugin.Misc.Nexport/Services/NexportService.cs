@@ -1698,7 +1698,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollementExpirationDate)?
             VerifyNexportEnrollmentStatus(Product product, Customer customer, int? storeId = null)
         {
-            var mapping = GetProductMappingByNopProductId(product.Id, storeId);
+            var mapping = GetProductMappingByNopProductId(product.Id, storeId) ?? GetProductMappingByNopProductId(product.Id);
             if (mapping != null)
             {
                 var userMapping = FindUserMappingByCustomerId(customer.Id);
@@ -1793,7 +1793,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return true;
 
             var existingEnrollmentStatus = VerifyNexportEnrollmentStatus(product, customer, store.Id);
-            var mapping = GetProductMappingByNopProductId(product.Id, store.Id);
+            var mapping = GetProductMappingByNopProductId(product.Id, store.Id) ?? GetProductMappingByNopProductId(product.Id);
 
             if (mapping != null)
             {
@@ -1936,7 +1936,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                     foreach (var otherProductCategory in productsCategoryInSameCategory)
                     {
-                        var productMapping = GetProductMappingByNopProductId(otherProductCategory.ProductId);
+                        var productMapping = GetProductMappingByNopProductId(otherProductCategory.ProductId, storeId) ??
+                                             GetProductMappingByNopProductId(otherProductCategory.ProductId);
                         if (productMapping != null)
                         {
                             var existingEnrollmentStatus = VerifyNexportEnrollmentStatus(otherProductCategory.Product, customer, storeId);
