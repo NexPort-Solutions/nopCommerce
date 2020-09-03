@@ -221,32 +221,36 @@
                 });
 
                 function setNexportUserId() {
-                    var userId = $("#@Html.IdFor(model => model.NexportUserId)").val();
-                    if (confirm("Are you sure you want to assign the user Id " + userId + " for this customer?")) {
-                        var postData = {
+                    var element = $("#@Html.IdFor(model => model.NexportUserId)");
+                    var userId = element.val();
+                    if (element.valid()) {
+                        if (confirm("Are you sure you want to assign the user Id " + userId + " for this customer?")) {
+                            var postData = {
+                                customerId: @Model.CustomerId,
+                                nexportUserId: userId
+                            };
+                            addAntiForgeryToken(postData);
 
-                            customerId: @Model.CustomerId,
-                            nexportUserId: userId
-                        };
-                        addAntiForgeryToken(postData);
-
-                        $.ajax({
-                            url: "@Url.Action("SetNexportUser", "NexportIntegration")",
-                            type: "POST",
-                            dataType: "json",
-                            data: postData,
-                            success: function(data, textStatus, jqXHR) {
-                                if (data.redirectUrl) {
-                                    window.location.href = data.redirectUrl;
+                            $.ajax({
+                                url: "@Url.Action("SetNexportUser", "NexportIntegration")",
+                                type: "POST",
+                                dataType: "json",
+                                data: postData,
+                                success: function(data, textStatus, jqXHR) {
+                                    if (data.redirectUrl) {
+                                        window.location.href = data.redirectUrl;
+                                    }
+                                },
+                                error: function(jqXHR, textStatus, errorThrown) {
+                                    alert(errorThrown);
                                 }
-                            },
-                            error: function(jqXHR, textStatus, errorThrown) {
-                                alert(errorThrown);
-                            }
-                        });
-                    } else {
-                        return false;
+                            });
+                        } else {
+                            return false;
+                        }
                     }
+
+                    return false;
                 }
 
                 function renderAnswerStatusInfo(data, type, row, meta) {
