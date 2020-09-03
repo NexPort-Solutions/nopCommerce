@@ -518,33 +518,49 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             if (nexportUserId != Guid.Empty)
             {
-                var currentUserMapping = _nexportService.FindUserMappingByCustomerId(customer.Id);
-                if (currentUserMapping == null)
-                {
-                    _nexportService.InsertUserMapping(new NexportUserMapping
-                    {
-                        NexportUserId = nexportUserId,
-                        NopUserId = customer.Id
-                    });
-                }
-                else
-                {
-                    currentUserMapping.NexportUserId = nexportUserId;
-
-                    _nexportService.UpdateUserMapping(currentUserMapping);
-                }
-
+                GetUserResponse nexportUser = null;
                 try
                 {
-                    _nexportService.SynchronizeContactInfoFromNexport(customer, nexportUserId);
+                    nexportUser = _nexportService.GetNexportUser(nexportUserId);
                 }
                 catch (Exception ex)
                 {
-                    var errMsg = $"Cannot synchronize the contact info for customer {customer.Id} with Nexport user {nexportUserId}";
+                    var errMsg = $"Cannot map customer {customerId} with Nexport user {nexportUserId}";
                     _logger.Error(errMsg, ex);
+
+                    _notificationService.ErrorNotification(errMsg);
                 }
 
-                _notificationService.SuccessNotification("Success update Nexport user mapping");
+                if (nexportUser != null)
+                {
+                    var currentUserMapping = _nexportService.FindUserMappingByCustomerId(customer.Id);
+                    if (currentUserMapping == null)
+                    {
+                        _nexportService.InsertUserMapping(new NexportUserMapping
+                        {
+                            NexportUserId = nexportUserId,
+                            NopUserId = customer.Id
+                        });
+                    }
+                    else
+                    {
+                        currentUserMapping.NexportUserId = nexportUserId;
+
+                        _nexportService.UpdateUserMapping(currentUserMapping);
+                    }
+
+                    try
+                    {
+                        _nexportService.SynchronizeContactInfoFromNexport(customer, nexportUserId);
+                    }
+                    catch (Exception ex)
+                    {
+                        var errMsg = $"Cannot synchronize the contact info for customer {customer.Id} with Nexport user {nexportUserId}";
+                        _logger.Error(errMsg, ex);
+                    }
+
+                    _notificationService.SuccessNotification("Success update Nexport user mapping");
+                }
             }
 
             return Json(new
