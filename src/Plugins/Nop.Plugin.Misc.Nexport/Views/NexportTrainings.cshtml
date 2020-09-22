@@ -40,21 +40,23 @@
         var orgId = $(element).data("org-id");
         var userId = $("#userId").val();
         if (orgId && userId) {
+            var nexportWindow = window.open("about:blank", "_blank");
+
             var url = "@Url.Action("GoToNexportOrg", "NexportIntegration")";
             url += "?orgId=" + orgId + "&userId=" + userId;
 
             $.ajax({
                 url: url,
                 type: "GET",
-                async: false,
                 success: function(result) {
                     if (result && result.RedirectUrl) {
-                        window.open(result.RedirectUrl, "_blank");
+                        nexportWindow.location.href = result.RedirectUrl;
                     }
                 },
                 error: function(xhr, textStatus, errorThrown) {
                     var response = xhr.responseJSON;
                     if (response && response.Error) {
+                        nexportWindow.close();
                         displayBarNotification(response.Error, "error");
                     }
                 }
