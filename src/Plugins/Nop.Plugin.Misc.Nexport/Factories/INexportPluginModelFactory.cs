@@ -8,6 +8,7 @@ using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
@@ -107,5 +108,11 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             NexportRegistrationFieldOption registrationFieldOption);
 
         NexportCustomerRegistrationFieldsModel PrepareNexportCustomerRegistrationFieldsModel(Store store);
+
+        NexportOrderInvoiceItemListModel PrepareNexportOrderInvoiceItemListModel(NexportOrderInvoiceItemSearchModel searchModel,
+            bool excludeNonApproval = false);
+
+        NexportOrderInvoiceItemModel PrepareNexportOrderInvoiceItemModel(NexportOrderInvoiceItemModel model,
+            NexportOrderInvoiceItem orderInvoiceItem);
     }
 }

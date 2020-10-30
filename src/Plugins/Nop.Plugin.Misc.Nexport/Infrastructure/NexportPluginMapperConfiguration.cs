@@ -7,6 +7,7 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Category;
+using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
@@ -52,6 +53,14 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                     opts => opts.MapFrom(model => model.AllowExtension))
                 .ForMember(entity => entity.RenewalWindow,
                     opts => opts.MapFrom(model => model.RenewalWindow))
+                .ForMember(entity => entity.RenewalDuration,
+                    opts => opts.MapFrom(model => model.RenewalDuration))
+                .ForMember(entity => entity.RenewalCompletionThreshold,
+                    opts => opts.MapFrom(model => model.RenewalCompletionThreshold))
+                .ForMember(entity => entity.RenewalApprovalMethod,
+                    opts => opts.MapFrom(model => model.RenewalApprovalMethod))
+                .ForMember(entity => entity.ExtensionPurchaseLimit,
+                    opts => opts.MapFrom(model => model.ExtensionPurchaseLimit))
                 .ForAllOtherMembers(opts => opts.Ignore());
 
             CreateMap<NexportProductGroupMembershipMapping, NexportProductGroupMembershipMappingModel>();
@@ -100,6 +109,13 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             CreateMap<NexportRegistrationFieldCategoryModel, NexportRegistrationFieldCategory>();
 
             CreateMap<Category, NexportCategoryModel>();
+
+            CreateMap<NexportOrderInvoiceItem, NexportOrderInvoiceItemModel>()
+                .ForMember(model => model.ProductName, opts => opts.Ignore())
+                .ForMember(model => model.NexportProductName, opts => opts.Ignore())
+                .ForMember(model => model.NexportSyllabusId, opts => opts.Ignore())
+                .ForMember(model => model.ExistingEnrollmentId, opts => opts.Ignore())
+                .ForMember(model => model.UtcExistingEnrollmentExpirationDate, opts => opts.Ignore());
         }
 
         public int Order => 0;

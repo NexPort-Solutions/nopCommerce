@@ -112,6 +112,20 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
         [NopResourceDisplayName("Plugins.Misc.Nexport.RenewalWindow")]
         public string RenewalWindow { get; set; }
 
+        [NopResourceDisplayName("Plugins.Misc.Nexport.RenewalDuration")]
+        public string RenewalDuration{ get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.RenewalCompletionThreshold")]
+        [UIHint("Int32Nullable")]
+        public int? RenewalCompletionThreshold { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.RenewalApprovalMethod")]
+        public NexportEnrollmentRenewalApprovalMethodEnum? RenewalApprovalMethod { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.ExtensionPurchaseLimit")]
+        [UIHint("Int32Nullable")]
+        public int? ExtensionPurchaseLimit { get; set; }
+
         public NexportProductGroupMembershipMappingModel AddGroupMembershipMappingModel { get; set; }
 
         public IList<NexportProductGroupMembershipMappingModel> GroupMembershipMappingModels { get; set; }

@@ -18,7 +18,7 @@ namespace Nop.Plugin.Misc.Nexport.Data
             builder.Property(m => m.DisplayName).HasMaxLength(255);
             builder.Property(m => m.NexportCatalogSyllabusLinkId);
             builder.Property(m => m.NexportSubscriptionOrgId);
-            builder.Property(m => m.NexportSubscriptionOrgName);
+            builder.Property(m => m.NexportSubscriptionOrgName).HasMaxLength(255);
             builder.Property(m => m.NexportSubscriptionOrgShortName).HasMaxLength(50);
             builder.Property(m => m.NexportCatalogId);
             builder.Property(m => m.NexportSyllabusId);
@@ -37,7 +37,11 @@ namespace Nop.Plugin.Misc.Nexport.Data
             builder.Property(m => m.AutoRedeem);
             builder.Property(m => m.AllowExtension);
             builder.Property(m => m.IsExtensionProduct);
-            builder.Property(m => m.RenewalWindow);
+            builder.Property(m => m.RenewalWindow).HasMaxLength(255);
+            builder.Property(m => m.RenewalDuration).HasMaxLength(255);
+            builder.Property(m => m.RenewalCompletionThreshold);
+            builder.Property(m => m.RenewalApprovalMethod);
+            builder.Property(m => m.ExtensionPurchaseLimit);
             builder.Property(m => m.StoreId);
 
             base.Configure(builder);

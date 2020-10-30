@@ -18,5 +18,7 @@ namespace Nop.Plugin.Misc.Nexport.Domain
         public DateTime? UtcLastFailedDate { get; set; }
 
         public int RetryCount { get; set; }
+
+        public int? ManualApprovalAction { get; set; }
     }
 }

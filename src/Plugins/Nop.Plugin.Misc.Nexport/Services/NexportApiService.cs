@@ -820,7 +820,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public InvoiceRedemptionResponse GetNexportInvoiceRedemption([NotNull] string url, [NotNull] string accessToken, Guid invoiceItemId)
+        public NexportGetInvoiceRedemptionDetails GetNexportInvoiceRedemption([NotNull] string url, [NotNull] string accessToken, Guid invoiceItemId)
         {
             if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
@@ -836,7 +836,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
             };
 
-            var result = nexportApi.PointOfSaleApiGetInvoiceRedemption(invoiceItemId, accessToken);
+            var response = nexportApi.PointOfSaleApiGetInvoiceRedemptionWithHttpInfo(invoiceItemId, accessToken);
+
+            var result = new NexportGetInvoiceRedemptionDetails
+            {
+                Response = response.Data,
+                StatusCode = (int)response.StatusCode
+            };
 
             return result;
         }

@@ -10,7 +10,6 @@ using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
-using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
@@ -52,6 +51,7 @@ using Nop.Plugin.Misc.Nexport.Infrastructure.ModelState;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Category;
+using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
@@ -676,7 +676,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [AuthorizeAdmin]
-        [Area("Admin")]
+        [Area(AreaNames.Admin)]
         [AdminAntiForgery]
         public IActionResult ProductMappingDetailsPopup(int mappingId)
         {
@@ -792,8 +792,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     }
 
                     ViewBag.RefreshPage = true;
-
-                    model = _nexportPluginModelFactory.PrepareNexportProductMappingModel(productMapping, true);
                 }
                 catch (Exception ex)
                 {
@@ -808,6 +806,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     _notificationService.ErrorNotification(errorMsg);
                 }
             }
+
+            model = _nexportPluginModelFactory.PrepareNexportProductMappingModel(productMapping, true);
 
             return View("~/Plugins/Misc.Nexport/Views/ProductMappingDetailsPopup.cshtml", model);
         }
@@ -836,7 +836,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [AuthorizeAdmin]
-        [Area("Admin")]
+        [Area(AreaNames.Admin)]
         [HttpPost]
         [AdminAntiForgery]
         public IActionResult GetProductGroupMembershipMappings(int nexportProductMappingId)
@@ -853,7 +853,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(model);
         }
 
-        [Area("Admin")]
+        [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
         [AdminAntiForgery]
         [HttpPost]
@@ -883,7 +883,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             });
         }
 
-        [Area("Admin")]
+        [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
         [AdminAntiForgery]
         [HttpPost]
@@ -1156,6 +1156,94 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Catalog.Categories.Updated"));
 
             return RedirectToAction("Edit", "Category", new { id = category.Id });
+        }
+
+        #endregion
+
+        #region Order Management Actions
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AdminAntiForgery]
+        public IActionResult GetNexportOrderInvoiceItems(NexportOrderInvoiceItemSearchModel searchModel)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageOrders))
+                return AccessDeniedDataTablesJson();
+
+            var model = _nexportPluginModelFactory.PrepareNexportOrderInvoiceItemListModel(searchModel, true);
+
+            return Json(model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult EditNexportOrderInvoiceItemApproval(int orderInvoiceItemId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageOrders))
+                return AccessDeniedView();
+
+            var orderInvoiceItem = _nexportService.FindNexportOrderInvoiceItemById(orderInvoiceItemId);
+
+            if (orderInvoiceItem == null)
+                throw new ArgumentException("No Nexport order invoice item found with the specified id", nameof(orderInvoiceItemId));
+
+            var model = _nexportPluginModelFactory.PrepareNexportOrderInvoiceItemModel(null, orderInvoiceItem);
+
+            return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Order/_OrderDetails.NexportOrderApproval.Edit.cshtml", model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        [HttpPost]
+        public IActionResult ModifyNexportEnrollment(int id, int action)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageOrders))
+                return AccessDeniedView();
+
+            var orderInvoiceItem = _nexportService.FindNexportOrderInvoiceItemById(id);
+
+            if (orderInvoiceItem == null)
+                throw new ArgumentException("No Nexport order invoice item found with the specified id", nameof(id));
+
+            var order = _orderService.GetOrderById(orderInvoiceItem.OrderId);
+
+            if (order != null)
+            {
+                var orderItem = _orderService.GetOrderItemById(orderInvoiceItem.OrderItemId);
+
+                if (orderItem != null)
+                {
+                    var customer = _customerService.GetCustomerById(order.CustomerId);
+                    var productMapping = _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
+                    var nexportUserMapping =
+                        _nexportService.FindUserMappingByCustomerId(order.CustomerId);
+
+                    if (productMapping != null && nexportUserMapping != null)
+                    {
+                        _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
+                            new NexportOrderInvoiceRedemptionQueueItem
+                            {
+                                OrderInvoiceItemId = orderInvoiceItem.Id,
+                                RedeemingUserId = nexportUserMapping.NexportUserId,
+                                ProductMappingId = productMapping.Id,
+                                OrderItemId = orderInvoiceItem.OrderItemId,
+                                UtcDateCreated = DateTime.UtcNow,
+                                ManualApprovalAction = action
+                            });
+
+                        return Json(new
+                        {
+                            success = true,
+                            message = $"Nexport invoice {orderInvoiceItem.InvoiceItemId} redemption for customer {customer.Email} [{nexportUserMapping.NexportUserId}] has been scheduled. " +
+                                      "Please check back later for new order status."
+                        });
+                    }
+                }
+            }
+
+            return new NullJsonResult();
         }
 
         #endregion
@@ -2754,6 +2842,32 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             try
             {
                 result.RedirectUrl = _nexportService.SignInNexport(orderInvoiceItem);
+            }
+            catch (Exception ex)
+            {
+                var errorMsg = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.FailedToRedirectToNexport");
+                _logger.Error(errorMsg, ex, _workContext.CurrentCustomer);
+
+                result.Error = errorMsg;
+                HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            }
+
+            return Json(result);
+        }
+
+        public IActionResult GoToNexportClassroom(Guid enrollmentId)
+        {
+            if (!_workContext.CurrentCustomer.IsRegistered())
+                return Challenge();
+
+            if (enrollmentId == Guid.Empty)
+                throw new Exception("Enrollment Id cannot be empty.");
+
+            dynamic result = new ExpandoObject();
+
+            try
+            {
+                result.RedirectUrl = _nexportService.SignInNexportClassroom(enrollmentId);
             }
             catch (Exception ex)
             {

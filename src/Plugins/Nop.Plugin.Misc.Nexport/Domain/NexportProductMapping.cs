@@ -61,6 +61,14 @@ namespace Nop.Plugin.Misc.Nexport.Domain
 
         public string RenewalWindow { get; set; }
 
+        public string RenewalDuration { get; set; }
+
+        public int? RenewalCompletionThreshold { get; set; }
+
+        public NexportEnrollmentRenewalApprovalMethodEnum? RenewalApprovalMethod { get; set; }
+
+        public int? ExtensionPurchaseLimit { get; set; }
+
         public int? StoreId { get; set; }
     }
 }

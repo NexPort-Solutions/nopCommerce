@@ -21,6 +21,7 @@ namespace Nop.Plugin.Misc.Nexport.Data
             builder.Property(m => m.RedeemingUserId);
             builder.Property(m => m.RedemptionEnrollmentId);
             builder.Property(m => m.UtcDateRedemption);
+            builder.Property(m => m.RequireManualApproval);
 
             base.Configure(builder);
         }

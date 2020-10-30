@@ -2,14 +2,84 @@
 
 <div class="nex-duration-picker-element col-sm-4">
     <input class="form-control input-sm" type="number" min="0" data-duration="days">
-    <div class="nex-duration-picker-element-label">days</div>
 </div>
 <div class="nex-duration-picker-element col-sm-4">
     <input class="form-control input-sm" type="number" min="0" max="23" data-duration="hours">
-    <div class="nex-duration-picker-element-label">hours</div>
 </div>
 <div class="nex-duration-picker-element col-sm-4">
     <input class="form-control input-sm" type="number" min="0" max="59" data-duration="minutes">
-    <div class="nex-duration-picker-element-label">minutes</div>
 </div>
 <input type="hidden" id="@Model.Name" name="@Model.Name" value="@Model.Value" />
+
+<script>
+    function convertTimeSpan(ts) {
+        var days, hours, minutes;
+        days = 0;
+        hours = 0;
+        minutes = 0;
+        var timeSpanComponents = ts.split(":");
+
+        if (timeSpanComponents.length === 3) {
+            var daysAndHoursParts = timeSpanComponents[0].split(".");
+            if (daysAndHoursParts.length === 2) {
+                days = daysAndHoursParts[0];
+                hours = daysAndHoursParts[1];
+            }
+
+            minutes = timeSpanComponents[1];
+        }
+
+        return {
+            days: days,
+            hours: hours,
+            minutes: minutes
+        };
+    }
+
+    function durationPickerChanged(container, submitInputElement) {
+        var days = parseInt(container.find("input[data-duration=days]").val(), 10) || 0;
+        var hours = parseInt(container.find("input[data-duration=hours]").val(), 10) || 0;
+        var minutes = parseInt(container.find("input[data-duration=minutes]").val(), 10) || 0;
+
+        var duration = +days + "." + +hours + ":" + +minutes + ":00";
+        container.find(submitInputElement).val(duration);
+    }
+
+    $(document).ready(function() {
+        var touchSpinConfig = {
+            decimals: 0,
+            verticalbuttons: true,
+            verticalupclass: "glyphicon glyphicon-chevron-up",
+            verticaldownclass: "glyphicon glyphicon-chevron-down",
+            buttondown_class: "btn",
+            buttonup_class: "btn"
+        };
+
+        var container = $("#@Model.ContainerId");
+        var submitInputElement = $("#@Model.Name");
+
+        var durationPickerDaysElement = container.find("input[data-duration=days]");
+        durationPickerDaysElement.TouchSpin($.extend({ min: 0, max: 10000, postfix: "days" }, touchSpinConfig)).change(function () {
+            durationPickerChanged(container, submitInputElement);
+        });
+
+        var durationPickerHoursElement = container.find("input[data-duration=hours]");
+        durationPickerHoursElement.TouchSpin($.extend({ min: 0, max: 23, postfix: "hours" }, touchSpinConfig)).change(function () {
+            durationPickerChanged(container, submitInputElement);
+        });
+
+        var durationPickerMinutesElement = container.find("input[data-duration=minutes]");
+        durationPickerMinutesElement.TouchSpin($.extend({ min: 0, max: 59, postfix: "minutes" }, touchSpinConfig)).change(function () {
+            durationPickerChanged(container, submitInputElement);
+        });
+
+        var value = @Json.Serialize(!string.IsNullOrWhiteSpace(Model.Value)) ? "@Model.Value" : null;
+
+        if (value && value.indexOf(":") !== -1) {
+            var duration = convertTimeSpan(value);
+            durationPickerDaysElement.val(duration.days);
+            durationPickerHoursElement.val(duration.hours);
+            durationPickerMinutesElement.val(duration.minutes);
+        }
+    });
+</script>

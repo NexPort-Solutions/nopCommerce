@@ -1,5 +1,7 @@
-﻿@using Nop.Plugin.Misc.Nexport.Models
-@using Nop.Plugin.Misc.Nexport.Models.ProductMappings
+﻿@using Nop.Plugin.Misc.Nexport.Models.ProductMappings
+@using Nop.Plugin.Misc.Nexport.Extensions
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+
 @inject IJsonHelper Json
 
 @model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingModel
@@ -103,33 +105,6 @@
                                     <div class="form-text-row">@Model.StoreName</div>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <div class="col-sm-5 col-md-3">
-                                    <nop-label asp-for="IsExtensionProduct" />
-                                </div>
-                                <div class="col-sm-7 col-md-9">
-                                    <nop-editor asp-for="IsExtensionProduct" />
-                                    <span asp-validation-for="IsExtensionProduct"></span>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <div class="col-sm-5 col-md-3">
-                                    <nop-label asp-for="AllowExtension" />
-                                </div>
-                                <div class="col-sm-7 col-md-9">
-                                    <nop-editor asp-for="AllowExtension" />
-                                    <span asp-validation-for="AllowExtension"></span>
-                                </div>
-                            </div>
-                            <div class="form-group hidden" id="renewalWindowOption">
-                                <div class="col-sm-5 col-md-3">
-                                    <nop-label asp-for="RenewalWindow" />
-                                </div>
-                                <div class="col-sm-7 col-md-9">
-                                    <nex-duration-picker asp-for="RenewalWindow" asp-value="@Model.RenewalWindow" asp-id="renewal-window-duration-picker" />
-                                    <span asp-validation-for="RenewalWindow"></span>
-                                </div>
-                            </div>
                         </div>
                     </div>
                     <div class="panel panel-default panel-popup">
@@ -170,6 +145,74 @@
                                     <span asp-validation-for="UtcAccessExpirationDate"></span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default panel-popup">
+                        <div class="panel-heading">
+                            <span>Product extension settings</span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="form-group">
+                                <div class="col-md-3 col-sm-5">
+                                    <nop-label asp-for="AllowExtension" />
+                                </div>
+                                <div class="col-md-9 col-sm-7">
+                                    <nop-editor asp-for="AllowExtension" />
+                                    <span asp-validation-for="AllowExtension"></span>
+                                </div>
+                            </div>
+                            <nop-nested-setting asp-for="AllowExtension">
+                                <div class="form-group" id="extensionProductOption">
+                                    <div class="col-md-3 col-sm-5">
+                                        <nop-label asp-for="IsExtensionProduct" />
+                                    </div>
+                                    <div class="col-md-9 col-sm-7">
+                                        <nop-editor asp-for="IsExtensionProduct" />
+                                        <span asp-validation-for="IsExtensionProduct"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group" id="renewalWindowOption">
+                                    <div class="col-md-3 col-sm-5">
+                                        <nop-label asp-for="RenewalWindow" />
+                                    </div>
+                                    <div class="col-md-9 col-sm-7">
+                                        <nex-duration-picker asp-for="RenewalWindow" asp-value="@Model.RenewalWindow" asp-id="renewal-window-duration-picker" />
+                                        <span asp-validation-for="RenewalWindow"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group" id="renewalDurationOption">
+                                    <div class="col-md-3 col-sm-5">
+                                        <nop-label asp-for="RenewalDuration" />
+                                    </div>
+                                    <div class="col-md-9 col-sm-7">
+                                        <nex-duration-picker asp-for="RenewalDuration" asp-value="@Model.RenewalDuration" asp-id="renewal-duration-picker" />
+                                        <span asp-validation-for="RenewalDuration"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group" id="renewalCompletionThresholdOption">
+                                    <div class="col-md-3 col-sm-5">
+                                        <nop-label asp-for="RenewalCompletionThreshold" />
+                                    </div>
+                                    <div class="col-md-9 col-sm-7">
+                                        <nop-editor asp-for="RenewalCompletionThreshold" asp-postfix="%" />
+                                        <span asp-validation-for="RenewalCompletionThreshold"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group" id="renewalApprovalMethodOption">
+                                    <div class="col-md-3 col-sm-5">
+                                        <nop-label asp-for="RenewalApprovalMethod" />
+                                    </div>
+                                    <div class="col-md-9 col-sm-7">
+                                        @{
+                                            var renewalApprovalMethods = Model.RenewalApprovalMethod.HasValue
+                                                ? Model.RenewalApprovalMethod.Value.ToNexportSelectList()
+                                                : Html.GetEnumSelectList<NexportEnrollmentRenewalApprovalMethodEnum>();
+                                        }
+                                        <nop-select asp-for="RenewalApprovalMethod" asp-items="@renewalApprovalMethods" />
+                                        <span asp-validation-for="RenewalApprovalMethod"></span>
+                                    </div>
+                                </div>
+                            </nop-nested-setting>
                         </div>
                     </div>
 
@@ -264,35 +307,11 @@
                         </div>
                     </div>
                 </div>
-                </div>
+            </div>
         </div>
     </form>
 
     <script>
-        function convertTimeSpan(ts) {
-            var days, hours, minutes;
-            days = 0;
-            hours = 0;
-            minutes = 0;
-            var timeSpanComponents = ts.split(":");
-
-            if (timeSpanComponents.length === 3) {
-                var daysAndHoursParts = timeSpanComponents[0].split(".");
-                if (daysAndHoursParts.length === 2) {
-                    days = daysAndHoursParts[0];
-                    hours = daysAndHoursParts[1];
-                }
-
-                minutes = timeSpanComponents[1];
-            }
-
-            return {
-                days: days,
-                hours: hours,
-                minutes: minutes
-            };
-        }
-
         function initTypeAhead(element, appendToElement, customMatcher, afterSelectionCallbackFunction) {
             $(element).bootstrapTypeahead({
                 source: function(query, process) {
@@ -354,47 +373,20 @@
             return ~orgShortName.toLowerCase().indexOf(query.toLowerCase());
         }
 
-        function durationPickerChanged(container, submitInputElement) {
-            console.log(container);
-
-            var days = parseInt(container.find("input[data-duration=days]").val(), 10) || 0;
-            var hours = parseInt(container.find("input[data-duration=hours]").val(), 10) || 0;
-            var minutes = parseInt(container.find("input[data-duration=minutes]").val(), 10) || 0;
-
-            var duration = +days + "." + +hours + ":" + +minutes + ":00";
-            container.find(submitInputElement).val(duration);
-        }
-
-        function initDurationPicker(container, submitInputElement, value) {
-            var touchSpinConfig = {
-                decimals: 0,
-                verticalbuttons: true,
-                verticalupclass: "glyphicon glyphicon-chevron-up",
-                verticaldownclass: "glyphicon glyphicon-chevron-down",
-                buttondown_class: "btn",
-                buttonup_class: "btn"
-            };
-
-            var durationPickerDaysElement = container.find("input[data-duration=days]");
-            durationPickerDaysElement.TouchSpin($.extend({ min: 0, max: 10000 }, touchSpinConfig)).change(function () {
-                durationPickerChanged(container, submitInputElement);
-            });
-
-            var durationPickerHoursElement = container.find("input[data-duration=hours]");
-            durationPickerHoursElement.TouchSpin($.extend({ min: 0, max: 23 }, touchSpinConfig)).change(function () {
-                durationPickerChanged(container, submitInputElement);
-            });
-
-            var durationPickerMinutesElement = container.find("input[data-duration=minutes]");
-            durationPickerMinutesElement.TouchSpin($.extend({ min: 0, max: 59 }, touchSpinConfig)).change(function () {
-                durationPickerChanged(container, submitInputElement);
-            });
-
-            if (value && value.indexOf(":") !== -1) {
-                var duration = convertTimeSpan(value);
-                durationPickerDaysElement.val(duration.days);
-                durationPickerHoursElement.val(duration.hours);
-                durationPickerMinutesElement.val(duration.minutes);
+        function toggleExtensionSettings() {
+            if ($("#@Html.IdFor(model => model.AllowExtension)").is(":checked")) {
+                $("#extensionProductOption").show();
+                $("#renewalWindowOption").show();
+                $("#renewalDurationOption").show();
+                $("#renewalCompletionThresholdOption").show();
+                $("#renewalApprovalMethodOption").show();
+            } else {
+                $("#@Html.IdFor(model => model.IsExtensionProduct)").prop("checked", false);
+                $("#extensionProductOption").hide();
+                $("#renewalWindowOption").hide();
+                $("#renewalDurationOption").hide();
+                $("#renewalCompletionThresholdOption").hide();
+                $("#renewalApprovalMethodOption").hide();
             }
         }
 
@@ -444,30 +436,12 @@
                     }
                 });
 
-            var accessTimeLimitDurationPicker = $("#access-time-limit-duration-picker");
-            var accessTimeLimitDuration = hasAccessTimeLimitValue ? "@Model.AccessTimeLimit" : null;
-            initDurationPicker(accessTimeLimitDurationPicker, $("#@Html.IdFor(model => model.AccessTimeLimit)"), accessTimeLimitDuration);
-
-            var renewalWindowDurationPicker = $("#renewal-window-duration-picker");
-
-            $("#@Html.IdFor(model => model.AllowExtension)").on("change",
-                function(e) {
-                    if (this.checked) {
-                        $("#renewalWindowOption").removeClass("hidden");
-                    } else {
-                        $("#renewalWindowOption").addClass("hidden");
-                    }
-                });
-
             var allowExtensionValue = @Json.Serialize(Model.AllowExtension);
             if (!allowExtensionValue) {
-                $("#renewalWindowOption").addClass("hidden");
+                $("#renewalWindowOption").hide();
             } else {
-                $("#renewalWindowOption").removeClass("hidden");
+                $("#renewalWindowOption").show();
             }
-
-            var renewalWindowDuration =  @Json.Serialize(!string.IsNullOrWhiteSpace(Model.RenewalWindow)) ? "@Model.RenewalWindow" : null;
-            initDurationPicker(renewalWindowDurationPicker, $("#@Html.IdFor(model => model.RenewalWindow)"), renewalWindowDuration);
 
             initTypeAhead($("#NexportSubscriptionOrgId"), $("#NexportSubscriptionOrgId").parent(),
                 function(item, query) {
@@ -523,15 +497,15 @@
                         if (!data.Result) {
                             return;
                         }
+
                         updateTable("#product-mapping-group-memberships-grid");
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
                         console.error(errorThrown);
                     },
                     complete: function (jqXHR, textStatus) {
-                        //$("#addGroupMembership").attr("disabled", false);
-
                         groupIdInputElement.val("");
+
                         $("#AddGroupMembership_GroupName_Display").empty();
                         $("#AddGroupMembership_GroupName").val("");
                         $("#AddGroupMembership_GroupShortName_Display").empty();
@@ -539,6 +513,9 @@
                     }
                 });
             });
+
+            $("#@Html.IdFor(model => model.AllowExtension)").click(toggleExtensionSettings);
+            toggleExtensionSettings();
         });
 
         //# sourceURL=ProductMappingDetailsPopup.js

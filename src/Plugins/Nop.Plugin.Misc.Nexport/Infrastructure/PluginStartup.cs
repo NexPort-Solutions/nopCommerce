@@ -112,6 +112,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
                     nexportPluginService.InstallScheduledTask();
                     nexportPluginService.AddActivityLogTypes();
+                    nexportPluginService.AddMessageTemplates();
                     nexportPluginService.AddOrUpdateResources();
                 }
             }

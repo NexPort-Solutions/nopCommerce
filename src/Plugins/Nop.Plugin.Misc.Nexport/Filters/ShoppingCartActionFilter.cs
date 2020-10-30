@@ -69,7 +69,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                         {
                             var product = _productService.GetProductById(item.ProductId);
                             var canPurchaseProduct =
-                                _nexportService.CanRepurchaseNexportProduct(product, _workContext.CurrentCustomer);
+                                _nexportService.CanPurchaseNexportProduct(product, _workContext.CurrentCustomer);
 
                             if (!canPurchaseProduct)
                             {
@@ -211,7 +211,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                                 if (customer.IsRegistered())
                                 {
                                     var canPurchaseProduct =
-                                        _nexportService.CanRepurchaseNexportProduct(product, _workContext.CurrentCustomer);
+                                        _nexportService.CanPurchaseNexportProduct(product, _workContext.CurrentCustomer);
 
                                     if (!canPurchaseProduct)
                                     {

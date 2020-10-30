@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
+using System.Net;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using NexportApi.Client;
@@ -15,6 +18,7 @@ using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
@@ -28,16 +32,17 @@ using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Services.Common;
 using Nop.Services.Orders;
+using Nop.Services.Customers;
+using Nop.Services.Directory;
+using Nop.Services.Helpers;
+using Nop.Services.Plugins;
+using Nop.Web.Framework;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
-using Nop.Services.Customers;
-using Nop.Services.Directory;
-using Nop.Services.Helpers;
-using Nop.Services.Plugins;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -47,7 +52,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         private readonly NexportApiService _nexportApiService;
 
+        private readonly EmailAccountSettings _emailAccountSettings;
         private readonly NexportSettings _nexportSettings;
+
         private readonly IAclService _aclService;
         private readonly ICacheManager _cacheManager;
         private readonly IEventPublisher _eventPublisher;
@@ -90,8 +97,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IStateProvinceService _stateProvinceService;
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly INotificationService _notificationService;
+        private readonly IEmailAccountService _emailAccountService;
+        private readonly ILanguageService _languageService;
+        private readonly IMessageTemplateService _messageTemplateService;
+        private readonly IWorkflowMessageService _workflowMessageService;
+        private readonly IMessageTokenProvider _messageTokenProvider;
+
         private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomerRenderPluginManager;
         private readonly IDateTimeHelper _dateTimeHelper;
+        private readonly IUrlHelperFactory _urlHelperFactory;
+        private readonly IActionContextAccessor _actionContextAccessor;
         private readonly IWorkContext _workContext;
         private readonly IStoreContext _storeContext;
         private readonly ILogger _logger;
@@ -102,6 +117,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public NexportService(
             NexportApiService nexportApiService,
+            EmailAccountSettings emailAccountSettings,
             NexportSettings nexportSettings,
             IAclService aclService,
             ICacheManager cacheManager,
@@ -144,14 +160,22 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IStateProvinceService stateProvinceService,
             IGenericAttributeService genericAttributeService,
             INotificationService notificationService,
+            ILanguageService languageService,
+            IMessageTemplateService messageTemplateService,
+            IEmailAccountService emailAccountService,
+            IMessageTokenProvider messageTokenProvider,
+            IWorkflowMessageService workflowMessageService,
             ILocalizationService localizationService,
             IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomerRenderPluginManager,
             IDateTimeHelper dateTimeHelper,
+            IUrlHelperFactory urlHelperFactory,
+            IActionContextAccessor actionContextAccessor,
             IWorkContext workContext,
             IStoreContext storeContext,
             ILogger logger)
         {
             _nexportApiService = nexportApiService;
+            _emailAccountSettings = emailAccountSettings;
             _nexportSettings = nexportSettings;
             _aclService = aclService;
             _cacheManager = cacheManager;
@@ -195,12 +219,156 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _stateProvinceService = stateProvinceService;
             _genericAttributeService = genericAttributeService;
             _notificationService = notificationService;
+            _languageService = languageService;
+            _messageTemplateService = messageTemplateService;
+            _emailAccountService = emailAccountService;
+            _messageTokenProvider = messageTokenProvider;
+            _workflowMessageService = workflowMessageService;
             _localizationService = localizationService;
             _registrationFieldCustomerRenderPluginManager = registrationFieldCustomerRenderPluginManager;
             _dateTimeHelper = dateTimeHelper;
+            _urlHelperFactory = urlHelperFactory;
+            _actionContextAccessor = actionContextAccessor;
             _workContext = workContext;
             _storeContext = storeContext;
             _logger = logger;
+        }
+
+        #endregion
+
+        #region Utilities
+
+        /// <summary>
+        /// Ensure language is active
+        /// </summary>
+        /// <param name="languageId">Language identifier</param>
+        /// <param name="storeId">Store identifier</param>
+        /// <returns>Return a value language identifier</returns>
+        private int EnsureLanguageIsActive(int languageId, int storeId)
+        {
+            //load language by specified ID
+            var language = _languageService.GetLanguageById(languageId);
+
+            if (language == null || !language.Published)
+            {
+                //load any language from the specified store
+                language = _languageService.GetAllLanguages(storeId: storeId).FirstOrDefault();
+            }
+
+            if (language == null || !language.Published)
+            {
+                //load any language
+                language = _languageService.GetAllLanguages().FirstOrDefault();
+            }
+
+            if (language == null)
+                throw new Exception("No active language could be loaded");
+
+            return language.Id;
+        }
+
+        /// <summary>
+        /// Get active message templates by the name
+        /// </summary>
+        /// <param name="messageTemplateName">Message template name</param>
+        /// <param name="storeId">Store identifier</param>
+        /// <returns>List of message templates</returns>
+        private IList<MessageTemplate> GetActiveMessageTemplates(string messageTemplateName, int storeId)
+        {
+            //get message templates by the name
+            var messageTemplates = _messageTemplateService.GetMessageTemplatesByName(messageTemplateName, storeId);
+
+            //no template found
+            if (!messageTemplates?.Any() ?? true)
+                return new List<MessageTemplate>();
+
+            //filter active templates
+            messageTemplates = messageTemplates.Where(messageTemplate => messageTemplate.IsActive).ToList();
+
+            return messageTemplates;
+        }
+
+        /// <summary>
+        /// Get EmailAccount to use with a message templates
+        /// </summary>
+        /// <param name="messageTemplate">Message template</param>
+        /// <param name="languageId">Language identifier</param>
+        /// <returns>EmailAccount</returns>
+        private EmailAccount GetEmailAccountOfMessageTemplate(MessageTemplate messageTemplate, int languageId)
+        {
+            var emailAccountId = _localizationService.GetLocalized(messageTemplate, mt => mt.EmailAccountId, languageId);
+            //some 0 validation (for localizable "Email account" dropdownlist which saves 0 if "Standard" value is chosen)
+            if (emailAccountId == 0)
+                emailAccountId = messageTemplate.EmailAccountId;
+
+            var emailAccount = (_emailAccountService.GetEmailAccountById(emailAccountId) ??
+                                _emailAccountService.GetEmailAccountById(_emailAccountSettings.DefaultEmailAccountId)) ??
+                               _emailAccountService.GetAllEmailAccounts().FirstOrDefault();
+            return emailAccount;
+        }
+
+        #endregion
+
+        #region Workflow Message Services
+
+        #region Message Token Builders
+
+        private void AddNexportOrderApprovalTokens(IList<Token> tokens, Order order)
+        {
+            tokens.Add(new Token("NexportOrderApproval.OrderId", order.Id));
+
+            var store = _storeService.GetStoreById(order.StoreId) ?? throw new Exception("No store could be loaded");
+
+            //ensure that the store URL is specified
+            if (string.IsNullOrEmpty(store.Url))
+                throw new Exception("URL cannot be null");
+
+            //generate a URL with an absolute path
+            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+            var url = new PathString(urlHelper.Action("Edit", "Order", new { id = order.Id }));
+
+            //remove the application path from the generated URL if exists
+            var pathBase = _actionContextAccessor.ActionContext?.HttpContext?.Request?.PathBase ?? PathString.Empty;
+            url.StartsWithSegments(pathBase, out url);
+
+            //compose the result
+            var orderUrl = Uri.EscapeUriString(WebUtility.UrlDecode($"{store.Url}{AreaNames.Admin}/{url}"));
+
+            tokens.Add(new Token("NexportOrderApproval.AdminViewOrderUrl", orderUrl, true));
+            //_eventPublisher.EntityTokensAdded(nexportOrderInvoiceItem, tokens);
+        }
+
+        #endregion
+
+        public IList<int> SendNewNexportOrderApprovalStoreOwnerNotification(Order order, int languageId)
+        {
+            if (order == null)
+                throw new ArgumentNullException(nameof(order));
+
+            var store = _storeService.GetStoreById(order.StoreId);
+            languageId = EnsureLanguageIsActive(languageId, store.Id);
+
+            var messageTemplates = GetActiveMessageTemplates(
+                NexportDefaults.NEXPORT_ORDER_MANUAL_APPROVAL_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE, store.Id);
+            if (!messageTemplates.Any())
+                return new List<int>();
+
+            var commonTokens = new List<Token>();
+            _messageTokenProvider.AddOrderTokens(commonTokens, order, languageId);
+            AddNexportOrderApprovalTokens(commonTokens, order);
+
+            return messageTemplates.Select(messageTemplate =>
+            {
+                var emailAccount = GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
+
+                var tokens = new List<Token>(commonTokens);
+                _messageTokenProvider.AddStoreTokens(tokens, store, emailAccount);
+
+                var toEmail = emailAccount.Email;
+                var toName = emailAccount.DisplayName;
+
+                return _workflowMessageService.SendNotification(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
+            }).ToList();
         }
 
         #endregion
@@ -981,6 +1149,36 @@ namespace Nop.Plugin.Misc.Nexport.Services
         }
 
         [CanBeNull]
+        public SectionEnrollmentsResponse GetSectionEnrollmentDetails(Guid orgId, Guid userId, Guid syllabusId)
+        {
+            SectionEnrollmentsResponse result;
+
+            try
+            {
+                result = _nexportApiService.GetNexportSectionEnrollment(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                    orgId, userId, syllabusId);
+            }
+            catch (Exception ex)
+            {
+                var errMsg = $"Error occurred during Web API call GetSectionEnrollments for section {syllabusId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<SectionEnrollmentsResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+
+            return result;
+        }
+
+        [CanBeNull]
         public TrainingPlanResponse GetTrainingPlanDetails(Guid trainingPlanId)
         {
             TrainingPlanResponse result;
@@ -1028,6 +1226,36 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 if (ex is ApiException exception)
                 {
                     var errorResponse = JsonConvert.DeserializeObject<GetDescriptionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+
+            return result;
+        }
+
+        [CanBeNull]
+        public TrainingPlanEnrollmentsResponse GetTrainingPlanEnrollmentDetails(Guid orgId, Guid userId, Guid trainingPlanId)
+        {
+            TrainingPlanEnrollmentsResponse result;
+
+            try
+            {
+                result = _nexportApiService.GetNexportTrainingPlanEnrollment(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                    orgId, userId, trainingPlanId);
+            }
+            catch (Exception ex)
+            {
+                var errMsg = $"Error occurred during Web API call GetTrainingPlanEnrollments for training plan {trainingPlanId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<TrainingPlanEnrollmentsResponse>(exception.ErrorContent.ToString());
                     if (errorResponse != null)
                     {
                         throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
@@ -1231,6 +1459,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 invoiceItem.RedeemingUserId = redeemingUserId;
                 invoiceItem.UtcDateRedemption = redeemInvoiceResult.UtcRedemptionDate;
+                invoiceItem.RequireManualApproval = null;
 
                 if (redeemInvoiceResult.RedemptionEnrollmentId != null)
                 {
@@ -1258,6 +1487,58 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
+        [CanBeNull]
+        public InvoiceRedemptionResponse GetNexportInvoiceRedemption(Guid invoiceItemId)
+        {
+            if (invoiceItemId == Guid.Empty)
+                throw new ArgumentException("Invoice item Id cannot be an empty GUID");
+
+            try
+            {
+                var response = _nexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url, _nexportSettings.AuthenticationToken, invoiceItemId);
+
+                if (response.StatusCode == 409)
+                    return null;
+
+                if (response.StatusCode == 200)
+                    return response.Response;
+
+                if (response.StatusCode == 403)
+                {
+                    var message = $"Nexport plugin access does not have permission to look up the invoice redemption for invoice item {invoiceItemId}";
+                    _logger.Error(message);
+
+                    throw new ApiException(response.StatusCode, message);
+                }
+
+                if (response.StatusCode == 422)
+                {
+                    var message = $"Validation exception occurred when trying to get the invoice redemption for invoice item {invoiceItemId}";
+                    _logger.Error(message);
+
+                    throw new ApiException(response.StatusCode, message);
+                }
+            }
+            catch (Exception ex)
+            {
+                var errMsg = $"Error occurred during GetInvoiceRedemption api call for the invoice item {invoiceItemId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<InvoiceRedemptionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+
+            return null;
+        }
+
         public string SignInNexport(NexportOrderInvoiceItem invoiceItem)
         {
             if (invoiceItem == null)
@@ -1267,8 +1548,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             try
             {
-                redemption = _nexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId);
+                redemption = GetNexportInvoiceRedemption(invoiceItem.InvoiceItemId);
 
             }
             catch (Exception ex)
@@ -1374,6 +1654,36 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
+        public string SignInNexportClassroom(Guid enrollmentId)
+        {
+            try
+            {
+                var response = _nexportApiService.NexportClassroomSingleSignOn(_nexportSettings.Url,
+                    _nexportSettings.AuthenticationToken, enrollmentId, _storeContext.CurrentStore.Url);
+
+                if (response.ApiErrorEntity.ErrorCode == 0)
+                    return response.Url;
+            }
+            catch (Exception ex)
+            {
+                var errMsg = $"Error occurred during SignIn api call for enrollment {enrollmentId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<SsoResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+
+            return null;
+        }
+
         public List<MemberShipInfo> AddNexportMemberships(Guid userId, IList<Guid> groupIds)
         {
             if (userId == Guid.Empty)
@@ -1454,10 +1764,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     var orderInvoiceItem = FindNexportOrderInvoiceItem(order.Id, orderItem.Id);
                     if (orderInvoiceItem?.UtcDateRedemption != null)
                     {
-                        var invoiceRedemption = _nexportApiService.GetNexportInvoiceRedemption(
-                            _nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                            orderInvoiceItem.InvoiceItemId);
-                        if (invoiceRedemption.ApiErrorEntity.ErrorCode == 0)
+                        var invoiceRedemption = GetNexportInvoiceRedemption(orderInvoiceItem.InvoiceItemId);
+                        if (invoiceRedemption?.ApiErrorEntity.ErrorCode == 0)
                         {
                             if (!organizationModelList.Exists(i => i.OrgId == invoiceRedemption.OrganizationId))
                             {
@@ -1695,7 +2003,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         }
 
         [CanBeNull]
-        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollementExpirationDate)?
+        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollementExpirationDate, int completionPercentage)?
             VerifyNexportEnrollmentStatus(Product product, Customer customer, int? storeId = null)
         {
             var mapping = GetProductMappingByNopProductId(product.Id, storeId) ?? GetProductMappingByNopProductId(product.Id);
@@ -1712,7 +2020,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollmentExpirationDate)?
+        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? EnrollmentExpirationDate, int CompletionPercentage)?
             VerifyNexportEnrollmentStatus(NexportProductMapping productMapping, NexportUserMapping nexportUserMapping)
         {
             if (productMapping == null)
@@ -1745,24 +2053,24 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (productMapping.Type == NexportProductTypeEnum.Section)
                 {
-                    var existingEnrollment = _nexportApiService.GetNexportSectionEnrollment(
-                        _nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                        orgId, nexportUserMapping.NexportUserId, productMapping.NexportSyllabusId.Value);
+                    var existingEnrollment = GetSectionEnrollmentDetails(orgId,
+                        nexportUserMapping.NexportUserId, productMapping.NexportSyllabusId.Value);
 
                     if (existingEnrollment != null)
                     {
-                        return (existingEnrollment.Phase, existingEnrollment.Result, existingEnrollment.ExpirationDate);
+                        return (existingEnrollment.Phase, existingEnrollment.Result,
+                            existingEnrollment.ExpirationDate, existingEnrollment.PercentAssignmentsComplete);
                     }
                 }
                 else if (productMapping.Type == NexportProductTypeEnum.TrainingPlan)
                 {
-                    var existingEnrollment = _nexportApiService.GetNexportTrainingPlanEnrollment(
-                        _nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                        orgId, nexportUserMapping.NexportUserId, productMapping.NexportSyllabusId.Value);
+                    var existingEnrollment = GetTrainingPlanEnrollmentDetails(orgId,
+                        nexportUserMapping.NexportUserId, productMapping.NexportSyllabusId.Value);
 
                     if (existingEnrollment != null)
                     {
-                        return (existingEnrollment.Phase, existingEnrollment.Result, existingEnrollment.ExpirationDate);
+                        return (existingEnrollment.Phase, existingEnrollment.Result,
+                            existingEnrollment.ExpirationDate, existingEnrollment.PercentRequirementsFulfilled);
                     }
                 }
             }
@@ -1777,7 +2085,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public bool CanRepurchaseNexportProduct(Product product, Customer customer)
+        public bool CanPurchaseNexportProduct(Product product, Customer customer)
         {
             if (product == null)
                 throw new ArgumentNullException(nameof(product));
@@ -1797,77 +2105,83 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             if (mapping != null)
             {
-                if (existingEnrollmentStatus != null)
+                if (existingEnrollmentStatus == null)
                 {
-                    switch (existingEnrollmentStatus)
+                    if (mapping.IsExtensionProduct)
+                        return false;
+
+                    return CanPurchaseDifferentProductInNexportCategory(product, customer, store.Id);
+                }
+
+                switch (existingEnrollmentStatus)
+                {
+                    case var status
+                        when status.Value.Phase == Enums.PhaseEnum.Finished &&
+                             status.Value.Result == Enums.ResultEnum.Failing:
                     {
-                        case var status
-                            when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Failing:
-                            {
-                                var allowRepurchaseFailedCourses = _genericAttributeService.GetAttribute<bool>(store,
-                                    NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
-                                return allowRepurchaseFailedCourses;
-                            }
+                        var allowRepurchaseFailedCourses = _genericAttributeService.GetAttribute<bool>(store,
+                            NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
+                        return allowRepurchaseFailedCourses;
+                    }
 
-                        case var status
-                            when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Passing:
-                            {
-                                var allowRepurchasePassedCourses = _genericAttributeService.GetAttribute<bool>(store,
-                                    NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
-                                return allowRepurchasePassedCourses;
-                            }
+                    case var status
+                        when status.Value.Phase == Enums.PhaseEnum.Finished &&
+                             status.Value.Result == Enums.ResultEnum.Passing:
+                    {
+                        var allowRepurchasePassedCourses = _genericAttributeService.GetAttribute<bool>(store,
+                            NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
+                        return allowRepurchasePassedCourses;
+                    }
 
-                        case var status
-                            when status.Value.Phase == Enums.PhaseEnum.InProgress:
-                            {
-                                var currentEnrollmentExpirationDate = status.Value.enrollementExpirationDate;
+                    case var status
+                        when status.Value.Phase == Enums.PhaseEnum.InProgress:
+                    {
+                        var currentEnrollmentExpirationDate = status.Value.enrollementExpirationDate;
 
-                                if (currentEnrollmentExpirationDate.HasValue)
+                        if (currentEnrollmentExpirationDate.HasValue)
+                        {
+                            if (mapping.AllowExtension)
+                            {
+                                if (mapping.UtcAccessExpirationDate.HasValue)
                                 {
-                                    if (mapping.AllowExtension)
+                                    if (mapping.UtcAccessExpirationDate.Value > currentEnrollmentExpirationDate.Value)
                                     {
-                                        if (mapping.UtcAccessExpirationDate.HasValue)
+                                        if (!string.IsNullOrWhiteSpace(mapping.RenewalWindow))
                                         {
-                                            if (mapping.UtcAccessExpirationDate.Value > currentEnrollmentExpirationDate.Value)
-                                            {
-                                                if (!string.IsNullOrWhiteSpace(mapping.RenewalWindow))
-                                                {
-                                                    var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
-                                                    return DateTime.UtcNow >= mapping.UtcAccessExpirationDate.Value - renewalWindowTimeSpan;
-                                                }
-
-                                                return true;
-                                            }
-
-                                            return false;
+                                            var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
+                                            return DateTime.UtcNow >= mapping.UtcAccessExpirationDate.Value -
+                                                renewalWindowTimeSpan;
                                         }
 
                                         return true;
                                     }
 
-                                    return CanRepurchaseProductInNexportCategory(product, customer, store.Id);
+                                    return false;
                                 }
 
-                                return CanRepurchaseProductInNexportCategory(product, customer, store.Id);
+                                return true;
                             }
+                        }
 
-                        case var status
-                            when status.Value.Phase == Enums.PhaseEnum.NotStarted:
-                            {
-                                return false;
-                            }
+                        return false;
                     }
-                }
-                else
-                {
-                    if (mapping.IsExtensionProduct)
-                        return false;
 
-                    if (!CanRepurchaseProductInNexportCategory(product, customer, store.Id, true))
-                        return false;
+                    case var status
+                        when status.Value.Phase == Enums.PhaseEnum.NotStarted:
+                    {
+                        var currentEnrollmentExpirationDate = status.Value.enrollementExpirationDate;
+
+                        // Customer purchase eligibility depends on the extension setting since the enrollment has not expired yet
+                        if (currentEnrollmentExpirationDate.HasValue &&
+                            currentEnrollmentExpirationDate >= DateTime.UtcNow)
+                            return mapping.AllowExtension;
+
+                        return true;
+                    }
                 }
             }
 
+            // Customer is allowed to purchase this product since no product mapping is available to determine the purchase eligibility
             return true;
         }
 
@@ -1879,7 +2193,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (storeId < 1)
                 return (null, null);
 
-            var productCategories = _categoryService.GetProductCategoriesByProductId(product.Id, storeId);
+            var productCategories = _categoryService.GetProductCategoriesByProductId(product.Id, storeId, true);
             var shoppingCartItemsExceptCurrentProduct = _shoppingCartService
                 .GetShoppingCart(_workContext.CurrentCustomer, ShoppingCartType.ShoppingCart, storeId)
                 .Where(x => x.ProductId != product.Id)
@@ -1896,7 +2210,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         shoppingCartItemsExceptCurrentProduct.FirstOrDefault(itemProduct =>
                             _categoryService
                                 .GetProductCategoriesByProductId(itemProduct.ProductId,
-                                    _storeContext.CurrentStore.Id)
+                                    _storeContext.CurrentStore.Id, true)
                                 .Any(x => x.CategoryId == productCategory.CategoryId));
 
                     return (productInSameCategory, productCategory.Category);
@@ -1906,7 +2220,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return (null, null);
         }
 
-        public bool CanRepurchaseProductInNexportCategory(Product product, Customer customer, int storeId, bool checkOtherProductWithinCategory = false)
+        public bool CanPurchaseDifferentProductInNexportCategory(Product product, Customer customer, int storeId)
         {
             if (product == null)
                 throw new ArgumentNullException(nameof(product));
@@ -1915,24 +2229,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 throw new ArgumentNullException(nameof(customer));
 
             if (storeId < 1)
-                return false;
+                throw new ArgumentException("Store Id is an invalid number", nameof(storeId));
 
-            var productCategories = _categoryService.GetProductCategoriesByProductId(product.Id, storeId);
+            var productCategories = _categoryService.GetProductCategoriesByProductId(product.Id, storeId, true);
 
             foreach (var productCategory in productCategories)
             {
-                var allowPurchaseDuringEnrollment = _genericAttributeService.GetAttribute(
+                var allowPurchaseDifferentProductInCategory = _genericAttributeService.GetAttribute(
                     productCategory.Category,
                     NexportDefaults.ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT,
-                    defaultValue: false);
+                    defaultValue: true);
 
-                if (!checkOtherProductWithinCategory)
-                    return allowPurchaseDuringEnrollment;
-
-                if (!allowPurchaseDuringEnrollment)
+                if (!allowPurchaseDifferentProductInCategory)
                 {
                     var productsCategoryInSameCategory =
-                        _categoryService.GetProductCategoriesByCategoryId(productCategory.CategoryId, showHidden: false);
+                        _categoryService.GetProductCategoriesByCategoryId(productCategory.CategoryId, showHidden: true);
 
                     foreach (var otherProductCategory in productsCategoryInSameCategory)
                     {
@@ -1941,8 +2252,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         if (productMapping != null)
                         {
                             var existingEnrollmentStatus = VerifyNexportEnrollmentStatus(otherProductCategory.Product, customer, storeId);
-                            if (existingEnrollmentStatus != null)
+
+                            var currentEnrollmentExpirationDate = existingEnrollmentStatus?.enrollementExpirationDate;
+                            if (currentEnrollmentExpirationDate.HasValue &&
+                                currentEnrollmentExpirationDate >= DateTime.UtcNow &&
+                                (existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.NotStarted ||
+                                 existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.InProgress))
                             {
+                                // Customer is not allowed to purchase this product
+                                // since there is an existing enrollment from a different product within this category
+                                // that has not been expired and that enrollment is currently either in the Not Started or In Progress phase.
                                 return false;
                             }
                         }

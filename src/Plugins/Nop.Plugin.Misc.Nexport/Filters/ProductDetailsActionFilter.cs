@@ -1,16 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
-using Nop.Plugin.Misc.Nexport.Domain.Enums;
-using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Orders;
 using Nop.Web.Controllers;
 using Nop.Web.Models.Catalog;
+using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Services;
 
 namespace Nop.Plugin.Misc.Nexport.Filters
 {
@@ -43,13 +44,15 @@ namespace Nop.Plugin.Misc.Nexport.Filters
         {
             if (!(context.ActionDescriptor is ControllerActionDescriptor actionDescriptor))
                 return;
+
             if (actionDescriptor.ControllerTypeInfo == typeof(ProductController) &&
                 actionDescriptor.ActionName == nameof(ProductController.ProductDetails))
             {
                 var customer = _workContext.CurrentCustomer;
                 if (customer != null && customer.IsRegistered())
                 {
-                    if (context.Result is ViewResult result && result.Model is ProductDetailsModel productDetailsModel)
+                    if (context.Result is ViewResult result &&
+                        result.Model is ProductDetailsModel productDetailsModel)
                     {
                         var store = _storeContext.CurrentStore;
                         var storeModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(
@@ -57,7 +60,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
 
                         if (storeModel == NexportStoreSaleModel.Retail)
                         {
-                            var items = _shoppingCartService.GetShoppingCart(customer, ShoppingCartType.ShoppingCart,
+                            var items = _shoppingCartService.GetShoppingCart(customer,
+                                ShoppingCartType.ShoppingCart,
                                 _storeContext.CurrentStore.Id, productDetailsModel.Id);
 
                             if (items.Count > 0)
@@ -70,20 +74,31 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                             }
                             else
                             {
-                                var product = _productService.GetProductById(productDetailsModel.Id);
-                                var canPurchaseProduct =
-                                    _nexportService.CanRepurchaseNexportProduct(product, customer);
 
-                                if (_genericAttributeService.GetAttribute<bool>(store,
-                                    NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
+                                var product = _productService.GetProductById(productDetailsModel.Id);
+
+                                try
                                 {
-                                    productDetailsModel.AddToCart.DisableBuyButton = !canPurchaseProduct;
+                                    var canPurchaseProduct =
+                                        _nexportService.CanPurchaseNexportProduct(product, customer);
+
+                                    if (_genericAttributeService.GetAttribute<bool>(store,
+                                        NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
+                                    {
+                                        productDetailsModel.AddToCart.DisableBuyButton = !canPurchaseProduct;
+                                    }
+                                }
+                                catch (Exception)
+                                {
+                                    // ignored
                                 }
                             }
                         }
                     }
                 }
             }
+
+
             //} else if (actionDescriptor.ControllerTypeInfo == typeof(CatalogController) &&
             //           actionDescriptor.ActionName == nameof(CatalogController.Category))
             //{

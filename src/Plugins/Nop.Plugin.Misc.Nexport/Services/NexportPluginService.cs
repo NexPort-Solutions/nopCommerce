@@ -1,33 +1,42 @@
 ﻿using System;
 using System.Linq;
 using Nop.Core.Domain.Logging;
+using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Tasks;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
+using Nop.Services.Messages;
 using Nop.Services.Tasks;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
     public class NexportPluginService
     {
+        private readonly EmailAccountSettings _emailAccountSettings;
+
         private readonly IScheduleTaskService _scheduleTaskService;
         private readonly ISettingService _settingService;
         private readonly ILocalizationService _localizationService;
         private readonly ICustomerActivityService _customerActivityService;
+        private readonly IMessageTemplateService _messageTemplateService;
         private readonly ILogger _logger;
 
         public NexportPluginService(
+            EmailAccountSettings emailAccountSettings,
             IScheduleTaskService scheduleTaskService,
             ISettingService settingService,
             ILocalizationService localizationService,
             ICustomerActivityService customerActivityService,
+            IMessageTemplateService messageTemplateService,
             ILogger logger)
         {
+            _emailAccountSettings = emailAccountSettings;
             _scheduleTaskService = scheduleTaskService;
             _settingService = settingService;
             _localizationService = localizationService;
             _customerActivityService = customerActivityService;
+            _messageTemplateService = messageTemplateService;
             _logger = logger;
         }
 
@@ -228,6 +237,33 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
+        public void AddMessageTemplates()
+        {
+            var messageTemplates = _messageTemplateService.GetAllMessageTemplates(0);
+            if (!messageTemplates.Any(x =>
+                x.Name.Equals(NexportDefaults.NEXPORT_ORDER_MANUAL_APPROVAL_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE)))
+            {
+                _messageTemplateService.InsertMessageTemplate(new MessageTemplate
+                {
+                    Name = NexportDefaults.NEXPORT_ORDER_MANUAL_APPROVAL_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE,
+                    Subject = "New order approval request",
+                    Body = $"<p>{Environment.NewLine}Order #%NexportOrderApproval.OrderId% requires an approval before the enrollment(s) can be redeemed for the students.{Environment.NewLine}<br />{Environment.NewLine}Please click <a href=\"%NexportOrderApproval.AdminViewOrderUrl%\">here</a> to view the order and take action.",
+                    IsActive = true,
+                    EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
+                });
+            }
+        }
+
+        public void DeleteMessageTemplates()
+        {
+            var messageTemplates = _messageTemplateService.GetAllMessageTemplates(0)
+                .Where(x => x.Name.Contains("Nexport"));
+            foreach (var messageTemplate in messageTemplates)
+            {
+                _messageTemplateService.DeleteMessageTemplate(messageTemplate);
+            }
+        }
+
         public void AddOrUpdateResources()
         {
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Url", "Server url");
@@ -333,6 +369,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowExtension.Hint", "Allows customers to purchase the product as extension product");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow", "Renewal window");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow.Hint", "The time period that customers can purchase the product to extend the expiration on the Nexport product");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalDuration", "Renewal duration");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalDuration.Hint", "The time period that the enrollment can be extended");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalCompletionThreshold", "Enrollment completion threshold");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalCompletionThreshold.Hint",
+                "When this completion threshold is met, the enrollment will be either extended or reset if the approval is set to automatically and the completion is above or below respectively.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalApprovalMethod", "Approval method");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalApprovalMethod.Hint",
+                "When approval method is set to manual, the administrator will be able to choose the choice between extending or restarting the enrollment.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.ExtensionPurchaseLimit", "Extension purchase limit");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.ExtensionPurchaseLimit.Hint", "Limit how many times the customers can purchase the extension.");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.UserId", "Nexport user Id");
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.UserId.Hint", "The user Id in Nexport");
@@ -550,6 +596,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.AllowExtension.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RenewalDuration");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RenewalDuration.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RenewalCompletionThreshold");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RenewalCompletionThreshold.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RenewalApprovalMethod");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RenewalApprovalMethod.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.ExtensionPurchaseLimit");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.ExtensionPurchaseLimit.Hint");
 
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.UserId");
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.UserId.Hint");

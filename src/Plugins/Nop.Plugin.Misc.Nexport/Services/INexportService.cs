@@ -85,6 +85,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         NexportOrderInvoiceItem FindNexportOrderInvoiceItemById(int orderInvoiceItemId);
 
+        IList<NexportOrderInvoiceItem> GetNexportOrderInvoiceItems(Guid userId);
+
+        IPagedList<NexportOrderInvoiceItem> GetNexportOrderInvoiceItems(int orderId, bool excludeNonApproval = false,
+            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
+
         void MapNexportProduct(MapProductToNexportProductModel model);
 
         void MapNexportProduct(MapNexportProductModel model);

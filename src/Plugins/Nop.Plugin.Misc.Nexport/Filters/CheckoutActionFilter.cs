@@ -73,7 +73,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 foreach (var productMapping in nexportProductMappings)
                 {
                     var product = _productService.GetProductById(productMapping.NopProductId);
-                    var canPurchaseProduct = _nexportService.CanRepurchaseNexportProduct(product, _workContext.CurrentCustomer);
+                    var canPurchaseProduct = _nexportService.CanPurchaseNexportProduct(product, _workContext.CurrentCustomer);
                     if (!canPurchaseProduct)
                     {
                         var shoppingCartItem = cart.FirstOrDefault(i => i.ProductId == productMapping.NopProductId);

@@ -20,5 +20,7 @@ namespace Nop.Plugin.Misc.Nexport.Domain
         public Guid? RedemptionEnrollmentId { get; set; }
 
         public DateTime? UtcDateRedemption { get; set; }
+
+        public bool? RequireManualApproval { get; set; }
     }
 }

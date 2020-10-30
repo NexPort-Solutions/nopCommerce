@@ -34,6 +34,7 @@ using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
@@ -49,6 +50,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
     {
         #region Fields
 
+        private readonly NexportSettings _nexportSettings;
         private readonly CatalogSettings _catalogSettings;
         private readonly CurrencySettings _currencySettings;
         private readonly IAclSupportedModelFactory _aclSupportedModelFactory;
@@ -95,7 +97,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         #region Constructor
 
-        public NexportPluginModelFactory(CatalogSettings catalogSettings,
+        public NexportPluginModelFactory(
+            NexportSettings nexportSettings,
+            CatalogSettings catalogSettings,
             CurrencySettings currencySettings,
             IAclSupportedModelFactory aclSupportedModelFactory,
             IBaseAdminModelFactory baseAdminModelFactory,
@@ -136,6 +140,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             CaptchaSettings captchaSettings,
             NexportService nexportService)
         {
+            _nexportSettings = nexportSettings;
             _catalogSettings = catalogSettings;
             _currencySettings = currencySettings;
             _aclSupportedModelFactory = aclSupportedModelFactory;
@@ -1046,6 +1051,67 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 .OrderBy(x => x.DisplayOrder)
                 .Select(x => x.ToModel<NexportRegistrationFieldModel>())
                 .ToList();
+
+            return model;
+        }
+
+        public NexportOrderInvoiceItemListModel PrepareNexportOrderInvoiceItemListModel(NexportOrderInvoiceItemSearchModel searchModel,
+            bool excludeNonApproval = false)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var nexportOrderInvoiceItems =
+                _nexportService.GetNexportOrderInvoiceItems(searchModel.OrderId, excludeNonApproval,
+                    searchModel.Page - 1, searchModel.PageSize);
+
+            var model = new NexportOrderInvoiceItemListModel().PrepareToGrid(searchModel,
+                nexportOrderInvoiceItems, () =>
+                {
+                    return nexportOrderInvoiceItems.Select(orderInvoiceItem =>
+                    {
+                        var orderInvoiceItemModel = orderInvoiceItem.ToModel<NexportOrderInvoiceItemModel>();
+
+                        var order = _orderService.GetOrderById(orderInvoiceItemModel.OrderId);
+                        var orderItem = _orderService.GetOrderItemById(orderInvoiceItemModel.OrderItemId);
+                        var store = _storeService.GetStoreById(order.StoreId);
+                        var productMapping = _nexportService.GetProductMappingByNopProductId(orderItem.ProductId, store.Id);
+                        orderInvoiceItemModel.ProductName = _productService.GetProductById(orderItem.ProductId).Name;
+                        orderInvoiceItemModel.NexportProductName = productMapping.NexportProductName;
+                        if (productMapping.NexportSyllabusId != null)
+                        {
+                            orderInvoiceItemModel.NexportSyllabusId = productMapping.NexportSyllabusId.Value;
+                            Guid orgId;
+
+                            if (productMapping.NexportSubscriptionOrgId != null)
+                                orgId = productMapping.NexportSubscriptionOrgId.Value;
+                            else
+                                orgId = _genericAttributeService.GetAttribute<Guid?>(store,
+                                    // ReSharper disable once PossibleInvalidOperationException
+                                    "NexportSubscriptionOrganizationId", store.Id) ?? _nexportSettings.RootOrganizationId.Value;
+
+                            var nexportUserMapping = _nexportService.FindUserMappingByCustomerId(order.CustomerId);
+
+                            var existingEnrollment = _nexportService.GetSectionEnrollmentDetails(
+                                orgId, nexportUserMapping.NexportUserId, productMapping.NexportSyllabusId.Value);
+                            if (existingEnrollment != null)
+                            {
+                                orderInvoiceItemModel.ExistingEnrollmentId = existingEnrollment.EnrollmentId;
+                                orderInvoiceItemModel.UtcExistingEnrollmentExpirationDate = existingEnrollment.ExpirationDate;
+                            }
+                        }
+
+                        return orderInvoiceItemModel;
+                    });
+                });
+
+            return model;
+        }
+
+        public NexportOrderInvoiceItemModel PrepareNexportOrderInvoiceItemModel(NexportOrderInvoiceItemModel model,
+            NexportOrderInvoiceItem orderInvoiceItem)
+        {
+            model = model ?? orderInvoiceItem.ToModel<NexportOrderInvoiceItemModel>();
 
             return model;
         }

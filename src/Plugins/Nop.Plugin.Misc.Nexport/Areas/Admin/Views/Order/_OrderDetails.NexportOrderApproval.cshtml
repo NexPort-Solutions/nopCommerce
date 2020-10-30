@@ -1,0 +1,124 @@
+﻿@using Nop.Plugin.Misc.Nexport.Models.Order
+@using System.Net
+
+@model Nop.Plugin.Misc.Nexport.Models.Order.NexportOrderApprovalModel
+
+<div class="panel-group">
+    <div class="panel panel-body">
+        @await Html.PartialAsync("Table", new DataTablesModel
+   {
+       Name = "nexport-order-invoice-items-grid",
+       UrlRead = new DataUrl("GetNexportOrderInvoiceItems", "NexportIntegration",
+                new RouteValueDictionary { [nameof(Model.SearchModel.OrderId)] = Model.SearchModel.OrderId }),
+       Length = Model.SearchModel.PageSize,
+       LengthMenu = Model.SearchModel.AvailablePageSizes,
+       ColumnCollection = new List<ColumnProperty>
+            {
+                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.ProductName))
+                {
+                    Title = "Product",
+                    Width = "50",
+                },
+                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.NexportProductName))
+                {
+                    Title = "Nexport Product",
+                    Width = "50",
+                },
+                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.NexportSyllabusId))
+                {
+                    Title = "Nexport Syllabus Id",
+                    Width = "100",
+                },
+                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.InvoiceItemId))
+                {
+                    Title = "Invoice Item Id",
+                    Width = "100"
+                },
+                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.ExistingEnrollmentId))
+                {
+                    Title = "Nexport Enrollment Id",
+                    Width = "100",
+                },
+                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.UtcExistingEnrollmentExpirationDate))
+                {
+                    Title = "Nexport Enrollment Expiration",
+                    Width = "100",
+                    Render = new RenderCustom("renderLocalDateForTableEntry")
+                },
+                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.Id))
+                {
+                    Width = "200",
+                    ClassName = NopColumnClassDefaults.Button,
+                    Render = new RenderCustom("renderModifyEnrollment"),
+                    AutoWidth = false
+                }
+            }
+        })
+    </div>
+</div>
+
+<script>
+    function renderModifyEnrollment(data, type, row, meta) {
+        if (!row.Id)
+            return "";
+
+        var renewButtonFunction = "renewEnrollment('" + data + "'); return false;";
+        var resetButtonFunction = "resetEnrollment('" + data + "'); return false;";
+
+        return renderCustomButton(renewButtonFunction, "fa fa-calendar-plus-o", "Renew the enrollment") +
+            renderCustomButton(resetButtonFunction, "fa fa-refresh", "Restart the enrollment");
+    }
+
+    function modifyExistingEnrollment(orderInvoiceItemId, action) {
+        var postData = {
+            id: orderInvoiceItemId,
+            action: action
+        };
+
+        addAntiForgeryToken(postData);
+
+        $.ajax({
+            url: "@Url.Action("ModifyNexportEnrollment", "NexportIntegration")",
+            type: "@WebRequestMethods.Http.Post",
+            dataType: "json",
+            data: postData,
+            success: function(data, textStatus, jqXHR) {
+                // Display error if returned
+                if (data) {
+                    if (data.success && data.message) {
+                        alert(data.message);
+                    }
+                    else {
+                        if (data.error)
+                            display_nop_error(data.error);
+                    }
+                }
+                // Refresh grid
+                $("#nexport-order-invoice-items-grid").DataTable().draw(false);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert(errorThrown);
+            }
+        });
+    }
+
+    function renewEnrollment(dataId) {
+        if (dataId < 1) {
+            return;
+        }
+
+        if (confirm("Do you want to renew the enrollment that associated with this product?")) {
+            modifyExistingEnrollment(dataId, 1);
+        }
+    }
+
+    function resetEnrollment(dataId) {
+        if (dataId < 1) {
+            return;
+        }
+
+        if (confirm("Do you want to restart the enrollment that associated with this product?")) {
+            modifyExistingEnrollment(dataId, 2);
+        }
+    }
+</script>

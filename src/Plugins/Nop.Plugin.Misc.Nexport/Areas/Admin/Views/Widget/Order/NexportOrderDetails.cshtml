@@ -1,0 +1,14 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.Order.NexportOrderAdditionalInfoModel
+
+@{
+    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
+
+    const string hideNexportOrderApprovalBlockAttributeName = "OrderPage.NexportOrderApprovalBlock";
+    var hideNexportOrderApprovalBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportOrderApprovalBlockAttributeName);
+}
+
+<nop-panel asp-name="customersettings-nexportregistrationfields" asp-icon="fa fa-pencil-square-o"
+           asp-title="Nexport order approval"
+           asp-hide-block-attribute-name="@hideNexportOrderApprovalBlockAttributeName" asp-hide="@hideNexportOrderApprovalBlock" asp-advanced="false">
+    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/Order/_OrderDetails.NexportOrderApproval.cshtml", Model.NexportOrderApprovalModel)
+</nop-panel>

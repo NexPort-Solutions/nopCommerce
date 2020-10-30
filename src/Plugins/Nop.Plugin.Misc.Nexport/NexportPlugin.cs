@@ -140,6 +140,8 @@ namespace Nop.Plugin.Misc.Nexport {
                 _settingService.SaveSetting(_widgetSettings);
             }
 
+            _nexportPluginService.AddMessageTemplates();
+
             _nexportPluginService.InstallScheduledTask();
 
             _nexportPluginService.AddActivityLogTypes();
@@ -158,6 +160,8 @@ namespace Nop.Plugin.Misc.Nexport {
             }
 
             _settingService.DeleteSetting<NexportSettings>();
+
+            _nexportPluginService.DeleteMessageTemplates();
 
             _nexportPluginService.UninstallScheduledTask();
 
@@ -194,6 +198,7 @@ namespace Nop.Plugin.Misc.Nexport {
                 AdminWidgetZones.CustomerDetailsBlock,
                 AdminWidgetZones.CustomerUserDetailsBlock,
                 AdminWidgetZones.CategoryDetailsBlock,
+                AdminWidgetZones.OrderDetailsBlock,
                 PublicWidgetZones.OrderDetailsProductLine,
                 PublicWidgetZones.AccountNavigationAfter,
                 PublicWidgetZones.HeaderLinksBefore,
@@ -222,6 +227,9 @@ namespace Nop.Plugin.Misc.Nexport {
 
             if (widgetZone == AdminWidgetZones.CategoryDetailsBlock)
                 return "WidgetsNexportCategoryDetailsBlock";
+
+            if (widgetZone == AdminWidgetZones.OrderDetailsBlock)
+                return "WidgetsNexportOrderDetailsBlock";
 
             if (widgetZone == PublicWidgetZones.OrderDetailsProductLine)
                 return "WidgetsNexportOrderDetailsProductLine";

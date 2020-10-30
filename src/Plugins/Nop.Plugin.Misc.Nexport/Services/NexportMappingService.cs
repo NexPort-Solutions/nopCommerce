@@ -627,6 +627,36 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return orderInvoiceItemId < 1 ? null : _nexportOrderInvoiceItemRepository.GetById(orderInvoiceItemId);
         }
 
+        public IList<NexportOrderInvoiceItem> GetNexportOrderInvoiceItems(Guid userId)
+        {
+            return userId == Guid.Empty
+                ? new List<NexportOrderInvoiceItem>()
+                : _nexportOrderInvoiceItemRepository.Table.Where(o => o.RedeemingUserId == userId).ToList();
+        }
+
+        public IPagedList<NexportOrderInvoiceItem> GetNexportOrderInvoiceItems(int orderId, bool excludeNonApproval = false,
+            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
+        {
+            if (orderId < 1)
+                return new PagedList<NexportOrderInvoiceItem>(new List<NexportOrderInvoiceItem>(), pageIndex, pageSize);
+
+            var redemptionQueueQuery = _nexportOrderInvoiceRedemptionQueueRepository.Table
+                .Select(q => q.OrderItemId).ToList();
+
+            var query = _nexportOrderInvoiceItemRepository.Table
+                .Where(o => o.OrderId == orderId);
+
+            if (excludeNonApproval)
+                query = query.Where(x =>
+                    x.RequireManualApproval.HasValue &&
+                    x.RequireManualApproval.Value &&
+                    !redemptionQueueQuery.Contains(x.OrderItemId));
+
+            var nexportOrderInvoiceItems = new PagedList<NexportOrderInvoiceItem>(query, pageIndex, pageSize);
+
+            return nexportOrderInvoiceItems;
+        }
+
         [Obsolete("Will be removed shortly")]
         public void MapNexportProduct(MapProductToNexportProductModel model)
         {

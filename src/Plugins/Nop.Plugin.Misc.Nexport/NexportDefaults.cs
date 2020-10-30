@@ -192,6 +192,9 @@ namespace Nop.Plugin.Misc.Nexport
         public const string NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE =
             "Nexport.ProcessingSupplementalInfoGroupAssociations";
 
+        public const string NEXPORT_ORDER_MANUAL_APPROVAL_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE =
+            "Nexport.OrderManualApproval.StoreOwnerNotification";
+
         public static string NexportRegistrationFieldsZone = "nexport_registration_fields";
 
         public static string NexportCustomRegistrationFieldZone = "admin_nexport_custom_registration_field";

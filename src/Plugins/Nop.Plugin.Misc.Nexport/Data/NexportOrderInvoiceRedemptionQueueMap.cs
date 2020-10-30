@@ -19,6 +19,7 @@ namespace Nop.Plugin.Misc.Nexport.Data
             builder.Property(m => m.UtcDateCreated);
             builder.Property(m => m.UtcLastFailedDate);
             builder.Property(m => m.RetryCount);
+            builder.Property(m => m.ManualApprovalAction);
 
             base.Configure(builder);
         }
