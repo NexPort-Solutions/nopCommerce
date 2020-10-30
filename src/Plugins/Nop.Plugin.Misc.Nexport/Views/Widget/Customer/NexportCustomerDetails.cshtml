@@ -193,13 +193,7 @@
                     jQuery.validator.addMethod("dotnet-guid",
                         function(value, element) {
                             return this.optional(element) || /[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}/i.test(value);
-                        },
-                        "Please input the correct GUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx");
-
-                    $("#@Html.IdFor(model => model.NexportUserId)").rules("add",
-                        {
-                            "dotnet-guid": true
-                        });
+                        }, "Please input the correct GUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx");
 
                     $("#btnRefreshAnswerList").click(function() {
                         // Refresh child grid
@@ -210,13 +204,17 @@
                     });
 
                     $("#setNexportUserId").on("click",
-                        function() {
-                            setNexportUserId();
+                        function(e) {
+                            e.preventDefault();
+
+                            var userIdElement = $("#@Html.IdFor(model => model.NexportUserId)");
+                            userIdElement.rules("add", { "dotnet-guid": true });
+
+                            setNexportUserId(userIdElement);
                         });
                 });
 
-                function setNexportUserId() {
-                    var element = $("#@Html.IdFor(model => model.NexportUserId)");
+                function setNexportUserId(element) {
                     var userId = element.val();
                     if (element.valid()) {
                         if (confirm("Are you sure you want to assign the user Id " + userId + " for this customer?")) {
@@ -240,12 +238,11 @@
                                     alert(errorThrown);
                                 }
                             });
-                        } else {
-                            return false;
                         }
+                    } else{
+                        element.rules("remove", "dotnet-guid");
+                        alert("Please input the correct GUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) for Nexport user Id!");
                     }
-
-                    return false;
                 }
 
                 function renderAnswerStatusInfo(data, type, row, meta) {
