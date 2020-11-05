@@ -245,9 +245,9 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
         /// <param name="userMapping">The Nexport user mapping</param>
         /// <param name="invoiceItem">The Nexport order invoice item</param>
         /// <param name="redeemingUserId">The Nexport user Id</param>
-        /// <param name="manualApprovalAction">Manual approval action: 1 - Renew and extend enrollment; 2 - Restart enrollment</param>
+        /// <param name="extensionAction">The extension action: 1 - Renew and extend enrollment; 2 - Restart enrollment</param>
         private void RedeemNexportInvoice(NexportProductMapping productMapping, NexportUserMapping userMapping,
-            NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, int? manualApprovalAction = null)
+            NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, int? extensionAction = null)
         {
             if (productMapping == null)
                 throw new ArgumentNullException(nameof(productMapping));
@@ -321,10 +321,10 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     }
                                     else
                                     {
-                                        if (manualApprovalAction != null)
+                                        if (extensionAction != null)
                                         {
                                             _nexportService.RedeemNexportInvoiceItem(invoiceItem, redeemingUserId,
-                                                manualApprovalAction == 1
+                                                extensionAction == 1
                                                     ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
                                                     : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment);
                                         }
