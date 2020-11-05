@@ -2003,7 +2003,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         }
 
         [CanBeNull]
-        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollementExpirationDate, int completionPercentage)?
+        public (Guid EnrollmentId, Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? enrollementExpirationDate, int completionPercentage)?
             VerifyNexportEnrollmentStatus(Product product, Customer customer, int? storeId = null)
         {
             var mapping = GetProductMappingByNopProductId(product.Id, storeId) ?? GetProductMappingByNopProductId(product.Id);
@@ -2020,7 +2020,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public (Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? EnrollmentExpirationDate, int CompletionPercentage)?
+        public (Guid EnrollmentId, Enums.PhaseEnum Phase, Enums.ResultEnum Result, DateTime? EnrollmentExpirationDate, int CompletionPercentage)?
             VerifyNexportEnrollmentStatus(NexportProductMapping productMapping, NexportUserMapping nexportUserMapping)
         {
             if (productMapping == null)
@@ -2058,7 +2058,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                     if (existingEnrollment != null)
                     {
-                        return (existingEnrollment.Phase, existingEnrollment.Result,
+                        return (existingEnrollment.EnrollmentId, existingEnrollment.Phase, existingEnrollment.Result,
                             existingEnrollment.ExpirationDate, existingEnrollment.PercentAssignmentsComplete);
                     }
                 }
@@ -2069,7 +2069,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                     if (existingEnrollment != null)
                     {
-                        return (existingEnrollment.Phase, existingEnrollment.Result,
+                        return (existingEnrollment.EnrollmentId, existingEnrollment.Phase, existingEnrollment.Result,
                             existingEnrollment.ExpirationDate, existingEnrollment.PercentRequirementsFulfilled);
                     }
                 }
@@ -2118,66 +2118,50 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     case var status
                         when status.Value.Phase == Enums.PhaseEnum.Finished &&
                              status.Value.Result == Enums.ResultEnum.Failing:
-                    {
-                        var allowRepurchaseFailedCourses = _genericAttributeService.GetAttribute<bool>(store,
-                            NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
-                        return allowRepurchaseFailedCourses;
-                    }
+                        {
+                            var allowRepurchaseFailedCourses = _genericAttributeService.GetAttribute<bool>(store,
+                                NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
+                            return allowRepurchaseFailedCourses;
+                        }
 
                     case var status
                         when status.Value.Phase == Enums.PhaseEnum.Finished &&
                              status.Value.Result == Enums.ResultEnum.Passing:
-                    {
-                        var allowRepurchasePassedCourses = _genericAttributeService.GetAttribute<bool>(store,
-                            NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
-                        return allowRepurchasePassedCourses;
-                    }
+                        {
+                            var allowRepurchasePassedCourses = _genericAttributeService.GetAttribute<bool>(store,
+                                NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
+                            return allowRepurchasePassedCourses;
+                        }
 
                     case var status
-                        when status.Value.Phase == Enums.PhaseEnum.InProgress:
-                    {
-                        var currentEnrollmentExpirationDate = status.Value.enrollementExpirationDate;
-
-                        if (currentEnrollmentExpirationDate.HasValue)
+                        when status.Value.Phase == Enums.PhaseEnum.InProgress ||
+                             status.Value.Phase == Enums.PhaseEnum.NotStarted:
                         {
+                            // Customer is allowed to purchase this product under one of these scenarios:
+                            // A - The product allows extension, the purchase limit has not exceed yet, and the enrollment has been expired.
+                            // B - The product allows extension, the purchase limit has not exceed yet, the enrollment has not yet expired,
+                            // and it is within the renewal window time-frame.
                             if (mapping.AllowExtension)
                             {
-                                if (mapping.UtcAccessExpirationDate.HasValue)
+                                if (!ExceedExtensionPurchaseLimit(customer, mapping, status.Value.EnrollmentId))
                                 {
-                                    if (mapping.UtcAccessExpirationDate.Value > currentEnrollmentExpirationDate.Value)
+                                    var currentEnrollmentExpirationDate = status.Value.enrollementExpirationDate;
+                                    if (currentEnrollmentExpirationDate.HasValue &&
+                                        currentEnrollmentExpirationDate >= DateTime.UtcNow)
                                     {
                                         if (!string.IsNullOrWhiteSpace(mapping.RenewalWindow))
                                         {
                                             var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
-                                            return DateTime.UtcNow >= mapping.UtcAccessExpirationDate.Value -
-                                                renewalWindowTimeSpan;
+                                            return DateTime.UtcNow >= currentEnrollmentExpirationDate - renewalWindowTimeSpan;
                                         }
-
-                                        return true;
                                     }
 
-                                    return false;
+                                    return true;
                                 }
-
-                                return true;
                             }
+
+                            return false;
                         }
-
-                        return false;
-                    }
-
-                    case var status
-                        when status.Value.Phase == Enums.PhaseEnum.NotStarted:
-                    {
-                        var currentEnrollmentExpirationDate = status.Value.enrollementExpirationDate;
-
-                        // Customer purchase eligibility depends on the extension setting since the enrollment has not expired yet
-                        if (currentEnrollmentExpirationDate.HasValue &&
-                            currentEnrollmentExpirationDate >= DateTime.UtcNow)
-                            return mapping.AllowExtension;
-
-                        return true;
-                    }
                 }
             }
 
@@ -2270,6 +2254,29 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
 
             return true;
+        }
+
+        public bool ExceedExtensionPurchaseLimit(Customer customer, NexportProductMapping productMapping, Guid enrollmentId)
+        {
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            if (productMapping == null)
+                throw new ArgumentNullException(nameof(productMapping));
+
+            var nexportUserMapping = FindUserMappingByCustomerId(customer.Id);
+
+            if (nexportUserMapping != null)
+            {
+                var previousInvoiceItems = GetNexportOrderInvoiceItems(nexportUserMapping.NexportUserId);
+                var previousExtensionCount = previousInvoiceItems
+                    .Select(invoiceItem => _orderService.GetOrderItemById(invoiceItem.OrderItemId))
+                    .Count(orderItem => orderItem.ProductId == productMapping.NopProductId);
+
+                return productMapping.ExtensionPurchaseLimit == null || !(previousExtensionCount - 1 < productMapping.ExtensionPurchaseLimit);
+            }
+
+            return false;
         }
 
         public string GetStoreName(int storeId)

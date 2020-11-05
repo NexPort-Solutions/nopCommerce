@@ -479,12 +479,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value.Required", "The value for option is required");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.Options", "Additional options");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.LimitSingleProductPurchase", "Limit single product purchase");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.LimitSingleProductPurchase.Hint", "Allowing customers to purchase single product within the category");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.LimitSingleProductPurchase", "Limit single product per checkout");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.LimitSingleProductPurchase.Hint", "Allowing customers to purchase single product within the category per checkout.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.AutoSwapProductPurchase", "Auto swapping between individual product");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.AutoSwapProductPurchase.Hint", "When customers select a different product within the category, the current product in the shopping cart will be replaced automatically with that new product item.");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.AllowProductPurchaseInCategoryDuringEnrollment", "Allow customers with existing enrollments to purchase the product");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.AllowProductPurchaseInCategoryDuringEnrollment.Hint", "Allowing customers that current have enrollments in Nexport to purchase the product in this category");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.AllowProductPurchaseInCategoryDuringEnrollment", "Allow customers with existing enrollments to purchase additional products within this category");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.AllowProductPurchaseInCategoryDuringEnrollment.Hint",
+                "Allowing customers that currently have enrollments in Nexport to purchase additional products besides the products that associated with the enrollments in this category.");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.FailedToRedirectToNexport", "Error occurred during the transferring to Nexport. You might not have an active subscription in Nexport Campus. Please contact customer service for further assistance.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Errors.FailedToRedeemForUser", "Failed to redeem Nexport invoice item {0} for user {1}");
