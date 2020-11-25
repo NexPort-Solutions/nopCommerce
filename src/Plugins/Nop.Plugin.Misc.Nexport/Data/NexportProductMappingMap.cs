@@ -51,6 +51,8 @@ namespace Nop.Plugin.Misc.Nexport.Data
             table.WithColumn(nameof(NexportProductMapping.NexportProductName)).AsFixedLengthString(255)
                 .WithColumn(nameof(NexportProductMapping.DisplayName)).AsFixedLengthString(255)
                 .WithColumn(nameof(NexportProductMapping.Type)).AsInt32()
+                .WithColumn(nameof(NexportProductMapping.PublishingModel)).AsInt32()
+                .WithColumn(nameof(NexportProductMapping.PricingModel)).AsInt32()
                 .WithColumn(nameof(NexportProductMapping.NexportSubscriptionOrgName)).AsFixedLengthString(255)
                 .WithColumn(nameof(NexportProductMapping.NexportSubscriptionOrgShortName)).AsFixedLengthString(50)
                 .WithColumn(nameof(NexportProductMapping.SectionCeus)).AsFixedLengthString(64)
