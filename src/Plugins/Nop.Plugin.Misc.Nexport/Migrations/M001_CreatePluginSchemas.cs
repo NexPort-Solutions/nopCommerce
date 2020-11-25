@@ -1,9 +1,12 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 using Nop.Plugin.Misc.Nexport.Domain;
 
 namespace Nop.Plugin.Misc.Nexport.Migrations
 {
+    [Tags(NexportDefaults.PluginMigrationTag)]
     [Migration(1, "Initial table creation for Nexport plugin")]
+    [SkipMigration]
     public class M001_CreatePluginSchemas : Migration
     {
         private const string TABLE_NAME = nameof(NexportProductMapping);

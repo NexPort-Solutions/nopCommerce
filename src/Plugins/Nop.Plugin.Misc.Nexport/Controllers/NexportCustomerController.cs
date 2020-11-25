@@ -37,8 +37,6 @@ using Nop.Services.Tax;
 using Nop.Web.Controllers;
 using Nop.Web.Factories;
 using Nop.Web.Framework.Mvc.Filters;
-using Nop.Web.Framework.Security;
-using Nop.Web.Framework.Controllers;
 using Nop.Web.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
@@ -209,7 +207,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var attributes = _customerAttributeService.GetAllCustomerAttributes();
             foreach (var attribute in attributes)
             {
-                var controlId = $"{NopAttributePrefixDefaults.Customer}{attribute.Id}";
+                var controlId = $"{NopCustomerServicesDefaults.CustomerAttributePrefix}{attribute.Id}";
                 switch (attribute.AttributeControlType)
                 {
                     case AttributeControlType.DropdownList:
@@ -375,7 +373,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         #endregion
 
-        [HttpsRequirement(SslRequirement.Yes)]
+        [HttpsRequirement]
         //available even when a store is closed
         [CheckAccessClosedStore(true)]
         //available even when navigation is not allowed
@@ -393,7 +391,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [CheckAccessClosedStore(true)]
         //available even when navigation is not allowed
         [CheckAccessPublicStore(true)]
-        [PublicAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public virtual IActionResult Login(NexportLoginModel model, string returnUrl, bool captchaValid)
         {
             //validate CAPTCHA
@@ -489,7 +487,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return View(model);
         }
 
-        [HttpsRequirement(SslRequirement.Yes)]
+        [HttpsRequirement]
         //available even when navigation is not allowed
         [CheckAccessPublicStore(true)]
         public virtual IActionResult Register()
@@ -507,7 +505,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         [ValidateCaptcha]
         [ValidateHoneypot]
-        [PublicAntiForgery]
+        [AutoValidateAntiforgeryToken]
         //available even when navigation is not allowed
         [CheckAccessPublicStore(true)]
         public virtual IActionResult Register(RegisterModel model, string returnUrl, bool captchaValid, IFormCollection form)
@@ -516,7 +514,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (_customerSettings.UserRegistrationType == UserRegistrationType.Disabled)
                 return RedirectToRoute("RegisterResult", new { resultId = (int)UserRegistrationType.Disabled });
 
-            if (_workContext.CurrentCustomer.IsRegistered())
+            if (_customerService.IsRegistered(_workContext.CurrentCustomer))
             {
                 //Already registered customer.
                 _authenticationService.SignOut();
@@ -759,11 +757,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                             defaultAddress.CountryId = null;
                         if (defaultAddress.StateProvinceId == 0)
                             defaultAddress.StateProvinceId = null;
+
                         //set default address
-                        //customer.Addresses.Add(defaultAddress);
-                        customer.CustomerAddressMappings.Add(new CustomerAddressMapping { Address = defaultAddress });
-                        customer.BillingAddress = defaultAddress;
-                        customer.ShippingAddress = defaultAddress;
+                        _customerService.InsertCustomerAddress(customer, defaultAddress);
+
+                        customer.BillingAddressId = defaultAddress.Id;
+                        customer.ShippingAddressId = defaultAddress.Id;
                         _customerService.UpdateCustomer(customer);
                     }
 

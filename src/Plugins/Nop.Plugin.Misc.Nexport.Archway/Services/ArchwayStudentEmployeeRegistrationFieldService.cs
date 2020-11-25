@@ -6,50 +6,55 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using CsvHelper;
+using LinqToDB.Common;
+using LinqToDB.DataProvider;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Nop.Core.Caching;
-using Nop.Core.Data;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Infrastructure;
+using Nop.Data;
 using Nop.Services.Logging;
 using Nop.Plugin.Misc.Nexport.Archway.Data;
 using Nop.Plugin.Misc.Nexport.Archway.Domains;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Caching;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Services
 {
     public class ArchwayStudentEmployeeRegistrationFieldService : IArchwayStudentEmployeeRegistrationFieldService
     {
-        private readonly PluginObjectContext _pluginContext;
+        private readonly INopDataProvider _nopDataProvider;
         private readonly IRepository<ArchwayStoreRecordInfo> _archwayStoreRecordRepository;
         private readonly IRepository<ArchwayStoreEmployeePosition> _archwayStoreEmployeePositionRepository;
         private readonly IRepository<ArchwayStudentRegistrationFieldKeyMapping> _archwayStudentRegistrationFieldKeyMappingRepository;
         private readonly IRepository<ArchwayStudentRegistrationFieldAnswer> _archwayStudentRegistrationFieldAnswerRepository;
-        private readonly ICacheManager _cacheManager;
+        private readonly ICacheKeyService _cacheKeyService;
+        private readonly IStaticCacheManager _cacheManager;
         private readonly INopFileProvider _fileProvider;
         private readonly NexportService _nexportService;
         private readonly ILogger _logger;
 
         public ArchwayStudentEmployeeRegistrationFieldService(
-            PluginObjectContext pluginContext,
             IRepository<ArchwayStoreRecordInfo> archwayStoreRecordRepository,
             IRepository<ArchwayStoreEmployeePosition> archwayStoreEmployeePositionRepository,
             IRepository<ArchwayStudentRegistrationFieldKeyMapping> archwayStudentRegistrationFieldKeyMappingRepository,
             IRepository<ArchwayStudentRegistrationFieldAnswer> archwayStudentRegistrationFieldAnswerRepository,
-            ICacheManager cacheManager,
+            ICacheKeyService cacheKeyService,
+            IStaticCacheManager cacheManager,
             INopFileProvider fileProvider,
+            INopDataProvider nopDataProvider,
             NexportService nexportService,
             ILogger logger)
         {
-            _pluginContext = pluginContext;
             _archwayStoreRecordRepository = archwayStoreRecordRepository;
             _archwayStoreEmployeePositionRepository = archwayStoreEmployeePositionRepository;
             _archwayStudentRegistrationFieldKeyMappingRepository = archwayStudentRegistrationFieldKeyMappingRepository;
             _archwayStudentRegistrationFieldAnswerRepository = archwayStudentRegistrationFieldAnswerRepository;
+            _cacheKeyService = cacheKeyService;
             _cacheManager = cacheManager;
             _fileProvider = fileProvider;
+            _nopDataProvider = nopDataProvider;
             _nexportService = nexportService;
             _logger = logger;
         }
@@ -78,8 +83,8 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                     _fileProvider.CreateDirectory(fullDataPath);
 
                 var csvFilePath = _fileProvider.Combine(fullDataPath, storeDataFile.FileName);
-                using (var fileStream = new FileStream(csvFilePath, FileMode.Create))
-                    storeDataFile.CopyTo(fileStream);
+                using var fileStream = new FileStream(csvFilePath, FileMode.Create);
+                storeDataFile.CopyTo(fileStream);
 
                 return csvFilePath;
             }
@@ -96,42 +101,33 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             {
                 var filePath = _fileProvider.GetAbsolutePath(storeDataFilePath);
 
-                using (var reader = new StreamReader(filePath))
+                using var reader = new StreamReader(filePath);
+                using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+                csv.Configuration.RegisterClassMap<ArchwayStoreRecordParsingClassMap>();
+                csv.Configuration.Delimiter = "|";
+
+                var dt = new DataTable();
+
+                using var dr = new CsvDataReader(csv);
+                dt.Load(dr);
+
+                var dataSettings = DataSettingsManager.LoadSettings();
+                if (!dataSettings?.IsValid ?? true)
+                    return;
+
+                _nopDataProvider.ExecuteNonQuery("DELETE FROM ArchwayStore");
+
+                using var bulkCopy = new SqlBulkCopy(dataSettings.ConnectionString) { BatchSize = 1000 };
+
+                var map = new ArchwayStoreRecordParsingClassMap();
+
+                foreach (var member in map.MemberMaps)
                 {
-                    using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-                    {
-                        csv.Configuration.RegisterClassMap<ArchwayStoreRecordParsingClassMap>();
-                        csv.Configuration.Delimiter = "|";
-
-                        var dt = new DataTable();
-
-                        using (var dr = new CsvDataReader(csv))
-                        {
-                            dt.Load(dr);
-
-                            var dataSettings = DataSettingsManager.LoadSettings();
-                            if (!dataSettings?.IsValid ?? true)
-                                return;
-
-                            _pluginContext.ExecuteSqlCommand(new RawSqlString("DELETE FROM ArchwayStore"));
-
-                            using (var bulkCopy = new SqlBulkCopy(dataSettings.DataConnectionString))
-                            {
-                                bulkCopy.BatchSize = 1000;
-
-                                var map = new ArchwayStoreRecordParsingClassMap();
-
-                                foreach (var member in map.MemberMaps)
-                                {
-                                    bulkCopy.ColumnMappings.Add(member.Data.Names.First(), member.Data.Member.Name);
-                                }
-
-                                bulkCopy.DestinationTableName = "ArchwayStore";
-                                bulkCopy.WriteToServer(dt);
-                            }
-                        }
-                    }
+                    bulkCopy.ColumnMappings.Add(member.Data.Names.First(), member.Data.Member.Name);
                 }
+
+                bulkCopy.DestinationTableName = "ArchwayStore";
+                bulkCopy.WriteToServer(dt);
             }
             catch (Exception ex)
             {
@@ -149,13 +145,14 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
 
         public ArchwayStoreRecordInfo GetArchwayStoreRecordInfo(int storeNumber)
         {
-            return _archwayStoreRecordRepository.TableNoTracking.FirstOrDefault(s => s.StoreNumber == storeNumber);
+            return _archwayStoreRecordRepository.Table.FirstOrDefault(s => s.StoreNumber == storeNumber);
         }
 
         public IList<ArchwayStoreRecordInfo> GetArchwayStoreRecordInfos()
         {
-            return _cacheManager.Get(PluginDefaults.ArchwayStoreRecordAllNoPaginationCacheKey,
-                () => _archwayStoreRecordRepository.TableNoTracking.ToList());
+            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(PluginDefaults.ArchwayStoreRecordAllNoPaginationCacheKey);
+
+            return _cacheManager.Get(cacheKey, () => _archwayStoreRecordRepository.Table.ToList());
         }
 
         public void InsertOrUpdateArchwayStoreRecord(ArchwayStoreRecordInfo record)
@@ -203,15 +200,13 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
 
         public IList<ArchwayStoreEmployeePosition> GetArchwayStoreEmployeePositions(string jobType)
         {
-            if (string.IsNullOrWhiteSpace(jobType))
-                return _cacheManager.Get(PluginDefaults.ArchwayStoreEmployeePositionAllNoPaginationCacheKey,
-                    () => _archwayStoreEmployeePositionRepository
-                        .TableNoTracking.ToList());
+            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(PluginDefaults.ArchwayStoreEmployeePositionAllNoPaginationCacheKey);
 
-            return _cacheManager.Get(PluginDefaults.ArchwayStoreEmployeePositionAllNoPaginationCacheKey,
-                () => _archwayStoreEmployeePositionRepository.
-                    TableNoTracking
-                    .Where(p => p.JobType == jobType).ToList());
+            if (string.IsNullOrWhiteSpace(jobType))
+                return _cacheManager.Get(cacheKey, () => _archwayStoreEmployeePositionRepository.Table.ToList());
+
+            return _cacheManager.Get(cacheKey,
+                () => _archwayStoreEmployeePositionRepository.Table.Where(p => p.JobType == jobType).ToList());
         }
 
         public void InsertArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position)
@@ -244,8 +239,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             if (string.IsNullOrWhiteSpace(fieldControlName))
                 return null;
 
-            return _archwayStudentRegistrationFieldKeyMappingRepository
-                .TableNoTracking
+            return _archwayStudentRegistrationFieldKeyMappingRepository.Table
                 .FirstOrDefault(x => x.FieldControlName == fieldControlName);
         }
 
@@ -290,9 +284,8 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             if (customerId < 1)
                 return new List<ArchwayStudentRegistrationFieldAnswer>();
 
-            return _archwayStudentRegistrationFieldAnswerRepository
-                .TableNoTracking.Where(x =>
-                    x.CustomerId == customerId && x.FieldId == fieldId).ToList();
+            return _archwayStudentRegistrationFieldAnswerRepository.Table
+                .Where(x => x.CustomerId == customerId && x.FieldId == fieldId).ToList();
         }
 
         public void InsertArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer)
@@ -308,8 +301,11 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             if (answer == null)
                 throw new ArgumentNullException(nameof(answer));
 
-            if (_archwayStudentRegistrationFieldAnswerRepository.TableNoTracking.Any(x =>
-                x.CustomerId == answer.CustomerId && x.FieldId == answer.FieldId && x.FieldKey == answer.FieldKey))
+            if (_archwayStudentRegistrationFieldAnswerRepository.Table
+                .Any(x =>
+                    x.CustomerId == answer.CustomerId &&
+                    x.FieldId == answer.FieldId &&
+                    x.FieldKey == answer.FieldKey))
                 return;
 
             _archwayStudentRegistrationFieldAnswerRepository.Insert(answer);
@@ -336,11 +332,11 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             var controlId = $"{NexportDefaults.NexportRegistrationFieldPrefix}-{fieldId}.{PluginDefaults.HtmlFieldPrefix}";
 
             var customFieldsInForm = form.Where(x => x.Key.Contains(controlId));
-            foreach (var field in customFieldsInForm)
+            foreach (var (key, value) in customFieldsInForm)
             {
-                var registrationFieldKey = field.Key.Substring(field.Key.IndexOf(PluginDefaults.HtmlFieldPrefix, StringComparison.Ordinal) +
-                                                               PluginDefaults.HtmlFieldPrefix.Length + 1);
-                result.Add(registrationFieldKey, field.Value);
+                var registrationFieldKey = key.Substring(key.IndexOf(PluginDefaults.HtmlFieldPrefix, StringComparison.Ordinal) +
+                                                                             PluginDefaults.HtmlFieldPrefix.Length + 1);
+                result.Add(registrationFieldKey, value);
             }
 
             return result;

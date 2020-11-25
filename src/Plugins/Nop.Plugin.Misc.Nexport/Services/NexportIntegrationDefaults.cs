@@ -1,15 +1,9 @@
-﻿using System;
+﻿using Nop.Core.Caching;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
-    public static partial class NexportIntegrationDefaults
+    public static class NexportIntegrationDefaults
     {
-        public static string GetProductMappingCatalogAllByCatalogIdCacheKey(bool showHidden, Guid catalogId,
-            int pageIndex, int pageSize, int customerId, int storeId)
-        {
-            return string.Format(ProductMappingCatalogAllByCatalogIdCacheKey, showHidden, catalogId, pageIndex, pageSize, customerId, storeId);
-        }
-
         /// <summary>
         /// Gets a key for caching
         /// </summary>
@@ -21,13 +15,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
         /// {4} : current customer ID
         /// {5} : store ID
         /// </remarks>
-        public static string ProductMappingCatalogAllByCatalogIdCacheKey => "Nop.nexport.mapping.catalog.allbycatalogid-{0}-{1}-{2}-{3}-{4}-{5}";
-
-        public static string GetProductMappingSectionAllBySectionIdCacheKey(bool showHidden, Guid sectionId,
-            int pageIndex, int pageSize, int customerId, int storeId)
-        {
-            return string.Format(ProductMappingSectionAllBySectionIdCacheKey, showHidden, sectionId, pageIndex, pageSize, customerId, storeId);
-        }
+        public static CacheKey ProductMappingCatalogAllByCatalogIdCacheKey =>
+            new CacheKey("Nop.nexport.mapping.catalog.allbycatalogid-{0}-{1}-{2}-{3}-{4}-{5}");
 
         /// <summary>
         /// Gets a key for caching
@@ -40,13 +29,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         /// {4} : current customer ID
         /// {5} : store ID
         /// </remarks>
-        public static string ProductMappingSectionAllBySectionIdCacheKey => "Nop.nexport.mapping.section.allbysectionid-{0}-{1}-{2}-{3}-{4}-{5}";
-
-        public static string GetProductMappingTrainingPlanAllByTrainingPlanIdCacheKey(bool showHidden, Guid trainingPlanId,
-            int pageIndex, int pageSize, int customerId, int storeId)
-        {
-            return string.Format(ProductMappingTrainingPlanAllByTrainingPlanIdCacheKey, showHidden, trainingPlanId, pageIndex, pageSize, customerId, storeId);
-        }
+        public static CacheKey ProductMappingSectionAllBySectionIdCacheKey => new CacheKey("Nop.nexport.mapping.section.allbysectionid-{0}-{1}-{2}-{3}-{4}-{5}");
 
         /// <summary>
         /// Gets a key for caching
@@ -59,7 +42,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         /// {4} : current customer ID
         /// {5} : store ID
         /// </remarks>
-        public static string ProductMappingTrainingPlanAllByTrainingPlanIdCacheKey => "Nop.nexport.mapping.trainingplan.allbytrainingplanid-{0}-{1}-{2}-{3}-{4}-{5}";
+        public static CacheKey ProductMappingTrainingPlanAllByTrainingPlanIdCacheKey => new CacheKey("Nop.nexport.mapping.trainingplan.allbytrainingplanid-{0}-{1}-{2}-{3}-{4}-{5}");
 
         /// <summary>
         /// Gets a key for caching
@@ -70,19 +53,19 @@ namespace Nop.Plugin.Misc.Nexport.Services
         /// {2} : show hidden records?
         /// {3} : show all
         /// </remarks>
-        public static string ProductMappingsAllCacheKey => "Nop.nexport.mapping.all-{0}-{1}-{2}-{3}";
+        public static CacheKey ProductMappingsAllCacheKey => new CacheKey("Nop.nexport.mapping.all-{0}-{1}-{2}-{3}");
 
-        public static string ProductMappingPatternCacheKey => "Nop.nexport.mapping.";
+        public static CacheKey ProductMappingPatternCacheKey => new CacheKey("Nop.nexport.mapping.");
 
-        public static string ProductGroupMembershipMappingsAllCacheKey => "Nop.nexport.groupmembership.mapping.all-{0}-{1}-{2}-{3}";
+        public static CacheKey ProductGroupMembershipMappingsAllCacheKey => new CacheKey("Nop.nexport.groupmembership.mapping.all-{0}-{1}-{2}-{3}");
 
-        public static string ProductGroupMembershipMappingPatternCacheKey => "Nop.nexport.groupmembership.mapping.";
+        public static CacheKey ProductGroupMembershipMappingPatternCacheKey => new CacheKey("Nop.nexport.groupmembership.mapping.");
 
-        public static string ProductStoreMappingsAllCacheKey => "Nop.nexport.mapping.store.all";
+        public static CacheKey ProductStoreMappingsAllCacheKey => new CacheKey("Nop.nexport.mapping.store.all");
 
-        public static string ProductStoreMappingPatternCacheKey => "Nop.nexport.mapping.store.";
+        public static CacheKey ProductStoreMappingPatternCacheKey => new CacheKey("Nop.nexport.mapping.store.");
 
-        public static string UserMappingPatternCacheKey => "Nop.nexport.user.mapping.";
+        public static CacheKey UserMappingPatternCacheKey => new CacheKey("Nop.nexport.user.mapping.");
 
         /// <summary>
         /// Gets a key for caching
@@ -91,40 +74,40 @@ namespace Nop.Plugin.Misc.Nexport.Services
         /// {0} : page index
         /// {1} : page size
         /// </remarks>
-        public static string SupplementalInfoQuestionAllCacheKey => "Nop.nexport.supplementalinfo.question.all-{0}-{1}";
+        public static CacheKey SupplementalInfoQuestionAllCacheKey => new CacheKey("Nop.nexport.supplementalinfo.question.all-{0}-{1}");
 
-        public static string SupplementalInfoQuestionAllNoPaginationCacheKey => "Nop.nexport.supplementalinfo.question.all";
+        public static CacheKey SupplementalInfoQuestionAllNoPaginationCacheKey => new CacheKey("Nop.nexport.supplementalinfo.question.all");
 
-        public static string SupplementalInfoQuestionPatternCacheKey => "Nop.nexport.supplementalinfo.question.";
+        public static CacheKey SupplementalInfoQuestionPatternCacheKey => new CacheKey("Nop.nexport.supplementalinfo.question.");
 
-        public static string SupplementalInfoOptionPatternCacheKey => "Nop.nexport.supplementalinfo.option.";
+        public static CacheKey SupplementalInfoOptionPatternCacheKey => new CacheKey("Nop.nexport.supplementalinfo.option.");
 
-        public static string SupplementalInfoQuestionMappingPatternCacheKey => "Nop.nexport.supplementalinfo.question.mapping.";
+        public static CacheKey SupplementalInfoQuestionMappingPatternCacheKey => new CacheKey("Nop.nexport.supplementalinfo.question.mapping.");
 
-        public static string SupplementalInfoOptionGroupAssociationsAllCacheKey => "Nop.nexport.supplementalinfo.option.groupassociation.all-{0}";
+        public static CacheKey SupplementalInfoOptionGroupAssociationsAllCacheKey => new CacheKey("Nop.nexport.supplementalinfo.option.groupassociation.all-{0}");
 
-        public static string SupplementalInfoOptionGroupAssociationPatternCacheKey => "Nop.nexport.supplementalinfo.option.groupassociation.";
+        public static CacheKey SupplementalInfoOptionGroupAssociationPatternCacheKey => new CacheKey("Nop.nexport.supplementalinfo.option.groupassociation.");
 
-        public static string SupplementalInfoAnswerAllCacheKey => "Nop.nexport.supplementalinfo.answer.all";
+        public static CacheKey SupplementalInfoAnswerAllCacheKey => new CacheKey("Nop.nexport.supplementalinfo.answer.all");
 
-        public static string SupplementalInfoAnswerPatternCacheKey => "Nop.nexport.supplementalinfo.answer.";
+        public static CacheKey SupplementalInfoAnswerPatternCacheKey => new CacheKey("Nop.nexport.supplementalinfo.answer.");
 
-        public static string SupplementalInfoAnswerMembershipPatternCacheKey => "Nop.nexport.supplementalinfo.answermembership.";
+        public static CacheKey SupplementalInfoAnswerMembershipPatternCacheKey => new CacheKey("Nop.nexport.supplementalinfo.answermembership.");
 
-        public static string SupplementalInfoRequiredPatternCacheKey => "Nop.nexport.supplementalinfo.required.";
+        public static CacheKey SupplementalInfoRequiredPatternCacheKey => new CacheKey("Nop.nexport.supplementalinfo.required.");
 
-        public static string RegistrationFieldAllCacheKey => "Nop.nexport.registrationfield.all";
+        public static CacheKey RegistrationFieldAllCacheKey => new CacheKey("Nop.nexport.registrationfield.all");
 
-        public static string RegistrationFieldOptionAllCacheKey => "Nop.nexport.registrationfield.option.all";
+        public static CacheKey RegistrationFieldOptionAllCacheKey => new CacheKey("Nop.nexport.registrationfield.option.all");
 
-        public static string RegistrationFieldPatternCacheKey => "Nop.nexport.registrationfield.";
+        public static CacheKey RegistrationFieldPatternCacheKey => new CacheKey("Nop.nexport.registrationfield.");
 
-        public static string RegistrationFieldCategoryAllCacheKey => "Nop.nexport.registrationfield.category.all";
+        public static CacheKey RegistrationFieldCategoryAllCacheKey => new CacheKey("Nop.nexport.registrationfield.category.all");
 
-        public static string RegistrationFieldCategoryPatternCacheKey => "Nop.nexport.registrationfield.category.";
+        public static CacheKey RegistrationFieldCategoryPatternCacheKey => new CacheKey("Nop.nexport.registrationfield.category.");
 
-        public static string RegistrationFieldAnswerAllCacheKey => "Nop.nexport.registrationfield.answer.all";
+        public static CacheKey RegistrationFieldAnswerAllCacheKey => new CacheKey("Nop.nexport.registrationfield.answer.all");
 
-        public static string RegistrationFieldAnswerPatternCacheKey => "Nop.nexport.registrationfield.answer.";
+        public static CacheKey RegistrationFieldAnswerPatternCacheKey => new CacheKey("Nop.nexport.registrationfield.answer.");
     }
 }

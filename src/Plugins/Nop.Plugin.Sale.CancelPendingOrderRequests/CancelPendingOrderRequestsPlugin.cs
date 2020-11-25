@@ -11,7 +11,6 @@ using Nop.Services.Configuration;
 using Nop.Services.Plugins;
 using Nop.Web.Framework.Infrastructure;
 using Nop.Web.Framework.Menu;
-using Nop.Plugin.Sale.CancelPendingOrderRequests.Data;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
 
@@ -19,18 +18,15 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
 {
     public class CancelPendingOrderRequestsPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
     {
-        private readonly CancelPendingOrderRequestsObjectContext _cancelPendingOrderRequestsObjectContext;
         private readonly CancelPendingOrderRequestsPluginService _cancelCancelPendingOrderRequestsPluginService;
         private readonly WidgetSettings _widgetSettings;
         private readonly ISettingService _settingService;
 
         public CancelPendingOrderRequestsPlugin(
-            CancelPendingOrderRequestsObjectContext cancelPendingOrderRequestsObjectContext,
             CancelPendingOrderRequestsPluginService cancelCancelPendingOrderRequestsPluginService,
             WidgetSettings widgetSetting,
             ISettingService settingService)
         {
-            _cancelPendingOrderRequestsObjectContext = cancelPendingOrderRequestsObjectContext;
             _cancelCancelPendingOrderRequestsPluginService = cancelCancelPendingOrderRequestsPluginService;
             _widgetSettings = widgetSetting;
             _settingService = settingService;
@@ -57,7 +53,24 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
 
         public override void Install()
         {
-            _cancelPendingOrderRequestsObjectContext.Install();
+            try
+            {
+                var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
+                using var serviceScope = migrationServiceProvider.CreateScope();
+                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+                try
+                {
+                    ((MigrationRunner)runner).MigrateUp();
+                }
+                catch (MissingMigrationsException)
+                {
+                    // ignored
+                }
+            }
+            catch (Exception)
+            {
+                // Ignore
+            }
 
             if (!_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
             {
@@ -87,17 +100,15 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
             try
             {
                 var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
-                using (var serviceScope = migrationServiceProvider.CreateScope())
+                using var serviceScope = migrationServiceProvider.CreateScope();
+                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+                try
                 {
-                    var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-                    try
-                    {
-                        ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
-                    }
-                    catch (MissingMigrationsException)
-                    {
-                        // ignored
-                    }
+                    ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
+                }
+                catch (MissingMigrationsException)
+                {
+                    // ignored
                 }
             }
             catch (Exception)
@@ -110,8 +121,6 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
             {
                 _settingService.DeleteSetting(versionSetting);
             }
-
-            _cancelPendingOrderRequestsObjectContext.Uninstall();
 
             base.Uninstall();
         }

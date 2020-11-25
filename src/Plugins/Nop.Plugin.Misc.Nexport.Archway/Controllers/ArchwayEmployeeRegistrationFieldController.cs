@@ -78,7 +78,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [Route("Admin/NexportIntegration/EditRegistrationField/{id}")]
         [HttpPost, ActionName("EditRegistrationField")]
         [FormValueRequired("savecustomregistrationfield_archway")]
@@ -124,8 +124,8 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        [HttpsRequirement(SslRequirement.Yes)]
-        [AdminAntiForgery(true)]
+        [HttpsRequirement]
+        //[AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult AsyncUploadStoreData()
         {

@@ -9,10 +9,9 @@ using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Nop.Core.Data;
 using Nop.Core.Infrastructure;
+using Nop.Data;
 using Nop.Services.Configuration;
-using Nop.Web.Framework.Infrastructure.Extensions;
 using Nop.Plugin.Misc.Nexport.Archway.Data;
 using Nop.Plugin.Misc.Nexport.Archway.Infrastructure.RoutingRule;
 using Nop.Plugin.Misc.Nexport.Archway.Migrations;
@@ -25,19 +24,13 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
     {
         public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
-            // Add object context
-            services.AddDbContext<PluginObjectContext>(optionsBuilder =>
-            {
-                optionsBuilder.UseSqlServerWithLazyLoading(services);
-            });
-
             services.Configure<RazorViewEngineOptions>(options =>
             {
                 options.ViewLocationExpanders.Add(new ViewLocationExpander());
             });
         }
 
-        private static IServiceProvider CreateFluentMigratorRunnerService()
+        public static IServiceProvider CreateFluentMigratorRunnerService()
         {
             var dataSettings = DataSettingsManager.LoadSettings();
 
@@ -46,7 +39,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
                 .AddFluentMigratorCore().ConfigureRunner(builder =>
                 {
                     builder.AddSqlServer()
-                        .WithGlobalConnectionString(dataSettings.DataConnectionString)
+                        .WithGlobalConnectionString(dataSettings.ConnectionString)
                         .WithVersionTable(new ArchwayPluginMigrationVersionTable())
                         .ScanIn(typeof(Nop.Plugin.Misc.Nexport.Archway.Migrations.M001_CreatePluginSchemas).Assembly)
                         .For.Migrations()
@@ -72,17 +65,15 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
             try
             {
                 var migratorRunnerService = CreateFluentMigratorRunnerService();
-                using (var serviceScope = migratorRunnerService.CreateScope())
+                using var serviceScope = migratorRunnerService.CreateScope();
+                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+                try
                 {
-                    var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-                    try
-                    {
-                        runner.MigrateUp();
-                    }
-                    catch (MissingMigrationsException)
-                    {
-                        // ignored
-                    }
+                    runner.MigrateUp();
+                }
+                catch (MissingMigrationsException)
+                {
+                    // ignored
                 }
             }
             catch (Exception ex)
@@ -99,41 +90,39 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
 
             ApplyMigration(application);
 
-            using (var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            using var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope();
+            var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
+
+            var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            var versionSettingValue = settingService.GetSettingByKey<string>(PluginDefaults.ASSEMBLY_VERSION_KEY);
+            Version installedAssemblyVersion = null;
+
+            if (!string.IsNullOrEmpty(versionSettingValue))
             {
-                var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
+                installedAssemblyVersion =
+                    Version.Parse(versionSettingValue);
+            }
 
-                var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-                var versionSettingValue = settingService.GetSettingByKey<string>(PluginDefaults.ASSEMBLY_VERSION_KEY);
-                Version installedAssemblyVersion = null;
+            if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
+            {
+                settingService.SetSetting(PluginDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
 
-                if (!string.IsNullOrEmpty(versionSettingValue))
+                var pluginService =
+                    serviceScope.ServiceProvider.GetRequiredService<ArchwayPluginService>();
+
+                pluginService.AddOrUpdateResources();
+            }
+
+            var customEnrollmentRouteControl =
+                settingService.GetSettingByKey<bool>(PluginDefaults.CustomEnrollmentRouteControlSettingKey);
+            if (customEnrollmentRouteControl)
+            {
+                var customEnrollmentRoute = settingService.GetSettingByKey<string>(PluginDefaults.CustomEnrollmentRouteSettingKey);
+                if (!string.IsNullOrWhiteSpace(customEnrollmentRoute))
                 {
-                    installedAssemblyVersion =
-                        Version.Parse(versionSettingValue);
-                }
-
-                if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
-                {
-                    settingService.SetSetting(PluginDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
-
-                    var pluginService =
-                        serviceScope.ServiceProvider.GetRequiredService<ArchwayPluginService>();
-
-                    pluginService.AddOrUpdateResources();
-                }
-
-                var customEnrollmentRouteControl =
-                    settingService.GetSettingByKey<bool>(PluginDefaults.CustomEnrollmentRouteControlSettingKey);
-                if (customEnrollmentRouteControl)
-                {
-                    var customEnrollmentRoute = settingService.GetSettingByKey<string>(PluginDefaults.CustomEnrollmentRouteSettingKey);
-                    if (!string.IsNullOrWhiteSpace(customEnrollmentRoute))
-                    {
-                        var customShoppingCartRoutingRule = new CustomShoppingCartRoutingRule(customEnrollmentRoute);
-                        var options = new RewriteOptions().Add(customShoppingCartRoutingRule);
-                        application.UseRewriter(options);
-                    }
+                    var customShoppingCartRoutingRule = new CustomShoppingCartRoutingRule(customEnrollmentRoute);
+                    var options = new RewriteOptions().Add(customShoppingCartRoutingRule);
+                    application.UseRewriter(options);
                 }
             }
         }

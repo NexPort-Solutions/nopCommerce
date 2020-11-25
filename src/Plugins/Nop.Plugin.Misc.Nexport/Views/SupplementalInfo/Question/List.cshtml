@@ -1,12 +1,8 @@
-﻿@using Nop.Plugin.Misc.Nexport.Models
-@using Nop.Web.Framework.Models.DataTables
-@using Nop.Plugin.Misc.Nexport
-@using Microsoft.AspNetCore.Routing
-@using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+﻿@using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 @model NexportSupplementalInfoQuestionSearchModel
 
 @{
-    Layout = "_AdminLayout";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminPopupLayout.cshtml";
 
     Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
 

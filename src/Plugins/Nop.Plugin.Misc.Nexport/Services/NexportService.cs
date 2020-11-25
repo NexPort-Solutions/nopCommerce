@@ -14,7 +14,6 @@ using NexportApi.Client;
 using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Caching;
-using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
@@ -22,6 +21,7 @@ using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
+using Nop.Data;
 using Nop.Services.Catalog;
 using Nop.Services.Configuration;
 using Nop.Services.Events;
@@ -43,6 +43,7 @@ using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
+using Nop.Services.Caching;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -55,8 +56,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly EmailAccountSettings _emailAccountSettings;
         private readonly NexportSettings _nexportSettings;
 
+        private readonly IAddressService _addressService;
         private readonly IAclService _aclService;
-        private readonly ICacheManager _cacheManager;
+        private readonly ICacheKeyService _cacheKeyService;
+        private readonly IStaticCacheManager _cacheManager;
         private readonly IEventPublisher _eventPublisher;
         private readonly ILocalizationService _localizationService;
         private readonly IProductService _productService;
@@ -119,8 +122,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             NexportApiService nexportApiService,
             EmailAccountSettings emailAccountSettings,
             NexportSettings nexportSettings,
+            IAddressService addressService,
             IAclService aclService,
-            ICacheManager cacheManager,
+            ICacheKeyService cacheKeyService,
+            IStaticCacheManager cacheManager,
             IEventPublisher eventPublisher,
             IProductService productService,
             IRepository<AclRecord> aclRepository,
@@ -177,7 +182,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportApiService = nexportApiService;
             _emailAccountSettings = emailAccountSettings;
             _nexportSettings = nexportSettings;
+            _addressService = addressService;
             _aclService = aclService;
+            _cacheKeyService = cacheKeyService;
             _cacheManager = cacheManager;
             _eventPublisher = eventPublisher;
             _localizationService = localizationService;
@@ -1758,7 +1765,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             foreach (var order in orders)
             {
-                var orderItems = order.OrderItems;
+                var orderItems = _orderService.GetOrderItems(order.Id);
                 foreach (var orderItem in orderItems)
                 {
                     var orderInvoiceItem = FindNexportOrderInvoiceItem(order.Id, orderItem.Id);
@@ -1877,19 +1884,20 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
+        //TODO: Switch to use built-in order service method
         public void AddOrderNote(Order order, string note, bool? displayToCustomer = null, DateTime? utcNoteCreationDate = null, bool updateOrder = false)
         {
-            order.OrderNotes.Add(new OrderNote
-            {
-                Note = note,
-                DisplayToCustomer = displayToCustomer.GetValueOrDefault(false),
-                CreatedOnUtc = utcNoteCreationDate.GetValueOrDefault(DateTime.UtcNow)
-            });
+            //order.OrderNotes.Add(new OrderNote
+            //{
+            //    Note = note,
+            //    DisplayToCustomer = displayToCustomer.GetValueOrDefault(false),
+            //    CreatedOnUtc = utcNoteCreationDate.GetValueOrDefault(DateTime.UtcNow)
+            //});
 
-            if (updateOrder)
-            {
-                _orderService.UpdateOrder(order);
-            }
+            //if (updateOrder)
+            //{
+            //    _orderService.UpdateOrder(order);
+            //}
         }
 
         public void CreateAndMapNewNexportUser(Customer customer)
@@ -1910,30 +1918,33 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             UserContactInfoRequest contactInfo = null;
 
-            var currentBillingAddress = customer.BillingAddress;
-            if (currentBillingAddress != null)
+            if (customer.BillingAddressId != null)
             {
-                var customerStateProvince =
-                    _stateProvinceService.GetStateProvinceById(currentBillingAddress.StateProvinceId.GetValueOrDefault(0));
-
-                var customerAddressState = customerStateProvince != null ? customerStateProvince.Name : "";
-
-                var customerCountry =
-                    _countryService.GetCountryById(currentBillingAddress.CountryId.GetValueOrDefault(0));
-
-                var customerAddressCountry = customerCountry != null ? customerCountry.Name : "";
-
-                contactInfo = new UserContactInfoRequest(apiErrorEntity: new ApiErrorEntity())
+                var currentBillingAddress = _addressService.GetAddressById(customer.BillingAddressId.Value);
+                if (currentBillingAddress != null)
                 {
-                    AddressLine1 = currentBillingAddress.Address1,
-                    AddressLine2 = currentBillingAddress.Address2,
-                    City = currentBillingAddress.City,
-                    State = customerAddressState,
-                    Country = customerAddressCountry,
-                    PostalCode = currentBillingAddress.ZipPostalCode,
-                    Phone = currentBillingAddress.PhoneNumber,
-                    Fax = currentBillingAddress.FaxNumber
-                };
+                    var customerStateProvince =
+                        _stateProvinceService.GetStateProvinceById(currentBillingAddress.StateProvinceId.GetValueOrDefault(0));
+
+                    var customerAddressState = customerStateProvince != null ? customerStateProvince.Name : "";
+
+                    var customerCountry =
+                        _countryService.GetCountryById(currentBillingAddress.CountryId.GetValueOrDefault(0));
+
+                    var customerAddressCountry = customerCountry != null ? customerCountry.Name : "";
+
+                    contactInfo = new UserContactInfoRequest(apiErrorEntity: new ApiErrorEntity())
+                    {
+                        AddressLine1 = currentBillingAddress.Address1,
+                        AddressLine2 = currentBillingAddress.Address2,
+                        City = currentBillingAddress.City,
+                        State = customerAddressState,
+                        Country = customerAddressCountry,
+                        PostalCode = currentBillingAddress.ZipPostalCode,
+                        Phone = currentBillingAddress.PhoneNumber,
+                        Fax = currentBillingAddress.FaxNumber
+                    };
+                }
             }
 
             var nexportUser = CreateNexportUser(login, password, firstName, lastName,
@@ -1992,8 +2003,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 if (address.StateProvinceId == 0)
                     address.StateProvinceId = null;
 
-                customer.CustomerAddressMappings.Add(new CustomerAddressMapping { Address = address });
-                _customerService.UpdateCustomer(customer);
+                _customerService.InsertCustomerAddress(customer, address);
 
                 customer.BillingAddressId = address.Id;
                 customer.ShippingAddressId = address.Id;
@@ -2185,7 +2195,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             foreach (var productCategory in productCategories)
             {
-                var limitSinglePurchase = _genericAttributeService.GetAttribute<bool>(productCategory.Category,
+                var category = _categoryService.GetCategoryById(productCategory.CategoryId);
+                if (category == null)
+                    continue;
+
+                var limitSinglePurchase = _genericAttributeService.GetAttribute<bool>(category,
                             NexportDefaults.LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY);
 
                 if (limitSinglePurchase)
@@ -2197,7 +2211,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                     _storeContext.CurrentStore.Id, true)
                                 .Any(x => x.CategoryId == productCategory.CategoryId));
 
-                    return (productInSameCategory, productCategory.Category);
+                    return (productInSameCategory, category);
                 }
             }
 
@@ -2219,8 +2233,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             foreach (var productCategory in productCategories)
             {
+                var category = _categoryService.GetCategoryById(productCategory.CategoryId);
+                if (category == null)
+                    continue;
+
                 var allowPurchaseDifferentProductInCategory = _genericAttributeService.GetAttribute(
-                    productCategory.Category,
+                    category,
                     NexportDefaults.ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT,
                     defaultValue: true);
 
@@ -2235,18 +2253,22 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                              GetProductMappingByNopProductId(otherProductCategory.ProductId);
                         if (productMapping != null)
                         {
-                            var existingEnrollmentStatus = VerifyNexportEnrollmentStatus(otherProductCategory.Product, customer, storeId);
-
-                            var currentEnrollmentExpirationDate = existingEnrollmentStatus?.enrollementExpirationDate;
-                            if (currentEnrollmentExpirationDate.HasValue &&
-                                currentEnrollmentExpirationDate >= DateTime.UtcNow &&
-                                (existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.NotStarted ||
-                                 existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.InProgress))
+                            var otherProduct = _productService.GetProductById(otherProductCategory.ProductId);
+                            if (otherProduct != null)
                             {
-                                // Customer is not allowed to purchase this product
-                                // since there is an existing enrollment from a different product within this category
-                                // that has not been expired and that enrollment is currently either in the Not Started or In Progress phase.
-                                return false;
+                                var existingEnrollmentStatus = VerifyNexportEnrollmentStatus(otherProduct, customer, storeId);
+
+                                var currentEnrollmentExpirationDate = existingEnrollmentStatus?.enrollementExpirationDate;
+                                if (currentEnrollmentExpirationDate.HasValue &&
+                                    currentEnrollmentExpirationDate >= DateTime.UtcNow &&
+                                    (existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.NotStarted ||
+                                     existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.InProgress))
+                                {
+                                    // Customer is not allowed to purchase this product
+                                    // since there is an existing enrollment from a different product within this category
+                                    // that has not been expired and that enrollment is currently either in the Not Started or In Progress phase.
+                                    return false;
+                                }
                             }
                         }
                     }

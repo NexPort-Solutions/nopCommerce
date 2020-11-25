@@ -1,9 +1,11 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Migrations
 {
     [Migration(1, "Initial table creation for CancelPendingOrderRequests plugin")]
     [Tags("CancelPendingOrderRequestPluginMigration")]
+    [SkipMigration]
     public class M001_CreatePluginSchemas : Migration
     {
         private const string PENDING_ORDER_CANCELLATION_REQUESTS_TABLE_NAME =

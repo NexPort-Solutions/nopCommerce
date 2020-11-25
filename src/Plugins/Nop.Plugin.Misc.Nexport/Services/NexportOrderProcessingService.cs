@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
@@ -37,6 +36,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         #region Constructor
 
         public NexportOrderProcessingService(CurrencySettings currencySettings,
+            IAddressService addressService,
             IAffiliateService affiliateService,
             ICheckoutAttributeFormatter checkoutAttributeFormatter,
             ICountryService countryService,
@@ -64,11 +64,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IProductService productService,
             IRewardPointService rewardPointService,
             IShipmentService shipmentService,
-            IShippingPluginManager shippingPluginManager,
             IShippingService shippingService,
             IShoppingCartService shoppingCartService,
             IStateProvinceService stateProvinceService,
-            IStoreContext storeContext,
             ITaxService taxService,
             IVendorService vendorService,
             IWebHelper webHelper,
@@ -80,50 +78,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             RewardPointsSettings rewardPointsSettings,
             ShippingSettings shippingSettings,
             TaxSettings taxSettings,
-            NexportService nexportService) : base(currencySettings,
-                affiliateService,
-                checkoutAttributeFormatter,
-                countryService,
-                currencyService,
-                customerActivityService,
-                customerService,
-                customNumberFormatter,
-                discountService,
-                encryptionService,
-                eventPublisher,
-                genericAttributeService,
-                giftCardService,
-                languageService,
-                localizationService,
-                logger,
-                orderService,
-                orderTotalCalculationService,
-                paymentPluginManager,
-                paymentService,
-                pdfService,
-                priceCalculationService,
-                priceFormatter,
-                productAttributeFormatter,
-                productAttributeParser,
-                productService,
-                rewardPointService,
-                shipmentService,
-                shippingPluginManager,
-                shippingService,
-                shoppingCartService,
-                stateProvinceService,
-                storeContext,
-                taxService,
-                vendorService,
-                webHelper,
-                workContext,
-                workflowMessageService,
-                localizationSettings,
-                orderSettings,
-                paymentSettings,
-                rewardPointsSettings,
-                shippingSettings,
-                taxSettings)
+            NexportService nexportService) :
+            base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter, countryService, currencyService,
+                customerActivityService, customerService, customNumberFormatter, discountService, encryptionService, eventPublisher,
+                genericAttributeService, giftCardService, languageService, localizationService, logger, orderService, orderTotalCalculationService,
+                paymentPluginManager, paymentService, pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser,
+                productService, rewardPointService, shipmentService, shippingService, shoppingCartService, stateProvinceService, taxService, vendorService,
+                webHelper, workContext, workflowMessageService, localizationSettings, orderSettings, paymentSettings,
+                rewardPointsSettings, shippingSettings, taxSettings)
         {
             _orderService = orderService;
             _orderSettings = orderSettings;
@@ -197,8 +159,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 }
             }
 
+            var orderItems = _orderService.GetOrderItems(order.Id);
+
             // Check if the order has any item that has Nexport mapping
-            var hasAnyNexportProduct = order.OrderItems
+            var hasAnyNexportProduct = orderItems
                 .Select(item => _nexportService.GetProductMappingByNopProductId(item.ProductId))
                 .Any(productMapping => productMapping != null);
 

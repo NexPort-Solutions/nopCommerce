@@ -6,9 +6,9 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Infrastructure
 {
     public class RouteProvider : IRouteProvider
     {
-        public void RegisterRoutes(IRouteBuilder routeBuilder)
+        public void RegisterRoutes(IEndpointRouteBuilder endpointRouteBuilder)
         {
-            routeBuilder.MapRoute("Plugin.Misc.Nexport.DiscountPerCreditHours.Configure",
+            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.DiscountPerCreditHours.Configure",
                 "Admin/NexportDiscountPerCreditHours/Configure",
                 new { controller = "NexportDiscountPerCreditHoursController", action = "Configure" });
         }

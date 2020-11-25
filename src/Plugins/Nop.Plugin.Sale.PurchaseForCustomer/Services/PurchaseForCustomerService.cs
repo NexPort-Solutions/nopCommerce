@@ -38,6 +38,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
         #region Fields
 
         private readonly CurrencySettings _currencySettings;
+        private readonly IAddressService _addressService;
         private readonly IAffiliateService _affiliateService;
         private readonly ICheckoutAttributeFormatter _checkoutAttributeFormatter;
         private readonly ICountryService _countryService;
@@ -88,6 +89,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
 
         public PurchaseForCustomerService(
             CurrencySettings currencySettings,
+            IAddressService addressService,
             IAffiliateService affiliateService,
             ICheckoutAttributeFormatter checkoutAttributeFormatter,
             ICountryService countryService,
@@ -130,16 +132,15 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
             PaymentSettings paymentSettings,
             RewardPointsSettings rewardPointsSettings,
             ShippingSettings shippingSettings,
-            TaxSettings taxSettings) : base(currencySettings, affiliateService, checkoutAttributeFormatter, countryService,
-            currencyService, customerActivityService, customerService, customNumberFormatter,
-            discountService, encryptionService, eventPublisher, genericAttributeService, giftCardService, languageService,
-            localizationService, logger, orderService, orderTotalCalculationService, paymentPluginManager,
-            paymentService, pdfService, priceCalculationService, priceFormatter, productAttributeFormatter,
-            productAttributeParser, productService, rewardPointService, shipmentService, shippingPluginManager, shippingService, shoppingCartService,
-            stateProvinceService, storeContext, taxService, vendorService, webHelper, workContext, workflowMessageService,
-            localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
+            TaxSettings taxSettings) :
+            base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter, countryService, currencyService, customerActivityService, customerService,
+                customNumberFormatter, discountService, encryptionService, eventPublisher, genericAttributeService, giftCardService, languageService, localizationService, logger,
+                orderService, orderTotalCalculationService, paymentPluginManager, paymentService, pdfService, priceCalculationService, priceFormatter, productAttributeFormatter,
+                productAttributeParser, productService, rewardPointService, shipmentService, shippingService, shoppingCartService, stateProvinceService, taxService, vendorService,
+                webHelper, workContext, workflowMessageService, localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
         {
             _currencySettings = currencySettings;
+            _addressService = addressService;
             _affiliateService = affiliateService;
             _checkoutAttributeFormatter = checkoutAttributeFormatter;
             _countryService = countryService;
@@ -204,14 +205,12 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
             {
                 ShoppingCartType = ShoppingCartType.ShoppingCart,
                 StoreId = store.Id,
-                Product = product,
                 ProductId = product.Id,
                 AttributesXml = null,
                 CustomerEnteredPrice = decimal.Zero,
                 Quantity = 1,
                 CreatedOnUtc = now,
                 UpdatedOnUtc = now,
-                Customer = customer,
                 CustomerId = customer.Id
             };
 
@@ -249,7 +248,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
                 details.AffiliateId = affiliate.Id;
 
             //check whether customer is guest
-            if (details.Customer.IsGuest() && !_orderSettings.AnonymousCheckoutAllowed)
+            if (_customerService.IsGuest(details.Customer) && !_orderSettings.AnonymousCheckoutAllowed)
                 throw new NopException("Anonymous checkout is not allowed");
 
             //customer currency
@@ -267,15 +266,18 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
                 details.CustomerLanguage = _workContext.WorkingLanguage;
 
             //billing address
-            if (details.Customer.BillingAddress == null)
+            if (details.Customer.BillingAddressId is null)
                 throw new NopException("Billing address is not provided");
 
-            if (!CommonHelper.IsValidEmail(details.Customer.BillingAddress.Email))
+            var billingAddress = _customerService.GetCustomerBillingAddress(details.Customer);
+
+            if (!CommonHelper.IsValidEmail(billingAddress?.Email))
                 throw new NopException("Email is not valid");
 
-            details.BillingAddress = (Address)details.Customer.BillingAddress.Clone();
-            if (details.BillingAddress.Country != null && !details.BillingAddress.Country.AllowsBilling)
-                throw new NopException($"Country '{details.BillingAddress.Country.Name}' is not allowed for billing");
+            details.BillingAddress = _addressService.CloneAddress(billingAddress);
+
+            if (_countryService.GetCountryByAddress(details.BillingAddress) is Country billingCountry && !billingCountry.AllowsBilling)
+                throw new NopException($"Country '{billingCountry.Name}' is not allowed for billing");
 
             //load shopping cart
             details.Cart = shoppingCartItems;
@@ -351,24 +353,27 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
                         Address1 = pickupPoint.Address,
                         City = pickupPoint.City,
                         County = pickupPoint.County,
-                        Country = country,
-                        StateProvince = state,
+                        CountryId = country?.Id,
+                        StateProvinceId = state?.Id,
                         ZipPostalCode = pickupPoint.ZipPostalCode,
                         CreatedOnUtc = DateTime.UtcNow
                     };
                 }
                 else
                 {
-                    if (details.Customer.ShippingAddress == null)
+                    if (details.Customer.ShippingAddressId == null)
                         throw new NopException("Shipping address is not provided");
 
-                    if (!CommonHelper.IsValidEmail(details.Customer.ShippingAddress.Email))
+                    var shippingAddress = _customerService.GetCustomerShippingAddress(details.Customer);
+
+                    if (!CommonHelper.IsValidEmail(shippingAddress?.Email))
                         throw new NopException("Email is not valid");
 
                     //clone shipping address
-                    details.ShippingAddress = (Address)details.Customer.ShippingAddress.Clone();
-                    if (details.ShippingAddress.Country != null && !details.ShippingAddress.Country.AllowsShipping)
-                        throw new NopException($"Country '{details.ShippingAddress.Country.Name}' is not allowed for shipping");
+                    details.ShippingAddress = _addressService.CloneAddress(shippingAddress);
+
+                    if (_countryService.GetCountryByAddress(details.ShippingAddress) is Country shippingCountry && !shippingCountry.AllowsShipping)
+                        throw new NopException($"Country '{shippingCountry.Name}' is not allowed for shipping");
                 }
 
                 var shippingOption = _genericAttributeService.GetAttribute<ShippingOption>(details.Customer,
@@ -384,12 +389,9 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
             else
                 details.ShippingStatus = ShippingStatus.ShippingNotRequired;
 
-            //LoadAllShippingRateComputationMethods
-            var shippingRateComputationMethods = _shippingPluginManager.LoadActivePlugins(_workContext.CurrentCustomer, _storeContext.CurrentStore.Id);
-
             //shipping total
-            var orderShippingTotalInclTax = _orderTotalCalculationService.GetShoppingCartShippingTotal(details.Cart, true, shippingRateComputationMethods, out var _, out var shippingTotalDiscounts);
-            var orderShippingTotalExclTax = _orderTotalCalculationService.GetShoppingCartShippingTotal(details.Cart, false, shippingRateComputationMethods);
+            var orderShippingTotalInclTax = _orderTotalCalculationService.GetShoppingCartShippingTotal(details.Cart, true, out var _, out var shippingTotalDiscounts);
+            var orderShippingTotalExclTax = _orderTotalCalculationService.GetShoppingCartShippingTotal(details.Cart, false);
             if (!orderShippingTotalInclTax.HasValue || !orderShippingTotalExclTax.HasValue)
                 throw new NopException("Shipping total couldn't be calculated");
 
@@ -406,7 +408,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
             details.PaymentAdditionalFeeExclTax = _taxService.GetPaymentMethodAdditionalFee(paymentAdditionalFee, false, details.Customer);
 
             //tax amount
-            details.OrderTaxTotal = _orderTotalCalculationService.GetTaxTotal(details.Cart, shippingRateComputationMethods, out var taxRatesDictionary);
+            details.OrderTaxTotal = _orderTotalCalculationService.GetTaxTotal(details.Cart, out var taxRatesDictionary);
 
             //VAT number
             var customerVatStatus = (VatNumberStatus)_genericAttributeService.GetAttribute<int>(details.Customer, NopCustomerDefaults.VatNumberStatusIdAttribute);
@@ -520,29 +522,31 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
         {
             foreach (var sc in details.Cart)
             {
+                var product = _productService.GetProductById(sc.ProductId);
+
                 //prices
-                var scUnitPrice = _priceCalculationService.GetUnitPrice(sc);
-                var scSubTotal = _priceCalculationService.GetSubTotal(sc, true, out var discountAmount,
+                var scUnitPrice = _shoppingCartService.GetUnitPrice(sc);
+                var scSubTotal = _shoppingCartService.GetSubTotal(sc, true, out var discountAmount,
                     out var scDiscounts, out _);
                 var scUnitPriceInclTax =
-                    _taxService.GetProductPrice(sc.Product, scUnitPrice, true, details.Customer, out var _);
+                    _taxService.GetProductPrice(product, scUnitPrice, true, details.Customer, out var _);
                 var scUnitPriceExclTax =
-                    _taxService.GetProductPrice(sc.Product, scUnitPrice, false, details.Customer, out _);
+                    _taxService.GetProductPrice(product, scUnitPrice, false, details.Customer, out _);
                 var scSubTotalInclTax =
-                    _taxService.GetProductPrice(sc.Product, scSubTotal, true, details.Customer, out _);
+                    _taxService.GetProductPrice(product, scSubTotal, true, details.Customer, out _);
                 var scSubTotalExclTax =
-                    _taxService.GetProductPrice(sc.Product, scSubTotal, false, details.Customer, out _);
+                    _taxService.GetProductPrice(product, scSubTotal, false, details.Customer, out _);
                 var discountAmountInclTax =
-                    _taxService.GetProductPrice(sc.Product, discountAmount, true, details.Customer, out _);
+                    _taxService.GetProductPrice(product, discountAmount, true, details.Customer, out _);
                 var discountAmountExclTax =
-                    _taxService.GetProductPrice(sc.Product, discountAmount, false, details.Customer, out _);
+                    _taxService.GetProductPrice(product, discountAmount, false, details.Customer, out _);
                 foreach (var disc in scDiscounts)
                     if (!_discountService.ContainsDiscount(details.AppliedDiscounts, disc))
                         details.AppliedDiscounts.Add(disc);
 
                 //attributes
                 var attributeDescription =
-                    _productAttributeFormatter.FormatAttributes(sc.Product, sc.AttributesXml, details.Customer);
+                    _productAttributeFormatter.FormatAttributes(product, sc.AttributesXml, details.Customer);
 
                 var itemWeight = _shippingService.GetShoppingCartItemWeight(sc);
 
@@ -550,13 +554,13 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
                 var orderItem = new OrderItem
                 {
                     OrderItemGuid = Guid.NewGuid(),
-                    Order = order,
+                    OrderId = order.Id,
                     ProductId = sc.ProductId,
                     UnitPriceInclTax = scUnitPriceInclTax,
                     UnitPriceExclTax = scUnitPriceExclTax,
                     PriceInclTax = scSubTotalInclTax,
                     PriceExclTax = scSubTotalExclTax,
-                    OriginalProductCost = _priceCalculationService.GetProductCost(sc.Product, sc.AttributesXml),
+                    OriginalProductCost = _priceCalculationService.GetProductCost(product, sc.AttributesXml),
                     AttributeDescription = attributeDescription,
                     AttributesXml = sc.AttributesXml,
                     Quantity = sc.Quantity,
@@ -569,16 +573,15 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
                     RentalStartDateUtc = sc.RentalStartDateUtc,
                     RentalEndDateUtc = sc.RentalEndDateUtc
                 };
-                order.OrderItems.Add(orderItem);
-                _orderService.UpdateOrder(order);
+
+                _orderService.InsertOrderItem(orderItem);
 
                 //gift cards
-                AddGiftCards(sc.Product, sc.AttributesXml, sc.Quantity, orderItem, scUnitPriceExclTax);
+                AddGiftCards(product, sc.AttributesXml, sc.Quantity, orderItem, scUnitPriceExclTax);
 
                 //inventory
-                _productService.AdjustInventory(sc.Product, -sc.Quantity, sc.AttributesXml,
-                    string.Format(_localizationService.GetResource("Admin.StockQuantityHistory.Messages.PlaceOrder"),
-                        order.Id));
+                _productService.AdjustInventory(product, -sc.Quantity, sc.AttributesXml,
+                    string.Format(_localizationService.GetResource("Admin.StockQuantityHistory.Messages.PlaceOrder"), order.Id));
             }
         }
 

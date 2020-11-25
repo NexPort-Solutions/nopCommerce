@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Domain.Discounts;
 using Nop.Services.Catalog;
@@ -53,7 +52,7 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Controller
                 throw new ArgumentException("Discount could not be loaded");
 
             //check whether the discount requirement exists
-            if (discountRequirementId.HasValue && discount.DiscountRequirements.All(requirement => requirement.Id != discountRequirementId.Value))
+            if (discountRequirementId.HasValue && _discountService.GetDiscountRequirementById(discountRequirementId.Value) is null)
                 return Content("Failed to load requirement.");
 
             var creditHours = _settingService.GetSettingByKey<decimal>(string.Format(NexportDiscountDefaults.SettingsKey, discountRequirementId ?? 0));
@@ -72,34 +71,33 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Controller
         }
 
         [HttpPost]
-        [AdminAntiForgery]
-        public IActionResult Configure(int discountId, int? discountRequirementId, decimal creditHours)
+        [AutoValidateAntiforgeryToken]
+        public IActionResult Configure(RequirementModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
                 return Content("Access denied");
 
             // Load the discount
-            var discount = _discountService.GetDiscountById(discountId);
+            var discount = _discountService.GetDiscountById(model.DiscountId);
             if (discount == null)
-                throw new ArgumentException("Discount could not be loaded");
+                return NotFound(new { Errors = new[] { "Discount could not be loaded" } });
 
             // Get the discount requirement
-            var discountRequirement = discountRequirementId.HasValue
-                ? discount.DiscountRequirements.FirstOrDefault(requirement => requirement.Id == discountRequirementId.Value) : null;
+            var discountRequirement = _discountService.GetDiscountRequirementById(model.RequirementId);
 
             if (discountRequirement == null)
             {
                 discountRequirement = new DiscountRequirement
                 {
+                    DiscountId = model.DiscountId,
                     DiscountRequirementRuleSystemName = NexportDiscountDefaults.SystemName
                 };
 
-                discount.DiscountRequirements.Add(discountRequirement);
-                _discountService.UpdateDiscount(discount);
+                _discountService.InsertDiscountRequirement(discountRequirement);
             }
 
             // Save restricted customer role identifier
-            _settingService.SetSetting(string.Format(NexportDiscountDefaults.SettingsKey, discountRequirement.Id), creditHours);
+            _settingService.SetSetting(string.Format(NexportDiscountDefaults.SettingsKey, discountRequirement.Id), model.CreditHours);
 
             return Json(new { Result = true, NewRequirementId = discountRequirement.Id });
         }

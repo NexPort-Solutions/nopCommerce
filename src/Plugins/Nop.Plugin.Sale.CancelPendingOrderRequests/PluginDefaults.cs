@@ -1,4 +1,6 @@
-﻿namespace Nop.Plugin.Sale.CancelPendingOrderRequests
+﻿using Nop.Core.Caching;
+
+namespace Nop.Plugin.Sale.CancelPendingOrderRequests
 {
     public class PluginDefaults
     {
@@ -15,9 +17,7 @@
         /// <remarks>
         /// {0} : language ID
         /// </remarks>
-        public static string CancellationRequestReasonsModelKey => "Nop.sale.cancellationrequestreasons-{0}";
-
-        public static string CancellationRequestReasonsPrefixCacheKey => "Nop.sale.cancellationrequestreasons";
+        public static CacheKey CancellationRequestReasonsCacheKey => new CacheKey("Nop.sale.cancellationrequestreasons-{0}");
 
         public const string EDIT_CANCELLATION_REQUEST_ACTIVITY_LOG_TYPE = "EditCancellationRequest";
 

@@ -1,32 +1,30 @@
-﻿using System.Linq;
-using System.Security.Policy;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
-using Nop.Core.Domain.Customers;
-using Nop.Core.Domain.Orders;
-using Nop.Plugin.Misc.Nexport.Factories;
-using Nop.Plugin.Misc.Nexport.Services;
-using Nop.Services.Catalog;
+using Nop.Services.Customers;
 using Nop.Services.Orders;
 using Nop.Web.Controllers;
+using Nop.Plugin.Misc.Nexport.Services;
 
 namespace Nop.Plugin.Misc.Nexport.Filters
 {
     public class OrderDetailsActionFilter : ActionFilterAttribute
     {
+        private readonly ICustomerService _customerService;
         private readonly IOrderService _orderService;
         private readonly IStoreContext _storeContext;
         private readonly IWorkContext _workContext;
         private readonly NexportService _nexportService;
 
         public OrderDetailsActionFilter(
+            ICustomerService customerService,
             IOrderService orderService,
             IStoreContext storeContext,
             IWorkContext workContext,
             NexportService nexportService)
         {
+            _customerService = customerService;
             _orderService = orderService;
             _storeContext = storeContext;
             _workContext = workContext;
@@ -42,7 +40,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 actionDescriptor.ActionName == nameof(OrderController.Details))
             {
                 var customer = _workContext.CurrentCustomer;
-                if (customer != null && customer.IsRegistered())
+                if (customer != null && _customerService.IsRegistered(customer))
                 {
                     var store = _storeContext.CurrentStore;
 

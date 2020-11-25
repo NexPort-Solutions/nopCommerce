@@ -1,8 +1,11 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 
 namespace Nop.Plugin.Misc.Nexport.Migrations
 {
+    [Tags(NexportDefaults.PluginMigrationTag)]
     [Migration(6, "Add SectionCeus to NexportProductMapping table")]
+    [SkipMigration]
     public class M006_AddSectionCeusToNexportProductMapping : Migration
     {
         private const string TABLE_NAME = "NexportProductMapping";

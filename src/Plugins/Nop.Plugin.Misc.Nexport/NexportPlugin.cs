@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using FluentMigrator.Runner;
+using FluentMigrator.Runner.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
 using Nop.Core;
-using Nop.Core.Data;
 using Nop.Core.Domain.Cms;
 using Nop.Core.Infrastructure;
+using Nop.Data;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
@@ -21,12 +22,12 @@ using Nop.Web.Framework.Menu;
 using Nop.Web.Framework.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Plugin.Misc.Nexport.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Services;
 
 namespace Nop.Plugin.Misc.Nexport {
     public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
     {
-        private readonly NexportPluginObjectContext _nexportProductMappingContext;
         private readonly IRepository<NexportProductMapping> _nexportProductRepository;
         private readonly NexportSettings _nexportSettings;
         private readonly NexportPluginService _nexportPluginService;
@@ -42,7 +43,6 @@ namespace Nop.Plugin.Misc.Nexport {
         private readonly ILogger _logger;
 
         public NexportPlugin(
-            NexportPluginObjectContext nexportProductMappingContext,
             IRepository<NexportProductMapping> nexportProductRepository,
             NexportSettings nexportSettings,
             NexportPluginService nexportPluginService,
@@ -55,7 +55,6 @@ namespace Nop.Plugin.Misc.Nexport {
             IScheduleTaskService scheduleTaskService,
             IWebHelper webHelper, ILogger logger)
         {
-            _nexportProductMappingContext = nexportProductMappingContext;
             _nexportProductRepository = nexportProductRepository;
 
             _nexportSettings = nexportSettings;
@@ -129,7 +128,24 @@ namespace Nop.Plugin.Misc.Nexport {
 
         public override void Install()
         {
-            _nexportProductMappingContext.Install();
+            try
+            {
+                var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
+                using var serviceScope = migrationServiceProvider.CreateScope();
+                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+                try
+                {
+                    runner.MigrateUp();
+                }
+                catch (MissingMigrationsException)
+                {
+                    // ignored
+                }
+            }
+            catch (Exception)
+            {
+                // Ignore
+            }
 
             var settings = new NexportSettings();
             _settingService.SaveSetting(settings);
@@ -180,8 +196,6 @@ namespace Nop.Plugin.Misc.Nexport {
             {
                 // Ignore
             }
-
-            _nexportProductMappingContext.Uninstall();
 
             base.Uninstall();
         }

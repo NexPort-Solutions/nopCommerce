@@ -1,18 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
 using NexportApi.Model;
-
-using Nop.Core.Data;
+using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Services.Cms;
-using Nop.Services.Customers;
-using Nop.Services.Directory;
 using Nop.Services.Logging;
-using Nop.Services.Plugins;
 using Nop.Services.Tasks;
 
 namespace Nop.Plugin.Misc.Nexport.Services.Tasks

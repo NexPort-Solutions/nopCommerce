@@ -1,4 +1,5 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+
 @model Nop.Plugin.Misc.Nexport.Models.Stores.NexportStoreModel
 
 @if (Model.Id > 0)
@@ -104,7 +105,6 @@
                 </div>
                 <div class="col-md-9">
                     <div class="input-group">
-                        @*<input type="hidden" value="@Model.NexportSubscriptionOrgId" />*@
                         <nop-editor asp-for="NexportSubscriptionOrgId" asp-required="false" asp-render-form-control-class="true"
                                     asp-template="GuidNullable"/>
                         <div class="input-group-btn">

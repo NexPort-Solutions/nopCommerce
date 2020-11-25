@@ -3,7 +3,7 @@
   "FriendlyName": "Archway custom registration field",
   "SystemName": "Misc.Nexport.Archway",
   "Version": "1.0",
-  "SupportedVersions": [ "4.20" ],
+  "SupportedVersions": [ "4.30" ],
   "Author": "Nexport Solutions",
   "DisplayOrder": 1003,
   "FileName": "Nop.Plugin.Misc.Nexport.Archway.dll",

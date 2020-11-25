@@ -1,8 +1,11 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 
 namespace Nop.Plugin.Misc.Nexport.Migrations
 {
+    [Tags(NexportDefaults.PluginMigrationTag)]
     [Migration(21, "Add NexportRegistrationField related entity tables")]
+    [SkipMigration]
     public class M021_AddNexportRegistrationFieldEntityTables : Migration
     {
         private const string REGISTRATION_FIELD_TABLE_NAME = "NexportRegistrationField";

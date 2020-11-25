@@ -3,7 +3,7 @@
   "FriendlyName": "Purchase for customer",
   "SystemName": "Sale.PurchaseForCustomer",
   "Version": "1.00",
-  "SupportedVersions": [ "4.20" ],
+  "SupportedVersions": [ "4.30" ],
   "Author": "Nexport Solutions",
   "DisplayOrder": 1002,
   "FileName": "Nop.Plugin.Sale.PurchaseForCustomer.dll",

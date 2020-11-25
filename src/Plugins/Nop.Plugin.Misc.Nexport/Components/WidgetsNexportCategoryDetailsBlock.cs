@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Nop.Core.Domain.Customers;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Services;
@@ -14,17 +13,20 @@ namespace Nop.Plugin.Misc.Nexport.Components
     [ViewComponent(Name = "WidgetsNexportCategoryDetailsBlock")]
     public class WidgetsNexportCategoryDetailsBlock : NopViewComponent
     {
+        private readonly NexportSettings _nexportSettings;
         private readonly NexportService _nexportService;
         private readonly INexportPluginModelFactory _nexportPluginModelFactory;
         private readonly ICategoryService _categoryService;
         private readonly IGenericAttributeService _genericAttributeService;
 
         public WidgetsNexportCategoryDetailsBlock(
+            NexportSettings nexportSettings,
             NexportService nexportService,
             INexportPluginModelFactory nexportPluginModelFactory,
             ICategoryService categoryService,
             IGenericAttributeService genericAttributeService)
         {
+            _nexportSettings = nexportSettings;
             _nexportService = nexportService;
             _nexportPluginModelFactory = nexportPluginModelFactory;
             _categoryService = categoryService;
@@ -33,6 +35,9 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
         public IViewComponentResult Invoke(string widgetZone, object additionalData)
         {
+            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+                return Content("");
+
             var categoryModel = (CategoryModel) additionalData;
 
             var category = _categoryService.GetCategoryById(categoryModel.Id);

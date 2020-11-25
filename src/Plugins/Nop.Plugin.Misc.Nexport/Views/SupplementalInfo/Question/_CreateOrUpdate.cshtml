@@ -1,11 +1,6 @@
-﻿@using Nop.Core
-@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoQuestionModel
-
-@inject Nop.Services.Common.IGenericAttributeService genericAttributeService
-@inject IWorkContext workContext
+﻿@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoQuestionModel
 
 @{
-
     const string hideInfoBlockAttributeName = "SupplementalInfo.Question.HideInfoBlock";
     var hideInfoBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideInfoBlockAttributeName);
 

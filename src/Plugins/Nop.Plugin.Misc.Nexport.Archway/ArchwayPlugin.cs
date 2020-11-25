@@ -1,22 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using FluentMigrator.Runner;
+using FluentMigrator.Runner.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Nop.Core;
 using Nop.Core.Domain.Cms;
 using Nop.Core.Infrastructure;
-using Nop.Plugin.Misc.Nexport.Archway.Data;
-using Nop.Plugin.Misc.Nexport.Archway.Services;
-using Nop.Plugin.Misc.Nexport.Extensions;
-using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Cms;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Logging;
 using Nop.Services.Plugins;
+using Nop.Plugin.Misc.Nexport.Archway.Infrastructure;
+using Nop.Plugin.Misc.Nexport.Archway.Services;
+using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Plugin.Misc.Nexport.Services;
 
 namespace Nop.Plugin.Misc.Nexport.Archway
 {
@@ -24,7 +26,6 @@ namespace Nop.Plugin.Misc.Nexport.Archway
     public class ArchwayPlugin : BasePlugin, IMiscPlugin, IWidgetPlugin, IRegistrationFieldCustomRender
     {
         private readonly ArchwayPluginService _archwayPluginService;
-        private readonly PluginObjectContext _pluginContext;
         private readonly IArchwayStudentEmployeeRegistrationFieldService _archwayStudentEmployeeRegistrationFieldService;
         private readonly IUrlHelperFactory _urlHelperFactory;
         private readonly IActionContextAccessor _actionContextAccessor;
@@ -36,7 +37,6 @@ namespace Nop.Plugin.Misc.Nexport.Archway
 
         public ArchwayPlugin(
             ArchwayPluginService archwayPluginService,
-            PluginObjectContext pluginContext,
             IArchwayStudentEmployeeRegistrationFieldService archwayStudentEmployeeRegistrationFieldService,
             IUrlHelperFactory urlHelperFactory,
             IActionContextAccessor actionContextAccessor,
@@ -46,7 +46,6 @@ namespace Nop.Plugin.Misc.Nexport.Archway
             IWebHelper webHelper, ILogger logger)
         {
             _archwayPluginService = archwayPluginService;
-            _pluginContext = pluginContext;
             _archwayStudentEmployeeRegistrationFieldService = archwayStudentEmployeeRegistrationFieldService;
             _urlHelperFactory = urlHelperFactory;
             _actionContextAccessor = actionContextAccessor;
@@ -59,7 +58,24 @@ namespace Nop.Plugin.Misc.Nexport.Archway
 
         public override void Install()
         {
-            _pluginContext.Install();
+            try
+            {
+                var migratorRunnerService = PluginStartup.CreateFluentMigratorRunnerService();
+                using var serviceScope = migratorRunnerService.CreateScope();
+                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+                try
+                {
+                    runner.MigrateUp();
+                }
+                catch (MissingMigrationsException)
+                {
+                    // ignored
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Error occurred during database migration process: {ex.Message}", ex);
+            }
 
             if (!_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
             {
@@ -93,8 +109,6 @@ namespace Nop.Plugin.Misc.Nexport.Archway
             {
                 _logger.Error($"Error occurred while removing plugin {PluginDefaults.SystemName} version table : {ex.Message}", ex);
             }
-
-            _pluginContext.Uninstall();
 
             base.Uninstall();
         }

@@ -35,9 +35,9 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Factories
             }).ToList();
 
             var availableCustomers = _customerService.GetAllCustomers().ToList()
-                .Where(x => !x.IsSystemAccount &&
-                            !string.IsNullOrWhiteSpace(x.Email) && x.IsRegistered())
-                .OrderBy(x => x.Email);
+                .Where(customer => !customer.IsSystemAccount &&
+                            !string.IsNullOrWhiteSpace(customer.Email) && _customerService.IsRegistered(customer))
+                .OrderBy(customer => customer.Email);
             model.AvailableCustomers = availableCustomers.Select(customer =>
             {
                 var customerFullName = _customerService.GetCustomerFullName(customer);

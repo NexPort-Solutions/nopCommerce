@@ -1,12 +1,9 @@
-﻿@using Microsoft.AspNetCore.Routing
-@using Nop.Plugin.Misc.Nexport.Models
-@using Nop.Plugin.Misc.Nexport.Models.Catalog
+﻿@using Nop.Plugin.Misc.Nexport.Models.Catalog
 @using Nop.Plugin.Misc.Nexport.Models.Syllabus
-@using Nop.Web.Framework.Models.DataTables
 
 @model NexportCatalogSearchModel
 
-@await Html.PartialAsync("Table", new DataTablesModel
+@await Html.PartialAsync("Table", new NexportDataTablesModel
 {
     Name = "nexport-catalog-grid",
     UrlRead = new DataUrl("CatalogList", "NexportIntegration",
@@ -141,7 +138,8 @@
         var nexportProductType = +row.Type + 1;
 
         var renderControl = "<input type=\"radio\" data-control=\"nexport-product-selection\" name=\"nexport-product-selection\" value=\"" + row.SyllabusId +
-            "\" data-catalog-id=\""+ row.CatalogId + "\" data-syllabus-id=\"" + row.SyllabusId + "\" data-product-id=\"" + row.ProductId + "\" data-product-type=\"" + nexportProductType + "\"";
+            "\" data-catalog-id=\""+ row.CatalogId + "\" data-syllabus-id=\"" + row.SyllabusId +
+            "\" data-product-id=\"" + row.ProductId + "\" data-product-type=\"" + nexportProductType + "\"";
 
         renderControl += ">";
 

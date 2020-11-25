@@ -5,7 +5,6 @@ using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
-using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Order;
@@ -20,12 +19,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
     public partial interface INexportPluginModelFactory
     {
         NexportProductMappingModel PrepareNexportProductMappingModel(NexportProductMapping productMapping, bool isEditable);
-
-        NexportProductMappingSearchModel PrepareNexportProductMappingSearchModel(
-            NexportProductMappingSearchModel searchModel);
-
-        MapProductToNexportProductListModel PrepareMapProductToNexportProductListModel(
-            NexportProductMappingSearchModel searchModel);
 
         NexportProductMappingListModel PrepareNexportProductMappingListModel(
             NexportProductMappingSearchModel searchModel, Guid nexportProductId,

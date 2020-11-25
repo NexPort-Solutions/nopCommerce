@@ -1,8 +1,11 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 
 namespace Nop.Plugin.Misc.Nexport.Migrations
 {
+    [Tags(NexportDefaults.PluginMigrationTag)]
     [Migration(7, "Add Nexport SubscriptionOrgName and SubscriptionOrgShortName to NexportProductMapping table")]
+    [SkipMigration]
     public class M007_AddNexportSubscriptionOrgNameAndShortNameToNexportProductMapping : Migration
     {
         private const string TABLE_NAME = "NexportProductMapping";

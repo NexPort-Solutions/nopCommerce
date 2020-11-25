@@ -1,9 +1,11 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Migrations
 {
     [Tags(PluginDefaults.PluginMigrationTag)]
     [Migration(1, "Initial table creation for Archway plugin")]
+    [SkipMigration]
     public class M001_CreatePluginSchemas : Migration
     {
         private const string ARCHWAY_STORE_TABLE_NAME = "ArchwayStore";

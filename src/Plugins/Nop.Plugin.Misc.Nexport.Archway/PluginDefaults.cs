@@ -1,4 +1,6 @@
-﻿namespace Nop.Plugin.Misc.Nexport.Archway
+﻿using Nop.Core.Caching;
+
+namespace Nop.Plugin.Misc.Nexport.Archway
 {
     public class PluginDefaults
     {
@@ -15,9 +17,9 @@
 
         public static string UploadPath => "files\\archwaystoredata";
 
-        public static string ArchwayStoreRecordAllNoPaginationCacheKey => "Nop.nexport.archway.storerecord.all";
+        public static CacheKey ArchwayStoreRecordAllNoPaginationCacheKey => new CacheKey("Nop.nexport.archway.storerecord.all");
 
-        public static string ArchwayStoreEmployeePositionAllNoPaginationCacheKey => "Nop.nexport.archway.employeeposition.all";
+        public static CacheKey ArchwayStoreEmployeePositionAllNoPaginationCacheKey => new CacheKey("Nop.nexport.archway.employeeposition.all");
 
         public static string CustomEnrollmentRouteSettingKey = "nexport.archway.enrollment.route";
 

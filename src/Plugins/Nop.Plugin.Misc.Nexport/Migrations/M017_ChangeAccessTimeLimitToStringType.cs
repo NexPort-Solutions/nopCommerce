@@ -1,8 +1,11 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 
 namespace Nop.Plugin.Misc.Nexport.Migrations
 {
+    [Tags(NexportDefaults.PluginMigrationTag)]
     [Migration(17, "Change AccessTimeLimit in NexportProductMapping table to string type")]
+    [SkipMigration]
     public class M017_ChangeAccessTimeLimitToStringType : Migration
     {
         private const string TABLE_NAME = "NexportProductMapping";

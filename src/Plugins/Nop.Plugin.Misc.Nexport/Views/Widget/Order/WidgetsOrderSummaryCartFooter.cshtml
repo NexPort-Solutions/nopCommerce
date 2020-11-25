@@ -1,7 +1,7 @@
-﻿@using Nop.Services.Discounts
+﻿@using Nop.Core.Domain.Discounts
 
 @{
-    var discounts = ViewData["DiscountList"] as List<DiscountForCaching>;
+    var discounts = ViewData["DiscountList"] as List<Discount>;
 }
 
 @if (discounts != null)

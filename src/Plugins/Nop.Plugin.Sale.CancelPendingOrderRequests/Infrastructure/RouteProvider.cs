@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Routing;
-using Nop.Web.Framework.Localization;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
@@ -8,9 +8,9 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
     {
         public int Priority => int.MaxValue - 101;
 
-        public void RegisterRoutes(IRouteBuilder routeBuilder)
+        public void RegisterRoutes(IEndpointRouteBuilder endpointRouteBuilder)
         {
-            routeBuilder.MapLocalizedRoute("CancelPendingOrderRequest", "cancellationrequest/{orderId:min(0)}",
+            endpointRouteBuilder.MapControllerRoute("CancelPendingOrderRequest", "cancellationrequest/{orderId:min(0)}",
                 new { controller = "CancelPendingOrderRequests", action = "CancellationRequest" });
         }
     }

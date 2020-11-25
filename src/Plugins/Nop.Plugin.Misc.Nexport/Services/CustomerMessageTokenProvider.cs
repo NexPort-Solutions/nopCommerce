@@ -8,6 +8,7 @@ using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Tax;
+using Nop.Services.Blogs;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
@@ -17,9 +18,11 @@ using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Media;
 using Nop.Services.Messages;
+using Nop.Services.News;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Seo;
+using Nop.Services.Shipping;
 using Nop.Services.Stores;
 using Nop.Services.Vendors;
 
@@ -32,19 +35,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
             CurrencySettings currencySettings,
             IActionContextAccessor actionContextAccessor,
             IAddressAttributeFormatter addressAttributeFormatter,
+            IAddressService addressService,
+            IBlogService blogService,
+            ICountryService countryService,
             ICurrencyService currencyService,
             ICustomerAttributeFormatter customerAttributeFormatter,
             ICustomerService customerService,
             IDateTimeHelper dateTimeHelper,
-            IDownloadService downloadService,
             IEventPublisher eventPublisher,
             IGenericAttributeService genericAttributeService,
+            IGiftCardService giftCardService,
             ILanguageService languageService,
             ILocalizationService localizationService,
+            INewsService newsService,
             IOrderService orderService,
             IPaymentPluginManager paymentPluginManager,
             IPaymentService paymentService,
             IPriceFormatter priceFormatter,
+            IProductService productService,
+            IRewardPointService rewardPointService,
+            IShipmentService shipmentService,
+            IStateProvinceService stateProvinceService,
             IStoreContext storeContext,
             IStoreService storeService,
             IUrlHelperFactory urlHelperFactory,
@@ -59,19 +70,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 currencySettings,
                 actionContextAccessor,
                 addressAttributeFormatter,
+                addressService,
+                blogService,
+                countryService,
                 currencyService,
                 customerAttributeFormatter,
                 customerService,
                 dateTimeHelper,
-                downloadService,
                 eventPublisher,
                 genericAttributeService,
+                giftCardService,
                 languageService,
                 localizationService,
+                newsService,
                 orderService,
                 paymentPluginManager,
                 paymentService,
                 priceFormatter,
+                productService,
+                rewardPointService,
+                shipmentService,
+                stateProvinceService,
                 storeContext,
                 storeService,
                 urlHelperFactory,

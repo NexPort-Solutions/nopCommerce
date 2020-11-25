@@ -1,8 +1,11 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 
 namespace Nop.Plugin.Misc.Nexport.Migrations
 {
+    [Tags(NexportDefaults.PluginMigrationTag)]
     [Migration(18, "Add AllowExtension and RenewalWindow to NexportProductMapping table")]
+    [SkipMigration]
     public class M018_AddAllowExtensionAndRenewalWindowToNexportProductMapping : Migration
     {
         private const string TABLE_NAME = "NexportProductMapping";

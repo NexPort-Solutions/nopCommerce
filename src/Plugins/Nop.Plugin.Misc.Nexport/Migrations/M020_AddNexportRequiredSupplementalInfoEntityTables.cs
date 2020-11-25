@@ -1,8 +1,11 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 
 namespace Nop.Plugin.Misc.Nexport.Migrations
 {
+    [Tags(NexportDefaults.PluginMigrationTag)]
     [Migration(20, "Add processing required supplemental info answer entity tables")]
+    [SkipMigration]
     public class M020_AddNexportRequiredSupplementalInfoEntityTables : Migration
     {
         private const string PROCESSING_REQUIRED_ANSWER_TABLE_NAME = "NexportSupplementalInfoAnswerProcessingQueue";

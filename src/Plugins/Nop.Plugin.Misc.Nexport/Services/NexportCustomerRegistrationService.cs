@@ -1,6 +1,4 @@
 ﻿using System;
-
-using NexportApi.Client;
 using NexportApi.Model;
 
 using Nop.Core;
@@ -173,7 +171,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (!customer.Active)
                 return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.NotActive };
             //only registered can login
-            if (!customer.IsRegistered())
+            if (!_customerService.IsRegistered(customer))
                 return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.NotRegistered };
             //check whether a customer is locked out
             if (customer.CannotLoginUntilDateUtc.HasValue && customer.CannotLoginUntilDateUtc.Value > DateTime.UtcNow)

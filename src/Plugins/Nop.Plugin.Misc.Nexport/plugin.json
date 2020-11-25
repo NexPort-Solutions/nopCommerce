@@ -3,7 +3,7 @@
   "FriendlyName": "Nexport",
   "SystemName": "Misc.Nexport",
   "Version": "1.0",
-  "SupportedVersions": [ "4.20" ],
+  "SupportedVersions": [ "4.30" ],
   "Author": "Nexport Solutions",
   "DisplayOrder": 1001,
   "FileName": "Nop.Plugin.Misc.Nexport.dll",

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NexportApi.Client;
-using Nop.Core.Data;
+using Nop.Data;
 using Nop.Services.Cms;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
@@ -54,10 +54,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                     NexportDefaults.NexportGroupMembershipRemovalTaskBatchSizeSettingKey,
                     NexportDefaults.NexportGroupMembershipRemovalTaskBatchSize);
 
-                var answers = (from q
-                        in _nexportGroupMembershipRemovalQueueRepository.Table
-                               orderby q.UtcDateCreated
-                               select q.Id).Take(_batchSize).ToList();
+                var answers = (_nexportGroupMembershipRemovalQueueRepository.Table.OrderBy(q => q.UtcDateCreated)
+                    .Select(q => q.Id)).Take(_batchSize).ToList();
 
                 ProcessNexportGroupMembershipRemoval(answers);
             }

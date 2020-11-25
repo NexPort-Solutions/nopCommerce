@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Nop.Core;
-using Nop.Core.Data;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Logging;
@@ -13,14 +13,13 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure.Logging
     public class DefaultLogger : Nop.Services.Logging.DefaultLogger
     {
         private readonly CommonSettings _commonSettings;
-        private readonly IDbContext _dbContext;
         private readonly IRepository<Log> _logRepository;
         private readonly IWebHelper _webHelper;
 
-        public DefaultLogger(CommonSettings commonSettings, IDbContext dbContext, IRepository<Log> logRepository, IWebHelper webHelper) : base(commonSettings, dbContext, logRepository, webHelper)
+        public DefaultLogger(CommonSettings commonSettings, IRepository<Log> logRepository, IWebHelper webHelper) :
+            base(commonSettings, logRepository, webHelper)
         {
             _commonSettings = commonSettings;
-            _dbContext = dbContext;
             _logRepository = logRepository;
             _webHelper = webHelper;
         }
@@ -40,7 +39,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure.Logging
                 ShortMessage = shortMessage,
                 FullMessage = fullMessage,
                 IpAddress = _webHelper.GetCurrentIpAddress(),
-                Customer = customer,
+                CustomerId = customer?.Id,
                 PageUrl = _webHelper.GetThisPageUrl(true),
                 ReferrerUrl = _webHelper.GetUrlReferrer(),
                 CreatedOnUtc = DateTime.UtcNow
@@ -56,7 +55,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure.Logging
             switch (level)
             {
                 case LogLevel.Debug:
-                    var hostingEnvironment = EngineContext.Current.Resolve<IHostingEnvironment>();
+                    var hostingEnvironment = EngineContext.Current.Resolve<IWebHostEnvironment>();
                     return hostingEnvironment.IsDevelopment();
 
                 case LogLevel.Information:

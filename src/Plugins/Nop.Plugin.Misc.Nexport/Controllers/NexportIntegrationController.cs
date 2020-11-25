@@ -8,7 +8,6 @@ using Newtonsoft.Json;
 using NexportApi.Client;
 using NexportApi.Model;
 using Nop.Core;
-using Nop.Core.Data;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
@@ -16,7 +15,7 @@ using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Vendors;
 using Nop.Core.Events;
-using Nop.Data.Extensions;
+using Nop.Data;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
@@ -41,7 +40,6 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
-using Nop.Web.Framework.Security;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
@@ -265,7 +263,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [ExportModelState]
         public IActionResult Configure(ConfigurationModel model)
         {
@@ -300,7 +298,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost, ActionName("Configure")]
         [FormValueRequired("setserverurl")]
         [ExportModelState]
@@ -335,7 +333,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost, ActionName("Configure")]
         [FormValueRequired("setrootorganizationid")]
         [ExportModelState]
@@ -367,7 +365,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost, ActionName("Configure")]
         [FormValueRequired("setmerchantaccountid")]
         [ExportModelState]
@@ -398,7 +396,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [Route("Admin/Store/Edit/{id}")]
         [HttpPost, ActionName("Edit")]
         [FormValueRequired("setsubscriptionorgid")]
@@ -407,7 +405,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageStores))
                 return AccessDeniedView();
 
-            var store = _storeService.GetStoreById(model.Id, false);
+            var store = _storeService.GetStoreById(model.Id);
             if (store == null)
                 return RedirectToAction("List", "Store");
 
@@ -420,7 +418,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [Route("Admin/Store/Edit/{id}")]
         [HttpPost, ActionName("Edit")]
         [FormValueRequired("savenexportstoreconfig")]
@@ -429,7 +427,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageStores))
                 return AccessDeniedView();
 
-            var store = _storeService.GetStoreById(model.Id, false);
+            var store = _storeService.GetStoreById(model.Id);
             if (store == null)
                 return RedirectToAction("List", "Store");
 
@@ -454,7 +452,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         #region User Configuration Actions
 
         [Area(AreaNames.Admin)]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [Route("Admin/Customer/Edit/{id}")]
         [HttpPost, ActionName("Edit")]
         [FormValueRequired("setnexportuserid")]
@@ -503,7 +501,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [HttpPost]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult SetNexportUser(int customerId, Guid nexportUserId)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
@@ -590,7 +588,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult CatalogList(NexportCatalogSearchModel searchModel)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
@@ -614,37 +612,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(model);
         }
 
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        public IActionResult ListCatalogs()
-        {
-            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-                return AccessDeniedView();
-
-            return View("~/Plugins/Misc.Nexport/Views/Catalog/ManageCatalogs.cshtml");
-        }
-
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        public IActionResult CatalogList(Guid? orgId)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
-                return AccessDeniedDataTablesJson();
-
-            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-                return AccessDeniedDataTablesJson();
-
-            var model = new NexportCatalogSearchModel { OrgId = orgId };
-
-            model.SetGridPageSize();
-
-            return View("~/Plugins/Misc.Nexport/Views/Catalog/CatalogList.cshtml", model);
-        }
-
         [HttpPost]
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult GetCatalogs(NexportCatalogSearchModel searchModel)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
@@ -661,7 +632,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult GetSyllabuses(NexportSyllabusListSearchModel searchModel)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
@@ -677,7 +648,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult ProductMappingDetailsPopup(int mappingId)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
@@ -693,7 +664,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult GetProductMappings(NexportProductMappingSearchModel searchModel, Guid? nexportProductId, NexportProductTypeEnum? nexportProductType, int? nopProductId)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
@@ -721,7 +692,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         [ParameterBasedOnFormName("save-continue", "continueEditing")]
         [FormValueRequired("save", "save-continue")]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult EditMapping(NexportProductMappingModel model, bool continueEditing)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
@@ -814,7 +785,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult DeleteMapping(int id)
         {
@@ -838,7 +809,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult GetProductGroupMembershipMappings(int nexportProductMappingId)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
@@ -855,7 +826,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult AddGroupMembershipMapping(int nexportProductMappingId, Guid nexportGroupId, string nexportGroupName, string nexportGroupShortName)
         {
@@ -885,7 +856,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult DeleteGroupMembershipMapping(int id)
         {
@@ -915,7 +886,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [FormValueRequired("save")]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult MapNexportProductPopup(MapNexportProductModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
@@ -966,102 +937,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(result);
         }
 
-        [Obsolete("Will be removed shortly")]
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        public IActionResult MapProductPopup(Guid nexportProductId, NexportProductTypeEnum nexportProductType)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
-                return AccessDeniedView();
-
-            // Prepare model
-            var model = _nexportPluginModelFactory.PrepareNexportProductMappingSearchModel(new NexportProductMappingSearchModel());
-
-            return View("~/Plugins/Misc.Nexport/Views/MapProductWithNexport.cshtml", model);
-        }
-
-        [Obsolete("Will be removed shortly")]
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        [HttpPost]
-        [FormValueRequired("save")]
-        [AdminAntiForgery]
-        public IActionResult MapProductPopup(MapProductToNexportProductModel model)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
-                return AccessDeniedView();
-
-            _nexportService.MapNexportProduct(model);
-
-            ViewBag.RefreshPage = true;
-
-            ViewBag.ClosePage = true;
-
-            return View("~/Plugins/Misc.Nexport/Views/MapProductWithNexport.cshtml", new NexportProductMappingSearchModel());
-        }
-
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        [HttpPost]
-        [AdminAntiForgery]
-        public IActionResult MapProductPopupList(NexportProductMappingSearchModel searchModel)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
-                return AccessDeniedDataTablesJson();
-
-            // Prepare model
-            var model = _nexportPluginModelFactory.PrepareMapProductToNexportProductListModel(searchModel);
-
-            return Json(model);
-        }
-
-        [Obsolete("Will be removed shortly")]
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        public IActionResult ShowProductDetails(Guid nexportProductId, Guid nexportCatalogId, Guid? nexportSyllabusId, NexportProductTypeEnum nexportProductType)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
-                return AccessDeniedView();
-
-            switch (nexportProductType)
-            {
-                case NexportProductTypeEnum.Catalog:
-                    var catalogModel = _nexportService.GetCatalogDetails(nexportProductId);
-
-                    return View("~/Plugins/Misc.Nexport/Views/Catalog/CatalogDetails.cshtml", catalogModel);
-
-                case NexportProductTypeEnum.Section:
-                    if (nexportSyllabusId != null)
-                    {
-                        var sectionModel = _nexportService.GetSectionDetails(nexportSyllabusId.Value);
-
-                        return View("~/Plugins/Misc.Nexport/Views/Syllabus/Section/SectionDetails.cshtml", sectionModel);
-                    }
-
-                    throw new ArgumentNullException(nameof(nexportSyllabusId), "Syllabus Id cannot be null!");
-
-                case NexportProductTypeEnum.TrainingPlan:
-                    if (nexportSyllabusId != null)
-                    {
-                        var trainingPlanModel = _nexportService.GetTrainingPlanDetails(nexportSyllabusId.Value);
-
-                        return View("~/Plugins/Misc.Nexport/Views/Syllabus/TrainingPlan/TrainingPlanDetails.cshtml", trainingPlanModel);
-                    }
-
-                    throw new ArgumentNullException(nameof(nexportSyllabusId), "Syllabus Id cannot be null!");
-
-                default:
-                    goto case NexportProductTypeEnum.Catalog;
-            }
-        }
-
         #endregion
 
         #region Product Management Actions
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [Route("Admin/Product/Edit/{id}")]
         [HttpPost, ActionName("Edit")]
         [FormValueRequired("syncnexportproduct")]
@@ -1091,7 +973,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult CopyProduct(ProductModel model, bool copyProductMapping = false)
         {
@@ -1131,7 +1013,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [Route("/Admin/Category/Edit/{id}")]
         [HttpPost, ActionName("Edit")]
         [FormValueRequired("savenexportcategoryoptions")]
@@ -1165,7 +1047,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult GetNexportOrderInvoiceItems(NexportOrderInvoiceItemSearchModel searchModel)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageOrders))
@@ -1195,7 +1077,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult ModifyNexportEnrollment(int id, int action)
         {
@@ -1266,7 +1148,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult ListSupplementalInfoQuestion(NexportSupplementalInfoQuestionSearchModel searchModel)
         {
@@ -1296,7 +1178,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [ParameterBasedOnFormName("save-continue", "continueEditing")]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult AddSupplementalInfoQuestion(NexportSupplementalInfoQuestionModel model,
             bool continueEditing)
         {
@@ -1339,7 +1221,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         public virtual IActionResult EditSupplementalInfoQuestion(NexportSupplementalInfoQuestionModel model, bool continueEditing)
         {
@@ -1372,7 +1254,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public virtual IActionResult DeleteSupplementalInfoQuestion(int id)
         {
@@ -1392,7 +1274,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public virtual IActionResult DeleteSelectedSupplementalInfoQuestion(ICollection<int> selectedIds)
         {
@@ -1409,7 +1291,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public virtual IActionResult SupplementalInfoOptionList(NexportSupplementalInfoOptionSearchModel searchModel)
         {
@@ -1426,7 +1308,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public virtual IActionResult SupplementalInfoOptionCreatePopup(int questionId)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
@@ -1444,7 +1326,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public virtual IActionResult SupplementalInfoOptionCreatePopup(NexportSupplementalInfoOptionModel model)
         {
@@ -1473,7 +1355,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public virtual IActionResult SupplementalInfoOptionEditPopup(int optionId)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
@@ -1493,7 +1375,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public virtual IActionResult SupplementalInfoOptionEditPopup(NexportSupplementalInfoOptionModel model)
         {
@@ -1524,7 +1406,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public virtual IActionResult DeleteSupplementalInfoOption(int id)
         {
@@ -1541,7 +1423,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area("Admin")]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult AddSupplementalInfoOptionGroupAssociation(int optionId, Guid nexportGroupId, string nexportGroupName, string nexportGroupShortName)
         {
@@ -1572,7 +1454,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area("Admin")]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult DeleteSupplementalInfoOptionGroupAssociation(int id)
         {
@@ -1589,7 +1471,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult ChangeSupplementalInfoOptionGroupAssociationStatus(int id)
         {
@@ -1610,7 +1492,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         [Area("Admin")]
         [HttpPost]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult GetSupplementalInfoOptionGroupAssociations(int optionId)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
@@ -1627,7 +1509,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         public IActionResult AnswerSupplementalInfoQuestion(string returnUrl)
         {
-            if (!_workContext.CurrentCustomer.IsRegistered())
+            if (!_customerService.IsRegistered(_workContext.CurrentCustomer))
                 return Challenge();
 
             var requirements = _nexportService.GetNexportRequiredSupplementalInfos(_workContext.CurrentCustomer.Id,
@@ -1646,10 +1528,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [HttpPost]
-        [PublicAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult SaveSupplementalInfoAnswer(SaveSupplementalInfoAnswers request)
         {
-            if (!_workContext.CurrentCustomer.IsRegistered())
+            if (!_customerService.IsRegistered(_workContext.CurrentCustomer))
                 return Challenge();
 
             foreach (var answer in request.Answers)
@@ -1693,7 +1575,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult GetCustomerSupplementalInfoQuestions(NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel searchModel)
         {
@@ -1707,7 +1589,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult GetCustomerSupplementalInfoAnswers(NexportSupplementalInfoAnswerListSearchModel searchModel)
         {
@@ -1742,7 +1624,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult EditCustomerSupplementalInfoAnsweredQuestion(int customerId, int storeId, EditSupplementInfoAnswerRequestModel editModel)
         {
@@ -1880,7 +1762,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult DeleteCustomerSupplementalInfoAnswer(int answerId)
         {
@@ -1946,7 +1828,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult ListRegistrationFieldCategory(NexportRegistrationFieldCategorySearchModel searchModel)
         {
@@ -1973,7 +1855,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         public IActionResult CreateRegistrationFieldCategory(NexportRegistrationFieldCategoryModel model, bool continueEditing = false)
         {
@@ -2017,7 +1899,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         public virtual IActionResult EditRegistrationFieldCategory(NexportRegistrationFieldCategoryModel model, bool continueEditing)
         {
@@ -2081,7 +1963,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult ListRegistrationField(NexportRegistrationFieldSearchModel searchModel)
         {
@@ -2107,7 +1989,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         public IActionResult CreateRegistrationField(NexportRegistrationFieldModel model, bool continueEditing = false)
         {
@@ -2163,7 +2045,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         public IActionResult EditRegistrationField(NexportRegistrationFieldModel model, bool continueEditing)
         {
@@ -2248,7 +2130,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var registrationField = _nexportService.GetNexportRegistrationFieldById(id);
             var registrationFieldOptionSettings = _genericAttributeService.GetAttributesForEntity(registrationField.Id,
-                registrationField.GetUnproxiedEntityType().Name);
+                registrationField.GetType().Name);
 
             _nexportService.DeleteNexportRegistrationField(registrationField);
 
@@ -2276,7 +2158,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult ListRegistrationFieldOptions(NexportRegistrationFieldOptionSearchModel searchModel)
         {
@@ -2310,7 +2192,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         public IActionResult CreateRegistrationFieldOption(NexportRegistrationFieldOptionModel model, bool continueEditing = false)
         {
@@ -2361,7 +2243,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         public IActionResult EditRegistrationFieldOption(NexportRegistrationFieldOptionModel model, bool continueEditing)
         {
@@ -2462,7 +2344,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         {
             var order = eventMessage.Order;
 
-            foreach (var item in order.OrderItems)
+            var orderItems = _orderService.GetOrderItems(order.Id);
+
+            foreach (var item in orderItems)
             {
                 var mapping = _nexportService.GetProductMappingByNopProductId(item.ProductId, order.StoreId) ??
                     _nexportService.GetProductMappingByNopProductId(item.ProductId);
@@ -2567,16 +2451,16 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         #region Customer Actions
 
-        [HttpsRequirement(SslRequirement.Yes)]
+        [HttpsRequirement]
         public IActionResult ViewNexportOrderRedemption(NexportOrderInvoiceItem model)
         {
             return View("~/Plugins/Misc.Nexport/Views/ViewOrder.cshtml", model);
         }
 
-        [HttpsRequirement(SslRequirement.Yes)]
+        [HttpsRequirement]
         public IActionResult ViewNexportTraining()
         {
-            if (!_workContext.CurrentCustomer.IsRegistered())
+            if (!_customerService.IsRegistered(_workContext.CurrentCustomer))
                 return Challenge();
 
             try
@@ -2601,10 +2485,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return new EmptyResult();
         }
 
-        [HttpsRequirement(SslRequirement.Yes)]
+        [HttpsRequirement]
         public IActionResult ViewSupplementalInfoAnswers()
         {
-            if (!_workContext.CurrentCustomer.IsRegistered())
+            if (!_customerService.IsRegistered(_workContext.CurrentCustomer))
                 return Challenge();
 
             try
@@ -2623,10 +2507,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return new EmptyResult();
         }
 
-        [HttpsRequirement(SslRequirement.Yes)]
+        [HttpsRequirement]
         public IActionResult EditSupplementalInfoAnswers(int questionId)
         {
-            if (!_workContext.CurrentCustomer.IsRegistered())
+            if (!_customerService.IsRegistered(_workContext.CurrentCustomer))
                 return Challenge();
 
             var question = _nexportService.GetNexportSupplementalInfoQuestionById(questionId);
@@ -2641,10 +2525,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [HttpPost]
-        [PublicAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult EditSupplementalInfoAnswers(EditSupplementInfoAnswerRequestModel editModel)
         {
-            if (!_workContext.CurrentCustomer.IsRegistered())
+            if (!_customerService.IsRegistered(_workContext.CurrentCustomer))
                 return Challenge();
 
             if (editModel.OptionIds == null || editModel.OptionIds.Count == 0)
@@ -2766,10 +2650,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         #region Redeeming Product Actions
 
         [HttpPost]
-        [PublicAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult RedeemNexportOrderInvoiceItem(int orderItemInvoiceId, Guid? redeemingUserId)
         {
-            if (!_workContext.CurrentCustomer.IsRegistered())
+            if (!_customerService.IsRegistered(_workContext.CurrentCustomer))
                 return Challenge();
 
             var customer = _workContext.CurrentCustomer;
@@ -2823,7 +2707,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         public IActionResult GoToNexport(int orderInvoiceItemId)
         {
-            if (!_workContext.CurrentCustomer.IsRegistered())
+            if (!_customerService.IsRegistered(_workContext.CurrentCustomer))
                 return Challenge();
 
             if (orderInvoiceItemId < 1)
@@ -2857,7 +2741,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         public IActionResult GoToNexportClassroom(Guid enrollmentId)
         {
-            if (!_workContext.CurrentCustomer.IsRegistered())
+            if (!_customerService.IsRegistered(_workContext.CurrentCustomer))
                 return Challenge();
 
             if (enrollmentId == Guid.Empty)
@@ -2883,7 +2767,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         public IActionResult GoToNexportOrg(Guid orgId, Guid userId)
         {
-            if (!_workContext.CurrentCustomer.IsRegistered())
+            if (!_customerService.IsRegistered(_workContext.CurrentCustomer))
                 return Challenge();
 
             if (orgId == Guid.Empty)

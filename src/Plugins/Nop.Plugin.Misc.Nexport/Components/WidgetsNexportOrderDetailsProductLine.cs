@@ -45,8 +45,12 @@ namespace Nop.Plugin.Misc.Nexport.Components
             var model = (OrderDetailsModel.OrderItemModel)additionalData;
 
             var orderItem = _orderService.GetOrderItemByGuid(model.OrderItemGuid);
+            if (orderItem == null)
+                return Content("");
 
-            if (orderItem.Order.OrderStatus != OrderStatus.Complete)
+            var order = _orderService.GetOrderById(orderItem.OrderId);
+
+            if (order == null || order.OrderStatus != OrderStatus.Complete)
                 return Content("");
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Order/NexportOrderDetailsProductLine.cshtml", model);

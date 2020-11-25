@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NexportApi.Client;
-using Nop.Core.Data;
+using Nop.Data;
 using Nop.Services.Cms;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
@@ -58,9 +58,10 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 _batchSize = _settingService.GetSettingByKey(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSizeSettingKey,
                     NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSize);
 
-                var answers = (from q in _nexportSupplementalInfoAnswerProcessingQueueRepository.Table
-                               orderby q.UtcDateCreated
-                               select q.Id).Take(_batchSize).ToList();
+                var answers = (_nexportSupplementalInfoAnswerProcessingQueueRepository.Table
+                    .OrderBy(q => q.UtcDateCreated)
+                    .Select(q => q.Id))
+                    .Take(_batchSize).ToList();
 
                 ProcessNexportSupplementalInfoAnswers(answers);
             }

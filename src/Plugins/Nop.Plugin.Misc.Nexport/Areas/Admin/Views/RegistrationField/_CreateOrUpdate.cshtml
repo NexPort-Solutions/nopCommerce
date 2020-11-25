@@ -12,7 +12,10 @@
 }
 
 <div asp-validation-summary="All"></div>
-<input asp-for="Id" type="hidden" />
+@if (Model.Id > 0)
+{
+    <input asp-for="Id" type="hidden" />
+}
 
 <div class="content">
     <div class="form-horizontal">

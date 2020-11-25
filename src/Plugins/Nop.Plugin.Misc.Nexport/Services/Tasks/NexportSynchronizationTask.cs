@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Nop.Core.Data;
+using Nop.Data;
 using Nop.Services.Cms;
 using Nop.Services.Logging;
 using Nop.Services.Tasks;
@@ -38,9 +38,10 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
             try
             {
-                var mappingIds = (from m in _nexportProductMappingRepository.Table
-                    orderby m.UtcLastSynchronizationDate
-                    select m.Id).Take(_batchSize).ToList();
+                var mappingIds = (_nexportProductMappingRepository.Table
+                    .OrderBy(m => m.UtcLastSynchronizationDate)
+                    .Select(m => m.Id))
+                    .Take(_batchSize).ToList();
 
                 SynchronizeProductMappings(mappingIds);
             }

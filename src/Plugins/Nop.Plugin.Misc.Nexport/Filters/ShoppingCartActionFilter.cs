@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Primitives;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
-using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
@@ -19,11 +18,13 @@ using Nop.Web.Models.ShoppingCart;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Customers;
 
 namespace Nop.Plugin.Misc.Nexport.Filters
 {
     public class ShoppingCartActionFilter : ActionFilterAttribute
     {
+        private readonly ICustomerService _customerService;
         private readonly IProductService _productService;
         private readonly IShoppingCartService _shoppingCartService;
         private readonly INotificationService _notificationService;
@@ -34,6 +35,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
         private readonly IStoreContext _storeContext;
 
         public ShoppingCartActionFilter(
+            ICustomerService customerService,
             IProductService productService,
             IShoppingCartService shoppingCartService,
             INotificationService notificationService,
@@ -43,6 +45,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             IWorkContext workContext,
             IStoreContext storeContext)
         {
+            _customerService = customerService;
             _productService = productService;
             _shoppingCartService = shoppingCartService;
             _notificationService = notificationService;
@@ -61,9 +64,9 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             if (actionDescriptor.ControllerTypeInfo == typeof(ShoppingCartController) &&
                 actionDescriptor.ActionName == nameof(ShoppingCartController.Cart))
             {
-                if (_workContext.CurrentCustomer.IsRegistered())
+                if (_customerService.IsRegistered(_workContext.CurrentCustomer))
                 {
-                    if (context.Result is ViewResult result && result.Model is ShoppingCartModel shoppingCartModel)
+                    if (context.Result is ViewResult { Model: ShoppingCartModel shoppingCartModel })
                     {
                         foreach (var item in shoppingCartModel.Items)
                         {
@@ -208,7 +211,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                             if (product != null)
                             {
                                 var customer = _workContext.CurrentCustomer;
-                                if (customer.IsRegistered())
+                                if (_customerService.IsRegistered(customer))
                                 {
                                     var canPurchaseProduct =
                                         _nexportService.CanPurchaseNexportProduct(product, _workContext.CurrentCustomer);

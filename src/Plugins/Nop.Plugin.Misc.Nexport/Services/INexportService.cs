@@ -90,8 +90,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
         IPagedList<NexportOrderInvoiceItem> GetNexportOrderInvoiceItems(int orderId, bool excludeNonApproval = false,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
-        void MapNexportProduct(MapProductToNexportProductModel model);
-
         void MapNexportProduct(MapNexportProductModel model);
 
         void InsertUserMapping(NexportUserMapping nexportUserMapping);

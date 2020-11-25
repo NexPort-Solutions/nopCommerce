@@ -16,13 +16,15 @@ using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
+using Nop.Services.Caching;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
 {
     public class PendingOrderCancellationRequestModelFactory : IPendingOrderCancellationRequestModelFactory
     {
         private readonly ILocalizedModelFactory _localizedModelFactory;
-        private readonly ICacheManager _cacheManager;
+        private readonly IStaticCacheManager _cacheManager;
+        private readonly ICacheKeyService _cacheKeyService;
         private readonly ICustomerService _customerService;
         private readonly ILocalizationService _localizationService;
         private readonly IDateTimeHelper _dateTimeHelper;
@@ -31,7 +33,8 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
 
         public PendingOrderCancellationRequestModelFactory(
             ILocalizedModelFactory localizedModelFactory,
-            ICacheManager cacheManager,
+            IStaticCacheManager cacheManager,
+            ICacheKeyService cacheKeyService,
             ICustomerService customerService,
             ILocalizationService localizationService,
             IDateTimeHelper dateTimeHelper,
@@ -40,6 +43,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
         {
             _localizedModelFactory = localizedModelFactory;
             _cacheManager = cacheManager;
+            _cacheKeyService = cacheKeyService;
             _customerService = customerService;
             _localizationService = localizationService;
             _dateTimeHelper = dateTimeHelper;
@@ -106,7 +110,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
 
                     var customer = _customerService.GetCustomerById(cancellationRequest.CustomerId);
 
-                    requestModel.CustomerInfo = customer != null && customer.IsRegistered()
+                    requestModel.CustomerInfo = customer != null && _customerService.IsRegistered(customer)
                         ? customer.Email : _localizationService.GetResource("Admin.Customers.Guest");
 
                     return requestModel;
@@ -124,9 +128,11 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             if (model == null)
                 throw new ArgumentNullException(nameof(model));
 
+            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(PluginDefaults.CancellationRequestReasonsCacheKey, _workContext.WorkingLanguage.Id);
+
             model.OrderId = order.Id;
 
-            model.AvailableCancelReasons = _cacheManager.Get(string.Format(PluginDefaults.CancellationRequestReasonsModelKey, _workContext.WorkingLanguage.Id),
+            model.AvailableCancelReasons = _cacheManager.Get(cacheKey,
                 () =>
                 {
                     return _pendingOrderCancellationRequestService
@@ -149,7 +155,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
                 return model;
 
             //fill in model values from the entity
-            model = model ?? new PendingOrderCancellationRequestModel
+            model ??= new PendingOrderCancellationRequestModel
             {
                 Id = cancellationRequest.Id,
                 CustomerId = cancellationRequest.CustomerId,
@@ -159,7 +165,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
 
             var customer = _customerService.GetCustomerById(cancellationRequest.CustomerId);
 
-            model.CustomerInfo = customer.IsRegistered()
+            model.CustomerInfo = _customerService.IsRegistered(customer)
                 ? customer.Email
                 : _localizationService.GetResource("Admin.Customers.Guest");
             model.OrderId = cancellationRequest.OrderId;

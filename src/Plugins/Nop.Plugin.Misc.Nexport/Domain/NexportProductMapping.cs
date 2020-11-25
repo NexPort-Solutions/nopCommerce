@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using NexportApi.Model;
 using Nop.Core;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;

@@ -1,10 +1,12 @@
 ﻿@using Nop.Services.Helpers
+
 @inject IDateTimeHelper dateTimeHelper
 @inject IJsonHelper Json
+
 @model Nop.Plugin.Misc.Nexport.Models.ConfigurationModel
 
 @{
-    Layout = "_ConfigurePlugin";
+    Layout = "~/Areas/Admin/Views/Shared/_ConfigurePlugin.cshtml";
 
     Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
 }

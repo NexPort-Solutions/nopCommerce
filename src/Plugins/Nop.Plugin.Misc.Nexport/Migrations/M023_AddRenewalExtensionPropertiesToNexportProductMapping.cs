@@ -1,10 +1,12 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 using Nop.Plugin.Misc.Nexport.Domain;
-using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 
 namespace Nop.Plugin.Misc.Nexport.Migrations
 {
+    [Tags(NexportDefaults.PluginMigrationTag)]
     [Migration(23, "Add additional renewal extension properties to Nexport product mapping table")]
+    [SkipMigration]
     public class M023_AddRenewalExtensionPropertiesToNexportProductMapping : Migration
     {
         public override void Up()

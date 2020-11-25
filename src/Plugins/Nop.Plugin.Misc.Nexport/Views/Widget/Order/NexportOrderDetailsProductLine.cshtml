@@ -1,52 +1,55 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Services
 @using Nop.Services.Orders
-@using Nop.Core
 @using Nop.Core.Domain.Orders
+
 @inject IOrderService orderService
 @inject NexportService nexportService
 @inject IStoreContext storeContext
-@inject IWorkContext workContext
 
 @model Nop.Web.Models.Order.OrderDetailsModel.OrderItemModel
 
 @if (Model != null && Model.Id > 0)
 {
     var orderItem = orderService.GetOrderItemById(Model.Id);
-    if (orderItem.Order.OrderStatus == OrderStatus.Complete)
+    if (orderItem != null)
     {
-        var nexportOrderInvoice = nexportService.FindNexportOrderInvoiceItem(orderItem.OrderId, orderItem.Id);
-
-        if (nexportOrderInvoice != null)
+        var order = orderService.GetOrderById(orderItem.OrderId);
+        if (order?.OrderStatus == OrderStatus.Complete)
         {
-            var popupTitle = "";
-            if (nexportOrderInvoice.UtcDateRedemption != null)
+            var nexportOrderInvoice = nexportService.FindNexportOrderInvoiceItem(orderItem.OrderId, orderItem.Id);
+
+            if (nexportOrderInvoice != null)
             {
-                <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">(@T("Plugins.Misc.Nexport.Order.ViewRedemption"))</a>
-                popupTitle = T("Plugins.Misc.Nexport.Order.ViewRedemption").Text;
-            }
-            else
-            {
-                <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">(@T("Plugins.Misc.Nexport.Order.Redeem"))</a>
-                popupTitle = T("Plugins.Misc.Nexport.Order.Redeem").Text;
-            }
+                var popupTitle = "";
+                if (nexportOrderInvoice.UtcDateRedemption != null)
+                {
+                    <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">(@T("Plugins.Misc.Nexport.Order.ViewRedemption"))</a>
+                    popupTitle = T("Plugins.Misc.Nexport.Order.ViewRedemption").Text;
+                }
+                else
+                {
+                    <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">(@T("Plugins.Misc.Nexport.Order.Redeem"))</a>
+                    popupTitle = T("Plugins.Misc.Nexport.Order.Redeem").Text;
+                }
 
-            <div data-id="redemption-view-popup" data-nexport-order-invoice-id="@nexportOrderInvoice.Id" title="@popupTitle" style="display: none;">
-                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/_RedeemOrViewOrder.cshtml", nexportOrderInvoice)
-            </div>
+                <div data-id="redemption-view-popup" data-nexport-order-invoice-id="@nexportOrderInvoice.Id" title="@popupTitle" style="display: none;">
+                    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/_RedeemOrViewOrder.cshtml", nexportOrderInvoice)
+                </div>
 
-            <script asp-location="Footer">
-                $(document).ready(function () {
-                    $("[data-id=view-redemption-link][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").on("click", function () {
-                        var targetWidth = 550;
-                        var maxHeight = $(window).height() - 20;
+                <script asp-location="Footer">
+                    $(document).ready(function () {
+                        $("[data-id=view-redemption-link][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").on("click", function () {
+                            var targetWidth = 550;
+                            var maxHeight = $(window).height() - 20;
 
-                        $("[data-id=redemption-view-popup][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").dialog({
-                            width: targetWidth,
-                            maxHeight: maxHeight
+                            $("[data-id=redemption-view-popup][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").dialog({
+                                width: targetWidth,
+                                maxHeight: maxHeight
+                            });
                         });
                     });
-                });
-            </script>
+                </script>
+            }
         }
     }
 }

@@ -1,9 +1,12 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 using Nop.Plugin.Misc.Nexport.Domain;
 
 namespace Nop.Plugin.Misc.Nexport.Migrations
 {
+    [Tags(NexportDefaults.PluginMigrationTag)]
     [Migration(19, "Add NexportSupplementalInfo related entity tables")]
+    [SkipMigration]
     public class M019_AddNexportSupplementalInfoEntityTables : Migration
     {
         public override void Up()

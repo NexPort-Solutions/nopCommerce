@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <TieredCompilation>true</TieredCompilation>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>8.0</LangVersion>
     <ApplicationIcon />
     <Authors>Nexport Solutions</Authors>
     <Company>Nexport Solutions</Company>
@@ -24,8 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentMigrator" Version="3.2.8" />
-    <PackageReference Include="FluentMigrator.Runner" Version="3.2.8" />
     <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
   </ItemGroup>
 

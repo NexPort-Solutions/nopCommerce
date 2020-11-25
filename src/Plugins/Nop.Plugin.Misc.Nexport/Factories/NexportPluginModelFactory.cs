@@ -31,7 +31,6 @@ using Nop.Web.Framework.Models.Extensions;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
-using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Order;
@@ -224,50 +223,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 questionItem.Selected = int.TryParse(questionItem.Value, out var questionId) &&
                                         model.SupplementalInfoQuestionIds.Contains(questionId);
             }
-
-            return model;
-        }
-
-        public virtual NexportProductMappingSearchModel PrepareNexportProductMappingSearchModel(NexportProductMappingSearchModel searchModel)
-        {
-            if (searchModel == null)
-                throw new ArgumentNullException(nameof(searchModel));
-
-            //prepare available stores
-            _baseAdminModelFactory.PrepareStores(searchModel.AvailableStores);
-
-            //prepare page parameters
-            searchModel.SetGridPageSize();
-
-            return searchModel;
-        }
-
-        public virtual MapProductToNexportProductListModel PrepareMapProductToNexportProductListModel(NexportProductMappingSearchModel searchModel)
-        {
-            if (searchModel == null)
-                throw new ArgumentNullException(nameof(searchModel));
-
-            // Get all all products in the store
-            var products = _productService.SearchProducts(showHidden: true,
-                //categoryIds: new List<int> { searchModel.SearchCategoryId },
-                //manufacturerId: searchModel.SearchManufacturerId,
-                storeId: searchModel.SearchStoreId,
-                //vendorId: searchModel.SearchVendorId,
-                //productType: searchModel.SearchProductTypeId > 0 ? (ProductType?)searchModel.SearchProductTypeId : null,
-                keywords: searchModel.SearchProductName,
-                pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
-
-            // Prepare grid model
-            var model = new MapProductToNexportProductListModel().PrepareToGrid(searchModel, products, () =>
-            {
-                return products.Select(product =>
-                {
-                    var productModel = product.ToModel<MappingProductModel>();
-                    productModel.SeName = _urlRecordService.GetSeName(product, 0, true, false);
-
-                    return productModel;
-                });
-            });
 
             return model;
         }

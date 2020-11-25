@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <TieredCompilation>true</TieredCompilation>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>8.0</LangVersion>
     <ApplicationIcon />
     <Authors>Nexport Solutions</Authors>
     <Company>Nexport Solutions</Company>
@@ -27,9 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="15.0.8" />
-    <PackageReference Include="FluentMigrator" Version="3.2.9" />
-    <PackageReference Include="FluentMigrator.Runner" Version="3.2.9" />
+    <PackageReference Include="CsvHelper" Version="16.0.0" />
     <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
     <PackageReference Include="NexportApi" Version="1.0.25" />
     <PackageReference Include="RestSharp" Version="106.11.7" />
@@ -76,7 +74,6 @@
     <None Remove="Views\NexportCustomer\Register.cshtml" />
     <None Remove="Views\MapNexportProduct.cshtml" />
     <None Remove="Views\MapNexportProductList.cshtml" />
-    <None Remove="Views\MapProductWithNexport.cshtml" />
     <None Remove="Views\NexportTrainings.cshtml" />
     <None Remove="Views\Order\CustomerOrders.cshtml" />
     <None Remove="Views\ProductMappingDetails.cshtml" />
@@ -100,7 +97,6 @@
     <None Remove="Views\SupplementalInfo\Question\_CreateOrUpdate.Info.cshtml" />
     <None Remove="Views\SupplementalInfo\Question\_CreateOrUpdate.QuestionOptions.cshtml" />
     <None Remove="Views\SupplementalInfo\_CreateOrUpdate.Question.cshtml" />
-    <None Remove="Views\Syllabus\SyllabusList.cshtml" />
     <None Remove="Views\ViewOrder.cshtml" />
     <None Remove="Views\Widget\Customer\NexportCustomerDetails.cshtml" />
     <None Remove="Views\Widget\Customer\NexportCustomerUserSettings.cshtml" />
@@ -111,7 +107,6 @@
     <None Remove="Views\Widget\Order\WidgetsOrderSummaryCartFooter.cshtml" />
     <None Remove="Views\Widget\Product\WidgetsProductDetailsOverviewTop.cshtml" />
     <None Remove="Views\Widget\WidgetsHeaderLinksBefore.cshtml" />
-    <None Remove="Views\_CreateNopProductWithMapping.cshtml" />
     <None Remove="Views\_RedeemOrViewOrder.cshtml" />
     <None Remove="Views\_ViewImports.cshtml" />
   </ItemGroup>
@@ -301,12 +296,6 @@
     <Content Include="Views\SupplementalInfo\Question\_CreateOrUpdate.QuestionOptions.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\Syllabus\SyllabusList.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Syllabus\TrainingPlan\TrainingPlanDetails.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Views\ViewOrder.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -343,9 +332,6 @@
     <Content Include="Views\Widget\WidgetsHeaderLinksBefore.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\_CreateNopProductWithMapping.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Views\_ViewImports.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -355,22 +341,10 @@
     <Content Include="Views\Catalog\Catalogs.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\Catalog\ManageCatalogs.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Views\Configure.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\MapProductWithNexport.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Views\Shared\Components\NexportOrganizationList\Default.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Syllabus\Section\SectionDetails.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Catalog\CatalogDetails.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\_RedeemOrViewOrder.cshtml">

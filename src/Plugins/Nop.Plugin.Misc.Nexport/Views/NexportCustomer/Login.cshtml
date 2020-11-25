@@ -1,9 +1,9 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.Customer.NexportLoginModel
-@*@model Nop.Web.Models.Customer.LoginModel*@
-@using Nop.Core
-@using Nop.Core.Domain.Customers
+﻿@using Nop.Core.Domain.Customers
 
 @inject IWebHelper webHelper
+
+@model Nop.Plugin.Misc.Nexport.Models.Customer.NexportLoginModel
+
 @{
     Layout = "_ColumnsOne";
 
@@ -15,6 +15,7 @@
     //register URL with return URL (if specified)
     var registerUrl = Url.RouteUrl("Register", new { returnUrl = this.Context.Request.Query["returnUrl"] }, webHelper.CurrentRequestProtocol);
 }
+
 <div class="page login-page">
     <div class="page-title">
         <h1>@T("Account.Login.Welcome")</h1>

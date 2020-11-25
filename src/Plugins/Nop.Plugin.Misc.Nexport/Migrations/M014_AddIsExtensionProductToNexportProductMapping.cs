@@ -1,9 +1,12 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 using Nop.Plugin.Misc.Nexport.Domain;
 
 namespace Nop.Plugin.Misc.Nexport.Migrations
 {
+    [Tags(NexportDefaults.PluginMigrationTag)]
     [Migration(14, "Add IsExtensionProduct to NexportProductMapping table")]
+    [SkipMigration]
     public class M014_AddIsExtensionProductToNexportProductMapping : Migration
     {
         private const string TABLE_NAME = nameof(NexportProductMapping);

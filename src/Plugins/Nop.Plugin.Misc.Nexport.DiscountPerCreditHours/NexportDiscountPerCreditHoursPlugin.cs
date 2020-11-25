@@ -69,7 +69,7 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours
                 .Where(discountRequirement => discountRequirement.DiscountRequirementRuleSystemName == NexportDiscountDefaults.SystemName);
             foreach (var discountRequirement in discountRequirements)
             {
-                _discountService.DeleteDiscountRequirement(discountRequirement);
+                _discountService.DeleteDiscountRequirement(discountRequirement, true);
             }
 
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours");
@@ -116,7 +116,7 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours
             var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
 
             return urlHelper.Action("Configure", "NexportDiscountPerCreditHours",
-                new { discountId = discountId, discountRequirementId = discountRequirementId }, _webHelper.CurrentRequestProtocol);
+                new {discountId, discountRequirementId }, _webHelper.CurrentRequestProtocol);
         }
     }
 }

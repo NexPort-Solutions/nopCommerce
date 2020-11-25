@@ -3,7 +3,7 @@
   "FriendlyName": "Cancel pending order requests",
   "SystemName": "Sale.CancelPendingOrderRequests",
   "Version": "1.00",
-  "SupportedVersions": [ "4.20" ],
+  "SupportedVersions": [ "4.30" ],
   "Author": "Nexport Solutions",
   "DisplayOrder": 1002,
   "FileName": "Nop.Plugin.Sale.CancelPendingOrderRequests.dll",

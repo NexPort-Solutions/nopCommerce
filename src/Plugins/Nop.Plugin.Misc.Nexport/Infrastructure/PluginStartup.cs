@@ -8,11 +8,9 @@ using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Nop.Core.Data;
 using Nop.Core.Infrastructure;
+using Nop.Data;
 using Nop.Services.Configuration;
-using Nop.Web.Framework.Infrastructure.Extensions;
-using Nop.Plugin.Misc.Nexport.Data;
 using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Plugin.Misc.Nexport.Migrations;
 using Nop.Plugin.Misc.Nexport.Services;
@@ -30,12 +28,6 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
         /// <param name="configuration">Configuration of the application</param>
         public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
-            // Add object context
-            services.AddDbContext<NexportPluginObjectContext>(optionsBuilder =>
-            {
-                optionsBuilder.UseSqlServerWithLazyLoading(services);
-            });
-
             services.Configure<RazorViewEngineOptions>(options =>
             {
                 options.ViewLocationExpanders.Add(new ViewLocationExpander());
@@ -52,7 +44,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             });
         }
 
-        private static IServiceProvider CreateFluentMigratorRunnerService()
+        public static IServiceProvider CreateFluentMigratorRunnerService()
         {
             var dataSettings = DataSettingsManager.LoadSettings();
 
@@ -61,7 +53,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 .AddFluentMigratorCore().ConfigureRunner(builder =>
                 {
                     builder.AddSqlServer()
-                        .WithGlobalConnectionString(dataSettings.DataConnectionString)
+                        .WithGlobalConnectionString(dataSettings.ConnectionString)
                         .WithVersionTable(new NexportPluginMigrationVersionTable())
                         .ScanIn(typeof(Nop.Plugin.Misc.Nexport.Migrations.M001_CreatePluginSchemas).Assembly)
                         .For.Migrations()
@@ -70,7 +62,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 .AddLogging(lb => lb.AddEventSourceLogger())
                 .Configure<RunnerOptions>(opt =>
                 {
-                    opt.Tags = new[] { "", "NexportPluginMigration" };
+                    opt.Tags = new[] { "NexportPluginMigration" };
                 })
                 // Build the service provider
                 .BuildServiceProvider(false);
@@ -89,32 +81,30 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
             ApplyMigration(application);
 
-            using (var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            using var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope();
+            var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
+
+            var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            var versionSettingValue = settingService.GetSettingByKey<string>(NexportDefaults.ASSEMBLY_VERSION_KEY);
+            Version installedAssemblyVersion = null;
+
+            if (!string.IsNullOrEmpty(versionSettingValue))
             {
-                var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
+                installedAssemblyVersion =
+                    Version.Parse(versionSettingValue);
+            }
 
-                var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-                var versionSettingValue = settingService.GetSettingByKey<string>(NexportDefaults.ASSEMBLY_VERSION_KEY);
-                Version installedAssemblyVersion = null;
+            if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
+            {
+                settingService.SetSetting(NexportDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
 
-                if (!string.IsNullOrEmpty(versionSettingValue))
-                {
-                    installedAssemblyVersion =
-                        Version.Parse(versionSettingValue);
-                }
+                var nexportPluginService =
+                    serviceScope.ServiceProvider.GetRequiredService<NexportPluginService>();
 
-                if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
-                {
-                    settingService.SetSetting(NexportDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
-
-                    var nexportPluginService =
-                        serviceScope.ServiceProvider.GetRequiredService<NexportPluginService>();
-
-                    nexportPluginService.InstallScheduledTask();
-                    nexportPluginService.AddActivityLogTypes();
-                    nexportPluginService.AddMessageTemplates();
-                    nexportPluginService.AddOrUpdateResources();
-                }
+                nexportPluginService.InstallScheduledTask();
+                nexportPluginService.AddActivityLogTypes();
+                nexportPluginService.AddMessageTemplates();
+                nexportPluginService.AddOrUpdateResources();
             }
         }
 
@@ -129,17 +119,15 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             try
             {
                 var migratorRunnerService = CreateFluentMigratorRunnerService();
-                using (var serviceScope = migratorRunnerService.CreateScope())
+                using var serviceScope = migratorRunnerService.CreateScope();
+                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+                try
                 {
-                    var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-                    try
-                    {
-                        runner.MigrateUp();
-                    }
-                    catch (MissingMigrationsException)
-                    {
-                        // ignored
-                    }
+                    runner.MigrateUp();
+                }
+                catch (MissingMigrationsException)
+                {
+                    // ignored
                 }
             }
             catch (Exception ex)

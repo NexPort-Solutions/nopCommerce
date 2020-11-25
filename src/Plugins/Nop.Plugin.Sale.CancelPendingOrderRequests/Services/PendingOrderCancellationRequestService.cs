@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Nop.Core;
-using Nop.Core.Data;
-using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Html;
+using Nop.Data;
 using Nop.Services.Events;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
@@ -18,6 +17,7 @@ using Nop.Services.Payments;
 using Nop.Services.Stores;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
+using Nop.Services.Common;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
 {
@@ -28,6 +28,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
         private readonly IRepository<PendingOrderCancellationRequest> _pendingOrderCancellationRequestRepository;
         private readonly IRepository<PendingOrderCancellationRequestReason> _pendingOrderCancellationRequestReasonRepository;
 
+        private readonly IAddressService _addressService;
         private readonly IWorkflowMessageService _workflowMessageService;
         private readonly ICustomerService _customerService;
         private readonly IOrderService _orderService;
@@ -47,6 +48,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             EmailAccountSettings emailAccountSettings,
             IRepository<PendingOrderCancellationRequest> pendingOrderCancellationRequestRepository,
             IRepository<PendingOrderCancellationRequestReason> pendingOrderCancellationRequestReasonRepository,
+            IAddressService addressService,
             IWorkflowMessageService workflowMessageService,
             ICustomerService customerService,
             IOrderService orderService,
@@ -65,6 +67,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             _emailAccountSettings = emailAccountSettings;
             _pendingOrderCancellationRequestRepository = pendingOrderCancellationRequestRepository;
             _pendingOrderCancellationRequestReasonRepository = pendingOrderCancellationRequestReasonRepository;
+            _addressService = addressService;
             _workflowMessageService = workflowMessageService;
             _customerService = customerService;
             _orderService = orderService;
@@ -200,7 +203,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             if (cancellationRequestReason == null)
                 throw new ArgumentNullException(nameof(cancellationRequestReason));
 
-            if (_pendingOrderCancellationRequestReasonRepository.TableNoTracking.Count() == 1)
+            if (_pendingOrderCancellationRequestReasonRepository.Table.Count() == 1)
                 throw new NopException("You cannot delete cancellation request reason. At least one cancellation request reason is required.");
 
             _pendingOrderCancellationRequestReasonRepository.Delete(cancellationRequestReason);
@@ -354,11 +357,13 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
 
                 _eventPublisher.MessageTokensAdded(messageTemplate, tokens);
 
-                var toEmail = customer.IsGuest() ?
-                    order.BillingAddress.Email :
+                var billingAddress = _addressService.GetAddressById(order.BillingAddressId);
+
+                var toEmail = _customerService.IsGuest(customer) ?
+                    billingAddress.Email :
                     customer.Email;
-                var toName = customer.IsGuest() ?
-                    order.BillingAddress.FirstName :
+                var toName = _customerService.IsGuest(customer) ?
+                    billingAddress.FirstName :
                     _customerService.GetCustomerFullName(customer);
 
                 return _workflowMessageService.SendNotification(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
@@ -395,11 +400,13 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
 
                 _eventPublisher.MessageTokensAdded(messageTemplate, tokens);
 
-                var toEmail = customer.IsGuest() ?
-                    order.BillingAddress.Email :
+                var billingAddress = _addressService.GetAddressById(order.BillingAddressId);
+
+                var toEmail = _customerService.IsGuest(customer) ?
+                    billingAddress.Email :
                     customer.Email;
-                var toName = customer.IsGuest() ?
-                    order.BillingAddress.FirstName :
+                var toName = _customerService.IsGuest(customer) ?
+                    billingAddress.FirstName :
                     _customerService.GetCustomerFullName(customer);
 
                 return _workflowMessageService.SendNotification(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
@@ -429,14 +436,13 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
                             order.PaymentStatus = result.NewPaymentStatus;
                             _orderService.UpdateOrder(order);
 
-                            order.OrderNotes.Add(new OrderNote
+                            _orderService.InsertOrderNote(new OrderNote
                             {
+                                OrderId = order.Id,
                                 Note = "Order has been voided",
                                 DisplayToCustomer = false,
                                 CreatedOnUtc = DateTime.UtcNow
                             });
-
-                            _orderService.UpdateOrder(order);
                         }
                     }
                     catch (Exception ex)
@@ -449,14 +455,13 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
                     order.PaymentStatusId = (int)PaymentStatus.Voided;
                     _orderService.UpdateOrder(order);
 
-                    order.OrderNotes.Add(new OrderNote
+                    _orderService.InsertOrderNote(new OrderNote
                     {
+                        OrderId = order.Id,
                         Note = "Order has been voided",
                         DisplayToCustomer = false,
                         CreatedOnUtc = DateTime.UtcNow
                     });
-
-                    _orderService.UpdateOrder(order);
                 }
             }
             else if (order.PaymentStatus == PaymentStatus.Pending)
@@ -464,14 +469,13 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
                 order.PaymentStatusId = (int)PaymentStatus.Voided;
                 _orderService.UpdateOrder(order);
 
-                order.OrderNotes.Add(new OrderNote
+                _orderService.InsertOrderNote(new OrderNote
                 {
+                    OrderId = order.Id,
                     Note = "Order has been voided",
                     DisplayToCustomer = false,
                     CreatedOnUtc = DateTime.UtcNow
                 });
-
-                _orderService.UpdateOrder(order);
             }
         }
     }

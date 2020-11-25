@@ -14,7 +14,6 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
-using Nop.Web.Framework.Security;
 using Nop.Services.Events;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
@@ -106,7 +105,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult List(PendingOrderCancellationRequestSearchModel searchModel)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
@@ -140,7 +139,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         [Route("Admin/CancelPendingOrderRequests/Edit/{requestId}")]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         [FormValueRequired("save", "save-continue")]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult Edit(PendingOrderCancellationRequestModel model, bool continueEditing)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
@@ -219,7 +218,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult Delete(int id)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
@@ -242,7 +241,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
 
         #region Customer Areas
 
-        [HttpsRequirement(SslRequirement.Yes)]
+        [HttpsRequirement]
         public IActionResult CancellationRequest(int orderId)
         {
             var order = _orderService.GetOrderById(orderId);
@@ -259,7 +258,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         }
 
         [HttpPost, ActionName("CancellationRequest")]
-        [PublicAntiForgery]
+        [AutoValidateAntiforgeryToken]
         public IActionResult CancellationRequestSubmit(int orderId, SubmitCancellationRequestModel model, IFormCollection form)
         {
             var order = _orderService.GetOrderById(orderId);
@@ -339,7 +338,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         public IActionResult CancellationRequestReasonCreate(PendingOrderCancellationRequestReasonModel model, bool continueEditing)
         {
@@ -384,7 +383,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         public IActionResult CancellationRequestReasonEdit(PendingOrderCancellationRequestReasonModel model, bool continueEditing)
         {
@@ -418,7 +417,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        [AdminAntiForgery]
+        [AutoValidateAntiforgeryToken]
         [HttpPost]
         public IActionResult CancellationRequestReasonDelete(int id)
         {

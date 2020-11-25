@@ -1,8 +1,11 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 
 namespace Nop.Plugin.Misc.Nexport.Migrations
 {
+    [Tags(NexportDefaults.PluginMigrationTag)]
     [Migration(4, "Add NexportOrderInvoiceItem table")]
+    [SkipMigration]
     public class M004_AddNexportOrderInvoiceItem : Migration
     {
         private const string TABLE_NAME = "NexportOrderInvoiceItem";

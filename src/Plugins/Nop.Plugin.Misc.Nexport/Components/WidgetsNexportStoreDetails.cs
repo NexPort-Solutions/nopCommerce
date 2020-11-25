@@ -16,6 +16,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
     [ViewComponent(Name = "WidgetsNexportStoreDetails")]
     public class WidgetsNexportStoreDetails : NopViewComponent
     {
+        private readonly NexportSettings _nexportSettings;
         private readonly IStaticCacheManager _cacheManager;
         private readonly IStoreModelFactory _storeModelFactory;
         private readonly ISettingService _settingService;
@@ -23,12 +24,14 @@ namespace Nop.Plugin.Misc.Nexport.Components
         private readonly IGenericAttributeService _genericAttributeService;
 
         public WidgetsNexportStoreDetails(
+            NexportSettings nexportSettings,
             IStaticCacheManager cacheManager,
             IStoreModelFactory storeModelFactory,
             ISettingService settingService,
             IStoreService storeService,
             IGenericAttributeService genericAttributeService)
         {
+            _nexportSettings = nexportSettings;
             _cacheManager = cacheManager;
             _storeModelFactory = storeModelFactory;
             _settingService = settingService;
@@ -38,6 +41,9 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
         public IViewComponentResult Invoke(string widgetZone, object additionalData)
         {
+            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+                return Content("");
+
             var storeModel = (StoreModel)additionalData;
             var store = _storeService.GetStoreById(storeModel.Id);
 

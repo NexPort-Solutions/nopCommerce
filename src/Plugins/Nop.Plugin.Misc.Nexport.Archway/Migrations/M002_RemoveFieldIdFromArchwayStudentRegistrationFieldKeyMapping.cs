@@ -1,9 +1,11 @@
 ﻿using FluentMigrator;
+using Nop.Data.Migrations;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Migrations
 {
     [Tags(PluginDefaults.PluginMigrationTag)]
     [Migration(2, "Remove FieldId from ArchwayStudentRegistrationFieldKeyMapping table")]
+    [SkipMigration]
     public class M002_RemoveFieldIdFromArchwayStudentRegistrationFieldKeyMapping : Migration
     {
         private const string TABLE_NAME = "ArchwayStudentRegistrationFieldKeyMapping";

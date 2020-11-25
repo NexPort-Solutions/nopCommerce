@@ -6,6 +6,8 @@ namespace Nop.Plugin.Misc.Nexport
     {
         public const string SystemName = "Misc.Nexport";
 
+        public const string PluginMigrationTag = "NexportPluginMigration";
+
         public const string SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME = "Nexport Integration - Supplemental Info";
 
         public static string NexportPluginViewBasePath = "~/Plugins/Misc.Nexport/Views/";
