@@ -13,7 +13,8 @@ namespace Nop.Plugin.Misc.Nexport.Data
             { typeof(NexportSupplementalInfoAnswerProcessingQueueItem), "NexportSupplementalInfoAnswerProcessingQueue" },
             { typeof(NexportOrderProcessingQueueItem), "NexportOrderProcessingQueue" },
             { typeof(NexportOrderInvoiceRedemptionQueueItem), "NexportOrderInvoiceRedemptionQueue" },
-            { typeof(NexportRegistrationFieldSynchronizationQueueItem), "NexportRegistrationFieldSynchronizationQueue" }
+            { typeof(NexportRegistrationFieldSynchronizationQueueItem), "NexportRegistrationFieldSynchronizationQueue" },
+            { typeof(NexportGroupMembershipRemovalQueueItem), "NexportGroupMembershipRemovalQueue" }
         };
 
         public Dictionary<(Type, string), string> ColumnName => new Dictionary<(Type, string), string>();
