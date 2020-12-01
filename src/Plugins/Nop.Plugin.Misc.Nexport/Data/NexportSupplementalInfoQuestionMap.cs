@@ -23,7 +23,9 @@ namespace Nop.Plugin.Misc.Nexport.Data
         //}
         public override void MapEntity(CreateTableExpressionBuilder table)
         {
-            table.WithColumn(nameof(NexportSupplementalInfoQuestion.Description)).AsFixedLengthString(1000);
+            table
+                .WithColumn(nameof(NexportSupplementalInfoQuestion.Description)).AsFixedLengthString(1000)
+                .WithColumn(nameof(NexportSupplementalInfoQuestion.Type)).AsInt32();
         }
     }
 }
