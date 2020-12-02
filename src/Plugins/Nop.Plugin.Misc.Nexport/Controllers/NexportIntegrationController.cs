@@ -69,7 +69,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         IConsumer<EntityDeletedEvent<Product>>,
         IConsumer<EntityDeletedEvent<Customer>>,
         IConsumer<EntityInsertedEvent<Store>>,
-        IConsumer<EntityDeletedEvent<Store>>
+        IConsumer<EntityDeletedEvent<Store>>,
+        IConsumer<EntityInsertedEvent<Category>>,
+        IConsumer<EntityDeletedEvent<Category>>
     {
         #region Fields
 
@@ -2561,6 +2563,26 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             {
                 _nexportService.DeleteNexportProductMapping(mapping);
             }
+        }
+
+        public void HandleEvent(EntityInsertedEvent<Category> eventMessage)
+        {
+            var category = eventMessage.Entity;
+
+            _genericAttributeService.SaveAttribute(category,
+                NexportDefaults.LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY, false);
+            _genericAttributeService.SaveAttribute(category,
+                NexportDefaults.AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY, true);
+            _genericAttributeService.SaveAttribute(category,
+                NexportDefaults.ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT, true);
+        }
+
+        public void HandleEvent(EntityDeletedEvent<Category> eventMessage)
+        {
+            var deletedCategory = eventMessage.Entity;
+
+            var categoryNexportAttributes = _genericAttributeService.GetAttributesForEntity(deletedCategory.Id, "Category");
+            _genericAttributeService.DeleteAttributes(categoryNexportAttributes);
         }
 
         #endregion
