@@ -2266,14 +2266,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var nexportUserMapping = FindUserMappingByCustomerId(customer.Id);
 
-            if (nexportUserMapping != null)
+            if (productMapping.ExtensionPurchaseLimit != null && nexportUserMapping != null)
             {
                 var previousInvoiceItems = GetNexportOrderInvoiceItems(nexportUserMapping.NexportUserId);
                 var previousExtensionCount = previousInvoiceItems
                     .Select(invoiceItem => _orderService.GetOrderItemById(invoiceItem.OrderItemId))
-                    .Count(orderItem => orderItem.ProductId == productMapping.NopProductId);
+                    .Count(orderItem => orderItem.ProductId == productMapping.NopProductId) - 1;
 
-                return productMapping.ExtensionPurchaseLimit == null || !(previousExtensionCount - 1 < productMapping.ExtensionPurchaseLimit);
+                return previousExtensionCount > productMapping.ExtensionPurchaseLimit;
             }
 
             return false;
