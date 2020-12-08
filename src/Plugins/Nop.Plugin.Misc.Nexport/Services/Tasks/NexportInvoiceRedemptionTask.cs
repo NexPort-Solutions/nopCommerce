@@ -309,7 +309,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                 _nexportService.RedeemNexportInvoiceItem(invoiceItem, redeemingUserId,
                                                     completionThreshold > status.Value.CompletionPercentage
                                                         ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
-                                                        : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
+                                                        : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment);
                                             }
                                         }
                                         else
