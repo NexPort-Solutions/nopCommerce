@@ -2146,20 +2146,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                 if (!ExceedExtensionPurchaseLimit(customer, mapping, status.Value.EnrollmentId))
                                 {
                                     var currentEnrollmentExpirationDate = status.Value.enrollementExpirationDate;
-                                    if (currentEnrollmentExpirationDate.HasValue &&
-                                        currentEnrollmentExpirationDate >= DateTime.UtcNow)
+                                    if (currentEnrollmentExpirationDate.HasValue)
                                     {
-                                        if (!string.IsNullOrWhiteSpace(mapping.RenewalWindow))
+                                        if (currentEnrollmentExpirationDate >= DateTime.UtcNow)
                                         {
-                                            var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
-                                            return DateTime.UtcNow >= currentEnrollmentExpirationDate - renewalWindowTimeSpan;
+                                            if (!string.IsNullOrWhiteSpace(mapping.RenewalWindow))
+                                            {
+                                                var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
+                                                return DateTime.UtcNow >= currentEnrollmentExpirationDate - renewalWindowTimeSpan;
+                                            }
                                         }
+
+                                        // Allow customer to purchase since the enrollment has been expired
+                                        return true;
                                     }
 
-                                    return true;
+                                    // Customer is not allowed to purchase since there is still an active enrollment that has no expiration date
+                                    return false;
                                 }
                             }
 
+                            // Customer is not allowed to purchase since the extension purchase limit has been met
                             return false;
                         }
                 }
