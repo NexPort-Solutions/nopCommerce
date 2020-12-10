@@ -30,7 +30,7 @@
     <PackageReference Include="CsvHelper" Version="15.0.8" />
     <PackageReference Include="FluentMigrator" Version="3.2.9" />
     <PackageReference Include="FluentMigrator.Runner" Version="3.2.9" />
-    <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
+    <PackageReference Include="JetBrains.Annotations" Version="2020.3.0" />
     <PackageReference Include="NexportApi" Version="1.0.25" />
     <PackageReference Include="RestSharp" Version="106.11.7" />
   </ItemGroup>
