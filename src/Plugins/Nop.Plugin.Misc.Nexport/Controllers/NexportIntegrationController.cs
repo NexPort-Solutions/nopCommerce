@@ -1178,23 +1178,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(model);
         }
 
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        public IActionResult EditNexportOrderInvoiceItemApproval(int orderInvoiceItemId)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageOrders))
-                return AccessDeniedView();
-
-            var orderInvoiceItem = _nexportService.FindNexportOrderInvoiceItemById(orderInvoiceItemId);
-
-            if (orderInvoiceItem == null)
-                throw new ArgumentException("No Nexport order invoice item found with the specified id", nameof(orderInvoiceItemId));
-
-            var model = _nexportPluginModelFactory.PrepareNexportOrderInvoiceItemModel(null, orderInvoiceItem);
-
-            return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Order/_OrderDetails.NexportOrderApproval.Edit.cshtml", model);
-        }
-
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
         [AdminAntiForgery]
