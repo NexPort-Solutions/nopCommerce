@@ -1,7 +1,9 @@
 ﻿@using Nop.Core
 @using Nop.Plugin.Misc.Nexport.Services
+
 @inject IWorkContext workContext
 @inject NexportService nexportService
+
 @model Nop.Plugin.Misc.Nexport.Domain.NexportOrderInvoiceItem
 
 @{
@@ -13,11 +15,7 @@
     {
         if (Model.RedeemingUserId != null)
         {
-            @*<a href="@Url.Action("GoToNexport", "NexportIntegration",
-                         new {
-                             orderInvoiceItemId = Model.Id
-                         })" target="_blank" id="go-to-nexport-link">Click here to go to Nexport</a>*@
-            <a href="javascript:void(0);" onclick="navigateToNexport(this); return false;"
+            <a href="javascript:void(0);" onclick="navigateToNexportClassroom(this); return false;"
                data-order-invoice-id="@Model.Id" id="go-to-nexport-link">Click here to go to Nexport</a>
         }
     }
@@ -26,28 +24,14 @@
         <span>This product has been redeemed by user [@Model.RedeemingUserId]</span>
     }
 </div>
-<script asp-location="Footer">
-    function navigateToNexport(element) {
+<script>
+    function navigateToNexportClassroom(element) {
         var orderInvoiceItemId = $(element).data("order-invoice-id");
         if (orderInvoiceItemId) {
             var url = "@Url.Action("GoToNexport", "NexportIntegration")";
             url += "?orderInvoiceItemId=" + orderInvoiceItemId;
 
-            $.ajax({
-                url: url,
-                type: "GET",
-                success: function(result) {
-                    if (result && result.RedirectUrl) {
-                        window.open(result.RedirectUrl, "_blank");
-                    }
-                },
-                error: function(xhr, textStatus, errorThrown) {
-                    var response = xhr.responseJSON;
-                    if (response && response.Error) {
-                        displayBarNotification(response.Error, "error");
-                    }
-                }
-            });
+            navigateToNexport(url);
         }
     }
 </script>

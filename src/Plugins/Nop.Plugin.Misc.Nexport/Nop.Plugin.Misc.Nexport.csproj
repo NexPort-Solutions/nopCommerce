@@ -68,6 +68,7 @@
     <None Remove="Scripts\bootstrap3-typeahead.js" />
     <None Remove="Scripts\dataTables.rowGroup.min.js" />
     <None Remove="Scripts\jquery-ui-timepicker-addon.min.js" />
+    <None Remove="Scripts\nexport_common.js" />
     <None Remove="Scripts\nexport_plugin_common.js" />
     <None Remove="Views\Configure.cshtml" />
     <None Remove="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml" />
@@ -214,6 +215,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Scripts\jquery-ui-timepicker-addon.min.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\nexport_common.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Scripts\nexport_plugin_common.js">
