@@ -348,8 +348,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.StoreMapping", "Store");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.StoreMapping.Hint",
                 "The current store that the product is mapped to. If it is empty, this mapping is the default mapping.");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.IsExtensionProduct", "Extension product");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.IsExtensionProduct.Hint", "Allows the product to become extension product only");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.IsExtensionProduct", "Extension only product");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.IsExtensionProduct.Hint", "Allows the product to become extension only product");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.ProductAccessExpirationOption", "Access expiration option");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.ProductAccessExpirationOption.Hint",
                 "Specify the access expiration in Nexport. If specified, access expiration date will take priority compared to access expiration time limit.");
@@ -368,7 +368,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowExtension", "Allow extension");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowExtension.Hint", "Allows customers to purchase the product as extension product");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow", "Renewal window");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow.Hint", "The time period that customers can purchase the product to extend the expiration on the Nexport product");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow.Hint",
+                "The time period that customers can purchase the product to extend the expiration on the Nexport product. Customers can only make purchase if the current date is within the period from the current Nexport product expiration date minus the time window.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalDuration", "Renewal duration");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalDuration.Hint", "The time period that the enrollment can be extended");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalCompletionThreshold", "Enrollment completion threshold");
