@@ -222,43 +222,49 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                                 OrderItemId = orderItem.Id,
                                                                 InvoiceItemId = invoiceItemId.Value,
                                                                 InvoiceId = orderInvoiceId,
-                                                                UtcDateProcessed = DateTime.UtcNow
+                                                                UtcDateProcessed = DateTime.UtcNow,
+                                                                RequireManualApproval = addItemResult.RequireManualApproval
                                                             };
 
-                                                            if (mapping.RenewalCompletionThreshold.HasValue)
-                                                            {
-                                                                if (addItemResult.CompletionPercentage > mapping.RenewalCompletionThreshold &&
-                                                                   mapping.RenewalApprovalMethod == NexportEnrollmentRenewalApprovalMethodEnum.Manual)
-                                                                    nexportOrderInvoiceItem.RequireManualApproval = true;
-
-                                                                if (addItemResult.CompletionPercentage < mapping.RenewalCompletionThreshold)
-                                                                    // This allows the task to automatically process redemption as restarting the enrollment
-                                                                    // in which the customer currently does not meet the enrollment completion threshold
-                                                                    // no matter what the approval method is.
-                                                                    extensionAction = 2;
-                                                            }
+                                                            // This allows the task to automatically process redemption as restarting the enrollment
+                                                            // in which the customer currently does not meet the enrollment completion threshold
+                                                            // no matter what the approval method is.
+                                                            extensionAction = addItemResult.ExtensionAction;
 
                                                             _nexportService.InsertOrUpdateNexportOrderInvoiceItem(nexportOrderInvoiceItem);
 
-                                                            // Add the invoice item for auto redeeming after committing the invoice
-                                                            // if AutoRedeem is set on the mapping and the renewal approval method is not defined
-                                                            // or the approval method is set to be Auto
-                                                            if (mapping.AutoRedeem &&
-                                                                !nexportOrderInvoiceItem.RequireManualApproval.HasValue ||
-                                                                !nexportOrderInvoiceItem.RequireManualApproval.Value)
+                                                            if (mapping.AutoRedeem)
                                                             {
-                                                                autoRedeemingInvoiceItems.Add(new AutoRedeemingInvoiceItem
+                                                                // Add the invoice item for auto redeeming after committing the invoice
+                                                                // if AutoRedeem is set on the mapping and the renewal approval method is not defined
+                                                                // or the approval method is set to be Auto
+                                                                if (!nexportOrderInvoiceItem.RequireManualApproval.HasValue ||
+                                                                    !nexportOrderInvoiceItem.RequireManualApproval.Value)
                                                                 {
-                                                                    Id = nexportOrderInvoiceItem.Id,
-                                                                    ProductMappingId = mapping.Id,
-                                                                    OrderItemId = orderItem.Id,
-                                                                    ExtensionAction = extensionAction
-                                                                });
+                                                                    autoRedeemingInvoiceItems.Add(new AutoRedeemingInvoiceItem
+                                                                    {
+                                                                        Id = nexportOrderInvoiceItem.Id,
+                                                                        ProductMappingId = mapping.Id,
+                                                                        OrderItemId = orderItem.Id,
+                                                                        ExtensionAction = extensionAction
+                                                                    });
+                                                                }
+                                                                else
+                                                                {
+                                                                    // Set this to true in order to prevent completing the order
+                                                                    requireManualApproval = true;
+                                                                }
                                                             }
                                                             else
                                                             {
-                                                                // Set this to true in order to prevent completing the order
-                                                                requireManualApproval = true;
+                                                                // Order invoice item that does not do automatically redemption
+                                                                // still require manual approval if set
+                                                                if (nexportOrderInvoiceItem.RequireManualApproval.HasValue &&
+                                                                    nexportOrderInvoiceItem.RequireManualApproval.Value)
+                                                                {
+                                                                    // Set this to true in order to prevent completing the order
+                                                                    requireManualApproval = true;
+                                                                }
                                                             }
 
                                                             invoiceTotalCost += productCost;
@@ -300,20 +306,18 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                     $"Cannot schedule redemption processing for order items within order {order.Id}", ex);
                                             }
                                         }
+
+                                        // Only complete the order if it does not require approval from administrators
+                                        if (!requireManualApproval)
+                                        {
+                                            completeOrder = true;
+                                            _nexportService.AddOrderNote(order, "Nexport invoice has been successfully processed");
+                                        }
                                         else
                                         {
-                                            // Only complete the order if it does not require approval from administrators
-                                            if (!requireManualApproval)
-                                            {
-                                                completeOrder = true;
-                                                _nexportService.AddOrderNote(order, "Nexport invoice has been successfully processed");
-                                            }
-                                            else
-                                            {
-                                                // Send email notification to store owners to take approval action for this order
-                                                _nexportService.SendNewNexportOrderApprovalStoreOwnerNotification(order,
-                                                    _localizationSettings.DefaultAdminLanguageId);
-                                            }
+                                            // Send email notification to store owners to take approval action for this order
+                                            _nexportService.SendNewNexportOrderApprovalStoreOwnerNotification(order,
+                                                _localizationSettings.DefaultAdminLanguageId);
                                         }
 
                                         _logger.Information($"Order {queueItem.OrderId} has been successfully processed!");
@@ -461,12 +465,15 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
         /// <param name="subscriptionOrgId">The Nexport subscription organization Id</param>
         /// <param name="groupMembershipIds">The list of group membership Ids</param>
         /// <returns>The Nexport invoice item Id</returns>
-        private (Guid? InvoiceItemId, int? CompletionPercentage) AddItemToNexportInvoice(NexportProductMapping productMapping, NexportUserMapping userMapping,
+        private (Guid? InvoiceItemId, int? CompletionPercentage, bool? RequireManualApproval, int? ExtensionAction)
+            AddItemToNexportInvoice(NexportProductMapping productMapping, NexportUserMapping userMapping,
             Guid orderInvoiceId, decimal productCost, Guid subscriptionOrgId, IList<Guid> groupMembershipIds)
         {
             Guid? invoiceItemId = null;
 
             int? completionPercentage = null;
+            int? extensionAction = null;
+            bool? requireManualApproval = null;
 
             if (productMapping.NexportCatalogSyllabusLinkId != null)
             {
@@ -475,22 +482,56 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                 switch (existingEnrollmentStatus)
                 {
+                    // Applicable for enrollment that is needed to be renewed or restarted
                     case var status
                         when status != null &&
                              (status.Value.Phase == Enums.PhaseEnum.NotStarted || status.Value.Phase == Enums.PhaseEnum.InProgress):
                         {
-                            // Use the renewal duration instead
-                            invoiceItemId = _nexportService.AddItemToNexportOrderInvoice(
-                                orderInvoiceId,
-                                productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus, productCost,
-                                subscriptionOrgId, groupMembershipIds,
-                                productMapping.UtcAccessExpirationDate, productMapping.RenewalDuration);
-
                             completionPercentage = existingEnrollmentStatus.Value.CompletionPercentage;
+
+                            if (productMapping.RenewalCompletionThreshold.HasValue)
+                            {
+                                if (completionPercentage < productMapping.RenewalCompletionThreshold)
+                                {
+                                    // Use either access expiration date or access time limit when restarting enrollments that below the completion threshold
+                                    invoiceItemId = _nexportService.AddItemToNexportOrderInvoice(
+                                        orderInvoiceId,
+                                        productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus, productCost,
+                                        subscriptionOrgId, groupMembershipIds,
+                                        productMapping.UtcAccessExpirationDate, productMapping.AccessTimeLimit);
+
+                                    extensionAction = 2;
+                                }
+                                else
+                                {
+                                    invoiceItemId = _nexportService.AddItemToNexportOrderInvoice(
+                                        orderInvoiceId,
+                                        productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus,
+                                        productCost,
+                                        subscriptionOrgId, groupMembershipIds,
+                                        productMapping.UtcAccessExpirationDate, productMapping.RenewalDuration);
+
+                                    requireManualApproval = productMapping.RenewalApprovalMethod == NexportEnrollmentRenewalApprovalMethodEnum.Manual;
+                                }
+                            }
+                            else
+                            {
+                                var newAccessTimeLimit = !string.IsNullOrEmpty(productMapping.AccessTimeLimit)
+                                    ? productMapping.AccessTimeLimit
+                                    : productMapping.RenewalDuration;
+
+                                invoiceItemId = _nexportService.AddItemToNexportOrderInvoice(
+                                    orderInvoiceId,
+                                    productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus,
+                                    productCost,
+                                    subscriptionOrgId, groupMembershipIds,
+                                    productMapping.UtcAccessExpirationDate, newAccessTimeLimit);
+                            }
 
                             break;
                         }
 
+                    // Applicable for new enrollment or enrollment that has been completed (passed or failed)
                     case var status
                         when status == null ||
                              status.Value.Phase == Enums.PhaseEnum.Finished &&
@@ -518,7 +559,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 }
             }
 
-            return (invoiceItemId, completionPercentage);
+            return (invoiceItemId, completionPercentage, requireManualApproval, extensionAction);
         }
 
         private void LogAndAddOrderNoteForError(Order order, string errMsg, Exception ex = null)

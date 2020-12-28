@@ -1030,29 +1030,33 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         var order = _orderService.GetOrderById(orderInvoiceItemModel.OrderId);
                         var orderItem = _orderService.GetOrderItemById(orderInvoiceItemModel.OrderItemId);
                         var store = _storeService.GetStoreById(order.StoreId);
-                        var productMapping = _nexportService.GetProductMappingByNopProductId(orderItem.ProductId, store.Id);
-                        orderInvoiceItemModel.ProductName = _productService.GetProductById(orderItem.ProductId).Name;
-                        orderInvoiceItemModel.NexportProductName = productMapping.NexportProductName;
-                        if (productMapping.NexportSyllabusId != null)
+                        var productMapping = _nexportService.GetProductMappingByNopProductId(orderItem.ProductId, store.Id) ??
+                                             _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
+                        if (productMapping != null)
                         {
-                            orderInvoiceItemModel.NexportSyllabusId = productMapping.NexportSyllabusId.Value;
-                            Guid orgId;
-
-                            if (productMapping.NexportSubscriptionOrgId != null)
-                                orgId = productMapping.NexportSubscriptionOrgId.Value;
-                            else
-                                orgId = _genericAttributeService.GetAttribute<Guid?>(store,
-                                    // ReSharper disable once PossibleInvalidOperationException
-                                    "NexportSubscriptionOrganizationId", store.Id) ?? _nexportSettings.RootOrganizationId.Value;
-
-                            var nexportUserMapping = _nexportService.FindUserMappingByCustomerId(order.CustomerId);
-
-                            var existingEnrollment = _nexportService.GetSectionEnrollmentDetails(
-                                orgId, nexportUserMapping.NexportUserId, productMapping.NexportSyllabusId.Value);
-                            if (existingEnrollment != null)
+                            orderInvoiceItemModel.ProductName = _productService.GetProductById(orderItem.ProductId).Name;
+                            orderInvoiceItemModel.NexportProductName = productMapping.NexportProductName;
+                            if (productMapping.NexportSyllabusId != null)
                             {
-                                orderInvoiceItemModel.ExistingEnrollmentId = existingEnrollment.EnrollmentId;
-                                orderInvoiceItemModel.UtcExistingEnrollmentExpirationDate = existingEnrollment.ExpirationDate;
+                                orderInvoiceItemModel.NexportSyllabusId = productMapping.NexportSyllabusId.Value;
+                                Guid orgId;
+
+                                if (productMapping.NexportSubscriptionOrgId != null)
+                                    orgId = productMapping.NexportSubscriptionOrgId.Value;
+                                else
+                                    orgId = _genericAttributeService.GetAttribute<Guid?>(store,
+                                        // ReSharper disable once PossibleInvalidOperationException
+                                        "NexportSubscriptionOrganizationId", store.Id) ?? _nexportSettings.RootOrganizationId.Value;
+
+                                var nexportUserMapping = _nexportService.FindUserMappingByCustomerId(order.CustomerId);
+
+                                var existingEnrollment = _nexportService.GetSectionEnrollmentDetails(
+                                    orgId, nexportUserMapping.NexportUserId, productMapping.NexportSyllabusId.Value);
+                                if (existingEnrollment != null)
+                                {
+                                    orderInvoiceItemModel.ExistingEnrollmentId = existingEnrollment.EnrollmentId;
+                                    orderInvoiceItemModel.UtcExistingEnrollmentExpirationDate = existingEnrollment.ExpirationDate;
+                                }
                             }
                         }
 

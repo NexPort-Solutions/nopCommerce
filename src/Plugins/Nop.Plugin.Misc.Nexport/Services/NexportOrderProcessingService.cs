@@ -169,7 +169,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             // If the order contains Nexport product and is being processed, then do not set the status to complete
             if (hasAnyNexportProduct)
             {
-                if (_nexportService.HasNexportOrderProcessingQueueItem(order.Id))
+                if (_nexportService.HasNexportOrderProcessingQueueItem(order.Id) ||
+                    _nexportService.GetNexportOrderInvoiceItems(order.Id, true).Any())
                 {
                     completed = false;
                 }

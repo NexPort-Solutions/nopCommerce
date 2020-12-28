@@ -2,6 +2,8 @@
 
 @{
     Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
+
+    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_common.js");
 }
 
 @if (Model != null && Model.Id > 0)
@@ -63,7 +65,9 @@
                                     type: "GET",
                                     data: result,
                                     success: function(viewResult) {
-                                        $("#redeem-view-order-container").html(viewResult);
+                                        var parseViewResult = $.parseHTML(viewResult, null, true);
+                                        $("#redeem-view-order-container").html(parseViewResult);
+                                        $("#redeemCompleted").data("redeemed", true);
                                     }
                                 });
                             }

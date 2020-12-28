@@ -348,8 +348,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.StoreMapping", "Store");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.StoreMapping.Hint",
                 "The current store that the product is mapped to. If it is empty, this mapping is the default mapping.");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.IsExtensionProduct", "Extension product");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.IsExtensionProduct.Hint", "Allows the product to become extension product only");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.IsExtensionProduct", "Extension only product");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.IsExtensionProduct.Hint", "Allows the product to become extension only product");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.ProductAccessExpirationOption", "Access expiration option");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.ProductAccessExpirationOption.Hint",
                 "Specify the access expiration in Nexport. If specified, access expiration date will take priority compared to access expiration time limit.");
@@ -368,15 +368,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowExtension", "Allow extension");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.AllowExtension.Hint", "Allows customers to purchase the product as extension product");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow", "Renewal window");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow.Hint", "The time period that customers can purchase the product to extend the expiration on the Nexport product");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalWindow.Hint",
+                "The time period that customers can purchase the product to extend the expiration on the Nexport product. Customers can only make purchase if the current date is within the period from the current Nexport product expiration date minus the time window.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalDuration", "Renewal duration");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalDuration.Hint", "The time period that the enrollment can be extended");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalCompletionThreshold", "Enrollment completion threshold");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalCompletionThreshold.Hint",
-                "When this completion threshold is met, the enrollment will be either extended or reset if the approval is set to automatically and the completion is above or below respectively.");
+                "When this completion threshold is met, the enrollment will either be reset if the completion percentage is below the threshold or be extended automatically based on the Auto approval method. If approval method is Manual, the action will be deferred to the selection from administrators.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalApprovalMethod", "Approval method");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RenewalApprovalMethod.Hint",
-                "When approval method is set to manual, the administrator will be able to choose the choice between extending or restarting the enrollment.");
+                "When approval method is set to manual, the administrator will be able to choose the choice between extending or restarting the enrollment when the completion percentage exceeds the completion threshold.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.ExtensionPurchaseLimit", "Extension purchase limit");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.ExtensionPurchaseLimit.Hint", "Limit how many times the customers can purchase the extension.");
 

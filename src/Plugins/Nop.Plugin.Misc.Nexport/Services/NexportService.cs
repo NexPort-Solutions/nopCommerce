@@ -2156,20 +2156,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                 if (!ExceedExtensionPurchaseLimit(customer, mapping, status.Value.EnrollmentId))
                                 {
                                     var currentEnrollmentExpirationDate = status.Value.enrollementExpirationDate;
-                                    if (currentEnrollmentExpirationDate.HasValue &&
-                                        currentEnrollmentExpirationDate >= DateTime.UtcNow)
+                                    if (currentEnrollmentExpirationDate.HasValue)
                                     {
-                                        if (!string.IsNullOrWhiteSpace(mapping.RenewalWindow))
+                                        if (currentEnrollmentExpirationDate >= DateTime.UtcNow)
                                         {
-                                            var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
-                                            return DateTime.UtcNow >= currentEnrollmentExpirationDate - renewalWindowTimeSpan;
+                                            if (!string.IsNullOrWhiteSpace(mapping.RenewalWindow))
+                                            {
+                                                var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
+                                                return DateTime.UtcNow >= currentEnrollmentExpirationDate - renewalWindowTimeSpan;
+                                            }
                                         }
+
+                                        // Allow customer to purchase since the enrollment has been expired
+                                        return true;
                                     }
 
-                                    return true;
+                                    // Customer is not allowed to purchase since there is still an active enrollment that has no expiration date
+                                    return false;
                                 }
                             }
 
+                            // Customer is not allowed to purchase since the extension purchase limit has been met
                             return false;
                         }
                 }
@@ -2288,14 +2295,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var nexportUserMapping = FindUserMappingByCustomerId(customer.Id);
 
-            if (nexportUserMapping != null)
+            if (productMapping.ExtensionPurchaseLimit != null && nexportUserMapping != null)
             {
                 var previousInvoiceItems = GetNexportOrderInvoiceItems(nexportUserMapping.NexportUserId);
                 var previousExtensionCount = previousInvoiceItems
                     .Select(invoiceItem => _orderService.GetOrderItemById(invoiceItem.OrderItemId))
-                    .Count(orderItem => orderItem.ProductId == productMapping.NopProductId);
+                    .Count(orderItem => orderItem.ProductId == productMapping.NopProductId) - 1;
 
-                return productMapping.ExtensionPurchaseLimit == null || !(previousExtensionCount - 1 < productMapping.ExtensionPurchaseLimit);
+                return previousExtensionCount > productMapping.ExtensionPurchaseLimit;
             }
 
             return false;

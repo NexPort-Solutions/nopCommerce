@@ -23,12 +23,18 @@
                 var popupTitle = "";
                 if (nexportOrderInvoice.UtcDateRedemption != null)
                 {
-                    <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">(@T("Plugins.Misc.Nexport.Order.ViewRedemption"))</a>
+                    <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">
+                        (@T("Plugins.Misc.Nexport.Order.ViewRedemption"))
+                    </a>
                     popupTitle = T("Plugins.Misc.Nexport.Order.ViewRedemption").Text;
                 }
                 else
                 {
-                    <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">(@T("Plugins.Misc.Nexport.Order.Redeem"))</a>
+                    <input type="hidden" id="redeemCompleted" data-redeemed=false />
+                    <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">
+                        (@T("Plugins.Misc.Nexport.Order.Redeem"))
+                    </a>
+                    <a href="javascript:void(0);" data-id="refreshLink" style="display: none;">(Check the redemption)</a>
                     popupTitle = T("Plugins.Misc.Nexport.Order.Redeem").Text;
                 }
 
@@ -42,10 +48,17 @@
                             var targetWidth = 550;
                             var maxHeight = $(window).height() - 20;
 
-                            $("[data-id=redemption-view-popup][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").dialog({
-                                width: targetWidth,
-                                maxHeight: maxHeight
-                            });
+                        $("[data-id=redemption-view-popup][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").dialog({
+                            width: targetWidth,
+                            maxHeight: maxHeight,
+                            close: function(event, ui) {
+                                if ($("#redeemCompleted").data("redeemed")) {
+                                    $("[data-id=view-redemption-link]").hide();
+                                    $("[data-id=refreshLink]").click(function(e) {
+                                        location.reload();
+                                    }).show();
+                                }
+                            }
                         });
                     });
                 </script>
