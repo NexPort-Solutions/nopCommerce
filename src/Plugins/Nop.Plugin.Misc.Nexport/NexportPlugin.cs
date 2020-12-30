@@ -164,6 +164,8 @@ namespace Nop.Plugin.Misc.Nexport {
 
             _nexportPluginService.AddOrUpdateResources();
 
+            _nexportPluginService.InstallPermissionProvider();
+
             base.Install();
         }
 
@@ -184,6 +186,8 @@ namespace Nop.Plugin.Misc.Nexport {
             _nexportPluginService.DeleteActivityLogTypes();
 
             _nexportPluginService.DeleteResources();
+
+            _nexportPluginService.UninstallPermissionProvider();
 
             try
             {

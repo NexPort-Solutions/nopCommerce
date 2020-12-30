@@ -56,6 +56,7 @@ using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Plugin.Misc.Nexport.Services.Security;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
@@ -210,7 +211,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpGet]
         public IActionResult SearchNexportDirectory(string searchTerm, int? page = null)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping))
                 return AccessDeniedView();
 
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
@@ -577,7 +578,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         public IActionResult GetCatalogList(Guid? orgId, int nopProductId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedDataTablesJson();
 
             var model = new NexportCatalogSearchModel { OrgId = orgId, NopProductId = nopProductId };
@@ -593,7 +596,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public IActionResult CatalogList(NexportCatalogSearchModel searchModel)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedDataTablesJson();
 
             var model = _nexportPluginModelFactory.PrepareNexportCatalogListModel(searchModel);
@@ -606,7 +611,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult SyllabusList(NexportSyllabusListSearchModel searchModel)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) ||
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedDataTablesJson();
 
             var model = _nexportPluginModelFactory.PrepareNexportSyllabusListModel(searchModel);
@@ -620,10 +627,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public IActionResult GetCatalogs(NexportCatalogSearchModel searchModel)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
-                return AccessDeniedDataTablesJson();
-
-            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedDataTablesJson();
 
             var model = _nexportPluginModelFactory.PrepareNexportCatalogListModel(searchModel);
@@ -637,10 +643,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public IActionResult GetSyllabuses(NexportSyllabusListSearchModel searchModel)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
-                return AccessDeniedDataTablesJson();
-
-            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedDataTablesJson();
 
             var model = _nexportPluginModelFactory.PrepareNexportSyllabusListModel(searchModel);
@@ -653,7 +658,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public IActionResult ProductMappingDetailsPopup(int mappingId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedView();
 
             var productMapping = _nexportService.GetProductMappingById(mappingId);
@@ -669,10 +676,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public IActionResult GetProductMappings(NexportProductMappingSearchModel searchModel, Guid? nexportProductId, NexportProductTypeEnum? nexportProductType, int? nopProductId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
-                return AccessDeniedDataTablesJson();
-
-            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedDataTablesJson();
 
             var model = new NexportProductMappingListModel();
@@ -697,7 +703,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public IActionResult EditMapping(NexportProductMappingModel model, bool continueEditing)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedView();
 
             var productMapping = _nexportService.GetProductMappingById(model.Id)
@@ -791,7 +799,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult DeleteMapping(int id)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping))
                 return AccessDeniedView();
 
             var mapping = _nexportService.GetProductMappingById(id) ??
@@ -814,10 +823,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public IActionResult GetProductGroupMembershipMappings(int nexportProductMappingId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
-                return AccessDeniedDataTablesJson();
-
-            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedDataTablesJson();
 
             var model = _nexportPluginModelFactory.PrepareNexportProductMappingGroupMembershipListModel(
@@ -832,7 +840,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult AddGroupMembershipMapping(int nexportProductMappingId, Guid nexportGroupId, string nexportGroupName, string nexportGroupShortName)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping))
                 return AccessDeniedView();
 
             if (nexportGroupId == Guid.Empty)
@@ -862,7 +871,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult DeleteGroupMembershipMapping(int id)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping))
                 return AccessDeniedView();
 
             var groupMembershipMapping = _nexportService.GetProductGroupMembershipMappingById(id);
@@ -878,7 +888,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         public IActionResult MapNexportProductPopup()
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedView();
 
             return View("~/Plugins/Misc.Nexport/Views/MapNexportProduct.cshtml");
@@ -891,7 +903,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public IActionResult MapNexportProductPopup(MapNexportProductModel model)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedView();
 
             dynamic result = new ExpandoObject();
@@ -951,7 +965,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [FormValueRequired("syncnexportproduct")]
         public IActionResult SyncNexportProductWithNopProduct(ProductModel model, [FromForm(Name = "NexportMappingId")] int mappingId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedView();
 
             var product = _productService.GetProductById(model.Id);
@@ -1052,7 +1068,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public IActionResult GetNexportOrderInvoiceItems(NexportOrderInvoiceItemSearchModel searchModel)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageOrders))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageOrders) ||
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportOrderInvoice))
                 return AccessDeniedDataTablesJson();
 
             var model = _nexportPluginModelFactory.PrepareNexportOrderInvoiceItemListModel(searchModel, true);
@@ -1066,7 +1083,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult ModifyNexportEnrollment(int id, int action)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageOrders))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageOrders) ||
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportOrderInvoice))
                 return AccessDeniedView();
 
             var orderInvoiceItem = _nexportService.FindNexportOrderInvoiceItemById(id);
@@ -1121,7 +1139,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         public IActionResult ListSupplementalInfoQuestion()
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             //prepare model
@@ -1137,7 +1155,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult ListSupplementalInfoQuestion(NexportSupplementalInfoQuestionSearchModel searchModel)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedDataTablesJson();
 
             //prepare model
@@ -1151,7 +1169,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         public IActionResult AddSupplementalInfoQuestion()
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var model = _nexportPluginModelFactory.PrepareNexportSupplementalInfoQuestionModel(new NexportSupplementalInfoQuestionModel(), null);
@@ -1167,7 +1185,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         public IActionResult AddSupplementalInfoQuestion(NexportSupplementalInfoQuestionModel model,
             bool continueEditing)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             if (ModelState.IsValid)
@@ -1192,7 +1210,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         public IActionResult EditSupplementalInfoQuestion(int id)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageAttributes))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var supplementalInfoQuestion = _nexportService.GetNexportSupplementalInfoQuestionById(id);
@@ -1210,7 +1228,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         public virtual IActionResult EditSupplementalInfoQuestion(NexportSupplementalInfoQuestionModel model, bool continueEditing)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var supplementalInfoQuestion = _nexportService.GetNexportSupplementalInfoQuestionById(model.Id);
@@ -1243,7 +1261,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public virtual IActionResult DeleteSupplementalInfoQuestion(int id)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var supplementalInfoQuestion = _nexportService.GetNexportSupplementalInfoQuestionById(id);
@@ -1263,7 +1281,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public virtual IActionResult DeleteSelectedSupplementalInfoQuestion(ICollection<int> selectedIds)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             if (selectedIds != null)
@@ -1280,7 +1298,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public virtual IActionResult SupplementalInfoOptionList(NexportSupplementalInfoOptionSearchModel searchModel)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedDataTablesJson();
 
             var question = _nexportService.GetNexportSupplementalInfoQuestionById(searchModel.QuestionId)
@@ -1296,7 +1314,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public virtual IActionResult SupplementalInfoOptionCreatePopup(int questionId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var question = _nexportService.GetNexportSupplementalInfoQuestionById(questionId)
@@ -1315,7 +1333,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public virtual IActionResult SupplementalInfoOptionCreatePopup(NexportSupplementalInfoOptionModel model)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var question = _nexportService.GetNexportSupplementalInfoQuestionById(model.QuestionId)
@@ -1343,7 +1361,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public virtual IActionResult SupplementalInfoOptionEditPopup(int optionId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var option = _nexportService.GetNexportSupplementalInfoOptionById(optionId)
@@ -1364,7 +1382,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public virtual IActionResult SupplementalInfoOptionEditPopup(NexportSupplementalInfoOptionModel model)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var option = _nexportService.GetNexportSupplementalInfoOptionById(model.Id)
@@ -1395,7 +1413,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public virtual IActionResult DeleteSupplementalInfoOption(int id)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var option = _nexportService.GetNexportSupplementalInfoOptionById(id)
@@ -1412,7 +1430,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult AddSupplementalInfoOptionGroupAssociation(int optionId, Guid nexportGroupId, string nexportGroupName, string nexportGroupShortName)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             if (nexportGroupId == Guid.Empty)
@@ -1443,7 +1461,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult DeleteSupplementalInfoOptionGroupAssociation(int id)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var groupAssociation = _nexportService.GetNexportSupplementalInfoOptionGroupAssociationById(id)
@@ -1460,7 +1478,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult ChangeSupplementalInfoOptionGroupAssociationStatus(int id)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var groupAssociation = _nexportService.GetNexportSupplementalInfoOptionGroupAssociationById(id)
@@ -1480,7 +1498,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public IActionResult GetSupplementalInfoOptionGroupAssociations(int optionId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedDataTablesJson();
 
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
@@ -1564,7 +1582,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult GetCustomerSupplementalInfoQuestions(NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel searchModel)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedDataTablesJson();
 
             var model = _nexportPluginModelFactory.PrepareNexportSupplementalInfoQuestionListModel(searchModel);
@@ -1578,7 +1596,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult GetCustomerSupplementalInfoAnswers(NexportSupplementalInfoAnswerListSearchModel searchModel)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedDataTablesJson();
 
             var model = _nexportPluginModelFactory.PrepareNexportSupplementalInfoAnswerListModel(searchModel);
@@ -1590,7 +1608,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         public IActionResult EditCustomerSupplementalInfoAnsweredQuestion(int customerId, int storeId, int questionId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) ||
+                !_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var customer = _customerService.GetCustomerById(customerId)
@@ -1613,7 +1632,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult EditCustomerSupplementalInfoAnsweredQuestion(int customerId, int storeId, EditSupplementInfoAnswerRequestModel editModel)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) ||
+                !_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedView();
 
             var customer = _customerService.GetCustomerById(customerId)
@@ -1751,7 +1771,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public IActionResult DeleteCustomerSupplementalInfoAnswer(int answerId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) ||
+                !_permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo))
                 return AccessDeniedDataTablesJson();
 
             var answer = _nexportService.GetNexportSupplementalInfoAnswerById(answerId)

@@ -105,6 +105,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 nexportPluginService.AddActivityLogTypes();
                 nexportPluginService.AddMessageTemplates();
                 nexportPluginService.AddOrUpdateResources();
+                nexportPluginService.InstallPermissionProvider();
             }
         }
 

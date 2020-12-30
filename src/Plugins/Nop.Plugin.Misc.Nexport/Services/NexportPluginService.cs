@@ -1,12 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Tasks;
+using Nop.Core.Infrastructure;
+using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
+using Nop.Services.Security;
 using Nop.Services.Tasks;
 
 namespace Nop.Plugin.Misc.Nexport.Services
@@ -15,6 +19,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
     {
         private readonly EmailAccountSettings _emailAccountSettings;
 
+        private readonly IPermissionService _permissionService;
         private readonly IScheduleTaskService _scheduleTaskService;
         private readonly ISettingService _settingService;
         private readonly ILocalizationService _localizationService;
@@ -26,6 +31,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             EmailAccountSettings emailAccountSettings,
             IScheduleTaskService scheduleTaskService,
             ISettingService settingService,
+            IPermissionService permissionService,
             ILocalizationService localizationService,
             ICustomerActivityService customerActivityService,
             IMessageTemplateService messageTemplateService,
@@ -34,6 +40,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _emailAccountSettings = emailAccountSettings;
             _scheduleTaskService = scheduleTaskService;
             _settingService = settingService;
+            _permissionService = permissionService;
             _localizationService = localizationService;
             _customerActivityService = customerActivityService;
             _messageTemplateService = messageTemplateService;
@@ -721,6 +728,26 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.SingleProductInCatalog");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase");
+        }
+
+        public void InstallPermissionProvider()
+        {
+            var permissionProviders = new List<Type> { typeof(NexportPermissionProvider) };
+            foreach (var providerType in permissionProviders)
+            {
+                var provider = (IPermissionProvider)Activator.CreateInstance(providerType);
+                _permissionService.InstallPermissions(provider);
+            }
+        }
+
+        public void UninstallPermissionProvider()
+        {
+            var permissionProviders = new List<Type> { typeof(NexportPermissionProvider) };
+            foreach (var providerType in permissionProviders)
+            {
+                var provider = (IPermissionProvider)Activator.CreateInstance(providerType);
+                _permissionService.UninstallPermissions(provider);
+            }
         }
     }
 }
