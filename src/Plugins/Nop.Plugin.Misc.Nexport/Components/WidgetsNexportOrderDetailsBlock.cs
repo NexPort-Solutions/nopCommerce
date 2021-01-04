@@ -6,6 +6,8 @@ using Nop.Web.Framework.Components;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Plugin.Misc.Nexport.Services.Security;
+using Nop.Services.Security;
 
 namespace Nop.Plugin.Misc.Nexport.Components
 {
@@ -16,6 +18,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
         private readonly NexportService _nexportService;
         private readonly INexportPluginModelFactory _nexportPluginModelFactory;
         private readonly IOrderService _orderService;
+        private readonly IPermissionService _permissionService;
         private readonly IGenericAttributeService _genericAttributeService;
 
         public WidgetsNexportOrderDetailsBlock(
@@ -23,6 +26,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
             NexportService nexportService,
             INexportPluginModelFactory nexportPluginModelFactory,
             IOrderService orderService,
+            IPermissionService permissionService,
             IGenericAttributeService genericAttributeService)
         {
             _nexportSettings = nexportSettings;
@@ -30,11 +34,13 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _nexportPluginModelFactory = nexportPluginModelFactory;
             _orderService = orderService;
             _genericAttributeService = genericAttributeService;
+            _permissionService = permissionService;
         }
 
         public IViewComponentResult Invoke(string widgetZone, object additionalData)
         {
-            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportOrderInvoice))
                 return Content("");
 
             var orderModel = (OrderModel)additionalData;
