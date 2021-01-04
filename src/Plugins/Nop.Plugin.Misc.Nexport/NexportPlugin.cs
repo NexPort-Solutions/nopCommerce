@@ -24,6 +24,8 @@ using Nop.Plugin.Misc.Nexport.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Plugin.Misc.Nexport.Services.Security;
+using Nop.Services.Security;
 
 namespace Nop.Plugin.Misc.Nexport {
     public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
@@ -36,6 +38,7 @@ namespace Nop.Plugin.Misc.Nexport {
         private readonly IActionContextAccessor _actionContextAccessor;
         private readonly IDiscountService _discountService;
         private readonly ILocalizationService _localizationService;
+        private readonly IPermissionService _permissionService;
         private readonly ISettingService _settingService;
         private readonly IScheduleTaskService _scheduleTaskService;
         private readonly WidgetSettings _widgetSettings;
@@ -51,6 +54,7 @@ namespace Nop.Plugin.Misc.Nexport {
             IDiscountService discountService,
             WidgetSettings widgetSetting,
             ILocalizationService localizationService,
+            IPermissionService permissionService,
             ISettingService settingService,
             IScheduleTaskService scheduleTaskService,
             IWebHelper webHelper, ILogger logger)
@@ -66,6 +70,7 @@ namespace Nop.Plugin.Misc.Nexport {
             _discountService = discountService;
             _widgetSettings = widgetSetting;
             _localizationService = localizationService;
+            _permissionService = permissionService;
             _settingService = settingService;
             _scheduleTaskService = scheduleTaskService;
             _webHelper = webHelper;
@@ -90,7 +95,7 @@ namespace Nop.Plugin.Misc.Nexport {
 
             node.ChildNodes.Add(new SiteMapNode()
             {
-                Visible = true,
+                Visible = _permissionService.Authorize(StandardPermissionProvider.ManagePlugins),
                 Title = "Configuration",
                 SystemName = "Nexport Integration - Configuration",
                 ControllerName = "NexportIntegration",
@@ -100,7 +105,7 @@ namespace Nop.Plugin.Misc.Nexport {
 
             node.ChildNodes.Add(new SiteMapNode()
             {
-                Visible = true,
+                Visible = _permissionService.Authorize(StandardPermissionProvider.ManageStores),
                 Title = "Store Configuration",
                 SystemName = "Nexport Integration - Store Configuration",
                 ControllerName = "Store",
@@ -110,7 +115,7 @@ namespace Nop.Plugin.Misc.Nexport {
 
             node.ChildNodes.Add(new SiteMapNode()
             {
-                Visible = true,
+                Visible = _permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo),
                 Title = "Supplemental Info",
                 SystemName = NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME,
                 ControllerName = "NexportIntegration",
