@@ -4,7 +4,6 @@ using System.Linq;
 using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Tasks;
-using Nop.Core.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;

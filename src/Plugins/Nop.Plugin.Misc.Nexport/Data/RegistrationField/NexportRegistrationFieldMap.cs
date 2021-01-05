@@ -6,26 +6,6 @@ namespace Nop.Plugin.Misc.Nexport.Data.RegistrationField
 {
     public class NexportRegistrationFieldMap : NopEntityBuilder<NexportRegistrationField>
     {
-        //public override void Configure(EntityTypeBuilder<NexportRegistrationField> builder)
-        //{
-        //    builder.ToTable(nameof(NexportRegistrationField));
-
-        //    builder.HasKey(m => m.Id);
-
-        //    builder.Property(m => m.Name);
-        //    builder.Property(m => m.Type);
-        //    builder.Property(m => m.NexportCustomProfileFieldKey).HasMaxLength(255);
-        //    builder.Property(m => m.IsRequired);
-        //    builder.Property(m => m.IsActive);
-        //    builder.Property(m => m.Validation);
-        //    builder.Property(m => m.ValidationRegex).HasMaxLength(1000);
-        //    builder.Property(m => m.FieldCategoryId);
-        //    builder.Property(m => m.DisplayOrder);
-        //    builder.Property(m => m.CustomFieldRender);
-
-        //    base.Configure(builder);
-        //}
-
         public override void MapEntity(CreateTableExpressionBuilder table)
         {
             table

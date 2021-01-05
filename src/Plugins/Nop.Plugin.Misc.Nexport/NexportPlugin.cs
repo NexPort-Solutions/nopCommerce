@@ -20,7 +20,6 @@ using Nop.Services.Discounts;
 using Nop.Services.Tasks;
 using Nop.Web.Framework.Menu;
 using Nop.Web.Framework.Infrastructure;
-using Nop.Plugin.Misc.Nexport.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Services;
@@ -236,7 +235,7 @@ namespace Nop.Plugin.Misc.Nexport {
             if (widgetZone == AdminWidgetZones.StoreDetailsBottom)
                 return "WidgetsNexportStoreDetails";
 
-            if(widgetZone == AdminWidgetZones.ProductDetailsBlock)
+            if (widgetZone == AdminWidgetZones.ProductDetailsBlock)
                 return "WidgetsNexportProductMappingsInProductPage";
 
             if (widgetZone == AdminWidgetZones.ProductDetailsButtons)
