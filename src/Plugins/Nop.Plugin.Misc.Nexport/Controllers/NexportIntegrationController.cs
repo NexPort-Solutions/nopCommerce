@@ -817,13 +817,44 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return new NullJsonResult();
         }
 
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AutoValidateAntiforgeryToken]
+        [HttpPost]
+        public IActionResult DeleteMappings(ICollection<int> selectedIds)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) ||
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping))
+                return AccessDeniedView();
+
+            if (selectedIds != null)
+            {
+                foreach (var id in selectedIds)
+                {
+                    var mapping = _nexportService.GetProductMappingById(id);
+                    if (mapping != null)
+                    {
+                        _nexportService.DeleteNexportProductMapping(mapping);
+
+                        var groupMembershipMappings = _nexportService.GetProductGroupMembershipMappings(mapping.Id);
+                        foreach (var groupMembershipMapping in groupMembershipMappings)
+                        {
+                            _nexportService.DeleteGroupMembershipMapping(groupMembershipMapping);
+                        }
+                    }
+                }
+            }
+
+            return Json(new { Result = true });
+        }
+
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AutoValidateAntiforgeryToken]
         public IActionResult GetProductGroupMembershipMappings(int nexportProductMappingId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) ||
                 !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
                 string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedDataTablesJson();
@@ -2250,35 +2281,24 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
         [AutoValidateAntiforgeryToken]
-        [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
-        public IActionResult EditRegistrationFieldOption(NexportRegistrationFieldOptionModel model, bool continueEditing)
+        [HttpPost]
+        public IActionResult EditRegistrationFieldOption(NexportRegistrationFieldOptionModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
 
             var registrationFieldOption = _nexportService.GetNexportRegistrationFieldOptionById(model.Id);
             if (registrationFieldOption == null)
-                return RedirectToAction("ListRegistrationField");
+                return new NullJsonResult();
 
             var registrationField = _nexportService.GetNexportRegistrationFieldById(registrationFieldOption.FieldId);
             if (registrationField == null)
-                return RedirectToAction("ListRegistrationField");
+                return new NullJsonResult();
 
-            if (ModelState.IsValid)
-            {
-                registrationFieldOption = model.ToEntity(registrationFieldOption);
-                _nexportService.UpdateNexportRegistrationFieldOption(registrationFieldOption);
+            registrationFieldOption = model.ToEntity(registrationFieldOption);
+            _nexportService.UpdateNexportRegistrationFieldOption(registrationFieldOption);
 
-                _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Customers.Nexport.RegistrationField.Options.Updated"));
-
-                ViewBag.RefreshPage = true;
-
-                return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Edit.cshtml", model);
-            }
-
-            model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldOptionModel(null, registrationField, registrationFieldOption);
-
-            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Edit.cshtml", model);
+            return new NullJsonResult();
         }
 
         [Area(AreaNames.Admin)]

@@ -32,8 +32,8 @@
                             if (options.Count > 0)
                             {
                                 var renderOptions = Model.DisplayOptionByAscendingOrder
-                                    ? options.OrderBy(x => x.OptionValue).ToList()
-                                    : options;
+                                    ? options.OrderBy(x => x.DisplayOrder).ToList()
+                                    : options.OrderByDescending(x => x.DisplayOrder).ToList();
 
                                 <div class="option-list nexport-option-list">
                                     @if (Model.AllowMultipleSelection)
@@ -67,9 +67,9 @@
                             if (options.Count > 0)
                             {
                                 var renderOptions = Model.DisplayOptionByAscendingOrder
-                                    ? options.OrderBy(x => x.OptionValue).ToList()
-                                    : options;
-
+                                    ? options.OrderBy(x => x.DisplayOrder).ToList()
+                                    : options.OrderByDescending(x => x.DisplayOrder).ToList();
+                                <input type="hidden" value="@Model.DisplayOptionByAscendingOrder" />
                                 <select name="@(controlId)" id="@(controlId)">
                                     @if (!Model.IsRequired)
                                     {

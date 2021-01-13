@@ -1,5 +1,4 @@
-﻿@using System.Net
-@using Nop.Plugin.Misc.Nexport.Domain.Enums
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Models.ProductMappings
 @using Nop.Services.Helpers
 @inject IDateTimeHelper dateTimeHelper
@@ -7,23 +6,14 @@
 @model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingListSearchModel
 
 @{
-    var productIdCol = new ColumnProperty(nameof(NexportProductMappingModel.NopProductId))
-    {
-        Title = "Product Id",
-        Width = "50",
-    };
-
-    var viewProductBtnCol = new ColumnProperty(nameof(NexportProductMappingModel.NopProductId))
-    {
-        Title = "View Product",
-        Width = "50",
-        ClassName = NopColumnClassDefaults.Button,
-        Render = new RenderButtonView(new DataUrl("~/Admin/Product/Edit/", nameof(NexportProductMappingModel.NopProductId))),
-        AutoWidth = false
-    };
-
     var tableColumns = new List<ColumnProperty>
-{
+    {
+        new ColumnProperty(nameof(NexportProductMappingModel.Id))
+        {
+            Width = "50",
+            IsMasterCheckBox = true,
+            Render = new RenderCustom("deleteMappingCheckBox")
+        },
         new ColumnProperty(nameof(NexportProductMappingModel.StoreName))
         {
             Title = "Store",
@@ -35,12 +25,17 @@
             Title = "Nexport Product Name",
             Width = "150"
         },
-        productIdCol,
         new ColumnProperty(nameof(NexportProductMappingModel.Id))
         {
-            Title = "Subscription Organization",
-            Width = "150",
-            Render = new RenderCustom("renderSubscriptionOrgName")
+            Title = "Nexport Product Details",
+            Width = "550",
+            Render = new RenderCustom("renderNexportProductDetails")
+        },
+        new ColumnProperty(nameof(NexportProductMappingModel.Id))
+        {
+            Title = "Subscription Information",
+            Width = "250",
+            Render = new RenderCustom("renderSubscriptionInformation")
         },
         new ColumnProperty(nameof(NexportProductMappingModel.UtcLastModifiedDate))
         {
@@ -48,14 +43,6 @@
             Width = "150",
             Render = new RenderCustom("renderLocalDateForTableEntry")
         },
-        new ColumnProperty(nameof(NexportProductMappingModel.UtcLastSynchronizationDate))
-        {
-            Title = "Last Synchronized Date",
-            Width = "150",
-            Render = new RenderCustom("renderLocalDateForTableEntry"),
-            AutoWidth = false
-        },
-        viewProductBtnCol,
         new ColumnProperty(nameof(NexportProductMappingModel.Id))
         {
             Width = "100",
@@ -69,56 +56,19 @@
             Render = new RenderCustom("renderModifyProductMapping"),
             ClassName = NopColumnClassDefaults.Button,
             AutoWidth = false
-        },
-        new ColumnProperty(nameof(NexportProductMappingModel.Id))
-        {
-            Width = "50",
-            Render = new RenderCustom("renderDeleteMapping"),
-            ClassName = NopColumnClassDefaults.Button,
-            AutoWidth = false
         }
     };
-
-    if (Model.NopProductId != null)
-    {
-        tableColumns.Remove(productIdCol);
-        tableColumns.Remove(viewProductBtnCol);
-
-        tableColumns.Insert(2,
-            new ColumnProperty(nameof(NexportProductMappingModel.Type))
-            {
-                Title = "Type",
-                Width = "50",
-                AutoWidth = false,
-                Render = new RenderCustom("renderMappingType")
-            });
-
-        tableColumns.Insert(3,
-            new ColumnProperty(nameof(NexportProductMappingModel.NexportCatalogId))
-            {
-                Title = "Nexport Catalog Id",
-                Width = "150",
-                AutoWidth = false,
-                Render = new RenderCustom("renderCatalogId")
-            });
-
-        tableColumns.Insert(4,
-            new ColumnProperty(nameof(NexportProductMappingModel.NexportSyllabusId))
-            {
-                Title = "Nexport Syllabus Id",
-                Width = "150",
-                AutoWidth = false
-            });
-
-        tableColumns.Insert(5,
-            new ColumnProperty(nameof(NexportProductMappingModel.NexportCatalogSyllabusLinkId))
-            {
-                Title = "Nexport Product Id",
-                Width = "150",
-                AutoWidth = false
-            });
-    }
 }
+<div class="clearfix">
+    <div class="pull-right">
+        <button type="button" id="delete-selected-mappings" class="btn bg-red">
+            <i class="fa fa-trash-o"></i>
+            @T("Admin.Common.Delete.Selected")
+        </button>
+        <nop-action-confirmation asp-button-id="delete-selected-mappings" />
+    </div>
+</div>
+<nop-alert asp-alert-id="deleteSelectedMappingsFailed" />
 
 @await Html.PartialAsync("Table", new NexportDataTablesModel
 {
@@ -151,26 +101,81 @@
         return data;
     }
 
-    function renderMappingType(data, type, row, meta) {
-        if (row.NexportCatalogId !== "00000000-0000-0000-0000-000000000000") {
-            if (data === +"@((int)NexportProductTypeEnum.Catalog)") {
-                return "Catalog";
-            } else if (data === +"@((int)NexportProductTypeEnum.Section)") {
-                return "Section";
-            } else if (data === +"@((int)NexportProductTypeEnum.TrainingPlan)") {
-                return "Training Plain";
+    function deleteMappingCheckBox(data, type, row, meta) {
+        if (meta.row === 0)
+            return "";
+
+        return (data === true)
+            ? '<input name="checkbox_delete_product_mappings" value="' + row.Id + '" type="checkbox" class="checkboxGroups" checked="checked" />'
+            : '<input name="checkbox_delete_product_mappings" value="' + row.Id + '" type="checkbox" class="checkboxGroups" />';
+    }
+
+    function renderNexportProductDetails(data, type, row, meta) {
+        if (data > 0) {
+            var displayText = "";
+            if (row.NexportCatalogId !== "00000000-0000-0000-0000-000000000000") {
+                displayText += "<b>Type: </b>";
+                if (row.Type === +"@((int)NexportProductTypeEnum.Catalog)") {
+                    displayText += "Catalog";
+                } else if (row.Type === +"@((int)NexportProductTypeEnum.Section)") {
+                    displayText += "Section";
+                } else if (row.Type === +"@((int)NexportProductTypeEnum.TrainingPlan)") {
+                    displayText += "Training Plain";
+                }
+
+                displayText += "<br>" + "<b>Nexport Catalog Id: </b>" + row.NexportCatalogId;
+
+                if (row.NexportSyllabusId || row.NexportSyllabus !== "00000000-0000-0000-0000-000000000000") {
+                    displayText += "<br>" + "<b>Nexport Syllabus Id: </b>" + row.NexportSyllabusId;
+                }
+
+                displayText += "<br>" + "<b>Nexport Product Id: </b>" + row.NexportCatalogSyllabusLinkId;
+
+                if (row.UtcLastSynchronizationDate) {
+                    displayText += "<br>" + "<b>Last Synchronized Date: </b>" + renderLocalDateForTableEntry(row.UtcLastSynchronizationDate, null, null, null);
+                }
             }
+
+            return displayText;
         }
 
         return "";
     }
 
-    function renderCatalogId(data, type, row, meta) {
-        if (data === "00000000-0000-0000-0000-000000000000") {
-            return "";
+    function renderSubscriptionInformation(data, type, row, meta) {
+        if (data > 0) {
+            var displayText = "";
+
+            var subOrgName = row.NexportSubscriptionOrgName;
+            var subOrgDisplayText = subOrgName;
+
+            if (subOrgName) {
+                subOrgDisplayText += " - " + row.NexportSubscriptionOrgShortName;
+                displayText += "<b>Subscription Organization: </b>" + subOrgDisplayText;
+            }
+
+            var groupMembershipNames = "";
+            var groupMemberships = row.GroupMembershipMappingModels;
+
+            if (groupMemberships) {
+                if (groupMemberships.length > 0) {
+                    groupMembershipNames += "<br>" + "<b>Group Memberships: </b>";
+                    for (var i = 0; i < groupMemberships.length; i++) {
+                        groupMembershipNames += groupMemberships[i].NexportGroupName + " (" + 
+                            groupMemberships[i].NexportGroupShortName + ")";
+                        if (i < groupMemberships.length - 1) {
+                            groupMembershipNames += ", ";
+                        }
+                    }
+
+                    displayText += groupMembershipNames;
+                }
+            }
+            
+            return displayText;
         }
 
-        return data;
+        return "";
     }
 
     function renderViewMappingDetails(data, type, row, meta) {
@@ -223,19 +228,6 @@
         return renderCustomButton(buttonFunction, "fa fa-info", buttonName);;
     }
 
-    function renderDeleteMapping(data, type, row, meta) {
-        if (!row.StoreId)
-            return "";
-
-        var buttonFunction = "deleteMapping('" + data + "');return false;";
-
-        var buttonElement = +data < 1
-            ? renderCustomButton(buttonFunction, "fa fa-remove", "Delete mapping", true)
-            : renderCustomButton(buttonFunction, "fa fa-remove", "Delete mapping");
-
-        return buttonElement;
-    }
-
     function renderModifyProductMapping(data, type, row, meta) {
         var url = "@Url.Action("MapNexportProductPopup", "NexportIntegration")";
         url += "?nopProductId=@Model.NopProductId";
@@ -269,65 +261,21 @@
             buttonElement += " disabled";
         }
 
-        buttonElement += "><i class=\""+ buttonIconClass + "\"></i>"+ buttonName + "</button>";
+        buttonElement += "><i class=\"" + buttonIconClass + "\"></i>" + buttonName + "</button>";
 
         return buttonElement;
-    }
-
-    function renderSubscriptionOrgName(data, type, row, meta) {
-        var subOrgName = row.NexportSubscriptionOrgName;
-        var displayText = subOrgName;
-
-        if (subOrgName !== null) {
-            displayText += " - " + row.NexportSubscriptionOrgShortName;
-        }
-
-        return displayText;
     }
 
     function renderLocalDateForTableEntry(data, type, row, meta) {
         return data ? moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss") : null;
     }
 
-    function deleteMapping(dataId) {
-        if (dataId < 1) {
-            return false;
-        }
-
-        if (confirm("@T("Admin.Common.DeleteConfirmation")")) {
-            var postData = {
-                id: dataId
-            };
-            addAntiForgeryToken(postData);
-
-            $.ajax({
-                url: "@Url.Action("DeleteMapping","NexportIntegration")",
-                type: "@WebRequestMethods.Http.Post",
-                dataType: "json",
-                data: postData,
-                success: function (data, textStatus, jqXHR) {
-                    // Display error if returned
-                    if (data) {
-                        display_nop_error(data);
-                    }
-                    // Refresh grid
-                    $("#product-mappings-grid").DataTable().draw(false);
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    alert(errorThrown);
-                }
-            });
-        }
-        else {
-            return false;
-        }
-    }
-
-    $(document).ready(function () {
-        $("#product-mapping-container").on("xhr.dt", "#product-mappings-grid",
+    $(document).ready(function() {
+        $("#product-mapping-container").on("xhr.dt",
+            "#product-mappings-grid",
             function(e, settings, json, xhr) {
-                if (json.data) {
-                    if (json.data[0].NopProductId !== 0) {
+                if (json.Data) {
+                    if (json.Data[0].NopProductId !== 0) {
                         hasDefaultMapping = true;
                     } else {
                         hasDefaultMapping = false;
@@ -335,8 +283,45 @@
                 }
             });
 
+        $("#delete-selected-mappings-action-confirmation-submit-button").bind("click", function (e) {
+            var submitIds = selectedIds;
+            submitIds = $.grep(submitIds, function(value) {
+                return value !== "0";
+            });
 
-        $("#btnRefreshMappings").click(function () {
+            var noDeletion = false;
+            if (submitIds.length < 1) {
+                noDeletion = true;
+            }
+
+            var postData = {
+                selectedIds: submitIds
+            };
+            addAntiForgeryToken(postData);
+
+            $.ajax({
+                cache: false,
+                type: "POST",
+                url: "@Url.Action("DeleteMappings", "NexportIntegration")",
+                data: postData,
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $("#deleteSelectedMappingsFailed-info").text(errorThrown);
+                    $("#deleteSelectedMappingsFailed").click();
+                },
+                complete: function (jqXHR, textStatus) {
+                    updateTable("#product-mappings-grid");
+                }
+            });
+
+            $("#delete-selected-mappings-action-confirmation").modal("toggle");
+
+            if (noDeletion)
+                alert("No mapping selected");
+
+            return false;
+        });
+
+        $("#btnRefreshMappings").click(function() {
             // Refresh grid
             $("#product-mappings-grid").DataTable().draw(false);
 

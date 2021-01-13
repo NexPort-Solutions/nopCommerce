@@ -9,5 +9,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Option.Value")]
         public string OptionValue { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Option.DisplayOrder")]
+        public int DisplayOrder { get; set; }
     }
 }

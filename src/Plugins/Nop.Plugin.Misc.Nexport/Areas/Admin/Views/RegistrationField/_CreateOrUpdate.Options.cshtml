@@ -34,20 +34,29 @@
                     [nameof(Model.RegistrationFieldOptionSearchModel.RegistrationFieldId)] = Model.RegistrationFieldOptionSearchModel.RegistrationFieldId
                 }),
             UrlDelete = new DataUrl("DeleteRegistrationFieldOption", "NexportIntegration", null),
+            UrlUpdate = new DataUrl("EditRegistrationFieldOption","NexportIntegration", null),
             Length = Model.RegistrationFieldOptionSearchModel.PageSize,
             LengthMenu = Model.RegistrationFieldOptionSearchModel.AvailablePageSizes,
             ColumnCollection = new List<ColumnProperty>
             {
                 new ColumnProperty(nameof(NexportRegistrationFieldOption.OptionValue))
                 {
-                    Title = T("Plugins.Misc.Nexport.RegistrationField.Option.Value").Text
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Option.Value").Text,
+                    Editable = true,
+                    EditType = EditType.String
+                },
+                new ColumnProperty(nameof(NexportRegistrationFieldOption.DisplayOrder))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Option.DisplayOrder").Text,
+                    Editable = true,
+                    EditType = EditType.Number
                 },
                 new ColumnProperty(nameof(NexportRegistrationFieldOption.Id))
                 {
                     Title = T("Admin.Common.Edit").Text,
                     Width = "100",
                     ClassName = NopColumnClassDefaults.Button,
-                    Render = new RenderCustom("renderEditNexportRegistrationFieldOption")
+                    Render = new RenderButtonsInlineEdit()
                 },
                 new ColumnProperty(nameof(CustomerAttributeValueModel.Id))
                 {

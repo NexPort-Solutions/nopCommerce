@@ -309,6 +309,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         mappingModel.StoreName = _nexportService.GetStoreName(mappingModel.StoreId.Value);
                     }
 
+                    var groupMemberships = _nexportService.GetProductGroupMembershipMappings(mappingModel.Id);
+                    foreach (var groupMembership in groupMemberships)
+                    {
+                        var groupMembershipModel = groupMembership.ToModel<NexportProductGroupMembershipMappingModel>();
+                        mappingModel.GroupMembershipMappingModels.Add(groupMembershipModel);
+                    }
+
                     return mappingModel;
                 });
             });
@@ -1004,7 +1011,21 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             model.RegistrationFieldsWithoutCategory = availableFields
                 .Where(x => x.FieldCategoryId == null)
                 .OrderBy(x => x.DisplayOrder)
-                .Select(x => x.ToModel<NexportRegistrationFieldModel>())
+                .Select(f =>
+                {
+                    var fieldModel = f.ToModel<NexportRegistrationFieldModel>();
+                    if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox ||
+                        fieldModel.Type == NexportRegistrationFieldType.SelectDropDown)
+                    {
+                        if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox)
+                            fieldModel.AllowMultipleSelection = _genericAttributeService.GetAttribute(f,
+                                nameof(fieldModel.AllowMultipleSelection), defaultValue: false);
+
+                        fieldModel.DisplayOptionByAscendingOrder = _genericAttributeService.GetAttribute(f,
+                            nameof(fieldModel.DisplayOptionByAscendingOrder), defaultValue: false);
+                    }
+
+                    return fieldModel;                })
                 .ToList();
 
             return model;

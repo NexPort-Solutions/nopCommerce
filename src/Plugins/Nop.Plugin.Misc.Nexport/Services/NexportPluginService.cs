@@ -483,6 +483,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Custom", "Registration field custom option");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value", "Option value");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value.Hint", "The value of the option");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.DisplayOrder", "Display order");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Option.Value.Required", "The value for option is required");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Category.Options", "Additional options");
