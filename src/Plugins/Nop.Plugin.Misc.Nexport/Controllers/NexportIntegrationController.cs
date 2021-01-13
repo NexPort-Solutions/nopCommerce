@@ -2250,35 +2250,24 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
         [AutoValidateAntiforgeryToken]
-        [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
-        public IActionResult EditRegistrationFieldOption(NexportRegistrationFieldOptionModel model, bool continueEditing)
+        [HttpPost]
+        public IActionResult EditRegistrationFieldOption(NexportRegistrationFieldOptionModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
 
             var registrationFieldOption = _nexportService.GetNexportRegistrationFieldOptionById(model.Id);
             if (registrationFieldOption == null)
-                return RedirectToAction("ListRegistrationField");
+                return new NullJsonResult();
 
             var registrationField = _nexportService.GetNexportRegistrationFieldById(registrationFieldOption.FieldId);
             if (registrationField == null)
-                return RedirectToAction("ListRegistrationField");
+                return new NullJsonResult();
 
-            if (ModelState.IsValid)
-            {
-                registrationFieldOption = model.ToEntity(registrationFieldOption);
-                _nexportService.UpdateNexportRegistrationFieldOption(registrationFieldOption);
+            registrationFieldOption = model.ToEntity(registrationFieldOption);
+            _nexportService.UpdateNexportRegistrationFieldOption(registrationFieldOption);
 
-                _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Customers.Nexport.RegistrationField.Options.Updated"));
-
-                ViewBag.RefreshPage = true;
-
-                return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Edit.cshtml", model);
-            }
-
-            model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldOptionModel(null, registrationField, registrationFieldOption);
-
-            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Edit.cshtml", model);
+            return new NullJsonResult();
         }
 
         [Area(AreaNames.Admin)]

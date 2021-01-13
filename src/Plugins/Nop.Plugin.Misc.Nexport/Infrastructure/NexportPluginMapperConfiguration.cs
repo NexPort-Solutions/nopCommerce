@@ -101,7 +101,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             CreateMap<NexportRegistrationFieldModel, NexportRegistrationField>();
 
             CreateMap<NexportRegistrationFieldOption, NexportRegistrationFieldOptionModel>();
-            CreateMap<NexportRegistrationFieldOptionModel, NexportRegistrationFieldOption>();
+            CreateMap<NexportRegistrationFieldOptionModel, NexportRegistrationFieldOption>()
+                .ForMember(entity => entity.FieldId, opts => opts.Ignore());
 
             CreateMap<NexportRegistrationFieldCategory, NexportRegistrationFieldCategoryModel>();
             CreateMap<NexportRegistrationFieldCategoryModel, NexportRegistrationFieldCategory>();
