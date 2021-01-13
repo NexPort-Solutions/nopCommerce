@@ -309,6 +309,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         mappingModel.StoreName = _nexportService.GetStoreName(mappingModel.StoreId.Value);
                     }
 
+                    var groupMemberships = _nexportService.GetProductGroupMembershipMappings(mappingModel.Id);
+                    foreach (var groupMembership in groupMemberships)
+                    {
+                        var groupMembershipModel = groupMembership.ToModel<NexportProductGroupMembershipMappingModel>();
+                        mappingModel.GroupMembershipMappingModels.Add(groupMembershipModel);
+                    }
+
                     return mappingModel;
                 });
             });

@@ -817,13 +817,44 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return new NullJsonResult();
         }
 
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AutoValidateAntiforgeryToken]
+        [HttpPost]
+        public IActionResult DeleteMappings(ICollection<int> selectedIds)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) ||
+                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping))
+                return AccessDeniedView();
+
+            if (selectedIds != null)
+            {
+                foreach (var id in selectedIds)
+                {
+                    var mapping = _nexportService.GetProductMappingById(id);
+                    if (mapping != null)
+                    {
+                        _nexportService.DeleteNexportProductMapping(mapping);
+
+                        var groupMembershipMappings = _nexportService.GetProductGroupMembershipMappings(mapping.Id);
+                        foreach (var groupMembershipMapping in groupMembershipMappings)
+                        {
+                            _nexportService.DeleteGroupMembershipMapping(groupMembershipMapping);
+                        }
+                    }
+                }
+            }
+
+            return Json(new { Result = true });
+        }
+
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AutoValidateAntiforgeryToken]
         public IActionResult GetProductGroupMembershipMappings(int nexportProductMappingId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) || 
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts) ||
                 !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping) ||
                 string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return AccessDeniedDataTablesJson();
