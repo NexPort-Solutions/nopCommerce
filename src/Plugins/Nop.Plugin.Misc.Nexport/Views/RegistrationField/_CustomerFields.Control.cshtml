@@ -20,6 +20,22 @@
                 {
                     case NexportRegistrationFieldType.Text:
                         <input name="@(controlId)" type="text" class="textbox" id="@(controlId)" />
+                        <script asp-location="Footer">
+                            $(document).ready(function () {
+                                $("#@(controlId)").rules("add", {
+                                    "validate-pattern": {
+                                        @if (Model.IsRequired)
+                                                {
+                                                    <text>required: true,</text>
+                                                }
+                                        format: "@Model.ValidationRegex"
+                                    },
+                                    messages: {
+                                        "validate-pattern": "@(string.IsNullOrWhiteSpace(Model.ValidationMessage) ? "Please input the correct format" : Model.ValidationMessage)"
+                                    }
+                                });
+                            });
+                        </script>
 
                         break;
                     case NexportRegistrationFieldType.Numeric:

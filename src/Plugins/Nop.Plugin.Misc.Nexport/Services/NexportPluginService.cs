@@ -461,6 +461,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Validation.Hint", "Use custom validation to validate the registration field before submitting it.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex", "Custom validation");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex.Hint", "Regular expression that will be used to validate the field before submitting.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.ValidationMessage", "Validation message");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.ValidationMessage.Hint", "The message that will be displayed when the custom validation has failed.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.StoreMappings", "Stores");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Stores", "Stores");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Stores.Hint", "Option to limit display the registration field to a certain store");
@@ -687,6 +689,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Validation.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.ValidationMessage");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.ValidationMessage.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.StoreMappings");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Stores");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RegistrationField.Field.Stores.Hint");

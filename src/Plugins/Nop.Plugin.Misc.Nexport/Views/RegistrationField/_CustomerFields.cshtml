@@ -8,6 +8,8 @@
 
 @{
     Html.AppendScriptParts("~/lib/datatables/moment-with-locales-2.22.2.min.js");
+    Html.AppendScriptParts("~/Plugins/Misc.Nexport/Scripts/xregexp-all.min.js");
+
     Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
 
     Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/jquery-ui-timepicker-addon.min.css");
@@ -72,7 +74,27 @@
 
                 if (options.required || value)
                     return moment(value, options.format, true).isValid();
+
+                return true;
             }, "Please enter a valid datetime value");
+
+            jQuery.validator.addMethod("validate-pattern", function (value, element, params) {
+                var options = params ||
+                {
+                    format: "",
+                    required: false
+                };
+
+                if (this.optional(element))
+                    return true;
+
+                if (options.required || value) {
+                    var regEx = XRegExp.build(options.format, null, "x");
+                    return regEx.test(value);
+                }
+
+                return true;
+            }, "Please enter a valid format");
         });
     </script>
 }

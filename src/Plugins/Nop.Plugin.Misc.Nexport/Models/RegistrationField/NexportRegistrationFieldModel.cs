@@ -57,6 +57,9 @@ namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
         [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex")]
         public string ValidationRegex { get; set; }
 
+        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.ValidationMessage")]
+        public string ValidationMessage { get; set; }
+
         [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.StoreMappings")]
         public string StoreMappings { get; set; }
 

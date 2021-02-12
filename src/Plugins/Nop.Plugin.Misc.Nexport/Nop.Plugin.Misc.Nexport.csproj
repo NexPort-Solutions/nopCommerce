@@ -70,6 +70,7 @@
     <None Remove="Scripts\jquery-ui-timepicker-addon.min.js" />
     <None Remove="Scripts\nexport_common.js" />
     <None Remove="Scripts\nexport_plugin_common.js" />
+    <None Remove="Scripts\xregexp-all.min.js" />
     <None Remove="Views\Configure.cshtml" />
     <None Remove="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml" />
     <None Remove="Views\NexportCustomer\Login.cshtml" />
@@ -221,6 +222,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Scripts\nexport_plugin_common.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\xregexp-all.min.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml">

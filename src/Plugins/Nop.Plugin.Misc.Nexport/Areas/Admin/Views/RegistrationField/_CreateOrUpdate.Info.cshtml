@@ -46,9 +46,11 @@
     function toggleValidation() {
         if ($("#@Html.IdFor(model => model.Validation)").is(":checked")) {
             $("#validationRegexSettingContainer").show();
+            $("#validationMessageSettingContainer").show();
         } else {
             $("#@Html.IdFor(model => model.ValidationRegex)").val("");
             $("#validationRegexSettingContainer").hide();
+            $("#validationMessageSettingContainer").hide();
         }
     }
 </script>
@@ -148,6 +150,15 @@
             <div class="col-md-9">
                 <nop-editor asp-for="ValidationRegex" />
                 <span asp-validation-for="ValidationRegex"></span>
+            </div>
+        </div>
+        <div class="form-group" id="validationMessageSettingContainer">
+            <div class="col-md-3">
+                <nop-label asp-for="ValidationMessage" />
+            </div>
+            <div class="col-md-9">
+                <nop-editor asp-for="ValidationMessage" />
+                <span asp-validation-for="ValidationMessage"></span>
             </div>
         </div>
     </nop-nested-setting>

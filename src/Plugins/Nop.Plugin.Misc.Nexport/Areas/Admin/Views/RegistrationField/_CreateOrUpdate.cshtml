@@ -9,6 +9,8 @@
 
     const string hideRegistrationFieldCustomBlockAttributeName = "NexportRegistrationField.HideCustomBlock";
     var hideCustomBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideRegistrationFieldCustomBlockAttributeName);
+
+    Html.AddScriptParts("~/Plugins/Misc.Nexport/Scripts/xregexp-all.min.js");
 }
 
 <div asp-validation-summary="All"></div>
