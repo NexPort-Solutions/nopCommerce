@@ -31,11 +31,15 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
 
         ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMapping(string fieldControlName);
 
+        ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMappingByFieldKey(string fieldKey);
+
         void InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping);
 
         void DeleteArchwayStudentRegistrationFieldKeyMapping(ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping);
 
         IList<ArchwayStudentRegistrationFieldAnswer> GetArchwayStudentRegistrationFieldAnswers(int customerId, int fieldId);
+
+        ArchwayStudentRegistrationFieldAnswer GetArchwayStudentRegistrationFieldAnswer(int id);
 
         void InsertArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer);
 
@@ -43,10 +47,14 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
 
         void UpdateArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer);
 
+        void UpdateArchwayStudentRegistrationFieldAnswersForCustomer(int customerId, int fieldId, Dictionary<string, string> fields);
+
         Dictionary<string, string> ParseArchwayStoreEmployeeRegistrationFields(int fieldId, IFormCollection form);
 
         void SaveArchwayStoreEmployeeRegistrationFields(Customer customer, int fieldId, Dictionary<string, string> fields);
 
         Dictionary<string, string> ProcessArchwayStoreEmployeeRegistrationFields(int customerId, int fieldId);
+
+        Dictionary<string, string> GetCustomFieldNamesAndValues(int customerId, int fieldId);
     }
 }

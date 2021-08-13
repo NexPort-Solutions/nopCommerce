@@ -235,7 +235,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         IList<NexportRegistrationField> GetNexportRegistrationFieldsByCategoryId(int categoryId);
 
-        IPagedList<NexportRegistrationField> GetNexportRegistrationFieldsPagination(
+        IPagedList<NexportRegistrationField> GetNexportRegistrationFieldsPagination(int pageIndex = 0, int pageSize = int.MaxValue);
+
+        IPagedList<NexportRegistrationField> GetNexportRegistrationFieldsWithAnswersPagination(int customerId,
             int pageIndex = 0, int pageSize = int.MaxValue);
 
         void InsertNexportRegistrationField(NexportRegistrationField registrationField);
@@ -282,10 +284,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         NexportRegistrationFieldAnswer GetNexportRegistrationFieldAnswerById(int fieldAnswerId);
 
-        IList<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswers(int customerId);
+        IList<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswers(int customerId, int? fieldId = null);
 
         IPagedList<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswersPagination(int customerId,
+            int? fieldId = null,
             int pageIndex = 0, int pageSize = int.MaxValue);
+
+        NexportRegistrationFieldAnswer GetNexportRegistrationFieldAnswerByFieldOption(int customerId, int fieldId, int fieldOptionId);
 
         void InsertNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
 

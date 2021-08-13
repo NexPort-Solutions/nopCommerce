@@ -27,8 +27,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
             _localizationService = localizationService;
         }
 
-        public ArchwayStudentEmployeeRegistrationFieldModel PrepareArchwayStudentEmployeeRegistrationFieldModel(
-            int fieldId)
+        public ArchwayStudentEmployeeRegistrationFieldModel PrepareArchwayStudentEmployeeRegistrationFieldModel(int fieldId)
         {
             var model = new ArchwayStudentEmployeeRegistrationFieldModel { FieldId = fieldId };
 
@@ -82,6 +81,59 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
                     }
                 }
             }
+
+            return model;
+        }
+
+        public ArchwayStudentEmployeeRegistrationFieldModel PrepareEditArchwayStudentEmployeeRegistrationFieldModel(int customerId, int fieldId)
+        {
+            var model = PrepareArchwayStudentEmployeeRegistrationFieldModel(fieldId);
+
+            var currentAnswers = _archwayStudentEmployeeRegistrationFieldService.GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
+
+            model.StoreLocationState = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreStateField")?.TextValue;
+            
+            model.StoreLocationCity = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreCityField")?.TextValue;
+
+            var citiesFromCurrentState = GetArchwayStoreCitiesByState(model.StoreLocationState, true);
+            foreach (var city in citiesFromCurrentState)
+            {
+                model.AvailableCities.Add(new SelectListItem
+                {
+                    Text = city.name,
+                    Value = city.name
+                });
+            }
+
+            model.StoreLocationAddress = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreAddressField")?.TextValue;
+
+            var addressFromCurrentCity = GetArchwayStoreAddressesByCity(model.StoreLocationCity, true);
+            foreach (var address in addressFromCurrentCity)
+            {
+                model.AvailableAddresses.Add(new SelectListItem
+                {
+                    Text = address.name,
+                    Value = address.name
+                });
+            }
+
+            model.EmployeePosition = currentAnswers.FirstOrDefault(x => x.FieldKey == "EmployeePositionField").TextValue;
+
+
+            model.StoreNumber = int.Parse(currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreIdField")?.TextValue);
+            model.StoreType = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreTypeField")?.TextValue;
+
+            var positionFromCurrentAddress = GetArchwayStoreEmployeePositionsByStore(model.StoreNumber.ToString(), true);
+            foreach(var position in positionFromCurrentAddress)
+            {
+                model.AvailableEmployeePositions.Add(new SelectListItem
+                {
+                    Text = position.name,
+                    Value = position.name
+                });
+            }
+
+            model.EmployeeId = currentAnswers.FirstOrDefault(x => x.FieldKey == "EmployeeIdField")?.TextValue;
 
             return model;
         }

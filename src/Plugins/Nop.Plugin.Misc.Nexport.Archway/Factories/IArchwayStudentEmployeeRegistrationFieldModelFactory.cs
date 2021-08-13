@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Nop.Plugin.Misc.Nexport.Archway.Models;
-using Nop.Web.Models.Directory;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Factories
 {
@@ -9,6 +8,8 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
         ArchwayStudentEmployeeRegistrationFieldModel PrepareArchwayStudentEmployeeRegistrationFieldModel(int fieldId);
 
         ArchwayStudentEmployeeRegistrationFieldOptionModel PrepareArchwayStudentEmployeeRegistrationFieldOptionModel(int fieldId);
+
+        ArchwayStudentEmployeeRegistrationFieldModel PrepareEditArchwayStudentEmployeeRegistrationFieldModel(int customerId, int fieldId);
 
         IList<ArchwayStoreCityModel> GetArchwayStoreCitiesByState(string state, bool addSelectCityItem);
 

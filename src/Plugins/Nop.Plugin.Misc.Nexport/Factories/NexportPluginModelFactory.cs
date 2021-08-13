@@ -408,6 +408,16 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 CustomerId = customer.Id
             };
 
+            model.NexportCustomerRegistrationFieldWithAnswersListSearchModel = new NexportCustomerRegistrationFieldWithAnswersListSearchModel
+            {
+                CustomerId = customer.Id
+            };
+
+            model.NexportCustomerRegistrationFieldAnswerListSearchModel = new NexportCustomerRegistrationFieldAnswerListSearchModel
+            {
+                CustomerId = customer.Id
+            };
+
             return model;
         }
 
@@ -882,14 +892,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return searchModel;
         }
 
-        public virtual NexportRegistrationFieldListModel PrepareNexportRegistrationFieldListModel(
-            NexportRegistrationFieldSearchModel searchModel)
+        public virtual NexportRegistrationFieldListModel PrepareNexportRegistrationFieldListModel(NexportRegistrationFieldSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var registrationFields =
-                _nexportService.GetNexportRegistrationFieldsPagination(searchModel.Page - 1, searchModel.PageSize);
+            var registrationFields = _nexportService.GetNexportRegistrationFieldsPagination(searchModel.Page - 1, searchModel.PageSize);
 
             var model = new NexportRegistrationFieldListModel().PrepareToGrid(searchModel,
                 registrationFields, () =>
@@ -1051,6 +1059,126 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 .OrderBy(x => x.DisplayOrder)
                 .Select(x => x.ToModel<NexportRegistrationFieldModel>())
                 .ToList();
+
+            return model;
+        }
+
+        public NexportCustomerRegistrationFieldAnswerListModel PrepareNexportCustomerRegistrationFieldAnswerListModel(
+            NexportCustomerRegistrationFieldAnswerListSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var customerNexportRegistrationFieldAnswers = _nexportService.GetNexportRegistrationFieldAnswersPagination(searchModel.CustomerId, searchModel.FieldId,
+                pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
+
+            var model = new NexportCustomerRegistrationFieldAnswerListModel().PrepareToGrid(searchModel, customerNexportRegistrationFieldAnswers, () =>
+            {
+                return customerNexportRegistrationFieldAnswers.Select(answer =>
+                {
+                    var answerModel = answer.ToModel<NexportCustomerRegistrationFieldAnswerModel>();
+                    var registrationField = _nexportService.GetNexportRegistrationFieldById(answer.FieldId);
+                    if (registrationField != null)
+                    {
+                        if (string.IsNullOrEmpty(registrationField.CustomFieldRender))
+                        {
+                            if (!string.IsNullOrEmpty(answer.TextValue))
+                            {
+                                answerModel.FieldValue = answer.TextValue;
+                            }
+                            else if (answer.NumericValue != null)
+                            {
+                                answerModel.FieldValue = answer.NumericValue.ToString();
+                            }
+                            else if (answer.DateTimeValue != null)
+                            {
+                                answerModel.FieldValue = answer.DateTimeValue.ToString();
+                            }
+                            else if (answer.BooleanValue != null)
+                            {
+                                answerModel.FieldValue = answer.BooleanValue.Value ? "True" : "False";
+                            }
+                            else if (answer.FieldOptionId != null)
+                            {
+                                var fieldOption =
+                                    _nexportService.GetNexportRegistrationFieldOptionById(answer.FieldOptionId.Value,
+                                        answer.FieldId);
+                                if (fieldOption != null)
+                                {
+                                    answerModel.FieldValue = fieldOption.OptionValue;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var customRender = _registrationFieldCustomRenderPluginManager.LoadPluginBySystemName(registrationField.CustomFieldRender);
+
+                            if (customRender != null)
+                            {
+                                var customFieldRenderAnswers = customRender.GetCustomFieldNamesAndValues(searchModel.CustomerId, registrationField.Id);
+                                answerModel.FieldValue = string.Join("; ",
+                                    customFieldRenderAnswers
+                                        .Select(customAnswer =>
+                                            string.IsNullOrWhiteSpace(customAnswer.Value)
+                                                ? $"{customAnswer.Key}: N/A"
+                                                : $"{customAnswer.Key}: {customAnswer.Value}")
+                                        .ToList());
+                            }
+                        }
+                    }
+
+                    return answerModel;
+                });
+            });
+
+            return model;
+        }
+
+        public NexportCustomerRegistrationFieldWithAnswersListModel PrepareNexportCustomerRegistrationFieldWithAnswersListModel(
+            NexportCustomerRegistrationFieldWithAnswersListSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var customerNexportRegistrationFieldsWithAnswers = _nexportService.GetNexportRegistrationFieldsWithAnswersPagination(searchModel.CustomerId,
+                pageIndex: searchModel.Page - 1,
+                pageSize: searchModel.PageSize);
+
+            var model = new NexportCustomerRegistrationFieldWithAnswersListModel().PrepareToGrid(searchModel, customerNexportRegistrationFieldsWithAnswers, () =>
+            {
+                return customerNexportRegistrationFieldsWithAnswers.Select(field =>
+                {
+                    var fieldModel = field.ToModel<NexportCustomerRegistrationFieldWithAnswersModel>();
+                    fieldModel.CustomerId = searchModel.CustomerId;
+                    fieldModel.FieldType = field.Type.GetDisplayName();
+
+                    return fieldModel;
+                });
+            });
+
+            return model;
+        }
+
+        public NexportCustomerRegistrationFieldAnswersEditModel PrepareNexportCustomerRegistrationFieldAnswersEditModel(
+            Customer customer, NexportRegistrationField registrationField)
+        {
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            if (registrationField == null)
+                throw new ArgumentNullException(nameof(registrationField));
+
+            var currentRegistrationFieldAnswers = _nexportService.GetNexportRegistrationFieldAnswers(customer.Id, registrationField.Id);
+
+            var registrationFieldModel = registrationField.ToModel<NexportRegistrationFieldModel>();
+            PrepareNexportRegistrationFieldModel(registrationFieldModel, registrationField);
+
+            var model = new NexportCustomerRegistrationFieldAnswersEditModel
+            {
+                RegistrationField = registrationFieldModel,
+                Options = _nexportService.GetNexportRegistrationFieldOptions(registrationField.Id),
+                Answers = currentRegistrationFieldAnswers
+            };
 
             return model;
         }

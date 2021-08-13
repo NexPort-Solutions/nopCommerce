@@ -160,6 +160,17 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
                 });
             }
         }
+        
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult EditCustomerRegistrationFieldAnswers(int customerId, int fieldId)
+        {
+            var model = _archwayStudentEmployeeRegistrationFieldModelFactory.PrepareEditArchwayStudentEmployeeRegistrationFieldModel(customerId, fieldId);
+
+            ViewData.TemplateInfo.HtmlFieldPrefix = $"{NexportDefaults.NexportRegistrationFieldPrefix}-{fieldId}.{PluginDefaults.HtmlFieldPrefix}";
+
+            return PartialView("~/Plugins/Misc.Nexport.Archway/Views/RegistrationField/EditCustomerRegistrationFieldAnswers.cshtml", model);
+        }
 
         #endregion
 

@@ -103,7 +103,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IWorkflowMessageService _workflowMessageService;
         private readonly IMessageTokenProvider _messageTokenProvider;
 
-        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomerRenderPluginManager;
+        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
         private readonly IDateTimeHelper _dateTimeHelper;
         private readonly IUrlHelperFactory _urlHelperFactory;
         private readonly IActionContextAccessor _actionContextAccessor;
@@ -166,7 +166,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IMessageTokenProvider messageTokenProvider,
             IWorkflowMessageService workflowMessageService,
             ILocalizationService localizationService,
-            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomerRenderPluginManager,
+            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
             IDateTimeHelper dateTimeHelper,
             IUrlHelperFactory urlHelperFactory,
             IActionContextAccessor actionContextAccessor,
@@ -225,7 +225,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _messageTokenProvider = messageTokenProvider;
             _workflowMessageService = workflowMessageService;
             _localizationService = localizationService;
-            _registrationFieldCustomerRenderPluginManager = registrationFieldCustomerRenderPluginManager;
+            _registrationFieldCustomRenderPluginManager = registrationFieldCustomRenderPluginManager;
             _dateTimeHelper = dateTimeHelper;
             _urlHelperFactory = urlHelperFactory;
             _actionContextAccessor = actionContextAccessor;
@@ -2372,7 +2372,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 if (!field.IsActive)
                     continue;
 
-                var customRender = _registrationFieldCustomerRenderPluginManager.LoadPluginBySystemName(field.CustomFieldRender);
+                var customRender = _registrationFieldCustomRenderPluginManager.LoadPluginBySystemName(field.CustomFieldRender);
 
                 if (customRender != null)
                 {
@@ -2581,7 +2581,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     continue;
 
                 var customRender =
-                    _registrationFieldCustomerRenderPluginManager.LoadPluginBySystemName(field.CustomFieldRender);
+                    _registrationFieldCustomRenderPluginManager.LoadPluginBySystemName(field.CustomFieldRender);
                 var processResult = customRender?.ProcessCustomRegistrationFields(answer.CustomerId, field.Id);
                 if (processResult != null)
                 {
@@ -2596,7 +2596,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public IList<NexportRegistrationFieldCustomRender> GetNexportRegistrationFieldCustomRenders()
         {
-            var availablePlugins = _registrationFieldCustomerRenderPluginManager.LoadAllPlugins().ToList();
+            var availablePlugins = _registrationFieldCustomRenderPluginManager.LoadAllPlugins().ToList();
 
             var list = new List<NexportRegistrationFieldCustomRender>();
 

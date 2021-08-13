@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using CsvHelper;
+using CsvHelper.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Nop.Core.Caching;
@@ -17,6 +18,7 @@ using Nop.Plugin.Misc.Nexport.Archway.Data;
 using Nop.Plugin.Misc.Nexport.Archway.Domains;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Localization;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Services
 {
@@ -29,6 +31,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
         private readonly IRepository<ArchwayStudentRegistrationFieldAnswer> _archwayStudentRegistrationFieldAnswerRepository;
         private readonly ICacheManager _cacheManager;
         private readonly INopFileProvider _fileProvider;
+        private readonly ILocalizationService _localizationService;
         private readonly NexportService _nexportService;
         private readonly ILogger _logger;
 
@@ -40,6 +43,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             IRepository<ArchwayStudentRegistrationFieldAnswer> archwayStudentRegistrationFieldAnswerRepository,
             ICacheManager cacheManager,
             INopFileProvider fileProvider,
+            ILocalizationService localizationService,
             NexportService nexportService,
             ILogger logger)
         {
@@ -50,6 +54,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             _archwayStudentRegistrationFieldAnswerRepository = archwayStudentRegistrationFieldAnswerRepository;
             _cacheManager = cacheManager;
             _fileProvider = fileProvider;
+            _localizationService = localizationService;
             _nexportService = nexportService;
             _logger = logger;
         }
@@ -98,10 +103,10 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
 
                 using (var reader = new StreamReader(filePath))
                 {
-                    using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                    var csvReaderConfig = new CsvConfiguration(CultureInfo.InvariantCulture) { Delimiter = "|" };
+                    using (var csv = new CsvReader(reader, csvReaderConfig))
                     {
-                        csv.Configuration.RegisterClassMap<ArchwayStoreRecordParsingClassMap>();
-                        csv.Configuration.Delimiter = "|";
+                        csv.Context.RegisterClassMap<ArchwayStoreRecordParsingClassMap>();
 
                         var dt = new DataTable();
 
@@ -238,8 +243,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             _archwayStoreEmployeePositionRepository.Delete(position);
         }
 
-        public ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMapping(
-            string fieldControlName)
+        public ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMapping(string fieldControlName)
         {
             if (string.IsNullOrWhiteSpace(fieldControlName))
                 return null;
@@ -247,6 +251,16 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             return _archwayStudentRegistrationFieldKeyMappingRepository
                 .TableNoTracking
                 .FirstOrDefault(x => x.FieldControlName == fieldControlName);
+        }
+
+        public ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMappingByFieldKey(string fieldKey)
+        {
+            if (string.IsNullOrWhiteSpace(fieldKey))
+                return null;
+
+            return _archwayStudentRegistrationFieldKeyMappingRepository
+                .TableNoTracking
+                .FirstOrDefault(x => x.FieldKey == fieldKey);
         }
 
         public void InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(
@@ -295,6 +309,11 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                     x.CustomerId == customerId && x.FieldId == fieldId).ToList();
         }
 
+        public ArchwayStudentRegistrationFieldAnswer GetArchwayStudentRegistrationFieldAnswer(int id)
+        {
+            return id < 1 ? null : _archwayStudentRegistrationFieldAnswerRepository.GetById(id);
+        }
+
         public void InsertArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer)
         {
             if (answer == null)
@@ -312,7 +331,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                 x.CustomerId == answer.CustomerId && x.FieldId == answer.FieldId && x.FieldKey == answer.FieldKey))
                 return;
 
-            _archwayStudentRegistrationFieldAnswerRepository.Insert(answer);
+            _archwayStudentRegistrationFieldAnswerRepository.Delete(answer);
         }
 
         public void UpdateArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer)
@@ -320,7 +339,43 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             if (answer == null)
                 throw new ArgumentNullException(nameof(answer));
 
-            _archwayStudentRegistrationFieldAnswerRepository.Insert(answer);
+            _archwayStudentRegistrationFieldAnswerRepository.Update(answer);
+        }
+
+        public void UpdateArchwayStudentRegistrationFieldAnswersForCustomer(int customerId, int fieldId, Dictionary<string, string> fields)
+        {
+            var answers = GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
+            var prefix = $"{NexportDefaults.NexportRegistrationFieldPrefix}-{fieldId}.{PluginDefaults.HtmlFieldPrefix}";
+            foreach (var (key, value) in fields)
+            {
+                var fieldControl = key.Substring(key.IndexOf(prefix, StringComparison.Ordinal) + prefix.Length + 1);
+                var fieldKeyMapping = GetArchwayStudentRegistrationFieldKeyMapping(fieldControl);
+                if (fieldKeyMapping != null)
+                {
+                    var currentAnswer = answers.FirstOrDefault(x => x.FieldKey == fieldKeyMapping.FieldKey);
+                    if (currentAnswer != null)
+                    {
+                        currentAnswer.TextValue = value;
+                        currentAnswer.UtcDateModified = DateTime.UtcNow;
+
+                        UpdateArchwayStudentRegistrationFieldAnswer(currentAnswer);
+                    }
+                    else
+                    {
+                        var newAnswer = new ArchwayStudentRegistrationFieldAnswer
+                        {
+                            CustomerId = customerId,
+                            FieldId = fieldId,
+                            FieldKey = fieldKeyMapping.FieldKey,
+                            TextValue = value,
+                            UtcDateCreated = DateTime.UtcNow,
+                            UtcDateModified = DateTime.UtcNow
+                        };
+
+                        InsertArchwayStudentRegistrationFieldAnswer(newAnswer);
+                    }
+                }
+            }
         }
 
         public Dictionary<string, string> ParseArchwayStoreEmployeeRegistrationFields(int fieldId, IFormCollection form)
@@ -383,6 +438,22 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             var answers = GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
 
             return answers.ToDictionary(answer => answer.FieldKey, answer => answer.TextValue);
+        }
+
+        public Dictionary<string, string> GetCustomFieldNamesAndValues(int customerId, int fieldId)
+        {
+            var result = new Dictionary<string, string>();
+            var answers = GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
+            foreach (var answer in answers.Where(x=>x.FieldKey != "StoreIdField" && x.FieldKey != "StoreTypeField"))
+            {
+                var fieldKeyInfo = GetArchwayStudentRegistrationFieldKeyMappingByFieldKey(answer.FieldKey);
+                if (fieldKeyInfo != null)
+                {
+                    result.Add(_localizationService.GetResource($"Plugins.Misc.Nexport.Archway.Field.{fieldKeyInfo.FieldControlName}"), answer.TextValue);
+                }
+            }
+
+            return result;
         }
     }
 }

@@ -1654,6 +1654,26 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
+        public IPagedList<NexportRegistrationField> GetNexportRegistrationFieldsWithAnswersPagination(int customerId,
+            int pageIndex = 0, int pageSize = int.MaxValue)
+        {
+            var registrationFieldWithAnswerIds =
+                _nexportRegistrationFieldAnswerRepository
+                    .TableNoTracking
+                    .Where(fa => fa.CustomerId == customerId)
+                    .GroupBy(fa => fa.FieldId)
+                    .Select(x => x.FirstOrDefault().FieldId)
+                    .ToList();
+
+            var query = _nexportRegistrationFieldRepository
+                .TableNoTracking
+                .Where(f => registrationFieldWithAnswerIds.Contains(f.Id));
+
+            var fields = new PagedList<NexportRegistrationField>(query, pageIndex, pageSize);
+
+            return fields;
+        }
+
         public void InsertNexportRegistrationField(NexportRegistrationField registrationField)
         {
             if (registrationField == null)
@@ -1863,26 +1883,50 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return fieldAnswerId < 1 ? null : _nexportRegistrationFieldAnswerRepository.GetById(fieldAnswerId);
         }
 
-        public IList<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswers(int customerId)
+        public IList<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswers(int customerId, int? fieldId = null)
         {
             if (customerId < 1)
                 return new List<NexportRegistrationFieldAnswer>();
 
-            return _nexportRegistrationFieldAnswerRepository.TableNoTracking
-                .Where(fa => fa.CustomerId == customerId).ToList();
+            var query = _nexportRegistrationFieldAnswerRepository.TableNoTracking
+                .Where(fa => fa.CustomerId == customerId);
+
+            if (fieldId != null)
+            {
+                query = query.Where(x => x.FieldId == fieldId);
+            }
+
+            return query.ToList();
         }
 
         public IPagedList<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswersPagination(int customerId,
+            int? fieldId = null,
             int pageIndex = 0, int pageSize = int.MaxValue)
         {
             return _cacheManager.Get(NexportIntegrationDefaults.RegistrationFieldAnswerAllCacheKey, () =>
             {
                 var query = _nexportRegistrationFieldAnswerRepository.TableNoTracking.Where(fa => fa.CustomerId == customerId);
 
+                if (fieldId != null)
+                {
+                    query = query.Where(x => x.FieldId == fieldId);
+                }
+
                 var fields = new PagedList<NexportRegistrationFieldAnswer>(query, pageIndex, pageSize);
 
                 return fields;
             });
+        }
+
+        public NexportRegistrationFieldAnswer GetNexportRegistrationFieldAnswerByFieldOption(int customerId, int fieldId, int fieldOptionId)
+        {
+            if (customerId < 1 || fieldId < 1)
+                return null;
+
+            return _nexportRegistrationFieldAnswerRepository.TableNoTracking.FirstOrDefault(fa =>
+                fa.CustomerId == customerId &&
+                fa.FieldId == fieldId &&
+                fa.FieldOptionId == fieldOptionId);
         }
 
         public void InsertNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)

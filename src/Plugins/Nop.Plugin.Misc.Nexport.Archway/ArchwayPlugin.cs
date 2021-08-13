@@ -138,6 +138,25 @@ namespace Nop.Plugin.Misc.Nexport.Archway
                 .ProcessArchwayStoreEmployeeRegistrationFields(customerId, fieldId);
         }
 
+        public Dictionary<string, string> GetCustomFieldNamesAndValues(int customerId, int fieldId)
+        {
+            return _archwayStudentEmployeeRegistrationFieldService
+                .GetCustomFieldNamesAndValues(customerId, fieldId);
+        }
+
+        public string GetEditCustomerRegistrationFieldAnswersViewUrl(int customerId, int fieldId)
+        {
+            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+
+            return urlHelper.Action("EditCustomerRegistrationFieldAnswers", "ArchwayEmployeeRegistrationField",
+                new { customerId = customerId, fieldId = fieldId }, _webHelper.CurrentRequestProtocol);
+        }
+
+        public void UpdateCustomRegistrationFieldAnswers(int customerId, int fieldId, Dictionary<string, string> fields)
+        {
+            _archwayStudentEmployeeRegistrationFieldService.UpdateArchwayStudentRegistrationFieldAnswersForCustomer(customerId, fieldId, fields);
+        }
+
         public bool HideInWidgetList => true;
 
         public string GetWidgetViewComponentName(string widgetZone)

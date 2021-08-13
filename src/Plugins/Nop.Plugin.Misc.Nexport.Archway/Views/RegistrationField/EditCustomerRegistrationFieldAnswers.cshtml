@@ -13,58 +13,69 @@
     if (registrationField != null)
     {
         <text>
-            <div class="inputs custom-attributes">
-                <label asp-for="StoreLocationState" asp-postfix=":"></label>
-                <select asp-for="StoreLocationState" asp-items="Model.AvailableStates"
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="StoreLocationState" />
+                </div>
+                <div class="col-md-9">
+                    <nop-select asp-for="StoreLocationState" asp-items="Model.AvailableStates"
                         data-storelocation-city="#@Html.IdFor(model => model.StoreLocationCity)"
-                        data-loading="#cities-loading-progress"></select>
-                @if (registrationField.IsRequired)
-                {
-                    <nop-required />
-                }
-                <span asp-validation-for="@Model.StoreLocationState"></span>
+                        data-loading="#cities-loading-progress" />
+                    <span asp-validation-for="StoreLocationState"></span>
+                </div>
             </div>
-            <div class="inputs custom-attributes">
-                <label asp-for="StoreLocationCity" asp-postfix=":"></label>
-                <select asp-for="StoreLocationCity" asp-items="Model.AvailableCities"
+
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="StoreLocationCity" />
+                </div>
+                <div class="col-md-9">
+                    <nop-select asp-for="StoreLocationCity" asp-items="Model.AvailableCities"
                         data-storelocation-address="#@Html.IdFor(model => model.StoreLocationAddress)"
-                        data-loading="#addresses-loading-progress"></select>
-                <span id="cities-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
-                @if (registrationField.IsRequired)
-                {
-                    <nop-required />
-                }
-                <span asp-validation-for="StoreLocationCity"></span>
+                        data-loading="#addresses-loading-progress" />
+                    <span id="cities-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+                    <span asp-validation-for="StoreLocationCity"></span>
+                </div>
             </div>
-            <div class="inputs custom-attributes">
-                <label asp-for="StoreLocationAddress" asp-postfix=":"></label>
-                <select asp-for="StoreLocationAddress" asp-items="Model.AvailableAddresses"
+
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="StoreLocationAddress" />
+                </div>
+                <div class="col-md-9">
+                    <nop-select asp-for="StoreLocationAddress" asp-items="Model.AvailableAddresses"
                         data-storelocation-employeeposition="#@Html.IdFor(model => model.EmployeePosition)"
-                        data-loading="#employee-positions-loading-progress"></select>
-                <span id="addresses-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
-                @if (registrationField.IsRequired)
-                {
-                    <nop-required />
-                }
-                <span asp-validation-for="StoreLocationAddress"></span>
+                        data-loading="#employee-positions-loading-progress" />
+
+                    <span id="addresses-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+                    <span asp-validation-for="StoreLocationAddress"></span>
+                </div>
             </div>
+
+            <div class="form-group">
+                <div class="col-md-3">
+                    <nop-label asp-for="EmployeePosition" />
+                </div>
+                <div class="col-md-9">
+                    <nop-select asp-for="EmployeePosition" asp-items="Model.AvailableEmployeePositions" />
+                    <span id="employee-positions-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+                    <span asp-validation-for="EmployeePosition"></span>
+                </div>
+            </div>
+
+            <div class="form-group" id="storeEmployeeIdContainer">
+                <div class="col-md-3">
+                    <nop-label asp-for="EmployeeId" />
+                </div>
+                <div class="col-md-9">
+                    <nop-editor asp-for="EmployeeId" />
+                    <span asp-validation-for="EmployeeId"></span>
+                </div>
+            </div>
+
             <input type="hidden" asp-for="StoreType" />
             <input type="hidden" asp-for="StoreNumber" />
-            <div class="inputs custom-attributes">
-                <label asp-for="EmployeePosition" asp-postfix=":"></label>
-                <select asp-for="EmployeePosition" asp-items="Model.AvailableEmployeePositions"></select>
-                <span id="employee-positions-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
-                @if (registrationField.IsRequired)
-                {
-                    <nop-required />
-                }
-                <span asp-validation-for="EmployeePosition"></span>
-            </div>
-            <div class="inputs custom-attributes" id="storeEmployeeIdContainer">
-                <label asp-for="EmployeeId" asp-postfix=":"></label>
-                <nop-editor asp-for="EmployeeId" />
-                <span asp-validation-for="EmployeeId"></span>
-            </div>
+
             <script>
                 function resetHiddenInputFields() {
                     $("#storeEmployeeIdContainer").hide();
@@ -77,49 +88,49 @@
                 $(document).ready(function() {
                     $("#storeEmployeeIdContainer").hide();
 
-                    $("#@Html.IdFor(model => model.StoreLocationState)").change(function(e) {
-						resetHiddenInputFields();
+                    storeLocationCitySelectHandler($("#@Html.IdFor(model => model.StoreLocationCity)"));
 
-                        $("select[id=\"@Html.IdFor(model => model.StoreLocationAddress)\"]").html("");
-                        $("select[id=\"@Html.IdFor(model => model.EmployeePosition)\"]").html("");
+                    $("#@Html.IdFor(model => model.StoreLocationState)").change(function(e) {
+                        resetHiddenInputFields();
+
+                        $("#@Html.IdFor(model => model.StoreLocationAddress)").html("");
+                        $("#@Html.IdFor(model => model.EmployeePosition)").html("");
 
                         storeLocationStateSelectHandler($(e.target));
-					});
+                    });
 
                     $("#@Html.IdFor(model => model.StoreLocationCity)").change(function(e) {
                         resetHiddenInputFields();
 
-                        $("select[id=\"@Html.IdFor(model => model.EmployeePosition)\"]").html("");
+                        $("#@Html.IdFor(model => model.EmployeePosition)").html("");
 
                         storeLocationCitySelectHandler($(e.target));
                     });
 
                     $("#@Html.IdFor(model => model.StoreLocationAddress)").change(function(e) {
-						resetHiddenInputFields();
+                        resetHiddenInputFields();
 
-						storeLocationAddressSelectHandler($(e.target));
+                        storeLocationAddressSelectHandler($(e.target));
                     });
 
-                    if ($(document).has("#@Html.IdFor(model => model.EmployeePosition)")) {
-                        $("#@Html.IdFor(model => model.EmployeePosition)").change(function(e) {
-                            if ($("#@Html.IdFor(model => model.StoreType)").val() === "MCD") {
-                                $("#@Html.IdFor(model => model.EmployeeId)").val("");
-                                $("#@Html.IdFor(model => model.EmployeeId)").rules("add", {
-                                        required: true,
-                                        min: 1,
-                                        messages: {
-                                            required: "This is a required field",
-                                            min: "Id must be greater than 0"
-                                        }
-                                    });
-                                $("#storeEmployeeIdContainer").show();
-                            } else {
-                                $("#@Html.IdFor(model => model.EmployeeId)").rules("remove");
-                                $("#storeEmployeeIdContainer").hide();
-                                $("#@Html.IdFor(model => model.EmployeeId)").val("");
-                            }
-                        });
-                    }
+                    $("#@Html.IdFor(model => model.EmployeePosition)").change(function(e) {
+                        if ($("#@Html.IdFor(model => model.StoreType)").val() === "MCD") {
+                            $("#@Html.IdFor(model => model.EmployeeId)").val("");
+                            $("#@Html.IdFor(model => model.EmployeeId)").rules("add", {
+                                    required: true,
+                                    min: 1,
+                                    messages: {
+                                        required: "This is a required field",
+                                        min: "Id must be greater than 0"
+                                    }
+                                });
+                            $("#storeEmployeeIdContainer").show();
+                        } else {
+                            $("#@Html.IdFor(model => model.EmployeeId)").rules("remove");
+                            $("#storeEmployeeIdContainer").hide();
+                            $("#@Html.IdFor(model => model.EmployeeId)").val("");
+                        }
+                    });
 
                     @if (registrationField.IsRequired)
                     {
@@ -173,8 +184,8 @@
                     }
 
                     archwayStoreSelectionHandler(
-						"@Url.RouteUrl("GetArchwayStoreCitiesByState")",
-						handler,
+                        "@Url.RouteUrl("GetArchwayStoreCitiesByState")",
+                        handler,
                         "storelocation-city",
                         ajaxData,
                         function(selectionElement, data) {
@@ -194,19 +205,24 @@
                     }
 
                     archwayStoreSelectionHandler(
-						"@Url.RouteUrl("GetArchwayStoreAddressesByCity")",
-						handler,
+                        "@Url.RouteUrl("GetArchwayStoreAddressesByCity")",
+                        handler,
                         "storelocation-address",
                         ajaxData,
                         function(selectionElement, data) {
                             selectionElement.append($("<option></option>").val("").html("Select"));
                             $.each(data,
                                 function(id, option) {
-                                    selectionElement.append(
-                                        $("<option></option>")
+                                    var optionElement = $("<option></option>")
                                         .attr("data-store-type", option.storeType)
                                         .attr("data-store-number", option.storeNumber)
-                                        .val(option.name).html(option.name));
+                                        .val(option.name).html(option.name);
+
+                                    if (option.storeNumber == "@Model.StoreNumber"){
+                                        optionElement.prop("selected", true);
+                                    }
+
+                                    selectionElement.append(optionElement);
                                 });
                         }, "Failed to retrieve addresses!");
                 }
@@ -231,8 +247,8 @@
                         }
 
                         archwayStoreSelectionHandler(
-							"@Url.RouteUrl("GetArchwayEmployeePositionsByStore")",
-							handler,
+                            "@Url.RouteUrl("GetArchwayEmployeePositionsByStore")",
+                            handler,
                             "storelocation-employeeposition",
                             ajaxData,
                             function (selectionElement, data) {
@@ -243,6 +259,8 @@
                             }, "Failed to retrieve employee positions!");
                     }
                 }
+
+                //# sourceURL=EditArchwayRegistrationFieldAnswer.js
             </script>
         </text>
     }

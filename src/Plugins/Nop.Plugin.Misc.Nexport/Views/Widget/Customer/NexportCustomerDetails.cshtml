@@ -8,6 +8,7 @@
 @using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 @using System.Net
 @using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer
 @using Nop.Services.Stores
 
 @inject IGenericAttributeService genericAttributeService
@@ -30,6 +31,9 @@
 
     const string hideNexportSupplementalInfoAnswersBlockAttributeName = "CustomerPage.HideNexportSupplementalInfoAnswersBlock";
     var hideNexportSupplementalInfoAnswersBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportSupplementalInfoAnswersBlockAttributeName);
+
+    const string hideNexportCustomerRegistrationFieldAnswersBlockAttributeName = "CustomerPage.HideNexportCustomerRegistrationFieldAnswersBlock";
+    var hideNexportCustomerRegistrationFieldAnswersBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportCustomerRegistrationFieldAnswersBlockAttributeName);
 
     <nop-panel asp-name="nexport-customer-details" asp-icon="fa fa-sticky-note-o" asp-title="Nexport Customer Info"
                asp-hide-block-attribute-name="@hideNexportCustomerDetailsBlockAttributeName" asp-hide="@hideNexportCustomerDetailsBlock" asp-advanced="false">
@@ -187,158 +191,260 @@
             })
 
             <input type="submit" id="btnRefreshAnswerList" style="display: none">
-
-            <script>
-                $(document).ready(function() {
-                    jQuery.validator.addMethod("dotnet-guid",
-                        function(value, element) {
-                            return this.optional(element) || /[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}/i.test(value);
-                        }, "Please input the correct GUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx");
-
-                    $("#btnRefreshAnswerList").click(function() {
-                        // Refresh child grid
-                        $("table[id*=nexport-customer-supplemental-info-answers-list]").DataTable().draw(false);
-
-                        // Return false to don't reload a page
-                        return false;
-                    });
-
-                    $("#setNexportUserId").on("click",
-                        function(e) {
-                            e.preventDefault();
-
-                            var userIdElement = $("#@Html.IdFor(model => model.NexportUserId)");
-                            userIdElement.rules("add", { "dotnet-guid": true });
-
-                            setNexportUserId(userIdElement);
-                        });
-                });
-
-                function setNexportUserId(element) {
-                    var userId = element.val();
-                    if (element.valid()) {
-                        if (confirm("Are you sure you want to assign the user Id " + userId + " for this customer?")) {
-                            var postData = {
-                                customerId: @Model.CustomerId,
-                                nexportUserId: userId
-                            };
-                            addAntiForgeryToken(postData);
-
-                            $.ajax({
-                                url: "@Url.Action("SetNexportUser", "NexportIntegration")",
-                                type: "POST",
-                                dataType: "json",
-                                data: postData,
-                                success: function(data, textStatus, jqXHR) {
-                                    if (data.redirectUrl) {
-                                        window.location.href = data.redirectUrl;
-                                    }
-                                },
-                                error: function(jqXHR, textStatus, errorThrown) {
-                                    alert(errorThrown);
-                                }
-                            });
-                        }
-                    } else{
-                        element.rules("remove", "dotnet-guid");
-                        alert("Please input the correct GUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) for Nexport user Id!");
-                    }
-                }
-
-                function renderAnswerStatusInfo(data, type, row, meta) {
-                    if (data === +"@((int) NexportSupplementalInfoAnswerStatus.NotProcessed)") {
-                        return "@NexportSupplementalInfoAnswerStatus.NotProcessed.GetDisplayName()";
-                    } else if (data === +"@((int) NexportSupplementalInfoAnswerStatus.Processed)") {
-                        return "@NexportSupplementalInfoAnswerStatus.Processed.GetDisplayName()";
-                    } else if (data === +"@((int) NexportSupplementalInfoAnswerStatus.Modified)") {
-                        return "@NexportSupplementalInfoAnswerStatus.Modified.GetDisplayName()";
-                    } else {
-                        return "";
-                    }
-                }
-
-                function renderCustomGroupingRow(rows, group, level) {
-                    var rowData = rows.data();
-                    if (rowData.count() < 1)
-                        return "";
-
-                    var questionId = rowData.pluck("QuestionId")[0];
-                    var storeId = rowData.pluck("StoreId")[0];
-
-                    var buttonFunction = "editCustomerQuestion('" + questionId + "'" + ", '" + storeId + "');return false;";
-
-                    var element = "Store - " + rowData.pluck("StoreName")[0] + "<button class=\"btn btn-default\" style=\"margin-left: 5px; margin-top: 1px; margin-bottom: 1px; padding: 5px 12px;\"" +
-                        " onclick=\"" + buttonFunction + "\"";
-                    element += "><i class=\"fa fa-pencil\"></i>Edit</button>";
-
-                    return element;
-                }
-
-                function editCustomerQuestion(questionId, storeId) {
-                    if (questionId < 1) {
-                        alert("Invalid question Id");
-                        return;
-                    }
-
-                    if (storeId < 1) {
-                        alert("Invalid store Id");
-                        return;
-                    }
-
-                    var url = "@Url.Action("EditCustomerSupplementalInfoAnsweredQuestion", "NexportIntegration")";
-                    url += "?customerId=@Model.CustomerId";
-                    url += "&questionId=" + questionId;
-                    url += "&storeId=" + storeId;
-                    url += "&containerId=nexport-customer-supplemental-info-answers&btnId=btnRefreshAnswerList";
-
-                    OpenWindow(url, 800, 800, true);
-                }
-
-                function renderDeleteCustomerAnswer(data, type, row, meta) {
-                    if (!row.Id)
-                        return "";
-
-                    var buttonFunction = "deleteCustomerAnswer('" + data + "');return false;";
-
-                    return renderCustomButton(buttonFunction, "fa fa-delete", "Delete");
-                }
-
-                function deleteCustomerAnswer(answerId) {
-                    if (answerId < 1) {
-                        alert("Invalid answer Id");
-                        return;
-                    }
-
-                    if (confirm("@T("Admin.Common.DeleteConfirmation")")) {
-                        var postData = {
-                            answerId: answerId
-                        };
-                        addAntiForgeryToken(postData);
-
-                        $.ajax({
-                            url: "@Url.Action("DeleteCustomerSupplementalInfoAnswer", "NexportIntegration")",
-                            type: "@WebRequestMethods.Http.Post",
-                            dataType: "json",
-                            data: postData,
-                            success: function(data, textStatus, jqXHR) {
-                                // Display error if returned
-                                if (data) {
-                                    display_nop_error(data);
-                                }
-                                // Refresh grid
-                                $("table[id*=nexport-customer-supplemental-info-answers-list]").DataTable().draw(false);
-                            },
-                            error: function(jqXHR, textStatus, errorThrown) {
-                                alert(errorThrown);
-                            }
-                        });
-                    }
-
-                    return;
-                }
-
-                //# sourceURL=nexport_customer_details.js
-            </script>
         </div>
     </nop-panel>
+    <nop-panel asp-name="nexport-customer-registration-field-answers" asp-icon="fa fa-id-card-o"
+               asp-title="Nexport Registration Field Answers"
+               asp-hide-block-attribute-name="@hideNexportCustomerRegistrationFieldAnswersBlockAttributeName"
+               asp-hide="@hideNexportCustomerRegistrationFieldAnswersBlock" asp-advanced="false">
+        <div class="panel-body">
+            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
+            {
+                Name = "nexport-customer-registration-fields",
+                UrlRead = new DataUrl("GetNexportRegistrationFieldsForCustomer", "NexportIntegration",
+                    new RouteValueDictionary {
+                        {
+                            "customerId", Model.CustomerId
+                        }}),
+                Length = Model.NexportCustomerRegistrationFieldWithAnswersListSearchModel.PageSize,
+                LengthMenu = Model.NexportCustomerRegistrationFieldWithAnswersListSearchModel.AvailablePageSizes,
+                PrimaryKeyColumn = nameof(NexportCustomerRegistrationFieldWithAnswersModel.Id),
+                ColumnCollection = new List<ColumnProperty>
+                {
+                    new ColumnProperty(null)
+                    {
+                        Render = new RenderChildCaret(),
+                        Width = "5",
+                        Searchable = false,
+                        ClassName = NopColumnClassDefaults.ChildControl,
+                        AutoWidth = false
+                    },
+                    new ColumnProperty(nameof(NexportCustomerRegistrationFieldWithAnswersModel.FieldName))
+                    {
+                        Title = "Name",
+                        Width = "200"
+                    },
+                    new ColumnProperty(nameof(NexportCustomerRegistrationFieldWithAnswersModel.FieldType))
+                    {
+                        Title = "Type",
+                        Width = "100"
+                    },
+                    new ColumnProperty(nameof(NexportCustomerRegistrationFieldWithAnswersModel.Id))
+                    {
+                        Width = "50",
+                        Render = new RenderCustom("renderEditCustomerRegistrationFieldAnswer"),
+                        ClassName = NopColumnClassDefaults.Button,
+                        AutoWidth = false
+                    },
+                },
+                ChildTable = new NexportDataTablesModel
+                {
+                    Name = "nexport-customer-registration-field-answers",
+                    UrlRead = new DataUrl("GetNexportRegistrationFieldAnswersForCustomer", "NexportIntegration",
+                                new RouteValueDictionary {
+                                    { "customerId", Model.CustomerId }
+                                }),
+                    IsChildTable = true,
+                    Length = Model.NexportCustomerRegistrationFieldAnswerListSearchModel.PageSize,
+                    LengthMenu = Model.NexportCustomerRegistrationFieldAnswerListSearchModel.AvailablePageSizes,
+                    Filters = new List<FilterParameter>
+                    {
+                        new FilterParameter(nameof(NexportCustomerRegistrationFieldAnswerModel.FieldId),
+                            nameof(NexportCustomerRegistrationFieldWithAnswersModel.Id), true)
+                    },
+                    CustomRowStartRender = "renderCustomerRegistrationFieldGroupingRow",
+                    ColumnCollection = new List<ColumnProperty>
+                    {
+                        new ColumnProperty(nameof(NexportCustomerRegistrationFieldAnswerModel.FieldValue))
+                        {
+                            Title = "Value"
+                        }
+                    }
+                }
+            })
+            <input type="submit" id="btnRefreshRegistrationAnswerList" style="display: none">
+            </div>
+    </nop-panel>
+    <script>
+        $(document).ready(function() {
+            jQuery.validator.addMethod("dotnet-guid",
+                function(value, element) {
+                    return this.optional(element) || /[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}/i.test(value);
+                }, "Please input the correct GUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx");
+
+            $("#btnRefreshAnswerList").click(function() {
+                // Refresh child grid
+                $("table[id*=nexport-customer-supplemental-info-answers-list]").DataTable().draw(false);
+
+                // Return false to don't reload a page
+                return false;
+            });
+
+            $("#btnRefreshRegistrationAnswerList").click(function() {
+                // Refresh child grid
+                $("table[id*=nexport-customer-registration-fields]").DataTable().draw(false);
+
+                // Return false to don't reload a page
+                return false;
+            });
+
+            $("#setNexportUserId").on("click",
+                function(e) {
+                    e.preventDefault();
+
+                    var userIdElement = $("#@Html.IdFor(model => model.NexportUserId)");
+                    userIdElement.rules("add", { "dotnet-guid": true });
+
+                    setNexportUserId(userIdElement);
+                });
+        });
+
+        function setNexportUserId(element) {
+            var userId = element.val();
+            if (element.valid()) {
+                if (confirm("Are you sure you want to assign the user " + userDetail.firstName + " " + userDetail.lastName + " (" + userDetail.id + ")" + " for this customer?")) {
+                    var postData = {
+                        customerId: @Model.CustomerId,
+                        nexportUserId: userId
+                    };
+                    addAntiForgeryToken(postData);
+
+                    $.ajax({
+                        url: "@Url.Action("SetNexportUser", "NexportIntegration")",
+                        type: "POST",
+                        dataType: "json",
+                        data: postData,
+                        success: function(data, textStatus, jqXHR) {
+                            if (data !== "undefined" && data && data.redirectUrl) {
+                                window.location.href = data.redirectUrl;
+                            }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            alert(errorThrown);
+                        }
+                    });
+                }
+            } else{
+                element.rules("remove", "dotnet-guid");
+                alert("Please input the correct GUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) for Nexport user Id!");
+            }
+        }
+
+        function renderAnswerStatusInfo(data, type, row, meta) {
+            if (data === +"@((int) NexportSupplementalInfoAnswerStatus.NotProcessed)") {
+                return "@NexportSupplementalInfoAnswerStatus.NotProcessed.GetDisplayName()";
+            } else if (data === +"@((int) NexportSupplementalInfoAnswerStatus.Processed)") {
+                return "@NexportSupplementalInfoAnswerStatus.Processed.GetDisplayName()";
+            } else if (data === +"@((int) NexportSupplementalInfoAnswerStatus.Modified)") {
+                return "@NexportSupplementalInfoAnswerStatus.Modified.GetDisplayName()";
+            } else {
+                return "";
+            }
+        }
+
+        function renderCustomGroupingRow(rows, group, level) {
+            var rowData = rows.data();
+            if (rowData.count() < 1)
+                return "";
+
+            var questionId = rowData.pluck("QuestionId")[0];
+            var storeId = rowData.pluck("StoreId")[0];
+
+            var buttonFunction = "editCustomerQuestion('" + questionId + "'" + ", '" + storeId + "');return false;";
+
+            var element = "Store - " + rowData.pluck("StoreName")[0] + "<button class=\"btn btn-default\" style=\"margin-left: 5px; margin-top: 1px; margin-bottom: 1px; padding: 5px 12px;\"" +
+                " onclick=\"" + buttonFunction + "\"";
+            element += "><i class=\"fa fa-pencil\"></i>Edit</button>";
+
+            return element;
+        }
+
+        function editCustomerQuestion(questionId, storeId) {
+            if (questionId < 1) {
+                alert("Invalid question Id");
+                return;
+            }
+
+            if (storeId < 1) {
+                alert("Invalid store Id");
+                return;
+            }
+
+            var url = "@Url.Action("EditCustomerSupplementalInfoAnsweredQuestion", "NexportIntegration")";
+            url += "?customerId=@Model.CustomerId";
+            url += "&questionId=" + questionId;
+            url += "&storeId=" + storeId;
+            url += "&containerId=nexport-customer-supplemental-info-answers&btnId=btnRefreshAnswerList";
+
+            OpenWindow(url, 800, 800, true);
+        }
+
+        function renderDeleteCustomerAnswer(data, type, row, meta) {
+            if (!row.Id)
+                return "";
+
+            var buttonFunction = "deleteCustomerAnswer('" + data + "');return false;";
+
+            return renderCustomButton(buttonFunction, "fa fa-delete", "Delete");
+        }
+
+        function deleteCustomerAnswer(answerId) {
+            if (answerId < 1) {
+                alert("Invalid answer Id");
+                return;
+            }
+
+            if (confirm("@T("Admin.Common.DeleteConfirmation")")) {
+                var postData = {
+                    answerId: answerId
+                };
+                addAntiForgeryToken(postData);
+
+                $.ajax({
+                    url: "@Url.Action("DeleteCustomerSupplementalInfoAnswer", "NexportIntegration")",
+                    type: "@WebRequestMethods.Http.Post",
+                    dataType: "json",
+                    data: postData,
+                    success: function(data, textStatus, jqXHR) {
+                        // Display error if returned
+                        if (data) {
+                            display_nop_error(data);
+                        }
+                        // Refresh grid
+                        $("table[id*=nexport-customer-supplemental-info-answers-list]").DataTable().draw(false);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            }
+
+            return;
+        }
+
+        function renderEditCustomerRegistrationFieldAnswer(data, type, row, meta) {
+            if (!row.Id)
+                return "";
+
+            var buttonFunction = "editRegistrationFieldAnswer('" + data + "');return false;";
+
+            return renderCustomButton(buttonFunction, "fa fa-pencil", "Edit");
+        }
+
+        function editRegistrationFieldAnswer(fieldId) {
+            if (fieldId < 1) {
+                alert("Invalid field Id");
+                return;
+            }
+
+            var url = "@Url.Action("EditCustomerRegistrationFieldAnswers", "NexportIntegration")";
+            url += "?customerId=@Model.CustomerId";
+            url += "&fieldId=" + fieldId;
+            url += "&containerId=nexport-customer-registration-field-answers&btnId=btnRefreshRegistrationAnswerList";
+
+            OpenWindow(url, 800, 800, true);
+        }
+
+        //# sourceURL=nexport_customer_details.js
+    </script>
 }

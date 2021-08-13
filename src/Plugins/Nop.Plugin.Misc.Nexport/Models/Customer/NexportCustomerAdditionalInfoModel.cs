@@ -1,4 +1,5 @@
 ﻿using System;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
@@ -27,6 +28,10 @@ namespace Nop.Plugin.Misc.Nexport.Models.Customer
         public NexportSupplementalInfoAnswerListSearchModel NexportSupplementalInfoAnswerListSearchModel { get; set; }
 
         public NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel { get; set; }
+
+        public NexportCustomerRegistrationFieldWithAnswersListSearchModel NexportCustomerRegistrationFieldWithAnswersListSearchModel { get; set; }
+
+        public NexportCustomerRegistrationFieldAnswerListSearchModel NexportCustomerRegistrationFieldAnswerListSearchModel { get; set; }
 
         public bool Editable { get; set; }
     }

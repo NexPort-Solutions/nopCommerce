@@ -10,6 +10,7 @@ using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 
@@ -107,6 +108,13 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
             CreateMap<NexportRegistrationFieldCategory, NexportRegistrationFieldCategoryModel>();
             CreateMap<NexportRegistrationFieldCategoryModel, NexportRegistrationFieldCategory>();
+
+            CreateMap<NexportRegistrationField, NexportCustomerRegistrationFieldWithAnswersModel>()
+                .ForMember(model => model.FieldName, opts => opts.MapFrom(entity => entity.Name))
+                .ForMember(model => model.CustomRender, opts => opts.MapFrom(entity => entity.CustomFieldRender))
+                .ForMember(model => model.CustomerId, opts => opts.Ignore());
+            CreateMap<NexportRegistrationFieldAnswer, NexportCustomerRegistrationFieldAnswerModel>()
+                .ForMember(model => model.FieldValue, opts => opts.Ignore());
 
             CreateMap<Category, NexportCategoryModel>();
 

@@ -54,6 +54,7 @@ using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
@@ -2425,6 +2426,217 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var url = registrationFieldCustomRender.GetCustomRenderUrl(fieldId);
 
             return Json(new { url });
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        [HttpPost]
+        public IActionResult GetNexportRegistrationFieldsForCustomer(NexportCustomerRegistrationFieldWithAnswersListSearchModel searchModel)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedDataTablesJson();
+
+            var model = _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldWithAnswersListModel(searchModel);
+
+            return Json(model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        [HttpPost]
+        public IActionResult GetNexportRegistrationFieldAnswersForCustomer(NexportCustomerRegistrationFieldAnswerListSearchModel searchModel)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedDataTablesJson();
+
+            var model = _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldAnswerListModel(searchModel);
+
+            return Json(model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        public IActionResult GetEditCustomerRegistrationFieldAnswersViewUrl(string systemName, int customerId, int fieldId)
+        {
+            if (string.IsNullOrEmpty(systemName))
+                throw new ArgumentNullException(nameof(systemName));
+
+            var registrationFieldCustomRender = _registrationFieldCustomRenderPluginManager.LoadPluginBySystemName(systemName)
+                                                ?? throw new ArgumentException("Registration field custom render could not be loaded");
+
+            var url = registrationFieldCustomRender.GetEditCustomerRegistrationFieldAnswersViewUrl(customerId, fieldId);
+
+            return Json(new { url });
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        public IActionResult EditCustomerRegistrationFieldAnswers(int customerId, int fieldId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = _customerService.GetCustomerById(customerId)
+                           ?? throw new Exception($"No customer found with the specified id {customerId}");
+
+            var field = _nexportService.GetNexportRegistrationFieldById(fieldId)
+                           ?? throw new Exception($"No Nexport registration field found with the specified id {fieldId}");
+
+            var model = _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldAnswersEditModel(customer, field);
+
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/EditCustomerRegistrationFieldAnswers.cshtml", model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        [HttpPost]
+        public IActionResult EditCustomerRegistrationFieldAnswers(int customerId, EditRegistrationFieldAnswerRequestModel editModel)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = _customerService.GetCustomerById(customerId)
+                           ?? throw new Exception($"No customer found with the specified id {customerId}");
+
+            var field = _nexportService.GetNexportRegistrationFieldById(editModel.FieldId)
+                        ?? throw new Exception($"No Nexport registration field found with the specified id {editModel.FieldId}");
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    NexportRegistrationFieldAnswer currentAnswer;
+                    switch (field.Type)
+                    {
+                        case NexportRegistrationFieldType.Text:
+                        case NexportRegistrationFieldType.Email:
+                        case NexportRegistrationFieldType.Numeric:
+                        case NexportRegistrationFieldType.Boolean:
+                        case NexportRegistrationFieldType.DateOnly:
+                        case NexportRegistrationFieldType.DateTime:
+                        case NexportRegistrationFieldType.SelectDropDown:
+                            currentAnswer = _nexportService.GetNexportRegistrationFieldAnswerById(editModel.PreviousAnswers[0]);
+
+                            if (currentAnswer != null)
+                            {
+                                if (field.Type == NexportRegistrationFieldType.Text ||
+                                    field.Type == NexportRegistrationFieldType.Email)
+                                    currentAnswer.TextValue = editModel.AnswerValue;
+                                else if (field.Type == NexportRegistrationFieldType.Numeric)
+                                    currentAnswer.NumericValue = int.Parse(editModel.AnswerValue);
+                                else if (field.Type == NexportRegistrationFieldType.Boolean)
+                                    currentAnswer.BooleanValue = bool.Parse(editModel.AnswerValue);
+                                else if (field.Type == NexportRegistrationFieldType.DateOnly ||
+                                            field.Type == NexportRegistrationFieldType.DateTime)
+                                    currentAnswer.DateTimeValue = DateTime.Parse(editModel.AnswerValue);
+                                else if (field.Type == NexportRegistrationFieldType.SelectDropDown)
+                                {
+                                    if (editModel.AnswerFieldOptions != null && editModel.AnswerFieldOptions.Count > 0)
+                                    {
+                                        var newOption = editModel.AnswerFieldOptions[0];
+                                        currentAnswer.FieldOptionId = newOption == 0 ? null : (int?)newOption;
+                                    }
+                                    else
+                                        currentAnswer.FieldOptionId = null;
+                                }
+
+                                currentAnswer.UtcDateModified = DateTime.UtcNow;
+                                _nexportService.UpdateNexportRegistrationFieldAnswer(currentAnswer);
+                            }
+
+                            break;
+
+                        case NexportRegistrationFieldType.SelectCheckbox:
+                            if (editModel.AllowMultipleSelection != null && editModel.AllowMultipleSelection.Value)
+                            {
+                                var currentAnswers = _nexportService.GetNexportRegistrationFieldAnswers(customerId, editModel.FieldId);
+                                var currentAnswersFieldOptions = currentAnswers
+                                    .Where(x => x.FieldOptionId != null)
+                                    .Select(x => x.FieldOptionId.Value).ToList();
+
+                                var newOptions = editModel.AnswerFieldOptions.Except(currentAnswersFieldOptions);
+
+                                var removingOptions = currentAnswersFieldOptions.Except(editModel.AnswerFieldOptions);
+
+                                foreach (var newOption in newOptions)
+                                {
+                                    var newAnswer = new NexportRegistrationFieldAnswer
+                                    {
+                                        CustomerId = customerId,
+                                        FieldId = editModel.FieldId,
+                                        UtcDateCreated = DateTime.UtcNow,
+                                        UtcDateModified = DateTime.UtcNow,
+                                        FieldOptionId = newOption
+                                    };
+
+                                    _nexportService.InsertNexportRegistrationFieldAnswer(newAnswer);
+                                }
+
+                                foreach (var removingOption in removingOptions)
+                                {
+                                    currentAnswer = _nexportService.GetNexportRegistrationFieldAnswerByFieldOption(customerId, editModel.FieldId, removingOption);
+                                    if (currentAnswer != null)
+                                    {
+                                        _nexportService.DeleteNexportRegistrationFieldAnswer(currentAnswer);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                currentAnswer = _nexportService.GetNexportRegistrationFieldAnswerById(editModel.PreviousAnswers[0]);
+
+                                if (currentAnswer != null)
+                                {
+                                    if (editModel.AnswerFieldOptions != null && editModel.AnswerFieldOptions.Count > 0)
+                                        currentAnswer.FieldOptionId = editModel.AnswerFieldOptions[0];
+                                    else
+                                        currentAnswer.FieldOptionId = null;
+
+                                    currentAnswer.UtcDateModified = DateTime.UtcNow;
+                                    _nexportService.UpdateNexportRegistrationFieldAnswer(currentAnswer);
+                                }
+                            }
+
+                            break;
+
+                        case NexportRegistrationFieldType.CustomType:
+                            var submittingFields = new Dictionary<string, string>();
+                            var customFieldKeys = editModel.FormCollection.Keys.Where(x => x.StartsWith($"NexportCustomProfile-{field.Id}"));
+                            foreach (var key in customFieldKeys)
+                            {
+                                editModel.FormCollection.TryGetValue(key, out var fieldValue);
+                                submittingFields.Add(key, fieldValue);
+                            }
+
+                            var registrationFieldCustomRender = _registrationFieldCustomRenderPluginManager.LoadPluginBySystemName(field.CustomFieldRender);
+                            registrationFieldCustomRender?.UpdateCustomRegistrationFieldAnswers(customer.Id, field.Id, submittingFields);
+
+                            break;
+
+
+                        case NexportRegistrationFieldType.None:
+                            break;
+                    }
+
+
+                    ViewBag.RefreshPage = true;
+
+                    ViewBag.ClosePage = true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error("Error occurred while saving Nexport registration field", ex, customer);
+                    _notificationService.ErrorNotification("Unable to save Nexport registration field!");
+                }
+            }
+
+            var model = _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldAnswersEditModel(customer, field);
+
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/EditCustomerRegistrationFieldAnswers.cshtml", model);
         }
 
         #endregion

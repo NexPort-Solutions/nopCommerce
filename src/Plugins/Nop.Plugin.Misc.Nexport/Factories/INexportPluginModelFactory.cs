@@ -109,6 +109,15 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         NexportCustomerRegistrationFieldsModel PrepareNexportCustomerRegistrationFieldsModel(Store store);
 
+        NexportCustomerRegistrationFieldAnswerListModel PrepareNexportCustomerRegistrationFieldAnswerListModel(
+            NexportCustomerRegistrationFieldAnswerListSearchModel searchModel);
+
+        NexportCustomerRegistrationFieldWithAnswersListModel PrepareNexportCustomerRegistrationFieldWithAnswersListModel(
+            NexportCustomerRegistrationFieldWithAnswersListSearchModel searchModel);
+
+        NexportCustomerRegistrationFieldAnswersEditModel PrepareNexportCustomerRegistrationFieldAnswersEditModel(
+            Customer customer, NexportRegistrationField registrationField);
+
         NexportOrderInvoiceItemListModel PrepareNexportOrderInvoiceItemListModel(NexportOrderInvoiceItemSearchModel searchModel,
             bool excludeNonApproval = false);
 
