@@ -319,12 +319,12 @@
                 addAntiForgeryToken(getUserDetailData);
 
                 $.ajax({
-					url: "@Url.Action("GetNexportUserDetails", "NexportIntegration")",
-					type: "POST",
-					dataType: "json",
-					data: getUserDetailData,
-					success: function(userDetail, textStatus, jqXHR) {
-						if (userDetail !== "undefined" && userDetail) {
+                    url: "@Url.Action("GetNexportUserDetails", "NexportIntegration")",
+                    type: "POST",
+                    dataType: "json",
+                    data: getUserDetailData,
+                    success: function(userDetail, textStatus, jqXHR) {
+                        if (userDetail !== "undefined" && userDetail) {
                             if (confirm("Are you sure you want to assign the user " + userDetail.firstName + " " + userDetail.lastName + " (" + userDetail.id + ")" + " for this customer?")) {
                                 var postData = {
                                     customerId: @Model.CustomerId,
@@ -349,7 +349,7 @@
                             }
                         }
                     },
-					error:function(jqXHR, textStatus, errorThrown) {
+                    error:function(jqXHR, textStatus, errorThrown) {
                         alert(errorThrown);
                     }
                 });

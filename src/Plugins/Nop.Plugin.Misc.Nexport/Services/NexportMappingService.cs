@@ -860,8 +860,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (nexportUserMapping == null)
                 throw new ArgumentNullException(nameof(nexportUserMapping));
 
-            if (_nexportUserMappingRepository.Table.Any(user => user.NopUserId == nexportUserMapping.NopUserId))
-                return;
+            if (_nexportUserMappingRepository
+                .Table
+                .Any(user => user.NexportUserId == nexportUserMapping.NexportUserId))
+                throw new NopException($"The Nexport user Id {nexportUserMapping.NexportUserId} has been mapped with another users!");
 
             _nexportUserMappingRepository.Insert(nexportUserMapping);
 
