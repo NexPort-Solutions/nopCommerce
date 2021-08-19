@@ -13,6 +13,9 @@ namespace Nop.Plugin.Misc.Nexport.Models.Customer
         [NopResourceDisplayName("Account.Fields.Nexport.UserId")]
         public Guid? NexportUserId { get; set; }
 
+        [NopResourceDisplayName("Account.Fields.Nexport.UserFullName")]
+        public string NexportUserFullName { get; set; }
+
         [NopResourceDisplayName("Account.Fields.Nexport.OwnerOrgId")]
         public Guid? OwnerOrgId { get; set; }
 

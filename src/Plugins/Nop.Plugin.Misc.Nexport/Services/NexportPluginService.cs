@@ -387,6 +387,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.OwnerOrgId.Hint", "The Id of the owner organization for the user");
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.OwnerOrgShortName", "Nexport owner organization short name");
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.OwnerOrgShortName.Hint", "The short name of the owner organization for the user");
+            _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.UserFullName", "Nexport user full name");
+            _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.UserFullName.Hint", "The full name of the user in Nexport");
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.Email", "Nexport email");
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.Email.Hint", "The internal email of the user in Nexport");
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Login.Fields.EmailOrUsername", "Email/Username");
@@ -615,6 +617,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.OwnerOrgId.Hint");
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.OwnerOrgShortName");
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.OwnerOrgShortName.Hint");
+            _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.UserFullName");
+            _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.UserFullName.Hint");
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.Email");
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.Email.Hint");
             _localizationService.DeletePluginLocaleResource("Account.Login.Fields.EmailOrUsername");

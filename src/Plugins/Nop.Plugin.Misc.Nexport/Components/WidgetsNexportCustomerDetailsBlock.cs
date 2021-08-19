@@ -53,7 +53,9 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
                         if (nexportUser != null)
                         {
+                            model.NexportUserFullName = $"{nexportUser.FirstName} {nexportUser.LastName}";
                             model.NexportEmail = nexportUser.InternalEmail;
+
                             if (nexportUser.OwnerOrgId != null)
                             {
                                 model.OwnerOrgId = nexportUser.OwnerOrgId;

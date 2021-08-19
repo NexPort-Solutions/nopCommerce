@@ -507,6 +507,46 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AdminAntiForgery]
+        public IActionResult GetNexportUserDetails(Guid nexportUserId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return ErrorJson(_localizationService.GetResource("Admin.AccessDenied.Description"));
+            
+            GetUserResponse nexportUser = null;
+
+            if (nexportUserId != Guid.Empty)
+            {
+                try
+                {
+                    nexportUser = _nexportService.GetNexportUser(nexportUserId);
+                }
+                catch (Exception ex)
+                {
+                    var errMsg = $"Cannot get detail information of Nexport user {nexportUserId}";
+                    _logger.Error(errMsg, ex);
+
+                    _notificationService.ErrorNotification(errMsg);
+                }
+            }
+
+            if (nexportUser != null)
+            {
+                return Json(new
+                {
+                    id = nexportUser.UserId,
+                    firstName = nexportUser.FirstName,
+                    lastName = nexportUser.LastName,
+                    email = nexportUser.Email,
+                    internalEmail = nexportUser.InternalEmail
+                });
+            }
+
+            return Json(null);
+        }
+
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AdminAntiForgery]
         public IActionResult SetNexportUser(int customerId, Guid nexportUserId)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))

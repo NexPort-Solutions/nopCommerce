@@ -55,6 +55,17 @@
             </div>
             @if (Model.NexportUserId.HasValue)
             {
+                if (!string.IsNullOrEmpty(Model.NexportUserFullName))
+                {
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <nop-label asp-for="NexportUserFullName" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.NexportUserFullName</div>
+                        </div>
+                    </div>
+                }
                 if (!string.IsNullOrEmpty(Model.NexportEmail))
                 {
                     <div class="form-group">
@@ -302,28 +313,48 @@
         function setNexportUserId(element) {
             var userId = element.val();
             if (element.valid()) {
-                if (confirm("Are you sure you want to assign the user " + userDetail.firstName + " " + userDetail.lastName + " (" + userDetail.id + ")" + " for this customer?")) {
-                    var postData = {
-                        customerId: @Model.CustomerId,
-                        nexportUserId: userId
-                    };
-                    addAntiForgeryToken(postData);
+                var getUserDetailData = {
+                    nexportUserId: userId
+                };
+                addAntiForgeryToken(getUserDetailData);
 
-                    $.ajax({
-                        url: "@Url.Action("SetNexportUser", "NexportIntegration")",
-                        type: "POST",
-                        dataType: "json",
-                        data: postData,
-                        success: function(data, textStatus, jqXHR) {
-                            if (data !== "undefined" && data && data.redirectUrl) {
-                                window.location.href = data.redirectUrl;
+                $.ajax({
+					url: "@Url.Action("GetNexportUserDetails", "NexportIntegration")",
+					type: "POST",
+					dataType: "json",
+					data: getUserDetailData,
+					success: function(userDetail, textStatus, jqXHR) {
+						if (userDetail !== "undefined" && userDetail) {
+                            if (confirm("Are you sure you want to assign the user " + userDetail.firstName + " " + userDetail.lastName + " (" + userDetail.id + ")" + " for this customer?")) {
+                                var postData = {
+                                    customerId: @Model.CustomerId,
+                                    nexportUserId: userId
+                                };
+                                addAntiForgeryToken(postData);
+
+                                $.ajax({
+                                    url: "@Url.Action("SetNexportUser", "NexportIntegration")",
+                                    type: "POST",
+                                    dataType: "json",
+                                    data: postData,
+                                    success: function(data, textStatus, jqXHR) {
+                                        if (data !== "undefined" && data && data.redirectUrl) {
+                                            window.location.href = data.redirectUrl;
+                                        }
+                                    },
+                                    error: function(jqXHR, textStatus, errorThrown) {
+                                        alert(errorThrown);
+                                    }
+                                });
                             }
-                        },
-                        error: function(jqXHR, textStatus, errorThrown) {
-                            alert(errorThrown);
                         }
-                    });
-                }
+                    },
+					error:function(jqXHR, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+
+                
             } else{
                 element.rules("remove", "dotnet-guid");
                 alert("Please input the correct GUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) for Nexport user Id!");
