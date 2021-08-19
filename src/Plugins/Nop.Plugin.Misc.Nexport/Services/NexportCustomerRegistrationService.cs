@@ -97,17 +97,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             if (customer == null)
             {
-                if (isValidEmail)
-                    return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.CustomerNotExist };
-
                 var nexportUserResponse = _nexportService.AuthenticateUser(usernameOrEmail, password);
 
                 if (nexportUserResponse == null)
                     throw new Exception($"Cannot authenticate the user with the login {usernameOrEmail}");
 
-                if (nexportUserResponse.ApiErrorEntity.ErrorCode ==
-                    ApiErrorEntity.ErrorCodeEnum.AuthenticationError)
+                if (nexportUserResponse.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.AuthenticationError)
                     return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.WrongPassword };
+
+                if (nexportUserResponse.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.ItemNotFound)
+                    return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.CustomerNotExist };
 
                 var nexportUserId = nexportUserResponse.UserId;
                 var nexportUserMapping = _nexportService.FindUserMappingByNexportUserId(nexportUserId);
