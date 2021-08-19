@@ -629,6 +629,30 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             });
         }
 
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AdminAntiForgery]
+        public IActionResult CanSetNexportUser(int customerId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return ErrorJson(_localizationService.GetResource("Admin.AccessDenied.Description"));
+
+            var customer = _customerService.GetCustomerById(customerId);
+            if (customer == null)
+            {
+                return Json(null);
+            }
+
+            var nexportUserMapping = _nexportService.FindUserMappingByCustomerId(customerId);
+            if (nexportUserMapping != null)
+            {
+                var customerOrders = _orderService.SearchOrders(customerId: customer.Id, pageSize: 10);
+                return Json(!customerOrders.Any());
+            }
+
+            return Json(true);
+        }
+
         #endregion
 
         #region Product Mapping Actions

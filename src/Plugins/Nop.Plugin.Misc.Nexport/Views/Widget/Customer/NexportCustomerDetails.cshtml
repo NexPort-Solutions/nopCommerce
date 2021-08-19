@@ -299,6 +299,8 @@
                 return false;
             });
 
+            canSetNexportUserId("@Model.CustomerId");
+
             $("#setNexportUserId").on("click",
                 function(e) {
                     e.preventDefault();
@@ -309,6 +311,31 @@
                     setNexportUserId(userIdElement);
                 });
         });
+
+        function canSetNexportUserId(customerId) {
+            var postData = {
+                customerId: customerId
+            };
+            addAntiForgeryToken(postData);
+
+            $.ajax({
+                url: "@Url.Action("CanSetNexportUser", "NexportIntegration")",
+                type: "POST",
+                dataType: "json",
+                data: postData,
+                success: function(result, textStatus, jqXHR) {
+                    if (result !== undefined && typeof result === "boolean") {
+                        $("#setNexportUserId").prop("disabled", !result).off("click");
+                        if (!result) {
+                            $("#@Html.IdFor(model => model.NexportUserId)").prop("disabled", true);
+                        }
+                    }
+                },
+                error:function(jqXHR, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
 
         function setNexportUserId(element) {
             var userId = element.val();
@@ -324,7 +351,7 @@
                     dataType: "json",
                     data: getUserDetailData,
                     success: function(userDetail, textStatus, jqXHR) {
-                        if (userDetail !== "undefined" && userDetail) {
+                        if (userDetail !== undefined && userDetail) {
                             if (confirm("Are you sure you want to assign the user " + userDetail.firstName + " " + userDetail.lastName + " (" + userDetail.id + ")" + " for this customer?")) {
                                 var postData = {
                                     customerId: @Model.CustomerId,
@@ -338,7 +365,7 @@
                                     dataType: "json",
                                     data: postData,
                                     success: function(data, textStatus, jqXHR) {
-                                        if (data !== "undefined" && data && data.redirectUrl) {
+                                        if (data !== undefined && data && data.redirectUrl) {
                                             window.location.href = data.redirectUrl;
                                         }
                                     },
