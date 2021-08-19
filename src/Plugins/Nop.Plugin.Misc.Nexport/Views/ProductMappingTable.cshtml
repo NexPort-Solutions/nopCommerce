@@ -327,17 +327,14 @@
     }
 
     $(document).ready(function () {
+        checkDefaultMappingExisted();
+
         $("#product-mapping-container").on("xhr.dt", "#product-mappings-grid",
             function(e, settings, json, xhr) {
                 if (json.data) {
-                    if (json.data[0].NopProductId !== 0) {
-                        hasDefaultMapping = true;
-                    } else {
-                        hasDefaultMapping = false;
-                    }
+                    checkDefaultMappingExisted();
                 }
             });
-
 
         $("#btnRefreshMappings").click(function () {
             // Refresh grid
@@ -347,6 +344,29 @@
             return false;
         });
     });
+
+    function checkDefaultMappingExisted() {
+        var checkDefaultMappingData = {
+            productId: @Model.NopProductId
+        };
+        addAntiForgeryToken(checkDefaultMappingData);
+
+        $.ajax({
+            url: "@Url.Action("HasDefaultMapping","NexportIntegration")",
+            type: "@WebRequestMethods.Http.Post",
+            dataType: "json",
+            data: checkDefaultMappingData,
+            success: function (data, textStatus, jqXHR) {
+                // Display error if returned
+                if (data) {
+                    hasDefaultMapping = data;
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                hasDefaultMapping = false;
+            }
+        });
+    }
 
     //# sourceURL=ProductMappingTable.js
 </script>

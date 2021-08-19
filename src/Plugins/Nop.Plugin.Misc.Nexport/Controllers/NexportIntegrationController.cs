@@ -878,6 +878,18 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return new NullJsonResult();
         }
 
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [HttpPost]
+        [AdminAntiForgery]
+        public IActionResult HasDefaultMapping(int productId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+                return AccessDeniedView();
+
+            return Json(_nexportService.HasDefaultMapping(productId));
+        }
+
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
