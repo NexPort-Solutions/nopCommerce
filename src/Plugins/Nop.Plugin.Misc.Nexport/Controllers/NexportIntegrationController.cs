@@ -653,6 +653,32 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(true);
         }
 
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        [Route("Admin/Customer/Edit/{id}")]
+        [HttpPost, ActionName("Edit")]
+        [FormValueRequired("syncnexportregistrationfields")]
+        public IActionResult SyncCustomerRegistrationFieldsWithNexport(CustomerModel model)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = _customerService.GetCustomerById(model.Id);
+            if (customer == null)
+                return RedirectToAction("List", "Customer");
+
+            _nexportService.InsertNexportRegistrationFieldSynchronizationQueueItem(new NexportRegistrationFieldSynchronizationQueueItem
+            {
+                CustomerId = model.Id,
+                UtcDateCreated = DateTime.UtcNow
+            });
+
+            _notificationService.SuccessNotification("The customer registration fields has been scheduled to be synchronize with Nexport.");
+
+            return RedirectToAction("Edit", "Customer", new { id = model.Id });
+        }
+
         #endregion
 
         #region Product Mapping Actions

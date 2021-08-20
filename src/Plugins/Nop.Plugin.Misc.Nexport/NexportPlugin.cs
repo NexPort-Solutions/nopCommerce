@@ -195,6 +195,7 @@ namespace Nop.Plugin.Misc.Nexport {
                 AdminWidgetZones.StoreDetailsBottom,
                 AdminWidgetZones.ProductDetailsButtons,
                 AdminWidgetZones.ProductDetailsBlock,
+                AdminWidgetZones.CustomerDetailsButtons,
                 AdminWidgetZones.CustomerDetailsBlock,
                 AdminWidgetZones.CustomerUserDetailsBlock,
                 AdminWidgetZones.CategoryDetailsBlock,
@@ -218,6 +219,9 @@ namespace Nop.Plugin.Misc.Nexport {
 
             if (widgetZone == AdminWidgetZones.ProductDetailsButtons)
                 return "WidgetsNexportProductDetailsButtons";
+
+            if (widgetZone == AdminWidgetZones.CustomerDetailsButtons)
+                return "WidgetsNexportCustomerDetailsButtons";
 
             if (widgetZone == AdminWidgetZones.CustomerDetailsBlock)
                 return "WidgetsNexportCustomerDetailsBlock";

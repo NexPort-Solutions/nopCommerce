@@ -1,0 +1,11 @@
+﻿@model Nop.Web.Areas.Admin.Models.Customers.CustomerModel
+
+<div id="nexport-actions-container">
+    @if (Model != null && Model.Id > 0)
+    {
+        <button type="submit" id="syncCustomerFieldsBtn" class="btn bg-olive" style="margin-left: 3px;" name="syncnexportregistrationfields">
+            <i class="fa fa-refresh"></i>
+            Synchronize Nexport registration fields
+        </button>
+    }
+</div>

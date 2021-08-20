@@ -105,7 +105,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     }
                                 }
 
-                                _logger.Debug("Synchronize registration fields in Nexport completed.");
+                                _logger.Debug($"Synchronize registration fields in Nexport completed for Nexport user Id {userMapping.NexportUserId}.");
                             }
                         }
                     }
