@@ -325,8 +325,9 @@
                 data: postData,
                 success: function(result, textStatus, jqXHR) {
                     if (result !== undefined && typeof result === "boolean") {
-                        $("#setNexportUserId").prop("disabled", !result).off("click");
+                        $("#setNexportUserId").prop("disabled", !result);
                         if (!result) {
+                            $("#setNexportUserId").off("click");
                             $("#@Html.IdFor(model => model.NexportUserId)").prop("disabled", true);
                         }
                     }
