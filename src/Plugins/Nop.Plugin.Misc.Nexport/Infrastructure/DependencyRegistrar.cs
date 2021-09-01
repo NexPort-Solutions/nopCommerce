@@ -15,8 +15,8 @@ using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Customers;
 using Nop.Services.Logging;
-using Nop.Services.Messages;
 using Nop.Services.Orders;
+using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Controllers;
 using DefaultLogger = Nop.Plugin.Misc.Nexport.Infrastructure.Logging.DefaultLogger;
 
@@ -47,6 +47,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
             builder.RegisterType<NexportPluginModelFactory>().As<INexportPluginModelFactory>()
                 .InstancePerLifetimeScope();
+
+            builder.RegisterType<NexportStoreService>().As<IStoreService>().InstancePerLifetimeScope();
 
             builder.RegisterType<NexportIntegrationController>().AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<NexportAdminCustomerController>().As<CustomerController>().InstancePerLifetimeScope();
