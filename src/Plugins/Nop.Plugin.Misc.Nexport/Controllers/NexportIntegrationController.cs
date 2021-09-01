@@ -1248,6 +1248,65 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }
         }
 
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        public IActionResult DuplicateProductMapping(int productId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
+                return AccessDeniedView();
+
+            var product = _productService.GetProductById(productId)
+                        ?? throw new Exception($"No product found with the specified id {productId}");
+
+            var model = _nexportPluginModelFactory.PrepareDuplicateNexportProductMappingModel(product);
+
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}Product/ProductMapping/DuplicateProductMapping.cshtml", model);
+        }
+        
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        [HttpPost]
+        public IActionResult DuplicateProductMapping(int productId, DuplicateNexportProductMappingModel model)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
+                return AccessDeniedView();
+
+            var product = _productService.GetProductById(productId)
+                          ?? throw new Exception($"No product found with the specified id {productId}");
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var productMapping = _nexportService.GetProductMappingByNopProductId(product.Id, model.SourceStoreId);
+
+                    if (productMapping != null)
+                    {
+                        foreach (var storeId in model.DestinationStoreIds)
+                        {
+                            _nexportService.DuplicateProductMapping(productMapping, storeId);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    var errMsg =
+                        $"Unable to duplicate Nexport product mapping for product {product.Id} based on store mapping";
+                    _logger.Error($"Unable to duplicate Nexport product mapping for product {product.Id} based on store mapping");
+                }
+                
+
+                ViewBag.RefreshPage = true;
+
+                ViewBag.ClosePage = true;
+            }
+
+            model = _nexportPluginModelFactory.PrepareDuplicateNexportProductMappingModel(product);
+
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}Product/ProductMapping/DuplicateProductMapping.cshtml", model);
+        }
+
         #endregion
 
         #region Category Management Actions

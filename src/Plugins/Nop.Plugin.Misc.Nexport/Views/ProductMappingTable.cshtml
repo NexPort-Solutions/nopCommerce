@@ -26,7 +26,7 @@
     };
 
     var tableColumns = new List<ColumnProperty>
-{
+    {
         new ColumnProperty(nameof(NexportProductMappingModel.StoreName))
         {
             Title = "Store",
@@ -122,6 +122,13 @@
             });
     }
 }
+
+<div>
+    <button class="btn bg-blue" id="duplicateProductMappingBtn">
+        <i class="fa fa-clone"></i>
+        Duplicate mapping
+    </button>
+</div>
 
 @await Html.PartialAsync("Table", new NexportDataTablesModel
 {
@@ -343,6 +350,12 @@
             // Return false to don't reload a page
             return false;
         });
+
+        $("#duplicateProductMappingBtn").click(function() {
+            duplicateProductMapping();
+
+            return false;
+        });
     });
 
     function checkDefaultMappingExisted() {
@@ -366,6 +379,14 @@
                 hasDefaultMapping = false;
             }
         });
+    }
+
+    function duplicateProductMapping() {
+        var url = "@Url.Action("DuplicateProductMapping", "NexportIntegration")";
+        url += "?productId=@Model.NopProductId";
+        url += "&containerId=product-mapping-container&btnId=btnRefreshMappings";
+
+        OpenWindow(url, 800, 800, true);
     }
 
     //# sourceURL=ProductMappingTable.js

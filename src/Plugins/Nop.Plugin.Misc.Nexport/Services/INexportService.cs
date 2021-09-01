@@ -118,6 +118,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         void CopyProductMappings(Product originalProduct, Product copyingProduct);
 
+        void DuplicateProductMapping(NexportProductMapping productMapping, int storeId);
+
         #region Supplemental Info
 
         IPagedList<NexportSupplementalInfoQuestion> GetAllNexportSupplementalInfoQuestionsPagination(

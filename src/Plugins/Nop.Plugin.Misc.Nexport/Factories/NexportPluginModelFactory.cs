@@ -384,6 +384,45 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
+        public DuplicateNexportProductMappingModel PrepareDuplicateNexportProductMappingModel(Product product)
+        {
+            var model = new DuplicateNexportProductMappingModel();
+
+            var defaultMapping = _nexportService.GetProductMappingByNopProductId(product.Id);
+            if (defaultMapping == null)
+                return model;
+
+            model.AvailableStores.Add(new SelectListItem
+            {
+                Text = "Default",
+                Value = ""
+            });
+
+            var availableStores = _storeService.GetAllStores();
+            foreach (var store in availableStores)
+            {
+                var mapping = _nexportService.GetProductMappingByNopProductId(product.Id, store.Id);
+                if (mapping != null)
+                {
+                    model.AvailableStores.Add(new SelectListItem
+                    {
+                        Text = store.Name,
+                        Value = store.Id.ToString()
+                    });
+                }
+                else
+                {
+                    model.DestinationStores.Add(new SelectListItem
+                    {
+                        Text = store.Name,
+                        Value = store.Id.ToString()
+                    });
+                }
+            }
+
+            return model;
+        }
+
         public virtual NexportCustomerAdditionalInfoModel PrepareNexportAdditionalInfoModel(Customer customer)
         {
             if (customer == null)

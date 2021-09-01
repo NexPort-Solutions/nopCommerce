@@ -380,6 +380,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 "When approval method is set to manual, the administrator will be able to choose the choice between extending or restarting the enrollment when the completion percentage exceeds the completion threshold.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.ExtensionPurchaseLimit", "Extension purchase limit");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.ExtensionPurchaseLimit.Hint", "Limit how many times the customers can purchase the extension.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.DuplicateSourceStoreMapping", "Mapping duplication source");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.DuplicateSourceStoreMapping.Hint", "The store that contains the product mapping which will be duplicated from.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.DuplicateDestinationStoreMappings", "Mapping duplication destinations");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.DuplicateDestinationStoreMappings.Hint", "The list of stores that the product mapping will be duplicated to.");
 
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.UserId", "Nexport user Id");
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.UserId.Hint", "The user Id in Nexport");
@@ -610,6 +614,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.RenewalApprovalMethod.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.ExtensionPurchaseLimit");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.ExtensionPurchaseLimit.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.DuplicateSourceStoreMapping");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.DuplicateSourceStoreMapping.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.DuplicateDestinationStoreMappings");
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.DuplicateDestinationStoreMappings.Hint");
 
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.UserId");
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.UserId.Hint");

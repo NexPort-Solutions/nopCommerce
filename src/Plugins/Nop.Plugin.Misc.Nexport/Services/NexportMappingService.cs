@@ -11,6 +11,8 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
+using Nop.Core.Infrastructure.Mapper;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -968,7 +970,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 throw new ArgumentNullException(nameof(originalProduct));
 
             if (copyingProduct == null)
-                throw new ArgumentNullException(nameof(originalProduct));
+                throw new ArgumentNullException(nameof(copyingProduct));
 
             var mappings = GetProductMappings(originalProduct.Id);
             foreach (var mapping in mappings)
@@ -1016,6 +1018,28 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                     InsertNexportProductGroupMembershipMapping(newGroupMembershipMapping);
                 }
+            }
+        }
+
+        public void DuplicateProductMapping(NexportProductMapping productMapping, int storeId)
+        {
+            var newMapping = AutoMapperConfiguration.Mapper.Map<NexportProductMapping>(productMapping);
+            newMapping.StoreId = storeId;
+            
+            InsertNexportProductMapping(newMapping);
+
+            var groupMembershipMappings = GetProductGroupMembershipMappings(productMapping.Id);
+            foreach (var groupMembershipMapping in groupMembershipMappings)
+            {
+                var newGroupMembershipMapping = new NexportProductGroupMembershipMapping
+                {
+                    NexportGroupId = groupMembershipMapping.NexportGroupId,
+                    NexportGroupName = groupMembershipMapping.NexportGroupName,
+                    NexportGroupShortName = groupMembershipMapping.NexportGroupShortName,
+                    NexportProductMappingId = newMapping.Id
+                };
+
+                InsertNexportProductGroupMembershipMapping(newGroupMembershipMapping);
             }
         }
 

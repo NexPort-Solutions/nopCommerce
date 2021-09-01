@@ -64,6 +64,9 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                     opts => opts.MapFrom(model => model.ExtensionPurchaseLimit))
                 .ForAllOtherMembers(opts => opts.Ignore());
 
+            CreateMap<NexportProductMapping, NexportProductMapping>()
+                .ForMember(x => x.Id, opts => opts.Ignore());
+
             CreateMap<NexportProductGroupMembershipMapping, NexportProductGroupMembershipMappingModel>();
             CreateMap<NexportProductGroupMembershipMappingModel, NexportProductGroupMembershipMapping>();
 

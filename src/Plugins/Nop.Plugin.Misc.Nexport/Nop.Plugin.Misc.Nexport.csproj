@@ -38,6 +38,7 @@
     <None Remove="Areas\Admin\Views\Category\NexportOptions.cshtml" />
     <None Remove="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml" />
     <None Remove="Areas\Admin\Views\Product\Edit.cshtml" />
+    <None Remove="Areas\Admin\Views\Product\ProductMapping\DuplicateProductMapping.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Category\Create.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Category\Edit.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Category\List.cshtml" />
@@ -128,6 +129,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Product\ProductMapping\DuplicateProductMapping.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\RegistrationField\Customer\AddCustomerRegistrationFieldAnswers.cshtml">
