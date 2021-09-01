@@ -238,7 +238,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
         IPagedList<NexportRegistrationField> GetNexportRegistrationFieldsPagination(int pageIndex = 0, int pageSize = int.MaxValue);
 
         IPagedList<NexportRegistrationField> GetNexportRegistrationFieldsWithAnswersPagination(int customerId,
-            int pageIndex = 0, int pageSize = int.MaxValue);
+            int? storeId = null, int pageIndex = 0, int pageSize = int.MaxValue);
+
+        IList<NexportRegistrationField> GetNexportRegistrationFieldsWithAnswers(int customerId, int? storeId = null);
 
         void InsertNexportRegistrationField(NexportRegistrationField registrationField);
 

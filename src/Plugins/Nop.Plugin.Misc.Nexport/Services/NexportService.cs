@@ -2331,14 +2331,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public Dictionary<int, string> ParseRegistrationFields(IFormCollection form)
+        public Dictionary<int, string> ParseRegistrationFields(IFormCollection form, int? storeId = null)
         {
             if (form == null)
                 throw new ArgumentNullException(nameof(form));
 
+            storeId = storeId ?? _storeContext.CurrentStore.Id;
+
             var result = new Dictionary<int, string>();
 
-            var registrationFields = GetNexportRegistrationFields(_storeContext.CurrentStore.Id)
+            var registrationFields = GetNexportRegistrationFields(storeId.Value)
                 .Where(f => f.Type != NexportRegistrationFieldType.CustomType);
 
             foreach (var field in registrationFields)
@@ -2357,14 +2359,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public Dictionary<int, Dictionary<string, string>> ParseCustomRegistrationFields(IFormCollection form)
+        public Dictionary<int, Dictionary<string, string>> ParseCustomRegistrationFields(IFormCollection form, int? storeId = null)
         {
             if (form == null)
                 throw new ArgumentNullException(nameof(form));
 
+            storeId = storeId ?? _storeContext.CurrentStore.Id;
+
             var result = new Dictionary<int, Dictionary<string, string>>();
 
-            var registrationFields = GetNexportRegistrationFields(_storeContext.CurrentStore.Id)
+            var registrationFields = GetNexportRegistrationFields(storeId.Value)
                 .Where(f => f.Type == NexportRegistrationFieldType.CustomType);
 
             foreach (var field in registrationFields)

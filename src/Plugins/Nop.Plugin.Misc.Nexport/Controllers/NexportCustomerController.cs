@@ -93,7 +93,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         private readonly MediaSettings _mediaSettings;
         private readonly StoreInformationSettings _storeInformationSettings;
         private readonly TaxSettings _taxSettings;
-        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomerRenderPluginManager;
+        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
         private readonly INexportPluginModelFactory _nexportPluginModelFactory;
         private readonly NexportService _nexportService;
 
@@ -145,7 +145,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             MediaSettings mediaSettings,
             StoreInformationSettings storeInformationSettings,
             TaxSettings taxSettings,
-            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomerRenderPluginManager,
+            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
             INexportPluginModelFactory nexportPluginModelFactory,
             NexportService nexportService)
         {
@@ -191,7 +191,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _mediaSettings = mediaSettings;
             _storeInformationSettings = storeInformationSettings;
             _taxSettings = taxSettings;
-            _registrationFieldCustomerRenderPluginManager = registrationFieldCustomerRenderPluginManager;
+            _registrationFieldCustomRenderPluginManager = registrationFieldCustomRenderPluginManager;
             _nexportPluginModelFactory = nexportPluginModelFactory;
             _nexportService = nexportService;
         }
@@ -719,10 +719,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                         var registrationField = _nexportService.GetNexportRegistrationFieldById(customField.Key);
                         if (registrationField != null)
                         {
-                            var customRender =
-                                _registrationFieldCustomerRenderPluginManager.LoadPluginBySystemName(registrationField
-                                    .CustomFieldRender);
-                            customRender?.SaveCustomRegistrationFields(registrationField.Id, customField.Value);
+                            var customRender = _registrationFieldCustomRenderPluginManager.LoadPluginBySystemName(registrationField.CustomFieldRender);
+                            customRender?.SaveCustomRegistrationFields(customer, registrationField.Id, customField.Value);
                         }
                     }
 

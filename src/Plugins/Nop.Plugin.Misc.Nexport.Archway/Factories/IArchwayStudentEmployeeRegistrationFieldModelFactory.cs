@@ -5,7 +5,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
 {
     public interface IArchwayStudentEmployeeRegistrationFieldModelFactory
     {
-        ArchwayStudentEmployeeRegistrationFieldModel PrepareArchwayStudentEmployeeRegistrationFieldModel(int fieldId);
+        ArchwayStudentEmployeeRegistrationFieldModel PrepareArchwayStudentEmployeeRegistrationFieldModel(int fieldId, bool renderAdminView);
 
         ArchwayStudentEmployeeRegistrationFieldOptionModel PrepareArchwayStudentEmployeeRegistrationFieldOptionModel(int fieldId);
 

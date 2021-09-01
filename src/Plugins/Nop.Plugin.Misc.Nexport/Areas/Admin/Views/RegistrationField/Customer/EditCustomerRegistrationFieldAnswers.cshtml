@@ -32,7 +32,7 @@
 {
     var controlId = $"NexportRegistrationFieldAnswer-{Model.RegistrationField.Id}";
 
-    <form id="edit-customer-question-form" method="post"
+    <form id="edit-customer-registration-fields-form" method="post"
           asp-action="EditCustomerRegistrationFieldAnswers"
           asp-controller="NexportIntegration"
           asp-route-customerId="@Context.Request.Query["customerId"]"
@@ -265,7 +265,6 @@
                                                         <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
                                                         <script>
                                                             $(document).ready(function() {
-                                                                console.log("test");
                                                                 $("#@(controlId)").kendoDateTimePicker({
                                                                     popup: {
                                                                         position: "bottom right",

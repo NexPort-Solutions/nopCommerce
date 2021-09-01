@@ -1,0 +1,453 @@
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Services
+@using Nop.Services.Helpers
+
+@inject NexportService nexportService
+@inject IUserAgentHelper userAgentHelper
+
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
+
+@if (Model.IsActive)
+{
+    var controlId = $"NexportCustomProfile-{Model.Id}";
+
+    if (Model.Type != NexportRegistrationFieldType.CustomType)
+    {
+        <text>
+            <div class="form-group">
+                <div class="col-xs-12 col-sm-3">
+                    <div class="label-wrapper">
+                        <label class="control-label" for="@(controlId)">@Model.Name</label>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-9">
+                    @if (Model.IsRequired)
+                    {
+                        <div class="input-group input-group-required">
+                            @switch (Model.Type)
+                            {
+                                case NexportRegistrationFieldType.Text:
+                                {
+                                    <input name="@(controlId)" type="text" class="form-control text-box single-line" id="@(controlId)" />
+                                    <script>
+                                        $(document).ready(function() {
+                                            $("#@(controlId)").rules("add",
+                                                {
+                                                    "validate-pattern": {
+                                                        required: true,
+                                                        format: "@Model.ValidationRegex"
+                                                    },
+                                                    messages: {
+                                                        "validate-pattern": "@(string.IsNullOrWhiteSpace(Model.ValidationMessage) ? "Please input the correct format" : Model.ValidationMessage)"
+                                                    }
+                                                });
+                                        });
+                                    </script>
+
+                                    break;
+                                }
+
+                                case NexportRegistrationFieldType.Numeric:
+                                {
+                                    <input name="@(controlId)" type="number" class="form-control" id="@(controlId)" />
+                                    
+                                    break;
+                                }
+
+                                case NexportRegistrationFieldType.SelectCheckbox:
+                                {
+                                    var options = nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                                    if (options.Count > 0)
+                                    {
+                                        var renderOptions = Model.DisplayOptionByAscendingOrder
+                                            ? options.OrderBy(x => x.OptionValue).ToList()
+                                            : options;
+
+                                        @if (Model.AllowMultipleSelection)
+                                        {
+                                            foreach (var option in renderOptions)
+                                            {
+                                                <div class="checkbox">
+                                                    <label for="@(controlId)_@(option.Id)">
+                                                        <input id="@(controlId)_@(option.Id)" type="checkbox" name="@(controlId)" value="@option.Id" style="margin-top: 3px;" />
+                                                        @option.OptionValue
+                                                    </label>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            foreach (var option in renderOptions)
+                                            {
+                                                <div class="checkbox">
+                                                    <label for="@(controlId)_@(option.Id)" style="padding-left: 0;">
+                                                        <input id="@(controlId)_@(option.Id)" type="radio" name="@(controlId)" value="@option.Id" style="margin-top: 3px;" />
+                                                        @option.OptionValue
+                                                    </label>
+                                                </div>
+                                            }
+                                        }
+                                    }
+
+                                    break;
+                                }
+
+                                case NexportRegistrationFieldType.SelectDropDown:
+                                {
+                                    var options = nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                                    if (options.Count > 0)
+                                    {
+                                        var renderOptions = Model.DisplayOptionByAscendingOrder
+                                            ? options.OrderBy(x => x.OptionValue).ToList()
+                                            : options;
+
+                                        <select name="@(controlId)" id="@(controlId)" class="form-control">
+                                            <option value="0">Please select</option>
+                                            @foreach (var option in renderOptions)
+                                            {
+                                                <option value="@option.Id">@option.OptionValue</option>
+                                            }
+                                        </select>
+                                    }
+
+                                    break;
+                                }
+
+                                case NexportRegistrationFieldType.Email:
+                                {
+                                    <input name="@(controlId)" type="email" class="form-control textbox single-line" id="@(controlId)"/>
+                                    <script>
+                                        $(document).ready(function() {
+                                            $("#@(controlId)").rules("add",
+                                                {
+                                                    email: true
+                                                });
+                                        });
+                                    </script>
+
+                                    break;
+                                }
+
+                                case NexportRegistrationFieldType.Boolean:
+                                {
+                                    <div class="checkbox">
+                                        <span>
+                                            <label for="@(controlId)_Yes">
+                                                <input id="@(controlId)_Yes" type="radio" name="@(controlId)" value="True"/>
+                                                Yes
+                                            </label>
+                                        </span>
+                                        <span>
+                                            <label for="@(controlId)_No">
+                                                <input id="@(controlId)_No" type="radio" name="@(controlId)" value="False"/>
+                                                No
+                                            </label>
+                                        </span>
+                                    </div>
+
+                                    break;
+                                }
+
+                                case NexportRegistrationFieldType.DateOnly:
+                                {
+                                    const string datePickerFormat = "MM/DD/YYYY";
+
+                                    <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker"/>
+                                    <script>
+                                        $(document).ready(function() {
+                                            $("#@(controlId)").kendoDatePicker({
+                                                format: "MM/dd/yyyy"
+                                            });
+                                            $("#@(controlId)").rules("add",
+                                                {
+                                                    "validate-datetime": {
+                                                        required: true,
+                                                        format: ["@datePickerFormat"]
+                                                    },
+                                                    messages: {
+                                                        "validate-datetime": "Please select the date value from the picker or input the valid format (MM/DD/YYYY)"
+                                                    }
+                                                });
+                                        });
+                                    </script>
+
+                                    break;
+                                }
+
+                                case NexportRegistrationFieldType.DateTime:
+                                {
+                                    const string dateTimePickerFormat = "MM/DD/YYYY hh:mm A";
+
+                                    <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker" />
+                                    <script>
+                                        $(document).ready(function() {
+                                            $("#@(controlId)").kendoDateTimePicker({
+                                                format: "MM/dd/yyyy hh:mm tt"
+                                            });
+                                            $("#@(controlId)").rules("add",
+                                                {
+                                                    "validate-datetime": {
+                                                        required: true,
+                                                        format: ["@dateTimePickerFormat"]
+                                                    },
+                                                    messages: {
+                                                        "validate-datetime": "Please select the date time value from the picker or input the valid format (MM/DD/YYYY HH:mm)"
+                                                    }
+                                                });
+                                        });
+                                    </script>
+
+                                    break;
+                                }
+
+                                case NexportRegistrationFieldType.None:
+                                    break;
+                            }
+                            <div class="input-group-btn">
+                                <nop-required />
+                            </div>
+                        </div>
+                        <span class="field-validation-valid" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
+                    }
+                    else
+                    {
+                        @switch (Model.Type)
+                        {
+                            case NexportRegistrationFieldType.Text:
+                                <input name="@(controlId)" type="text" class="form-control text-box single-line" id="@(controlId)"/>
+                                <script>
+                                    $(document).ready(function() {
+                                        $("#@(controlId)").rules("add",
+                                            {
+                                                "validate-pattern": {
+                                                    format: "@Model.ValidationRegex"
+                                                },
+                                                messages: {
+                                                    "validate-pattern": "@(string.IsNullOrWhiteSpace(Model.ValidationMessage) ? "Please input the correct format" : Model.ValidationMessage)"
+                                                }
+                                            });
+                                    });
+                                </script>
+
+                                break;
+                            case NexportRegistrationFieldType.Numeric:
+                                <input name="@(controlId)" type="number" class="form-control text-box single-line" id="@(controlId)"/>
+
+                                break;
+                            case NexportRegistrationFieldType.SelectCheckbox:
+                            {
+                                var options = nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                                if (options.Count > 0)
+                                {
+                                    var renderOptions = Model.DisplayOptionByAscendingOrder
+                                        ? options.OrderBy(x => x.OptionValue).ToList()
+                                        : options;
+                                        
+                                    @if (Model.AllowMultipleSelection)
+                                    {
+                                        foreach (var option in renderOptions)
+                                        {
+                                            <div class="checkbox">
+                                                <label for="@(controlId)_@(option.Id)">
+                                                    <input id="@(controlId)_@(option.Id)" type="checkbox" name="@(controlId)" value="@option.Id" style="margin-top: 3px;" />
+                                                    @option.OptionValue
+                                                </label>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        foreach (var option in renderOptions)
+                                        {
+                                            <div class="checkbox">
+                                                <label for="@(controlId)_@(option.Id)" style="padding-left: 0;">
+                                                    <input id="@(controlId)_@(option.Id)" type="radio" name="@(controlId)" value="@option.Id" style="margin-top: 3px;" />
+                                                    @option.OptionValue
+                                                </label>
+                                            </div>
+                                        }
+                                    }
+                                }
+
+                                break;
+                            }
+                            case NexportRegistrationFieldType.SelectDropDown:
+                            {
+                                var options = nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                                if (options.Count > 0)
+                                {
+                                    var renderOptions = Model.DisplayOptionByAscendingOrder
+                                        ? options.OrderBy(x => x.OptionValue).ToList()
+                                        : options;
+
+                                    <select name="@(controlId)" id="@(controlId)" class="form-control">
+                                        <option value="0">---</option>
+                                        @foreach (var option in renderOptions)
+                                        {
+                                            <option value="@option.Id">@option.OptionValue</option>
+                                        }
+                                    </select>
+                                }
+
+                                break;
+                            }
+                            case NexportRegistrationFieldType.Email:
+                                <input name="@(controlId)" type="email" class="form-control textbox single-line" id="@(controlId)"/>
+                                <script>
+                                    $(document).ready(function() {
+                                        $("#@(controlId)").rules("add",
+                                            {
+                                                email: true
+                                            });
+                                    });
+                                </script>
+
+                                break;
+                            case NexportRegistrationFieldType.Boolean:
+                                <div class="checkbox">
+                                    <span>
+                                        <label for="@(controlId)_Yes">
+                                            <input id="@(controlId)_Yes" type="radio" name="@(controlId)" value="True"/>
+                                            Yes
+                                        </label>
+                                    </span>
+                                    <span>
+                                        <label for="@(controlId)_No">
+                                            <input id="@(controlId)_No" type="radio" name="@(controlId)" value="False"/>
+                                            No
+                                        </label>
+                                    </span>
+                                </div>
+
+                                break;
+                            case NexportRegistrationFieldType.DateOnly:
+                            {
+                                const string datePickerFormat = "MM/DD/YYYY";
+                                
+                                <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker" />
+                                <script>
+                                    $(document).ready(function() {
+                                        $("#@(controlId)").kendoDatePicker({
+                                            format: "MM/dd/yyyy"
+                                        });
+                                        $("#@(controlId)").rules("add",
+                                            {
+                                                "validate-datetime": {
+                                                    format: ["@datePickerFormat"]
+                                                },
+                                                messages: {
+                                                    "validate-datetime": "Please select the date value from the picker or input the valid format (MM/DD/YYYY)"
+                                                }
+                                            });
+                                    });
+                                </script>
+
+                                break;
+                            }
+
+                            case NexportRegistrationFieldType.DateTime:
+                            {
+                                const string dateTimePickerFormat = "MM/DD/YYYY hh:mm A";
+
+                                <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker" />
+                                <script>
+                                    $(document).ready(function() {
+                                        $("#@(controlId)").kendoDateTimePicker({
+                                            format: "MM/dd/yyyy hh:mm tt"
+                                        });
+                                        $("#@(controlId)").rules("add",
+                                            {
+                                                "validate-datetime": {
+                                                    format: ["@dateTimePickerFormat"]
+                                                },
+                                                messages: {
+                                                    "validate-datetime": "Please select the date time value from the picker or input the valid format (MM/DD/YYYY HH:mm)"
+                                                }
+                                            });
+                                    });
+                                </script>
+
+                                break;
+                            }
+
+                            case NexportRegistrationFieldType.None:
+                                break;
+                        }
+                    }
+                    
+                    @if (Model.IsRequired)
+                    {
+                        <script>
+                            $(document).ready(function() {
+                                $("[id^=@(controlId)]").rules("add",
+                                    {
+                                        required: true,
+                                        @if (Model.Type == NexportRegistrationFieldType.SelectDropDown)
+                                        {
+                                            <text>min: 1,</text>
+                                        }
+                                        messages: {
+                                            @if (Model.Type == NexportRegistrationFieldType.SelectDropDown)
+                                            {
+                                                <text>min: "@Model.Name field is required.",</text>
+                                            }
+                                            required: "@Model.Name field is required."
+                                        }
+                                    });
+                            });
+                        </script>
+                    }
+                </div>
+            </div>
+            </text>
+        }
+        else
+        {
+            if (!string.IsNullOrWhiteSpace(Model.CustomFieldRender))
+            {
+                <div id="customRenderPlaceholder" style="margin-top: 10px;"></div>
+
+                <script>
+                    $(document).ready(function() {
+                        loadCustomFieldRender();
+                    });
+
+                    function loadCustomFieldRender() {
+                        var customFieldSystemName = "@Model.CustomFieldRender";
+                        $.ajax({
+                            cache: false,
+                            url: "@Url.Action("GetAdminRegistrationFieldCustomRenderUrl", "NexportIntegration")",
+                            data: {
+                                "systemName": customFieldSystemName,
+                                "fieldId": @Model.Id
+                            },
+                            success: function(data, textStatus, jqXHR) {
+                                displayCustomRender(data.url, "#customRenderPlaceholder");
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                $("#customRenderPlaceholder").html("Failed to load custom field render!");
+                            }
+                        });
+                    };
+
+                    function displayCustomRender(url, placeholderName) {
+                        $.ajax({
+                            cache: false,
+                            url: url + "&renderAdminView=true",
+                            dataType: "html",
+                            success: function(data, textStatus, jqXHR) {
+                                $(placeholderName).html(data);
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                $(placeholderName).html("Failed to custom field render content!");
+                            }
+                        });
+                    }
+                </script>
+            }
+            else
+            {
+                <span>No custom render associated with this field!</span>
+            }
+        }
+    }

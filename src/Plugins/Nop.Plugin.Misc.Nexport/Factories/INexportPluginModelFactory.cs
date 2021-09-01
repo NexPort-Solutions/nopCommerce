@@ -39,6 +39,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         NexportCustomerAdditionalInfoModel PrepareNexportAdditionalInfoModel(Customer customer);
 
+        AddNexportCustomerAdditionalInfoModel PrepareAddNexportAdditionalInfoModel(Customer customer);
+
         NexportCatalogListModel PrepareNexportCatalogListModel(NexportCatalogSearchModel searchModel);
 
         NexportSyllabusListModel PrepareNexportSyllabusListModel(NexportSyllabusListSearchModel searchModel);
@@ -108,6 +110,10 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             NexportRegistrationFieldOption registrationFieldOption);
 
         NexportCustomerRegistrationFieldsModel PrepareNexportCustomerRegistrationFieldsModel(Store store);
+
+        NexportAddCustomerRegistrationFieldsModel PrepareNexportAddCustomerRegistrationFieldsModel(Store store);
+
+        NexportAddCustomerRegistrationFieldsModel PrepareNexportAddCustomerRegistrationFieldsModel(Customer customer, Store store);
 
         NexportCustomerRegistrationFieldAnswerListModel PrepareNexportCustomerRegistrationFieldAnswerListModel(
             NexportCustomerRegistrationFieldAnswerListSearchModel searchModel);

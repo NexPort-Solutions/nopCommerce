@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
+using Nop.Core.Domain.Customers;
 using Nop.Services.Plugins;
 
 namespace Nop.Plugin.Misc.Nexport.Services
@@ -17,9 +18,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
         /// Get the URL for custom render MVC action
         /// </summary>
         /// <param name="fieldId">Registration field identifier</param>
+        /// <param name="renderAdminView">Determine if UI within admin area is rendered</param>
         /// <returns>URL for the custom render MVC action</returns>
-        string GetCustomRenderUrl(int fieldId);
+        string GetCustomRenderUrl(int fieldId, bool renderAdminView);
 
+        /// <summary>
+        /// Get the custom field prefix
+        /// </summary>
+        /// <returns>The prefix for custom field</returns>
         string GetCustomFieldPrefix();
 
         /// <summary>
@@ -33,9 +39,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
         /// <summary>
         /// Save all the custom registration fields
         /// </summary>
+        /// <param name="customer">The customer that will be associated with those registration fields</param>
         /// <param name="fieldId">Registration field identifier</param>
         /// <param name="fields">Dictionary of custom registration fields</param>
-        void SaveCustomRegistrationFields(int fieldId, Dictionary<string, string> fields);
+        void SaveCustomRegistrationFields(Customer customer, int fieldId, Dictionary<string, string> fields);
 
         /// <summary>
         /// Process the registration field data in order to send it back as custom profile field in Nexport

@@ -1657,6 +1657,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         }
 
         public IPagedList<NexportRegistrationField> GetNexportRegistrationFieldsWithAnswersPagination(int customerId,
+            int? storeId = null,
             int pageIndex = 0, int pageSize = int.MaxValue)
         {
             var registrationFieldWithAnswerIds =
@@ -1667,6 +1668,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     .Select(x => x.FirstOrDefault().FieldId)
                     .ToList();
 
+            if (storeId != null)
+            {
+                var registrationFieldIdsByStore = _nexportRegistrationFieldStoreMappingRepository
+                    .TableNoTracking
+                    .Where(x => x.StoreId == storeId)
+                    .Select(x => x.FieldId)
+                    .ToList();
+
+                registrationFieldWithAnswerIds = registrationFieldWithAnswerIds.Intersect(registrationFieldIdsByStore).ToList();
+            }
+
             var query = _nexportRegistrationFieldRepository
                 .TableNoTracking
                 .Where(f => registrationFieldWithAnswerIds.Contains(f.Id));
@@ -1674,6 +1686,34 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var fields = new PagedList<NexportRegistrationField>(query, pageIndex, pageSize);
 
             return fields;
+        }
+
+        public IList<NexportRegistrationField> GetNexportRegistrationFieldsWithAnswers(int customerId, int? storeId = null)
+        {
+            var registrationFieldWithAnswerIds =
+                _nexportRegistrationFieldAnswerRepository
+                    .TableNoTracking
+                    .Where(fa => fa.CustomerId == customerId)
+                    .GroupBy(fa => fa.FieldId)
+                    .Select(x => x.FirstOrDefault().FieldId)
+                    .ToList();
+
+            if (storeId != null)
+            {
+                var registrationFieldIdsByStore = _nexportRegistrationFieldStoreMappingRepository
+                    .TableNoTracking
+                    .Where(x => x.StoreId == storeId)
+                    .Select(x => x.FieldId)
+                    .ToList();
+
+                registrationFieldWithAnswerIds = registrationFieldWithAnswerIds.Intersect(registrationFieldIdsByStore).ToList();
+            }
+
+            var query = _nexportRegistrationFieldRepository
+                .TableNoTracking
+                .Where(f => registrationFieldWithAnswerIds.Contains(f.Id));
+
+            return query.ToList();
         }
 
         public void InsertNexportRegistrationField(NexportRegistrationField registrationField)

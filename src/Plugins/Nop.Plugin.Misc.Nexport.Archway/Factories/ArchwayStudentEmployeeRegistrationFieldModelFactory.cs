@@ -27,9 +27,9 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
             _localizationService = localizationService;
         }
 
-        public ArchwayStudentEmployeeRegistrationFieldModel PrepareArchwayStudentEmployeeRegistrationFieldModel(int fieldId)
+        public ArchwayStudentEmployeeRegistrationFieldModel PrepareArchwayStudentEmployeeRegistrationFieldModel(int fieldId, bool renderAdminView)
         {
-            var model = new ArchwayStudentEmployeeRegistrationFieldModel { FieldId = fieldId };
+            var model = new ArchwayStudentEmployeeRegistrationFieldModel { FieldId = fieldId, RenderAdminView = renderAdminView };
 
             var storeRecords = _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
 
@@ -87,7 +87,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
 
         public ArchwayStudentEmployeeRegistrationFieldModel PrepareEditArchwayStudentEmployeeRegistrationFieldModel(int customerId, int fieldId)
         {
-            var model = PrepareArchwayStudentEmployeeRegistrationFieldModel(fieldId);
+            var model = PrepareArchwayStudentEmployeeRegistrationFieldModel(fieldId, false);
 
             var currentAnswers = _archwayStudentEmployeeRegistrationFieldService.GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
 

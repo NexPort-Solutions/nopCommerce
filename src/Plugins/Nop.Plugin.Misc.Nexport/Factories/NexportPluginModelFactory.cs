@@ -408,15 +408,41 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 CustomerId = customer.Id
             };
 
+            var availableStores = _storeService.GetAllStores();
+
             model.NexportCustomerRegistrationFieldWithAnswersListSearchModel = new NexportCustomerRegistrationFieldWithAnswersListSearchModel
             {
-                CustomerId = customer.Id
+                CustomerId = customer.Id,
+                AvailableStores = availableStores.Select(store => new SelectListItem
+                {
+                    Text = store.Name,
+                    Value = store.Id.ToString()
+                }).ToList()
             };
 
             model.NexportCustomerRegistrationFieldAnswerListSearchModel = new NexportCustomerRegistrationFieldAnswerListSearchModel
             {
                 CustomerId = customer.Id
             };
+
+            return model;
+        }
+
+        public AddNexportCustomerAdditionalInfoModel PrepareAddNexportAdditionalInfoModel(Customer customer)
+        {
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            var model = new AddNexportCustomerAdditionalInfoModel { CustomerId = customer.Id };
+
+            var availableStores = _storeService.GetAllStores();
+            model.AvailableStores = availableStores.Select(store => new SelectListItem
+            {
+                Text = store.Name,
+                Value = store.Id.ToString()
+            }).ToList();
+
+            model.AvailableStores.Insert(0, new SelectListItem("Select store", ""));
 
             return model;
         }
@@ -1063,6 +1089,77 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
+        public NexportAddCustomerRegistrationFieldsModel PrepareNexportAddCustomerRegistrationFieldsModel(Store store)
+        {
+            if (store == null)
+                throw new ArgumentNullException(nameof(store));
+
+            var model = new NexportAddCustomerRegistrationFieldsModel();
+
+            var availableFields = _nexportService.GetNexportRegistrationFields(store.Id);
+
+            model.RegistrationFields = availableFields
+                .OrderBy(x => x.Type)
+                .ThenBy(x => x.Name)
+                .Select(x =>
+                {
+                    var fieldModel = x.ToModel<NexportRegistrationFieldModel>();
+                    if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox ||
+                        fieldModel.Type == NexportRegistrationFieldType.SelectDropDown)
+                    {
+                        if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox)
+                            fieldModel.AllowMultipleSelection = _genericAttributeService.GetAttribute(x,
+                                nameof(fieldModel.AllowMultipleSelection), defaultValue: false);
+
+                        fieldModel.DisplayOptionByAscendingOrder = _genericAttributeService.GetAttribute(x,
+                            nameof(fieldModel.DisplayOptionByAscendingOrder), defaultValue: false);
+                    }
+
+                    return fieldModel;
+                })
+                .ToList();
+
+            return model;
+        }
+
+        public NexportAddCustomerRegistrationFieldsModel PrepareNexportAddCustomerRegistrationFieldsModel(Customer customer, Store store)
+        {
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            if (store == null)
+                throw new ArgumentNullException(nameof(store));
+
+            var model = new NexportAddCustomerRegistrationFieldsModel();
+
+            var availableFields = _nexportService.GetNexportRegistrationFields(store.Id);
+            var customerExistingFields = _nexportService.GetNexportRegistrationFieldsWithAnswers(customer.Id, store.Id);
+            var fields = availableFields.Where(x => customerExistingFields.All(f => f.Id != x.Id));
+
+            model.RegistrationFields = fields
+                .OrderBy(x => x.Type)
+                .ThenBy(x => x.Name)
+                .Select(x =>
+                {
+                    var fieldModel = x.ToModel<NexportRegistrationFieldModel>();
+                    if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox ||
+                        fieldModel.Type == NexportRegistrationFieldType.SelectDropDown)
+                    {
+                        if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox)
+                            fieldModel.AllowMultipleSelection = _genericAttributeService.GetAttribute(x,
+                                nameof(fieldModel.AllowMultipleSelection), defaultValue: false);
+
+                        fieldModel.DisplayOptionByAscendingOrder = _genericAttributeService.GetAttribute(x,
+                            nameof(fieldModel.DisplayOptionByAscendingOrder), defaultValue: false);
+                    }
+
+                    return fieldModel;
+                })
+                .ToList();
+
+            return model;
+        }
+
         public NexportCustomerRegistrationFieldAnswerListModel PrepareNexportCustomerRegistrationFieldAnswerListModel(
             NexportCustomerRegistrationFieldAnswerListSearchModel searchModel)
         {
@@ -1141,6 +1238,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 throw new ArgumentNullException(nameof(searchModel));
 
             var customerNexportRegistrationFieldsWithAnswers = _nexportService.GetNexportRegistrationFieldsWithAnswersPagination(searchModel.CustomerId,
+                searchModel.StoreId,
                 pageIndex: searchModel.Page - 1,
                 pageSize: searchModel.PageSize);
 
@@ -1151,6 +1249,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     var fieldModel = field.ToModel<NexportCustomerRegistrationFieldWithAnswersModel>();
                     fieldModel.CustomerId = searchModel.CustomerId;
                     fieldModel.FieldType = field.Type.GetDisplayName();
+                    fieldModel.NexportCustomProfileFieldKey = field.NexportCustomProfileFieldKey;
 
                     return fieldModel;
                 });
@@ -1159,8 +1258,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportCustomerRegistrationFieldAnswersEditModel PrepareNexportCustomerRegistrationFieldAnswersEditModel(
-            Customer customer, NexportRegistrationField registrationField)
+        public NexportCustomerRegistrationFieldAnswersEditModel PrepareNexportCustomerRegistrationFieldAnswersEditModel(Customer customer, NexportRegistrationField registrationField)
         {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));

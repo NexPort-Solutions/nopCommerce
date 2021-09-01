@@ -10,6 +10,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer
 
         public string FieldType { get; set; }
 
+        public string NexportCustomProfileFieldKey { get; set; }
+
         public string CustomRender { get; set; }
     }
 }

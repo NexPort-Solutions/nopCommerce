@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Net;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NexportApi.Client;
@@ -511,7 +512,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
                 return ErrorJson(_localizationService.GetResource("Admin.AccessDenied.Description"));
-            
+
             GetUserResponse nexportUser = null;
 
             if (nexportUserId != Guid.Empty)
@@ -2534,7 +2535,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(new { url });
         }
 
-        public IActionResult GetRegistrationFieldCustomRenderUrl(string systemName, int fieldId)
+        public IActionResult GetRegistrationFieldCustomRenderUrl(string systemName, int fieldId, bool renderAdminView = false)
         {
             if (string.IsNullOrEmpty(systemName))
                 throw new ArgumentNullException(nameof(systemName));
@@ -2542,9 +2543,34 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var registrationFieldCustomRender = _registrationFieldCustomRenderPluginManager.LoadPluginBySystemName(systemName)
                                                 ?? throw new ArgumentException("Registration field custom render could not be loaded");
 
-            var url = registrationFieldCustomRender.GetCustomRenderUrl(fieldId);
+            var url = registrationFieldCustomRender.GetCustomRenderUrl(fieldId, renderAdminView);
 
             return Json(new { url });
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        public IActionResult GetAdminRegistrationFieldCustomRenderUrl(string systemName, int fieldId)
+        {
+            return GetRegistrationFieldCustomRenderUrl(systemName, fieldId, true);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        public IActionResult LoadRegistrationFieldAnswersByStore(int storeId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var store = _storeService.GetStoreById(storeId);
+
+            if (store == null)
+                return new EmptyResult();
+
+            var model = _nexportPluginModelFactory.PrepareNexportAddCustomerRegistrationFieldsModel(store);
+
+            return PartialView($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/_Create.RegistrationFieldAnswer.cshtml", model);
         }
 
         [Area(AreaNames.Admin)]
@@ -2589,6 +2615,86 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var url = registrationFieldCustomRender.GetEditCustomerRegistrationFieldAnswersViewUrl(customerId, fieldId);
 
             return Json(new { url });
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        public IActionResult AddCustomerRegistrationFieldAnswers(int customerId, int storeId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = _customerService.GetCustomerById(customerId)
+                           ?? throw new Exception($"No customer found with the specified id {customerId}");
+
+            var store = _storeService.GetStoreById(storeId)
+                        ?? throw new Exception($"No store found with the specified id {storeId}");
+
+            var model = _nexportPluginModelFactory.PrepareNexportAddCustomerRegistrationFieldsModel(customer, store);
+
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/AddCustomerRegistrationFieldAnswers.cshtml", model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AdminAntiForgery]
+        [HttpPost]
+        public IActionResult AddCustomerRegistrationFieldAnswers(int customerId, int storeId, IFormCollection form)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = _customerService.GetCustomerById(customerId)
+                           ?? throw new Exception($"No customer found with the specified id {customerId}");
+
+            var store = _storeService.GetStoreById(storeId)
+                        ?? throw new Exception($"No store found with the specified id {storeId}");
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Parse Nexport registration fields and check for errors
+                    var nexportRegistrationFields = _nexportService.ParseRegistrationFields(form, storeId);
+
+                    // Parse Nexport registration fields with custom type and check for errors
+                    var customRegistrationFields = _nexportService.ParseCustomRegistrationFields(form, storeId);
+
+                    // Save Nexport registration fields
+                    _nexportService.SaveNexportRegistrationFields(customer, nexportRegistrationFields);
+
+                    // Save Nexport custom registration fields
+                    foreach (var customField in customRegistrationFields)
+                    {
+                        var registrationField = _nexportService.GetNexportRegistrationFieldById(customField.Key);
+                        if (registrationField != null)
+                        {
+                            var customRender = _registrationFieldCustomRenderPluginManager.LoadPluginBySystemName(registrationField.CustomFieldRender);
+                            customRender?.SaveCustomRegistrationFields(customer, registrationField.Id, customField.Value);
+                        }
+                    }
+
+                    // Schedule synchronization task with Nexport for registration fields
+                    _nexportService.InsertNexportRegistrationFieldSynchronizationQueueItem(new NexportRegistrationFieldSynchronizationQueueItem
+                    {
+                        CustomerId = customer.Id,
+                        UtcDateCreated = DateTime.UtcNow
+                    });
+
+                    ViewBag.RefreshPage = true;
+
+                    ViewBag.ClosePage = true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error("Error occurred while creating Nexport registration fields", ex, customer);
+                    _notificationService.ErrorNotification("Unable to create Nexport registration fields!");
+                }
+            }
+
+            var model = _nexportPluginModelFactory.PrepareNexportAddCustomerRegistrationFieldsModel(customer, store);
+
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/AddCustomerRegistrationFieldAnswers.cshtml", model);
         }
 
         [Area(AreaNames.Admin)]
@@ -2740,7 +2846,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                         case NexportRegistrationFieldType.None:
                             break;
                     }
-
 
                     ViewBag.RefreshPage = true;
 

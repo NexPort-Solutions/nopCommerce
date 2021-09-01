@@ -37,12 +37,16 @@ namespace Nop.Plugin.Misc.Nexport.Components
             var customerModel = (CustomerModel) additionalData;
 
             if (customerModel.Id == 0)
-                return Content("");
+            {
+                var model = _nexportPluginModelFactory.PrepareAddNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
+
+                return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/AddNexportCustomerAdditionalInfo.cshtml", model);
+            }
+                
 
             try
             {
-                var model =
-                    _nexportPluginModelFactory.PrepareNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
+                var model = _nexportPluginModelFactory.PrepareNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
 
                 var mapping = _nexportService.FindUserMappingByCustomerId(customerModel.Id);
                 if (mapping != null)

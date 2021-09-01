@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Nop.Core;
 using Nop.Core.Domain.Cms;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Archway.Data;
 using Nop.Plugin.Misc.Nexport.Archway.Services;
@@ -107,12 +108,12 @@ namespace Nop.Plugin.Misc.Nexport.Archway
                 new { fieldId = fieldId }, _webHelper.CurrentRequestProtocol);
         }
 
-        public string GetCustomRenderUrl(int fieldId)
+        public string GetCustomRenderUrl(int fieldId, bool renderAdminView)
         {
             var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
 
             return urlHelper.Action("CustomRender", "ArchwayEmployeeRegistrationField",
-                new { fieldId = fieldId }, _webHelper.CurrentRequestProtocol);
+                new { fieldId = fieldId, renderAdminView = renderAdminView }, _webHelper.CurrentRequestProtocol);
         }
 
         public string GetCustomFieldPrefix()
@@ -122,26 +123,22 @@ namespace Nop.Plugin.Misc.Nexport.Archway
 
         public Dictionary<string, string> ParseCustomRegistrationFields(int fieldId, IFormCollection form)
         {
-            return _archwayStudentEmployeeRegistrationFieldService
-                .ParseArchwayStoreEmployeeRegistrationFields(fieldId, form);
+            return _archwayStudentEmployeeRegistrationFieldService.ParseArchwayStoreEmployeeRegistrationFields(fieldId, form);
         }
 
-        public void SaveCustomRegistrationFields(int fieldId, Dictionary<string, string> fields)
+        public void SaveCustomRegistrationFields(Customer customer, int fieldId, Dictionary<string, string> fields)
         {
-            _archwayStudentEmployeeRegistrationFieldService
-                .SaveArchwayStoreEmployeeRegistrationFields(_workContext.CurrentCustomer, fieldId, fields);
+            _archwayStudentEmployeeRegistrationFieldService.SaveArchwayStoreEmployeeRegistrationFields(customer, fieldId, fields);
         }
 
         public Dictionary<string, string> ProcessCustomRegistrationFields(int customerId, int fieldId)
         {
-            return _archwayStudentEmployeeRegistrationFieldService
-                .ProcessArchwayStoreEmployeeRegistrationFields(customerId, fieldId);
+            return _archwayStudentEmployeeRegistrationFieldService.ProcessArchwayStoreEmployeeRegistrationFields(customerId, fieldId);
         }
 
         public Dictionary<string, string> GetCustomFieldNamesAndValues(int customerId, int fieldId)
         {
-            return _archwayStudentEmployeeRegistrationFieldService
-                .GetCustomFieldNamesAndValues(customerId, fieldId);
+            return _archwayStudentEmployeeRegistrationFieldService.GetCustomFieldNamesAndValues(customerId, fieldId);
         }
 
         public string GetEditCustomerRegistrationFieldAnswersViewUrl(int customerId, int fieldId)

@@ -67,9 +67,9 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
             return View("~/Plugins/Misc.Nexport.Archway/Areas/Admin/Views/Customer/CustomRegistrationFieldDetails.cshtml", model);
         }
 
-        public IActionResult CustomRender(int fieldId)
+        public IActionResult CustomRender(int fieldId, bool renderAdminView)
         {
-            var model = _archwayStudentEmployeeRegistrationFieldModelFactory.PrepareArchwayStudentEmployeeRegistrationFieldModel(fieldId);
+            var model = _archwayStudentEmployeeRegistrationFieldModelFactory.PrepareArchwayStudentEmployeeRegistrationFieldModel(fieldId, renderAdminView);
 
             ViewData.TemplateInfo.HtmlFieldPrefix = $"{NexportDefaults.NexportRegistrationFieldPrefix}-{fieldId}.{PluginDefaults.HtmlFieldPrefix}";
 

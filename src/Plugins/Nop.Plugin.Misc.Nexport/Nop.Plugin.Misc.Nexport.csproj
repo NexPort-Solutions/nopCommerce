@@ -43,7 +43,10 @@
     <None Remove="Areas\Admin\Views\RegistrationField\Category\List.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Category\_CreateOrUpdate.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Create.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Customer\AddCustomerRegistrationFieldAnswers.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Customer\EditCustomerRegistrationFieldAnswers.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Customer\_Create.RegistrationFieldAnswer.Control.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Customer\_Create.RegistrationFieldAnswer.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Edit.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\List.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Option\Create.cshtml" />
@@ -104,6 +107,7 @@
     <None Remove="Views\SupplementalInfo\_CreateOrUpdate.Question.cshtml" />
     <None Remove="Views\Syllabus\SyllabusList.cshtml" />
     <None Remove="Views\ViewOrder.cshtml" />
+    <None Remove="Views\Widget\Customer\AddNexportCustomerAdditionalInfo.cshtml" />
     <None Remove="Views\Widget\Customer\NexportCustomerDetails.cshtml" />
     <None Remove="Views\Widget\Customer\NexportCustomerDetailsButtons.cshtml" />
     <None Remove="Views\Widget\Customer\NexportCustomerUserSettings.cshtml" />
@@ -126,7 +130,16 @@
     <Content Include="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Customer\AddCustomerRegistrationFieldAnswers.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Areas\Admin\Views\RegistrationField\Customer\EditCustomerRegistrationFieldAnswers.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Customer\_Create.RegistrationFieldAnswer.Control.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Customer\_Create.RegistrationFieldAnswer.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\RegistrationField\Option\_CreateOrUpdate.cshtml">
@@ -320,6 +333,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\ViewOrder.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Widget\Customer\AddNexportCustomerAdditionalInfo.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Widget\Customer\NexportCustomerDetails.cshtml">
