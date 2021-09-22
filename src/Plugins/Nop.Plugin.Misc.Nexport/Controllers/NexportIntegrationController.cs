@@ -1264,7 +1264,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             return View($"{NexportDefaults.NexportPluginAdminViewBasePath}Product/ProductMapping/DuplicateProductMapping.cshtml", model);
         }
-        
+
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
         [AdminAntiForgery]
@@ -1291,13 +1291,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                         }
                     }
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
                     var errMsg =
                         $"Unable to duplicate Nexport product mapping for product {product.Id} based on store mapping";
-                    _logger.Error($"Unable to duplicate Nexport product mapping for product {product.Id} based on store mapping");
+                    _logger.Error($"Unable to duplicate Nexport product mapping for product {product.Id} based on store mapping", ex);
                 }
-                
 
                 ViewBag.RefreshPage = true;
 

@@ -105,6 +105,10 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                 if (queueItem.RetryCount > MAX_RETRY_COUNT)
                                 {
                                     DeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem, invoiceItem);
+                                    CleanUpStoredMappingInfo(queueItem.OrderItemId);
+
+                                    // Complete the order
+                                    _orderProcessingService.CheckOrderStatus(order);
                                 }
                                 else
                                 {
