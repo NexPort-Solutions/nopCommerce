@@ -150,7 +150,7 @@ namespace Nop.Plugin.Misc.Nexport
         /// <summary>
         /// Nexport registration field synchronization task interval (in seconds)
         /// </summary>
-        public static int NexportRegistrationFieldSynchronizationTaskInterval => 20 * 60;
+        public static int NexportRegistrationFieldSynchronizationTaskInterval => 5;
 
         /// <summary>
         /// Nexport registration field  synchronization default batch size
