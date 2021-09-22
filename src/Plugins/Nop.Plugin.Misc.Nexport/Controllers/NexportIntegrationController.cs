@@ -48,6 +48,7 @@ using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
 using Nop.Plugin.Misc.Nexport.Infrastructure.ModelState;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
@@ -604,12 +605,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                         _logger.Error($"Cannot map customer {customer.Id} with Nexport user Id {nexportUserId}", ex);
 
                         var errMsg = $"Cannot map current customer with Nexport user {nexportUserId}";
-                        if (ex is NopException)
+                        if (ex is NexportUserMappingException exception)
                         {
-                            errMsg += $". {ex.Message}";
+                            var customerEditUrl = Url.Action("Edit", "Customer", new { id = exception.ExistingUserMapping.NopUserId });
+                            errMsg += $". {exception.Message}. Click <a href=\"{customerEditUrl}\">here</a> to view the existing customer.";
                         }
 
-                        _notificationService.ErrorNotification(errMsg);
+                        _notificationService.ErrorNotification(errMsg, false);
                     }
 
                     try

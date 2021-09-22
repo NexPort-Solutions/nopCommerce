@@ -13,6 +13,7 @@ using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Core.Infrastructure.Mapper;
+using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -862,10 +863,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (nexportUserMapping == null)
                 throw new ArgumentNullException(nameof(nexportUserMapping));
 
-            if (_nexportUserMappingRepository
+            var existingMapping = _nexportUserMappingRepository
                 .Table
-                .Any(user => user.NexportUserId == nexportUserMapping.NexportUserId))
-                throw new NopException($"The Nexport user Id {nexportUserMapping.NexportUserId} has been mapped with another users!");
+                .FirstOrDefault(user => user.NexportUserId == nexportUserMapping.NexportUserId);
+
+            if (existingMapping != null)
+                throw new NexportUserMappingException(
+                    $"The Nexport user Id {nexportUserMapping.NexportUserId} has been mapped with another users!",
+                    existingMapping);
 
             _nexportUserMappingRepository.Insert(nexportUserMapping);
 
