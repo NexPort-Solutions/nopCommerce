@@ -812,6 +812,41 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
+        public SubscriptionResponse FindSubscription(Guid userId, Guid orgId)
+        {
+            SubscriptionResponse result;
+
+            try
+            {
+                result = _nexportApiService.GetNexportSubscription(_nexportSettings.Url,
+                    _nexportSettings.AuthenticationToken, userId, orgId);
+            }
+            catch (Exception ex)
+            {
+                var errMsg = $"Error occurred during Web API call GetSubscription for user {userId} with the organization Id {orgId}";
+                _logger.Error($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<SubscriptionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        if (errorResponse.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.SubscriptionNotFound ||
+                            errorResponse.ApiErrorEntity.ErrorMessage.Contains("No subscription"))
+                        {
+                            return null;
+                        }
+
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+
+            return result;
+        }
+
         public IList<SubscriptionResponse> FindAllSubscriptions(Guid userId)
         {
             var items = new List<SubscriptionResponse>();
@@ -1751,10 +1786,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public List<NexportOrganizationModel> FindNexportRedemptionOrganizationsByCustomerId(int customerId)
+        public List<NexportOrganizationModel> FindNexportRedemptionOrganizationsByCustomerId(int customerId, bool checkSubscription = false)
         {
             var orders = _orderService.SearchOrders(_storeContext.CurrentStore.Id, customerId: customerId);
             var organizationModelList = new List<NexportOrganizationModel>();
+            NexportUserMapping userMapping = null;
+
+            if (checkSubscription)
+            {
+                userMapping = FindUserMappingByCustomerId(customerId);
+            }
 
             foreach (var order in orders)
             {
@@ -1777,12 +1818,19 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                                 if (org != null)
                                 {
-                                    organizationModelList.Add(new NexportOrganizationModel
+                                    var model = new NexportOrganizationModel
                                     {
                                         OrgId = org.OrgId,
                                         OrgName = org.Name,
                                         OrgShortName = org.ShortName
-                                    });
+                                    };
+
+                                    if (checkSubscription && userMapping != null)
+                                    {
+                                        model.Subscription = FindSubscription(userMapping.NexportUserId, org.OrgId);
+                                    }
+
+                                    organizationModelList.Add(model);
                                 }
                             }
                         }

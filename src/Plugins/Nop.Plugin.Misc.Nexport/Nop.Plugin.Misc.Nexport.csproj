@@ -30,7 +30,7 @@
     <PackageReference Include="FluentMigrator" Version="3.2.14" />
     <PackageReference Include="FluentMigrator.Runner" Version="3.2.14" />
     <PackageReference Include="JetBrains.Annotations" Version="2021.2.0" />
-    <PackageReference Include="NexportApi" Version="1.0.25" />
+    <PackageReference Include="NexportApi" Version="1.0.26" />
     <PackageReference Include="RestSharp" Version="106.12.0" />
   </ItemGroup>
 
@@ -67,6 +67,7 @@
     <None Remove="Content\nexport-store.css" />
     <None Remove="Content\nexport.css" />
     <None Remove="Content\rowGroup.dataTables.min.css" />
+    <None Remove="Content\uikit.min.css" />
     <None Remove="logo.jpg" />
     <None Remove="plugin.json" />
     <None Remove="Scripts\bootstrap3-typeahead.js" />
@@ -74,6 +75,7 @@
     <None Remove="Scripts\jquery-ui-timepicker-addon.min.js" />
     <None Remove="Scripts\nexport_common.js" />
     <None Remove="Scripts\nexport_plugin_common.js" />
+    <None Remove="Scripts\uikit.min.js" />
     <None Remove="Scripts\xregexp-all.min.js" />
     <None Remove="Views\Configure.cshtml" />
     <None Remove="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml" />
@@ -224,6 +226,9 @@
     <Content Include="Content\rowGroup.dataTables.min.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\uikit.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="logo.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -243,6 +248,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Scripts\nexport_plugin_common.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\uikit.min.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Scripts\xregexp-all.min.js">

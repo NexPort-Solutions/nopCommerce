@@ -31,7 +31,6 @@ using Nop.Web.Framework.Models.Extensions;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
-using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Order;
@@ -42,6 +41,7 @@ using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Common;
+using Nop.Services.Logging;
 using Nop.Services.Plugins;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
@@ -90,6 +90,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly VendorSettings _vendorSettings;
         private readonly CustomerSettings _customerSettings;
         private readonly CaptchaSettings _captchaSettings;
+        private readonly ILogger _logger;
 
         private readonly NexportService _nexportService;
 
@@ -138,6 +139,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             VendorSettings vendorSettings,
             CustomerSettings customerSettings,
             CaptchaSettings captchaSettings,
+            ILogger logger,
             NexportService nexportService)
         {
             _nexportSettings = nexportSettings;
@@ -180,6 +182,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _vendorSettings = vendorSettings;
             _customerSettings = customerSettings;
             _captchaSettings = captchaSettings;
+            _logger = logger;
             _nexportService = nexportService;
         }
 
@@ -586,14 +589,106 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 throw new ArgumentNullException(nameof(customer));
 
             var userMapping = _nexportService.FindUserMappingByCustomerId(customer.Id);
-            var redemptionOrganizations = _nexportService.FindNexportRedemptionOrganizationsByCustomerId(customer.Id);
+            var redemptionOrganizations = _nexportService.FindNexportRedemptionOrganizationsByCustomerId(customer.Id, true);
 
             var model = new NexportTrainingListModel();
 
-            if (userMapping != null && redemptionOrganizations != null)
+            if (userMapping != null)
             {
-                model.RedemptionOrganizations = redemptionOrganizations;
                 model.UserId = userMapping.NexportUserId;
+                model.RedemptionOrganizations = redemptionOrganizations;
+
+                var customerOrderInvoices = _nexportService.GetNexportOrderInvoiceItems(userMapping.NexportUserId)
+                    .Where(x => x.InvoiceItemId != Guid.Empty)
+                    .GroupBy(x => x.RedemptionEnrollmentId)
+                    .Select(x => x.OrderByDescending(invoice => invoice.UtcDateRedemption).First())
+                    .OrderByDescending(x => x.UtcDateRedemption)
+                    .ToList();
+                var trainingList = new List<NexportTrainingItemModel>();
+                foreach (var orderInvoice in customerOrderInvoices)
+                {
+                    try
+                    {
+                        var nexportInvoiceDetails =
+                            _nexportService.GetNexportInvoiceRedemption(orderInvoice.InvoiceItemId);
+                        if (nexportInvoiceDetails?.UtcRedemptionDate != null)
+                        {
+                            DateTime? enrollmentStartDate = null;
+                            DateTime? enrollmentExpirationDate = null;
+                            var enrollmentStatus = Enums.PhaseEnum.NotStarted;
+                            if (nexportInvoiceDetails.RedemptionUserId != null)
+                            {
+                                var enrollmentExisted = false;
+
+                                try
+                                {
+                                    if (nexportInvoiceDetails.RedemptionType == null ||
+                                    nexportInvoiceDetails.RedemptionType ==
+                                    InvoiceRedemptionResponse.RedemptionTypeEnum.Section)
+                                    {
+                                        var enrollmentDetails = _nexportService.GetSectionEnrollmentDetails(
+                                            nexportInvoiceDetails.OrganizationId,
+                                            nexportInvoiceDetails.RedemptionUserId.Value, nexportInvoiceDetails.SyllabusId);
+                                        if (enrollmentDetails != null)
+                                        {
+                                            enrollmentExisted = true;
+                                            enrollmentStartDate = enrollmentDetails.EnrollmentDate;
+                                            enrollmentExpirationDate = enrollmentDetails.ExpirationDate;
+                                            enrollmentStatus = enrollmentDetails.Phase;
+                                        }
+                                    }
+                                    else if (nexportInvoiceDetails.RedemptionType ==
+                                             InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
+                                    {
+                                        var enrollmentDetails = _nexportService.GetTrainingPlanEnrollmentDetails(
+                                            nexportInvoiceDetails.OrganizationId,
+                                            nexportInvoiceDetails.RedemptionUserId.Value, nexportInvoiceDetails.SyllabusId);
+                                        if (enrollmentDetails != null)
+                                        {
+                                            enrollmentExisted = true;
+                                            enrollmentStartDate = enrollmentDetails.EnrollmentDate;
+                                            enrollmentExpirationDate = enrollmentDetails.ExpirationDate;
+                                            enrollmentStatus = enrollmentDetails.Phase;
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.Warning($"Unable to get syllabus details for syllabus {nexportInvoiceDetails.SyllabusId}", ex);
+                                }
+
+                                if (enrollmentExisted)
+                                {
+                                    var trainingItem = new NexportTrainingItemModel
+                                    {
+                                        Name = nexportInvoiceDetails.SyllabusTitle,
+                                        Type = nexportInvoiceDetails.RedemptionType.Value,
+                                        UtcStartDate = enrollmentStartDate,
+                                        UtcExpirationDate = enrollmentExpirationDate,
+                                        UtcRedemptionDate = nexportInvoiceDetails.UtcRedemptionDate,
+                                        EnrollmentId = nexportInvoiceDetails.RedemptionEnrollmentId,
+                                        SyllabusId = nexportInvoiceDetails.SyllabusId,
+                                        OrganizationId = nexportInvoiceDetails.OrganizationId,
+                                        Status = enrollmentStatus
+                                    };
+
+                                    if (!trainingList.Any(x => x.SyllabusId == nexportInvoiceDetails.SyllabusId))
+                                        trainingList.Add(trainingItem);
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Warning($"Unable to get Nexport invoice item {orderInvoice.InvoiceItemId}", ex);
+                    }
+                }
+
+                model.Trainings = trainingList
+                    .GroupBy(x => x.OrganizationId)
+                    .ToDictionary(
+                        x => x.Key,
+                        x => x.ToList());
             }
 
             return model;

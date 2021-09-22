@@ -385,6 +385,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.DuplicateDestinationStoreMappings", "Mapping duplication destinations");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.DuplicateDestinationStoreMappings.Hint", "The list of stores that the product mapping will be duplicated to.");
 
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.Training", "Nexport Training");
+
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.UserId", "Nexport user Id");
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.UserId.Hint", "The user Id in Nexport");
             _localizationService.AddOrUpdatePluginLocaleResource("Account.Fields.Nexport.OwnerOrgId", "Nexport owner organization Id");
@@ -618,6 +620,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.DuplicateSourceStoreMapping.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.DuplicateDestinationStoreMappings");
             _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.DuplicateDestinationStoreMappings.Hint");
+
+            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.Training");
 
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.UserId");
             _localizationService.DeletePluginLocaleResource("Account.Fields.Nexport.UserId.Hint");

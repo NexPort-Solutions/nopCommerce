@@ -356,6 +356,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
+        public SubscriptionResponse GetNexportSubscription([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid orgId)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new NullReferenceException("Api url cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            _apiConfiguration.BasePath = url;
+
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
+            var result = nexportApi.AdminApiGetSubscription(accessToken, userId, orgId: orgId);
+
+            return result;
+        }
+
         public NexportSubscriptionsResponse GetNexportSubscriptions([NotNull] string url, [NotNull] string accessToken, Guid userId, int? page = null)
         {
             if (string.IsNullOrWhiteSpace(url))
