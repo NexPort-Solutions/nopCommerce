@@ -34,7 +34,6 @@
                                             $("#@(controlId)").rules("add",
                                                 {
                                                     "validate-pattern": {
-                                                        required: true,
                                                         format: "@Model.ValidationRegex"
                                                     },
                                                     messages: {
@@ -161,7 +160,6 @@
                                             $("#@(controlId)").rules("add",
                                                 {
                                                     "validate-datetime": {
-                                                        required: true,
                                                         format: ["@datePickerFormat"]
                                                     },
                                                     messages: {
@@ -187,7 +185,6 @@
                                             $("#@(controlId)").rules("add",
                                                 {
                                                     "validate-datetime": {
-                                                        required: true,
                                                         format: ["@dateTimePickerFormat"]
                                                     },
                                                     messages: {
@@ -211,7 +208,7 @@
                     }
                     else
                     {
-                        @switch (Model.Type)
+                        switch (Model.Type)
                         {
                             case NexportRegistrationFieldType.Text:
                                 <input name="@(controlId)" type="text" class="form-control text-box single-line" id="@(controlId)"/>
@@ -373,29 +370,6 @@
                             case NexportRegistrationFieldType.None:
                                 break;
                         }
-                    }
-                    
-                    @if (Model.IsRequired)
-                    {
-                        <script>
-                            $(document).ready(function() {
-                                $("[id^=@(controlId)]").rules("add",
-                                    {
-                                        required: true,
-                                        @if (Model.Type == NexportRegistrationFieldType.SelectDropDown)
-                                        {
-                                            <text>min: 1,</text>
-                                        }
-                                        messages: {
-                                            @if (Model.Type == NexportRegistrationFieldType.SelectDropDown)
-                                            {
-                                                <text>min: "@Model.Name field is required.",</text>
-                                            }
-                                            required: "@Model.Name field is required."
-                                        }
-                                    });
-                            });
-                        </script>
                     }
                 </div>
             </div>

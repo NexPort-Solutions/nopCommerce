@@ -6,6 +6,8 @@
 
 @if (Model != null)
 {
+    <p style="color: #ff2e2e;">Note: Fields with <b>*</b> are only required when customers register by themselves.</p>
+
     foreach (var registrationField in Model.RegistrationFields)
     {
         @await Html.PartialAsync("../Customer/_Create.RegistrationFieldAnswer.Control.cshtml",

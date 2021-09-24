@@ -273,7 +273,7 @@
                     });
                 }
 
-                @if (registrationField.IsRequired)
+                @if (!Model.RenderAdminView && registrationField.IsRequired)
                 {
                     <text>
                         $("#@Html.IdFor(model => model.StoreLocationState), #@Html.IdFor(model => model.StoreLocationCity), #@Html.IdFor(model => model.StoreLocationAddress), #@Html.IdFor(model => model.EmployeePosition)")

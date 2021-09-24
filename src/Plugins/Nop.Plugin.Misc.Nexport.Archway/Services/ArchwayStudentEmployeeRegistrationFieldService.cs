@@ -406,6 +406,10 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
 
+            var registrationField = _nexportService.GetNexportRegistrationFieldById(fieldId);
+            if (registrationField != null) 
+                return;
+
             _nexportService.InsertNexportRegistrationFieldAnswer(
                 new NexportRegistrationFieldAnswer
                 {
