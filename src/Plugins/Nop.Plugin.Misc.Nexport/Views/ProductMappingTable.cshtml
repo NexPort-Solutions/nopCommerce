@@ -374,6 +374,12 @@
                 if (data) {
                     hasDefaultMapping = data;
                 }
+
+                if (hasDefaultMapping) {
+                    $("#duplicateProductMappingBtn").prop("disabled", false);
+                } else {
+                    $("#duplicateProductMappingBtn").prop("disabled", true);
+                }
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 hasDefaultMapping = false;
