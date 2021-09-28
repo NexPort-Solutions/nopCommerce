@@ -52,11 +52,11 @@
                         <div class="nexport-training-item uk-panel uk-margin-small-bottom">
                             <div class="uk-card uk-card-default uk-full-width">
                                 <div class="uk-card-header" style="padding: 20px;">
-                                    <h3 class="uk-card-title uk-margin-small-bottom">
-                                        <span><i class="fal fa-sitemap" aria-hidden="true"></i></span>
+                                    <h3 class="uk-card-title uk-margin-small-bottom uk-flex">
+                                        <span><i class="far fa-school" aria-hidden="true"></i></span>
                                         <button class="uk-button uk-button-link uk-text-large" data-org-id="@org.OrgId" 
                                                 onclick="navigateToNexportOrganization(this);return false;"
-                                                disabled="@(subscriptionDisabled)">
+                                                disabled="@(subscriptionDisabled)" style="margin-left: 8px;">
                                             @org.OrgName (@org.OrgShortName)
                                         </button>
                                     </h3>
@@ -68,12 +68,17 @@
                                 <div class="uk-card-body" style="padding: 20px;">
                                     @foreach (var training in trainingList.Value)
                                     {
+                                        var iconClass = "fas fa-chalkboard-teacher";
+                                        if (training.Type == InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
+                                        {
+                                            iconClass = "fas fa-sitemap";
+                                        }
                                         var enrollmentDisabled = training.UtcExpirationDate != null && DateTime.UtcNow > training.UtcExpirationDate.Value;
                                         <div class="uk-card uk-card-default uk-margin-small-bottom">
-                                            <div class="uk-card-header" style="font-size: 1rem; padding: 20px;">
-                                                <span><i class="fad fa-stream"></i></span>
+                                            <div class="uk-card-header uk-flex" style="font-size: 1rem; padding: 20px; align-items: center;">
+                                                <span><i class="@iconClass"></i></span>
                                                 <button class="uk-button uk-button-link" data-enrollment-id="@training.EnrollmentId"
-                                                        onclick="navigateToNexportClassroom(this);return false;" style="font-size: 1em; text-transform: initial;"
+                                                        onclick="navigateToNexportClassroom(this);return false;" style="font-size: 1em; text-transform: initial; margin-left: 8px;"
                                                         disabled="@(enrollmentDisabled)">
                                                     @training.Name
                                                 </button>
@@ -103,52 +108,7 @@
                                     }
                                 </div>
                             </div>
-                            @*<div>
-                                
-                                <hr class="uk-margin-small">
-                                <div class="uk-margin-medium-left">
-                                    <ul class="uk-list">
-                                        @foreach (var training in trainingList.Value)
-                                        {
-                                            var trainingName = training.Name;
-                                            if (training.UtcExpirationDate != null)
-                                            {
-                                                trainingName += $" (Expired: {dateTimeHelper.ConvertToUserTime(training.UtcExpirationDate.Value)})";
-                                            }
-                                            <li style="font-size: 1.5em;">
-                                                <span><i class="fad fa-stream"></i></span>
-                                                <button class="uk-button uk-button-link" data-enrollment-id="@training.EnrollmentId"
-                                                        onclick="navigateToNexportClassroom(this);return false;" style="font-size: 1em;"
-                                                        disabled="@(training.UtcExpirationDate != null && DateTime.UtcNow > training.UtcExpirationDate.Value)">
-                                                    @trainingName
-                                                </button>
-                                            </li>
-                                        }
-                                    </ul>
-                                </div>
-                            </div>*@
                         </div>
-
-                        @*<div class="section nexport-training-item">
-                            <div class="title nexport-training-org">
-                                <a href="javascript:void(0);" data-org-id="@org.OrgId" onclick="navigateToNexportOrganization(this); return false;"
-                                   class="button-2 order-details-button" style="font-size: 1em;">@org.OrgName (@org.OrgShortName)</a>
-                            </div>
-                            <div class="nexport-training-courses">
-                                @foreach (var training in trainingList.Value)
-                                {
-                                    var trainingName = training.Name;
-                                    if (training.UtcExpirationDate != null)
-                                    {
-                                        trainingName += $" (Expired: {dateTimeHelper.ConvertToUserTime(training.UtcExpirationDate.Value)})";
-                                    }
-                                    <div>
-                                        <a href="javascript:void(0);" data-enrollment-id="@training.EnrollmentId" onclick="navigateToNexportClassroom(this); return false;"
-                                           class="button-2 order-details-button" style="font-size: 1em;">@trainingName</a>
-                                    </div>
-                                }
-                            </div>
-                        </div>*@
                     }
                 }
             </div>
