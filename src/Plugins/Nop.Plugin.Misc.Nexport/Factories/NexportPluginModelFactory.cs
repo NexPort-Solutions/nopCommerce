@@ -662,7 +662,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                     var trainingItem = new NexportTrainingItemModel
                                     {
                                         Name = nexportInvoiceDetails.SyllabusTitle,
-                                        Type = nexportInvoiceDetails.RedemptionType.Value,
+                                        Type = nexportInvoiceDetails.RedemptionType ?? InvoiceRedemptionResponse.RedemptionTypeEnum.Section,
                                         UtcStartDate = enrollmentStartDate,
                                         UtcExpirationDate = enrollmentExpirationDate,
                                         UtcRedemptionDate = nexportInvoiceDetails.UtcRedemptionDate,
@@ -680,7 +680,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     }
                     catch (Exception ex)
                     {
-                        _logger.Warning($"Unable to get Nexport invoice item {orderInvoice.InvoiceItemId}", ex);
+                        _logger.Warning($"Unable to get Nexport invoice item {orderInvoice.InvoiceItemId}", ex, customer);
                     }
                 }
 
