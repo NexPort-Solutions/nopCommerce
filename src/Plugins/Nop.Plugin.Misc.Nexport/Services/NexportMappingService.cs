@@ -11,7 +11,6 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
-using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
 
@@ -1699,13 +1698,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             if (storeId != null)
             {
-                var registrationFieldIdsByStore = _nexportRegistrationFieldStoreMappingRepository
-                    .TableNoTracking
-                    .Where(x => x.StoreId == storeId)
-                    .Select(x => x.FieldId)
-                    .ToList();
-
-                registrationFieldWithAnswerIds = registrationFieldWithAnswerIds.Intersect(registrationFieldIdsByStore).ToList();
+                registrationFieldWithAnswerIds = registrationFieldWithAnswerIds.Where(id =>
+                    _nexportRegistrationFieldStoreMappingRepository.TableNoTracking
+                        .Where(mapping => mapping.StoreId == storeId)
+                        .Select(mapping => mapping.FieldId).Contains(id) ||
+                    !(_nexportRegistrationFieldStoreMappingRepository.TableNoTracking
+                        .Where(mapping => mapping.FieldId == id)
+                        .Select(mapping => mapping.FieldId)).Contains(id)).ToList();
             }
 
             var query = _nexportRegistrationFieldRepository
