@@ -54,7 +54,7 @@
                                 <div class="uk-card-header" style="padding: 20px;">
                                     <h3 class="uk-card-title uk-margin-small-bottom uk-flex">
                                         <span><i class="far fa-school" aria-hidden="true"></i></span>
-                                        <button class="uk-button uk-button-link uk-text-large" data-org-id="@org.OrgId" 
+                                        <button class="uk-button uk-button-link uk-text-large" data-org-id="@org.OrgId"
                                                 onclick="navigateToNexportOrganization(this);return false;"
                                                 disabled="@(subscriptionDisabled)" style="margin-left: 8px;">
                                             @org.OrgName (@org.OrgShortName)
@@ -87,7 +87,7 @@
                                                 @if (training.UtcExpirationDate != null)
                                                 {
                                                     <div class="uk-margin-small-bottom">
-                                                        <strong>End date: </strong>@training.UtcExpirationDate
+                                                        <strong>End date: </strong>@dateTimeHelper.ConvertToUserTime(training.UtcExpirationDate.Value).ToString() (@dateTimeHelper.CurrentTimeZone.StandardName)
                                                     </div>
                                                 }
                                                 <div>
