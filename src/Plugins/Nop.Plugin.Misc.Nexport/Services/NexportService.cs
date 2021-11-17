@@ -2203,6 +2203,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                                 var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
                                                 return DateTime.UtcNow >= currentEnrollmentExpirationDate - renewalWindowTimeSpan;
                                             }
+
+                                            // Customer is not allowed to purchase since this is an active enrollment that has no renewal window
+                                            return false;
                                         }
 
                                         // Allow customer to purchase since the enrollment has been expired
