@@ -12,7 +12,7 @@
 
     if (registrationField != null)
     {
-        if(Model.RenderAdminView) 
+        if (Model.RenderAdminView)
         {
             if (registrationField.IsRequired)
             {
@@ -158,7 +158,7 @@
                 <input type="hidden" asp-for="StoreType" />
                 <input type="hidden" asp-for="StoreNumber" />
             }
-        } 
+        }
         else
         {
             <div class="inputs custom-attributes">
@@ -214,7 +214,7 @@
                 <span asp-validation-for="EmployeeId"></span>
             </div>
         }
-        
+
         <script>
             function resetHiddenInputFields() {
                 $("#storeEmployeeIdContainer").hide();

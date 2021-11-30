@@ -406,34 +406,54 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
 
-            var registrationField = _nexportService.GetNexportRegistrationFieldById(fieldId);
-            if (registrationField != null) 
-                return;
-
-            _nexportService.InsertNexportRegistrationFieldAnswer(
-                new NexportRegistrationFieldAnswer
-                {
-                    CustomerId = customer.Id,
-                    FieldId = fieldId,
-                    IsCustomField = true,
-                    UtcDateCreated = DateTime.UtcNow
-                });
-
-            foreach (var field in fields)
+            try
             {
-                var fieldKeyMapping = GetArchwayStudentRegistrationFieldKeyMapping(field.Key);
-                if (fieldKeyMapping != null)
+                if (fields.Count > 0)
                 {
-                    InsertArchwayStudentRegistrationFieldAnswer(
-                        new ArchwayStudentRegistrationFieldAnswer
+                    var includeStoreIdField = fields.TryGetValue("StoreNumber", out var storeIdFieldValue);
+                    if (!includeStoreIdField || string.IsNullOrWhiteSpace(storeIdFieldValue))
+                        return;
+
+                    int.TryParse(storeIdFieldValue, out var storeId);
+                    if (storeId < 0)
+                        return;
+
+                    var includeEmployeePositionField =
+                        fields.TryGetValue("EmployeePosition", out var employeePositionField);
+                    if (!includeEmployeePositionField || string.IsNullOrWhiteSpace(employeePositionField))
+                        return;
+
+                    _nexportService.InsertNexportRegistrationFieldAnswer(
+                        new NexportRegistrationFieldAnswer
                         {
                             CustomerId = customer.Id,
                             FieldId = fieldId,
-                            FieldKey = fieldKeyMapping.FieldKey,
-                            TextValue = field.Value,
+                            IsCustomField = true,
                             UtcDateCreated = DateTime.UtcNow
                         });
+
+                    foreach (var field in fields)
+                    {
+                        var fieldKeyMapping = GetArchwayStudentRegistrationFieldKeyMapping(field.Key);
+                        if (fieldKeyMapping != null)
+                        {
+                            InsertArchwayStudentRegistrationFieldAnswer(
+                                new ArchwayStudentRegistrationFieldAnswer
+                                {
+                                    CustomerId = customer.Id,
+                                    FieldId = fieldId,
+                                    FieldKey = fieldKeyMapping.FieldKey,
+                                    TextValue = field.Value,
+                                    UtcDateCreated = DateTime.UtcNow
+                                });
+                        }
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Unable to save registration field for Archway store employee", ex, customer);
+                throw;
             }
         }
 

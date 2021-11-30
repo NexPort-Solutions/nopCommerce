@@ -39,7 +39,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
                 .Where(s => storeAbbreviations.Contains(s.Abbreviation)).ToList();
             if (states.Any())
             {
-                model.AvailableStates.Add(new SelectListItem { Text = _localizationService.GetResource("Address.SelectState"), Value = "" });
+                model.AvailableStates.Add(new SelectListItem { Text = _localizationService.GetResource("Address.SelectState"), Value = null });
 
                 foreach (var s in states)
                 {
@@ -92,7 +92,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
             var currentAnswers = _archwayStudentEmployeeRegistrationFieldService.GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
 
             model.StoreLocationState = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreStateField")?.TextValue;
-            
+
             model.StoreLocationCity = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreCityField")?.TextValue;
 
             var citiesFromCurrentState = GetArchwayStoreCitiesByState(model.StoreLocationState, true);
@@ -117,10 +117,9 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
                 });
             }
 
-            model.EmployeePosition = currentAnswers.FirstOrDefault(x => x.FieldKey == "EmployeePositionField").TextValue;
+            model.EmployeePosition = currentAnswers.FirstOrDefault(x => x.FieldKey == "EmployeePositionField")?.TextValue;
 
-
-            model.StoreNumber = int.Parse(currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreIdField")?.TextValue);
+            model.StoreNumber = int.Parse(currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreIdField")?.TextValue ?? "0");
             model.StoreType = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreTypeField")?.TextValue;
 
             var positionFromCurrentAddress = GetArchwayStoreEmployeePositionsByStore(model.StoreNumber.ToString(), true);
