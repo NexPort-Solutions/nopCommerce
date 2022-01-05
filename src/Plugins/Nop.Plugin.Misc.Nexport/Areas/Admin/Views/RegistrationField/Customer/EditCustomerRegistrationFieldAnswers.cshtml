@@ -196,7 +196,7 @@
 
                                                         break;
                                                     case NexportRegistrationFieldType.Boolean:
-                                                        <input type="hidden" name="previousAnswer" value="@(Model.Answers.FirstOrDefault()?.Id)" />
+                                                        <input type="hidden" name="previousAnswers" value="@(Model.Answers.FirstOrDefault()?.Id)" />
                                                         <div class="option-list nexport-yes-no-field">
                                                             <span>
                                                                 <input id="@(controlId)_Yes" type="radio" name="answerValue" value="True" checked="@(Model.Answers.FirstOrDefault()?.BooleanValue)" />
