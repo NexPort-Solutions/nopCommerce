@@ -13,7 +13,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
 
         IList<ArchwayStoreCityModel> GetArchwayStoreCitiesByState(string state, bool addSelectCityItem);
 
-        IList<ArchwayStoreAddressModel> GetArchwayStoreAddressesByCity(string city, bool addSelectAddressItem);
+        IList<ArchwayStoreAddressModel> GetArchwayStoreAddressesByCity(string city, string state, bool addSelectAddressItem);
 
         IList<ArchwayStoreEmployeePositionModel> GetArchwayStoreEmployeePositionsByStore(string storeNumber, bool addSelectPositionItem);
     }

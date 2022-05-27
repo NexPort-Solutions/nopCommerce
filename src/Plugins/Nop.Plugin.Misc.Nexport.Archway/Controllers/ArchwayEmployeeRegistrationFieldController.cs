@@ -160,7 +160,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
                 });
             }
         }
-        
+
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         public IActionResult EditCustomerRegistrationFieldAnswers(int customerId, int fieldId)
@@ -184,9 +184,9 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
         }
 
         [CheckAccessPublicStore(true)]
-        public IActionResult GetArchwayStoreAddressesByCity(string city, bool addSelectAddressItem)
+        public IActionResult GetArchwayStoreAddressesByCity(string city, string state, bool addSelectAddressItem)
         {
-            var model = _archwayStudentEmployeeRegistrationFieldModelFactory.GetArchwayStoreAddressesByCity(city, addSelectAddressItem);
+            var model = _archwayStudentEmployeeRegistrationFieldModelFactory.GetArchwayStoreAddressesByCity(city, state, addSelectAddressItem);
             return Json(model);
         }
 

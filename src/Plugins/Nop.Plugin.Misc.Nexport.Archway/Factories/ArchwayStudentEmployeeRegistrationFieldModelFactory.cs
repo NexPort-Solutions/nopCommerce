@@ -107,7 +107,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
 
             model.StoreLocationAddress = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreAddressField")?.TextValue;
 
-            var addressFromCurrentCity = GetArchwayStoreAddressesByCity(model.StoreLocationCity, true);
+            var addressFromCurrentCity = GetArchwayStoreAddressesByCity(model.StoreLocationCity, model.StoreLocationState, true);
             foreach (var address in addressFromCurrentCity)
             {
                 model.AvailableAddresses.Add(new SelectListItem
@@ -166,15 +166,19 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
             return result;
         }
 
-        public IList<ArchwayStoreAddressModel> GetArchwayStoreAddressesByCity(string city, bool addSelectAddressItem)
+        public IList<ArchwayStoreAddressModel> GetArchwayStoreAddressesByCity(string city, string state, bool addSelectAddressItem)
         {
             if (string.IsNullOrWhiteSpace(city))
+                return new List<ArchwayStoreAddressModel>();
+
+            var stateProvince = _stateProvinceService.GetStateProvinces().FirstOrDefault(x => x.Name == state);
+            if (stateProvince == null)
                 return new List<ArchwayStoreAddressModel>();
 
             var storeRecords = _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
 
             var records = storeRecords
-                .Where(r => r.City == city)
+                .Where(r => r.City == city && r.State == stateProvince.Abbreviation)
                 .OrderBy(r => r.Address)
                 .ToList();
             var result = new List<ArchwayStoreAddressModel>();

@@ -343,6 +343,7 @@
                 var selectedItem = handler.val();
                 var ajaxData = {
                     "city": selectedItem,
+                    "state": $("#@Html.IdFor(model => model.StoreLocationState)").val(),
                     "addSelectAddressItem": "true"
                 }
 
