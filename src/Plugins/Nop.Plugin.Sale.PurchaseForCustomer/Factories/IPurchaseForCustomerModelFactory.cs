@@ -1,9 +1,10 @@
-﻿using Nop.Plugin.Sale.PurchaseForCustomer.Models;
+﻿using System.Threading.Tasks;
+using Nop.Plugin.Sale.PurchaseForCustomer.Models;
 
 namespace Nop.Plugin.Sale.PurchaseForCustomer.Factories
 {
     public interface IPurchaseForCustomerModelFactory
     {
-        PurchaseForCustomerOrderModel PreparePurchaseForCustomerOrderModel(int productId);
+        Task<PurchaseForCustomerOrderModel> PreparePurchaseForCustomerOrderModel(int productId);
     }
 }

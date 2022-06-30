@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Infrastructure;
 using Nop.Services.Catalog;
@@ -55,9 +56,9 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
             _logger = logger;
         }
 
-        public IActionResult PurchaseDetails(int productId)
+        public async Task<IActionResult> PurchaseDetails(int productId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
                 return AccessDeniedView();
 
             var model = _purchaseForCustomerModelFactory.PreparePurchaseForCustomerOrderModel(productId);
@@ -66,27 +67,28 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
         }
 
         [HttpPost]
-        public IActionResult PurchaseForCustomer(PurchaseForCustomerOrderModel model)
+        public async Task<IActionResult> PurchaseForCustomer(PurchaseForCustomerOrderModel model)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageOrders))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders))
                 return AccessDeniedView();
 
             PlaceOrderResult result = null;
 
             if (ModelState.IsValid)
             {
-                var store = _storeService.GetStoreById(model.StoreId);
+                var store = await _storeService.GetStoreByIdAsync(model.StoreId);
                 if (store != null)
                 {
-                    var product = _productService.GetProductById(model.ProductId);
+                    var product = await _productService.GetProductByIdAsync(model.ProductId);
                     if (product != null)
                     {
                         foreach (var customerId in model.CustomerIds)
                         {
-                            var customer = _customerService.GetCustomerById(customerId);
+                            var customer = await _customerService.GetCustomerByIdAsync(customerId);
                             if (customer != null)
                             {
-                                result = _purchaseForCustomerService.PurchaseProductForCustomer(product, customer, store, model.NotifyCustomer);
+                                result = await _purchaseForCustomerService
+                                    .PurchaseProductForCustomerAsync(product, customer, store, model.NotifyCustomer);
                             }
                         }
                     }
@@ -100,21 +102,21 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
                     if (model.MarkOrderAsPaid)
                     {
                         var orderProcessingService = EngineContext.Current.Resolve<IOrderProcessingService>();
-                        orderProcessingService.MarkOrderAsPaid(result.PlacedOrder);
+                        await orderProcessingService.MarkOrderAsPaidAsync(result.PlacedOrder);
                     }
 
-                    ViewBag.OrderResultMessage = _localizationService.GetResource("Admin.Catalog.Products.PurchaseForCustomer.Success");
+                    ViewBag.OrderResultMessage = await _localizationService.GetResourceAsync("Admin.Catalog.Products.PurchaseForCustomer.Success");
                 }
                 else
                 {
-                    ViewBag.OrderResultMessage = _localizationService.GetResource("Admin.Catalog.Products.PurchaseForCustomer.Error");
+                    ViewBag.OrderResultMessage = await _localizationService.GetResourceAsync("Admin.Catalog.Products.PurchaseForCustomer.Error");
 
                     var logError = result.Errors.Aggregate("Error while placing order. ",
                         (current, next) => $"{current}Error {result.Errors.IndexOf(next) + 1}: {next}. ");
                     foreach (var customerId in model.CustomerIds)
                     {
-                        var customer = _customerService.GetCustomerById(customerId);
-                        _logger.Error(logError, customer: customer);
+                        var customer = await _customerService.GetCustomerByIdAsync(customerId);
+                        await _logger.ErrorAsync(logError, customer: customer);
                     }
                 }
             }

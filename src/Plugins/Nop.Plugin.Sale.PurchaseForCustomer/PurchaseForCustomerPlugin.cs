@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Nop.Core.Domain.Cms;
 using Nop.Plugin.Sale.PurchaseForCustomer.Services;
 using Nop.Services.Cms;
@@ -25,40 +26,41 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer
             _settingService = settingService;
         }
 
-        public override void Install()
+        public override async Task InstallAsync()
         {
             if (!_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
             {
                 _widgetSettings.ActiveWidgetSystemNames.Add(PluginDefaults.SystemName);
-                _settingService.SaveSetting(_widgetSettings);
+                await _settingService.SaveSettingAsync(_widgetSettings);
             }
 
-            _purchaseForCustomerPluginService.AddOrUpdateResources();
+            await _purchaseForCustomerPluginService.AddOrUpdateResourcesAsync();
 
-            base.Install();
+            await base.InstallAsync();
         }
 
-        public override void Uninstall()
+        public override async Task UninstallAsync()
         {
             if (_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
             {
                 _widgetSettings.ActiveWidgetSystemNames.Remove(PluginDefaults.SystemName);
-                _settingService.SaveSetting(_widgetSettings);
+                await _settingService.SaveSettingAsync(_widgetSettings);
             }
 
-            _purchaseForCustomerPluginService.DeleteResources();
+            await _purchaseForCustomerPluginService.DeleteResourcesAsync();
 
-            base.Uninstall();
+            await base.UninstallAsync();
         }
 
         public bool HideInWidgetList => true;
 
-        public IList<string> GetWidgetZones()
+        public Task<IList<string>> GetWidgetZonesAsync()
         {
-            return new List<string>
-            {
-                AdminWidgetZones.ProductDetailsButtons
-            };
+            return Task.FromResult<IList<string>>(
+                new List<string>
+                {
+                    AdminWidgetZones.ProductDetailsButtons
+                });
         }
 
         public string GetWidgetViewComponentName(string widgetZone)

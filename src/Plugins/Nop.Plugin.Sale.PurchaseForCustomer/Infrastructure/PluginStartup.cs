@@ -7,6 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Infrastructure;
 using Nop.Services.Configuration;
 using Nop.Plugin.Sale.PurchaseForCustomer.Services;
+using Nop.Plugin.Sale.PurchaseForCustomer.Factories;
+using iTextSharp.text;
+using System.Threading.Tasks;
 
 namespace Nop.Plugin.Sale.PurchaseForCustomer.Infrastructure
 {
@@ -18,32 +21,42 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Infrastructure
             {
                 options.ViewLocationExpanders.Add(new ViewLocationExpander());
             });
+
+            services.AddScoped<IPurchaseForCustomerService, PurchaseForCustomerService>();
+            services.AddScoped<IPurchaseForCustomerModelFactory, PurchaseForCustomerModelFactory>();
+            services.AddScoped<PurchaseForCustomerPluginService>();
         }
 
         public void Configure(IApplicationBuilder application)
         {
-            using (var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            using var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>()?.CreateScope();
+            if (serviceScope != null)
             {
                 var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
 
                 var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-                var versionSettingValue = settingService.GetSettingByKey<string>(PluginDefaults.ASSEMBLY_VERSION_KEY);
-                Version installedAssemblyVersion = null;
-
-                if (!string.IsNullOrEmpty(versionSettingValue))
+                if (currentAssemblyVersion != null)
                 {
-                    installedAssemblyVersion =
-                        Version.Parse(versionSettingValue);
-                }
+                    var getSettingKeyTask = Task.Run(() => settingService.GetSettingByKeyAsync<string>(PluginDefaults.ASSEMBLY_VERSION_KEY));
+                    getSettingKeyTask.Wait();
+                    var versionSettingValue = getSettingKeyTask.Result;
+                    Version installedAssemblyVersion = null;
 
-                if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
-                {
-                    settingService.SetSetting(PluginDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
+                    if (!string.IsNullOrEmpty(versionSettingValue))
+                    {
+                        installedAssemblyVersion =
+                            Version.Parse(versionSettingValue);
+                    }
 
-                    var pluginService =
-                        serviceScope.ServiceProvider.GetRequiredService<PurchaseForCustomerPluginService>();
+                    if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
+                    {
+                        settingService.SetSettingAsync(PluginDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
 
-                    pluginService.AddOrUpdateResources();
+                        var pluginService =
+                            serviceScope.ServiceProvider.GetRequiredService<PurchaseForCustomerPluginService>();
+
+                        Task.Run(() => pluginService.AddOrUpdateResourcesAsync());
+                    }
                 }
             }
         }

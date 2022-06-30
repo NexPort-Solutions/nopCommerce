@@ -1,4 +1,5 @@
-﻿using Nop.Services.Localization;
+﻿using System.Threading.Tasks;
+using Nop.Services.Localization;
 
 namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
 {
@@ -11,44 +12,44 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
             _localizationService = localizationService;
         }
 
-        public void AddOrUpdateResources()
+        public async Task AddOrUpdateResourcesAsync()
         {
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.Customers",
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.Customers",
                 "Customers");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.Customers.Hint",
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.Customers.Hint",
                 "The customers that the product will be purchased for.");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.Store",
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.Store",
                 "Store");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.Store.Hint",
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.Store.Hint",
                 "The applicable store that the product will be purchased within.");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.MarkOrderAsPaid",
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.MarkOrderAsPaid",
                 "Mark order as paid");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.MarkOrderAsPaid.Hint",
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.MarkOrderAsPaid.Hint",
                 "Mark the order(s) as paid immediately after the order(s) have been successfully placed.");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.NotifyCustomer",
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.NotifyCustomer",
                 "Notify customer");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.NotifyCustomer.Hint",
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.NotifyCustomer.Hint",
                 "Notify each customer about the order");
-            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Catalog.Products.PurchaseForCustomer",
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Catalog.Products.PurchaseForCustomer",
                 "Purchase for customer");
-            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Catalog.Products.PurchaseForCustomer.Success",
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Catalog.Products.PurchaseForCustomer.Success",
                 "Successfully manually placed order(s) for customers.");
-            _localizationService.AddOrUpdatePluginLocaleResource("Admin.Catalog.Products.PurchaseForCustomer.Error",
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Catalog.Products.PurchaseForCustomer.Error",
                 "Cannot manually placed order(s) for customers due to errors.");
         }
 
-        public void DeleteResources()
+        public async Task DeleteResourcesAsync()
         {
-            _localizationService.DeletePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.Customers");
-            _localizationService.DeletePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.Customers.Hint");
-            _localizationService.DeletePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.Store");
-            _localizationService.DeletePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.Store.Hint");
-            _localizationService.DeletePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.MarkOrderAsPaid");
-            _localizationService.DeletePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.MarkOrderAsPaid.Hint");
-            _localizationService.DeletePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.NotifyCustomer");
-            _localizationService.DeletePluginLocaleResource("Plugins.Sale.Nexport.PurchaseForCustomer.NotifyCustomer.Hint");
-            _localizationService.DeletePluginLocaleResource("Admin.Catalog.Products.PurchaseForCustomer");
-            _localizationService.DeletePluginLocaleResource("Admin.Catalog.Products.PurchaseForCustomer.Error");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.Customers");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.Customers.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.Store");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.Store.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.MarkOrderAsPaid");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.MarkOrderAsPaid.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.NotifyCustomer");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Sale.Nexport.PurchaseForCustomer.NotifyCustomer.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Admin.Catalog.Products.PurchaseForCustomer");
+            await _localizationService.DeleteLocaleResourceAsync("Admin.Catalog.Products.PurchaseForCustomer.Error");
         }
     }
 }
