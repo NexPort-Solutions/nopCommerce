@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Exceptions;
@@ -127,7 +128,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
 
         public bool HideInWidgetList => true;
 
-        public IList<string> GetWidgetZones()
+        public async Task<IList<string>> GetWidgetZonesAsync()
         {
             return new List<string>
             {
@@ -149,6 +150,11 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
             }
 
             return "";
+        }
+
+        public Task ManageSiteMapAsync(SiteMapNode rootNode)
+        {
+            throw new NotImplementedException();
         }
     }
 }
