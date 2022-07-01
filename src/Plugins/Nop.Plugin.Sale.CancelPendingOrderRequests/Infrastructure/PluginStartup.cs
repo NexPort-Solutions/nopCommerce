@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Configuration;
@@ -14,6 +15,8 @@ using Nop.Services.Configuration;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Migrations;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
 using ILogger = Nop.Services.Logging.ILogger;
+using Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers;
+using Nop.Plugin.Sale.CancelPendingOrderRequests.Factories;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
 {
@@ -25,6 +28,11 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
             {
                 options.ViewLocationExpanders.Add(new ViewLocationExpander());
             });
+
+            services.AddScoped<CancelPendingOrderRequestsPluginService>();
+            services.AddScoped<IPendingOrderCancellationRequestService, PendingOrderCancellationRequestService>();
+            services.AddScoped<CancelPendingOrderRequestsController>();
+            services.AddScoped<IPendingOrderCancellationRequestModelFactory, PendingOrderCancellationRequestModelFactory>();
         }
 
         public static IServiceProvider CreateFluentMigratorRunnerService()
@@ -54,33 +62,43 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
         public void Configure(IApplicationBuilder application)
         {
             var dataSettings = DataSettingsManager.LoadSettings();
-            if (!dataSettings?.IsValid ?? true)
+
+            if (dataSettings == null ||
+                dataSettings.DataProvider == DataProviderType.Unknown ||
+                string.IsNullOrWhiteSpace(dataSettings.ConnectionString))
                 return;
 
-            ApplyMigration(application);
+            var migrationTask = Task.Run(() => ApplyMigration(application));
+            migrationTask.Wait();
 
-            using var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope();
-            var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
-
-            var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            var versionSettingValue = settingService.GetSettingByKey<string>(PluginDefaults.ASSEMBLY_VERSION_KEY);
-            Version installedAssemblyVersion = null;
-
-            if (!string.IsNullOrEmpty(versionSettingValue))
+            using var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>()?.CreateScope();
+            if (serviceScope != null)
             {
-                installedAssemblyVersion = Version.Parse(versionSettingValue);
-            }
+                var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
 
-            if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
-            {
-                settingService.SetSetting(PluginDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
+                var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+                if (currentAssemblyVersion != null)
+                {
+                    var versionSettingValue = settingService.GetSettingByKeyAsync<string>(PluginDefaults.ASSEMBLY_VERSION_KEY).Result;
+                    Version installedAssemblyVersion = null;
 
-                var nexportPluginService =
-                    serviceScope.ServiceProvider.GetRequiredService<CancelPendingOrderRequestsPluginService>();
+                    if (!string.IsNullOrEmpty(versionSettingValue))
+                    {
+                        installedAssemblyVersion = Version.Parse(versionSettingValue);
+                    }
 
-                nexportPluginService.AddActivityLogTypes();
-                nexportPluginService.AddMessageTemplates();
-                nexportPluginService.AddOrUpdateResources();
+                    if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
+                    {
+                        settingService.SetSettingAsync(PluginDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
+
+                        var nexportPluginService =
+                            serviceScope.ServiceProvider.GetRequiredService<CancelPendingOrderRequestsPluginService>();
+
+                        Task.Run(() => nexportPluginService.AddActivityLogTypesAsync());
+                        Task.Run(() => nexportPluginService.AddMessageTemplatesAsync());
+                        Task.Run(() => nexportPluginService.AddOrUpdateResourcesAsync());
+                    }
+                }
             }
         }
 
@@ -88,7 +106,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
         /// Apply migrations
         /// </summary>
         /// <param name="application"></param>
-        private void ApplyMigration(IApplicationBuilder application)
+        private async Task ApplyMigration(IApplicationBuilder application)
         {
             var logger = EngineContext.Current.Resolve<ILogger>();
 
@@ -108,7 +126,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
             }
             catch (Exception ex)
             {
-                logger.Error($"Error occurred during database migration process: {ex.Message}", ex);
+                await logger.ErrorAsync($"Error occurred during database migration process: {ex.Message}", ex);
             }
         }
 

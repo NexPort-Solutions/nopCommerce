@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Services.Orders;
@@ -21,9 +22,9 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Components
             _storeContext = storeContext;
         }
 
-        public IViewComponentResult Invoke(string widgetZone, object additionalData)
+        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
-            if (_storeContext.CurrentStore == null)
+            if (await _storeContext.GetCurrentStoreAsync() == null)
                 return Content("");
 
             var orderDetailsModel = (OrderDetailsModel)additionalData;
@@ -31,8 +32,8 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Components
             if (orderDetailsModel == null)
                 return Content("");
 
-            var order = _orderService.GetOrderById(orderDetailsModel.Id);
-            if (order == null || order.OrderStatus != OrderStatus.Pending)
+            var order = await _orderService.GetOrderByIdAsync(orderDetailsModel.Id);
+            if (order is not { OrderStatus: OrderStatus.Pending })
                 return Content("");
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Views/Widget/Order/WidgetsOrderDetailsPageOverview.cshtml", orderDetailsModel);

@@ -1,4 +1,5 @@
-﻿using Nop.Core.Domain.Orders;
+﻿using System.Threading.Tasks;
+using Nop.Core.Domain.Orders;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
 
@@ -6,21 +7,25 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
 {
     public interface IPendingOrderCancellationRequestModelFactory
     {
-        PendingOrderCancellationRequestSearchModel PreparePendingOrderCancellationRequestSearchModel
+        Task<PendingOrderCancellationRequestSearchModel> PreparePendingOrderCancellationRequestSearchModelAsync
             (PendingOrderCancellationRequestSearchModel searchModel);
 
-        PendingOrderCancellationRequestListModel PreparePendingOrderCancellationRequestListModel
+        Task<PendingOrderCancellationRequestListModel> PreparePendingOrderCancellationRequestListModelAsync
             (PendingOrderCancellationRequestSearchModel searchModel);
 
-        SubmitCancellationRequestModel PrepareSubmitCancellationRequestModel(SubmitCancellationRequestModel model, Order order);
+        Task<SubmitCancellationRequestModel> PrepareSubmitCancellationRequestModelAsync(
+            SubmitCancellationRequestModel model,
+            Order order);
 
-        PendingOrderCancellationRequestModel PreparePendingOrderCancellationRequestModel(
-            PendingOrderCancellationRequestModel model, PendingOrderCancellationRequest cancellationRequest, bool excludeProperties = false);
+        Task<PendingOrderCancellationRequestModel> PreparePendingOrderCancellationRequestModelAsync(
+            PendingOrderCancellationRequestModel model, PendingOrderCancellationRequest cancellationRequest,
+            bool excludeProperties = false);
 
-        PendingOrderCancellationRequestReasonModel PreparePendingOrderCancellationRequestReasonModel(
-            PendingOrderCancellationRequestReasonModel model, PendingOrderCancellationRequestReason cancellationRequestReason, bool excludeProperties = false);
+        Task<PendingOrderCancellationRequestReasonModel> PreparePendingOrderCancellationRequestReasonModelAsync(
+            PendingOrderCancellationRequestReasonModel model,
+            PendingOrderCancellationRequestReason cancellationRequestReason, bool excludeProperties = false);
 
-        PendingOrderCancellationRequestReasonListModel PreparePendingOrderCancellationRequestReasonListModel(
+        Task<PendingOrderCancellationRequestReasonListModel> PreparePendingOrderCancellationRequestReasonListModelAsync(
             PendingOrderCancellationRequestReasonSearchModel searchModel);
     }
 }

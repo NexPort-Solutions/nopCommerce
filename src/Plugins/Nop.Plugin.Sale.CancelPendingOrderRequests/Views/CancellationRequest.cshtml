@@ -3,11 +3,10 @@
 @{
     Layout = "_ColumnsOne";
 
-    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Sale.CancelPendingOrderRequests/Content/cancel_pending_order_plugin.css");
-
-    Html.AddTitleParts("Request Order Cancellation");
+    NopHtml.AddTitleParts("Request Order Cancellation");
 }
 
+<link rel="stylesheet" href="~/Plugins/Sale.CancelPendingOrderRequests/Content/cancel_pending_order_plugin.css" />
 <div class="page cancellation-request-page">
     <div class="page-title">
         <h1>@Html.Raw($"Cancel <a href=\"{Url.RouteUrl("OrderDetails", new {orderId = Model.OrderId})}\">order #{Model.OrderId}</a>")</h1>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
@@ -76,11 +77,11 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
 
         #region Utilities
 
-        protected virtual void UpdateLocales(PendingOrderCancellationRequestReason reason, PendingOrderCancellationRequestReasonModel model)
+        protected async Task UpdateLocalesAsync(PendingOrderCancellationRequestReason reason, PendingOrderCancellationRequestReasonModel model)
         {
             foreach (var localized in model.Locales)
             {
-                _localizedEntityService.SaveLocalizedValue(reason,
+                await _localizedEntityService.SaveLocalizedValueAsync(reason,
                     x => x.Name,
                     localized.Name,
                     localized.LanguageId);
@@ -91,13 +92,13 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        public IActionResult List()
+        public async Task<IActionResult> List()
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
 
             var model = _pendingOrderCancellationRequestModelFactory
-                .PreparePendingOrderCancellationRequestSearchModel(new PendingOrderCancellationRequestSearchModel());
+                .PreparePendingOrderCancellationRequestSearchModelAsync(new PendingOrderCancellationRequestSearchModel());
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/List.cshtml", model);
         }
@@ -106,13 +107,13 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AutoValidateAntiforgeryToken]
-        public IActionResult List(PendingOrderCancellationRequestSearchModel searchModel)
+        public async Task<IActionResult> List(PendingOrderCancellationRequestSearchModel searchModel)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
-                return AccessDeniedDataTablesJson();
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+                return await AccessDeniedDataTablesJson();
 
             var model = _pendingOrderCancellationRequestModelFactory
-                .PreparePendingOrderCancellationRequestListModel(searchModel);
+                .PreparePendingOrderCancellationRequestListModelAsync(searchModel);
 
             return Json(model);
         }
@@ -120,16 +121,18 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [Route("Admin/CancelPendingOrderRequests/Edit/{requestId}")]
-        public IActionResult Edit(int requestId)
+        public async Task<IActionResult> Edit(int requestId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
 
-            var returnRequest = _pendingOrderCancellationRequestService.GetCancellationRequestById(requestId);
+            var returnRequest =
+                await _pendingOrderCancellationRequestService.GetCancellationRequestByIdAsync(requestId);
             if (returnRequest == null)
                 return RedirectToAction("List");
 
-            var model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestModel(null, returnRequest);
+            var model =
+                _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestModelAsync(null, returnRequest);
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/Edit.cshtml", model);
         }
@@ -140,12 +143,12 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         [FormValueRequired("save", "save-continue")]
         [AutoValidateAntiforgeryToken]
-        public IActionResult Edit(PendingOrderCancellationRequestModel model, bool continueEditing)
+        public async Task<IActionResult> Edit(PendingOrderCancellationRequestModel model, bool continueEditing)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
 
-            var cancellationRequest = _pendingOrderCancellationRequestService.GetCancellationRequestById(model.Id);
+            var cancellationRequest = await _pendingOrderCancellationRequestService.GetCancellationRequestByIdAsync(model.Id);
             if (cancellationRequest == null)
                 return RedirectToAction("List");
 
@@ -156,33 +159,33 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
                     cancellationRequest = model.ToEntity(cancellationRequest);
                     cancellationRequest.UtcLastModifiedDate = DateTime.UtcNow;
 
-                    _pendingOrderCancellationRequestService.UpdateCancellationRequest(cancellationRequest);
+                    await _pendingOrderCancellationRequestService.UpdateCancellationRequestAsync(cancellationRequest);
 
-                    var order = _orderService.GetOrderById(cancellationRequest.OrderId);
+                    var order = await _orderService.GetOrderByIdAsync(cancellationRequest.OrderId);
                     if (order != null)
                     {
                         if (cancellationRequest.RequestStatus == PendingOrderCancellationRequestStatus.Accepted)
                         {
-                            _pendingOrderCancellationRequestService.SendCancellationRequestCustomerNotification(
+                            await _pendingOrderCancellationRequestService.SendCancellationRequestCustomerNotificationAsync(
                                 cancellationRequest, order, order.CustomerLanguageId,
                                 PluginDefaults.CANCELLATION_REQUEST_ACCEPTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE);
 
                             try
                             {
-                                _orderProcessingService.CancelOrder(order, true);
+                                await _orderProcessingService.CancelOrderAsync(order, true);
 
-                                _pendingOrderCancellationRequestService.VoidCancelledOrder(order);
+                                await _pendingOrderCancellationRequestService.VoidCancelledOrderAsync(order);
 
-                                _customerActivityService.InsertActivity("EditOrder",
-                                    string.Format(_localizationService.GetResource("ActivityLog.EditOrder"),
+                                await _customerActivityService.InsertActivityAsync("EditOrder",
+                                    string.Format(await _localizationService.GetResourceAsync("ActivityLog.EditOrder"),
                                         order.CustomOrderNumber), order);
                             }
                             catch (Exception ex)
                             {
-                                _notificationService.ErrorNotification(ex);
+                                await _notificationService.ErrorNotificationAsync(ex);
 
-                                model = _pendingOrderCancellationRequestModelFactory
-                                    .PreparePendingOrderCancellationRequestModel(model, cancellationRequest, true);
+                                model = await _pendingOrderCancellationRequestModelFactory
+                                    .PreparePendingOrderCancellationRequestModelAsync(model, cancellationRequest, true);
 
                                 return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/Edit.cshtml",
                                     model);
@@ -190,27 +193,28 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
                         }
                         else if (cancellationRequest.RequestStatus == PendingOrderCancellationRequestStatus.Rejected)
                         {
-                            _pendingOrderCancellationRequestService.SendCancellationRequestCustomerNotification(
+                            await _pendingOrderCancellationRequestService.SendCancellationRequestCustomerNotificationAsync(
                                 cancellationRequest, order, order.CustomerLanguageId,
                                 PluginDefaults.CANCELLATION_REQUEST_REJECTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE);
                         }
                     }
 
-                    _customerActivityService.InsertActivity(PluginDefaults.EDIT_CANCELLATION_REQUEST_ACTIVITY_LOG_TYPE,
-                            string.Format(_localizationService.GetResource("ActivityLog.EditCancellationRequest"), cancellationRequest.Id),
+                    await _customerActivityService.InsertActivityAsync(PluginDefaults.EDIT_CANCELLATION_REQUEST_ACTIVITY_LOG_TYPE,
+                            string.Format(await _localizationService.GetResourceAsync("ActivityLog.EditCancellationRequest"), cancellationRequest.Id),
                             cancellationRequest);
 
-                    _notificationService.SuccessNotification(_localizationService.GetResource("Admin.CancellationRequests.Updated"));
+                    _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.CancellationRequests.Updated"));
 
                     return continueEditing ? RedirectToAction("Edit", new { id = cancellationRequest.Id }) : RedirectToAction("List");
                 }
 
-                _notificationService.WarningNotification(_localizationService.GetResource("Admin.CancellationRequests.CannotModified"));
+                _notificationService.WarningNotification(await _localizationService.GetResourceAsync("Admin.CancellationRequests.CannotModified"));
 
                 return RedirectToAction("List");
             }
 
-            model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestModel(model, cancellationRequest, true);
+            model = await _pendingOrderCancellationRequestModelFactory
+                .PreparePendingOrderCancellationRequestModelAsync(model, cancellationRequest, true);
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/Edit.cshtml", model);
         }
@@ -219,22 +223,22 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AutoValidateAntiforgeryToken]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
 
-            var cancellationRequest = _pendingOrderCancellationRequestService.GetCancellationRequestById(id);
+            var cancellationRequest = await _pendingOrderCancellationRequestService.GetCancellationRequestByIdAsync(id);
             if (cancellationRequest == null)
                 return RedirectToAction("List");
 
-            _pendingOrderCancellationRequestService.DeleteCancellationRequest(cancellationRequest);
+            await _pendingOrderCancellationRequestService.DeleteCancellationRequestAsync(cancellationRequest);
 
-            _customerActivityService.InsertActivity(PluginDefaults.DELETE_CANCELLATION_REQUEST_ACTIVITY_LOG_TYPE,
-                string.Format(_localizationService.GetResource("ActivityLog.DeleteCancellationRequest"), cancellationRequest.Id),
+            await _customerActivityService.InsertActivityAsync(PluginDefaults.DELETE_CANCELLATION_REQUEST_ACTIVITY_LOG_TYPE,
+                string.Format(await _localizationService.GetResourceAsync("ActivityLog.DeleteCancellationRequest"), cancellationRequest.Id),
                 cancellationRequest);
 
-            _notificationService.SuccessNotification(_localizationService.GetResource("Admin.CancellationRequests.Deleted"));
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.CancellationRequests.Deleted"));
 
             return RedirectToAction("List");
         }
@@ -242,70 +246,76 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         #region Customer Areas
 
         [HttpsRequirement]
-        public IActionResult CancellationRequest(int orderId)
+        public async Task<IActionResult> CancellationRequest(int orderId)
         {
-            var order = _orderService.GetOrderById(orderId);
-            if (order == null || order.Deleted || _workContext.CurrentCustomer.Id != order.CustomerId)
+            var order = await _orderService.GetOrderByIdAsync(orderId);
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+            if (order == null || order.Deleted || currentCustomer.Id != order.CustomerId)
                 return Challenge();
 
             if (order.OrderStatus != OrderStatus.Pending)
                 return RedirectToRoute("Homepage");
 
             var model = new SubmitCancellationRequestModel();
-            model = _pendingOrderCancellationRequestModelFactory.PrepareSubmitCancellationRequestModel(model, order);
+            model = await _pendingOrderCancellationRequestModelFactory.PrepareSubmitCancellationRequestModelAsync(model, order);
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Views/CancellationRequest.cshtml", model);
         }
 
         [HttpPost, ActionName("CancellationRequest")]
         [AutoValidateAntiforgeryToken]
-        public IActionResult CancellationRequestSubmit(int orderId, SubmitCancellationRequestModel model, IFormCollection form)
+        public async Task<IActionResult> CancellationRequestSubmit(int orderId, SubmitCancellationRequestModel model, IFormCollection form)
         {
-            var order = _orderService.GetOrderById(orderId);
-            if (order == null || order.Deleted || _workContext.CurrentCustomer.Id != order.CustomerId)
+            var order = await _orderService.GetOrderByIdAsync(orderId);
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+            if (order == null || order.Deleted || currentCustomer.Id != order.CustomerId)
                 return Challenge();
 
             if (order.OrderStatus != OrderStatus.Pending)
                 return RedirectToRoute("Homepage");
 
-            var requestReason = _pendingOrderCancellationRequestService.GetCancellationRequestReasonById(model.CancellationRequestReasonId);
+            var requestReason =
+                await _pendingOrderCancellationRequestService.GetCancellationRequestReasonByIdAsync(model.CancellationRequestReasonId);
+            var currentStore = await _storeContext.GetCurrentStoreAsync();
 
             var cancellationRequest = new PendingOrderCancellationRequest
             {
                 OrderId = orderId,
-                CustomerId = _workContext.CurrentCustomer.Id,
-                StoreId = _storeContext.CurrentStore.Id,
+                CustomerId = currentCustomer.Id,
+                StoreId = currentStore.Id,
                 CustomerComments = model.Comments,
                 RequestStatus = PendingOrderCancellationRequestStatus.Received,
-                ReasonForCancellation = requestReason != null ? _localizationService.GetLocalized(requestReason, x => x.Name) : "not available",
+                ReasonForCancellation = requestReason != null
+                    ? await _localizationService.GetLocalizedAsync(requestReason, x => x.Name)
+                    : "not available",
                 StaffNotes = string.Empty,
                 UtcCreatedDate = DateTime.UtcNow,
                 UtcLastModifiedDate = DateTime.UtcNow
             };
 
-            _pendingOrderCancellationRequestService.InsertCancellationRequest(cancellationRequest);
+            await _pendingOrderCancellationRequestService.InsertCancellationRequestAsync(cancellationRequest);
 
-            _pendingOrderCancellationRequestService.SendNewCancellationRequestStoreOwnerNotification(
+            await _pendingOrderCancellationRequestService.SendNewCancellationRequestStoreOwnerNotificationAsync(
                 cancellationRequest, order, _localizationSettings.DefaultAdminLanguageId);
 
-            _pendingOrderCancellationRequestService.SendNewCancellationRequestCustomerNotification(
+            await _pendingOrderCancellationRequestService.SendNewCancellationRequestCustomerNotificationAsync(
                 cancellationRequest, order, order.CustomerLanguageId);
 
-            model = _pendingOrderCancellationRequestModelFactory.PrepareSubmitCancellationRequestModel(model, order);
-            model.Result = _localizationService.GetResource("CancellationRequests.Submitted");
+            model = await _pendingOrderCancellationRequestModelFactory.PrepareSubmitCancellationRequestModelAsync(model, order);
+            model.Result = await _localizationService.GetResourceAsync("CancellationRequests.Submitted");
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Views/CancellationRequest.cshtml", model);
         }
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        public IActionResult CancellationRequestReasonList()
+        public async Task<IActionResult> CancellationRequestReasonList()
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
 
             // Select an appropriate panel
-            SaveSelectedPanelName("ordersettings-cancellation-request");
+            SaveSelectedTabName("ordersettings-cancellation-request");
 
             return RedirectToAction("Order", "Setting");
         }
@@ -313,25 +323,25 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
-        public IActionResult CancellationRequestReasonList(PendingOrderCancellationRequestReasonSearchModel searchModel)
+        public async Task<IActionResult> CancellationRequestReasonList(PendingOrderCancellationRequestReasonSearchModel searchModel)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
-                return AccessDeniedDataTablesJson();
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+                return await AccessDeniedDataTablesJson();
 
-            var model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestReasonListModel(searchModel);
+            var model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestReasonListModelAsync(searchModel);
 
             return Json(model);
         }
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        public IActionResult CancellationRequestReasonCreate()
+        public async Task<IActionResult> CancellationRequestReasonCreate()
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
 
             var model = _pendingOrderCancellationRequestModelFactory.
-                PreparePendingOrderCancellationRequestReasonModel(new PendingOrderCancellationRequestReasonModel(), null);
+                PreparePendingOrderCancellationRequestReasonModelAsync(new PendingOrderCancellationRequestReasonModel(), null);
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/CancellationRequestReasonCreate.cshtml", model);
         }
@@ -340,43 +350,46 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         [Area(AreaNames.Admin)]
         [AutoValidateAntiforgeryToken]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
-        public IActionResult CancellationRequestReasonCreate(PendingOrderCancellationRequestReasonModel model, bool continueEditing)
+        public async Task<IActionResult> CancellationRequestReasonCreate(PendingOrderCancellationRequestReasonModel model, bool continueEditing)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
 
             if (ModelState.IsValid)
             {
                 var cancellationRequestReasonModel = model.ToEntity<PendingOrderCancellationRequestReason>();
-                _pendingOrderCancellationRequestService.InsertCancellationRequestReason(cancellationRequestReasonModel);
+                await _pendingOrderCancellationRequestService.InsertCancellationRequestReasonAsync(cancellationRequestReasonModel);
 
-                UpdateLocales(cancellationRequestReasonModel, model);
+                await UpdateLocalesAsync(cancellationRequestReasonModel, model);
 
                 _notificationService.SuccessNotification(
-                    _localizationService.GetResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Added"));
+                    await _localizationService.GetResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Added"));
 
                 return continueEditing
                     ? RedirectToAction("CancellationRequestReasonEdit", new { id = cancellationRequestReasonModel.Id })
                     : RedirectToAction("CancellationRequestReasonList");
             }
 
-            model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestReasonModel(model, null);
+            model = await _pendingOrderCancellationRequestModelFactory
+                .PreparePendingOrderCancellationRequestReasonModelAsync(model, null);
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/CancellationRequestReasonCreate.cshtml", model);
         }
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        public IActionResult CancellationRequestReasonEdit(int id)
+        public async Task<IActionResult> CancellationRequestReasonEdit(int id)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
 
-            var cancellationRequestReason = _pendingOrderCancellationRequestService.GetCancellationRequestReasonById(id);
+            var cancellationRequestReason =
+                await _pendingOrderCancellationRequestService.GetCancellationRequestReasonByIdAsync(id);
             if (cancellationRequestReason == null)
                 return RedirectToAction("CancellationRequestReasonList");
 
-            var model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestReasonModel(null, cancellationRequestReason);
+            var model = await _pendingOrderCancellationRequestModelFactory
+                    .PreparePendingOrderCancellationRequestReasonModelAsync(null, cancellationRequestReason);
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/CancellationRequestReasonEdit.cshtml", model);
         }
@@ -385,24 +398,25 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         [Area(AreaNames.Admin)]
         [AutoValidateAntiforgeryToken]
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
-        public IActionResult CancellationRequestReasonEdit(PendingOrderCancellationRequestReasonModel model, bool continueEditing)
+        public async Task<IActionResult> CancellationRequestReasonEdit(PendingOrderCancellationRequestReasonModel model, bool continueEditing)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
 
-            var cancellationRequestReason = _pendingOrderCancellationRequestService.GetCancellationRequestReasonById(model.Id);
+            var cancellationRequestReason =
+                await _pendingOrderCancellationRequestService.GetCancellationRequestReasonByIdAsync(model.Id);
             if (cancellationRequestReason == null)
                 return RedirectToAction("CancellationRequestReasonList");
 
             if (ModelState.IsValid)
             {
                 cancellationRequestReason = model.ToEntity(cancellationRequestReason);
-                _pendingOrderCancellationRequestService.UpdateCancellationRequestReason(cancellationRequestReason);
+                await _pendingOrderCancellationRequestService.UpdateCancellationRequestReasonAsync(cancellationRequestReason);
 
-                UpdateLocales(cancellationRequestReason, model);
+                await UpdateLocalesAsync(cancellationRequestReason, model);
 
                 _notificationService.SuccessNotification(
-                    _localizationService.GetResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Updated"));
+                    await _localizationService.GetResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Updated"));
 
                 if (!continueEditing)
                     return RedirectToAction("CancellationRequestReasonList");
@@ -410,7 +424,8 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
                 return RedirectToAction("CancellationRequestReasonEdit", new { id = cancellationRequestReason.Id });
             }
 
-            model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestReasonModel(model, cancellationRequestReason);
+            model = await _pendingOrderCancellationRequestModelFactory
+                .PreparePendingOrderCancellationRequestReasonModelAsync(model, cancellationRequestReason);
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/CancellationRequestReasonEdit.cshtml", model);
         }
@@ -419,27 +434,28 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         [Area(AreaNames.Admin)]
         [AutoValidateAntiforgeryToken]
         [HttpPost]
-        public IActionResult CancellationRequestReasonDelete(int id)
+        public async Task<IActionResult> CancellationRequestReasonDelete(int id)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
 
-            var cancellationRequestReason = _pendingOrderCancellationRequestService.GetCancellationRequestReasonById(id)
+            var cancellationRequestReason =
+                await _pendingOrderCancellationRequestService.GetCancellationRequestReasonByIdAsync(id)
                 ?? throw new ArgumentException("No cancellation request reason found with the specified id", nameof(id));
 
             try
             {
-                _pendingOrderCancellationRequestService.DeleteCancellationRequestReason(cancellationRequestReason);
+                await _pendingOrderCancellationRequestService.DeleteCancellationRequestReasonAsync(cancellationRequestReason);
 
                 _notificationService.SuccessNotification(
-                    _localizationService.GetResource("Admin.Configuration.Settings.Order.CancellationRequestReasons.Deleted"));
+                    await _localizationService.GetResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Deleted"));
 
                 return RedirectToAction("CancellationRequestReasonList");
 
             }
             catch (Exception ex)
             {
-                _notificationService.ErrorNotification(ex);
+                await _notificationService.ErrorNotificationAsync(ex);
 
                 return RedirectToAction("CancellationRequestReasonEdit", new { id = cancellationRequestReason.Id });
             }
@@ -447,7 +463,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
 
         #endregion
 
-        public void HandleEvent(AdditionalTokensAddedEvent eventMessage)
+        public async Task HandleEventAsync(AdditionalTokensAddedEvent eventMessage)
         {
             try
             {
@@ -534,7 +550,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
             }
             catch (Exception ex)
             {
-                _logger.Error("Cannot add additional message tokens", ex);
+                await _logger.ErrorAsync("Cannot add additional message tokens", ex);
             }
         }
     }

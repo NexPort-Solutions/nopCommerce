@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
-using Nop.Core.Html;
+using Nop.Core.Events;
 using Nop.Data;
-using Nop.Services.Events;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
@@ -18,6 +18,7 @@ using Nop.Services.Stores;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
 using Nop.Services.Common;
+using Nop.Services.Html;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
 {
@@ -41,6 +42,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
         private readonly IMessageTemplateService _messageTemplateService;
         private readonly IEmailAccountService _emailAccountService;
         private readonly IMessageTokenProvider _messageTokenProvider;
+        private readonly IHtmlFormatter _htmlFormatter;
         private readonly IEventPublisher _eventPublisher;
         private readonly ILogger _logger;
 
@@ -61,6 +63,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             IMessageTemplateService messageTemplateService,
             IEmailAccountService emailAccountService,
             IMessageTokenProvider messageTokenProvider,
+            IHtmlFormatter htmlFormatter,
             IEventPublisher eventPublisher,
             ILogger logger)
         {
@@ -80,6 +83,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             _messageTemplateService = messageTemplateService;
             _emailAccountService = emailAccountService;
             _messageTokenProvider = messageTokenProvider;
+            _htmlFormatter = htmlFormatter;
             _eventPublisher = eventPublisher;
             _logger = logger;
         }
@@ -92,21 +96,21 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
         /// <param name="languageId">Language identifier</param>
         /// <param name="storeId">Store identifier</param>
         /// <returns>Return a value language identifier</returns>
-        private int EnsureLanguageIsActive(int languageId, int storeId)
+        protected async Task<int> EnsureLanguageIsActiveAsync(int languageId, int storeId)
         {
             //load language by specified ID
-            var language = _languageService.GetLanguageById(languageId);
+            var language = await _languageService.GetLanguageByIdAsync(languageId);
 
             if (language == null || !language.Published)
             {
                 //load any language from the specified store
-                language = _languageService.GetAllLanguages(storeId: storeId).FirstOrDefault();
+                language = (await _languageService.GetAllLanguagesAsync(storeId: storeId)).FirstOrDefault();
             }
 
             if (language == null || !language.Published)
             {
                 //load any language
-                language = _languageService.GetAllLanguages().FirstOrDefault();
+                language = (await _languageService.GetAllLanguagesAsync()).FirstOrDefault();
             }
 
             if (language == null)
@@ -121,10 +125,10 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
         /// <param name="messageTemplateName">Message template name</param>
         /// <param name="storeId">Store identifier</param>
         /// <returns>List of message templates</returns>
-        private IList<MessageTemplate> GetActiveMessageTemplates(string messageTemplateName, int storeId)
+        private async Task<IList<MessageTemplate>> GetActiveMessageTemplatesAsync(string messageTemplateName, int storeId)
         {
             //get message templates by the name
-            var messageTemplates = _messageTemplateService.GetMessageTemplatesByName(messageTemplateName, storeId);
+            var messageTemplates = await _messageTemplateService.GetMessageTemplatesByNameAsync(messageTemplateName, storeId);
 
             //no template found
             if (!messageTemplates?.Any() ?? true)
@@ -142,32 +146,34 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
         /// <param name="messageTemplate">Message template</param>
         /// <param name="languageId">Language identifier</param>
         /// <returns>EmailAccount</returns>
-        private EmailAccount GetEmailAccountOfMessageTemplate(MessageTemplate messageTemplate, int languageId)
+        private async Task<EmailAccount> GetEmailAccountOfMessageTemplate(MessageTemplate messageTemplate, int languageId)
         {
-            var emailAccountId = _localizationService.GetLocalized(messageTemplate, mt => mt.EmailAccountId, languageId);
+            var emailAccountId = await _localizationService.GetLocalizedAsync(messageTemplate, mt => mt.EmailAccountId, languageId);
             //some 0 validation (for localizable "Email account" dropdownlist which saves 0 if "Standard" value is chosen)
             if (emailAccountId == 0)
                 emailAccountId = messageTemplate.EmailAccountId;
 
-            var emailAccount = (_emailAccountService.GetEmailAccountById(emailAccountId) ??
-                                _emailAccountService.GetEmailAccountById(_emailAccountSettings.DefaultEmailAccountId)) ??
-                               _emailAccountService.GetAllEmailAccounts().FirstOrDefault();
+            var emailAccount = await (_emailAccountService.GetEmailAccountByIdAsync(emailAccountId) ??
+                                _emailAccountService.GetEmailAccountByIdAsync(_emailAccountSettings.DefaultEmailAccountId)) ??
+                               (await _emailAccountService.GetAllEmailAccountsAsync()).FirstOrDefault();
             return emailAccount;
         }
 
         #endregion
 
-        public IPagedList<PendingOrderCancellationRequest> SearchCancellationRequests(
-            int storeId = 0, int customerId = 0,
+        public async Task<IPagedList<PendingOrderCancellationRequest>> SearchCancellationRequestsAsync(int storeId = 0,
+            int customerId = 0,
             PendingOrderCancellationRequestStatus? requestStatus = null,
             DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
-            int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false)
+            int pageIndex = 0, int pageSize = int.MaxValue)
         {
             var query = _pendingOrderCancellationRequestRepository.Table;
+
             if (storeId > 0)
                 query = query.Where(request => storeId == request.StoreId);
             if (customerId > 0)
                 query = query.Where(request => customerId == request.CustomerId);
+
             if (requestStatus.HasValue)
             {
                 var returnStatusId = (int)requestStatus.Value;
@@ -182,23 +188,18 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             query = query.OrderByDescending(request => request.UtcCreatedDate)
                 .ThenByDescending(request => request.Id);
 
-            var cancellationRequests =
-                new PagedList<PendingOrderCancellationRequest>(query, pageIndex, pageSize, getOnlyTotalCount);
-
-            return cancellationRequests;
+            return await query.ToPagedListAsync(pageIndex, pageSize);
         }
 
-        public void InsertCancellationRequestReason(PendingOrderCancellationRequestReason cancellationRequestReason)
+        public async Task InsertCancellationRequestReasonAsync(PendingOrderCancellationRequestReason cancellationRequestReason)
         {
             if (cancellationRequestReason == null)
                 throw new ArgumentNullException(nameof(cancellationRequestReason));
 
-            _pendingOrderCancellationRequestReasonRepository.Insert(cancellationRequestReason);
-
-            _eventPublisher.EntityInserted(cancellationRequestReason);
+            await _pendingOrderCancellationRequestReasonRepository.InsertAsync(cancellationRequestReason);
         }
 
-        public void DeleteCancellationRequestReason(PendingOrderCancellationRequestReason cancellationRequestReason)
+        public async Task DeleteCancellationRequestReasonAsync(PendingOrderCancellationRequestReason cancellationRequestReason)
         {
             if (cancellationRequestReason == null)
                 throw new ArgumentNullException(nameof(cancellationRequestReason));
@@ -206,42 +207,42 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             if (_pendingOrderCancellationRequestReasonRepository.Table.Count() == 1)
                 throw new NopException("You cannot delete cancellation request reason. At least one cancellation request reason is required.");
 
-            _pendingOrderCancellationRequestReasonRepository.Delete(cancellationRequestReason);
-
-            _eventPublisher.EntityDeleted(cancellationRequestReason);
+            await _pendingOrderCancellationRequestReasonRepository.DeleteAsync(cancellationRequestReason);
         }
 
-        public void UpdateCancellationRequestReason(PendingOrderCancellationRequestReason cancellationRequestReason)
+        public async Task UpdateCancellationRequestReasonAsync(PendingOrderCancellationRequestReason cancellationRequestReason)
         {
             if (cancellationRequestReason == null)
                 throw new ArgumentNullException(nameof(cancellationRequestReason));
 
-            _pendingOrderCancellationRequestReasonRepository.Update(cancellationRequestReason);
-
-            _eventPublisher.EntityUpdated(cancellationRequestReason);
+            await _pendingOrderCancellationRequestReasonRepository.UpdateAsync(cancellationRequestReason);
         }
 
-        public IList<PendingOrderCancellationRequestReason> GetAllCancellationRequestReasons()
+        public async Task<IList<PendingOrderCancellationRequestReason>> GetAllCancellationRequestReasonsAsync()
         {
-            var query = from reason in _pendingOrderCancellationRequestReasonRepository.Table
-                        orderby reason.DisplayOrder, reason.Id
-                        select reason;
-            return query.ToList();
+            var query =
+                _pendingOrderCancellationRequestReasonRepository
+                    .Table
+                    .OrderBy(reason => reason.DisplayOrder)
+                    .ThenBy(reason => reason.Id);
+            return await query.ToListAsync();
         }
 
-        public PendingOrderCancellationRequestReason GetCancellationRequestReasonById(int reasonId)
+        public async Task<PendingOrderCancellationRequestReason> GetCancellationRequestReasonByIdAsync(int reasonId)
         {
-            return reasonId < 1 ? null : _pendingOrderCancellationRequestReasonRepository.GetById(reasonId);
+            return reasonId < 1
+                ? null
+                : await _pendingOrderCancellationRequestReasonRepository.GetByIdAsync(reasonId);
         }
 
-        public bool HasCancellationRequestForOrder(int orderId)
+        public async Task<bool> HasCancellationRequestForOrderAsync(int orderId)
         {
-            return orderId > 0 && _pendingOrderCancellationRequestRepository.Table.Any(
+            return orderId > 0 && await _pendingOrderCancellationRequestRepository.Table.AnyAsync(
                 r => r.OrderId == orderId &&
                      r.RequestStatus == PendingOrderCancellationRequestStatus.Received);
         }
 
-        public void InsertCancellationRequest(PendingOrderCancellationRequest cancellationRequest)
+        public async Task InsertCancellationRequestAsync(PendingOrderCancellationRequest cancellationRequest)
         {
             if (cancellationRequest == null)
                 throw new ArgumentNullException(nameof(cancellationRequest));
@@ -249,171 +250,174 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             if (_pendingOrderCancellationRequestRepository.Table.Any(x => x.OrderId == cancellationRequest.OrderId))
                 return;
 
-            _pendingOrderCancellationRequestRepository.Insert(cancellationRequest);
-
-            _eventPublisher.EntityInserted(cancellationRequest);
+            await _pendingOrderCancellationRequestRepository.InsertAsync(cancellationRequest);
         }
 
-        public void DeleteCancellationRequest(PendingOrderCancellationRequest cancellationRequest)
+        public async Task DeleteCancellationRequestAsync(PendingOrderCancellationRequest cancellationRequest)
         {
             if (cancellationRequest == null)
                 throw new ArgumentNullException(nameof(cancellationRequest));
 
-            _pendingOrderCancellationRequestRepository.Delete(cancellationRequest);
-
-            _eventPublisher.EntityDeleted(cancellationRequest);
+            await _pendingOrderCancellationRequestRepository.DeleteAsync(cancellationRequest);
         }
 
-        public void UpdateCancellationRequest(PendingOrderCancellationRequest cancellationRequest)
+        public async Task UpdateCancellationRequestAsync(PendingOrderCancellationRequest cancellationRequest)
         {
             if (cancellationRequest == null)
                 throw new ArgumentNullException(nameof(cancellationRequest));
 
-            _pendingOrderCancellationRequestRepository.Update(cancellationRequest);
-
-            _eventPublisher.EntityUpdated(cancellationRequest);
+            await _pendingOrderCancellationRequestRepository.UpdateAsync(cancellationRequest);
         }
 
-        public PendingOrderCancellationRequest GetCancellationRequestById(int requestId)
+        public async Task<PendingOrderCancellationRequest> GetCancellationRequestByIdAsync(int requestId)
         {
-            return requestId < 1 ? null : _pendingOrderCancellationRequestRepository.GetById(requestId);
+            return requestId < 1
+                ? null
+                : await _pendingOrderCancellationRequestRepository.GetByIdAsync(requestId);
         }
 
-        public void AddCancellationRequestTokens(IList<Token> tokens, PendingOrderCancellationRequest cancellationRequest, Order order)
+        public async Task AddCancellationRequestTokensAsync(IList<Token> tokens, PendingOrderCancellationRequest cancellationRequest, Order order)
         {
             tokens.Add(new Token("CancellationRequest.Id", cancellationRequest.Id));
             tokens.Add(new Token("CancellationRequest.OrderId", order.Id));
             tokens.Add(new Token("CancellationRequest.Reason", cancellationRequest.ReasonForCancellation));
-            tokens.Add(new Token("CancellationRequest.CustomerComment", HtmlHelper.FormatText(cancellationRequest.CustomerComments, false, true, false, false, false, false), true));
-            tokens.Add(new Token("CancellationRequest.StaffNotes", HtmlHelper.FormatText(cancellationRequest.StaffNotes, false, true, false, false, false, false), true));
-            tokens.Add(new Token("CancellationRequest.Status", _localizationService.GetLocalizedEnum(cancellationRequest.RequestStatus)));
+            tokens.Add(new Token("CancellationRequest.CustomerComment",
+                _htmlFormatter.FormatText(cancellationRequest.CustomerComments, false, true, false, false, false, false), true));
+            tokens.Add(new Token("CancellationRequest.StaffNotes",
+                _htmlFormatter.FormatText(cancellationRequest.StaffNotes, false, true, false, false, false, false), true));
+            tokens.Add(new Token("CancellationRequest.Status", await _localizationService.GetLocalizedEnumAsync(cancellationRequest.RequestStatus)));
 
-            _eventPublisher.EntityTokensAdded(cancellationRequest, tokens);
         }
 
-        public IList<int> SendNewCancellationRequestStoreOwnerNotification(PendingOrderCancellationRequest cancellationRequest,
+        public async Task<IList<int>> SendNewCancellationRequestStoreOwnerNotificationAsync(PendingOrderCancellationRequest cancellationRequest,
             Order order, int languageId)
         {
             if (cancellationRequest == null)
                 throw new ArgumentNullException(nameof(cancellationRequest));
 
-            var store = _storeService.GetStoreById(order.StoreId) ?? _storeContext.CurrentStore;
-            languageId = EnsureLanguageIsActive(languageId, store.Id);
+            var store = await _storeService.GetStoreByIdAsync(order.StoreId) ?? await _storeContext.GetCurrentStoreAsync();
+            languageId = await EnsureLanguageIsActiveAsync(languageId, store.Id);
 
-            var messageTemplates = GetActiveMessageTemplates(PluginDefaults.NEW_CANCELLATION_REQUEST_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE, store.Id);
+            var messageTemplates = await GetActiveMessageTemplatesAsync(PluginDefaults.NEW_CANCELLATION_REQUEST_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE, store.Id);
             if (!messageTemplates.Any())
                 return new List<int>();
 
-            var customer = _customerService.GetCustomerById(cancellationRequest.CustomerId)
+            var customer = await _customerService.GetCustomerByIdAsync(cancellationRequest.CustomerId)
                            ?? throw new Exception($"Customer with Id {cancellationRequest.CustomerId} does not existed");
 
             var commonTokens = new List<Token>();
-            _messageTokenProvider.AddOrderTokens(commonTokens, order, languageId);
-            _messageTokenProvider.AddCustomerTokens(commonTokens, customer);
-            AddCancellationRequestTokens(commonTokens, cancellationRequest, order);
+            await _messageTokenProvider.AddOrderTokensAsync(commonTokens, order, languageId);
+            await _messageTokenProvider.AddCustomerTokensAsync(commonTokens, customer);
+            await AddCancellationRequestTokensAsync(commonTokens, cancellationRequest, order);
 
-            return messageTemplates.Select(messageTemplate =>
+            return await messageTemplates.SelectAwait(async messageTemplate =>
             {
-                var emailAccount = GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
+                var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
 
                 var tokens = new List<Token>(commonTokens);
-                _messageTokenProvider.AddStoreTokens(tokens, store, emailAccount);
+                await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
 
-                _eventPublisher.MessageTokensAdded(messageTemplate, tokens);
+                await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 
                 var toEmail = emailAccount.Email;
                 var toName = emailAccount.DisplayName;
 
-                return _workflowMessageService.SendNotification(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
-            }).ToList();
+                return await _workflowMessageService
+                    .SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
+            }).ToListAsync();
         }
 
-        public IList<int> SendNewCancellationRequestCustomerNotification(PendingOrderCancellationRequest cancellationRequest, Order order, int languageId)
+        public async Task<IList<int>> SendNewCancellationRequestCustomerNotificationAsync(PendingOrderCancellationRequest cancellationRequest,
+            Order order, int languageId)
         {
             if (cancellationRequest == null)
                 throw new ArgumentNullException(nameof(cancellationRequest));
 
-            var store = _storeService.GetStoreById(order.StoreId) ?? _storeContext.CurrentStore;
-            languageId = EnsureLanguageIsActive(languageId, store.Id);
+            var store = await _storeService.GetStoreByIdAsync(order.StoreId) ?? await _storeContext.GetCurrentStoreAsync();
+            languageId = await EnsureLanguageIsActiveAsync(languageId, store.Id);
 
-            var messageTemplates = GetActiveMessageTemplates(PluginDefaults.NEW_CANCELLATION_REQUEST_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE, store.Id);
+            var messageTemplates = await GetActiveMessageTemplatesAsync(PluginDefaults.NEW_CANCELLATION_REQUEST_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE, store.Id);
             if (!messageTemplates.Any())
                 return new List<int>();
 
-            var customer = _customerService.GetCustomerById(cancellationRequest.CustomerId)
+            var customer = await _customerService.GetCustomerByIdAsync(cancellationRequest.CustomerId)
                            ?? throw new Exception($"Customer with Id {cancellationRequest.CustomerId} does not existed");
 
             var commonTokens = new List<Token>();
-            _messageTokenProvider.AddOrderTokens(commonTokens, order, languageId);
-            _messageTokenProvider.AddCustomerTokens(commonTokens, customer);
-            AddCancellationRequestTokens(commonTokens, cancellationRequest, order);
+            await _messageTokenProvider.AddOrderTokensAsync(commonTokens, order, languageId);
+            await _messageTokenProvider.AddCustomerTokensAsync(commonTokens, customer);
+            await AddCancellationRequestTokensAsync(commonTokens, cancellationRequest, order);
 
-            return messageTemplates.Select(messageTemplate =>
+            return await messageTemplates.SelectAwait(async messageTemplate =>
             {
-                var emailAccount = GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
+                var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
 
                 var tokens = new List<Token>(commonTokens);
-                _messageTokenProvider.AddStoreTokens(tokens, store, emailAccount);
+                await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
 
-                _eventPublisher.MessageTokensAdded(messageTemplate, tokens);
+                await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 
-                var billingAddress = _addressService.GetAddressById(order.BillingAddressId);
+                var billingAddress = await _addressService.GetAddressByIdAsync(order.BillingAddressId);
 
-                var toEmail = _customerService.IsGuest(customer) ?
-                    billingAddress.Email :
-                    customer.Email;
-                var toName = _customerService.IsGuest(customer) ?
-                    billingAddress.FirstName :
-                    _customerService.GetCustomerFullName(customer);
+                var customerIsGuest = await _customerService.IsGuestAsync(customer);
+                var toEmail = customerIsGuest
+                    ? billingAddress.Email
+                    : customer.Email;
+                var toName = customerIsGuest
+                    ? billingAddress.FirstName
+                    : await _customerService.GetCustomerFullNameAsync(customer);
 
-                return _workflowMessageService.SendNotification(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
-            }).ToList();
+                return await _workflowMessageService
+                    .SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
+            }).ToListAsync();
         }
 
-        public IList<int> SendCancellationRequestCustomerNotification(PendingOrderCancellationRequest cancellationRequest,
+        public async Task<IList<int>> SendCancellationRequestCustomerNotificationAsync(PendingOrderCancellationRequest cancellationRequest,
             Order order, int languageId, string template)
         {
             if (cancellationRequest == null)
                 throw new ArgumentNullException(nameof(cancellationRequest));
 
-            var store = _storeService.GetStoreById(order.StoreId) ?? _storeContext.CurrentStore;
-            languageId = EnsureLanguageIsActive(languageId, store.Id);
+            var store = await _storeService.GetStoreByIdAsync(order.StoreId) ?? await _storeContext.GetCurrentStoreAsync();
+            languageId = await EnsureLanguageIsActiveAsync(languageId, store.Id);
 
-            var messageTemplates = GetActiveMessageTemplates(template, store.Id);
+            var messageTemplates = await GetActiveMessageTemplatesAsync(template, store.Id);
             if (!messageTemplates.Any())
                 return new List<int>();
 
-            var customer = _customerService.GetCustomerById(cancellationRequest.CustomerId)
+            var customer = await _customerService.GetCustomerByIdAsync(cancellationRequest.CustomerId)
                            ?? throw new Exception($"Customer with Id {cancellationRequest.CustomerId} does not existed");
 
             var commonTokens = new List<Token>();
-            _messageTokenProvider.AddOrderTokens(commonTokens, order, languageId);
-            _messageTokenProvider.AddCustomerTokens(commonTokens, customer);
-            AddCancellationRequestTokens(commonTokens, cancellationRequest, order);
+            await _messageTokenProvider.AddOrderTokensAsync(commonTokens, order, languageId);
+            await _messageTokenProvider.AddCustomerTokensAsync(commonTokens, customer);
+            await AddCancellationRequestTokensAsync(commonTokens, cancellationRequest, order);
 
-            return messageTemplates.Select(messageTemplate =>
+            return await messageTemplates.SelectAwait(async messageTemplate =>
             {
-                var emailAccount = GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
+                var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
 
                 var tokens = new List<Token>(commonTokens);
-                _messageTokenProvider.AddStoreTokens(tokens, store, emailAccount);
+                await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
 
-                _eventPublisher.MessageTokensAdded(messageTemplate, tokens);
+                await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 
-                var billingAddress = _addressService.GetAddressById(order.BillingAddressId);
+                var billingAddress = await _addressService.GetAddressByIdAsync(order.BillingAddressId);
 
-                var toEmail = _customerService.IsGuest(customer) ?
-                    billingAddress.Email :
-                    customer.Email;
-                var toName = _customerService.IsGuest(customer) ?
-                    billingAddress.FirstName :
-                    _customerService.GetCustomerFullName(customer);
+                var customerIsGuest = await _customerService.IsGuestAsync(customer);
+                var toEmail = customerIsGuest
+                    ? billingAddress.Email
+                    : customer.Email;
+                var toName = customerIsGuest
+                    ? billingAddress.FirstName
+                    : await _customerService.GetCustomerFullNameAsync(customer);
 
-                return _workflowMessageService.SendNotification(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
-            }).ToList();
+                return await _workflowMessageService
+                    .SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
+            }).ToListAsync();
         }
 
-        public void VoidCancelledOrder(Order order)
+        public async Task VoidCancelledOrderAsync(Order order)
         {
             if (order == null)
                 throw new ArgumentNullException(nameof(order));
@@ -423,20 +427,20 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
 
             if (order.PaymentStatus == PaymentStatus.Authorized)
             {
-                if (_paymentService.SupportVoid(order.PaymentMethodSystemName))
+                if (await _paymentService.SupportVoidAsync(order.PaymentMethodSystemName))
                 {
                     var request = new VoidPaymentRequest();
                     try
                     {
                         request.Order = order;
-                        var result = _paymentService.Void(request);
+                        var result = await _paymentService.VoidAsync(request);
 
                         if (result.Success)
                         {
                             order.PaymentStatus = result.NewPaymentStatus;
-                            _orderService.UpdateOrder(order);
+                            await _orderService.UpdateOrderAsync(order);
 
-                            _orderService.InsertOrderNote(new OrderNote
+                            await _orderService.InsertOrderNoteAsync(new OrderNote
                             {
                                 OrderId = order.Id,
                                 Note = "Order has been voided",
@@ -447,15 +451,15 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Error: {ex.Message}", ex);
+                        await _logger.ErrorAsync($"Error: {ex.Message}", ex);
                     }
                 }
                 else
                 {
                     order.PaymentStatusId = (int)PaymentStatus.Voided;
-                    _orderService.UpdateOrder(order);
+                    await _orderService.UpdateOrderAsync(order);
 
-                    _orderService.InsertOrderNote(new OrderNote
+                    await _orderService.InsertOrderNoteAsync(new OrderNote
                     {
                         OrderId = order.Id,
                         Note = "Order has been voided",
@@ -467,9 +471,9 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             else if (order.PaymentStatus == PaymentStatus.Pending)
             {
                 order.PaymentStatusId = (int)PaymentStatus.Voided;
-                _orderService.UpdateOrder(order);
+                await _orderService.UpdateOrderAsync(order);
 
-                _orderService.InsertOrderNote(new OrderNote
+                await _orderService.InsertOrderNoteAsync(new OrderNote
                 {
                     OrderId = order.Id,
                     Note = "Order has been voided",

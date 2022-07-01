@@ -7,13 +7,8 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Models
 {
-    public class PendingOrderCancellationRequestSearchModel : BaseSearchModel
+    public record PendingOrderCancellationRequestSearchModel : BaseSearchModel
     {
-        public PendingOrderCancellationRequestSearchModel()
-        {
-            RequestStatusList = new List<SelectListItem>();
-        }
-
         [NopResourceDisplayName("Admin.PendingOrderCancellationRequests.SearchStartDate")]
         [UIHint("DateNullable")]
         public DateTime? StartDate { get; set; }
@@ -25,6 +20,6 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Models
         [NopResourceDisplayName("Admin.PendingOrderCancellationRequests.RequestStatus")]
         public int RequestStatusId { get; set; }
 
-        public IList<SelectListItem> RequestStatusList { get; set; }
+        public IList<SelectListItem> RequestStatusList { get; set; } = new List<SelectListItem>();
     }
 }

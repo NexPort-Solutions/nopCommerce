@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core;
 using Nop.Core.Caching;
@@ -17,6 +18,7 @@ using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
 using Nop.Services.Caching;
+using Nop.Web.Areas.Admin.Models.Common;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
 {
@@ -24,7 +26,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
     {
         private readonly ILocalizedModelFactory _localizedModelFactory;
         private readonly IStaticCacheManager _cacheManager;
-        private readonly ICacheKeyService _cacheKeyService;
+        private readonly CacheKeyService _cacheKeyService;
         private readonly ICustomerService _customerService;
         private readonly ILocalizationService _localizationService;
         private readonly IDateTimeHelper _dateTimeHelper;
@@ -34,7 +36,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
         public PendingOrderCancellationRequestModelFactory(
             ILocalizedModelFactory localizedModelFactory,
             IStaticCacheManager cacheManager,
-            ICacheKeyService cacheKeyService,
+            CacheKeyService cacheKeyService,
             ICustomerService customerService,
             ILocalizationService localizationService,
             IDateTimeHelper dateTimeHelper,
@@ -51,13 +53,14 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             _workContext = workContext;
         }
 
-        public PendingOrderCancellationRequestSearchModel PreparePendingOrderCancellationRequestSearchModel(
-            PendingOrderCancellationRequestSearchModel searchModel)
+        public async Task<PendingOrderCancellationRequestSearchModel>
+            PreparePendingOrderCancellationRequestSearchModelAsync(PendingOrderCancellationRequestSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var availableStatusItems = PendingOrderCancellationRequestStatus.Accepted.ToSelectList(false);
+            //var availableStatusItems = PendingOrderCancellationRequestStatus.Accepted.ToSelectList(false);
+            var availableStatusItems = await PendingOrderCancellationRequestStatus.Accepted.ToSelectListAsync(false);
             foreach (var statusItem in availableStatusItems)
             {
                 searchModel.RequestStatusList.Add(statusItem);
@@ -67,7 +70,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             searchModel.RequestStatusList.Insert(0, new SelectListItem
             {
                 Value = "-1",
-                Text = _localizationService.GetResource("Admin.CancellationRequests.SearchCancellationRequestStatus.All")
+                Text = await _localizationService.GetResourceAsync("Admin.CancellationRequests.SearchCancellationRequestStatus.All")
             });
 
             searchModel.SetGridPageSize();
@@ -75,25 +78,27 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             return searchModel;
         }
 
-        public PendingOrderCancellationRequestListModel PreparePendingOrderCancellationRequestListModel(
-            PendingOrderCancellationRequestSearchModel searchModel)
+        public async Task<PendingOrderCancellationRequestListModel>
+            PreparePendingOrderCancellationRequestListModelAsync(PendingOrderCancellationRequestSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var startDateValue = !searchModel.StartDate.HasValue ?
-                null :
-                (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.StartDate.Value, _dateTimeHelper.CurrentTimeZone);
-            var endDateValue = !searchModel.EndDate.HasValue ?
-                null :
-                (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.EndDate.Value, _dateTimeHelper.CurrentTimeZone).AddDays(1);
-            var cancelRequestStatus = searchModel.RequestStatusId == -1 ?
-                null :
-                (PendingOrderCancellationRequestStatus?)searchModel.RequestStatusId;
+            var currentTimeZone = await _dateTimeHelper.GetCurrentTimeZoneAsync();
+
+            var startDateValue = !searchModel.StartDate.HasValue
+                ? null
+                : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.StartDate.Value, currentTimeZone);
+            var endDateValue = !searchModel.EndDate.HasValue
+                ? null
+                : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.EndDate.Value, currentTimeZone).AddDays(1);
+            var cancelRequestStatus = searchModel.RequestStatusId == -1
+                ? null
+                : (PendingOrderCancellationRequestStatus?)searchModel.RequestStatusId;
 
             // Get cancellation requests
             var cancellationRequests =
-                _pendingOrderCancellationRequestService.SearchCancellationRequests(
+                await _pendingOrderCancellationRequestService.SearchCancellationRequestsAsync(
                     requestStatus: cancelRequestStatus,
                     createdFromUtc: startDateValue, createdToUtc: endDateValue,
                     pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
@@ -103,15 +108,25 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             {
                 return cancellationRequests.Select(cancellationRequest =>
                 {
-                    var requestModel = cancellationRequest.ToModel<PendingOrderCancellationRequestModel>();
+                    var requestModel = Task.Run(async () =>
+                    {
+                        var requestModel = cancellationRequest.ToModel<PendingOrderCancellationRequestModel>();
 
-                    requestModel.UtcCreatedDate =
-                        _dateTimeHelper.ConvertToUserTime(cancellationRequest.UtcCreatedDate, DateTimeKind.Utc);
+                        requestModel.UtcCreatedDate =
+                            _dateTimeHelper.ConvertToUserTime(
+                                cancellationRequest.UtcCreatedDate,
+                                TimeZoneInfo.Utc,
+                                await _dateTimeHelper.GetCustomerTimeZoneAsync(await _workContext.GetCurrentCustomerAsync()));
 
-                    var customer = _customerService.GetCustomerById(cancellationRequest.CustomerId);
+                        var customer = await _customerService.GetCustomerByIdAsync(cancellationRequest.CustomerId);
 
-                    requestModel.CustomerInfo = customer != null && _customerService.IsRegistered(customer)
-                        ? customer.Email : _localizationService.GetResource("Admin.Customers.Guest");
+                        requestModel.CustomerInfo =
+                            customer != null && await _customerService.IsRegisteredAsync(customer)
+                                ? customer.Email
+                                : await _localizationService.GetResourceAsync("Admin.Customers.Guest");
+
+                        return requestModel;
+                    }).Result;
 
                     return requestModel;
                 });
@@ -120,7 +135,8 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             return model;
         }
 
-        public SubmitCancellationRequestModel PrepareSubmitCancellationRequestModel(SubmitCancellationRequestModel model, Order order)
+        public async Task<SubmitCancellationRequestModel>
+            PrepareSubmitCancellationRequestModelAsync(SubmitCancellationRequestModel model, Order order)
         {
             if (order == null)
                 throw new ArgumentNullException(nameof(order));
@@ -128,28 +144,30 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             if (model == null)
                 throw new ArgumentNullException(nameof(model));
 
-            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(PluginDefaults.CancellationRequestReasonsCacheKey, _workContext.WorkingLanguage.Id);
+            var workingLanguage = await _workContext.GetWorkingLanguageAsync();
+            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(PluginDefaults.CancellationRequestReasonsCacheKey, workingLanguage.Id);
 
             model.OrderId = order.Id;
 
-            model.AvailableCancelReasons = _cacheManager.Get(cacheKey,
-                () =>
+            model.AvailableCancelReasons = await _cacheManager.GetAsync(cacheKey,
+                async () =>
                 {
-                    return _pendingOrderCancellationRequestService
-                        .GetAllCancellationRequestReasons()
-                        .Select(reason =>
-                            new PendingOrderCancellationRequestReasonModel
-                            {
-                                Id = reason.Id,
-                                Name = _localizationService.GetLocalized(reason, x => x.Name)
-                            }).ToList();
+                    var requestReasons = await _pendingOrderCancellationRequestService
+                        .GetAllCancellationRequestReasonsAsync();
+                    return await requestReasons.SelectAwait(async reason =>
+                        new PendingOrderCancellationRequestReasonModel
+                        {
+                            Id = reason.Id,
+                            Name = await _localizationService.GetLocalizedAsync(reason, x => x.Name)
+                        }).ToListAsync();
                 });
 
             return model;
         }
 
-        public PendingOrderCancellationRequestModel PreparePendingOrderCancellationRequestModel(
-            PendingOrderCancellationRequestModel model, PendingOrderCancellationRequest cancellationRequest, bool excludeProperties = false)
+        public async Task<PendingOrderCancellationRequestModel> PreparePendingOrderCancellationRequestModelAsync(
+            PendingOrderCancellationRequestModel model, PendingOrderCancellationRequest cancellationRequest,
+            bool excludeProperties = false)
         {
             if (cancellationRequest == null)
                 return model;
@@ -161,13 +179,16 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
                 CustomerId = cancellationRequest.CustomerId,
             };
 
-            model.UtcCreatedDate = _dateTimeHelper.ConvertToUserTime(cancellationRequest.UtcCreatedDate, DateTimeKind.Utc);
+            var customer = await _customerService.GetCustomerByIdAsync(cancellationRequest.CustomerId);
 
-            var customer = _customerService.GetCustomerById(cancellationRequest.CustomerId);
+            model.UtcCreatedDate = _dateTimeHelper.ConvertToUserTime(
+                cancellationRequest.UtcCreatedDate,
+                TimeZoneInfo.Utc,
+                await _dateTimeHelper.GetCustomerTimeZoneAsync(customer));
 
-            model.CustomerInfo = _customerService.IsRegistered(customer)
+            model.CustomerInfo = await _customerService.IsRegisteredAsync(customer)
                 ? customer.Email
-                : _localizationService.GetResource("Admin.Customers.Guest");
+                : await _localizationService.GetResourceAsync("Admin.Customers.Guest");
             model.OrderId = cancellationRequest.OrderId;
 
             if (excludeProperties)
@@ -181,18 +202,19 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             return model;
         }
 
-        public PendingOrderCancellationRequestReasonModel PreparePendingOrderCancellationRequestReasonModel(
-            PendingOrderCancellationRequestReasonModel model, PendingOrderCancellationRequestReason cancellationRequestReason, bool excludeProperties = false)
+        public async Task<PendingOrderCancellationRequestReasonModel> PreparePendingOrderCancellationRequestReasonModelAsync(
+            PendingOrderCancellationRequestReasonModel model,
+            PendingOrderCancellationRequestReason cancellationRequestReason, bool excludeProperties = false)
         {
-            Action<PendingOrderCancellationRequestReasonLocalizedModel, int> localizedModelConfiguration = null;
+            Func<PendingOrderCancellationRequestReasonLocalizedModel, int, Task> localizedModelConfiguration = null;
 
             if (cancellationRequestReason != null)
             {
-                model = model ?? cancellationRequestReason.ToModel<PendingOrderCancellationRequestReasonModel>();
+                model ??= cancellationRequestReason.ToModel<PendingOrderCancellationRequestReasonModel>();
 
-                localizedModelConfiguration = (locale, languageId) =>
+                localizedModelConfiguration = async (locale, languageId) =>
                 {
-                    locale.Name = _localizationService.GetLocalized(
+                    locale.Name = await _localizationService.GetLocalizedAsync(
                         cancellationRequestReason,
                         entity => entity.Name,
                         languageId, false, false);
@@ -200,17 +222,19 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             }
 
             if (!excludeProperties)
-                model.Locales = _localizedModelFactory.PrepareLocalizedModels(localizedModelConfiguration);
+                model.Locales = await _localizedModelFactory.PrepareLocalizedModelsAsync(localizedModelConfiguration);
 
             return model;
         }
 
-        public PendingOrderCancellationRequestReasonListModel PreparePendingOrderCancellationRequestReasonListModel(PendingOrderCancellationRequestReasonSearchModel searchModel)
+        public async Task<PendingOrderCancellationRequestReasonListModel>
+            PreparePendingOrderCancellationRequestReasonListModelAsync(PendingOrderCancellationRequestReasonSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var reasons = _pendingOrderCancellationRequestService.GetAllCancellationRequestReasons().ToPagedList(searchModel);
+            var reasons =
+                (await _pendingOrderCancellationRequestService.GetAllCancellationRequestReasonsAsync()).ToPagedList(searchModel);
 
             var model = new PendingOrderCancellationRequestReasonListModel().PrepareToGrid(searchModel, reasons, () =>
             {

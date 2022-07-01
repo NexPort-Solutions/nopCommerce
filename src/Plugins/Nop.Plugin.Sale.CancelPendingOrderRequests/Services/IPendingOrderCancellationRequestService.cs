@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
@@ -9,41 +10,41 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
 {
     public interface IPendingOrderCancellationRequestService
     {
-        IPagedList<PendingOrderCancellationRequest> SearchCancellationRequests(
-            int storeId = 0, int customerId = 0,
+        Task<IPagedList<PendingOrderCancellationRequest>> SearchCancellationRequestsAsync(int storeId = 0,
+            int customerId = 0,
             PendingOrderCancellationRequestStatus? requestStatus = null,
             DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
-            int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false);
+            int pageIndex = 0, int pageSize = int.MaxValue);
 
-        void InsertCancellationRequestReason(PendingOrderCancellationRequestReason cancellationRequestReason);
+        Task InsertCancellationRequestReasonAsync(PendingOrderCancellationRequestReason cancellationRequestReason);
 
-        void DeleteCancellationRequestReason(PendingOrderCancellationRequestReason cancellationRequestReason);
+        Task DeleteCancellationRequestReasonAsync(PendingOrderCancellationRequestReason cancellationRequestReason);
 
-        void UpdateCancellationRequestReason(PendingOrderCancellationRequestReason cancellationRequestReason);
+        Task UpdateCancellationRequestReasonAsync(PendingOrderCancellationRequestReason cancellationRequestReason);
 
-        IList<PendingOrderCancellationRequestReason> GetAllCancellationRequestReasons();
+        Task<IList<PendingOrderCancellationRequestReason>> GetAllCancellationRequestReasonsAsync();
 
-        PendingOrderCancellationRequestReason GetCancellationRequestReasonById(int reasonId);
+        Task<PendingOrderCancellationRequestReason> GetCancellationRequestReasonByIdAsync(int reasonId);
 
-        bool HasCancellationRequestForOrder(int orderId);
+        Task<bool> HasCancellationRequestForOrderAsync(int orderId);
 
-        void InsertCancellationRequest(PendingOrderCancellationRequest cancellationRequest);
+        Task InsertCancellationRequestAsync(PendingOrderCancellationRequest cancellationRequest);
 
-        void DeleteCancellationRequest(PendingOrderCancellationRequest cancellationRequest);
+        Task DeleteCancellationRequestAsync(PendingOrderCancellationRequest cancellationRequest);
 
-        void UpdateCancellationRequest(PendingOrderCancellationRequest cancellationRequest);
+        Task UpdateCancellationRequestAsync(PendingOrderCancellationRequest cancellationRequest);
 
-        PendingOrderCancellationRequest GetCancellationRequestById(int requestId);
+        Task<PendingOrderCancellationRequest> GetCancellationRequestByIdAsync(int requestId);
 
-        IList<int> SendNewCancellationRequestStoreOwnerNotification(PendingOrderCancellationRequest cancellationRequest,
+        Task<IList<int>> SendNewCancellationRequestStoreOwnerNotificationAsync(PendingOrderCancellationRequest cancellationRequest,
             Order order, int languageId);
 
-        IList<int> SendNewCancellationRequestCustomerNotification(PendingOrderCancellationRequest cancellationRequest,
+        Task<IList<int>> SendNewCancellationRequestCustomerNotificationAsync(PendingOrderCancellationRequest cancellationRequest,
             Order order, int languageId);
 
-        IList<int> SendCancellationRequestCustomerNotification(PendingOrderCancellationRequest cancellationRequest,
+        Task<IList<int>> SendCancellationRequestCustomerNotificationAsync(PendingOrderCancellationRequest cancellationRequest,
             Order order, int languageId, string template);
 
-        void VoidCancelledOrder(Order order);
+        Task VoidCancelledOrderAsync(Order order);
     }
 }

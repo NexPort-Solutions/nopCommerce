@@ -2,13 +2,8 @@
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Models
 {
-    public class CancellationRequestSettingsModel : BaseNopModel
+    public record CancellationRequestSettingsModel : BaseNopModel
     {
-        public CancellationRequestSettingsModel()
-        {
-            CancellationRequestReasonSearchModel = new PendingOrderCancellationRequestReasonSearchModel();
-        }
-
-        public PendingOrderCancellationRequestReasonSearchModel CancellationRequestReasonSearchModel { get; set; }
+        public PendingOrderCancellationRequestReasonSearchModel CancellationRequestReasonSearchModel { get; set; } = new();
     }
 }

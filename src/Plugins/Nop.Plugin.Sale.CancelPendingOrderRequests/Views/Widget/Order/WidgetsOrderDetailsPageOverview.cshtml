@@ -4,12 +4,9 @@
 
 @model Nop.Web.Models.Order.OrderDetailsModel
 
-@{
-    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Sale.CancelPendingOrderRequests/Content/cancel_pending_order_plugin.css");
-}
-
+<link rel="stylesheet" href="~/Plugins/Sale.CancelPendingOrderRequests/Content/cancel_pending_order_plugin.css" />
 <div class="cancellation-request-container">
-    @if (pendingOrderCancellationRequestService.HasCancellationRequestForOrder(Model.Id))
+    @if (pendingOrderCancellationRequestService.HasCancellationRequestForOrderAsync(Model.Id))
     {
         <div class="cancellation-request-notice"><p>@T("CancellationRequests.ActiveNotice")</p></div>
     }

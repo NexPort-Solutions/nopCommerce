@@ -33,7 +33,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
             _settingService = settingService;
         }
 
-        public void ManageSiteMap(SiteMapNode rootNode)
+        public async Task ManageSiteMapAsync(SiteMapNode rootNode)
         {
             var salesNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Sales");
             if (salesNode == null)
@@ -52,7 +52,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
             salesNode.ChildNodes.Add(cancelOrderRequestNode);
         }
 
-        public override void Install()
+        public override async Task InstallAsync()
         {
             try
             {
@@ -76,27 +76,27 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
             if (!_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
             {
                 _widgetSettings.ActiveWidgetSystemNames.Add(PluginDefaults.SystemName);
-                _settingService.SaveSetting(_widgetSettings);
+                await _settingService.SaveSettingAsync(_widgetSettings);
             }
 
-            _cancelCancelPendingOrderRequestsPluginService.AddActivityLogTypes();
-            _cancelCancelPendingOrderRequestsPluginService.AddMessageTemplates();
-            _cancelCancelPendingOrderRequestsPluginService.AddOrUpdateResources();
+            await _cancelCancelPendingOrderRequestsPluginService.AddActivityLogTypesAsync();
+            await _cancelCancelPendingOrderRequestsPluginService.AddMessageTemplatesAsync();
+            await _cancelCancelPendingOrderRequestsPluginService.AddOrUpdateResourcesAsync();
 
-            base.Install();
+            await base.InstallAsync();
         }
 
-        public override void Uninstall()
+        public override async Task UninstallAsync()
         {
             if (_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
             {
                 _widgetSettings.ActiveWidgetSystemNames.Remove(PluginDefaults.SystemName);
-                _settingService.SaveSetting(_widgetSettings);
+                await _settingService.SaveSettingAsync(_widgetSettings);
             }
 
-            _cancelCancelPendingOrderRequestsPluginService.DeleteMessageTemplates();
-            _cancelCancelPendingOrderRequestsPluginService.DeleteActivityLogTypes();
-            _cancelCancelPendingOrderRequestsPluginService.DeleteResources();
+            await _cancelCancelPendingOrderRequestsPluginService.DeleteMessageTemplatesAsync();
+            await _cancelCancelPendingOrderRequestsPluginService.DeleteActivityLogTypesAsync();
+            await _cancelCancelPendingOrderRequestsPluginService.DeleteResourcesAsync();
 
             try
             {
@@ -117,24 +117,25 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
                 // Ignore
             }
 
-            var versionSetting = _settingService.GetSetting(PluginDefaults.ASSEMBLY_VERSION_KEY);
+            var versionSetting = await _settingService.GetSettingAsync(PluginDefaults.ASSEMBLY_VERSION_KEY);
             if (versionSetting != null)
             {
-                _settingService.DeleteSetting(versionSetting);
+                await _settingService.DeleteSettingAsync(versionSetting);
             }
 
-            base.Uninstall();
+            await base.UninstallAsync();
         }
 
         public bool HideInWidgetList => true;
 
-        public async Task<IList<string>> GetWidgetZonesAsync()
+        public Task<IList<string>> GetWidgetZonesAsync()
         {
-            return new List<string>
-            {
-                PublicWidgetZones.OrderDetailsPageOverview,
-                AdminWidgetZones.OrderSettingsDetailsBlock
-            };
+            return Task.FromResult<IList<string>>(
+                new List<string>
+                {
+                    PublicWidgetZones.OrderDetailsPageOverview,
+                    AdminWidgetZones.OrderSettingsDetailsBlock
+                });
         }
 
         public string GetWidgetViewComponentName(string widgetZone)
@@ -150,11 +151,6 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
             }
 
             return "";
-        }
-
-        public Task ManageSiteMapAsync(SiteMapNode rootNode)
-        {
-            throw new NotImplementedException();
         }
     }
 }

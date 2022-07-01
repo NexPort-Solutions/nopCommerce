@@ -5,7 +5,7 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Models
 {
-    public class PendingOrderCancellationRequestModel : BaseNopEntityModel
+    public record PendingOrderCancellationRequestModel : BaseNopEntityModel
     {
         [NopResourceDisplayName("Admin.PendingOrderCancellationRequests.Fields.OrderId")]
         public int OrderId { get; set; }

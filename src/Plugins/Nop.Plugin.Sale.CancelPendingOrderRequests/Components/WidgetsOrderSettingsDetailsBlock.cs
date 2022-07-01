@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
 using Nop.Web.Areas.Admin.Models.Settings;
 using Nop.Web.Framework.Components;
@@ -8,7 +9,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Components
     [ViewComponent(Name = "WidgetsOrderSettingsDetailsBlock")]
     public class WidgetsOrderSettingsDetailsBlock : NopViewComponent
     {
-        public IViewComponentResult Invoke(string widgetZone, object additionalData)
+        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
             var orderSettingsModel = (OrderSettingsModel)additionalData;
 

@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Models
 {
-    public class PendingOrderCancellationRequestReasonListModel : BasePagedListModel<PendingOrderCancellationRequestReasonModel>
+    public record PendingOrderCancellationRequestReasonListModel : BasePagedListModel<PendingOrderCancellationRequestReasonModel>
     {
     }
 }
