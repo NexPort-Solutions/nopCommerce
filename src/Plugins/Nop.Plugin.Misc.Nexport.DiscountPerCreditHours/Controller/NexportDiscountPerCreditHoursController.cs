@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Domain.Discounts;
 using Nop.Services.Catalog;
@@ -41,21 +42,22 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Controller
             _storeService = storeService;
         }
 
-        public IActionResult Configure(int discountId, int? discountRequirementId)
+        public async Task<IActionResult> Configure(int discountId, int? discountRequirementId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageDiscounts))
                 return Content("Access denied");
 
             //load the discount
-            var discount = _discountService.GetDiscountById(discountId);
+            var discount = await _discountService.GetDiscountByIdAsync(discountId);
             if (discount == null)
                 throw new ArgumentException("Discount could not be loaded");
 
             //check whether the discount requirement exists
-            if (discountRequirementId.HasValue && _discountService.GetDiscountRequirementById(discountRequirementId.Value) is null)
+            if (discountRequirementId.HasValue && await _discountService.GetDiscountRequirementByIdAsync(discountRequirementId.Value) is null)
                 return Content("Failed to load requirement.");
 
-            var creditHours = _settingService.GetSettingByKey<decimal>(string.Format(NexportDiscountDefaults.SettingsKey, discountRequirementId ?? 0));
+            var creditHours = await _settingService.GetSettingByKeyAsync<decimal>(
+                string.Format(NexportDiscountDefaults.SettingsKey, discountRequirementId ?? 0));
 
             var model = new RequirementModel
             {
@@ -72,18 +74,18 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Controller
 
         [HttpPost]
         [AutoValidateAntiforgeryToken]
-        public IActionResult Configure(RequirementModel model)
+        public async Task<IActionResult> Configure(RequirementModel model)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageDiscounts))
                 return Content("Access denied");
 
             // Load the discount
-            var discount = _discountService.GetDiscountById(model.DiscountId);
+            var discount = await _discountService.GetDiscountByIdAsync(model.DiscountId);
             if (discount == null)
                 return NotFound(new { Errors = new[] { "Discount could not be loaded" } });
 
             // Get the discount requirement
-            var discountRequirement = _discountService.GetDiscountRequirementById(model.RequirementId);
+            var discountRequirement = await _discountService.GetDiscountRequirementByIdAsync(model.RequirementId);
 
             if (discountRequirement == null)
             {
@@ -93,11 +95,11 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Controller
                     DiscountRequirementRuleSystemName = NexportDiscountDefaults.SystemName
                 };
 
-                _discountService.InsertDiscountRequirement(discountRequirement);
+                await _discountService.InsertDiscountRequirementAsync(discountRequirement);
             }
 
             // Save restricted customer role identifier
-            _settingService.SetSetting(string.Format(NexportDiscountDefaults.SettingsKey, discountRequirement.Id), model.CreditHours);
+            await _settingService.SetSettingAsync(string.Format(NexportDiscountDefaults.SettingsKey, discountRequirement.Id), model.CreditHours);
 
             return Json(new { Result = true, NewRequirementId = discountRequirement.Id });
         }

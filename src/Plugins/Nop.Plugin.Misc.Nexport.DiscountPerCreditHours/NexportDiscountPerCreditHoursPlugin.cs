@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -54,31 +55,33 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours
             _nexportService = nexportService;
         }
 
-        public override void Install()
+        public override async Task InstallAsync()
         {
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours", "Credit hours");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours.Hint", "Minimum credit hours for the discount to be effective");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours",
+                "Credit hours");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours.Hint",
+                "Minimum credit hours for the discount to be effective");
 
-            base.Install();
+            await base.InstallAsync();
         }
 
-        public override void Uninstall()
+        public override async Task UninstallAsync()
         {
             //discount requirements
-            var discountRequirements = _discountService.GetAllDiscountRequirements()
+            var discountRequirements = (await _discountService.GetAllDiscountRequirementsAsync())
                 .Where(discountRequirement => discountRequirement.DiscountRequirementRuleSystemName == NexportDiscountDefaults.SystemName);
             foreach (var discountRequirement in discountRequirements)
             {
-                _discountService.DeleteDiscountRequirement(discountRequirement, true);
+                await _discountService.DeleteDiscountRequirementAsync(discountRequirement, true);
             }
 
-            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours");
-            _localizationService.DeletePluginLocaleResource("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours.Hint");
 
-            base.Uninstall();
+            await base.UninstallAsync();
         }
 
-        public DiscountRequirementValidationResult CheckRequirement(DiscountRequirementValidationRequest request)
+        public async Task<DiscountRequirementValidationResult> CheckRequirementAsync(DiscountRequirementValidationRequest request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -89,14 +92,15 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours
             if (request.Customer == null)
                 return result;
 
-            var creditHours = _settingService.GetSettingByKey<decimal>(string.Format(NexportDiscountDefaults.SettingsKey, request.DiscountRequirementId));
+            var creditHours = await _settingService.GetSettingByKeyAsync<decimal>(
+                string.Format(NexportDiscountDefaults.SettingsKey, request.DiscountRequirementId));
 
             if (creditHours == 0M)
                 return result;
 
             var totalHours = 0M;
 
-            var shoppingCartItems = _shoppingCartService.GetShoppingCart(request.Customer, ShoppingCartType.ShoppingCart, request.Store.Id);
+            var shoppingCartItems = await _shoppingCartService.GetShoppingCartAsync(request.Customer, ShoppingCartType.ShoppingCart, request.Store.Id);
             foreach (var cartItem in shoppingCartItems)
             {
                 var mapping = _nexportService.GetProductMappingByNopProductId(cartItem.ProductId, cartItem.StoreId) ??
@@ -116,7 +120,7 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours
             var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
 
             return urlHelper.Action("Configure", "NexportDiscountPerCreditHours",
-                new {discountId, discountRequirementId }, _webHelper.CurrentRequestProtocol);
+                new { discountId, discountRequirementId }, _webHelper.GetCurrentRequestProtocol());
         }
     }
 }

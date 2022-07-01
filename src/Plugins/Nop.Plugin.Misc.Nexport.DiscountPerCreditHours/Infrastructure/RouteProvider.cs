@@ -10,7 +10,7 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Infrastructure
         {
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.DiscountPerCreditHours.Configure",
                 "Admin/NexportDiscountPerCreditHours/Configure",
-                new { controller = "NexportDiscountPerCreditHoursController", action = "Configure" });
+                new { controller = "NexportDiscountPerCreditHours", action = "Configure" });
         }
 
         public int Priority => int.MaxValue - 99;
