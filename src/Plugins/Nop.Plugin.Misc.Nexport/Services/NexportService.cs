@@ -60,7 +60,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         private readonly IAddressService _addressService;
         private readonly IAclService _aclService;
-        private readonly CacheKeyService _cacheKeyService;
         private readonly IStaticCacheManager _cacheManager;
         private readonly IEventPublisher _eventPublisher;
         private readonly ILocalizationService _localizationService;
@@ -126,7 +125,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             NexportSettings nexportSettings,
             IAddressService addressService,
             IAclService aclService,
-            CacheKeyService cacheKeyService,
             IStaticCacheManager cacheManager,
             IEventPublisher eventPublisher,
             IProductService productService,
@@ -186,7 +184,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportSettings = nexportSettings;
             _addressService = addressService;
             _aclService = aclService;
-            _cacheKeyService = cacheKeyService;
             _cacheManager = cacheManager;
             _eventPublisher = eventPublisher;
             _localizationService = localizationService;

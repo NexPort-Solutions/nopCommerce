@@ -26,7 +26,6 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
     {
         private readonly ILocalizedModelFactory _localizedModelFactory;
         private readonly IStaticCacheManager _cacheManager;
-        private readonly CacheKeyService _cacheKeyService;
         private readonly ICustomerService _customerService;
         private readonly ILocalizationService _localizationService;
         private readonly IDateTimeHelper _dateTimeHelper;
@@ -36,7 +35,6 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
         public PendingOrderCancellationRequestModelFactory(
             ILocalizedModelFactory localizedModelFactory,
             IStaticCacheManager cacheManager,
-            CacheKeyService cacheKeyService,
             ICustomerService customerService,
             ILocalizationService localizationService,
             IDateTimeHelper dateTimeHelper,
@@ -45,7 +43,6 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
         {
             _localizedModelFactory = localizedModelFactory;
             _cacheManager = cacheManager;
-            _cacheKeyService = cacheKeyService;
             _customerService = customerService;
             _localizationService = localizationService;
             _dateTimeHelper = dateTimeHelper;
@@ -145,7 +142,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
                 throw new ArgumentNullException(nameof(model));
 
             var workingLanguage = await _workContext.GetWorkingLanguageAsync();
-            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(PluginDefaults.CancellationRequestReasonsCacheKey, workingLanguage.Id);
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(PluginDefaults.CancellationRequestReasonsCacheKey, workingLanguage.Id);
 
             model.OrderId = order.Id;
 

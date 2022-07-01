@@ -31,7 +31,6 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
         private readonly IRepository<ArchwayStoreEmployeePosition> _archwayStoreEmployeePositionRepository;
         private readonly IRepository<ArchwayStudentRegistrationFieldKeyMapping> _archwayStudentRegistrationFieldKeyMappingRepository;
         private readonly IRepository<ArchwayStudentRegistrationFieldAnswer> _archwayStudentRegistrationFieldAnswerRepository;
-        private readonly CacheKeyService _cacheKeyService;
         private readonly IStaticCacheManager _cacheManager;
         private readonly INopFileProvider _fileProvider;
         private readonly NexportService _nexportService;
@@ -42,7 +41,6 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             IRepository<ArchwayStoreEmployeePosition> archwayStoreEmployeePositionRepository,
             IRepository<ArchwayStudentRegistrationFieldKeyMapping> archwayStudentRegistrationFieldKeyMappingRepository,
             IRepository<ArchwayStudentRegistrationFieldAnswer> archwayStudentRegistrationFieldAnswerRepository,
-            CacheKeyService cacheKeyService,
             IStaticCacheManager cacheManager,
             INopFileProvider fileProvider,
             INopDataProvider nopDataProvider,
@@ -53,7 +51,6 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             _archwayStoreEmployeePositionRepository = archwayStoreEmployeePositionRepository;
             _archwayStudentRegistrationFieldKeyMappingRepository = archwayStudentRegistrationFieldKeyMappingRepository;
             _archwayStudentRegistrationFieldAnswerRepository = archwayStudentRegistrationFieldAnswerRepository;
-            _cacheKeyService = cacheKeyService;
             _cacheManager = cacheManager;
             _fileProvider = fileProvider;
             _nopDataProvider = nopDataProvider;
@@ -154,7 +151,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
 
         public async Task<IList<ArchwayStoreRecordInfo>> GetArchwayStoreRecordInfos()
         {
-            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(PluginDefaults.ArchwayStoreRecordAllNoPaginationCacheKey);
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(PluginDefaults.ArchwayStoreRecordAllNoPaginationCacheKey);
 
             return await _cacheManager.GetAsync(cacheKey, () => _archwayStoreRecordRepository.Table.ToListAsync());
         }
@@ -204,7 +201,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
 
         public async Task<IList<ArchwayStoreEmployeePosition>> GetArchwayStoreEmployeePositions(string jobType)
         {
-            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(PluginDefaults.ArchwayStoreEmployeePositionAllNoPaginationCacheKey);
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(PluginDefaults.ArchwayStoreEmployeePositionAllNoPaginationCacheKey);
 
             if (string.IsNullOrWhiteSpace(jobType))
                 return await _cacheManager.GetAsync(cacheKey, () => _archwayStoreEmployeePositionRepository.Table.ToListAsync());

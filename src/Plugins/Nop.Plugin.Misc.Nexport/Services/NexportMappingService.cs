@@ -53,7 +53,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
             }
 
-            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingCatalogAllByCatalogIdCacheKey,
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingCatalogAllByCatalogIdCacheKey,
                 showHidden, catalogId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
             return await _cacheManager.GetAsync(cacheKey, async () =>
             {
@@ -121,7 +121,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
             }
 
-            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingSectionAllBySectionIdCacheKey,
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingSectionAllBySectionIdCacheKey,
                 showHidden, sectionId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
             return await _cacheManager.GetAsync(cacheKey, async () =>
             {
@@ -180,7 +180,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
             }
 
-            var key = _cacheKeyService.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingTrainingPlanAllByTrainingPlanIdCacheKey,
+            var key = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingTrainingPlanAllByTrainingPlanIdCacheKey,
                 showHidden, trainingPlanId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
             return await _cacheManager.GetAsync(key, async () =>
             {
@@ -259,7 +259,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public async Task<IPagedList<NexportProductMapping>> GetProductMappingsPagination(int? nopProductId = null,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
         {
-            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
                 (await _storeContext.GetCurrentStoreAsync()).Id,
                 string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
                 showHidden, "", true);
@@ -284,7 +284,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
             }
 
-            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
                 (await _storeContext.GetCurrentStoreAsync()).Id,
                 string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
                 showHidden, "", false);
@@ -333,7 +333,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public async Task<IList<NexportProductMapping>> GetProductMappings(int? nopProductId = null, int? storeId = null)
         {
-            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
                 (await _storeContext.GetCurrentStoreAsync()).Id,
                 string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
                 false, "", true);
@@ -358,7 +358,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (nexportProductMappingId < 1)
                 return new List<NexportProductGroupMembershipMapping>();
 
-            var key = _cacheKeyService.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductGroupMembershipMappingsAllCacheKey,
+            var key = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductGroupMembershipMappingsAllCacheKey,
                 (await _storeContext.GetCurrentStoreAsync()).Id,
                 string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
                 false, "", false);
@@ -376,7 +376,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (nexportProductMappingId < 1)
                 return new PagedList<NexportProductGroupMembershipMapping>(new List<NexportProductGroupMembershipMapping>(), pageIndex, pageSize);
 
-            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductGroupMembershipMappingsAllCacheKey,
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductGroupMembershipMappingsAllCacheKey,
                 (await _storeContext.GetCurrentStoreAsync()).Id,
                 string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
                 showHidden, "", false);
@@ -871,7 +871,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public async Task<IPagedList<NexportSupplementalInfoQuestion>> GetAllNexportSupplementalInfoQuestionsPagination(
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
         {
-            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoQuestionAllCacheKey, pageIndex, pageSize);
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoQuestionAllCacheKey, pageIndex, pageSize);
             return await _cacheManager.GetAsync(cacheKey, async () =>
             {
                 var query = _nexportSupplementalInfoQuestionRepository.Table.Select(question => question);
@@ -1058,7 +1058,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 return new PagedList<NexportSupplementalInfoOptionGroupAssociation>(
                     new List<NexportSupplementalInfoOptionGroupAssociation>(), pageIndex, pageSize);
 
-            var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoOptionGroupAssociationsAllCacheKey,
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoOptionGroupAssociationsAllCacheKey,
                 (await _storeContext.GetCurrentStoreAsync()).Id);
 
             return await _cacheManager.GetAsync(cacheKey, async () =>
