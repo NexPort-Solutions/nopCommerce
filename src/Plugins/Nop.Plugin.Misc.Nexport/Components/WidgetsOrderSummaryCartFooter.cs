@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Nop.Core;
@@ -31,17 +32,14 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _actionContextAccessor = actionContextAccessor;
         }
 
-        public IViewComponentResult Invoke(string widgetZone, object additionalData)
+        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
-            var cart = _shoppingCartService.GetShoppingCart(_workContext.CurrentCustomer, ShoppingCartType.ShoppingCart,
-                _storeContext.CurrentStore.Id);
-            _orderTotalCalculationService.GetShoppingCartSubTotal(cart,
-                false,
-                out _,
-                out var appliedDiscounts,
-                out _, out _);
+            var cart = await _shoppingCartService.GetShoppingCartAsync(
+                await _workContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart,
+                (await _storeContext.GetCurrentStoreAsync()).Id);
+            var (_, appliedDiscounts, _, _, _) = await _orderTotalCalculationService.GetShoppingCartSubTotalAsync(cart, false);
 
-            if ((_actionContextAccessor.ActionContext.ActionDescriptor as ControllerActionDescriptor)?.ActionName == "Cart")
+            if ((_actionContextAccessor.ActionContext?.ActionDescriptor as ControllerActionDescriptor)?.ActionName == "Cart")
                 return Content("");
 
             ViewData["DiscountList"] = appliedDiscounts;

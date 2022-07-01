@@ -1,11 +1,11 @@
 ﻿using System;
+using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
-using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Customer
 {
-    public class NexportCustomerAdditionalInfoModel : BaseNopModel
+    public record NexportCustomerAdditionalInfoModel : BaseNopModel
     {
         public int CustomerId { get; set; }
 

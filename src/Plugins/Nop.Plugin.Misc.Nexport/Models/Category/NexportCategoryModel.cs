@@ -3,7 +3,7 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Category
 {
-    public class NexportCategoryModel : CategoryModel
+    public record NexportCategoryModel : CategoryModel
     {
         [NopResourceDisplayName("Plugins.Misc.Nexport.Category.LimitSingleProductPurchase")]
         public bool LimitSingleProductPurchase { get; set; }

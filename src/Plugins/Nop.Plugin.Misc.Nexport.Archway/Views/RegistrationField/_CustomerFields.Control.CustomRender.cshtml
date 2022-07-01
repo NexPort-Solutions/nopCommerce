@@ -8,7 +8,7 @@
 
 @if (Model != null)
 {
-    var registrationField = nexportService.GetNexportRegistrationFieldById(Model.FieldId);
+    var registrationField = await nexportService.GetNexportRegistrationFieldById(Model.FieldId);
 
     if (registrationField != null)
     {

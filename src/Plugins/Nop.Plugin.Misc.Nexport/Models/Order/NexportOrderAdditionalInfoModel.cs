@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.Order
 {
-    public class NexportOrderAdditionalInfoModel : BaseNopModel
+    public record NexportOrderAdditionalInfoModel : BaseNopModel
     {
         public int OrderId { get; set; }
 

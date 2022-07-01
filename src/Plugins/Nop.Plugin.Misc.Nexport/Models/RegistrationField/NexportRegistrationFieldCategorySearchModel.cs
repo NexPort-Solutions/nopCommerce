@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
 {
-    public class NexportRegistrationFieldCategorySearchModel : BaseSearchModel
+    public record NexportRegistrationFieldCategorySearchModel : BaseSearchModel
     {
 
     }

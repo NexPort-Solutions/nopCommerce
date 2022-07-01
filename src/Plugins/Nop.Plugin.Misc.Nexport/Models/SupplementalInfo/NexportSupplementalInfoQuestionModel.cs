@@ -8,7 +8,7 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
-    public class NexportSupplementalInfoQuestionModel : BaseNopEntityModel
+    public record NexportSupplementalInfoQuestionModel : BaseNopEntityModel
     {
         public NexportSupplementalInfoQuestionModel()
         {

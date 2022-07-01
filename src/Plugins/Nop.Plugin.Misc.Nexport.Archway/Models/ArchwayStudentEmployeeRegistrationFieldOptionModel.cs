@@ -5,7 +5,7 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Models
 {
-    public class ArchwayStudentEmployeeRegistrationFieldOptionModel : BaseNopModel
+    public record ArchwayStudentEmployeeRegistrationFieldOptionModel : BaseNopModel
     {
         [FromForm(Name = "Id")]
         public int FieldId { get; set; }

@@ -7,7 +7,7 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 namespace Nop.Plugin.Misc.Nexport.Models
 {
     [SuppressMessage("ReSharper", "Mvc.TemplateNotResolved")]
-    public class ConfigurationModel : BaseNopModel
+    public record ConfigurationModel : BaseNopModel
     {
         //[DataType(DataType.Url)]
         [NopResourceDisplayName("Plugins.Misc.Nexport.Url")]

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Orders;
@@ -40,15 +41,15 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _orderService = orderService;
         }
 
-        public IViewComponentResult Invoke(string widgetZone, object additionalData)
+        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
             var model = (OrderDetailsModel.OrderItemModel)additionalData;
 
-            var orderItem = _orderService.GetOrderItemByGuid(model.OrderItemGuid);
+            var orderItem = await _orderService.GetOrderItemByGuidAsync(model.OrderItemGuid);
             if (orderItem == null)
                 return Content("");
 
-            var order = _orderService.GetOrderById(orderItem.OrderId);
+            var order = await _orderService.GetOrderByIdAsync(orderItem.OrderId);
 
             if (order == null || order.OrderStatus != OrderStatus.Complete)
                 return Content("");

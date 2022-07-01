@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.Order
 {
-    public class NexportOrderInvoiceItemListModel : BasePagedListModel<NexportOrderInvoiceItemModel>
+    public record NexportOrderInvoiceItemListModel : BasePagedListModel<NexportOrderInvoiceItemModel>
     {
     }
 }

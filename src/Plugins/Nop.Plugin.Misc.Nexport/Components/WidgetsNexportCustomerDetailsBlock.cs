@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NexportApi.Client;
 using Nop.Core.Domain.Customers;
@@ -32,7 +33,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _logger = logger;
         }
 
-        public IViewComponentResult Invoke(string widgetZone, object additionalData)
+        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
             var customerModel = (CustomerModel) additionalData;
 
@@ -42,12 +43,12 @@ namespace Nop.Plugin.Misc.Nexport.Components
             try
             {
                 var model =
-                    _nexportPluginModelFactory.PrepareNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
+                    await _nexportPluginModelFactory.PrepareNexportAdditionalInfoModelAsync(customerModel.ToEntity<Customer>());
 
-                var mapping = _nexportService.FindUserMappingByCustomerId(customerModel.Id);
+                var mapping = await _nexportService.FindUserMappingByCustomerId(customerModel.Id);
                 if (mapping != null)
                 {
-                    var nexportUser = _nexportService.GetNexportUser(mapping.NexportUserId);
+                    var nexportUser = await _nexportService.GetNexportUserAsync(mapping.NexportUserId);
 
                     if (nexportUser != null)
                     {
@@ -77,7 +78,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
                     errorMsg += $" ({exception.Message})";
                 }
 
-                _logger.Error(errorMsg, ex);
+                await _logger.ErrorAsync(errorMsg, ex);
                 _notificationService.ErrorNotification(errorMsg);
 
                 return Content("");

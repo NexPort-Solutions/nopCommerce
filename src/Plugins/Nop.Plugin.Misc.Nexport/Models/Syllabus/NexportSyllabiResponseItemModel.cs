@@ -4,7 +4,7 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Syllabus
 {
-    public class NexportSyllabiResponseItemModel : BaseNopModel
+    public record NexportSyllabiResponseItemModel : BaseNopModel
     {
         public Guid SyllabusId { get; set; }
 

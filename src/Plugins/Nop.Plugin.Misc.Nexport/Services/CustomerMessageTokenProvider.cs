@@ -8,15 +8,15 @@ using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Tax;
+using Nop.Core.Events;
 using Nop.Services.Blogs;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
-using Nop.Services.Events;
 using Nop.Services.Helpers;
+using Nop.Services.Html;
 using Nop.Services.Localization;
-using Nop.Services.Media;
 using Nop.Services.Messages;
 using Nop.Services.News;
 using Nop.Services.Orders;
@@ -45,6 +45,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IEventPublisher eventPublisher,
             IGenericAttributeService genericAttributeService,
             IGiftCardService giftCardService,
+            IHtmlFormatter htmlFormatter,
             ILanguageService languageService,
             ILocalizationService localizationService,
             INewsService newsService,
@@ -80,6 +81,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 eventPublisher,
                 genericAttributeService,
                 giftCardService,
+                htmlFormatter,
                 languageService,
                 localizationService,
                 newsService,

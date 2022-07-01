@@ -5,16 +5,8 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Models
 {
-    public class ArchwayStudentEmployeeRegistrationFieldModel : BaseNopModel
+    public record ArchwayStudentEmployeeRegistrationFieldModel : BaseNopModel
     {
-        public ArchwayStudentEmployeeRegistrationFieldModel()
-        {
-            AvailableStates = new List<SelectListItem>();
-            AvailableCities = new List<SelectListItem>();
-            AvailableAddresses = new List<SelectListItem>();
-            AvailableEmployeePositions = new List<SelectListItem>();
-        }
-
         public int FieldId { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.Archway.Field.StoreLocationState")]
@@ -36,12 +28,12 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Models
         [NopResourceDisplayName("Plugins.Misc.Nexport.Archway.Field.EmployeeId")]
         public string EmployeeId { get; set; }
 
-        public IList<SelectListItem> AvailableStates { get; set; }
+        public IList<SelectListItem> AvailableStates { get; set; } = new List<SelectListItem>();
 
-        public IList<SelectListItem> AvailableCities { get; set; }
+        public IList<SelectListItem> AvailableCities { get; set; } = new List<SelectListItem>();
 
-        public IList<SelectListItem> AvailableAddresses { get; set; }
+        public IList<SelectListItem> AvailableAddresses { get; set; } = new List<SelectListItem>();
 
-        public IList<SelectListItem> AvailableEmployeePositions { get; set; }
+        public IList<SelectListItem> AvailableEmployeePositions { get; set; } = new List<SelectListItem>();
     }
 }

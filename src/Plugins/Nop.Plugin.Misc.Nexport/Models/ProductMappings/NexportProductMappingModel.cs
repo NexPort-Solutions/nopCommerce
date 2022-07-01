@@ -4,24 +4,16 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using NexportApi.Model;
-using Nop.Web.Framework.Models;
-using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Web.Framework.Models;
+using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
 {
     [SuppressMessage("ReSharper", "Mvc.TemplateNotResolved")]
-    public class NexportProductMappingModel : BaseNopEntityModel, INexportProductMapping
+    public record NexportProductMappingModel : BaseNopEntityModel, INexportProductMapping
     {
-        public NexportProductMappingModel()
-        {
-            GroupMembershipMappingModels = new List<NexportProductGroupMembershipMappingModel>();
-
-            SupplementalInfoQuestionIds = new List<int>();
-            AvailableSupplementalInfoQuestions = new List<SelectListItem>();
-        }
-
         public int NopProductId { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.NexportProductName")]
@@ -128,11 +120,11 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
 
         public NexportProductGroupMembershipMappingModel AddGroupMembershipMappingModel { get; set; }
 
-        public IList<NexportProductGroupMembershipMappingModel> GroupMembershipMappingModels { get; set; }
+        public IList<NexportProductGroupMembershipMappingModel> GroupMembershipMappingModels { get; set; } = new List<NexportProductGroupMembershipMappingModel>();
 
-        public IList<int> SupplementalInfoQuestionIds { get; set; }
+        public IList<int> SupplementalInfoQuestionIds { get; set; } = new List<int>();
 
-        public IList<SelectListItem> AvailableSupplementalInfoQuestions { get; set; }
+        public IList<SelectListItem> AvailableSupplementalInfoQuestions { get; set; } = new List<SelectListItem>();
 
         public bool Editable { get; set; }
     }

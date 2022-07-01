@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
-    public class NexportSupplementalInfoOptionListModel: BasePagedListModel<NexportSupplementalInfoOptionModel>
+    public record NexportSupplementalInfoOptionListModel: BasePagedListModel<NexportSupplementalInfoOptionModel>
     {
 
     }

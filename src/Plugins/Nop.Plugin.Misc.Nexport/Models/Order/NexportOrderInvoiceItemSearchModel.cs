@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.Order
 {
-    public class NexportOrderInvoiceItemSearchModel : BaseSearchModel
+    public record NexportOrderInvoiceItemSearchModel : BaseSearchModel
     {
         public NexportOrderInvoiceItemSearchModel()
         {

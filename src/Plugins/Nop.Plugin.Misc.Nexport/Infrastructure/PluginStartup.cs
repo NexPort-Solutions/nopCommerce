@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Threading.Tasks;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Exceptions;
 using FluentMigrator.Runner.Initialization;
@@ -8,12 +9,18 @@ using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NexportApi.Client;
 using Nop.Core.Infrastructure;
 using Nop.Data;
+using Nop.Plugin.Misc.Nexport.Controllers;
+using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Services.Configuration;
 using Nop.Plugin.Misc.Nexport.Filters;
+using Nop.Plugin.Misc.Nexport.Infrastructure.Logging;
 using Nop.Plugin.Misc.Nexport.Migrations;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Customers;
+using Nop.Services.Orders;
 using ILogger = Nop.Services.Logging.ILogger;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure
@@ -42,6 +49,22 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 options.Filters.Add<ShoppingCartActionFilter>();
                 options.Filters.Add<OrderDetailsActionFilter>();
             });
+
+            var apiConfiguration = new Configuration();
+            services.AddSingleton(apiConfiguration);
+
+            services.AddTransient<ISynchronousClient>(a => new ApiClient(apiConfiguration.BasePath));
+            services.AddTransient<IAsynchronousClient>(a => new ApiClient(apiConfiguration.BasePath));
+
+            services.AddScoped<ILogger, DefaultLogger>();
+
+            services.AddScoped<ICustomerRegistrationService, NexportCustomerRegistrationService>();
+            services.AddScoped<IOrderProcessingService, NexportOrderProcessingService>();
+            services.AddScoped<NexportApiService>();
+            services.AddScoped<NexportService>();
+            services.AddScoped<NexportPluginService>();
+            services.AddScoped<INexportPluginModelFactory, NexportPluginModelFactory>();
+            services.AddScoped<NexportIntegrationController>();
         }
 
         public static IServiceProvider CreateFluentMigratorRunnerService()
@@ -76,36 +99,42 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
         public void Configure(IApplicationBuilder application)
         {
             var dataSettings = DataSettingsManager.LoadSettings();
-            if (!dataSettings?.IsValid ?? true)
+            if (dataSettings == null ||
+                dataSettings.DataProvider == DataProviderType.Unknown ||
+                string.IsNullOrWhiteSpace(dataSettings.ConnectionString))
                 return;
 
-            ApplyMigration(application);
+            var migrationTask = Task.Run(() => ApplyMigration(application));
+            migrationTask.Wait();
 
-            using var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope();
-            var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
-
-            var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            var versionSettingValue = settingService.GetSettingByKey<string>(NexportDefaults.ASSEMBLY_VERSION_KEY);
-            Version installedAssemblyVersion = null;
-
-            if (!string.IsNullOrEmpty(versionSettingValue))
+            using var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>()?.CreateScope();
+            if (serviceScope != null)
             {
-                installedAssemblyVersion =
-                    Version.Parse(versionSettingValue);
-            }
+                var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
 
-            if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
-            {
-                settingService.SetSetting(NexportDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
+                var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+                var versionSettingValue = settingService.GetSettingByKeyAsync<string>(NexportDefaults.ASSEMBLY_VERSION_KEY).Result;
+                Version installedAssemblyVersion = null;
 
-                var nexportPluginService =
-                    serviceScope.ServiceProvider.GetRequiredService<NexportPluginService>();
+                if (!string.IsNullOrEmpty(versionSettingValue))
+                {
+                    installedAssemblyVersion =
+                        Version.Parse(versionSettingValue);
+                }
 
-                nexportPluginService.InstallScheduledTask();
-                nexportPluginService.AddActivityLogTypes();
-                nexportPluginService.AddMessageTemplates();
-                nexportPluginService.AddOrUpdateResources();
-                nexportPluginService.InstallPermissionProvider();
+                if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
+                {
+                    settingService.SetSettingAsync(NexportDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion?.ToString());
+
+                    var nexportPluginService =
+                        serviceScope.ServiceProvider.GetRequiredService<NexportPluginService>();
+
+                    Task.Run(() => nexportPluginService.InstallScheduledTaskAsync());
+                    Task.Run(() => nexportPluginService.AddActivityLogTypesAsync());
+                    Task.Run(() => nexportPluginService.AddMessageTemplatesAsync());
+                    Task.Run(() => nexportPluginService.AddOrUpdateResourcesAsync());
+                    Task.Run(() => nexportPluginService.InstallPermissionProviderAsync());
+                }
             }
         }
 
@@ -113,7 +142,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
         /// Apply migrations
         /// </summary>
         /// <param name="application"></param>
-        private void ApplyMigration(IApplicationBuilder application)
+        private async Task ApplyMigration(IApplicationBuilder application)
         {
             var logger = EngineContext.Current.Resolve<ILogger>();
 
@@ -133,7 +162,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             }
             catch (Exception ex)
             {
-                logger.Error($"Error occurred during database migration process: {ex.Message}", ex);
+                await logger.ErrorAsync($"Error occurred during database migration process: {ex.Message}", ex);
             }
         }
 

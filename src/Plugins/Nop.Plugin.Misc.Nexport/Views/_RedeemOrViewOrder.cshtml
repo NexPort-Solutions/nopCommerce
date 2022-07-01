@@ -1,12 +1,11 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Domain.NexportOrderInvoiceItem
 
 @{
-    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
-
-    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_common.js");
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_common.js");
 }
 
-@if (Model != null && Model.Id > 0)
+<link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport.css" />
+@if (Model is { Id: > 0 })
 {
     <div id="redeem-view-order-container">
         @if (Model.UtcDateRedemption != null)
@@ -32,7 +31,7 @@
 
         <script asp-location="Footer">
             $(document).ready(function () {
-                $("input[type=radio][name=redemptionOption]").on("change", function(e) {
+                $("input[type=radio][name=redemptionOption]").on("change", function (e) {
                     if (this.value === "redeem") {
                         $("input[name=redemptionUser]").hide();
                     }
@@ -42,7 +41,7 @@
                 });
 
                 $("#redemption-submit").on("click",
-                    function(e) {
+                    function (e) {
                         // Call redemption action
                         var postData = {
                             orderItemInvoiceId: "@Model.Id"
@@ -59,12 +58,12 @@
                             url: "@Url.RouteUrl("Plugin.Misc.Nexport.RedeemOrder")",
                             type: "POST",
                             data: postData,
-                            success: function(result) {
+                            success: function (result) {
                                 $.ajax({
                                     url: "@Url.Action("ViewNexportOrderRedemption", "NexportIntegration")",
                                     type: "GET",
                                     data: result,
-                                    success: function(viewResult) {
+                                    success: function (viewResult) {
                                         var parseViewResult = $.parseHTML(viewResult, null, true);
                                         $("#redeem-view-order-container").html(parseViewResult);
                                         $("#redeemCompleted").data("redeemed", true);

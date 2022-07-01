@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Web.Framework.Components;
 using Nop.Web.Models.Catalog;
@@ -23,9 +24,9 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _storeContext = storeContext;
         }
 
-        public IViewComponentResult Invoke(string widgetZone, object additionalData)
+        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
-            if (_storeContext.CurrentStore == null)
+            if ((await _storeContext.GetCurrentStoreAsync()) == null)
                 return Content("");
 
             var productDetailsModel = (ProductDetailsModel)additionalData;
@@ -33,7 +34,8 @@ namespace Nop.Plugin.Misc.Nexport.Components
             if (productDetailsModel == null)
                 return Content("");
 
-            var model = _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id, _storeContext.CurrentStore.Id) ??
+            var model = _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id,
+                            (await _storeContext.GetCurrentStoreAsync()).Id) ??
                         _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id);
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Product/WidgetsProductDetailsOverviewTop.cshtml", model);

@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
-    public class NexportSupplementalInfoAnswerQuestionModel
+    public record NexportSupplementalInfoAnswerQuestionModel
     {
         public NexportSupplementalInfoAnswerQuestionModel()
         {

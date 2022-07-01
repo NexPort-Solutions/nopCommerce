@@ -3,7 +3,7 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
 {
-    public class NexportRegistrationFieldCategoryModel : BaseNopEntityModel
+    public record NexportRegistrationFieldCategoryModel : BaseNopEntityModel
     {
         [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Category.Title")]
         public string Title { get; set; }

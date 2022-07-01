@@ -3,7 +3,7 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Syllabus
 {
-    public class NexportSyllabusListSearchModel : BaseSearchModel
+    public record NexportSyllabusListSearchModel : BaseSearchModel
     {
         public NexportSyllabusListSearchModel()
         {

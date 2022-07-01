@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Web.Areas.Admin.Models.Settings;
@@ -20,14 +21,14 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _nexportPluginModelFactory = nexportPluginModelFactory;
         }
 
-        public IViewComponentResult Invoke(string widgetZone, object additionalData)
+        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
             var customerUserSettingsModel = (CustomerUserSettingsModel) additionalData;
 
             if (customerUserSettingsModel == null)
                 return Content("");
 
-            var model = _nexportPluginModelFactory.PrepareNexportCustomerAdditionalSettingsModel();
+            var model = _nexportPluginModelFactory.PrepareNexportCustomerAdditionalSettingsModelAsync();
 
             return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Setting/NexportCustomerUserSettings.cshtml", model);
         }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -32,9 +33,9 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             _tempDataDictionaryFactory = tempDataDictionaryFactory;
         }
 
-        public override void OnResultExecuting(ResultExecutingContext context)
+        public override async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
         {
-            if (!(context.ActionDescriptor is ControllerActionDescriptor actionDescriptor))
+            if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
             if (actionDescriptor.ControllerTypeInfo == typeof(ProductController) &&
@@ -43,16 +44,16 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             {
                 var tempData = _tempDataDictionaryFactory.GetTempData(context.HttpContext);
                 var messages = tempData.ContainsKey(NopMessageDefaults.NotificationListKey)
-                    ? JsonConvert.DeserializeObject<IList<NotifyData>>(tempData[NopMessageDefaults.NotificationListKey].ToString())
+                    ? JsonConvert.DeserializeObject<IList<NotifyData>>(tempData[NopMessageDefaults.NotificationListKey]!.ToString()!)
                     : new List<NotifyData>();
 
-                var hasMappingError = messages.Any(x => x.Message.Contains("default mapping with Nexport product"));
+                var hasMappingError = messages!.Any(x => x.Message.Contains("default mapping with Nexport product"));
                 if (!hasMappingError)
                 {
-                    if (context.Result is ViewResult result && result.Model is ProductModel productModel)
+                    if (context.Result is ViewResult { Model: ProductModel productModel })
                     {
-                        var hasAnyNexportMappings = _nexportService.HasNexportProductMapping(productModel.Id);
-                        var hasDefaultMapping = _nexportService.HasDefaultMapping(productModel.Id);
+                        var hasAnyNexportMappings = await _nexportService.HasNexportProductMapping(productModel.Id);
+                        var hasDefaultMapping = await _nexportService.HasDefaultMapping(productModel.Id);
 
                         if (hasAnyNexportMappings && !hasDefaultMapping)
                         {
@@ -63,12 +64,12 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 }
             }
 
-            base.OnResultExecuting(context);
+            await base.OnResultExecutionAsync(context, next);
         }
 
-        public override void OnActionExecuting(ActionExecutingContext context)
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            if (!(context.ActionDescriptor is ControllerActionDescriptor actionDescriptor))
+            if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
             if (actionDescriptor.ControllerTypeInfo == typeof(ProductController) &&
@@ -85,8 +86,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
 
                 if (productId != null)
                 {
-                    var hasAnyNexportMappings = _nexportService.HasNexportProductMapping(productId.Value);
-                    var hasDefaultMapping = _nexportService.HasDefaultMapping(productId.Value);
+                    var hasAnyNexportMappings = await _nexportService.HasNexportProductMapping(productId.Value);
+                    var hasDefaultMapping = await _nexportService.HasDefaultMapping(productId.Value);
 
                     if (hasAnyNexportMappings && !hasDefaultMapping)
                     {
@@ -101,7 +102,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 }
             }
 
-            base.OnActionExecuting(context);
+            await base.OnActionExecutionAsync(context, next);
         }
 
         private static int? GetProductId(ActionExecutingContext context)

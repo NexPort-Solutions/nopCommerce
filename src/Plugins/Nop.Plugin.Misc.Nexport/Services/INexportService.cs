@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
@@ -13,291 +14,314 @@ namespace Nop.Plugin.Misc.Nexport.Services
 {
     public interface INexportService
     {
-        void InsertNexportProductMapping(NexportProductMapping nexportProductMapping);
+        Task InsertNexportProductMapping(NexportProductMapping nexportProductMapping);
 
-        void InsertNexportProductGroupMembershipMapping(NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping);
+        Task InsertNexportProductGroupMembershipMapping(
+            NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping);
 
-        IPagedList<NexportProductMapping> GetProductCatalogsByCatalogId(Guid catalogId,
+        Task<IPagedList<NexportProductMapping>> GetProductCatalogsByCatalogId(Guid catalogId,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
-        IPagedList<NexportProductMapping> GetProductSectionsBySectionId(Guid sectionId,
+        Task<IPagedList<NexportProductMapping>> GetProductSectionsBySectionId(Guid sectionId,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
-        IPagedList<NexportProductMapping> GetProductTrainingPlansByTrainingPlanId(Guid trainingPlanId,
+        Task<IPagedList<NexportProductMapping>> GetProductTrainingPlansByTrainingPlanId(Guid trainingPlanId,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
-        NexportProductMapping FindProductCatalog(IList<NexportProductMapping> source, int productId, Guid catalogId, int? storeId = null);
+        NexportProductMapping FindProductCatalog(IList<NexportProductMapping> source, int productId,
+            Guid catalogId, int? storeId = null);
 
-        NexportProductMapping FindProductSection(IList<NexportProductMapping> source, int productId, Guid sectionId, int? storeId = null);
+        NexportProductMapping FindProductSection(IList<NexportProductMapping> source, int productId,
+            Guid sectionId, int? storeId = null);
 
-        NexportProductMapping FindProductTrainingPlan(IList<NexportProductMapping> source, int productId, Guid trainingPlan, int? storeId = null);
+        NexportProductMapping FindProductTrainingPlan(IList<NexportProductMapping> source, int productId,
+            Guid trainingPlan, int? storeId = null);
 
-        IPagedList<NexportProductMapping> GetProductMappingsPagination(int? nopProductId = null,
+        Task<IPagedList<NexportProductMapping>> GetProductMappingsPagination(int? nopProductId = null,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
-        IPagedList<NexportProductMapping> GetProductMappingsPagination(Guid nexportProductId,
+        Task<IPagedList<NexportProductMapping>> GetProductMappingsPagination(Guid nexportProductId,
             NexportProductTypeEnum nexportProductType,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
-        IList<NexportProductMapping> GetProductMappingsByStoreId(int storeId);
+        Task<IList<NexportProductMapping>> GetProductMappingsByStoreId(int storeId);
 
-        NexportProductMapping GetProductMappingByNopProductId(int nopProductId, int? storeId = null);
+        Task<NexportProductMapping> GetProductMappingByNopProductId(int nopProductId, int? storeId = null);
 
-        IList<NexportProductMapping> GetProductMappings(int? nopProductId = null, int? storeId = null);
+        Task<IList<NexportProductMapping>> GetProductMappings(int? nopProductId = null, int? storeId = null);
 
-        IList<NexportProductGroupMembershipMapping> GetProductGroupMembershipMappings(int nexportProductMappingId);
+        Task<IList<NexportProductGroupMembershipMapping>> GetProductGroupMembershipMappings(
+            int nexportProductMappingId);
 
-        IPagedList<NexportProductGroupMembershipMapping> GetProductGroupMembershipMappingsPagination(
+        Task<IPagedList<NexportProductGroupMembershipMapping>> GetProductGroupMembershipMappingsPagination(
             int nexportProductMappingId,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
-        IList<Guid> GetProductGroupMembershipIds(int nexportProductMappingId);
+        Task<IList<Guid>> GetProductGroupMembershipIds(int nexportProductMappingId);
 
-        Dictionary<Guid, int> FindMappingCountPerSyllabus(IList<GetSyllabiResponseItem> syllabusList);
+        Task<Dictionary<Guid, int>> FindMappingCountPerSyllabus(IList<GetSyllabiResponseItem> syllabusList);
 
-        NexportProductMapping GetProductMappingById(int mappingId);
+        Task<NexportProductMapping> GetProductMappingById(int mappingId);
 
-        void DeleteNexportProductMapping(NexportProductMapping mapping);
+        Task DeleteNexportProductMapping(NexportProductMapping mapping);
 
-        void UpdateNexportProductMapping(NexportProductMapping mapping);
+        Task UpdateNexportProductMapping(NexportProductMapping mapping);
 
-        NexportProductGroupMembershipMapping GetProductGroupMembershipMappingById(int mappingId);
+        Task<NexportProductGroupMembershipMapping> GetProductGroupMembershipMappingById(int mappingId);
 
-        void DeleteGroupMembershipMapping(NexportProductGroupMembershipMapping mapping);
+        Task DeleteGroupMembershipMapping(NexportProductGroupMembershipMapping mapping);
 
-        void InsertNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem);
+        Task InsertNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem);
 
-        void DeleteNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem);
+        Task DeleteNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem);
 
-        void InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
+        Task InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
-        void DeleteNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
+        Task DeleteNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
-        void UpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
+        Task UpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
-        void InsertNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
+        Task InsertNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
 
-        void DeleteNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
+        Task DeleteNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
 
-        void UpdateNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
+        Task UpdateNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
 
-        NexportOrderInvoiceItem FindNexportOrderInvoiceItem(int orderId, int orderItemId);
+        Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItem(int orderId, int orderItemId);
 
-        NexportOrderInvoiceItem FindNexportOrderInvoiceItemById(int orderInvoiceItemId);
+        Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemById(int orderInvoiceItemId);
 
-        IList<NexportOrderInvoiceItem> GetNexportOrderInvoiceItems(Guid userId);
+        Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId);
 
-        IPagedList<NexportOrderInvoiceItem> GetNexportOrderInvoiceItems(int orderId, bool excludeNonApproval = false,
+        Task<IPagedList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(int orderId,
+            bool excludeNonApproval = false,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
-        void MapNexportProduct(MapNexportProductModel model);
+        Task MapNexportProduct(MapNexportProductModel model);
 
-        void InsertUserMapping(NexportUserMapping nexportUserMapping);
+        Task InsertUserMapping(NexportUserMapping nexportUserMapping);
 
-        void DeleteUserMapping(NexportUserMapping nexportUserMapping);
+        Task DeleteUserMapping(NexportUserMapping nexportUserMapping);
 
-        void UpdateUserMapping(NexportUserMapping nexportUserMapping);
+        Task UpdateUserMapping(NexportUserMapping nexportUserMapping);
 
-        NexportUserMapping FindUserMappingByCustomerId(int nopCustomerId);
+        Task<NexportUserMapping> FindUserMappingByCustomerId(int nopCustomerId);
 
-        NexportUserMapping FindUserMappingByNexportUserId(Guid userId);
+        Task<NexportUserMapping> FindUserMappingByNexportUserId(Guid userId);
 
-        Guid? FindExistingInvoiceForOrder(int orderId);
+        Task<Guid?> FindExistingInvoiceForOrder(int orderId);
 
-        Guid? FindExistingInvoiceItemForOrderItem(int orderId, int orderItemId);
+        Task<Guid?> FindExistingInvoiceItemForOrderItem(int orderId, int orderItemId);
 
-        bool HasNexportOrderProcessingQueueItem(int orderId);
+        Task<bool> HasNexportOrderProcessingQueueItem(int orderId);
 
-        bool HasNexportProductMapping(Order order);
+        Task<bool> HasNexportProductMapping(Order order);
 
-        bool HasNexportProductMapping(int productId);
+        Task<bool> HasNexportProductMapping(int productId);
 
-        IList<int?> GetStoreIdsPerProductMapping(int productId);
+        Task<IList<int?>> GetStoreIdsPerProductMapping(int productId);
 
-        void CopyProductMappings(Product originalProduct, Product copyingProduct);
+        Task CopyProductMappingsAsync(Product originalProduct, Product copyingProduct);
 
         #region Supplemental Info
 
-        IPagedList<NexportSupplementalInfoQuestion> GetAllNexportSupplementalInfoQuestionsPagination(
+        Task<IPagedList<NexportSupplementalInfoQuestion>> GetAllNexportSupplementalInfoQuestionsPagination(
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
 
-        IList<NexportSupplementalInfoQuestion> GetAllNexportSupplementalInfoQuestions();
+        Task<IList<NexportSupplementalInfoQuestion>> GetAllNexportSupplementalInfoQuestions();
 
-        NexportSupplementalInfoQuestion GetNexportSupplementalInfoQuestionById(int questionId);
+        Task<NexportSupplementalInfoQuestion> GetNexportSupplementalInfoQuestionById(int questionId);
 
-        IList<NexportSupplementalInfoQuestion> GetNexportSupplementalInfoQuestionsByIds(int[] questionIds);
+        Task<IList<NexportSupplementalInfoQuestion>> GetNexportSupplementalInfoQuestionsByIds(int[] questionIds);
 
-        void InsertNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question);
+        Task InsertNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question);
 
-        void DeleteNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question);
+        Task DeleteNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question);
 
-        void DeleteNexportSupplementalInfoQuestions(IList<NexportSupplementalInfoQuestion> questions);
+        Task DeleteNexportSupplementalInfoQuestions(IList<NexportSupplementalInfoQuestion> questions);
 
-        void UpdateNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question);
+        Task UpdateNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question);
 
-        NexportSupplementalInfoOption GetNexportSupplementalInfoOptionById(int optionId);
+        Task<NexportSupplementalInfoOption> GetNexportSupplementalInfoOptionById(int optionId);
 
-        IList<NexportSupplementalInfoOption> GetNexportSupplementalInfoOptionsByQuestionId(int questionId,
+        Task<IList<NexportSupplementalInfoOption>> GetNexportSupplementalInfoOptionsByQuestionId(int questionId,
             bool showHidden = false);
 
-        void InsertNexportSupplementalInfoOption(NexportSupplementalInfoOption option);
+        Task InsertNexportSupplementalInfoOption(NexportSupplementalInfoOption option);
 
-        void DeleteNexportSupplementalInfoOption(NexportSupplementalInfoOption option);
+        Task DeleteNexportSupplementalInfoOption(NexportSupplementalInfoOption option);
 
-        void UpdateNexportSupplementalInfoOption(NexportSupplementalInfoOption option);
+        Task UpdateNexportSupplementalInfoOption(NexportSupplementalInfoOption option);
 
-        NexportSupplementalInfoQuestionMapping GetNexportSupplementalInfoQuestionMappingById(int questionMappingId);
+        Task<NexportSupplementalInfoQuestionMapping> GetNexportSupplementalInfoQuestionMappingById(
+            int questionMappingId);
 
-        IList<NexportSupplementalInfoQuestionMapping> GetNexportSupplementalInfoQuestionMappingsByProductMappingId(
-            int nexportProductMappingId);
+        Task<IList<NexportSupplementalInfoQuestionMapping>>
+            GetNexportSupplementalInfoQuestionMappingsByProductMappingId(int nexportProductMappingId);
 
-        NexportSupplementalInfoQuestionMapping GetNexportSupplementalInfoQuestionMapping(int nexportProductMappingId,
+        Task<NexportSupplementalInfoQuestionMapping> GetNexportSupplementalInfoQuestionMapping(
+            int nexportProductMappingId,
             int questionId);
 
-        void InsertNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping);
+        Task InsertNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping);
 
-        void DeleteNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping);
+        Task DeleteNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping);
 
-        void UpdateNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping);
+        Task UpdateNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping);
 
-        IPagedList<NexportSupplementalInfoOptionGroupAssociation> GetNexportSupplementalInfoOptionGroupAssociationsPagination(
-            int optionId, int pageIndex = 0, int pageSize = int.MaxValue);
+        Task<IPagedList<NexportSupplementalInfoOptionGroupAssociation>>
+            GetNexportSupplementalInfoOptionGroupAssociationsPagination(int optionId, int pageIndex = 0,
+                int pageSize = int.MaxValue);
 
-        IList<NexportSupplementalInfoOptionGroupAssociation> GetNexportSupplementalInfoOptionGroupAssociations(
+        Task<IList<NexportSupplementalInfoOptionGroupAssociation>> GetNexportSupplementalInfoOptionGroupAssociations(
             int optionId, bool excludeInactive = false);
 
-        NexportSupplementalInfoOptionGroupAssociation GetNexportSupplementalInfoOptionGroupAssociationById(
+        Task<NexportSupplementalInfoOptionGroupAssociation> GetNexportSupplementalInfoOptionGroupAssociationById(
             int groupAssociationId);
 
-        void InsertNexportSupplementalInfoOptionGroupAssociation(
+        Task InsertNexportSupplementalInfoOptionGroupAssociation(
             NexportSupplementalInfoOptionGroupAssociation groupAssociation);
 
-        void DeleteNexportSupplementalInfoOptionGroupAssociation(
+        Task DeleteNexportSupplementalInfoOptionGroupAssociation(
             NexportSupplementalInfoOptionGroupAssociation groupAssociation);
 
-        void UpdateNexportSupplementalInfoOptionGroupAssociation(
+        Task UpdateNexportSupplementalInfoOptionGroupAssociation(
             NexportSupplementalInfoOptionGroupAssociation groupAssociation);
 
-        void InsertNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer);
+        Task InsertNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer);
 
-        void DeleteNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer);
+        Task DeleteNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer);
 
-        void UpdateNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer);
+        Task UpdateNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer);
 
-        IList<NexportSupplementalInfoAnswer> GetNexportSupplementalInfoAnswers(int customerId, int storeId,
+        Task<IList<NexportSupplementalInfoAnswer>> GetNexportSupplementalInfoAnswers(int customerId, int storeId,
             int? questionId = null);
 
-        IPagedList<NexportSupplementalInfoAnswer> GetNexportSupplementalInfoAnswersPagination(int customerId, int? questionId = null,
+        Task<IPagedList<NexportSupplementalInfoAnswer>> GetNexportSupplementalInfoAnswersPagination(int customerId,
+            int? questionId = null,
             int pageIndex = 0, int pageSize = int.MaxValue);
 
-        NexportSupplementalInfoAnswer GetNexportSupplementalInfoAnswerById(int answerId);
+        Task<NexportSupplementalInfoAnswer> GetNexportSupplementalInfoAnswerById(int answerId);
 
-        IPagedList<NexportSupplementalInfoQuestion> GetNexportSupplementalInfoAnsweredQuestionsPagination(int customerId,
+        Task<IPagedList<NexportSupplementalInfoQuestion>> GetNexportSupplementalInfoAnsweredQuestionsPagination(
+            int customerId,
             int pageIndex = 0, int pageSize = int.MaxValue);
 
-        void InsertNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership);
+        Task InsertNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership);
 
-        void DeleteNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership);
+        Task DeleteNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership);
 
-        void InsertNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement);
+        Task InsertNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement);
 
-        void DeleteNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement);
+        Task DeleteNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement);
 
-        IList<NexportRequiredSupplementalInfo> GetNexportRequiredSupplementalInfos(int customerId, int storeId, int? questionId = null);
+        Task<IList<NexportRequiredSupplementalInfo>> GetNexportRequiredSupplementalInfos(int customerId, int storeId,
+            int? questionId = null);
 
-        NexportRequiredSupplementalInfo GetNexportRequiredSupplementalInfoByNopProductId(int customerId, int storeId, int questionId);
+        Task<NexportRequiredSupplementalInfo> GetNexportRequiredSupplementalInfoByNopProductId(int customerId,
+            int storeId, int questionId);
 
-        bool HasRequiredSupplementalInfo(int customerId, int storeId);
+        Task<bool> HasRequiredSupplementalInfo(int customerId, int storeId);
 
-        bool HasUnprocessedAnswer(int orderId);
+        Task<bool> HasUnprocessedAnswer(int orderId);
 
-        void InsertNexportSupplementalInfoAnswerProcessingQueueItem(NexportSupplementalInfoAnswerProcessingQueueItem queueItem);
+        Task InsertNexportSupplementalInfoAnswerProcessingQueueItem(
+            NexportSupplementalInfoAnswerProcessingQueueItem queueItem);
 
-        void DeleteNexportSupplementalInfoAnswerProcessingQueueItem(NexportSupplementalInfoAnswerProcessingQueueItem queueItem);
+        Task DeleteNexportSupplementalInfoAnswerProcessingQueueItem(
+            NexportSupplementalInfoAnswerProcessingQueueItem queueItem);
 
-        IList<NexportSupplementalInfoAnswerMembership> GetNexportSupplementalInfoAnswerMembershipsByAnswerId(int answerId);
+        Task<IList<NexportSupplementalInfoAnswerMembership>> GetNexportSupplementalInfoAnswerMembershipsByAnswerId(
+            int answerId);
 
-        NexportSupplementalInfoAnswerMembership GetNexportSupplementalInfoAnswerMembership(Guid nexportMembershipId);
+        Task<NexportSupplementalInfoAnswerMembership> GetNexportSupplementalInfoAnswerMembership(
+            Guid nexportMembershipId);
 
-        void InsertNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem);
+        Task InsertNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem);
 
-        void DeleteNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem);
+        Task DeleteNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem);
 
         #endregion
 
         #region Registration Field
 
-        NexportRegistrationField GetNexportRegistrationFieldById(int fieldId, int? categoryId = null);
+        Task<NexportRegistrationField> GetNexportRegistrationFieldById(int fieldId, int? categoryId = null);
 
-        IList<NexportRegistrationField> GetNexportRegistrationFields(int storeId);
+        Task<IList<NexportRegistrationField>> GetNexportRegistrationFields(int storeId);
 
-        IList<NexportRegistrationField> GetNexportRegistrationFieldsByCategoryId(int categoryId);
+        Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsByCategoryId(int categoryId);
 
-        IPagedList<NexportRegistrationField> GetNexportRegistrationFieldsPagination(
+        Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(int pageIndex = 0,
+            int pageSize = int.MaxValue);
+
+        Task InsertNexportRegistrationField(NexportRegistrationField registrationField);
+
+        Task DeleteNexportRegistrationField(NexportRegistrationField registrationField);
+
+        Task UpdateNexportRegistrationField(NexportRegistrationField registrationField);
+
+        Task<NexportRegistrationFieldOption> GetNexportRegistrationFieldOptionById(int fieldOptionId,
+            int? fieldId = null);
+
+        Task<IList<NexportRegistrationFieldOption>> GetNexportRegistrationFieldOptions(int? fieldId = null);
+
+        Task<IPagedList<NexportRegistrationFieldOption>> GetNexportRegistrationFieldOptionsPagination(int fieldId,
             int pageIndex = 0, int pageSize = int.MaxValue);
 
-        void InsertNexportRegistrationField(NexportRegistrationField registrationField);
+        Task InsertNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption);
 
-        void DeleteNexportRegistrationField(NexportRegistrationField registrationField);
+        Task DeleteNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption);
 
-        void UpdateNexportRegistrationField(NexportRegistrationField registrationField);
+        Task UpdateNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption);
 
-        NexportRegistrationFieldOption GetNexportRegistrationFieldOptionById(int fieldOptionId, int? fieldId = null);
+        Task<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategoryById(int fieldCategoryId);
 
-        IList<NexportRegistrationFieldOption> GetNexportRegistrationFieldOptions(int? fieldId = null);
+        Task<IList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategories();
 
-        IPagedList<NexportRegistrationFieldOption> GetNexportRegistrationFieldOptionsPagination(int fieldId,
+        Task<IList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategories(IList<int> fieldCategoryIds);
+
+        Task<IPagedList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategoriesPagination(
             int pageIndex = 0, int pageSize = int.MaxValue);
 
-        void InsertNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption);
+        Task InsertNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory);
 
-        void DeleteNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption);
+        Task DeleteNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory);
 
-        void UpdateNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption);
+        Task UpdateNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory);
 
-        NexportRegistrationFieldCategory GetNexportRegistrationFieldCategoryById(int fieldCategoryId);
+        Task<NexportRegistrationFieldStoreMapping> GetNexportRegistrationFieldStoreMappingById(int fieldStoreMappingId);
 
-        IList<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategories();
+        Task<IList<NexportRegistrationFieldStoreMapping>> GetNexportRegistrationFieldStoreMappings(int fieldId);
 
-        IList<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategories(IList<int> fieldCategoryIds);
+        Task InsertNexportRegistrationFieldStoreMapping(
+            NexportRegistrationFieldStoreMapping registrationFieldStoreMapping);
 
-        IPagedList<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategoriesPagination(
+        Task DeleteNexportRegistrationFieldStoreMapping(
+            NexportRegistrationFieldStoreMapping registrationFieldStoreMapping);
+
+        Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerById(int fieldAnswerId);
+
+        Task<IList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswers(int customerId);
+
+        Task<IPagedList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswersPagination(int customerId,
             int pageIndex = 0, int pageSize = int.MaxValue);
 
-        void InsertNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory);
+        Task InsertNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
 
-        void DeleteNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory);
+        Task DeleteNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
 
-        void UpdateNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory);
+        Task UpdateNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
 
-        NexportRegistrationFieldStoreMapping GetNexportRegistrationFieldStoreMappingById(int fieldStoreMappingId);
+        Task InsertNexportRegistrationFieldSynchronizationQueueItem(
+            NexportRegistrationFieldSynchronizationQueueItem queueItem);
 
-        IList<NexportRegistrationFieldStoreMapping> GetNexportRegistrationFieldStoreMappings(int fieldId);
+        Task DeleteNexportRegistrationFieldSynchronizationQueueItem(
+            NexportRegistrationFieldSynchronizationQueueItem queueItem);
 
-        void InsertNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping);
+        Task UpdateNexportRegistrationFieldSynchronizationQueueItem(
+            NexportRegistrationFieldSynchronizationQueueItem queueItem);
 
-        void DeleteNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping);
-
-        NexportRegistrationFieldAnswer GetNexportRegistrationFieldAnswerById(int fieldAnswerId);
-
-        IList<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswers(int customerId);
-
-        IPagedList<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswersPagination(int customerId,
-            int pageIndex = 0, int pageSize = int.MaxValue);
-
-        void InsertNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
-
-        void DeleteNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
-
-        void UpdateNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
-
-        void InsertNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
-
-        void DeleteNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
-
-        void UpdateNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
-
-        bool HasCustomRegistrationFieldRenderForStores(int fieldId, IList<int> storeIds, string customFieldRender);
+        Task<bool> HasCustomRegistrationFieldRenderForStores(int fieldId, IList<int> storeIds, string customFieldRender);
 
         #endregion
     }

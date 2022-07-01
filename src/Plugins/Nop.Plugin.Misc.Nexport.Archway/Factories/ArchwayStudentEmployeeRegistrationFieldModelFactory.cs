@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Plugin.Misc.Nexport.Archway.Extensions;
 using Nop.Plugin.Misc.Nexport.Archway.Models;
@@ -27,24 +28,24 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
             _localizationService = localizationService;
         }
 
-        public ArchwayStudentEmployeeRegistrationFieldModel PrepareArchwayStudentEmployeeRegistrationFieldModel(
-            int fieldId)
+        public async Task<ArchwayStudentEmployeeRegistrationFieldModel>
+            PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(int fieldId)
         {
             var model = new ArchwayStudentEmployeeRegistrationFieldModel { FieldId = fieldId };
 
-            var storeRecords = _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
+            var storeRecords = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
 
             var storeAbbreviations = storeRecords.Select(r => r.State).Distinct().ToList();
 
-            var states = _stateProvinceService.GetStateProvinces()
+            var states = (await _stateProvinceService.GetStateProvincesAsync())
                 .Where(s => storeAbbreviations.Contains(s.Abbreviation)).ToList();
             if (states.Any())
             {
-                model.AvailableStates.Add(new SelectListItem { Text = _localizationService.GetResource("Address.SelectState"), Value = "" });
+                model.AvailableStates.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectState"), Value = "" });
 
                 foreach (var s in states)
                 {
-                    var stateName = _localizationService.GetLocalized(s, x => x.Name);
+                    var stateName = await _localizationService.GetLocalizedAsync(s, x => x.Name);
 
                     model.AvailableStates.Add(new SelectListItem
                     {
@@ -57,7 +58,8 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
             return model;
         }
 
-        public ArchwayStudentEmployeeRegistrationFieldOptionModel PrepareArchwayStudentEmployeeRegistrationFieldOptionModel(int fieldId)
+        public async Task<ArchwayStudentEmployeeRegistrationFieldOptionModel>
+            PrepareArchwayStudentEmployeeRegistrationFieldOptionModelAsync(int fieldId)
         {
             var model = new ArchwayStudentEmployeeRegistrationFieldOptionModel
             {
@@ -73,7 +75,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
                     if (propAttribute != null)
                     {
                         var keyMapping =
-                            _archwayStudentEmployeeRegistrationFieldService
+                            await _archwayStudentEmployeeRegistrationFieldService
                                 .GetArchwayStudentRegistrationFieldKeyMapping(propAttribute.ControlName);
                         if (!string.IsNullOrWhiteSpace(keyMapping?.FieldKey))
                         {
@@ -86,16 +88,16 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
             return model;
         }
 
-        public IList<ArchwayStoreCityModel> GetArchwayStoreCitiesByState(string state, bool addSelectCityItem)
+        public async Task<IList<ArchwayStoreCityModel>> GetArchwayStoreCitiesByState(string state, bool addSelectCityItem)
         {
             if (string.IsNullOrWhiteSpace(state))
                 return new List<ArchwayStoreCityModel>();
 
-            var stateProvince = _stateProvinceService.GetStateProvinces().FirstOrDefault(x => x.Name == state);
+            var stateProvince = (await _stateProvinceService.GetStateProvincesAsync()).FirstOrDefault(x => x.Name == state);
             if (stateProvince == null)
                 return new List<ArchwayStoreCityModel>();
 
-            var storeRecords = _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
+            var storeRecords = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
 
             var cities = storeRecords
                 .Where(r => r.State == stateProvince.Abbreviation)
@@ -103,69 +105,46 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
                 .Select(r => r.City)
                 .Distinct()
                 .ToList();
-            var result = new List<ArchwayStoreCityModel>();
-            foreach (var city in cities)
-            {
-                result.Add(new ArchwayStoreCityModel
-                {
-                    name = city
-                });
-            }
 
-            return result;
+            return cities.Select(city => new ArchwayStoreCityModel { name = city }).ToList();
         }
 
-        public IList<ArchwayStoreAddressModel> GetArchwayStoreAddressesByCity(string city, bool addSelectAddressItem)
+        public async Task<IList<ArchwayStoreAddressModel>> GetArchwayStoreAddressesByCity(string city,
+            bool addSelectAddressItem)
         {
             if (string.IsNullOrWhiteSpace(city))
                 return new List<ArchwayStoreAddressModel>();
 
-            var storeRecords = _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
+            var storeRecords = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
 
             var records = storeRecords
                 .Where(r => r.City == city)
                 .OrderBy(r => r.Address)
                 .ToList();
-            var result = new List<ArchwayStoreAddressModel>();
-            foreach (var record in records)
-            {
-                result.Add(new ArchwayStoreAddressModel
-                {
-                    name = record.Address,
-                    storeNumber = record.Id,
-                    storeType = record.StoreType
-                });
-            }
 
-            return result;
+            return records.Select(record =>
+                new ArchwayStoreAddressModel { name = record.Address, storeNumber = record.Id, storeType = record.StoreType })
+                .ToList();
         }
 
-        public IList<ArchwayStoreEmployeePositionModel> GetArchwayStoreEmployeePositionsByStore(string storeNumber, bool addSelectPositionItem)
+        public async Task<IList<ArchwayStoreEmployeePositionModel>> GetArchwayStoreEmployeePositionsByStore(
+            string storeNumber, bool addSelectPositionItem)
         {
             if (string.IsNullOrWhiteSpace(storeNumber))
                 return new List<ArchwayStoreEmployeePositionModel>();
 
-            var storeRecord = _archwayStudentEmployeeRegistrationFieldService
+            var storeRecord = await _archwayStudentEmployeeRegistrationFieldService
                 .GetArchwayStoreRecordInfo(int.Parse(storeNumber));
 
             if (storeRecord == null)
                 return new List<ArchwayStoreEmployeePositionModel>();
 
             var employePositions =
-                _archwayStudentEmployeeRegistrationFieldService
-                    .GetArchwayStoreEmployeePositions(storeRecord.StoreType)
+                (await _archwayStudentEmployeeRegistrationFieldService
+                    .GetArchwayStoreEmployeePositions(storeRecord.StoreType))
                     .OrderBy(p => p.JobTitle);
 
-            var result = new List<ArchwayStoreEmployeePositionModel>();
-            foreach (var position in employePositions)
-            {
-                result.Add(new ArchwayStoreEmployeePositionModel
-                {
-                    name = position.JobTitle
-                });
-            }
-
-            return result;
+            return employePositions.Select(position => new ArchwayStoreEmployeePositionModel { name = position.JobTitle }).ToList();
         }
     }
 }

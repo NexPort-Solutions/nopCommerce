@@ -4,7 +4,7 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
-    public class NexportSupplementalInfoOptionGroupAssociationModel : BaseNopEntityModel
+    public record NexportSupplementalInfoOptionGroupAssociationModel : BaseNopEntityModel
     {
         public int NexportProductMappingId { get; set; }
 

@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
 {
-    public class NexportRegistrationFieldListModel : BasePagedListModel<NexportRegistrationFieldModel>
+    public record NexportRegistrationFieldListModel : BasePagedListModel<NexportRegistrationFieldModel>
     {
 
     }

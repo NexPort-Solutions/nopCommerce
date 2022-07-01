@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
-    public class NexportSupplementalInfoQuestionMappingModel : BaseNopEntityModel
+    public record NexportSupplementalInfoQuestionMappingModel : BaseNopEntityModel
     {
         public int NexportProductMappingId { get; set; }
 

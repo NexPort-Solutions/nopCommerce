@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
-    public class NexportCustomerSupplementalInfoAnsweredQuestionListModel : BasePagedListModel<NexportCustomerSupplementalInfoAnsweredQuestionModel>
+    public record NexportCustomerSupplementalInfoAnsweredQuestionListModel : BasePagedListModel<NexportCustomerSupplementalInfoAnsweredQuestionModel>
     {
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Services;
@@ -33,27 +34,27 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _genericAttributeService = genericAttributeService;
         }
 
-        public IViewComponentResult Invoke(string widgetZone, object additionalData)
+        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return Content("");
 
             var categoryModel = (CategoryModel) additionalData;
 
-            var category = _categoryService.GetCategoryById(categoryModel.Id);
+            var category = await _categoryService.GetCategoryByIdAsync(categoryModel.Id);
 
             if (category == null)
                 return Content("");
 
             var model = category.ToModel<NexportCategoryModel>();
 
-            model.LimitSingleProductPurchase = _genericAttributeService.GetAttribute<bool>(category,
+            model.LimitSingleProductPurchase = await _genericAttributeService.GetAttributeAsync<bool>(category,
                 NexportDefaults.LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY);
 
-            model.AutoSwapProductPurchase = _genericAttributeService.GetAttribute(category,
+            model.AutoSwapProductPurchase = await _genericAttributeService.GetAttributeAsync(category,
                 NexportDefaults.AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY, defaultValue: true);
 
-            model.AllowProductPurchaseInCategoryDuringEnrollment = _genericAttributeService.GetAttribute<bool>(category,
+            model.AllowProductPurchaseInCategoryDuringEnrollment = await _genericAttributeService.GetAttributeAsync<bool>(category,
                 NexportDefaults.ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT);
 
             return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Category/NexportCategoryDetails.cshtml", model);

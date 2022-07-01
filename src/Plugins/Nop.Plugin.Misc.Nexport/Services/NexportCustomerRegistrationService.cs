@@ -1,13 +1,18 @@
 ﻿using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Routing;
 using NexportApi.Model;
 
 using Nop.Core;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Events;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Services.Authentication;
+using Nop.Services.Authentication.MultiFactor;
 using Nop.Services.Common;
 using Nop.Services.Customers;
-using Nop.Services.Events;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
@@ -29,16 +34,23 @@ namespace Nop.Plugin.Misc.Nexport.Services
         #region Fields
 
         private readonly CustomerSettings _customerSettings;
+        private readonly IActionContextAccessor _actionContextAccessor;
+        private readonly IAuthenticationService _authenticationService;
+        private readonly ICustomerActivityService _customerActivityService;
         private readonly ICustomerService _customerService;
         private readonly IEncryptionService _encryptionService;
         private readonly IEventPublisher _eventPublisher;
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly ILocalizationService _localizationService;
+        private readonly IMultiFactorAuthenticationPluginManager _multiFactorAuthenticationPluginManager;
         private readonly INewsLetterSubscriptionService _newsLetterSubscriptionService;
+        private readonly INotificationService _notificationService;
         private readonly IRewardPointService _rewardPointService;
-        private readonly IStoreService _storeService;
-        private readonly IWorkContext _workContext;
+        private readonly IShoppingCartService _shoppingCartService;
         private readonly IStoreContext _storeContext;
+        private readonly IStoreService _storeService;
+        private readonly IUrlHelperFactory _urlHelperFactory;
+        private readonly IWorkContext _workContext;
         private readonly IWorkflowMessageService _workflowMessageService;
         private readonly RewardPointsSettings _rewardPointsSettings;
         private readonly NexportService _nexportService;
@@ -47,25 +59,34 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         #endregion
 
-        public NexportCustomerRegistrationService(
-            CustomerSettings customerSettings,
+        public NexportCustomerRegistrationService(CustomerSettings customerSettings,
+            IActionContextAccessor actionContextAccessor,
+            IAuthenticationService authenticationService,
+            ICustomerActivityService customerActivityService,
             ICustomerService customerService,
             IEncryptionService encryptionService,
             IEventPublisher eventPublisher,
             IGenericAttributeService genericAttributeService,
             ILocalizationService localizationService,
+            IMultiFactorAuthenticationPluginManager multiFactorAuthenticationPluginManager,
             INewsLetterSubscriptionService newsLetterSubscriptionService,
+            INotificationService notificationService,
             IRewardPointService rewardPointService,
-            IStoreService storeService,
-            IWorkContext workContext,
+            IShoppingCartService shoppingCartService,
             IStoreContext storeContext,
+            IStoreService storeService,
+            IUrlHelperFactory urlHelperFactory,
+            IWorkContext workContext,
             IWorkflowMessageService workflowMessageService,
             RewardPointsSettings rewardPointsSettings,
-            ILogger logger,
             NexportService nexportService,
-            NexportSettings nexportSettings)
-        : base(customerSettings, customerService, encryptionService, eventPublisher,
-            genericAttributeService, localizationService, newsLetterSubscriptionService, rewardPointService, storeService, workContext, workflowMessageService, rewardPointsSettings)
+            NexportSettings nexportSettings,
+            ILogger logger)
+        : base(customerSettings, actionContextAccessor, authenticationService, customerActivityService, customerService,
+            encryptionService, eventPublisher, genericAttributeService, localizationService, multiFactorAuthenticationPluginManager,
+            newsLetterSubscriptionService, notificationService, rewardPointService,
+            shoppingCartService, storeContext, storeService, urlHelperFactory,
+            workContext, workflowMessageService, rewardPointsSettings)
         {
             _customerSettings = customerSettings;
             _customerService = customerService;
@@ -85,20 +106,20 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _logger = logger;
         }
 
-        public NexportCustomerLoginResults ValidateNexportCustomer(string usernameOrEmail, string password)
+        public async Task<NexportCustomerLoginResults> ValidateNexportCustomerAsync(string usernameOrEmail, string password)
         {
             var isValidEmail = usernameOrEmail.IsValidEmail();
 
             var customer = !isValidEmail ?
-                _customerService.GetCustomerByUsername(usernameOrEmail) :
-                _customerService.GetCustomerByEmail(usernameOrEmail);
+                await _customerService.GetCustomerByUsernameAsync(usernameOrEmail) :
+                await _customerService.GetCustomerByEmailAsync(usernameOrEmail);
 
             if (customer == null)
             {
                 if (isValidEmail)
                     return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.CustomerNotExist };
 
-                var nexportUserResponse = _nexportService.AuthenticateUser(usernameOrEmail, password);
+                var nexportUserResponse = await _nexportService.AuthenticateUserAsync(usernameOrEmail, password);
 
                 if (nexportUserResponse == null)
                     throw new Exception($"Cannot authenticate the user with the login {usernameOrEmail}");
@@ -108,13 +129,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.WrongPassword };
 
                 var nexportUserId = nexportUserResponse.UserId;
-                var nexportUserMapping = _nexportService.FindUserMappingByNexportUserId(nexportUserId);
+                var nexportUserMapping = await _nexportService.FindUserMappingByNexportUserId(nexportUserId);
 
                 // Check if Nexport user mapping is existed. If existed, then log the user into the system.
                 // Otherwise, create new Nop user and map with the information from Nexport.
                 if (nexportUserMapping != null)
                 {
-                    customer = _customerService.GetCustomerById(nexportUserMapping.NopUserId);
+                    customer = await _customerService.GetCustomerByIdAsync(nexportUserMapping.NopUserId);
                 }
                 else
                 {
@@ -122,31 +143,31 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         _customerSettings.UserRegistrationType == UserRegistrationType.Standard ||
                         (_customerSettings.UserRegistrationType == UserRegistrationType.EmailValidation);
 
-                    customer = _workContext.CurrentCustomer;
+                    customer = await _workContext.GetCurrentCustomerAsync();
 
                     var registrationRequest = new CustomerRegistrationRequest(customer,
                         nexportUserResponse.InternalEmail, nexportUserResponse.InternalEmail,
                         CommonHelper.GenerateRandomDigitCode(20),
                         PasswordFormat.Hashed,
-                        _storeContext.CurrentStore.Id,
+                        (await _storeContext.GetCurrentStoreAsync()).Id,
                         registrationIsApproved);
 
-                    var registrationResult = base.RegisterCustomer(registrationRequest);
+                    var registrationResult = await base.RegisterCustomerAsync(registrationRequest);
                     if (!registrationResult.Success)
                         return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.NotRegistered };
 
-                    _genericAttributeService.SaveAttribute(customer, NopCustomerDefaults.FirstNameAttribute,
+                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.FirstNameAttribute,
                         nexportUserResponse.FirstName);
-                    _genericAttributeService.SaveAttribute(customer, NopCustomerDefaults.LastNameAttribute,
+                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.LastNameAttribute,
                         nexportUserResponse.LastName);
 
-                    _nexportService.InsertUserMapping(new NexportUserMapping()
+                    await _nexportService.InsertUserMapping(new NexportUserMapping()
                     {
                         NexportUserId = nexportUserId,
                         NopUserId = customer.Id
                     });
 
-                    _logger.Information($"Successfully create new customer for Nexport user {nexportUserId}.",
+                    await _logger.InformationAsync($"Successfully create new customer for Nexport user {nexportUserId}.",
                         customer: customer);
                 }
 
@@ -156,7 +177,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 customer.RequireReLogin = false;
                 customer.LastLoginDateUtc = DateTime.UtcNow;
 
-                _customerService.UpdateCustomer(customer);
+                await _customerService.UpdateCustomerAsync(customer);
 
                 return new NexportCustomerLoginResults
                 {
@@ -171,13 +192,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (!customer.Active)
                 return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.NotActive };
             //only registered can login
-            if (!_customerService.IsRegistered(customer))
+            if (!await _customerService.IsRegisteredAsync(customer))
                 return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.NotRegistered };
             //check whether a customer is locked out
             if (customer.CannotLoginUntilDateUtc.HasValue && customer.CannotLoginUntilDateUtc.Value > DateTime.UtcNow)
                 return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.LockedOut };
 
-            if (!PasswordsMatch(_customerService.GetCurrentPassword(customer.Id), password))
+            if (!PasswordsMatch(await _customerService.GetCurrentPasswordAsync(customer.Id), password))
             {
                 //wrong password
                 customer.FailedLoginAttempts++;
@@ -190,7 +211,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     customer.FailedLoginAttempts = 0;
                 }
 
-                _customerService.UpdateCustomer(customer);
+                await _customerService.UpdateCustomerAsync(customer);
 
                 return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.WrongPassword };
             }
@@ -200,7 +221,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             customer.CannotLoginUntilDateUtc = null;
             customer.RequireReLogin = false;
             customer.LastLoginDateUtc = DateTime.UtcNow;
-            _customerService.UpdateCustomer(customer);
+            await _customerService.UpdateCustomerAsync(customer);
 
             return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.Successful };
         }

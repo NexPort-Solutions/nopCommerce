@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Services.Configuration;
@@ -35,9 +36,9 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _settingService = settingService;
         }
 
-        public IViewComponentResult Invoke(string widgetZone, object additionalData)
+        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
-            if (_storeContext.CurrentStore == null)
+            if ((await _storeContext.GetCurrentStoreAsync()) == null)
                 return Content("");
 
             var productModel = (ProductModel)additionalData;

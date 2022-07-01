@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer
 {
-    public class NexportCustomerRegistrationFieldsModel
+    public record NexportCustomerRegistrationFieldsModel
     {
         public Dictionary<NexportRegistrationFieldCategoryModel, List<NexportRegistrationFieldModel>> RegistrationFieldsWithCategory { get; set; }
 

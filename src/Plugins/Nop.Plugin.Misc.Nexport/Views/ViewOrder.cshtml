@@ -6,7 +6,7 @@
 @model Nop.Plugin.Misc.Nexport.Domain.NexportOrderInvoiceItem
 
 @{
-    var currentUserId = nexportService.FindUserMappingByCustomerId(workContext.CurrentCustomer.Id).NexportUserId;
+    var currentUserId = (await nexportService.FindUserMappingByCustomerId((await workContext.GetCurrentCustomerAsync()).Id)).NexportUserId;
 }
 
 <div id="redemption-details" style="">

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Infrastructure;
 using Nop.Services.Localization;
@@ -57,19 +58,19 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        public IActionResult Configure(int fieldId)
+        public async Task<IActionResult> Configure(int fieldId)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
                 return Content("Access denied");
 
-            var model = _archwayStudentEmployeeRegistrationFieldModelFactory.PrepareArchwayStudentEmployeeRegistrationFieldOptionModel(fieldId);
+            var model = await _archwayStudentEmployeeRegistrationFieldModelFactory.PrepareArchwayStudentEmployeeRegistrationFieldOptionModelAsync(fieldId);
 
             return View("~/Plugins/Misc.Nexport.Archway/Areas/Admin/Views/Customer/CustomRegistrationFieldDetails.cshtml", model);
         }
 
-        public IActionResult CustomRender(int fieldId)
+        public async Task<IActionResult> CustomRender(int fieldId)
         {
-            var model = _archwayStudentEmployeeRegistrationFieldModelFactory.PrepareArchwayStudentEmployeeRegistrationFieldModel(fieldId);
+            var model = await _archwayStudentEmployeeRegistrationFieldModelFactory.PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(fieldId);
 
             ViewData.TemplateInfo.HtmlFieldPrefix = $"{NexportDefaults.NexportRegistrationFieldPrefix}-{fieldId}.{PluginDefaults.HtmlFieldPrefix}";
 
@@ -82,12 +83,12 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
         [Route("Admin/NexportIntegration/EditRegistrationField/{id}")]
         [HttpPost, ActionName("EditRegistrationField")]
         [FormValueRequired("savecustomregistrationfield_archway")]
-        public IActionResult SaveCustomFieldOption(ArchwayStudentEmployeeRegistrationFieldOptionModel model)
+        public async Task<IActionResult> SaveCustomFieldOption(ArchwayStudentEmployeeRegistrationFieldOptionModel model)
         {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
 
-            var registrationField = _nexportService.GetNexportRegistrationFieldById(model.FieldId);
+            var registrationField = await _nexportService.GetNexportRegistrationFieldById(model.FieldId);
             if (registrationField == null)
                 return RedirectToAction("ListRegistrationField", "NexportIntegration");
 
@@ -101,7 +102,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
                         var propAttribute = prop.GetCustomAttribute<ArchwayStudentRegistrationFieldControlAttribute>();
                         if (propAttribute != null)
                         {
-                            _archwayStudentEmployeeRegistrationFieldService
+                            await _archwayStudentEmployeeRegistrationFieldService
                                 .InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(
                                     new ArchwayStudentRegistrationFieldKeyMapping
                                     {
@@ -112,7 +113,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
                     }
                 }
 
-                _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Customers.Nexport.RegistrationField.Fields.Updated"));
+                _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Customers.Nexport.RegistrationField.Fields.Updated"));
 
                 ViewBag.RefreshPage = true;
 
@@ -125,9 +126,8 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpsRequirement]
-        //[AutoValidateAntiforgeryToken]
         [HttpPost]
-        public IActionResult AsyncUploadStoreData()
+        public async Task<IActionResult> AsyncUploadStoreData()
         {
             var httpPostedFile = Request.Form.Files.FirstOrDefault();
             if (httpPostedFile == null)
@@ -141,8 +141,8 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
 
             try
             {
-                var fileResult = _archwayStudentEmployeeRegistrationFieldService.SaveUploadedStoreDataFile(httpPostedFile);
-                _archwayStudentEmployeeRegistrationFieldService.ProcessUploadedStoreDataFile(fileResult);
+                var fileResult = await _archwayStudentEmployeeRegistrationFieldService.SaveUploadedStoreDataFile(httpPostedFile);
+                await _archwayStudentEmployeeRegistrationFieldService.ProcessUploadedStoreDataFile(fileResult);
 
                 return Json(new
                 {
@@ -166,23 +166,23 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
         #region Custom Render View Actions
 
         [CheckAccessPublicStore(true)]
-        public IActionResult GetArchwayStoreCitiesByState(string state, bool addSelectCityItem)
+        public async Task<IActionResult> GetArchwayStoreCitiesByState(string state, bool addSelectCityItem)
         {
-            var model = _archwayStudentEmployeeRegistrationFieldModelFactory.GetArchwayStoreCitiesByState(state, addSelectCityItem);
+            var model = await _archwayStudentEmployeeRegistrationFieldModelFactory.GetArchwayStoreCitiesByState(state, addSelectCityItem);
             return Json(model);
         }
 
         [CheckAccessPublicStore(true)]
-        public IActionResult GetArchwayStoreAddressesByCity(string city, bool addSelectAddressItem)
+        public async Task<IActionResult> GetArchwayStoreAddressesByCity(string city, bool addSelectAddressItem)
         {
-            var model = _archwayStudentEmployeeRegistrationFieldModelFactory.GetArchwayStoreAddressesByCity(city, addSelectAddressItem);
+            var model = await _archwayStudentEmployeeRegistrationFieldModelFactory.GetArchwayStoreAddressesByCity(city, addSelectAddressItem);
             return Json(model);
         }
 
         [CheckAccessPublicStore(true)]
-        public IActionResult GetArchwayStoreEmployeePositionsByStore(string storeNumber, bool addSelectPositionItem)
+        public async Task<IActionResult> GetArchwayStoreEmployeePositionsByStore(string storeNumber, bool addSelectPositionItem)
         {
-            var model = _archwayStudentEmployeeRegistrationFieldModelFactory.GetArchwayStoreEmployeePositionsByStore(storeNumber, addSelectPositionItem);
+            var model = await _archwayStudentEmployeeRegistrationFieldModelFactory.GetArchwayStoreEmployeePositionsByStore(storeNumber, addSelectPositionItem);
             return Json(model);
         }
 

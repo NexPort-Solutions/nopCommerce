@@ -11,7 +11,7 @@ namespace Nop.Plugin.Misc.Nexport.Validators.RegistrationField
         {
             RuleFor(x => x.Name)
                 .NotEmpty()
-                .WithMessage(localizationService.GetResource("Admin.Customers.CustomerAttributes.Fields.Name.Required"));
+                .WithMessageAwait(localizationService.GetResourceAsync("Admin.Customers.CustomerAttributes.Fields.Name.Required"));
 
             RuleFor(x => x.NexportCustomProfileFieldKey)
                 .Length(3, 255)

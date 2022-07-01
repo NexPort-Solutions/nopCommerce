@@ -6,7 +6,7 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
 {
-    public class BaseNexportProductMappingModel : BaseNopModel, INexportProductMapping
+    public record BaseNexportProductMappingModel : BaseNopModel, INexportProductMapping
     {
         public int NopProductId { get; set; }
 

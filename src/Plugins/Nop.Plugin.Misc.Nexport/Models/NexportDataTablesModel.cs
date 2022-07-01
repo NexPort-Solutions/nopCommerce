@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models
 {
-    public class NexportDataTablesModel : DataTablesModel
+    public record NexportDataTablesModel : DataTablesModel
     {
         public bool RowGrouping { get; set; }
 

@@ -7,9 +7,12 @@ namespace Nop.Plugin.Misc.Nexport.Services.Security
 {
     public class NexportPermissionProvider : IPermissionProvider
     {
-        public static readonly PermissionRecord ManageNexportProductMapping = new PermissionRecord { Name = "Manage Nexport product mapping", SystemName = "ManageNexportProductMapping", Category = "Nexport" };
-        public static readonly PermissionRecord ManageSupplementalInfo = new PermissionRecord { Name = "Manage Nexport supplemental info", SystemName = "ManageSupplementalInfo", Category = "Nexport" };
-        public static readonly PermissionRecord ManageNexportOrderInvoice = new PermissionRecord { Name = "Manage Nexport order invoice", SystemName = "ManageNexportOrderInvoice", Category = "Nexport" };
+        public static readonly PermissionRecord ManageNexportProductMapping =
+            new() { Name = "Manage Nexport product mapping", SystemName = "ManageNexportProductMapping", Category = "Nexport" };
+        public static readonly PermissionRecord ManageSupplementalInfo =
+            new() { Name = "Manage Nexport supplemental info", SystemName = "ManageSupplementalInfo", Category = "Nexport" };
+        public static readonly PermissionRecord ManageNexportOrderInvoice =
+            new() { Name = "Manage Nexport order invoice", SystemName = "ManageNexportOrderInvoice", Category = "Nexport" };
 
         public HashSet<(string systemRoleName, PermissionRecord[] permissions)> GetDefaultPermissions()
         {

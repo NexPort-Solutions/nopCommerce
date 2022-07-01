@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Exceptions;
 using Microsoft.AspNetCore.Http;
@@ -56,7 +57,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway
             _logger = logger;
         }
 
-        public override void Install()
+        public override async Task InstallAsync()
         {
             try
             {
@@ -74,29 +75,29 @@ namespace Nop.Plugin.Misc.Nexport.Archway
             }
             catch (Exception ex)
             {
-                _logger.Error($"Error occurred during database migration process: {ex.Message}", ex);
+                await _logger.ErrorAsync($"Error occurred during database migration process: {ex.Message}", ex);
             }
 
             if (!_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
             {
                 _widgetSettings.ActiveWidgetSystemNames.Add(PluginDefaults.SystemName);
-                _settingService.SaveSetting(_widgetSettings);
+                await _settingService.SaveSettingAsync(_widgetSettings);
             }
 
-            _archwayPluginService.AddOrUpdateResources();
+            await _archwayPluginService.AddOrUpdateResourcesAsync();
 
-            base.Install();
+            await base.InstallAsync();
         }
 
-        public override void Uninstall()
+        public override async Task UninstallAsync()
         {
             if (_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
             {
                 _widgetSettings.ActiveWidgetSystemNames.Remove(PluginDefaults.SystemName);
-                _settingService.SaveSetting(_widgetSettings);
+                await _settingService.SaveSettingAsync(_widgetSettings);
             }
 
-            _archwayPluginService.DeleteResources();
+            await _archwayPluginService.DeleteResourcesAsync();
 
             try
             {
@@ -107,10 +108,10 @@ namespace Nop.Plugin.Misc.Nexport.Archway
             }
             catch (Exception ex)
             {
-                _logger.Error($"Error occurred while removing plugin {PluginDefaults.SystemName} version table : {ex.Message}", ex);
+                await _logger.ErrorAsync($"Error occurred while removing plugin {PluginDefaults.SystemName} version table : {ex.Message}", ex);
             }
 
-            base.Uninstall();
+            await base.UninstallAsync();
         }
 
         public string GetRenderOptionUrl(int fieldId)
@@ -118,7 +119,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway
             var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
 
             return urlHelper.Action("Configure", "ArchwayEmployeeRegistrationField",
-                new { fieldId = fieldId }, _webHelper.CurrentRequestProtocol);
+                new { fieldId }, _webHelper.GetCurrentRequestProtocol());
         }
 
         public string GetCustomRenderUrl(int fieldId)
@@ -126,7 +127,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway
             var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
 
             return urlHelper.Action("CustomRender", "ArchwayEmployeeRegistrationField",
-                new { fieldId = fieldId }, _webHelper.CurrentRequestProtocol);
+                new { fieldId }, _webHelper.GetCurrentRequestProtocol());
         }
 
         public string GetCustomFieldPrefix()
@@ -134,21 +135,21 @@ namespace Nop.Plugin.Misc.Nexport.Archway
             return PluginDefaults.HtmlFieldPrefix;
         }
 
-        public Dictionary<string, string> ParseCustomRegistrationFields(int fieldId, IFormCollection form)
+        public async Task<Dictionary<string, string>> ParseCustomRegistrationFields(int fieldId, IFormCollection form)
         {
-            return _archwayStudentEmployeeRegistrationFieldService
+            return await _archwayStudentEmployeeRegistrationFieldService
                 .ParseArchwayStoreEmployeeRegistrationFields(fieldId, form);
         }
 
-        public void SaveCustomRegistrationFields(int fieldId, Dictionary<string, string> fields)
+        public async Task SaveCustomRegistrationFields(int fieldId, Dictionary<string, string> fields)
         {
-            _archwayStudentEmployeeRegistrationFieldService
-                .SaveArchwayStoreEmployeeRegistrationFields(_workContext.CurrentCustomer, fieldId, fields);
+            await _archwayStudentEmployeeRegistrationFieldService
+                .SaveArchwayStoreEmployeeRegistrationFields(await _workContext.GetCurrentCustomerAsync(), fieldId, fields);
         }
 
-        public Dictionary<string, string> ProcessCustomRegistrationFields(int customerId, int fieldId)
+        public async Task<Dictionary<string, string>> ProcessCustomRegistrationFields(int customerId, int fieldId)
         {
-            return _archwayStudentEmployeeRegistrationFieldService
+            return await _archwayStudentEmployeeRegistrationFieldService
                 .ProcessArchwayStoreEmployeeRegistrationFields(customerId, fieldId);
         }
 
@@ -162,12 +163,12 @@ namespace Nop.Plugin.Misc.Nexport.Archway
             return "";
         }
 
-        public IList<string> GetWidgetZones()
+        public Task<IList<string>> GetWidgetZonesAsync()
         {
-            return new List<string>()
+            return Task.FromResult<IList<string>>(new List<string>
             {
                 NexportDefaults.NexportCustomRegistrationFieldZone
-            };
+            });
         }
     }
 }

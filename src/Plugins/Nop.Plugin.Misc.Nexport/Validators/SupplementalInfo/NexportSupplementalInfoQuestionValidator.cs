@@ -4,12 +4,13 @@ using Nop.Services.Localization;
 using Nop.Web.Framework.Validators;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
+using Nop.Data.Mapping;
 
 namespace Nop.Plugin.Misc.Nexport.Validators.SupplementalInfo
 {
     public class NexportSupplementalInfoQuestionValidator : BaseNopValidator<NexportSupplementalInfoQuestionModel>
     {
-        public NexportSupplementalInfoQuestionValidator(ILocalizationService localizationService, INopDataProvider dataProvider)
+        public NexportSupplementalInfoQuestionValidator(ILocalizationService localizationService, IMappingEntityAccessor mappingEntityAccessor)
         {
             RuleFor(x => x.QuestionText)
                 .NotEmpty()
@@ -19,7 +20,7 @@ namespace Nop.Plugin.Misc.Nexport.Validators.SupplementalInfo
                 .Length(0, 1000)
                 .WithMessage("Description text cannot exceed 1000 characters");
 
-            SetDatabaseValidationRules<NexportSupplementalInfoQuestion>(dataProvider);
+            SetDatabaseValidationRules<NexportSupplementalInfoQuestion>(mappingEntityAccessor);
         }
     }
 }

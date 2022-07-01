@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -18,94 +19,103 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 {
     public partial interface INexportPluginModelFactory
     {
-        NexportProductMappingModel PrepareNexportProductMappingModel(NexportProductMapping productMapping, bool isEditable);
+        Task<NexportProductMappingModel> PrepareNexportProductMappingModelAsync(NexportProductMapping productMapping,
+            bool isEditable);
 
-        NexportProductMappingListModel PrepareNexportProductMappingListModel(
+        Task<NexportProductMappingListModel> PrepareNexportProductMappingListModelAsync(
             NexportProductMappingSearchModel searchModel, Guid nexportProductId,
             NexportProductTypeEnum nexportProductType);
 
-        NexportProductMappingListModel PrepareNexportProductMappingListModel(
+        Task<NexportProductMappingListModel> PrepareNexportProductMappingListModelAsync(
             NexportProductMappingSearchModel searchModel, int nopProductId);
 
-        NexportProductGroupMembershipMappingListModel PrepareNexportProductMappingGroupMembershipListModel(
+        Task<NexportProductGroupMembershipMappingListModel> PrepareNexportProductMappingGroupMembershipListModelAsync(
             NexportProductGroupMembershipMappingSearchModel searchModel, int nexportProductMappingId);
 
-        NexportCustomerAdditionalInfoModel PrepareNexportAdditionalInfoModel(Customer customer);
+        Task<NexportCustomerAdditionalInfoModel> PrepareNexportAdditionalInfoModelAsync(Customer customer);
 
-        NexportCatalogListModel PrepareNexportCatalogListModel(NexportCatalogSearchModel searchModel);
+        Task<NexportCatalogListModel> PrepareNexportCatalogListModelAsync(NexportCatalogSearchModel searchModel);
 
-        NexportSyllabusListModel PrepareNexportSyllabusListModel(NexportSyllabusListSearchModel searchModel);
+        Task<NexportSyllabusListModel> PrepareNexportSyllabusListModelAsync(NexportSyllabusListSearchModel searchModel);
 
-        NexportLoginModel PrepareNexportLoginModel(bool? checkoutAsGuest);
+        Task<NexportLoginModel> PrepareNexportLoginModelAsync(bool? checkoutAsGuest);
 
-        NexportTrainingListModel PrepareNexportTrainingListModel(Customer customer);
+        Task<NexportTrainingListModel> PrepareNexportTrainingListModelAsync(Customer customer);
 
-        NexportCustomerSupplementalInfoAnswersModel PrepareNexportCustomerSupplementalInfoAnswersModel(Customer customer, Store store);
+        Task<NexportCustomerSupplementalInfoAnswersModel> PrepareNexportCustomerSupplementalInfoAnswersModelAsync(
+            Customer customer, Store store);
 
-        NexportCustomerSupplementalInfoAnswerEditModel PrepareNexportCustomerSupplementalInfoAnswersEditModel(
-            Customer customer, Store store, NexportSupplementalInfoQuestion question);
+        Task<NexportCustomerSupplementalInfoAnswerEditModel>
+            PrepareNexportCustomerSupplementalInfoAnswersEditModelAsync(Customer customer, Store store,
+                NexportSupplementalInfoQuestion question);
 
-        NexportCustomerSupplementalInfoAnsweredQuestionListModel PrepareNexportSupplementalInfoQuestionListModel(
-            NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel searchModel);
+        Task<NexportCustomerSupplementalInfoAnsweredQuestionListModel>
+            PrepareNexportSupplementalInfoQuestionListModelAsync(
+                NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel searchModel);
 
-        NexportSupplementalInfoAnswerListModel PrepareNexportSupplementalInfoAnswerListModel(
+        Task<NexportSupplementalInfoAnswerListModel> PrepareNexportSupplementalInfoAnswerListModelAsync(
             NexportSupplementalInfoAnswerListSearchModel searchModel);
 
-        NexportSupplementalInfoQuestionSearchModel PrepareNexportSupplementalInfoQuestionSearchModel(
+        Task<NexportSupplementalInfoQuestionSearchModel> PrepareNexportSupplementalInfoQuestionSearchModelAsync(
             NexportSupplementalInfoQuestionSearchModel searchModel);
 
-        NexportSupplementalInfoQuestionListModel PrepareNexportSupplementalInfoQuestionListModel(
+        Task<NexportSupplementalInfoQuestionListModel> PrepareNexportSupplementalInfoQuestionListModelAsync(
             NexportSupplementalInfoQuestionSearchModel searchModel);
 
-        NexportSupplementalInfoQuestionModel PrepareNexportSupplementalInfoQuestionModel(
+        Task<NexportSupplementalInfoQuestionModel> PrepareNexportSupplementalInfoQuestionModelAsync(
             NexportSupplementalInfoQuestionModel model, NexportSupplementalInfoQuestion question);
 
-        NexportSupplementalInfoOptionSearchModel PrepareNexportSupplementalInfoOptionSearchModel(NexportSupplementalInfoOptionSearchModel searchModel,
+        Task<NexportSupplementalInfoOptionSearchModel> PrepareNexportSupplementalInfoOptionSearchModelAsync(
+            NexportSupplementalInfoOptionSearchModel searchModel,
             NexportSupplementalInfoQuestion question);
 
-        NexportSupplementalInfoOptionListModel PrepareNexportSupplementalInfoOptionListModel(
+        Task<NexportSupplementalInfoOptionListModel> PrepareNexportSupplementalInfoOptionListModelAsync(
             NexportSupplementalInfoOptionSearchModel searchModel, NexportSupplementalInfoQuestion question);
 
-        NexportSupplementalInfoOptionModel PrepareNexportSupplementalInfoOptionModel(
+        Task<NexportSupplementalInfoOptionModel> PrepareNexportSupplementalInfoOptionModelAsync(
             NexportSupplementalInfoOptionModel model, NexportSupplementalInfoQuestion question,
             NexportSupplementalInfoOption option);
 
-        NexportSupplementalInfoOptionGroupAssociationListModel PrepareNexportSupplementalInfoOptionGroupAssociationListModel(
-            NexportSupplementalInfoOptionGroupAssociationSearchModel searchModel, int optionId);
+        Task<NexportSupplementalInfoOptionGroupAssociationListModel>
+            PrepareNexportSupplementalInfoOptionGroupAssociationListModelAsync(
+                NexportSupplementalInfoOptionGroupAssociationSearchModel searchModel, int optionId);
 
-        NexportSupplementalInfoAnswerQuestionModel PrepareNexportSupplementalInfoAnswerQuestionModel(
+        Task<NexportSupplementalInfoAnswerQuestionModel> PrepareNexportSupplementalInfoAnswerQuestionModelAsync(
             IList<int> questionIds, Customer customer, Store store);
 
-        NexportCustomerAdditionalSettingsModel PrepareNexportCustomerAdditionalSettingsModel();
+        Task<NexportCustomerAdditionalSettingsModel> PrepareNexportCustomerAdditionalSettingsModelAsync();
 
-        NexportRegistrationFieldCategoryListModel PrepareNexportRegistrationFieldCategoryListModel(
+        Task<NexportRegistrationFieldCategoryListModel> PrepareNexportRegistrationFieldCategoryListModelAsync(
             NexportRegistrationFieldCategorySearchModel searchModel);
 
-        NexportRegistrationFieldCategoryModel PrepareNexportRegistrationFieldCategoryModel(NexportRegistrationFieldCategoryModel model,
+        Task<NexportRegistrationFieldCategoryModel> PrepareNexportRegistrationFieldCategoryModelAsync(
+            NexportRegistrationFieldCategoryModel model,
             NexportRegistrationFieldCategory registrationFieldCategory);
 
-        NexportRegistrationFieldListModel PrepareNexportRegistrationFieldListModel(
+        Task<NexportRegistrationFieldListModel> PrepareNexportRegistrationFieldListModelAsync(
             NexportRegistrationFieldSearchModel searchModel);
 
-        NexportRegistrationFieldModel PrepareNexportRegistrationFieldModel(NexportRegistrationFieldModel model,
+        Task<NexportRegistrationFieldModel> PrepareNexportRegistrationFieldModelAsync(
+            NexportRegistrationFieldModel model,
             NexportRegistrationField registrationField, bool excludeProperties = false);
 
-        NexportRegistrationFieldOptionSearchModel PrepareNexportRegistrationFieldOptionSearchModel(
+        Task<NexportRegistrationFieldOptionSearchModel> PrepareNexportRegistrationFieldOptionSearchModelAsync(
             NexportRegistrationFieldOptionSearchModel searchModel, NexportRegistrationField registrationField);
 
-        NexportRegistrationFieldOptionListModel PrepareNexportRegistrationFieldOptionListModel(
+        Task<NexportRegistrationFieldOptionListModel> PrepareNexportRegistrationFieldOptionListModelAsync(
             NexportRegistrationFieldOptionSearchModel searchModel, NexportRegistrationField registrationField);
 
-        NexportRegistrationFieldOptionModel PrepareNexportRegistrationFieldOptionModel(
+        Task<NexportRegistrationFieldOptionModel> PrepareNexportRegistrationFieldOptionModelAsync(
             NexportRegistrationFieldOptionModel model, NexportRegistrationField registrationField,
             NexportRegistrationFieldOption registrationFieldOption);
 
-        NexportCustomerRegistrationFieldsModel PrepareNexportCustomerRegistrationFieldsModel(Store store);
+        Task<NexportCustomerRegistrationFieldsModel> PrepareNexportCustomerRegistrationFieldsModelAsync(Store store);
 
-        NexportOrderInvoiceItemListModel PrepareNexportOrderInvoiceItemListModel(NexportOrderInvoiceItemSearchModel searchModel,
+        Task<NexportOrderInvoiceItemListModel> PrepareNexportOrderInvoiceItemListModelAsync(
+            NexportOrderInvoiceItemSearchModel searchModel,
             bool excludeNonApproval = false);
 
-        NexportOrderInvoiceItemModel PrepareNexportOrderInvoiceItemModel(NexportOrderInvoiceItemModel model,
+        Task<NexportOrderInvoiceItemModel> PrepareNexportOrderInvoiceItemModelAsync(NexportOrderInvoiceItemModel model,
             NexportOrderInvoiceItem orderInvoiceItem);
     }
 }

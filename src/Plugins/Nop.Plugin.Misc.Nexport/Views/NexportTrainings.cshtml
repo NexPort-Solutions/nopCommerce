@@ -3,10 +3,11 @@
 @{
     Layout = "_ColumnsTwo";
 
-    Html.AddTitleParts("Nexport Trainings");
-    Html.AppendPageCssClassParts("html-account-page");
-    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport-store.css");
+    NopHtml.AddTitleParts("Nexport Trainings");
+    NopHtml.AppendPageCssClassParts("html-account-page");
 }
+
+<link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport-store.css" />
 
 @section left
 {

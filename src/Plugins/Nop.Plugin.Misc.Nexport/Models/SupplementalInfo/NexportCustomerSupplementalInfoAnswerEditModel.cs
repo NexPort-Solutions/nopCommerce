@@ -5,16 +5,11 @@ using Nop.Plugin.Misc.Nexport.Domain;
 
 namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
-    public class NexportCustomerSupplementalInfoAnswerEditModel : BaseNopModel
+    public record NexportCustomerSupplementalInfoAnswerEditModel : BaseNopModel
     {
-        public NexportCustomerSupplementalInfoAnswerEditModel()
-        {
-            Options = new List<NexportSupplementalInfoOption>();
-        }
-
         public NexportSupplementalInfoQuestion Question { get; set; }
 
-        public IList<NexportSupplementalInfoOption> Options { get; set; }
+        public IList<NexportSupplementalInfoOption> Options { get; set; } = new List<NexportSupplementalInfoOption>();
 
         public IList<EditSupplementInfoAnswerRequest> Answers { get; set; }
     }

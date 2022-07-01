@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Nop.Data;
 using Nop.Services.Cms;
 using Nop.Services.Logging;
-using Nop.Services.Tasks;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Services.ScheduleTasks;
 
 namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 {
@@ -31,42 +32,43 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             _nexportService = nexportService;
         }
 
-        public void Execute()
+        public async Task ExecuteAsync()
         {
-            if (!_widgetPluginManager.IsPluginActive("Misc.Nexport"))
+            if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
                 return;
 
             try
             {
-                var mappingIds = (_nexportProductMappingRepository.Table
+                var mappingIds = await _nexportProductMappingRepository.Table
                     .OrderBy(m => m.UtcLastSynchronizationDate)
-                    .Select(m => m.Id))
-                    .Take(_batchSize).ToList();
+                    .Select(m => m.Id)
+                    .Take(_batchSize)
+                    .ToListAsync();
 
-                SynchronizeProductMappings(mappingIds);
+                await SynchronizeProductMappingsAsync(mappingIds);
             }
             catch (Exception ex)
             {
-                _logger.Error("Cannot synchronize with Nexport", ex);
+                await _logger.ErrorAsync("Cannot synchronize with Nexport", ex);
             }
         }
 
-        public void SynchronizeProductMappings(IList<int> mappingIds)
+        public async Task SynchronizeProductMappingsAsync(IList<int> mappingIds)
         {
             try
             {
                 foreach (var mappingId in mappingIds)
                 {
-                    _logger.Debug($"Begin synchronization process for product mapping {mappingId}");
+                    _logger.DebugAsync($"Begin synchronization process for product mapping {mappingId}");
 
-                    _nexportService.SyncNexportProduct(mappingId);
+                    await _nexportService.SyncNexportProductAsync(mappingId);
 
-                    _logger.Debug($"Synchronization process for product mapping {mappingId} has been completed!");
+                    _logger.DebugAsync($"Synchronization process for product mapping {mappingId} has been completed!");
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error("Cannot synchronize mappings with Nexport", ex);
+                await _logger.ErrorAsync("Cannot synchronize mappings with Nexport", ex);
             }
         }
     }

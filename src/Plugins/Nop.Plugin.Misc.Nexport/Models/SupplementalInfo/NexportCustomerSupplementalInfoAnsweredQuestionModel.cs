@@ -3,7 +3,7 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
-    public class NexportCustomerSupplementalInfoAnsweredQuestionModel : BaseNopEntityModel
+    public record NexportCustomerSupplementalInfoAnsweredQuestionModel : BaseNopEntityModel
     {
         public int CustomerId { get; set; }
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Services.Common;
 using Nop.Services.Orders;
 using Nop.Web.Areas.Admin.Models.Orders;
@@ -37,15 +38,15 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _permissionService = permissionService;
         }
 
-        public IViewComponentResult Invoke(string widgetZone, object additionalData)
+        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
-                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportOrderInvoice))
+                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportOrderInvoice))
                 return Content("");
 
             var orderModel = (OrderModel)additionalData;
 
-            var order = _orderService.GetOrderById(orderModel.Id);
+            var order = _orderService.GetOrderByIdAsync(orderModel.Id);
 
             if (order == null)
                 return Content("");

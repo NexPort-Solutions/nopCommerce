@@ -6,27 +6,15 @@ using Nop.Plugin.Misc.Nexport.Domain.Enums;
 
 namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
 {
-    public class NexportRegistrationFieldModel : BaseNopEntityModel, ILocalizedModel<NexportRegistrationFieldLocalizedModel>
+    public record NexportRegistrationFieldModel : BaseNopEntityModel, ILocalizedModel<NexportRegistrationFieldLocalizedModel>
     {
-        public NexportRegistrationFieldModel()
-        {
-            AvailableFieldTypes = new List<SelectListItem>();
-            AvailableFieldCategory = new List<SelectListItem>();
-
-            StoreMappingIds = new List<int>();
-            AvailableStores = new List<SelectListItem>();
-
-            Locales = new List<NexportRegistrationFieldLocalizedModel>();
-            RegistrationFieldOptionSearchModel = new NexportRegistrationFieldOptionSearchModel();
-        }
-
         [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Name")]
         public string Name { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Type")]
         public NexportRegistrationFieldType Type { get; set; }
 
-        public IList<SelectListItem> AvailableFieldTypes { get; set; }
+        public IList<SelectListItem> AvailableFieldTypes { get; set; } = new List<SelectListItem>();
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.AllowMultipleSelection")]
         public bool AllowMultipleSelection { get; set; }
@@ -48,7 +36,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
 
         public string FieldCategoryName { get; set; }
 
-        public IList<SelectListItem> AvailableFieldCategory { get; set; }
+        public IList<SelectListItem> AvailableFieldCategory { get; set; } = new List<SelectListItem>();
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Validation")]
         public bool Validation { get; set; }
@@ -60,9 +48,9 @@ namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
         public string StoreMappings { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Stores")]
-        public IList<int> StoreMappingIds { get; set; }
+        public IList<int> StoreMappingIds { get; set; } = new List<int>();
 
-        public IList<SelectListItem> AvailableStores { get; set; }
+        public IList<SelectListItem> AvailableStores { get; set; } = new List<SelectListItem>();
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder")]
         public int DisplayOrder { get; set; }
@@ -74,12 +62,12 @@ namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
 
         public string CustomFieldRenderDescription { get; set; }
 
-        public IList<NexportRegistrationFieldLocalizedModel> Locales { get; set; }
+        public IList<NexportRegistrationFieldLocalizedModel> Locales { get; set; } = new List<NexportRegistrationFieldLocalizedModel>();
 
-        public NexportRegistrationFieldOptionSearchModel RegistrationFieldOptionSearchModel { get; set; }
+        public NexportRegistrationFieldOptionSearchModel RegistrationFieldOptionSearchModel { get; set; } = new();
     }
 
-    public class NexportRegistrationFieldLocalizedModel : ILocalizedLocaleModel
+    public record NexportRegistrationFieldLocalizedModel : ILocalizedLocaleModel
     {
         public int LanguageId { get; set; }
 

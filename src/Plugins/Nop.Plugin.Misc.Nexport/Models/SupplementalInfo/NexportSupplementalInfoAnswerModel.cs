@@ -7,7 +7,7 @@ using Nop.Plugin.Misc.Nexport.Domain.Enums;
 
 namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
-    public class NexportSupplementalInfoAnswerModel : BaseNopEntityModel
+    public record NexportSupplementalInfoAnswerModel : BaseNopEntityModel
     {
         public int CustomerId { get; set; }
 

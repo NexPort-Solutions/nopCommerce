@@ -6,7 +6,7 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Stores
 {
-    public class NexportStoreModel : StoreModel
+    public record NexportStoreModel : StoreModel
     {
         [NopResourceDisplayName("Plugins.Misc.Nexport.NexportSubscriptionOrgId")]
         [UIHint("~/Plugins/Misc.Nexport/Views/Shared/EditorTemplates/GuidNullable.cshtml")]

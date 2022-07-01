@@ -4,7 +4,7 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
 {
-    public class NexportProductMappingListSearchModel : BaseSearchModel
+    public record NexportProductMappingListSearchModel : BaseSearchModel
     {
         public NexportProductMappingListSearchModel()
         {

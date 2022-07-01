@@ -4,7 +4,7 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
 {
-    public class NexportProductGroupMembershipMappingModel : BaseNopEntityModel
+    public record NexportProductGroupMembershipMappingModel : BaseNopEntityModel
     {
         public int NexportProductMappingId { get; set; }
 

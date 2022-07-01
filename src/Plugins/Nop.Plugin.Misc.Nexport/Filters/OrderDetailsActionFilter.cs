@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
@@ -31,41 +32,41 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             _nexportService = nexportService;
         }
 
-        public override void OnActionExecuting(ActionExecutingContext context)
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            if (!(context.ActionDescriptor is ControllerActionDescriptor actionDescriptor))
+            if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
             if (actionDescriptor.ControllerTypeInfo == typeof(OrderController) &&
                 actionDescriptor.ActionName == nameof(OrderController.Details))
             {
-                var customer = _workContext.CurrentCustomer;
-                if (customer != null && _customerService.IsRegistered(customer))
+                var customer = await _workContext.GetCurrentCustomerAsync();
+                if (customer != null && await _customerService.IsRegisteredAsync(customer))
                 {
-                    var store = _storeContext.CurrentStore;
+                    var store = await _storeContext.GetCurrentStoreAsync();
 
                     var hasRequiredSupplementalInfo =
-                        _nexportService.HasRequiredSupplementalInfo(customer.Id, store.Id);
+                        await _nexportService.HasRequiredSupplementalInfo(customer.Id, store.Id);
 
                     if (hasRequiredSupplementalInfo)
                     {
                         context.ActionArguments.TryGetValue("orderId", out var orderIdValue);
 
-                        if (orderIdValue is int orderId && orderId > 0)
+                        if (orderIdValue is int orderId and > 0)
                         {
-                            var order = _orderService.GetOrderById(orderId);
+                            var order = await _orderService.GetOrderByIdAsync(orderId);
 
-                            if (order != null && !order.Deleted && order.CustomerId == customer.Id)
+                            if (order is { Deleted: false } && order.CustomerId == customer.Id)
                             {
                                 context.Result = new RedirectToActionResult("AnswerSupplementalInfoQuestion",
-                                    "NexportIntegration", new { returnUrl = $"/orderdetails/{orderId}"});
+                                    "NexportIntegration", new { returnUrl = $"/orderdetails/{orderId}" });
                             }
                         }
                     }
                 }
             }
 
-            base.OnActionExecuting(context);
+            await base.OnActionExecutionAsync(context, next);
         }
     }
 }

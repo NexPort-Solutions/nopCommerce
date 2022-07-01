@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Caching;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Components;
@@ -29,10 +30,10 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _permissionService = permissionService;
         }
 
-        public IViewComponentResult Invoke(string widgetZone, object additionalData)
+        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
-                !_permissionService.Authorize(NexportPermissionProvider.ManageNexportProductMapping))
+                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
                 return Content("");
 
             var productModel = (ProductModel)additionalData;

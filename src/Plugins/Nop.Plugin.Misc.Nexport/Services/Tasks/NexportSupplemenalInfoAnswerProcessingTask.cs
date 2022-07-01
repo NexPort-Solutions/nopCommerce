@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using NexportApi.Client;
 using Nop.Data;
 using Nop.Services.Cms;
@@ -8,10 +9,10 @@ using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Logging;
-using Nop.Services.Tasks;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Services.ScheduleTasks;
 
 namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 {
@@ -48,30 +49,31 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             _nexportService = nexportService;
         }
 
-        public void Execute()
+        public async Task ExecuteAsync()
         {
-            if (!_widgetPluginManager.IsPluginActive("Misc.Nexport"))
+            if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
                 return;
 
             try
             {
-                _batchSize = _settingService.GetSettingByKey(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSizeSettingKey,
+                _batchSize = await _settingService.GetSettingByKeyAsync(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSizeSettingKey,
                     NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSize);
 
-                var answers = (_nexportSupplementalInfoAnswerProcessingQueueRepository.Table
+                var answers = await _nexportSupplementalInfoAnswerProcessingQueueRepository.Table
                     .OrderBy(q => q.UtcDateCreated)
-                    .Select(q => q.Id))
-                    .Take(_batchSize).ToList();
+                    .Select(q => q.Id)
+                    .Take(_batchSize)
+                    .ToListAsync();
 
-                ProcessNexportSupplementalInfoAnswers(answers);
+                await ProcessNexportSupplementalInfoAnswersAsync(answers);
             }
             catch (Exception ex)
             {
-                _logger.Error("Cannot process Nexport supplemental info answers", ex);
+                await _logger.ErrorAsync("Cannot process Nexport supplemental info answers", ex);
             }
         }
 
-        public void ProcessNexportSupplementalInfoAnswers(IList<int> queueItemIds)
+        public async Task ProcessNexportSupplementalInfoAnswersAsync(IList<int> queueItemIds)
         {
             try
             {
@@ -79,34 +81,34 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 {
                     try
                     {
-                        var queueItem = _nexportSupplementalInfoAnswerProcessingQueueRepository.GetById(queueItemId);
+                        var queueItem = await _nexportSupplementalInfoAnswerProcessingQueueRepository.GetByIdAsync(queueItemId);
 
                         if (queueItem == null)
                             return;
 
-                        _logger.Debug($"Begin processing supplemental info answer for answer {queueItem.AnswerId}");
+                        _logger.DebugAsync($"Begin processing supplemental info answer for answer {queueItem.AnswerId}");
 
-                        var answer = _nexportService.GetNexportSupplementalInfoAnswerById(queueItem.AnswerId);
+                        var answer = await _nexportService.GetNexportSupplementalInfoAnswerById(queueItem.AnswerId);
 
                         if (answer != null)
                         {
-                            var option = _nexportService.GetNexportSupplementalInfoOptionById(answer.OptionId);
+                            var option = await _nexportService.GetNexportSupplementalInfoOptionById(answer.OptionId);
                             if (option != null)
                             {
-                                var customerMapping = _nexportService.FindUserMappingByCustomerId(answer.CustomerId);
+                                var customerMapping = await _nexportService.FindUserMappingByCustomerId(answer.CustomerId);
                                 if (customerMapping != null)
                                 {
-                                    var customer = _customerService.GetCustomerById(customerMapping.NopUserId);
+                                    var customer = await _customerService.GetCustomerByIdAsync(customerMapping.NopUserId);
                                     if (customer != null)
                                     {
                                         var groupAssociations =
-                                            _nexportService.GetNexportSupplementalInfoOptionGroupAssociations(option.Id, true);
+                                            await _nexportService.GetNexportSupplementalInfoOptionGroupAssociations(option.Id, true);
 
                                         foreach (var groupAssociation in groupAssociations)
                                         {
                                             try
                                             {
-                                                var newMemberShipInfo = _nexportService.AddNexportMemberships(customerMapping.NexportUserId, new List<Guid>(1)
+                                                var newMemberShipInfo = await _nexportService.AddNexportMembershipsAsync(customerMapping.NexportUserId, new List<Guid>(1)
                                                 {
                                                     groupAssociation.NexportGroupId
                                                 });
@@ -114,21 +116,21 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                 if (newMemberShipInfo.Count == 0)
                                                     throw new Exception("Failed to create membership in Nexport");
 
-                                                _nexportService.InsertNexportSupplementalInfoAnswerMembership(
+                                                await _nexportService.InsertNexportSupplementalInfoAnswerMembership(
                                                     new NexportSupplementalInfoAnswerMembership
                                                     {
                                                         AnswerId = answer.Id,
                                                         NexportMembershipId = newMemberShipInfo[0].MembershipId
                                                     });
 
-                                                _customerActivityService.InsertActivity(customer,
+                                                await _customerActivityService.InsertActivityAsync(customer,
                                                     NexportDefaults
                                                         .NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE,
                                                     $"Successfully created membership for the group {groupAssociation.NexportGroupName} ({groupAssociation.NexportGroupShortName}) [Id: {groupAssociation.NexportGroupId}] in Nexport.");
                                             }
                                             catch (Exception ex)
                                             {
-                                                _customerActivityService.InsertActivity(customer,
+                                                await _customerActivityService.InsertActivityAsync(customer,
                                                     NexportDefaults
                                                         .NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE,
                                                     $"Cannot create membership for the group {groupAssociation.NexportGroupName} ({groupAssociation.NexportGroupShortName}) [Id: {groupAssociation.NexportGroupId}] in Nexport." +
@@ -139,25 +141,25 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         answer.Status = NexportSupplementalInfoAnswerStatus.Processed;
                                         answer.UtcDateProcessed = DateTime.UtcNow;
 
-                                        _nexportService.UpdateNexportSupplementalInfoAnswer(answer);
+                                        await _nexportService.UpdateNexportSupplementalInfoAnswer(answer);
                                     }
                                 }
                             }
                         }
 
-                        _nexportService.DeleteNexportSupplementalInfoAnswerProcessingQueueItem(queueItem);
+                        await _nexportService.DeleteNexportSupplementalInfoAnswerProcessingQueueItem(queueItem);
 
-                        _logger.Information($"Supplemental info answer processing queue item {queueItemId} has been processed and removed!");
+                        await _logger.InformationAsync($"Supplemental info answer processing queue item {queueItemId} has been processed and removed!");
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Cannot process the NexportSupplementalInfoAnswerQueue item with Id {queueItemId}", ex);
+                        await _logger.ErrorAsync($"Cannot process the NexportSupplementalInfoAnswerQueue item with Id {queueItemId}", ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error($"Cannot process the NexportSupplementalInfoAnswerQueue", ex);
+                await _logger.ErrorAsync($"Cannot process the NexportSupplementalInfoAnswerQueue", ex);
             }
         }
     }

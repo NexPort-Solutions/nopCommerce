@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -56,55 +57,56 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             _storeContext = storeContext;
         }
 
-        public override void OnResultExecuting(ResultExecutingContext context)
+        public override async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
         {
-            if (!(context.ActionDescriptor is ControllerActionDescriptor actionDescriptor))
+            if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
             if (actionDescriptor.ControllerTypeInfo == typeof(ShoppingCartController) &&
                 actionDescriptor.ActionName == nameof(ShoppingCartController.Cart))
             {
-                if (_customerService.IsRegistered(_workContext.CurrentCustomer))
+                var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+                if (await _customerService.IsRegisteredAsync(currentCustomer))
                 {
                     if (context.Result is ViewResult { Model: ShoppingCartModel shoppingCartModel })
                     {
                         foreach (var item in shoppingCartModel.Items)
                         {
-                            var product = _productService.GetProductById(item.ProductId);
+                            var product = await _productService.GetProductByIdAsync(item.ProductId);
                             var canPurchaseProduct =
-                                _nexportService.CanPurchaseNexportProduct(product, _workContext.CurrentCustomer);
+                                await _nexportService.CanPurchaseNexportProductAsync(product, currentCustomer);
 
                             if (!canPurchaseProduct)
                             {
-                                item.Warnings.Add(_localizationService.GetResource("Plugins.Misc.Nexport.Errors.ProductItemWilBeRemoved"));
+                                item.Warnings.Add(await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Errors.ProductItemWilBeRemoved"));
                             }
                         }
                     }
                 }
             }
 
-            base.OnResultExecuting(context);
+            await base.OnResultExecutionAsync(context, next);
         }
 
-        public override void OnActionExecuting(ActionExecutingContext context)
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            if (!(context.ActionDescriptor is ControllerActionDescriptor actionDescriptor))
+            if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
             if (actionDescriptor.ControllerTypeInfo == typeof(ShoppingCartController) &&
-                (actionDescriptor.ActionName == nameof(ShoppingCartController.AddProductToCart_Details) ||
-                 actionDescriptor.ActionName == nameof(ShoppingCartController.AddProductToCart_Catalog) ||
+                (actionDescriptor.ActionName is nameof(ShoppingCartController.AddProductToCart_Details) or nameof(ShoppingCartController.AddProductToCart_Catalog) ||
                  actionDescriptor.ActionName == nameof(ShoppingCartController.Cart) && context.HttpContext.Request.Method == HttpMethods.Post))
             {
-                CheckProductPurchaseEligibility(context);
+                await CheckProductPurchaseEligibilityAsync(context);
             }
 
-            base.OnActionExecuting(context);
+            await base.OnActionExecutionAsync(context, next);
         }
 
-        protected void CheckProductPurchaseEligibility(ActionExecutingContext context)
+
+        protected async Task CheckProductPurchaseEligibilityAsync(ActionExecutingContext context)
         {
-            if (!(context.ActionDescriptor is ControllerActionDescriptor actionDescriptor))
+            if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
             // Verify the product quantities when customers update the cart
@@ -113,11 +115,11 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 context.ActionArguments.TryGetValue("form", out var formValue);
                 if (formValue is FormCollection form)
                 {
-                    var cart = _shoppingCartService.GetShoppingCart(_workContext.CurrentCustomer,
-                        ShoppingCartType.ShoppingCart, _storeContext.CurrentStore.Id);
+                    var store = await _storeContext.GetCurrentStoreAsync();
+                    var cart = await _shoppingCartService.GetShoppingCartAsync(await _workContext.GetCurrentCustomerAsync(),
+                        ShoppingCartType.ShoppingCart, store.Id);
 
-                    var store = _storeContext.CurrentStore;
-                    var storeModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(
+                    var storeModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(
                         store, "NexportStoreSaleModel", store.Id);
 
                     if (storeModel == NexportStoreSaleModel.Retail)
@@ -131,8 +133,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                         foreach (var shoppingCartItem in cart)
                         {
                             var nexportProductMapping =
-                                _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId, store.Id) ??
-                                _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId);
+                                await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId, store.Id) ??
+                                await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId);
                             if (nexportProductMapping == null)
                                 continue;
 
@@ -157,7 +159,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
 
                         if (displayError)
                             _notificationService.ErrorNotification(
-                                _localizationService.GetResource("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart"));
+                                await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart"));
                     }
                 }
             }
@@ -168,7 +170,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 context.ActionArguments.TryGetValue("productId", out var productIdValue);
                 context.ActionArguments.TryGetValue("shoppingCartTypeId", out var shoppingCartTypeValue);
 
-                if (productIdValue is int productId && productId > 0 &&
+                if (productIdValue is int productId and > 0 &&
                     shoppingCartTypeValue is int shoppingCartType && (ShoppingCartType)shoppingCartType == ShoppingCartType.ShoppingCart)
                 {
                     if (actionDescriptor.ActionName == nameof(ShoppingCartController.AddProductToCart_Catalog))
@@ -193,45 +195,46 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                         }
                     }
 
-                    var items = _shoppingCartService.GetShoppingCart(_workContext.CurrentCustomer, ShoppingCartType.ShoppingCart,
-                        _storeContext.CurrentStore.Id, productId);
+                    var customer = await _workContext.GetCurrentCustomerAsync();
+                    var store = await _storeContext.GetCurrentStoreAsync();
 
-                    var store = _storeContext.CurrentStore;
-                    var storeModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(
+                    var items = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart,
+                        store.Id, productId);
+
+                    var storeModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(
                         store, "NexportStoreSaleModel", store.Id);
 
                     if (storeModel == NexportStoreSaleModel.Retail)
                     {
                         var nexportProductMapping =
-                            _nexportService.GetProductMappingByNopProductId(productId, store.Id) ??
-                            _nexportService.GetProductMappingByNopProductId(productId);
+                            await _nexportService.GetProductMappingByNopProductId(productId, store.Id) ??
+                            await _nexportService.GetProductMappingByNopProductId(productId);
                         if (nexportProductMapping != null)
                         {
-                            var product = _productService.GetProductById(productId);
+                            var product = await _productService.GetProductByIdAsync(productId);
                             if (product != null)
                             {
-                                var customer = _workContext.CurrentCustomer;
-                                if (_customerService.IsRegistered(customer))
+                                if (await _customerService.IsRegisteredAsync(customer))
                                 {
                                     var canPurchaseProduct =
-                                        _nexportService.CanPurchaseNexportProduct(product, _workContext.CurrentCustomer);
+                                        await _nexportService.CanPurchaseNexportProductAsync(product, customer);
 
                                     if (!canPurchaseProduct)
                                     {
                                         context.Result = new JsonResult(new
                                         {
                                             success = false,
-                                            message = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase")
+                                            message = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase")
                                         });
                                     }
                                     else
                                     {
-                                        CheckNexportCategoryPurchaseEligibility(context, product, store.Id);
+                                        await CheckNexportCategoryPurchaseEligibilityAsync(context, product, store.Id);
                                     }
                                 }
                                 else
                                 {
-                                    CheckNexportCategoryPurchaseEligibility(context, product, store.Id);
+                                    await CheckNexportCategoryPurchaseEligibilityAsync(context, product, store.Id);
                                 }
                             }
 
@@ -240,7 +243,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                                 context.Result = new JsonResult(new
                                 {
                                     success = false,
-                                    message = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.DuplicatedProduct")
+                                    message = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Errors.DuplicatedProduct")
                                 });
                             }
                             else if (quantity > 1)
@@ -248,7 +251,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                                 context.Result = new JsonResult(new
                                 {
                                     success = false,
-                                    message = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowed")
+                                    message = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowed")
                                 });
                             }
                         }
@@ -257,7 +260,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             }
         }
 
-        private void CheckNexportCategoryPurchaseEligibility(ActionExecutingContext context, Product product, int storeId)
+        private async Task CheckNexportCategoryPurchaseEligibilityAsync(ActionExecutingContext context, Product product, int storeId)
         {
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
@@ -266,22 +269,22 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 throw new ArgumentNullException(nameof(product));
 
             var productInTheSameCategory =
-                _nexportService.CanPurchaseProductInNexportCategory(product, storeId);
+                await _nexportService.CanPurchaseProductInNexportCategoryAsync(product, storeId);
 
             if (productInTheSameCategory.Item1 != null)
             {
-                var autoSwapProduct = _genericAttributeService.GetAttribute<bool>(
+                var autoSwapProduct = await _genericAttributeService.GetAttributeAsync<bool>(
                     productInTheSameCategory.Item2, NexportDefaults.AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY);
                 if (autoSwapProduct)
                 {
-                    _shoppingCartService.DeleteShoppingCartItem(productInTheSameCategory.Item1);
+                    await _shoppingCartService.DeleteShoppingCartItemAsync(productInTheSameCategory.Item1);
                 }
                 else
                 {
                     context.Result = new JsonResult(new
                     {
                         success = false,
-                        message = _localizationService.GetResource("Plugins.Misc.Nexport.Errors.SingleProductInCatalog")
+                        message = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Errors.SingleProductInCatalog")
                     });
                 }
             }

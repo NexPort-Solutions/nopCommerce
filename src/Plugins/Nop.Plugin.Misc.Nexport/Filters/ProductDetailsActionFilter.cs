@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -43,32 +44,32 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             _nexportService = nexportService;
         }
 
-        public override void OnResultExecuting(ResultExecutingContext context)
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            if (!(context.ActionDescriptor is ControllerActionDescriptor actionDescriptor))
+            if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
             if (actionDescriptor.ControllerTypeInfo == typeof(ProductController) &&
                 actionDescriptor.ActionName == nameof(ProductController.ProductDetails))
             {
-                var customer = _workContext.CurrentCustomer;
-                if (customer != null && _customerService.IsRegistered(customer))
+                var customer = await _workContext.GetCurrentCustomerAsync();
+                if (customer != null && await _customerService.IsRegisteredAsync(customer))
                 {
                     if (context.Result is ViewResult { Model: ProductDetailsModel productDetailsModel })
                     {
-                        var store = _storeContext.CurrentStore;
-                        var storeModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(
+                        var store = await _storeContext.GetCurrentStoreAsync();
+                        var storeModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(
                             store, "NexportStoreSaleModel", store.Id);
 
                         if (storeModel == NexportStoreSaleModel.Retail)
                         {
-                            var items = _shoppingCartService.GetShoppingCart(customer,
+                            var items = await _shoppingCartService.GetShoppingCartAsync(customer,
                                 ShoppingCartType.ShoppingCart,
-                                _storeContext.CurrentStore.Id, productDetailsModel.Id);
+                                store.Id, productDetailsModel.Id);
 
                             if (items.Count > 0)
                             {
-                                if (_genericAttributeService.GetAttribute<bool>(store,
+                                if (await _genericAttributeService.GetAttributeAsync<bool>(store,
                                     NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
                                 {
                                     productDetailsModel.AddToCart.DisableBuyButton = true;
@@ -77,14 +78,14 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                             else
                             {
 
-                                var product = _productService.GetProductById(productDetailsModel.Id);
+                                var product = await _productService.GetProductByIdAsync(productDetailsModel.Id);
 
                                 try
                                 {
                                     var canPurchaseProduct =
-                                        _nexportService.CanPurchaseNexportProduct(product, customer);
+                                        await _nexportService.CanPurchaseNexportProductAsync(product, customer);
 
-                                    if (_genericAttributeService.GetAttribute<bool>(store,
+                                    if (await _genericAttributeService.GetAttributeAsync<bool>(store,
                                         NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
                                     {
                                         productDetailsModel.AddToCart.DisableBuyButton = !canPurchaseProduct;
@@ -100,47 +101,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 }
             }
 
-
-            //} else if (actionDescriptor.ControllerTypeInfo == typeof(CatalogController) &&
-            //           actionDescriptor.ActionName == nameof(CatalogController.Category))
-            //{
-            //    var customer = _workContext.CurrentCustomer;
-            //    if (customer != null && customer.IsRegistered())
-            //    {
-            //        if (context.Result is ViewResult result && result.Model is CategoryModel categoryModel)
-            //        {
-            //            var store = _storeContext.CurrentStore;
-            //            var storeModel = _genericAttributeService.GetAttribute<NexportStoreSaleModel>(
-            //                store, "NexportStoreSaleModel", store.Id);
-
-            //            if (storeModel == NexportStoreSaleModel.Retail)
-            //            {
-            //                var productModels = categoryModel.Products;
-
-            //                foreach (var productModel in productModels)
-            //                {
-            //                    var items = _shoppingCartService.GetShoppingCart(customer, ShoppingCartType.ShoppingCart,
-            //                        _storeContext.CurrentStore.Id, productModel.Id);
-
-            //                    if (items.Count > 0)
-            //                    {
-            //                        productModel.ProductPrice.DisableBuyButton = true;
-            //                    }
-            //                    else
-            //                    {
-            //                        var product = _productService.GetProductById(productModel.Id);
-            //                        var canPurchaseProduct =
-            //                            _nexportService.CanRepurchaseNexportProduct(product, customer);
-
-            //                        productModel.ProductPrice.DisableBuyButton = !canPurchaseProduct;
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
-
-            base.OnResultExecuting(context);
+            await base.OnActionExecutionAsync(context, next);
         }
     }
 }

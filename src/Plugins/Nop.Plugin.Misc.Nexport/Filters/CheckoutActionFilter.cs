@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -41,56 +42,59 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             _storeContext = storeContext;
         }
 
-        public override void OnActionExecuting(ActionExecutingContext context)
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            if (!(context.ActionDescriptor is ControllerActionDescriptor actionDescriptor))
+            if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
             if (actionDescriptor.ControllerTypeInfo == typeof(CheckoutController)
-                && (actionDescriptor.ActionName == nameof(CheckoutController.Index)
-                    || actionDescriptor.ActionName == nameof(CheckoutController.OnePageCheckout)))
+                && actionDescriptor.ActionName is nameof(CheckoutController.Index) or nameof(CheckoutController.OnePageCheckout))
             {
-                var cart = _shoppingCartService.GetShoppingCart(_workContext.CurrentCustomer, ShoppingCartType.ShoppingCart, _storeContext.CurrentStore.Id);
+                var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+                var currentStore = await _storeContext.GetCurrentStoreAsync();
+
+                var cart = await _shoppingCartService.GetShoppingCartAsync(currentCustomer,
+                    ShoppingCartType.ShoppingCart, currentStore.Id);
 
                 var nexportProductMappings =
-                    cart.Select(shoppingCartItem =>
-                        _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId, _storeContext.CurrentStore.Id) ??
-                        _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId))
-                        .Where(mapping => mapping != null).ToList();
+                    await cart.SelectAwait(async shoppingCartItem =>
+                        await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId, currentStore.Id) ??
+                        await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId))
+                        .Where(mapping => mapping != null).ToListAsync();
 
                 // Check if there are products a product in the cart that have Nexport product mappings
                 if (nexportProductMappings.Count > 0)
                 {
-                    var userMapping = _nexportService.FindUserMappingByCustomerId(_workContext.CurrentCustomer.Id);
+                    var userMapping = await _nexportService.FindUserMappingByCustomerId(currentCustomer.Id);
                     // Create new Nexport user and map to this customer if the mapping does not existed
                     if (userMapping == null)
                     {
-                        _nexportService.CreateAndMapNewNexportUser(_workContext.CurrentCustomer);
+                        await _nexportService.CreateAndMapNewNexportUserAsync(currentCustomer);
                     }
                 }
 
                 // Verify if the products in the cart are allowed to be purchased
                 foreach (var productMapping in nexportProductMappings)
                 {
-                    var product = _productService.GetProductById(productMapping.NopProductId);
-                    var canPurchaseProduct = _nexportService.CanPurchaseNexportProduct(product, _workContext.CurrentCustomer);
+                    var product = await _productService.GetProductByIdAsync(productMapping.NopProductId);
+                    var canPurchaseProduct = await _nexportService.CanPurchaseNexportProductAsync(product, currentCustomer);
                     if (!canPurchaseProduct)
                     {
                         var shoppingCartItem = cart.FirstOrDefault(i => i.ProductId == productMapping.NopProductId);
                         if (shoppingCartItem != null)
                         {
-                            _shoppingCartService.DeleteShoppingCartItem(shoppingCartItem);
+                            await _shoppingCartService.DeleteShoppingCartItemAsync(shoppingCartItem);
                         }
                     }
                 }
 
-                if (!_workContext.CurrentCustomer.HasShoppingCartItems)
+                if (!currentCustomer.HasShoppingCartItems)
                 {
                     context.Result = new RedirectToActionResult("Cart", "ShoppingCart", null);
                 }
             }
 
-            base.OnActionExecuting(context);
+            await base.OnActionExecutionAsync(context, next);
         }
     }
 }

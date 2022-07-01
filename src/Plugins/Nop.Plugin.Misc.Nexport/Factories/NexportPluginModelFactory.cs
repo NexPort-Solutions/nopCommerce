@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using NexportApi.Model;
 using Nop.Core;
@@ -184,35 +185,35 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         #endregion
 
-        public virtual NexportProductMappingModel PrepareNexportProductMappingModel(NexportProductMapping productMapping, bool isEditable)
+        public virtual async Task<NexportProductMappingModel> PrepareNexportProductMappingModelAsync(NexportProductMapping productMapping, bool isEditable)
         {
             var model = productMapping.ToModel<NexportProductMappingModel>();
             model.Editable = isEditable;
             if (model.StoreId != null)
             {
-                model.StoreName = _nexportService.GetStoreName(model.StoreId.Value);
+                model.StoreName = await _nexportService.GetStoreNameAsync(model.StoreId.Value);
             }
 
             if (model.NexportSyllabusId != null)
             {
                 if (model.Type == NexportProductTypeEnum.Section)
                 {
-                    var sectionDetails = _nexportService.GetSectionDetails(model.NexportSyllabusId.Value);
+                    var sectionDetails = await _nexportService.GetSectionDetailsAsync(model.NexportSyllabusId.Value);
                     model.SectionNumber = sectionDetails?.SectionNumber;
                     model.UniqueName = sectionDetails?.UniqueName;
                 }
                 else if (model.Type == NexportProductTypeEnum.TrainingPlan)
                 {
-                    var trainingPlanDetails = _nexportService.GetTrainingPlanDetails(model.NexportSyllabusId.Value);
+                    var trainingPlanDetails = await _nexportService.GetTrainingPlanDetailsAsync(model.NexportSyllabusId.Value);
                     model.UniqueName = trainingPlanDetails?.UniqueName;
                 }
             }
 
             model.SupplementalInfoQuestionIds =
-                _nexportService.GetNexportSupplementalInfoQuestionMappingsByProductMappingId(productMapping.Id)
+                (await _nexportService.GetNexportSupplementalInfoQuestionMappingsByProductMappingId(productMapping.Id))
                     .Select(x => x.QuestionId).ToList();
 
-            var availableSupplementalInfoQuestions = _nexportService.GetSupplementalInfoQuestionList();
+            var availableSupplementalInfoQuestions = await _nexportService.GetSupplementalInfoQuestionList();
             foreach (var questionItem in availableSupplementalInfoQuestions)
             {
                 model.AvailableSupplementalInfoQuestions.Add(questionItem);
@@ -227,26 +228,26 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual NexportProductMappingListModel PrepareNexportProductMappingListModel(
+        public virtual async Task<NexportProductMappingListModel> PrepareNexportProductMappingListModelAsync(
             NexportProductMappingSearchModel searchModel, Guid nexportProductId,
             NexportProductTypeEnum nexportProductType)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var mappings = _nexportService.GetProductMappingsPagination(nexportProductId, nexportProductType,
+            var mappings = await _nexportService.GetProductMappingsPagination(nexportProductId, nexportProductType,
                 searchModel.Page - 1, searchModel.PageSize);
 
             // Prepare grid model
-            var model = new NexportProductMappingListModel().PrepareToGrid(searchModel, mappings, () =>
+            var model = await new NexportProductMappingListModel().PrepareToGridAsync(searchModel, mappings, () =>
             {
-                return mappings.Select(mapping =>
+                return mappings.SelectAwait(async mapping =>
                 {
                     // Fill in model values from the entity
                     var mappingModel = mapping.ToModel<NexportProductMappingModel>();
                     if (mappingModel.StoreId.HasValue)
                     {
-                        mappingModel.StoreName = _nexportService.GetStoreName(mappingModel.StoreId.Value);
+                        mappingModel.StoreName = await _nexportService.GetStoreNameAsync(mappingModel.StoreId.Value);
                     }
 
                     return mappingModel;
@@ -256,17 +257,17 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual NexportProductMappingListModel PrepareNexportProductMappingListModel(
+        public virtual async Task<NexportProductMappingListModel> PrepareNexportProductMappingListModelAsync(
             NexportProductMappingSearchModel searchModel, int nopProductId)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var availableStores = _storeService.GetAllStores();
+            var availableStores = await _storeService.GetAllStoresAsync();
             var mappingCollection = new List<NexportProductMapping>();
             foreach (var store in availableStores)
             {
-                var mapping = _nexportService.GetProductMappingByNopProductId(nopProductId, store.Id);
+                var mapping = await _nexportService.GetProductMappingByNopProductId(nopProductId, store.Id);
                 if (mapping != null)
                 {
                     mappingCollection.Add(mapping);
@@ -281,7 +282,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 }
             }
 
-            var defaultMapping = _nexportService.GetProductMappingByNopProductId(nopProductId);
+            var defaultMapping = await _nexportService.GetProductMappingByNopProductId(nopProductId);
             if (defaultMapping != null)
             {
                 mappingCollection.Insert(0, defaultMapping);
@@ -298,18 +299,19 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 searchModel.PageSize);
 
             // Prepare grid model
-            var model = new NexportProductMappingListModel().PrepareToGrid(searchModel, mappings, () =>
+            var model = await new NexportProductMappingListModel().PrepareToGridAsync(searchModel, mappings, () =>
             {
-                return mappings.Select(mapping =>
+                return mappings.SelectAwait(async mapping =>
                 {
                     // Fill in model values from the entity
                     var mappingModel = mapping.ToModel<NexportProductMappingModel>();
                     if (mappingModel.StoreId.HasValue)
                     {
-                        mappingModel.StoreName = _nexportService.GetStoreName(mappingModel.StoreId.Value);
+                        mappingModel.StoreName = await _nexportService.GetStoreNameAsync(mappingModel.StoreId.Value);
                     }
 
-                    var groupMemberships = _nexportService.GetProductGroupMembershipMappings(mappingModel.Id);
+                    var groupMemberships =
+                        await _nexportService.GetProductGroupMembershipMappings(mappingModel.Id);
                     foreach (var groupMembership in groupMemberships)
                     {
                         var groupMembershipModel = groupMembership.ToModel<NexportProductGroupMembershipMappingModel>();
@@ -323,15 +325,16 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual NexportProductGroupMembershipMappingListModel PrepareNexportProductMappingGroupMembershipListModel(
-            NexportProductGroupMembershipMappingSearchModel searchModel, int nexportProductMappingId)
+        public virtual async Task<NexportProductGroupMembershipMappingListModel>
+            PrepareNexportProductMappingGroupMembershipListModelAsync(
+                NexportProductGroupMembershipMappingSearchModel searchModel, int nexportProductMappingId)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var groupMembershipMappings = _nexportService.GetProductGroupMembershipMappingsPagination(nexportProductMappingId,
-                searchModel.Page - 1,
-                searchModel.PageSize);
+            var groupMembershipMappings =
+                await _nexportService.GetProductGroupMembershipMappingsPagination(nexportProductMappingId,
+                    searchModel.Page - 1, searchModel.PageSize);
 
             var model = new NexportProductGroupMembershipMappingListModel().PrepareToGrid(searchModel, groupMembershipMappings, () =>
             {
@@ -346,13 +349,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual NexportCustomerAdditionalInfoModel PrepareNexportAdditionalInfoModel(Customer customer)
+        public virtual async Task<NexportCustomerAdditionalInfoModel> PrepareNexportAdditionalInfoModelAsync(Customer customer)
         {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
 
             var model = new NexportCustomerAdditionalInfoModel { CustomerId = customer.Id };
-            var nexportUserMapping = _nexportService.FindUserMappingByCustomerId(customer.Id);
+            var nexportUserMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
             if (nexportUserMapping != null)
             {
                 model.NexportUserId = nexportUserMapping.NexportUserId;
@@ -363,7 +366,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 CustomerId = customer.Id,
             };
 
-            _baseAdminModelFactory.PrepareStores(model.NexportSupplementalInfoAnswerListSearchModel.AvailableStores);
+            await _baseAdminModelFactory.PrepareStoresAsync(model.NexportSupplementalInfoAnswerListSearchModel.AvailableStores);
 
             model.NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel = new NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel
             {
@@ -373,12 +376,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual NexportCatalogListModel PrepareNexportCatalogListModel(NexportCatalogSearchModel searchModel)
+        public virtual async Task<NexportCatalogListModel> PrepareNexportCatalogListModelAsync(NexportCatalogSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var catalogs = _nexportService.FindAllCatalogs(searchModel.OrgId, searchModel.Page - 1, searchModel.PageSize);
+            var catalogs =
+                await _nexportService.FindAllCatalogsAsync(searchModel.OrgId, searchModel.Page - 1, searchModel.PageSize);
 
             // Prepare grid model
             var model = new NexportCatalogListModel().PrepareToGrid(searchModel, catalogs, () =>
@@ -407,17 +411,17 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual NexportSyllabusListModel PrepareNexportSyllabusListModel(NexportSyllabusListSearchModel searchModel)
+        public virtual async Task<NexportSyllabusListModel> PrepareNexportSyllabusListModelAsync(NexportSyllabusListSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var syllabus = _nexportService.FindAllSyllabuses(searchModel.CatalogId, searchModel.Page - 1, searchModel.PageSize);
+            var syllabus = await _nexportService.FindAllSyllabusesAsync(searchModel.CatalogId, searchModel.Page - 1, searchModel.PageSize);
 
             // Prepare grid model
-            var model = new NexportSyllabusListModel().PrepareToGrid(searchModel, syllabus, () =>
+            var model = await new NexportSyllabusListModel().PrepareToGridAsync(searchModel, syllabus, () =>
             {
-                return syllabus.Select(syllabi =>
+                return syllabus.SelectAwait(async syllabi =>
                 {
                     // Fill in model values from the entity
                     var syllabiId = syllabi.SyllabusId;
@@ -428,12 +432,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         Name = syllabi.SyllabusName,
                         Type = syllabi.SyllabusType,
                         ProductId = syllabi.ProductId.Value,
-                        TotalMappings = _nexportService.FindMappingCountPerSyllabi(syllabiId)
+                        TotalMappings = await _nexportService.FindMappingCountPerSyllabi(syllabiId)
                     };
 
                     if (syllabi.SyllabusType == GetSyllabiResponseItem.SyllabusTypeEnum.Section)
                     {
-                        var sectionDetails = _nexportService.GetSectionDetails(syllabi.SyllabusId);
+                        var sectionDetails = await _nexportService.GetSectionDetailsAsync(syllabi.SyllabusId);
                         if (sectionDetails != null)
                         {
                             syllabiItemModel.UniqueName = sectionDetails.UniqueName;
@@ -442,7 +446,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     }
                     else if (syllabi.SyllabusType == GetSyllabiResponseItem.SyllabusTypeEnum.TrainingPlan)
                     {
-                        var trainingPlanDetails = _nexportService.GetTrainingPlanDetails(syllabi.SyllabusId);
+                        var trainingPlanDetails = await _nexportService.GetTrainingPlanDetailsAsync(syllabi.SyllabusId);
                         if (trainingPlanDetails != null)
                         {
                             syllabiItemModel.UniqueName = trainingPlanDetails.UniqueName;
@@ -456,24 +460,25 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual NexportLoginModel PrepareNexportLoginModel(bool? checkoutAsGuest)
+        public virtual Task<NexportLoginModel> PrepareNexportLoginModelAsync(bool? checkoutAsGuest)
         {
-            return new NexportLoginModel()
+            return Task.FromResult(new NexportLoginModel
             {
                 UsernamesEnabled = true,
                 RegistrationType = _customerSettings.UserRegistrationType,
                 CheckoutAsGuest = checkoutAsGuest.GetValueOrDefault(),
                 DisplayCaptcha = _captchaSettings.Enabled && _captchaSettings.ShowOnLoginPage
-            };
+            });
         }
 
-        public virtual NexportTrainingListModel PrepareNexportTrainingListModel(Customer customer)
+        public virtual async Task<NexportTrainingListModel> PrepareNexportTrainingListModelAsync(Customer customer)
         {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
 
-            var userMapping = _nexportService.FindUserMappingByCustomerId(customer.Id);
-            var redemptionOrganizations = _nexportService.FindNexportRedemptionOrganizationsByCustomerId(customer.Id);
+            var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+            var redemptionOrganizations =
+                await _nexportService.FindNexportRedemptionOrganizationsByCustomerIdAsync(customer.Id);
 
             var model = new NexportTrainingListModel();
 
@@ -486,7 +491,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportCustomerSupplementalInfoAnswersModel PrepareNexportCustomerSupplementalInfoAnswersModel(Customer customer, Store store)
+        public async Task<NexportCustomerSupplementalInfoAnswersModel>
+            PrepareNexportCustomerSupplementalInfoAnswersModelAsync(Customer customer, Store store)
         {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
@@ -496,7 +502,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var model = new NexportCustomerSupplementalInfoAnswersModel();
 
-            var answers = _nexportService.GetNexportSupplementalInfoAnswers(customer.Id, store.Id);
+            var answers = await _nexportService.GetNexportSupplementalInfoAnswers(customer.Id, store.Id);
             var questionIds = answers.Select(a => a.QuestionId).Distinct().ToList();
 
             foreach (var questionId in questionIds)
@@ -511,8 +517,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportCustomerSupplementalInfoAnswerEditModel PrepareNexportCustomerSupplementalInfoAnswersEditModel(
-            Customer customer, Store store, NexportSupplementalInfoQuestion question)
+        public async Task<NexportCustomerSupplementalInfoAnswerEditModel>
+            PrepareNexportCustomerSupplementalInfoAnswersEditModelAsync(Customer customer, Store store,
+                NexportSupplementalInfoQuestion question)
         {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
@@ -523,8 +530,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             if (question == null)
                 throw new ArgumentNullException(nameof(question));
 
-            var currentAnswers = _nexportService.GetNexportSupplementalInfoAnswers(customer.Id, store.Id, question.Id)
-                .Select(currentAnswer => new EditSupplementInfoAnswerRequest()
+            var currentAnswers = (await _nexportService.GetNexportSupplementalInfoAnswers(customer.Id, store.Id, question.Id))
+                .Select(currentAnswer => new EditSupplementInfoAnswerRequest
                 {
                     AnswerId = currentAnswer.Id,
                     OptionId = currentAnswer.OptionId
@@ -533,24 +540,26 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             var model = new NexportCustomerSupplementalInfoAnswerEditModel
             {
                 Question = question,
-                Options = _nexportService.GetNexportSupplementalInfoOptionsByQuestionId(question.Id, true),
+                Options = await _nexportService.GetNexportSupplementalInfoOptionsByQuestionId(question.Id, true),
                 Answers = currentAnswers
             };
 
             return model;
         }
 
-        public NexportCustomerSupplementalInfoAnsweredQuestionListModel PrepareNexportSupplementalInfoQuestionListModel(
-            NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel searchModel)
+        public async Task<NexportCustomerSupplementalInfoAnsweredQuestionListModel>
+            PrepareNexportSupplementalInfoQuestionListModelAsync(
+                NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var customerSupplementalInfoAnsweredQuestions = _nexportService.GetNexportSupplementalInfoAnsweredQuestionsPagination(searchModel.CustomerId,
+            var customerSupplementalInfoAnsweredQuestions = await _nexportService.GetNexportSupplementalInfoAnsweredQuestionsPagination(searchModel.CustomerId,
                 searchModel.Page - 1,
                 searchModel.PageSize);
 
-            var model = new NexportCustomerSupplementalInfoAnsweredQuestionListModel().PrepareToGrid(searchModel, customerSupplementalInfoAnsweredQuestions, () =>
+            var model = new NexportCustomerSupplementalInfoAnsweredQuestionListModel().PrepareToGrid(searchModel,
+                customerSupplementalInfoAnsweredQuestions, () =>
             {
                 return customerSupplementalInfoAnsweredQuestions.Select(question =>
                 {
@@ -563,29 +572,29 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportSupplementalInfoAnswerListModel PrepareNexportSupplementalInfoAnswerListModel(
+        public async Task<NexportSupplementalInfoAnswerListModel> PrepareNexportSupplementalInfoAnswerListModelAsync(
             NexportSupplementalInfoAnswerListSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var customerSupplementalInfoAnswers = _nexportService.GetNexportSupplementalInfoAnswersPagination(
+            var customerSupplementalInfoAnswers = await _nexportService.GetNexportSupplementalInfoAnswersPagination(
                 searchModel.CustomerId,
                 searchModel.QuestionId,
                 searchModel.Page - 1,
                 searchModel.PageSize);
 
-            var model = new NexportSupplementalInfoAnswerListModel().PrepareToGrid(searchModel, customerSupplementalInfoAnswers, () =>
+            var model = await new NexportSupplementalInfoAnswerListModel().PrepareToGridAsync(searchModel, customerSupplementalInfoAnswers, () =>
             {
-                return customerSupplementalInfoAnswers.Select(answer =>
+                return customerSupplementalInfoAnswers.SelectAwait(async answer =>
                 {
                     var answerModel = answer.ToModel<NexportSupplementalInfoAnswerModel>();
 
-                    answerModel.StoreName = _storeService.GetStoreById(answer.StoreId).Name;
+                    answerModel.StoreName = (await _storeService.GetStoreByIdAsync(answer.StoreId)).Name;
                     answerModel.OptionText =
-                        _nexportService.GetNexportSupplementalInfoOptionById(answer.OptionId).OptionText;
-                    answerModel.NexportMemberships = _nexportService
-                        .GetNexportSupplementalInfoAnswerMembershipsByAnswerId(answer.Id)
+                        (await _nexportService.GetNexportSupplementalInfoOptionById(answer.OptionId)).OptionText;
+                    answerModel.NexportMemberships = (await _nexportService
+                        .GetNexportSupplementalInfoAnswerMembershipsByAnswerId(answer.Id))
                         .Select(am => am.NexportMembershipId).ToList();
 
                     return answerModel;
@@ -595,8 +604,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual NexportSupplementalInfoQuestionSearchModel PrepareNexportSupplementalInfoQuestionSearchModel(
-            NexportSupplementalInfoQuestionSearchModel searchModel)
+        public virtual Task<NexportSupplementalInfoQuestionSearchModel>
+            PrepareNexportSupplementalInfoQuestionSearchModelAsync(NexportSupplementalInfoQuestionSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
@@ -604,18 +613,18 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             // Prepare page parameters
             searchModel.SetGridPageSize();
 
-            return searchModel;
+            return Task.FromResult(searchModel);
         }
 
-        public virtual NexportSupplementalInfoQuestionListModel PrepareNexportSupplementalInfoQuestionListModel(
-            NexportSupplementalInfoQuestionSearchModel searchModel)
+        public virtual async Task<NexportSupplementalInfoQuestionListModel>
+            PrepareNexportSupplementalInfoQuestionListModelAsync(NexportSupplementalInfoQuestionSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             // Get all available supplemental info questions
             var supplementalInfoQuestions =
-                _nexportService.GetAllNexportSupplementalInfoQuestionsPagination(pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
+                await _nexportService.GetAllNexportSupplementalInfoQuestionsPagination(pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
 
             // Prepare the list model
             var model = new NexportSupplementalInfoQuestionListModel().PrepareToGrid(searchModel,
@@ -632,25 +641,25 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual NexportSupplementalInfoQuestionModel PrepareNexportSupplementalInfoQuestionModel(
-            NexportSupplementalInfoQuestionModel model, NexportSupplementalInfoQuestion question)
+        public virtual async Task<NexportSupplementalInfoQuestionModel>
+            PrepareNexportSupplementalInfoQuestionModelAsync(NexportSupplementalInfoQuestionModel model, NexportSupplementalInfoQuestion question)
         {
             if (question != null)
             {
-                model = model ?? question.ToModel<NexportSupplementalInfoQuestionModel>();
+                model ??= question.ToModel<NexportSupplementalInfoQuestionModel>();
 
-                PrepareNexportSupplementalInfoOptionSearchModel(model.NexportSupplementalInfoOptionSearchModel, question);
+                await PrepareNexportSupplementalInfoOptionSearchModelAsync(model.NexportSupplementalInfoOptionSearchModel, question);
             }
 
             var availableQuestionTypes = new List<SelectListItem>
             {
-                new SelectListItem
+                new()
                 {
                     Text = NexportSupplementalInfoQuestionType.SingleOption.GetDisplayName(),
                     Value = ((int)NexportSupplementalInfoQuestionType.SingleOption).ToString(),
                     Selected = true
                 },
-                new SelectListItem
+                new()
                 {
                     Text = NexportSupplementalInfoQuestionType.MultipleOptions.GetDisplayName(),
                     Value = ((int)NexportSupplementalInfoQuestionType.MultipleOptions).ToString()
@@ -663,8 +672,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual NexportSupplementalInfoOptionSearchModel PrepareNexportSupplementalInfoOptionSearchModel(
-            NexportSupplementalInfoOptionSearchModel searchModel, NexportSupplementalInfoQuestion question)
+        public virtual Task<NexportSupplementalInfoOptionSearchModel>
+            PrepareNexportSupplementalInfoOptionSearchModelAsync(NexportSupplementalInfoOptionSearchModel searchModel,
+                NexportSupplementalInfoQuestion question)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
@@ -676,11 +686,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             searchModel.SetGridPageSize();
 
-            return searchModel;
+            return Task.FromResult(searchModel);
         }
 
-        public virtual NexportSupplementalInfoOptionListModel PrepareNexportSupplementalInfoOptionListModel(
-            NexportSupplementalInfoOptionSearchModel searchModel, NexportSupplementalInfoQuestion question)
+        public virtual async Task<NexportSupplementalInfoOptionListModel>
+            PrepareNexportSupplementalInfoOptionListModelAsync(NexportSupplementalInfoOptionSearchModel searchModel,
+                NexportSupplementalInfoQuestion question)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
@@ -688,7 +699,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             if (question == null)
                 throw new ArgumentNullException(nameof(question));
 
-            var options = _nexportService.GetNexportSupplementalInfoOptionsByQuestionId(question.Id)
+            var options = (await _nexportService.GetNexportSupplementalInfoOptionsByQuestionId(question.Id))
                 .ToPagedList(searchModel);
 
             //prepare list model
@@ -706,7 +717,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual NexportSupplementalInfoOptionModel PrepareNexportSupplementalInfoOptionModel(
+        public virtual Task<NexportSupplementalInfoOptionModel> PrepareNexportSupplementalInfoOptionModelAsync(
             NexportSupplementalInfoOptionModel model, NexportSupplementalInfoQuestion question,
             NexportSupplementalInfoOption option)
         {
@@ -716,22 +727,23 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             if (option != null)
             {
                 //fill in model values from the entity
-                model = model ?? option.ToModel<NexportSupplementalInfoOptionModel>();
+                model ??= option.ToModel<NexportSupplementalInfoOptionModel>();
             }
 
             model.QuestionId = question.Id;
 
-            return model;
+            return Task.FromResult(model);
         }
 
-        public NexportSupplementalInfoOptionGroupAssociationListModel PrepareNexportSupplementalInfoOptionGroupAssociationListModel(
-            NexportSupplementalInfoOptionGroupAssociationSearchModel searchModel, int optionId)
+        public async Task<NexportSupplementalInfoOptionGroupAssociationListModel>
+            PrepareNexportSupplementalInfoOptionGroupAssociationListModelAsync(
+                NexportSupplementalInfoOptionGroupAssociationSearchModel searchModel, int optionId)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             var groupAssociations =
-                _nexportService.GetNexportSupplementalInfoOptionGroupAssociationsPagination(optionId,
+                await _nexportService.GetNexportSupplementalInfoOptionGroupAssociationsPagination(optionId,
                     searchModel.Page - 1, searchModel.PageSize);
 
             var model = new NexportSupplementalInfoOptionGroupAssociationListModel().PrepareToGrid(searchModel, groupAssociations, () =>
@@ -747,7 +759,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportSupplementalInfoAnswerQuestionModel PrepareNexportSupplementalInfoAnswerQuestionModel(
+        public async Task<NexportSupplementalInfoAnswerQuestionModel> PrepareNexportSupplementalInfoAnswerQuestionModelAsync(
             IList<int> questionIds, Customer customer, Store store)
         {
             if (questionIds == null)
@@ -765,7 +777,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var answeredQuestions = new Dictionary<int, string>();
 
-            var answers = _nexportService.GetNexportSupplementalInfoAnswers(customer.Id, store.Id);
+            var answers = await _nexportService.GetNexportSupplementalInfoAnswers(customer.Id, store.Id);
             var answered = answers.Where(x => questionIds.Contains(x.QuestionId)).ToList();
 
             var questionWithAnswerIds = answered.Count > 0
@@ -785,24 +797,24 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportCustomerAdditionalSettingsModel PrepareNexportCustomerAdditionalSettingsModel()
+        public Task<NexportCustomerAdditionalSettingsModel> PrepareNexportCustomerAdditionalSettingsModelAsync()
         {
             var model = new NexportCustomerAdditionalSettingsModel();
 
             model.NexportRegistrationFieldCategorySearchModel.SetGridPageSize();
             model.NexportRegistrationFieldSearchModel.SetGridPageSize();
 
-            return model;
+            return Task.FromResult(model);
         }
 
-        public NexportRegistrationFieldCategoryListModel PrepareNexportRegistrationFieldCategoryListModel(
+        public async Task<NexportRegistrationFieldCategoryListModel> PrepareNexportRegistrationFieldCategoryListModelAsync(
             NexportRegistrationFieldCategorySearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             var registrationFields =
-                _nexportService.GetNexportRegistrationFieldCategoriesPagination(searchModel.Page - 1, searchModel.PageSize);
+                await _nexportService.GetNexportRegistrationFieldCategoriesPagination(searchModel.Page - 1, searchModel.PageSize);
 
             var model = new NexportRegistrationFieldCategoryListModel().PrepareToGrid(searchModel,
                 registrationFields, () =>
@@ -817,18 +829,18 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportRegistrationFieldCategoryModel PrepareNexportRegistrationFieldCategoryModel(
+        public Task<NexportRegistrationFieldCategoryModel> PrepareNexportRegistrationFieldCategoryModelAsync(
             NexportRegistrationFieldCategoryModel model, NexportRegistrationFieldCategory registrationFieldCategory)
         {
             if (registrationFieldCategory != null)
             {
-                model = model ?? registrationFieldCategory.ToModel<NexportRegistrationFieldCategoryModel>();
+                model ??= registrationFieldCategory.ToModel<NexportRegistrationFieldCategoryModel>();
             }
 
-            return model;
+            return Task.FromResult(model);
         }
 
-        public NexportRegistrationFieldOptionSearchModel PrepareNexportRegistrationFieldOptionSearchModel(
+        public Task<NexportRegistrationFieldOptionSearchModel> PrepareNexportRegistrationFieldOptionSearchModelAsync(
             NexportRegistrationFieldOptionSearchModel searchModel, NexportRegistrationField registrationField)
         {
             if (searchModel == null)
@@ -841,44 +853,48 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             searchModel.SetGridPageSize();
 
-            return searchModel;
+            return Task.FromResult(searchModel);
         }
 
-        public virtual NexportRegistrationFieldListModel PrepareNexportRegistrationFieldListModel(
+        public virtual async Task<NexportRegistrationFieldListModel> PrepareNexportRegistrationFieldListModelAsync(
             NexportRegistrationFieldSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             var registrationFields =
-                _nexportService.GetNexportRegistrationFieldsPagination(searchModel.Page - 1, searchModel.PageSize);
+                await _nexportService.GetNexportRegistrationFieldsPagination(searchModel.Page - 1, searchModel.PageSize);
 
-            var model = new NexportRegistrationFieldListModel().PrepareToGrid(searchModel,
+            var model = await new NexportRegistrationFieldListModel().PrepareToGridAsync(searchModel,
                 registrationFields, () =>
                 {
-                    return registrationFields.Select(field =>
+                    return registrationFields.SelectAwait(async field =>
                     {
                         var fieldModel = field.ToModel<NexportRegistrationFieldModel>();
 
                         if (fieldModel.FieldCategoryId.HasValue)
-                            fieldModel.FieldCategoryName = _nexportService.GetNexportRegistrationFieldCategoryById(
-                                    fieldModel.FieldCategoryId.Value).Title;
+                            fieldModel.FieldCategoryName = (await _nexportService.GetNexportRegistrationFieldCategoryById(
+                                    fieldModel.FieldCategoryId.Value)).Title;
 
-                        var storeMappings = _nexportService
+                        var storeMappings = await _nexportService
                             .GetNexportRegistrationFieldStoreMappings(fieldModel.Id);
 
                         for (var i = 0; i < storeMappings.Count; i++)
                         {
-                            if (i < storeMappings.Count - 1)
-                                fieldModel.StoreMappings += $"{_storeService.GetStoreById(storeMappings[i].StoreId).Name}, ";
-                            else
-                                fieldModel.StoreMappings += $"{_storeService.GetStoreById(storeMappings[i].StoreId).Name}";
+                            var store = await _storeService.GetStoreByIdAsync(storeMappings[i].StoreId);
+                            if (store != null)
+                            {
+                                if (i < storeMappings.Count - 1)
+                                    fieldModel.StoreMappings += $"{store.Name}, ";
+                                else
+                                    fieldModel.StoreMappings += $"{store.Name}";
+                            }
                         }
 
                         if (!string.IsNullOrWhiteSpace(fieldModel.CustomFieldRender))
                         {
                             var customRenderPlugin =
-                                _registrationFieldCustomRenderPluginManager.LoadPluginBySystemName(fieldModel
+                                await _registrationFieldCustomRenderPluginManager.LoadPluginBySystemNameAsync(fieldModel
                                     .CustomFieldRender);
                             fieldModel.CustomFieldRenderDescription = customRenderPlugin?.PluginDescriptor.FriendlyName;
                         }
@@ -890,40 +906,41 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual NexportRegistrationFieldModel PrepareNexportRegistrationFieldModel(NexportRegistrationFieldModel model,
+        public virtual async Task<NexportRegistrationFieldModel> PrepareNexportRegistrationFieldModelAsync(
+            NexportRegistrationFieldModel model,
             NexportRegistrationField registrationField, bool excludeProperties = false)
         {
-            Action<NexportRegistrationFieldLocalizedModel, int> localizedModelConfiguration = null;
+            Func<NexportRegistrationFieldLocalizedModel, int, Task> localizedModelConfiguration = null;
 
             if (registrationField != null)
             {
-                model = model ?? registrationField.ToModel<NexportRegistrationFieldModel>();
+                model ??= registrationField.ToModel<NexportRegistrationFieldModel>();
 
-                model.AllowMultipleSelection = _genericAttributeService.GetAttribute(registrationField,
+                model.AllowMultipleSelection = await _genericAttributeService.GetAttributeAsync(registrationField,
                     nameof(model.AllowMultipleSelection), defaultValue: false);
 
-                model.DisplayOptionByAscendingOrder = _genericAttributeService.GetAttribute(registrationField,
+                model.DisplayOptionByAscendingOrder = await _genericAttributeService.GetAttributeAsync(registrationField,
                     nameof(model.DisplayOptionByAscendingOrder), defaultValue: false);
 
-                model.StoreMappingIds = _nexportService.GetNexportRegistrationFieldStoreMappings(registrationField.Id)
+                model.StoreMappingIds = (await _nexportService.GetNexportRegistrationFieldStoreMappings(registrationField.Id))
                     .Select(s => s.StoreId).ToList();
 
-                PrepareNexportRegistrationFieldOptionSearchModel(model.RegistrationFieldOptionSearchModel, registrationField);
+                await PrepareNexportRegistrationFieldOptionSearchModelAsync(model.RegistrationFieldOptionSearchModel, registrationField);
 
-                localizedModelConfiguration = (locale, languageId) =>
+                localizedModelConfiguration = async (locale, languageId) =>
                 {
-                    locale.Name = _localizationService.GetLocalized(registrationField,
+                    locale.Name = await _localizationService.GetLocalizedAsync(registrationField,
                         entity => entity.Name, languageId,
                         false, false);
                 };
             }
 
             if (!excludeProperties)
-                model.Locales = _localizedModelFactory.PrepareLocalizedModels(localizedModelConfiguration);
+                model.Locales = await _localizedModelFactory.PrepareLocalizedModelsAsync(localizedModelConfiguration);
 
-            model.AvailableFieldCategory = _nexportService.GetRegistrationFieldCategoryList();
+            model.AvailableFieldCategory = await _nexportService.GetRegistrationFieldCategoryList();
 
-            var availableStores = _storeService.GetAllStores();
+            var availableStores = await _storeService.GetAllStoresAsync();
             model.AvailableStores = availableStores.Select(store => new SelectListItem
             {
                 Text = store.Name,
@@ -931,19 +948,20 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 Selected = model.StoreMappingIds.Contains(store.Id)
             }).ToList();
 
-            model.AvailableCustomFieldRenders = _nexportService.GetCustomRegistrationFieldRenders();
+            model.AvailableCustomFieldRenders = await _nexportService.GetCustomRegistrationFieldRendersAsync();
 
             return model;
         }
 
-        public virtual NexportRegistrationFieldOptionListModel PrepareNexportRegistrationFieldOptionListModel(
-            NexportRegistrationFieldOptionSearchModel searchModel, NexportRegistrationField registrationField)
+        public virtual async Task<NexportRegistrationFieldOptionListModel>
+            PrepareNexportRegistrationFieldOptionListModelAsync(NexportRegistrationFieldOptionSearchModel searchModel,
+                NexportRegistrationField registrationField)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             var registrationFieldOptions =
-                _nexportService.GetNexportRegistrationFieldOptionsPagination(registrationField.Id,
+                await _nexportService.GetNexportRegistrationFieldOptionsPagination(registrationField.Id,
                     searchModel.Page - 1, searchModel.PageSize);
 
             var model = new NexportRegistrationFieldOptionListModel().PrepareToGrid(searchModel,
@@ -959,48 +977,49 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportRegistrationFieldOptionModel PrepareNexportRegistrationFieldOptionModel(
+        public Task<NexportRegistrationFieldOptionModel> PrepareNexportRegistrationFieldOptionModelAsync(
             NexportRegistrationFieldOptionModel model, NexportRegistrationField registrationField,
             NexportRegistrationFieldOption registrationFieldOption)
         {
             if (registrationFieldOption != null)
             {
-                model = model ?? registrationFieldOption.ToModel<NexportRegistrationFieldOptionModel>();
+                model ??= registrationFieldOption.ToModel<NexportRegistrationFieldOptionModel>();
             }
 
-            return model;
+            return Task.FromResult(model);
         }
 
-        public NexportCustomerRegistrationFieldsModel PrepareNexportCustomerRegistrationFieldsModel(Store store)
+        public async Task<NexportCustomerRegistrationFieldsModel> PrepareNexportCustomerRegistrationFieldsModelAsync(
+            Store store)
         {
             var model = new NexportCustomerRegistrationFieldsModel();
 
-            var availableFields = _nexportService.GetNexportRegistrationFields(store.Id);
+            var availableFields = await _nexportService.GetNexportRegistrationFields(store.Id);
 
-            var fieldsWithCategory = availableFields.Where(x => x.FieldCategoryId != null)
-                .GroupBy(x =>
+            var fieldsWithCategory = (await availableFields.Where(x => x.FieldCategoryId != null)
+                .GroupByAwait(async x =>
                 {
-                    var fieldCategory = _nexportService.GetNexportRegistrationFieldCategoryById(x.FieldCategoryId.Value);
+                    var fieldCategory = await _nexportService.GetNexportRegistrationFieldCategoryById(x.FieldCategoryId.Value);
                     return fieldCategory;
                 })
-                .ToDictionary(x => x.Key.ToModel<NexportRegistrationFieldCategoryModel>(),
+                .ToDictionaryAwaitAsync(
+                    async x => x.Key.ToModel<NexportRegistrationFieldCategoryModel>(),
                     x => x
-                        .Select(f =>
+                        .SelectAwait(async f =>
                             {
                                 var fieldModel = f.ToModel<NexportRegistrationFieldModel>();
-                                if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox ||
-                                    fieldModel.Type == NexportRegistrationFieldType.SelectDropDown)
+                                if (fieldModel.Type is NexportRegistrationFieldType.SelectCheckbox or NexportRegistrationFieldType.SelectDropDown)
                                 {
                                     if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox)
-                                        fieldModel.AllowMultipleSelection = _genericAttributeService.GetAttribute(f,
+                                        fieldModel.AllowMultipleSelection = await _genericAttributeService.GetAttributeAsync(f,
                                             nameof(fieldModel.AllowMultipleSelection), defaultValue: false);
 
-                                    fieldModel.DisplayOptionByAscendingOrder = _genericAttributeService.GetAttribute(f,
+                                    fieldModel.DisplayOptionByAscendingOrder = await _genericAttributeService.GetAttributeAsync(f,
                                         nameof(fieldModel.DisplayOptionByAscendingOrder), defaultValue: false);
                                 }
 
                                 return fieldModel;
-                            }).OrderBy(f => f.DisplayOrder).ToList())
+                            }).OrderBy(f => f.DisplayOrder).ToListAsync()))
                 .OrderBy(x => x.Key.DisplayOrder)
                 .ThenBy(x => x.Key.Title);
 
@@ -1008,54 +1027,54 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 x => x.Key,
                 x => x.Value);
 
-            model.RegistrationFieldsWithoutCategory = availableFields
+            model.RegistrationFieldsWithoutCategory = await availableFields
                 .Where(x => x.FieldCategoryId == null)
                 .OrderBy(x => x.DisplayOrder)
-                .Select(f =>
+                .SelectAwait(async f =>
                 {
                     var fieldModel = f.ToModel<NexportRegistrationFieldModel>();
-                    if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox ||
-                        fieldModel.Type == NexportRegistrationFieldType.SelectDropDown)
+                    if (fieldModel.Type is NexportRegistrationFieldType.SelectCheckbox or NexportRegistrationFieldType.SelectDropDown)
                     {
                         if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox)
-                            fieldModel.AllowMultipleSelection = _genericAttributeService.GetAttribute(f,
+                            fieldModel.AllowMultipleSelection = await _genericAttributeService.GetAttributeAsync(f,
                                 nameof(fieldModel.AllowMultipleSelection), defaultValue: false);
 
-                        fieldModel.DisplayOptionByAscendingOrder = _genericAttributeService.GetAttribute(f,
+                        fieldModel.DisplayOptionByAscendingOrder = await _genericAttributeService.GetAttributeAsync(f,
                             nameof(fieldModel.DisplayOptionByAscendingOrder), defaultValue: false);
                     }
 
                     return fieldModel;                })
-                .ToList();
+                .ToListAsync();
 
             return model;
         }
 
-        public NexportOrderInvoiceItemListModel PrepareNexportOrderInvoiceItemListModel(NexportOrderInvoiceItemSearchModel searchModel,
+        public async Task<NexportOrderInvoiceItemListModel> PrepareNexportOrderInvoiceItemListModelAsync(
+            NexportOrderInvoiceItemSearchModel searchModel,
             bool excludeNonApproval = false)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             var nexportOrderInvoiceItems =
-                _nexportService.GetNexportOrderInvoiceItems(searchModel.OrderId, excludeNonApproval,
+                await _nexportService.GetNexportOrderInvoiceItems(searchModel.OrderId, excludeNonApproval,
                     searchModel.Page - 1, searchModel.PageSize);
 
-            var model = new NexportOrderInvoiceItemListModel().PrepareToGrid(searchModel,
+            var model = await new NexportOrderInvoiceItemListModel().PrepareToGridAsync(searchModel,
                 nexportOrderInvoiceItems, () =>
                 {
-                    return nexportOrderInvoiceItems.Select(orderInvoiceItem =>
+                    return nexportOrderInvoiceItems.SelectAwait(async orderInvoiceItem =>
                     {
                         var orderInvoiceItemModel = orderInvoiceItem.ToModel<NexportOrderInvoiceItemModel>();
 
-                        var order = _orderService.GetOrderById(orderInvoiceItemModel.OrderId);
-                        var orderItem = _orderService.GetOrderItemById(orderInvoiceItemModel.OrderItemId);
-                        var store = _storeService.GetStoreById(order.StoreId);
-                        var productMapping = _nexportService.GetProductMappingByNopProductId(orderItem.ProductId, store.Id) ??
-                                             _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
+                        var order = await _orderService.GetOrderByIdAsync(orderInvoiceItemModel.OrderId);
+                        var orderItem = await _orderService.GetOrderItemByIdAsync(orderInvoiceItemModel.OrderItemId);
+                        var store = await _storeService.GetStoreByIdAsync(order.StoreId);
+                        var productMapping = await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId, store.Id) ??
+                                             await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
                         if (productMapping != null)
                         {
-                            orderInvoiceItemModel.ProductName = _productService.GetProductById(orderItem.ProductId).Name;
+                            orderInvoiceItemModel.ProductName = (await _productService.GetProductByIdAsync(orderItem.ProductId)).Name;
                             orderInvoiceItemModel.NexportProductName = productMapping.NexportProductName;
                             if (productMapping.NexportSyllabusId != null)
                             {
@@ -1065,13 +1084,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                 if (productMapping.NexportSubscriptionOrgId != null)
                                     orgId = productMapping.NexportSubscriptionOrgId.Value;
                                 else
-                                    orgId = _genericAttributeService.GetAttribute<Guid?>(store,
+                                    orgId = await _genericAttributeService.GetAttributeAsync<Guid?>(store,
                                         // ReSharper disable once PossibleInvalidOperationException
                                         "NexportSubscriptionOrganizationId", store.Id) ?? _nexportSettings.RootOrganizationId.Value;
 
-                                var nexportUserMapping = _nexportService.FindUserMappingByCustomerId(order.CustomerId);
+                                var nexportUserMapping = await _nexportService.FindUserMappingByCustomerId(order.CustomerId);
 
-                                var existingEnrollment = _nexportService.GetSectionEnrollmentDetails(
+                                var existingEnrollment = await _nexportService.GetSectionEnrollmentDetailsAsync(
                                     orgId, nexportUserMapping.NexportUserId, productMapping.NexportSyllabusId.Value);
                                 if (existingEnrollment != null)
                                 {
@@ -1088,12 +1107,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public NexportOrderInvoiceItemModel PrepareNexportOrderInvoiceItemModel(NexportOrderInvoiceItemModel model,
+        public Task<NexportOrderInvoiceItemModel> PrepareNexportOrderInvoiceItemModelAsync(
+            NexportOrderInvoiceItemModel model,
             NexportOrderInvoiceItem orderInvoiceItem)
         {
-            model = model ?? orderInvoiceItem.ToModel<NexportOrderInvoiceItemModel>();
+            model ??= orderInvoiceItem.ToModel<NexportOrderInvoiceItemModel>();
 
-            return model;
+            return Task.FromResult(model);
         }
     }
 }

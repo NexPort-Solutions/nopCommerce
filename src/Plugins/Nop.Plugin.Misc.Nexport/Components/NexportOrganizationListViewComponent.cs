@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NexportApi.Client;
 using Nop.Services.Logging;
@@ -24,13 +25,13 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _logger = logger;
         }
 
-        public IViewComponentResult Invoke()
+        public async Task<IViewComponentResult> InvokeAsync()
         {
             try
             {
                 var model = new NexportOrganizationListModel
                 {
-                    Organizations = _nexportService.FindAllOrganizationsUnderRootOrganization()
+                    Organizations = await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync()
                 };
 
                 if (model.Organizations.Count < 1)
@@ -47,7 +48,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
                     errorMsg += $" ({exception.Message})";
                 }
 
-                _logger.Error(errorMsg, ex);
+                await _logger.ErrorAsync(errorMsg, ex);
                 _notificationService.ErrorNotification(errorMsg);
 
                 return Content("");

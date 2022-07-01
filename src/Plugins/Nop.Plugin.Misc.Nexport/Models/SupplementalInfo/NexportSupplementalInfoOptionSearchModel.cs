@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
-    public class NexportSupplementalInfoOptionSearchModel : BaseSearchModel
+    public record NexportSupplementalInfoOptionSearchModel : BaseSearchModel
     {
         public int QuestionId { get; set; }
     }

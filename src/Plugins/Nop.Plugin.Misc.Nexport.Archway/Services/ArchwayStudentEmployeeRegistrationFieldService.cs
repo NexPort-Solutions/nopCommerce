@@ -5,10 +5,12 @@ using System.Data.SqlClient;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using CsvHelper;
 using LinqToDB.Common;
 using LinqToDB.DataProvider;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Data.SqlClient;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Infrastructure;
@@ -29,7 +31,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
         private readonly IRepository<ArchwayStoreEmployeePosition> _archwayStoreEmployeePositionRepository;
         private readonly IRepository<ArchwayStudentRegistrationFieldKeyMapping> _archwayStudentRegistrationFieldKeyMappingRepository;
         private readonly IRepository<ArchwayStudentRegistrationFieldAnswer> _archwayStudentRegistrationFieldAnswerRepository;
-        private readonly ICacheKeyService _cacheKeyService;
+        private readonly CacheKeyService _cacheKeyService;
         private readonly IStaticCacheManager _cacheManager;
         private readonly INopFileProvider _fileProvider;
         private readonly NexportService _nexportService;
@@ -40,7 +42,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             IRepository<ArchwayStoreEmployeePosition> archwayStoreEmployeePositionRepository,
             IRepository<ArchwayStudentRegistrationFieldKeyMapping> archwayStudentRegistrationFieldKeyMappingRepository,
             IRepository<ArchwayStudentRegistrationFieldAnswer> archwayStudentRegistrationFieldAnswerRepository,
-            ICacheKeyService cacheKeyService,
+            CacheKeyService cacheKeyService,
             IStaticCacheManager cacheManager,
             INopFileProvider fileProvider,
             INopDataProvider nopDataProvider,
@@ -59,7 +61,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             _logger = logger;
         }
 
-        public string SaveUploadedStoreDataFile(IFormFile storeDataFile)
+        public async Task<string> SaveUploadedStoreDataFile(IFormFile storeDataFile)
         {
             if (storeDataFile == null)
                 throw new ArgumentNullException(nameof(storeDataFile));
@@ -83,19 +85,19 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                     _fileProvider.CreateDirectory(fullDataPath);
 
                 var csvFilePath = _fileProvider.Combine(fullDataPath, storeDataFile.FileName);
-                using var fileStream = new FileStream(csvFilePath, FileMode.Create);
-                storeDataFile.CopyTo(fileStream);
+                await using var fileStream = new FileStream(csvFilePath, FileMode.Create);
+                await storeDataFile.CopyToAsync(fileStream);
 
                 return csvFilePath;
             }
             catch (Exception ex)
             {
-                _logger.Error("Cannot save uploaded store data file", ex);
+                await _logger.ErrorAsync("Cannot save uploaded store data file", ex);
                 throw;
             }
         }
 
-        public void ProcessUploadedStoreDataFile(string storeDataFilePath)
+        public async Task ProcessUploadedStoreDataFile(string storeDataFilePath)
         {
             try
             {
@@ -112,10 +114,12 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                 dt.Load(dr);
 
                 var dataSettings = DataSettingsManager.LoadSettings();
-                if (!dataSettings?.IsValid ?? true)
+                if (dataSettings == null ||
+                    dataSettings.DataProvider == DataProviderType.Unknown ||
+                    string.IsNullOrWhiteSpace(dataSettings.ConnectionString))
                     return;
 
-                _nopDataProvider.ExecuteNonQuery("DELETE FROM ArchwayStore");
+                await _nopDataProvider.ExecuteNonQueryAsync("DELETE FROM ArchwayStore");
 
                 using var bulkCopy = new SqlBulkCopy(dataSettings.ConnectionString) { BatchSize = 1000 };
 
@@ -127,40 +131,40 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                 }
 
                 bulkCopy.DestinationTableName = "ArchwayStore";
-                bulkCopy.WriteToServer(dt);
+                await bulkCopy.WriteToServerAsync(dt);
             }
             catch (Exception ex)
             {
-                _logger.Error("Cannot process uploaded store data file", ex);
+                await _logger.ErrorAsync("Cannot process uploaded store data file", ex);
                 throw;
             }
         }
 
-        public ArchwayStoreRecordInfo GetArchwayStoreRecordInfoById(int id)
+        public async Task<ArchwayStoreRecordInfo> GetArchwayStoreRecordInfoById(int id)
         {
             return id < 0
                 ? null
-                : _archwayStoreRecordRepository.GetById(id);
+                : await _archwayStoreRecordRepository.GetByIdAsync(id);
         }
 
-        public ArchwayStoreRecordInfo GetArchwayStoreRecordInfo(int storeNumber)
+        public async Task<ArchwayStoreRecordInfo> GetArchwayStoreRecordInfo(int storeNumber)
         {
-            return _archwayStoreRecordRepository.Table.FirstOrDefault(s => s.StoreNumber == storeNumber);
+            return await _archwayStoreRecordRepository.Table.FirstOrDefaultAsync(s => s.StoreNumber == storeNumber);
         }
 
-        public IList<ArchwayStoreRecordInfo> GetArchwayStoreRecordInfos()
+        public async Task<IList<ArchwayStoreRecordInfo>> GetArchwayStoreRecordInfos()
         {
             var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(PluginDefaults.ArchwayStoreRecordAllNoPaginationCacheKey);
 
-            return _cacheManager.Get(cacheKey, () => _archwayStoreRecordRepository.Table.ToList());
+            return await _cacheManager.GetAsync(cacheKey, () => _archwayStoreRecordRepository.Table.ToListAsync());
         }
 
-        public void InsertOrUpdateArchwayStoreRecord(ArchwayStoreRecordInfo record)
+        public async Task InsertOrUpdateArchwayStoreRecord(ArchwayStoreRecordInfo record)
         {
             if (record == null)
                 throw new ArgumentNullException(nameof(record));
 
-            var currentRecord = GetArchwayStoreRecordInfo(record.StoreNumber);
+            var currentRecord = await GetArchwayStoreRecordInfo(record.StoreNumber);
             if (currentRecord != null)
             {
                 currentRecord.StoreNumber = record.StoreNumber;
@@ -175,75 +179,75 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                 currentRecord.OperatorFirstName = record.OperatorFirstName;
                 currentRecord.OperatorLastName = record.OperatorLastName;
 
-                _archwayStoreRecordRepository.Update(currentRecord);
+                await _archwayStoreRecordRepository.UpdateAsync(currentRecord);
             }
             else
             {
-                _archwayStoreRecordRepository.Insert(record);
+                await _archwayStoreRecordRepository.InsertAsync(record);
             }
         }
 
-        public void DeleteArchwayStoreRecord(ArchwayStoreRecordInfo record)
+        public async Task DeleteArchwayStoreRecord(ArchwayStoreRecordInfo record)
         {
             if (record == null)
                 throw new ArgumentNullException(nameof(record));
 
-            _archwayStoreRecordRepository.Delete(record);
+            await _archwayStoreRecordRepository.DeleteAsync(record);
         }
 
-        public ArchwayStoreEmployeePosition GetArchwayStoreEmployeePositionById(int id)
+        public async Task<ArchwayStoreEmployeePosition> GetArchwayStoreEmployeePositionById(int id)
         {
             return id < 1
                 ? null
-                : _archwayStoreEmployeePositionRepository.GetById(id);
+                : await _archwayStoreEmployeePositionRepository.GetByIdAsync(id);
         }
 
-        public IList<ArchwayStoreEmployeePosition> GetArchwayStoreEmployeePositions(string jobType)
+        public async Task<IList<ArchwayStoreEmployeePosition>> GetArchwayStoreEmployeePositions(string jobType)
         {
             var cacheKey = _cacheKeyService.PrepareKeyForDefaultCache(PluginDefaults.ArchwayStoreEmployeePositionAllNoPaginationCacheKey);
 
             if (string.IsNullOrWhiteSpace(jobType))
-                return _cacheManager.Get(cacheKey, () => _archwayStoreEmployeePositionRepository.Table.ToList());
+                return await _cacheManager.GetAsync(cacheKey, () => _archwayStoreEmployeePositionRepository.Table.ToListAsync());
 
-            return _cacheManager.Get(cacheKey,
-                () => _archwayStoreEmployeePositionRepository.Table.Where(p => p.JobType == jobType).ToList());
+            return await _cacheManager.GetAsync(cacheKey,
+                () => _archwayStoreEmployeePositionRepository.Table.Where(p => p.JobType == jobType).ToListAsync());
         }
 
-        public void InsertArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position)
+        public async Task InsertArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position)
         {
             if (position == null)
                 throw new ArgumentNullException(nameof(position));
 
-            _archwayStoreEmployeePositionRepository.Insert(position);
+            await _archwayStoreEmployeePositionRepository.InsertAsync(position);
         }
 
-        public void UpdateArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position)
+        public async Task UpdateArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position)
         {
             if (position == null)
                 throw new ArgumentNullException(nameof(position));
 
-            _archwayStoreEmployeePositionRepository.Update(position);
+            await _archwayStoreEmployeePositionRepository.UpdateAsync(position);
         }
 
-        public void DeleteArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position)
+        public async Task DeleteArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position)
         {
             if (position == null)
                 throw new ArgumentNullException(nameof(position));
 
-            _archwayStoreEmployeePositionRepository.Delete(position);
+            await _archwayStoreEmployeePositionRepository.DeleteAsync(position);
         }
 
-        public ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMapping(
+        public  async Task<ArchwayStudentRegistrationFieldKeyMapping> GetArchwayStudentRegistrationFieldKeyMapping(
             string fieldControlName)
         {
             if (string.IsNullOrWhiteSpace(fieldControlName))
                 return null;
 
-            return _archwayStudentRegistrationFieldKeyMappingRepository.Table
-                .FirstOrDefault(x => x.FieldControlName == fieldControlName);
+            return await _archwayStudentRegistrationFieldKeyMappingRepository.Table
+                .FirstOrDefaultAsync(x => x.FieldControlName == fieldControlName);
         }
 
-        public void InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(
+        public async Task InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(
             ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping)
         {
             if (fieldKeyMapping == null)
@@ -255,71 +259,75 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             if (currentMapping != null)
             {
                 currentMapping.FieldKey = fieldKeyMapping.FieldKey;
-                _archwayStudentRegistrationFieldKeyMappingRepository.Update(currentMapping);
+                await _archwayStudentRegistrationFieldKeyMappingRepository.UpdateAsync(currentMapping);
             }
             else
             {
-                _archwayStudentRegistrationFieldKeyMappingRepository.Insert(fieldKeyMapping);
+                await _archwayStudentRegistrationFieldKeyMappingRepository.InsertAsync(fieldKeyMapping);
             }
         }
 
-        public void DeleteArchwayStudentRegistrationFieldKeyMapping(ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping)
+        public async Task DeleteArchwayStudentRegistrationFieldKeyMapping(
+            ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping)
         {
             if (fieldKeyMapping == null)
                 throw new ArgumentNullException(nameof(fieldKeyMapping));
 
-            _archwayStudentRegistrationFieldKeyMappingRepository.Delete(fieldKeyMapping);
+            await _archwayStudentRegistrationFieldKeyMappingRepository.DeleteAsync(fieldKeyMapping);
         }
 
-        public void UpdateArchwayStudentRegistrationFieldKeyMapping(ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping)
+        public async Task UpdateArchwayStudentRegistrationFieldKeyMapping(
+            ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping)
         {
             if (fieldKeyMapping == null)
                 throw new ArgumentNullException(nameof(fieldKeyMapping));
 
-            _archwayStudentRegistrationFieldKeyMappingRepository.Update(fieldKeyMapping);
+            await _archwayStudentRegistrationFieldKeyMappingRepository.UpdateAsync(fieldKeyMapping);
         }
 
-        public IList<ArchwayStudentRegistrationFieldAnswer> GetArchwayStudentRegistrationFieldAnswers(int customerId, int fieldId)
+        public async Task<IList<ArchwayStudentRegistrationFieldAnswer>> GetArchwayStudentRegistrationFieldAnswers(
+            int customerId, int fieldId)
         {
             if (customerId < 1)
                 return new List<ArchwayStudentRegistrationFieldAnswer>();
 
-            return _archwayStudentRegistrationFieldAnswerRepository.Table
-                .Where(x => x.CustomerId == customerId && x.FieldId == fieldId).ToList();
+            return await _archwayStudentRegistrationFieldAnswerRepository.Table
+                .Where(x => x.CustomerId == customerId && x.FieldId == fieldId).ToListAsync();
         }
 
-        public void InsertArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer)
+        public async Task InsertArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer)
         {
             if (answer == null)
                 throw new ArgumentNullException(nameof(answer));
 
-            _archwayStudentRegistrationFieldAnswerRepository.Insert(answer);
+            await _archwayStudentRegistrationFieldAnswerRepository.InsertAsync(answer);
         }
 
-        public void DeleteArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer)
+        public async Task DeleteArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer)
         {
             if (answer == null)
                 throw new ArgumentNullException(nameof(answer));
 
-            if (_archwayStudentRegistrationFieldAnswerRepository.Table
-                .Any(x =>
+            if (await _archwayStudentRegistrationFieldAnswerRepository.Table
+                .AnyAsync(x =>
                     x.CustomerId == answer.CustomerId &&
                     x.FieldId == answer.FieldId &&
                     x.FieldKey == answer.FieldKey))
                 return;
 
-            _archwayStudentRegistrationFieldAnswerRepository.Insert(answer);
+            await _archwayStudentRegistrationFieldAnswerRepository.InsertAsync(answer);
         }
 
-        public void UpdateArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer)
+        public async Task UpdateArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer)
         {
             if (answer == null)
                 throw new ArgumentNullException(nameof(answer));
 
-            _archwayStudentRegistrationFieldAnswerRepository.Insert(answer);
+            await _archwayStudentRegistrationFieldAnswerRepository.InsertAsync(answer);
         }
 
-        public Dictionary<string, string> ParseArchwayStoreEmployeeRegistrationFields(int fieldId, IFormCollection form)
+        public async Task<Dictionary<string, string>> ParseArchwayStoreEmployeeRegistrationFields(int fieldId,
+            IFormCollection form)
         {
             if (form == null)
                 throw new ArgumentNullException(nameof(form));
@@ -334,20 +342,21 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             var customFieldsInForm = form.Where(x => x.Key.Contains(controlId));
             foreach (var (key, value) in customFieldsInForm)
             {
-                var registrationFieldKey = key.Substring(key.IndexOf(PluginDefaults.HtmlFieldPrefix, StringComparison.Ordinal) +
-                                                                             PluginDefaults.HtmlFieldPrefix.Length + 1);
+                var registrationFieldKey = key[(key.IndexOf(PluginDefaults.HtmlFieldPrefix, StringComparison.Ordinal) +
+                                                PluginDefaults.HtmlFieldPrefix.Length + 1)..];
                 result.Add(registrationFieldKey, value);
             }
 
             return result;
         }
 
-        public void SaveArchwayStoreEmployeeRegistrationFields(Customer customer, int fieldId, Dictionary<string, string> fields)
+        public async Task SaveArchwayStoreEmployeeRegistrationFields(Customer customer, int fieldId,
+            Dictionary<string, string> fields)
         {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
 
-            _nexportService.InsertNexportRegistrationFieldAnswer(
+            await _nexportService.InsertNexportRegistrationFieldAnswer(
                 new NexportRegistrationFieldAnswer
                 {
                     CustomerId = customer.Id,
@@ -358,10 +367,10 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
 
             foreach (var field in fields)
             {
-                var fieldKeyMapping = GetArchwayStudentRegistrationFieldKeyMapping(field.Key);
+                var fieldKeyMapping = await GetArchwayStudentRegistrationFieldKeyMapping(field.Key);
                 if (fieldKeyMapping != null)
                 {
-                    InsertArchwayStudentRegistrationFieldAnswer(
+                    await InsertArchwayStudentRegistrationFieldAnswer(
                         new ArchwayStudentRegistrationFieldAnswer
                         {
                             CustomerId = customer.Id,
@@ -374,9 +383,10 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             }
         }
 
-        public Dictionary<string, string> ProcessArchwayStoreEmployeeRegistrationFields(int customerId, int fieldId)
+        public async Task<Dictionary<string, string>> ProcessArchwayStoreEmployeeRegistrationFields(int customerId,
+            int fieldId)
         {
-            var answers = GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
+            var answers = await GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
 
             return answers.ToDictionary(answer => answer.FieldKey, answer => answer.TextValue);
         }

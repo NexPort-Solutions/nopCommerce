@@ -17,16 +17,18 @@ using Nop.Services.Logging;
 using Nop.Services.Cms;
 using Nop.Services.Plugins;
 using Nop.Services.Discounts;
-using Nop.Services.Tasks;
 using Nop.Web.Framework.Menu;
 using Nop.Web.Framework.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
+using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
+using System.Threading.Tasks;
 
-namespace Nop.Plugin.Misc.Nexport {
+namespace Nop.Plugin.Misc.Nexport
+{
     public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
     {
         private readonly IRepository<NexportProductMapping> _nexportProductRepository;
@@ -76,10 +78,11 @@ namespace Nop.Plugin.Misc.Nexport {
             _logger = logger;
         }
 
-        public void ManageSiteMap(SiteMapNode rootNode)
+        public async Task ManageSiteMapAsync(SiteMapNode rootNode)
         {
             var pluginNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Nexport");
-            if (pluginNode != null) return;
+            if (pluginNode != null)
+                return;
 
             if (_nexportSettings == null || string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return;
@@ -94,7 +97,7 @@ namespace Nop.Plugin.Misc.Nexport {
 
             node.ChildNodes.Add(new SiteMapNode()
             {
-                Visible = _permissionService.Authorize(StandardPermissionProvider.ManagePlugins),
+                Visible = await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins),
                 Title = "Configuration",
                 SystemName = "Nexport Integration - Configuration",
                 ControllerName = "NexportIntegration",
@@ -104,7 +107,7 @@ namespace Nop.Plugin.Misc.Nexport {
 
             node.ChildNodes.Add(new SiteMapNode()
             {
-                Visible = _permissionService.Authorize(StandardPermissionProvider.ManageStores),
+                Visible = await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores),
                 Title = "Store Configuration",
                 SystemName = "Nexport Integration - Store Configuration",
                 ControllerName = "Store",
@@ -114,7 +117,7 @@ namespace Nop.Plugin.Misc.Nexport {
 
             node.ChildNodes.Add(new SiteMapNode()
             {
-                Visible = _permissionService.Authorize(NexportPermissionProvider.ManageSupplementalInfo),
+                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo),
                 Title = "Supplemental Info",
                 SystemName = NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME,
                 ControllerName = "NexportIntegration",
@@ -130,7 +133,7 @@ namespace Nop.Plugin.Misc.Nexport {
             return $"{_webHelper.GetStoreLocation()}Admin/NexportIntegration/Configure";
         }
 
-        public override void Install()
+        public override async Task InstallAsync()
         {
             try
             {
@@ -152,46 +155,46 @@ namespace Nop.Plugin.Misc.Nexport {
             }
 
             var settings = new NexportSettings();
-            _settingService.SaveSetting(settings);
+            await _settingService.SaveSettingAsync(settings);
 
             if (!_widgetSettings.ActiveWidgetSystemNames.Contains(NexportDefaults.SystemName))
             {
                 _widgetSettings.ActiveWidgetSystemNames.Add(NexportDefaults.SystemName);
-                _settingService.SaveSetting(_widgetSettings);
+                await _settingService.SaveSettingAsync(_widgetSettings);
             }
 
-            _nexportPluginService.AddMessageTemplates();
+            await _nexportPluginService.AddMessageTemplatesAsync();
 
-            _nexportPluginService.InstallScheduledTask();
+            await _nexportPluginService.InstallScheduledTaskAsync();
 
-            _nexportPluginService.AddActivityLogTypes();
+            await _nexportPluginService.AddActivityLogTypesAsync();
 
-            _nexportPluginService.AddOrUpdateResources();
+            await _nexportPluginService.AddOrUpdateResourcesAsync();
 
-            _nexportPluginService.InstallPermissionProvider();
+            await _nexportPluginService.InstallPermissionProviderAsync();
 
-            base.Install();
+            await base.InstallAsync();
         }
 
-        public override void Uninstall()
+        public override async Task UninstallAsync()
         {
             if (_widgetSettings.ActiveWidgetSystemNames.Contains(NexportDefaults.SystemName))
             {
                 _widgetSettings.ActiveWidgetSystemNames.Remove(NexportDefaults.SystemName);
-                _settingService.SaveSetting(_widgetSettings);
+                await _settingService.SaveSettingAsync(_widgetSettings);
             }
 
-            _settingService.DeleteSetting<NexportSettings>();
+            await _settingService.DeleteSettingAsync<NexportSettings>();
 
-            _nexportPluginService.DeleteMessageTemplates();
+            await _nexportPluginService.DeleteMessageTemplatesAsync();
 
-            _nexportPluginService.UninstallScheduledTask();
+            await _nexportPluginService.UninstallScheduledTaskAsync();
 
-            _nexportPluginService.DeleteActivityLogTypes();
+            await _nexportPluginService.DeleteActivityLogTypesAsync();
 
-            _nexportPluginService.DeleteResources();
+            await _nexportPluginService.DeleteResourcesAsync();
 
-            _nexportPluginService.UninstallPermissionProvider();
+            await _nexportPluginService.UninstallPermissionProviderAsync();
 
             try
             {
@@ -205,29 +208,30 @@ namespace Nop.Plugin.Misc.Nexport {
                 // Ignore
             }
 
-            base.Uninstall();
+            await base.UninstallAsync();
         }
 
         public bool HideInWidgetList => true;
 
-        public IList<string> GetWidgetZones()
+        public Task<IList<string>> GetWidgetZonesAsync()
         {
-            return new List<string>
-            {
-                AdminWidgetZones.StoreDetailsBottom,
-                AdminWidgetZones.ProductDetailsButtons,
-                AdminWidgetZones.ProductDetailsBlock,
-                AdminWidgetZones.CustomerDetailsBlock,
-                AdminWidgetZones.CustomerUserDetailsBlock,
-                AdminWidgetZones.CategoryDetailsBlock,
-                AdminWidgetZones.OrderDetailsBlock,
-                PublicWidgetZones.OrderDetailsProductLine,
-                PublicWidgetZones.AccountNavigationAfter,
-                PublicWidgetZones.HeaderLinksBefore,
-                PublicWidgetZones.OrderSummaryCartFooter,
-                PublicWidgetZones.ProductDetailsOverviewTop,
-                NexportDefaults.NexportRegistrationFieldsZone
-            };
+            return Task.FromResult<IList<string>>(
+                new List<string>
+                {
+                    AdminWidgetZones.StoreDetailsBottom,
+                    AdminWidgetZones.ProductDetailsButtons,
+                    AdminWidgetZones.ProductDetailsBlock,
+                    AdminWidgetZones.CustomerDetailsBlock,
+                    AdminWidgetZones.CustomerUserDetailsBlock,
+                    AdminWidgetZones.CategoryDetailsBlock,
+                    AdminWidgetZones.OrderDetailsBlock,
+                    PublicWidgetZones.OrderDetailsProductLine,
+                    PublicWidgetZones.AccountNavigationAfter,
+                    PublicWidgetZones.HeaderLinksBefore,
+                    PublicWidgetZones.OrderSummaryCartFooter,
+                    PublicWidgetZones.ProductDetailsOverviewTop,
+                    NexportDefaults.NexportRegistrationFieldsZone
+                });
         }
 
         public string GetWidgetViewComponentName(string widgetZone)

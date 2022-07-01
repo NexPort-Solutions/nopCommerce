@@ -4,12 +4,8 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
 {
-    public class MapNexportProductModel : BaseNopModel
+    public record MapNexportProductModel : BaseNopModel
     {
-        public MapNexportProductModel()
-        {
-        }
-
         public int NopProductId { get; set; }
 
         /// <summary>

@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using NexportApi.Client;
 using Nop.Data;
 using Nop.Services.Cms;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Logging;
-using Nop.Services.Tasks;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Services.ScheduleTasks;
 
 namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 {
@@ -43,29 +44,32 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             _nexportService = nexportService;
         }
 
-        public void Execute()
+        public async Task ExecuteAsync()
         {
-            if (!_widgetPluginManager.IsPluginActive("Misc.Nexport"))
+            if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
                 return;
 
             try
             {
-                _batchSize = _settingService.GetSettingByKey(
+                _batchSize = await _settingService.GetSettingByKeyAsync(
                     NexportDefaults.NexportGroupMembershipRemovalTaskBatchSizeSettingKey,
                     NexportDefaults.NexportGroupMembershipRemovalTaskBatchSize);
 
-                var answers = (_nexportGroupMembershipRemovalQueueRepository.Table.OrderBy(q => q.UtcDateCreated)
-                    .Select(q => q.Id)).Take(_batchSize).ToList();
+                var answers = await _nexportGroupMembershipRemovalQueueRepository.Table
+                    .OrderBy(q => q.UtcDateCreated)
+                    .Select(q => q.Id)
+                    .Take(_batchSize)
+                    .ToListAsync();
 
-                ProcessNexportGroupMembershipRemoval(answers);
+                await ProcessNexportGroupMembershipRemovalAsync(answers);
             }
             catch (Exception ex)
             {
-                _logger.Error("Cannot process Nexport group membership removal", ex);
+                await _logger.ErrorAsync("Cannot process Nexport group membership removal", ex);
             }
         }
 
-        public void ProcessNexportGroupMembershipRemoval(IList<int> queueItemIds)
+        public async Task ProcessNexportGroupMembershipRemovalAsync(IList<int> queueItemIds)
         {
             try
             {
@@ -73,43 +77,43 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 {
                     try
                     {
-                        var queueItem = _nexportGroupMembershipRemovalQueueRepository.GetById(queueItemId);
+                        var queueItem = await _nexportGroupMembershipRemovalQueueRepository.GetByIdAsync(queueItemId);
 
                         if (queueItem == null)
                             return;
 
-                        _logger.Debug($"Begin processing group membership removal for customer {queueItem.CustomerId}");
+                        _logger.DebugAsync($"Begin processing group membership removal for customer {queueItem.CustomerId}");
 
-                        var customer = _customerService.GetCustomerById(queueItem.CustomerId);
+                        var customer = await _customerService.GetCustomerByIdAsync(queueItem.CustomerId);
 
                         if (customer != null)
                         {
                             var answerMembership =
-                                _nexportService.GetNexportSupplementalInfoAnswerMembership(
-                                    queueItem.NexportMembershipId);
+                                await _nexportService.GetNexportSupplementalInfoAnswerMembership(queueItem.NexportMembershipId);
 
                             if (answerMembership != null)
                             {
-                                _nexportService.DeleteNexportSupplementalInfoAnswerMembership(answerMembership);
+                                await _nexportService.DeleteNexportSupplementalInfoAnswerMembership(answerMembership);
                             }
 
                             try
                             {
-                                var removalMembership = _nexportService.RemoveNexportMemberships(new List<Guid>(1)
-                                {
-                                    queueItem.NexportMembershipId
-                                });
+                                var removalMembership = await _nexportService.RemoveNexportMembershipsAsync(
+                                    new List<Guid>(1)
+                                    {
+                                        queueItem.NexportMembershipId
+                                    });
 
                                 if (removalMembership.Count == 0)
                                     throw new Exception("Failed to remove membership in Nexport");
 
-                                _customerActivityService.InsertActivity(customer,
+                                await _customerActivityService.InsertActivityAsync(customer,
                                     NexportDefaults.NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE,
                                     $"Successfully removed membership [{queueItem.NexportMembershipId}] in Nexport.");
                             }
                             catch (Exception ex)
                             {
-                                _customerActivityService.InsertActivity(customer,
+                                await _customerActivityService.InsertActivityAsync(customer,
                                     NexportDefaults
                                         .NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE,
                                     $"Cannot remove membership [{queueItem.NexportMembershipId}] in Nexport." +
@@ -117,19 +121,19 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                             }
                         }
 
-                        _nexportService.DeleteNexportGroupMembershipRemovalQueueItem(queueItem);
+                        await _nexportService.DeleteNexportGroupMembershipRemovalQueueItem(queueItem);
 
-                        _logger.Information($"Group membership removal queue item {queueItemId} has been processed and removed!");
+                        await _logger.InformationAsync($"Group membership removal queue item {queueItemId} has been processed and removed!");
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Cannot process the NexportGroupMembershipRemovalQueue item with Id {queueItemId}", ex);
+                        await _logger.ErrorAsync($"Cannot process the NexportGroupMembershipRemovalQueue item with Id {queueItemId}", ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error($"Cannot process the NexportGroupMembershipRemovalQueue", ex);
+                await _logger.ErrorAsync($"Cannot process the NexportGroupMembershipRemovalQueue", ex);
             }
         }
     }

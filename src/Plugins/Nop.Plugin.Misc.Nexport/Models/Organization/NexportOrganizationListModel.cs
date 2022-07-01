@@ -4,13 +4,8 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Organization
 {
-    public class NexportOrganizationListModel : BaseNopModel
+    public record NexportOrganizationListModel : BaseNopModel
     {
-        public NexportOrganizationListModel()
-        {
-            Organizations = new List<OrganizationResponseItem>();
-        }
-
-        public IList<OrganizationResponseItem> Organizations { get; set; }
+        public IList<OrganizationResponseItem> Organizations { get; set; } = new List<OrganizationResponseItem>();
     }
 }

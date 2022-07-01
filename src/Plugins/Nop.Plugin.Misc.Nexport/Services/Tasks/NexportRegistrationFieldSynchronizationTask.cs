@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using NexportApi.Model;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -8,7 +9,7 @@ using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Services.Cms;
 using Nop.Services.Logging;
-using Nop.Services.Tasks;
+using Nop.Services.ScheduleTasks;
 
 namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 {
@@ -34,28 +35,29 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             _nexportService = nexportService;
         }
 
-        public void Execute()
+        public async Task ExecuteAsync()
         {
-            if (!_widgetPluginManager.IsPluginActive("Misc.Nexport"))
+            if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
                 return;
 
             try
             {
-                var syncItemIds = _nexportRegistrationFieldSynchronizationQueueRepository.Table
+                var syncItemIds = await _nexportRegistrationFieldSynchronizationQueueRepository.Table
                     .OrderBy(item => item.UtcDateLastAttempt)
                     .ThenBy(item => item.UtcDateCreated)
                     .Select(item => item.Id)
-                    .Take(_batchSize).ToList();
+                    .Take(_batchSize)
+                    .ToListAsync();
 
-                SynchronizeRegistrationFields(syncItemIds);
+                await SynchronizeRegistrationFieldsAsync(syncItemIds);
             }
             catch (Exception ex)
             {
-                _logger.Error("Cannot synchronize registration fields with Nexport", ex);
+                await _logger.ErrorAsync("Cannot synchronize registration fields with Nexport", ex);
             }
         }
 
-        public void SynchronizeRegistrationFields(IList<int> queueItemIds)
+        public async Task SynchronizeRegistrationFieldsAsync(IList<int> queueItemIds)
         {
             try
             {
@@ -63,28 +65,28 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 {
                     try
                     {
-                        var syncItem = _nexportRegistrationFieldSynchronizationQueueRepository.GetById(queueItemId);
+                        var syncItem = await _nexportRegistrationFieldSynchronizationQueueRepository.GetByIdAsync(queueItemId);
 
                         if (syncItem == null)
                             return;
 
-                        _logger.Debug($"Begin registration fields synchronization for customer {syncItem.CustomerId}");
+                        await _logger.DebugAsync($"Begin registration fields synchronization for customer {syncItem.CustomerId}");
 
-                        var userMapping = _nexportService.FindUserMappingByCustomerId(syncItem.CustomerId);
+                        var userMapping = await _nexportService.FindUserMappingByCustomerId(syncItem.CustomerId);
                         if (userMapping != null)
                         {
                             if (syncItem.Attempt > MAX_ATTEMPT_COUNT)
                             {
-                                _nexportRegistrationFieldSynchronizationQueueRepository.Delete(syncItem);
+                                await _nexportRegistrationFieldSynchronizationQueueRepository.DeleteAsync(syncItem);
                             }
                             else
                             {
                                 try
                                 {
                                     // Synchronize customer custom profile fields with Nexport
-                                    SynchronizeRegistrationFields(syncItem, userMapping);
+                                    await SynchronizeRegistrationFields(syncItem, userMapping);
 
-                                    _nexportRegistrationFieldSynchronizationQueueRepository.Delete(syncItem);
+                                    await _nexportRegistrationFieldSynchronizationQueueRepository.DeleteAsync(syncItem);
                                 }
                                 catch (Exception)
                                 {
@@ -92,32 +94,31 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                                     if (syncItem.Attempt <= MAX_ATTEMPT_COUNT)
                                     {
-                                        _nexportService.UpdateNexportRegistrationFieldSynchronizationQueueItem(syncItem);
+                                        await _nexportService.UpdateNexportRegistrationFieldSynchronizationQueueItem(syncItem);
                                     }
                                     else
                                     {
-                                        _nexportRegistrationFieldSynchronizationQueueRepository.Delete(syncItem);
+                                        await _nexportRegistrationFieldSynchronizationQueueRepository.DeleteAsync(syncItem);
                                     }
                                 }
 
-                                _logger.Debug("Synchronize registration fields in Nexport completed.");
+                                await _logger.DebugAsync("Synchronize registration fields in Nexport completed.");
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Cannot process the NexportRegistrationFieldSynchronizationQueue item with Id {queueItemId}", ex);
+                        await _logger.ErrorAsync($"Cannot process the NexportRegistrationFieldSynchronizationQueue item with Id {queueItemId}", ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error("Cannot synchronize registration field with Nexport", ex);
+                await _logger.ErrorAsync("Cannot synchronize registration field with Nexport", ex);
             }
         }
 
-        private void SynchronizeRegistrationFields(NexportRegistrationFieldSynchronizationQueueItem syncItem,
-            NexportUserMapping userMapping)
+        private async Task SynchronizeRegistrationFields(NexportRegistrationFieldSynchronizationQueueItem syncItem, NexportUserMapping userMapping)
         {
             if (syncItem == null)
                 throw new ArgumentNullException(nameof(syncItem));
@@ -125,7 +126,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             if (userMapping == null)
                 throw new ArgumentNullException(nameof(userMapping));
 
-            var registrationFields = _nexportService.GetNexportRegistrationFieldAnswers(userMapping.NopUserId);
+            var registrationFields = await _nexportService.GetNexportRegistrationFieldAnswers(userMapping.NopUserId);
 
             if (registrationFields.Count > 0)
             {
@@ -133,22 +134,22 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                 try
                 {
-                    nexportSubscriptions = _nexportService.FindAllSubscriptions(userMapping.NexportUserId).ToList();
+                    nexportSubscriptions = (await _nexportService.FindAllSubscriptionsAsync(userMapping.NexportUserId)).ToList();
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Cannot retrieve subscriptions for customer {userMapping.NopUserId} in Nexport", ex);
+                    await _logger.ErrorAsync($"Cannot retrieve subscriptions for customer {userMapping.NopUserId} in Nexport", ex);
                     throw;
                 }
 
                 if (nexportSubscriptions.Count > 0)
                 {
                     var profileFields =
-                        _nexportService.ConvertFieldAnswersToSubmissionProfileFields(
+                        await _nexportService.ConvertFieldAnswersToSubmissionProfileFields(
                             registrationFields.Where(x => !x.IsCustomField).ToList());
 
                     var customFields =
-                        _nexportService.ConvertCustomFieldAnswersToSubmissionProfileFields(
+                        await _nexportService.ConvertCustomFieldAnswersToSubmissionProfileFieldsAsync(
                             registrationFields.Where(x => x.IsCustomField).ToList());
 
                     var finalFields = profileFields.Concat(customFields)
@@ -159,23 +160,23 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                     {
                         try
                         {
-                            var result = _nexportService.SetCustomProfileFieldValues(subscription.SubscriptionId, finalFields);
+                            var result = await _nexportService.SetCustomProfileFieldValuesAsync(subscription.SubscriptionId, finalFields);
 
                             if (result != null && !string.IsNullOrEmpty(result.Message))
                             {
-                                _logger.Error($"Error occurred when setting custom profile fields for customer {userMapping.NopUserId}: {result.Message}");
+                                await _logger.ErrorAsync($"Error occurred when setting custom profile fields for customer {userMapping.NopUserId}: {result.Message}");
                             }
 
-                            _logger.Information($"Successfully synchronize custom profile fields for customer {userMapping.NopUserId} with the subscriber Id {subscription.SubscriptionId}");
+                            await _logger.InformationAsync($"Successfully synchronize custom profile fields for customer {userMapping.NopUserId} with the subscriber Id {subscription.SubscriptionId}");
                         }
                         catch (Exception ex)
                         {
-                            _logger.Error($"Cannot set custom profile fields for customer {userMapping.NopUserId} in Nexport", ex);
+                            await _logger.ErrorAsync($"Cannot set custom profile fields for customer {userMapping.NopUserId} in Nexport", ex);
                             throw;
                         }
                     }
 
-                    _logger.Information($"Successfully synchronize all custom profile fields for customer {userMapping.NopUserId}");
+                    await _logger.InformationAsync($"Successfully synchronize all custom profile fields for customer {userMapping.NopUserId}");
                 }
             }
         }

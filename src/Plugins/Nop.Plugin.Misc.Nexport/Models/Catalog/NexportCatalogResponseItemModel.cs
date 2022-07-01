@@ -4,7 +4,7 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Catalog
 {
-    public class NexportCatalogResponseItemModel : BaseNopModel
+    public record NexportCatalogResponseItemModel : BaseNopModel
     {
         public Guid OrgId { get; set; }
 

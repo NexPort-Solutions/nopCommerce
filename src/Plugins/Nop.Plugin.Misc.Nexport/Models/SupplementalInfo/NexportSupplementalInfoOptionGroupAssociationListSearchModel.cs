@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
-    public class NexportSupplementalInfoOptionGroupAssociationListSearchModel : BaseSearchModel
+    public record NexportSupplementalInfoOptionGroupAssociationListSearchModel : BaseSearchModel
     {
         public NexportSupplementalInfoOptionGroupAssociationListSearchModel()
         {

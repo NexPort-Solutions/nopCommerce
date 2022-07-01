@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Models
 {
-    public class ArchwayStoreCityModel : BaseNopModel
+    public record ArchwayStoreCityModel : BaseNopModel
     {
         public string name { get; set; }
     }

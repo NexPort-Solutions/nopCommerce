@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Nop.Plugin.Misc.Nexport.Archway.Models;
 using Nop.Web.Models.Directory;
 
@@ -6,14 +7,17 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
 {
     public interface IArchwayStudentEmployeeRegistrationFieldModelFactory
     {
-        ArchwayStudentEmployeeRegistrationFieldModel PrepareArchwayStudentEmployeeRegistrationFieldModel(int fieldId);
+        Task<ArchwayStudentEmployeeRegistrationFieldModel> PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(
+            int fieldId);
 
-        ArchwayStudentEmployeeRegistrationFieldOptionModel PrepareArchwayStudentEmployeeRegistrationFieldOptionModel(int fieldId);
+        Task<ArchwayStudentEmployeeRegistrationFieldOptionModel>
+            PrepareArchwayStudentEmployeeRegistrationFieldOptionModelAsync(int fieldId);
 
-        IList<ArchwayStoreCityModel> GetArchwayStoreCitiesByState(string state, bool addSelectCityItem);
+        Task<IList<ArchwayStoreCityModel>> GetArchwayStoreCitiesByState(string state, bool addSelectCityItem);
 
-        IList<ArchwayStoreAddressModel> GetArchwayStoreAddressesByCity(string city, bool addSelectAddressItem);
+        Task<IList<ArchwayStoreAddressModel>> GetArchwayStoreAddressesByCity(string city, bool addSelectAddressItem);
 
-        IList<ArchwayStoreEmployeePositionModel> GetArchwayStoreEmployeePositionsByStore(string storeNumber, bool addSelectPositionItem);
+        Task<IList<ArchwayStoreEmployeePositionModel>> GetArchwayStoreEmployeePositionsByStore(string storeNumber,
+            bool addSelectPositionItem);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
@@ -26,13 +27,13 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _storeContext = storeContext;
         }
 
-        public IViewComponentResult Invoke(string widgetZone, object additionalData)
+        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return Content("");
 
             var model =
-                _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldsModel(_storeContext.CurrentStore);
+                _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldsModelAsync(await _storeContext.GetCurrentStoreAsync());
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportRegistrationFields.cshtml", model);
         }

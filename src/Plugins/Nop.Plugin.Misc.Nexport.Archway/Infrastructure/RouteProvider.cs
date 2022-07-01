@@ -37,8 +37,8 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
 
             if (settingService != null && storeContext != null)
             {
-                var customEnrollmentRouteSetting = settingService.GetSetting(PluginDefaults.CustomEnrollmentRouteSettingKey,
-                    storeContext.CurrentStore.Id, true);
+                var customEnrollmentRouteSetting = (settingService.GetSettingAsync(PluginDefaults.CustomEnrollmentRouteSettingKey,
+                    storeContext.GetCurrentStore().Id, true)).Result;
                 if (customEnrollmentRouteSetting != null)
                 {
                     var customEnrollmentRoute = !string.IsNullOrWhiteSpace(customEnrollmentRouteSetting.Value)

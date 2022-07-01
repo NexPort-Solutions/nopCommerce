@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Nop.Services.Plugins;
 
@@ -17,10 +18,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         string GetCustomFieldPrefix();
 
-        Dictionary<string, string> ParseCustomRegistrationFields(int fieldId, IFormCollection form);
+        Task<Dictionary<string, string>> ParseCustomRegistrationFields(int fieldId, IFormCollection form);
 
-        void SaveCustomRegistrationFields(int fieldId, Dictionary<string, string> fields);
+        Task SaveCustomRegistrationFields(int fieldId, Dictionary<string, string> fields);
 
-        Dictionary<string, string> ProcessCustomRegistrationFields(int customerId, int fieldId);
+        Task<Dictionary<string, string>> ProcessCustomRegistrationFields(int customerId, int fieldId);
     }
 }

@@ -4,7 +4,7 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Catalog
 {
-    public class NexportCatalogSearchModel : BaseSearchModel
+    public record NexportCatalogSearchModel : BaseSearchModel
     {
         public NexportCatalogSearchModel()
         {

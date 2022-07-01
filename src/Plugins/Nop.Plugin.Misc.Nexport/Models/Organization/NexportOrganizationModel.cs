@@ -3,7 +3,7 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Organization
 {
-    public class NexportOrganizationModel : BaseNopModel
+    public record NexportOrganizationModel : BaseNopModel
     {
         public Guid OrgId { get; set; }
 

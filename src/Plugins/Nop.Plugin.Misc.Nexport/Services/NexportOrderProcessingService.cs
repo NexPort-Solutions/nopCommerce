@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
@@ -8,13 +9,13 @@ using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Domain.Tax;
+using Nop.Core.Events;
 using Nop.Services.Affiliates;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Discounts;
-using Nop.Services.Events;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
@@ -62,6 +63,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IProductAttributeFormatter productAttributeFormatter,
             IProductAttributeParser productAttributeParser,
             IProductService productService,
+            IReturnRequestService returnRequestService,
             IRewardPointService rewardPointService,
             IShipmentService shipmentService,
             IShippingService shippingService,
@@ -79,13 +81,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
             ShippingSettings shippingSettings,
             TaxSettings taxSettings,
             NexportService nexportService) :
-            base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter, countryService, currencyService,
-                customerActivityService, customerService, customNumberFormatter, discountService, encryptionService, eventPublisher,
-                genericAttributeService, giftCardService, languageService, localizationService, logger, orderService, orderTotalCalculationService,
-                paymentPluginManager, paymentService, pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser,
-                productService, rewardPointService, shipmentService, shippingService, shoppingCartService, stateProvinceService, taxService, vendorService,
-                webHelper, workContext, workflowMessageService, localizationSettings, orderSettings, paymentSettings,
-                rewardPointsSettings, shippingSettings, taxSettings)
+            base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter,
+                countryService, currencyService, customerActivityService, customerService,
+                customNumberFormatter, discountService, encryptionService, eventPublisher,
+                genericAttributeService, giftCardService, languageService, localizationService,
+                logger, orderService, orderTotalCalculationService, paymentPluginManager, paymentService,
+                pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser, productService,
+                returnRequestService, rewardPointService, shipmentService, shippingService, shoppingCartService,
+                stateProvinceService, taxService, vendorService, webHelper, workContext, workflowMessageService,
+                localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
         {
             _orderService = orderService;
             _orderSettings = orderSettings;
@@ -100,7 +104,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         /// If the order has any item that has Nexport mapping and is being processed by the scheduled task, then the status will not be set to complete.
         /// </summary>
         /// <param name="order">The order</param>
-        public override void CheckOrderStatus(Order order)
+        public override async Task CheckOrderStatusAsync(Order order)
         {
             if (order == null)
                 throw new ArgumentNullException(nameof(order));
@@ -109,7 +113,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 // Ensure that paid date is set
                 order.PaidDateUtc = DateTime.UtcNow;
-                _orderService.UpdateOrder(order);
+                await _orderService.UpdateOrderAsync(order);
             }
 
             switch (order.OrderStatus)
@@ -118,14 +122,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     if (order.PaymentStatus == PaymentStatus.Authorized ||
                         order.PaymentStatus == PaymentStatus.Paid)
                     {
-                        SetOrderStatus(order, OrderStatus.Processing, false);
+                        await SetOrderStatusAsync(order, OrderStatus.Processing, false);
                     }
 
                     if (order.ShippingStatus == ShippingStatus.PartiallyShipped ||
                         order.ShippingStatus == ShippingStatus.Shipped ||
                         order.ShippingStatus == ShippingStatus.Delivered)
                     {
-                        SetOrderStatus(order, OrderStatus.Processing, false);
+                        await SetOrderStatusAsync(order, OrderStatus.Processing, false);
                     }
 
                     break;
@@ -159,18 +163,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 }
             }
 
-            var orderItems = _orderService.GetOrderItems(order.Id);
+            var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
 
             // Check if the order has any item that has Nexport mapping
-            var hasAnyNexportProduct = orderItems
-                .Select(item => _nexportService.GetProductMappingByNopProductId(item.ProductId))
-                .Any(productMapping => productMapping != null);
+            var hasAnyNexportProduct = await orderItems
+                .SelectAwait(async item => await _nexportService.GetProductMappingByNopProductId(item.ProductId))
+                .AnyAsync(productMapping => productMapping != null);
 
             // If the order contains Nexport product and is being processed, then do not set the status to complete
             if (hasAnyNexportProduct)
             {
-                if (_nexportService.HasNexportOrderProcessingQueueItem(order.Id) ||
-                    _nexportService.GetNexportOrderInvoiceItems(order.Id, true).Any())
+                if (await _nexportService.HasNexportOrderProcessingQueueItem(order.Id) ||
+                    (await _nexportService.GetNexportOrderInvoiceItems(order.Id, true)).Any())
                 {
                     completed = false;
                 }
@@ -178,7 +182,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             if (completed)
             {
-                SetOrderStatus(order, OrderStatus.Complete, true);
+                await SetOrderStatusAsync(order, OrderStatus.Complete, true);
             }
         }
     }
