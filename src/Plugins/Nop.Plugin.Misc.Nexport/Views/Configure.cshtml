@@ -8,7 +8,7 @@
 @{
     Layout = "~/Areas/Admin/Views/Shared/_ConfigurePlugin.cshtml";
 
-    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
 }
 
 <form asp-controller="NexportIntegration" asp-action="Configure" method="post">

@@ -15,8 +15,9 @@
 
     if (Model.Type == NexportProductTypeEnum.Section)
     {
-        var hideSectionCEUs = genericAttributeService.GetAttribute<bool>(storeContext.CurrentStore,
-            NexportDefaults.HIDE_SECTION_CEUS_IN_PRODUCT_PAGE_SETTING_KEY, storeContext.CurrentStore.Id);
+        var currentStore = await storeContext.GetCurrentStoreAsync();
+        var hideSectionCEUs = await genericAttributeService.GetAttributeAsync<bool>(currentStore,
+            NexportDefaults.HIDE_SECTION_CEUS_IN_PRODUCT_PAGE_SETTING_KEY, currentStore.Id);
 
         if (!hideSectionCEUs)
         {

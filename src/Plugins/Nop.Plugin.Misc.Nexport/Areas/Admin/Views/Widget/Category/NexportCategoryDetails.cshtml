@@ -2,7 +2,7 @@
 
 @{
     const string hideNexportOptionsBlockAttributeName = "CategoryPage.HideNexportOptionsBlock";
-    var hideNexportOptionsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportOptionsBlockAttributeName);
+    var hideNexportOptionsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideNexportOptionsBlockAttributeName);
 }
 
 <nop-panel asp-name="nexport-category-options"

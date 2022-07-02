@@ -8,15 +8,15 @@
 
 @model Nop.Web.Models.Order.OrderDetailsModel.OrderItemModel
 
-@if (Model != null && Model.Id > 0)
+@if (Model is { Id: > 0 })
 {
-    var orderItem = orderService.GetOrderItemById(Model.Id);
+    var orderItem = await orderService.GetOrderItemByIdAsync(Model.Id);
     if (orderItem != null)
     {
-        var order = orderService.GetOrderById(orderItem.OrderId);
+        var order = await orderService.GetOrderByIdAsync(orderItem.OrderId);
         if (order?.OrderStatus == OrderStatus.Complete)
         {
-            var nexportOrderInvoice = nexportService.FindNexportOrderInvoiceItem(orderItem.OrderId, orderItem.Id);
+            var nexportOrderInvoice = await nexportService.FindNexportOrderInvoiceItem(orderItem.OrderId, orderItem.Id);
 
             if (nexportOrderInvoice != null)
             {

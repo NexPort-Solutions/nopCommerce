@@ -10,19 +10,18 @@
 
 @model Nop.Plugin.Misc.Nexport.Models.Customer.NexportCustomerAdditionalInfoModel
 
-@{
-    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
-    Html.AppendScriptParts("~/Plugins/Misc.Nexport/Scripts/dataTables.rowGroup.min.js");
-    Html.AddCssFileParts("~/Plugins/Misc.Nexport/Content/rowGroup.dataTables.min.css");
-}
+<script src="~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js"></script>
+<script src="~/Plugins/Misc.Nexport/Scripts/dataTables.rowGroup.min.js"></script>
+<link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/rowGroup.dataTables.min.css" />
 
-@if (Model != null && Model.Editable)
+@if (Model is {Editable: true })
 {
+    var customer = await workContext.GetCurrentCustomerAsync();
     const string hideNexportCustomerDetailsBlockAttributeName = "CustomerPage.HideNexportCustomerDetailsBlock";
-    var hideNexportCustomerDetailsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportCustomerDetailsBlockAttributeName);
+    var hideNexportCustomerDetailsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideNexportCustomerDetailsBlockAttributeName);
 
     const string hideNexportSupplementalInfoAnswersBlockAttributeName = "CustomerPage.HideNexportSupplementalInfoAnswersBlock";
-    var hideNexportSupplementalInfoAnswersBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportSupplementalInfoAnswersBlockAttributeName);
+    var hideNexportSupplementalInfoAnswersBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideNexportSupplementalInfoAnswersBlockAttributeName);
 
     <nop-panel asp-name="nexport-customer-details" asp-icon="fa fa-sticky-note-o" asp-title="Nexport Customer Info"
                asp-hide-block-attribute-name="@hideNexportCustomerDetailsBlockAttributeName" asp-hide="@hideNexportCustomerDetailsBlock" asp-advanced="false">

@@ -4,7 +4,7 @@
     Layout = "~/Areas/Admin/Views/Shared/_AdminPopupLayout.cshtml";
 
     ViewBag.Title = "Edit";
-    Html.SetActiveMenuItemSystemName(NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME);
+    NopHtml.SetActiveMenuItemSystemName(NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME);
 }
 
 <form asp-controller="NexportIntegration" asp-action="EditSupplementalInfoQuestion" method="post" id="edit-supplemental-info-question-form">

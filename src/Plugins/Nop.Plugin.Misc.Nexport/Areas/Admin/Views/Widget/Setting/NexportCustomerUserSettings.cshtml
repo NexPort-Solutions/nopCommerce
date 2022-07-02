@@ -7,7 +7,7 @@
 
 @{
     const string hideNexportRegistrationFieldsBlockAttributeName = "CustomerUserSettingsPage.NexportRegistrationFieldsBlock";
-    var hideNexportRegistrationFieldsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportRegistrationFieldsBlockAttributeName);
+    var hideNexportRegistrationFieldsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideNexportRegistrationFieldsBlockAttributeName);
 }
 
 <nop-panel asp-name="customersettings-nexportregistrationfields" asp-icon="fa fa-id-card-o"

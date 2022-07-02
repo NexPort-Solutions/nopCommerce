@@ -5,9 +5,9 @@
 
     //page title
     ViewBag.Title = "Edit option";
-
-    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
 }
+
+<script src="~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js"></script>
 
 <form asp-controller="NexportIntegration" asp-action="SupplementalInfoOptionEditPopup"
       asp-route-btnId="@Context.Request.Query["btnId"]"

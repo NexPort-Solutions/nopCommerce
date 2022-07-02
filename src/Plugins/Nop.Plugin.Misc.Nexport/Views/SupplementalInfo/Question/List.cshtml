@@ -5,11 +5,11 @@
 @{
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 
-    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
-
     ViewBag.Title = "Nexport Supplemental Info Questions";
-    Html.SetActiveMenuItemSystemName(NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME);
+    NopHtml.SetActiveMenuItemSystemName(NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME);
 }
+
+<script src="~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js"></script>
 
 <nop-antiforgery-token />
 <div class="content-header clearfix">

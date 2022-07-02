@@ -2,9 +2,9 @@
 
 @if (Model.Id > 0)
 {
-    Html.AddCssFileParts("~/lib/fineuploader/fine-uploader.min.css");
-    Html.AddScriptParts("~/lib/fineuploader/jquery.fine-uploader.min.js");
+    NopHtml.AddCssFileParts("~/lib/fineuploader/fine-uploader.min.css");
 
+    <script src="~/lib/fineuploader/jquery.fine-uploader.min.js"></script>
     <script>
         $(document).ready(function() {
             $("#@Html.IdFor(model => model.AvailableCustomFieldRenders)").change(loadNewCustomFieldRender);

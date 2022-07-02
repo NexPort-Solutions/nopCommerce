@@ -2,7 +2,7 @@
 
 @{
     const string hideNexportMappingsBlockAttributeName = "ProductPage.HideNexportMappingsBlock";
-    var hideNexportMappingsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportMappingsBlockAttributeName);
+    var hideNexportMappingsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideNexportMappingsBlockAttributeName);
 }
 
 <nop-panel asp-name="nexport-mapping-list" asp-icon="fa fa-paperclip" asp-title="Nexport Product Mappings"

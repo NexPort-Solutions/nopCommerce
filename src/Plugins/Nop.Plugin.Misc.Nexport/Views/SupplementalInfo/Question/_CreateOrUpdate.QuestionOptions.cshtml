@@ -2,9 +2,7 @@
 
 @model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoQuestionModel
 
-@{
-    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
-}
+<script src="~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js"></script>
 
 @if (Model.Id > 0)
 {

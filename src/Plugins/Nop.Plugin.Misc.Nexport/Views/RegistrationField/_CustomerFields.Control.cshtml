@@ -28,7 +28,7 @@
                         break;
                     case NexportRegistrationFieldType.SelectCheckbox:
                         {
-                            var options = nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                            var options = await nexportService.GetNexportRegistrationFieldOptions(Model.Id);
                             if (options.Count > 0)
                             {
                                 var renderOptions = Model.DisplayOptionByAscendingOrder
@@ -63,7 +63,7 @@
                         }
                     case NexportRegistrationFieldType.SelectDropDown:
                         {
-                            var options = nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                            var options = await nexportService.GetNexportRegistrationFieldOptions(Model.Id);
                             if (options.Count > 0)
                             {
                                 var renderOptions = Model.DisplayOptionByAscendingOrder

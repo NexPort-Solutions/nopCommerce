@@ -32,9 +32,9 @@
 
 @if (Model != null && Model.Id > 0)
 {
-    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
 
-    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport-admin.css", "", true);
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/nexport-admin.css", "", true);
 
     <form asp-controller="NexportIntegration" asp-action="EditMapping"
           asp-route-containerId="@Context.Request.Query["containerId"]"

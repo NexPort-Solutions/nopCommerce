@@ -28,8 +28,8 @@
                             var resourceDisplayName = prop.GetCustomAttribute<NopResourceDisplayNameAttribute>();
                             if (resourceDisplayName != null)
                             {
-                                var langId = workContext.WorkingLanguage.Id;
-                                var hintResource = localizationService.GetResource(
+                                var langId = (await workContext.GetWorkingLanguageAsync()).Id;
+                                var hintResource = await localizationService.GetResourceAsync(
                                     resourceDisplayName.ResourceKey + ".Hint", langId, returnEmptyIfNotFound: true,
                                     logIfNotFound: false);
 

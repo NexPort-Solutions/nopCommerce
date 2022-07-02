@@ -35,9 +35,9 @@
                     </div>
                 </div>
             </div>
-            @if (Model != null && Model.Id > 0)
+            @if (Model is { Id: > 0 })
             {
-                Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
+                NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
 
                 <div class="panel panel-default panel-popup">
                     <div class="panel-heading">

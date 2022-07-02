@@ -1,11 +1,12 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoQuestionModel
 
 @{
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
     const string hideInfoBlockAttributeName = "SupplementalInfo.Question.HideInfoBlock";
-    var hideInfoBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideInfoBlockAttributeName);
+    var hideInfoBlock = genericAttributeService.GetAttributeAsync<bool>(currentCustomer, hideInfoBlockAttributeName);
 
     const string hideOptionsBlockAttributeName = "SupplementalInfo.Question.HideOptionsBlock";
-    var hideOptionsBlock = genericAttributeService.GetAttribute(workContext.CurrentCustomer, hideOptionsBlockAttributeName, defaultValue: true);
+    var hideOptionsBlock = genericAttributeService.GetAttributeAsync(currentCustomer, hideOptionsBlockAttributeName, defaultValue: true);
 }
 
 <div asp-validation-summary="All"></div>

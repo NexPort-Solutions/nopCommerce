@@ -25,7 +25,7 @@
     </script>
 }
 
-@if (Model?.Question != null && Model.Options != null && Model.Options.Count > 0)
+@if (Model is { Question: { }, Options: { Count: > 0 } })
 {
     <form id="edit-customer-question-form" method="post"
           asp-action="EditCustomerSupplementalInfoAnsweredQuestion"

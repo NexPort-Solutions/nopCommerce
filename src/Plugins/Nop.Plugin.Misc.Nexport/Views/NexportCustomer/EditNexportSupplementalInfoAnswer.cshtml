@@ -4,18 +4,18 @@
 @{
     Layout = "_ColumnsTwo";
 
-    Html.AppendPageCssClassParts("html-account-page");
+    var kendoVersion = "2020.1.406";
 
-    var kendoVersion = "2014.1.318";
-    Html.AppendCssFileParts(ResourceLocation.Head, $"~/lib/kendo/{kendoVersion}/kendo.default.min.css");
-    Html.AppendCssFileParts(ResourceLocation.Head, $"~/lib/kendo/{kendoVersion}/kendo.common.min.css");
-    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
-
-    Html.AppendScriptParts(ResourceLocation.Footer, $"~/lib/kendo/{kendoVersion}/kendo.web.min.js");
-    Html.AddScriptParts(ResourceLocation.Footer, "~/js/public.accordion.js");
-
-    Html.AddTitleParts(T("Plugins.Misc.Nexport.Navigation.SupplementalInfoAnswers").Text);
+    NopHtml.AppendPageCssClassParts("html-account-page");
+    NopHtml.AddTitleParts(T("Plugins.Misc.Nexport.Navigation.SupplementalInfoAnswers").Text);
 }
+
+<link rel="stylesheet" href="~/lib/kendo/@kendoVersion/styles/web/kendo.common.min.css" />
+<link rel="stylesheet" href="~/lib/kendo/@kendoVersion/styles/web/kendo.default.min.css" />
+<link rel="stylesheet" href="~/lib/kendo/@kendoVersion/styles/web/kendo.rtl.min.css" />
+<link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport.css" />
+<script src="~/lib/kendo/@kendoVersion/js/kendo.ui.core.min.js"></script>
+<script src="~/js/public.accordion.js"></script>
 
 @section left
 {
@@ -27,7 +27,7 @@
         <h1>@T("Account.MyAccount") - @T("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.Edit.PageTitle")</h1>
     </div>
     <div class="page-body">
-        @if (Model?.Question != null && Model.Options != null && Model.Options.Count > 0)
+        @if (Model is { Question: { }, Options.Count: > 0 })
         {
             <form id="modify-answers-form" method="post" asp-action="EditSupplementalInfoAnswers" asp-controller="NexportIntegration">
                 <div class="modify-answers-container">

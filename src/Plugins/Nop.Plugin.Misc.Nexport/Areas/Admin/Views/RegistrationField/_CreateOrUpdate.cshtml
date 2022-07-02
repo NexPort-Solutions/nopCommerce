@@ -1,14 +1,15 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
 
 @{
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
     const string hideRegistrationFieldInfoBlockAttributeName = "NexportRegistrationField.HideInfoBlock";
-    var hideInfoBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideRegistrationFieldInfoBlockAttributeName);
+    var hideInfoBlock = await genericAttributeService.GetAttributeAsync<bool>(currentCustomer, hideRegistrationFieldInfoBlockAttributeName);
 
     const string hideRegistrationFieldOptionsBlockAttributeName = "NexportRegistrationField.HideOptionsBlock";
-    var hideOptionsBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideRegistrationFieldOptionsBlockAttributeName);
+    var hideOptionsBlock = await genericAttributeService.GetAttributeAsync<bool>(currentCustomer, hideRegistrationFieldOptionsBlockAttributeName);
 
     const string hideRegistrationFieldCustomBlockAttributeName = "NexportRegistrationField.HideCustomBlock";
-    var hideCustomBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideRegistrationFieldCustomBlockAttributeName);
+    var hideCustomBlock = await genericAttributeService.GetAttributeAsync<bool>(currentCustomer, hideRegistrationFieldCustomBlockAttributeName);
 }
 
 <div asp-validation-summary="All"></div>
