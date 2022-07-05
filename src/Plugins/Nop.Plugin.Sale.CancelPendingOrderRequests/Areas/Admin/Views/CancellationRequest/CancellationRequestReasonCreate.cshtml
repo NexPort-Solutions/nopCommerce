@@ -2,9 +2,8 @@
 
 @{
     ViewBag.Title = T("Admin.Configuration.Settings.Order.CancellationRequestReasons.AddNew").Text;
-    Html.SetActiveMenuItemSystemName("Order settings");
+    NopHtml.SetActiveMenuItemSystemName("Order settings");
 }
-
 
 <form asp-controller="CancelPendingOrderRequests" asp-action="CancellationRequestReasonCreate" method="post">
     <div class="content-header clearfix">

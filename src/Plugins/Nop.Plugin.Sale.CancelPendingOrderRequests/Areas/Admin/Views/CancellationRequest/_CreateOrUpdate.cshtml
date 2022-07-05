@@ -48,7 +48,7 @@
                             <nop-label asp-for="RequestStatus" />
                         </div>
                         <div class="col-md-9">
-                            <nop-select asp-for="RequestStatus" asp-items="@(Model.RequestStatus.ToSelectList())" />
+                            <nop-select asp-for="RequestStatus" asp-items="@(await Model.RequestStatus.ToSelectListAsync())" />
                             <span asp-validation-for="RequestStatus"></span>
                         </div>
                     </div>

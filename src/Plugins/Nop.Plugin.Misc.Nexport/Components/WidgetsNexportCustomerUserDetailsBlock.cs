@@ -28,7 +28,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
             if (customerUserSettingsModel == null)
                 return Content("");
 
-            var model = _nexportPluginModelFactory.PrepareNexportCustomerAdditionalSettingsModelAsync();
+            var model = await _nexportPluginModelFactory.PrepareNexportCustomerAdditionalSettingsModelAsync();
 
             return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Setting/NexportCustomerUserSettings.cshtml", model);
         }

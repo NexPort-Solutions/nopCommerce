@@ -26,10 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="16.0.0" />
-    <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
-    <PackageReference Include="NexportApi" Version="1.0.25" />
-    <PackageReference Include="RestSharp" Version="106.11.7" />
+    <PackageReference Include="JetBrains.Annotations" Version="2022.1.0" />
+    <PackageReference Include="NexportApi" Version="1.0.27" />
   </ItemGroup>
 
   <ItemGroup>

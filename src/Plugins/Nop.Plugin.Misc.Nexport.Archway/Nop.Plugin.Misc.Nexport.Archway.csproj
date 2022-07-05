@@ -39,10 +39,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Nop.Plugin.Misc.Nexport\Nop.Plugin.Misc.Nexport.csproj"/>
+    <Reference Include="Nop.Plugin.Misc.Nexport">
+      <HintPath>..\..\Presentation\Nop.Web\Plugins\Misc.Nexport\Nop.Plugin.Misc.Nexport.dll</HintPath>
+    </Reference>
     <ProjectReference Include="..\..\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />
     <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj" />
     <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="27.2.1" />
   </ItemGroup>
 
   <ItemGroup>

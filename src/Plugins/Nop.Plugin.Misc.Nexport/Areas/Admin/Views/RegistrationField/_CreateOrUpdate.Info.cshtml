@@ -54,7 +54,7 @@
 </script>
 
 <div class="panel-body">
-    @(NopHtml.LocalizedEditor<NexportRegistrationFieldModel, NexportRegistrationFieldLocalizedModel>("registrationfield-localized",
+    @(await Html.LocalizedEditorAsync<NexportRegistrationFieldModel, NexportRegistrationFieldLocalizedModel>("registrationfield-localized",
     @<div>
         <div class="form-group">
             <div class="col-md-3">

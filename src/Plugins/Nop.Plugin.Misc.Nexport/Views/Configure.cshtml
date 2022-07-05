@@ -6,18 +6,20 @@
 @model Nop.Plugin.Misc.Nexport.Models.ConfigurationModel
 
 @{
-    Layout = "~/Areas/Admin/Views/Shared/_ConfigurePlugin.cshtml";
+    //Layout = "~/Areas/Admin/Views/Shared/_ConfigurePlugin.cshtml";
+
+    Layout = "_ConfigurePlugin";
 
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
 }
 
 <form asp-controller="NexportIntegration" asp-action="Configure" method="post">
-    <div class="panel panel-default">
-        <div class="panel-heading">
+    <div class="card card-default">
+        <div class="card-header">
             Plugin Api Credential
         </div>
-        <div class="panel-body">
-            <div class="form-group">
+        <div class="card-body">
+            <div class="form-group row">
                 <div class="col-md-3">
                     <nop-label asp-for="Url" />
                 </div>
@@ -26,7 +28,7 @@
                     {
                         <div class="input-group">
                             <nop-editor asp-for="Url" />
-                            <div class="input-group-btn">
+                            <div class="input-group-append">
                                 <button id="setServerUrl" name="setserverurl" class="btn btn-info">
                                     Set url
                                 </button>
@@ -40,7 +42,7 @@
                     <span asp-validation-for="Url"></span>
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group row">
                 <div class="col-md-3">
                     <nop-label asp-for="Username" />
                 </div>
@@ -49,7 +51,7 @@
                     <span asp-validation-for="Username"></span>
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group row">
                 <div class="col-md-3">
                     <nop-label asp-for="Password" />
                 </div>
@@ -59,7 +61,7 @@
                 </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group row">
                 <div class="col-md-3">
                     <nop-label asp-for="CustomTokenExpirationDate" />
                 </div>
@@ -69,7 +71,7 @@
                 </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group row">
                 <div class="col-md-3">
                     <nop-label asp-for="AutoRenewToken" />
                 </div>
@@ -79,7 +81,7 @@
                 </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group row">
                 <div class="col-md-3">
                     <nop-label asp-for="TokenNeverExpired" />
                 </div>
@@ -89,8 +91,8 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <div class="col-md-9 col-md-offset-3">
+            <div class="form-group row">
+                <div class="col-md-9 offset-md-3">
                     <input type="submit" name="save" class="btn bg-blue" value="@T("Admin.Common.Save")" />
                 </div>
             </div>
@@ -99,13 +101,13 @@
 
     @if (!string.IsNullOrEmpty(Model.NexportAuthenticationToken))
     {
-        <div class="panel panel-default">
-            <div class="panel-heading">
+        <div class="card card-default">
+            <div class="card-header">
                 Plugin Api Token
             </div>
-            <div class="panel-body">
+            <div class="card-body">
 
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-md-3">
                         <nop-label asp-for="NexportAuthenticationToken" />
                     </div>
@@ -116,20 +118,20 @@
 
                 @if (Model.UtcExpirationDate.HasValue)
                 {
-                    <div class="form-group">
+                    <div class="form-group row">
                         <div class="col-md-3">
                             <nop-label asp-for="UtcExpirationDate" />
                         </div>
                         <div class="col-md-9">
-                            <div class="form-text-row">@dateTimeHelper.ConvertToUserTime(Model.UtcExpirationDate.Value).ToString("f")</div>
+                            <div class="form-text-row">@((await dateTimeHelper.ConvertToUserTimeAsync(Model.UtcExpirationDate.Value)).ToString("f"))</div>
                         </div>
                     </div>
                 }
 
                 @if (Model.UtcExpirationDate.HasValue && Model.UtcExpirationDate.Value < DateTime.UtcNow)
                 {
-                    <div class="form-group">
-                        <div class="col-md-9 col-md-offset-3">
+                    <div class="form-group row">
+                        <div class="col-md-9 offset-md-3">
                             <p class="text-yellow">
                                 <i class="icon fa fa-warning"></i>
                                 Api authentication token has expired. Please regenerate new token by submit the credential again
@@ -139,19 +141,19 @@
             </div>
         </div>
 
-        <div class="panel panel-default">
-            <div class="panel-heading">
+        <div class="card card-default">
+            <div class="card-header">
                 Root Organization
             </div>
-            <div class="panel-body">
-                <div class="form-group">
+            <div class="card-body">
+                <div class="form-group row">
                     <div class="col-md-3">
                         <nop-label asp-for="RootOrganizationId" />
                     </div>
                     <div class="col-md-9">
                         <div class="input-group">
                             <nop-editor asp-for="RootOrganizationId" asp-render-form-control-class="true" />
-                            <div class="input-group-btn">
+                            <div class="input-group-append">
                                 <button id="set-root-org-btn" name="setrootorganizationid" class="btn btn-info">
                                     Set root organization
                                 </button>
@@ -163,19 +165,19 @@
             </div>
         </div>
 
-        <div class="panel panel-default">
-            <div class="panel-heading">
+        <div class="card card-default">
+            <div class="card-header">
                 Merchant Account
             </div>
-            <div class="panel-body">
-                <div class="form-group">
+            <div class="card-body">
+                <div class="form-group row">
                     <div class="col-md-3">
                         <nop-label asp-for="MerchantAccountId" />
                     </div>
                     <div class="col-md-9">
                         <div class="input-group">
                             <nop-editor asp-for="MerchantAccountId" asp-render-form-control-class="true" />
-                            <div class="input-group-btn">
+                            <div class="input-group-append">
                                 <button id="set-merchant-account-btn" name="setmerchantaccountid" class="btn btn-info">
                                     Set merchant account
                                 </button>

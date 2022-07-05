@@ -41,10 +41,10 @@
 
                                 foreach (var questionId in Model.QuestionWithoutAnswerIds)
                                 {
-                                    var question = nexportService.GetNexportSupplementalInfoQuestionById(questionId);
+                                    var question = await nexportService.GetNexportSupplementalInfoQuestionById(questionId);
                                     if (question != null && question.IsActive)
                                     {
-                                        var options = nexportService.GetNexportSupplementalInfoOptionsByQuestionId(question.Id);
+                                        var options = await nexportService.GetNexportSupplementalInfoOptionsByQuestionId(question.Id);
                                         if (options.Count > 0)
                                         {
                                             <div style="padding-bottom: 15px;">

@@ -15,12 +15,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Nop.Plugin.Misc.Nexport\Nop.Plugin.Misc.Nexport.csproj"/>
-    <!--<Reference Include="Nop.Plugin.Misc.Nexport">
+    <!--<ProjectReference Include="..\Nop.Plugin.Misc.Nexport\Nop.Plugin.Misc.Nexport.csproj"/>-->
+    <Reference Include="Nop.Plugin.Misc.Nexport">
       <HintPath>..\..\Presentation\Nop.Web\Plugins\Misc.Nexport\Nop.Plugin.Misc.Nexport.dll</HintPath>
-      <Private>false</Private>
     </Reference>
-    <ProjectReference Include="..\..\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />-->
+    <ProjectReference Include="..\..\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />
+    <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj" />
     <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
   </ItemGroup>
 

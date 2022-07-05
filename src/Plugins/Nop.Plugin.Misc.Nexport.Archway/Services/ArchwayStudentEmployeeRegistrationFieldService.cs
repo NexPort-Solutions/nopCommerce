@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CsvHelper;
+using CsvHelper.Configuration;
 using LinqToDB.Common;
 using LinqToDB.DataProvider;
 using Microsoft.AspNetCore.Http;
@@ -101,9 +102,11 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                 var filePath = _fileProvider.GetAbsolutePath(storeDataFilePath);
 
                 using var reader = new StreamReader(filePath);
-                using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-                csv.Configuration.RegisterClassMap<ArchwayStoreRecordParsingClassMap>();
-                csv.Configuration.Delimiter = "|";
+                using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    Delimiter = "|"
+                });
+                csv.Context.RegisterClassMap<ArchwayStoreRecordParsingClassMap>();
 
                 var dt = new DataTable();
 

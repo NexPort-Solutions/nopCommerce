@@ -44,6 +44,7 @@ using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Services;
 using System.Collections.Generic;
+using Nop.Core.Infrastructure;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
@@ -419,9 +420,14 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             {
                 try
                 {
+                    var nexportCustomerRegistrationService = EngineContext.Current.Resolve<NexportCustomerRegistrationService>();
+
                     var validationResult =
-                        await (_customerRegistrationService as NexportCustomerRegistrationService)?
-                            .ValidateNexportCustomerAsync(model.EmailOrUsername, model.Password);
+                        await nexportCustomerRegistrationService.ValidateNexportCustomerAsync(model.EmailOrUsername, model.Password);
+
+
+                        //await (_customerRegistrationService as NexportCustomerRegistrationService)?
+                        //    .ValidateNexportCustomerAsync(model.EmailOrUsername, model.Password);
 
                     if (validationResult != null)
                     {

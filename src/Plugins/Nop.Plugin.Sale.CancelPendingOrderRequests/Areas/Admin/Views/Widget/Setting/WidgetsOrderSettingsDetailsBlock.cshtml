@@ -8,7 +8,7 @@
 
 @{
     const string hideCancellationRequestBlockAttributeName = "OrderSettingsPage.HideCancellationRequestBlock";
-    var hideCancellationRequestBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideCancellationRequestBlockAttributeName);
+    var hideCancellationRequestBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideCancellationRequestBlockAttributeName);
 }
 
 <nop-panel asp-name="ordersettings-cancellation-request" asp-icon="fa fa-stop-circle"

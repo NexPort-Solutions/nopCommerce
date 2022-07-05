@@ -58,6 +58,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
             services.AddScoped<ILogger, DefaultLogger>();
 
+            services.AddScoped<NexportCustomerRegistrationService>();
             services.AddScoped<ICustomerRegistrationService, NexportCustomerRegistrationService>();
             services.AddScoped<IOrderProcessingService, NexportOrderProcessingService>();
             services.AddScoped<NexportApiService>();

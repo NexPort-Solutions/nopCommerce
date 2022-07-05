@@ -11,10 +11,10 @@
 
 @{
     ViewBag.Title = T("Admin.PendingOrderCancellationRequests").Text;
-    Html.SetActiveMenuItemSystemName("Cancellation requests");
+    NopHtml.SetActiveMenuItemSystemName("Cancellation requests");
 
     const string hideSearchBlockAttributeName = "CancellationRequestsPage.HideSearchBlock";
-    var hideSearchBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideSearchBlockAttributeName);
+    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
 }
 
 <nop-antiforgery-token />
@@ -91,19 +91,19 @@
                         LengthMenu = Model.AvailablePageSizes,
                         Filters = new List<FilterParameter>
                         {
-                            new FilterParameter(nameof(Model.StartDate)),
-                            new FilterParameter(nameof(Model.EndDate)),
-                            new FilterParameter(nameof(Model.RequestStatusId))
+                            new(nameof(Model.StartDate)),
+                            new(nameof(Model.EndDate)),
+                            new(nameof(Model.RequestStatusId))
                         },
                         ColumnCollection = new List<ColumnProperty>
                         {
-                            new ColumnProperty(nameof(PendingOrderCancellationRequestModel.Id))
+                            new(nameof(PendingOrderCancellationRequestModel.Id))
                             {
                                 Title = "Id",
                                 Width = "100",
                                 AutoWidth = false,
                             },
-                            new ColumnProperty(nameof(PendingOrderCancellationRequestModel.OrderId))
+                            new(nameof(PendingOrderCancellationRequestModel.OrderId))
                             {
                                 Title = "Order",
                                 ClassName = NopColumnClassDefaults.Button,
@@ -111,25 +111,25 @@
                                 Width = "100",
                                 AutoWidth = false
                             },
-                            new ColumnProperty(nameof(PendingOrderCancellationRequestModel.CustomerId))
+                            new(nameof(PendingOrderCancellationRequestModel.CustomerId))
                             {
                                 Title = T("Admin.PendingOrderCancellationRequests.Fields.Customer").Text,
                                 Width = "350",
                                 Render = new RenderCustom("renderCustomerInfo")
                             },
-                            new ColumnProperty(nameof(PendingOrderCancellationRequestModel.RequestStatus))
+                            new(nameof(PendingOrderCancellationRequestModel.RequestStatus))
                             {
                                 Title = T("Admin.PendingOrderCancellationRequests.Fields.RequestStatus").Text,
                                 Width = "200",
                                 Render = new RenderCustom("renderStatusInfo")
                             },
-                            new ColumnProperty(nameof(PendingOrderCancellationRequestModel.UtcCreatedDate))
+                            new(nameof(PendingOrderCancellationRequestModel.UtcCreatedDate))
                             {
                                 Title = T("Admin.PendingOrderCancellationRequests.Fields.UtcCreatedDate").Text,
                                 Width = "100",
                                 Render = new RenderDate()
                             },
-                            new ColumnProperty(nameof(PendingOrderCancellationRequestModel.Id))
+                            new(nameof(PendingOrderCancellationRequestModel.Id))
                             {
                                 Title = T("Admin.Common.Edit").Text,
                                 Width = "100",
