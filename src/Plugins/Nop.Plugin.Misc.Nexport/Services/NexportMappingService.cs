@@ -1326,11 +1326,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
 
-            var nexportProductMappings = orderItems
-                .Select(item =>
-                    GetProductMappingByNopProductId(item.ProductId, order.StoreId) ??
-                    GetProductMappingByNopProductId(item.ProductId))
-                .Where(mapping => mapping != null).ToList();
+            var nexportProductMappings = await orderItems
+                .SelectAwait(async item =>
+                    await GetProductMappingByNopProductId(item.ProductId, order.StoreId) ??
+                    await GetProductMappingByNopProductId(item.ProductId))
+                .Where(mapping => mapping != null).ToListAsync();
 
             return await nexportProductMappings.SelectAwait(async t =>
                     await (await GetNexportSupplementalInfoQuestionMappingsByProductMappingId(t.Id))

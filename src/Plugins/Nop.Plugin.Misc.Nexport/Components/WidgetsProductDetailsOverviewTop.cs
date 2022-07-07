@@ -34,9 +34,9 @@ namespace Nop.Plugin.Misc.Nexport.Components
             if (productDetailsModel == null)
                 return Content("");
 
-            var model = _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id,
+            var model = await _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id,
                             (await _storeContext.GetCurrentStoreAsync()).Id) ??
-                        _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id);
+                        await _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id);
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Product/WidgetsProductDetailsOverviewTop.cshtml", model);
         }

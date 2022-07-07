@@ -61,7 +61,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
                 return AccessDeniedView();
 
-            var model = _purchaseForCustomerModelFactory.PreparePurchaseForCustomerOrderModel(productId);
+            var model = await _purchaseForCustomerModelFactory.PreparePurchaseForCustomerOrderModel(productId);
 
             return View("~/Plugins/Sale.PurchaseForCustomer/Areas/Admin/Views/PurchaseForCustomer/PurchaseDetails.cshtml", model);
         }

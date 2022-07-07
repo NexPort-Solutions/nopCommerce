@@ -5,12 +5,12 @@
     var hideNexportMappingsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideNexportMappingsBlockAttributeName);
 }
 
-<nop-panel asp-name="nexport-mapping-list" asp-icon="fa fa-paperclip" asp-title="Nexport Product Mappings"
+<nop-card asp-name="nexport-mapping-list" asp-icon="fa fa-paperclip" asp-title="Nexport Product Mappings"
            asp-hide-block-attribute-name="@hideNexportMappingsBlockAttributeName" asp-hide="@hideNexportMappingsBlock" asp-advanced="false">
-    <div class="panel-body">
-        <div class="sub-panel" id="product-mapping-container">
+    <div class="card-body">
+        <div class="card-group" id="product-mapping-container">
             @* ReSharper disable once Mvc.PartialViewNotResolved *@
             @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappingTable.cshtml", Model)
         </div>
     </div>
-</nop-panel>
+</nop-card>
