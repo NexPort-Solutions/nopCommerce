@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core;
 using Nop.Core.Domain.Cms;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Infrastructure;
 using Nop.Services.Cms;
 using Nop.Services.Common;
@@ -122,12 +123,12 @@ namespace Nop.Plugin.Misc.Nexport.Archway
                 new { fieldId }, _webHelper.GetCurrentRequestProtocol());
         }
 
-        public string GetCustomRenderUrl(int fieldId)
+        public Task<string> GetCustomRenderUrl(int fieldId, bool renderAdminView)
         {
             var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
 
-            return urlHelper.Action("CustomRender", "ArchwayEmployeeRegistrationField",
-                new { fieldId }, _webHelper.GetCurrentRequestProtocol());
+            return Task.FromResult(urlHelper.Action("CustomRender", "ArchwayEmployeeRegistrationField",
+                new { fieldId }, _webHelper.GetCurrentRequestProtocol()));
         }
 
         public string GetCustomFieldPrefix()
@@ -141,16 +142,34 @@ namespace Nop.Plugin.Misc.Nexport.Archway
                 .ParseArchwayStoreEmployeeRegistrationFields(fieldId, form);
         }
 
-        public async Task SaveCustomRegistrationFields(int fieldId, Dictionary<string, string> fields)
+        public async Task SaveCustomRegistrationFields(Customer customer, int fieldId, Dictionary<string, string> fields)
         {
             await _archwayStudentEmployeeRegistrationFieldService
-                .SaveArchwayStoreEmployeeRegistrationFields(await _workContext.GetCurrentCustomerAsync(), fieldId, fields);
+                .SaveArchwayStoreEmployeeRegistrationFields(customer, fieldId, fields);
         }
 
         public async Task<Dictionary<string, string>> ProcessCustomRegistrationFields(int customerId, int fieldId)
         {
             return await _archwayStudentEmployeeRegistrationFieldService
                 .ProcessArchwayStoreEmployeeRegistrationFields(customerId, fieldId);
+        }
+
+        public async Task<Dictionary<string, string>> GetCustomFieldNamesAndValues(int customerId, int fieldId)
+        {
+            return await _archwayStudentEmployeeRegistrationFieldService.GetCustomFieldNamesAndValues(customerId, fieldId);
+        }
+
+        public string GetEditCustomerRegistrationFieldAnswersViewUrl(int customerId, int fieldId)
+        {
+            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+
+            return urlHelper.Action("EditCustomerRegistrationFieldAnswers", "ArchwayEmployeeRegistrationField",
+                new { customerId = customerId, fieldId = fieldId }, _webHelper.GetCurrentRequestProtocol());
+        }
+
+        public async Task UpdateCustomRegistrationFieldAnswers(int customerId, int fieldId, Dictionary<string, string> fields)
+        {
+            await _archwayStudentEmployeeRegistrationFieldService.UpdateArchwayStudentRegistrationFieldAnswersForCustomer(customerId, fieldId, fields);
         }
 
         public bool HideInWidgetList => true;

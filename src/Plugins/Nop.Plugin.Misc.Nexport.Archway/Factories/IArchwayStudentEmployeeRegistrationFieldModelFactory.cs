@@ -1,21 +1,23 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Nop.Plugin.Misc.Nexport.Archway.Models;
-using Nop.Web.Models.Directory;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Factories
 {
     public interface IArchwayStudentEmployeeRegistrationFieldModelFactory
     {
         Task<ArchwayStudentEmployeeRegistrationFieldModel> PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(
-            int fieldId);
+            int fieldId, bool renderAdminView);
 
         Task<ArchwayStudentEmployeeRegistrationFieldOptionModel>
             PrepareArchwayStudentEmployeeRegistrationFieldOptionModelAsync(int fieldId);
 
-        Task<IList<ArchwayStoreCityModel>> GetArchwayStoreCitiesByState(string state, bool addSelectCityItem);
+        Task<ArchwayStudentEmployeeRegistrationFieldModel> PrepareEditArchwayStudentEmployeeRegistrationFieldModel(
+            int customerId, int fieldId);
 
-        Task<IList<ArchwayStoreAddressModel>> GetArchwayStoreAddressesByCity(string city, bool addSelectAddressItem);
+        Task<IList<ArchwayStoreCityModel>> GetArchwayStoreCitiesByState(string state, bool addSelectAddressItem);
+
+        Task<IList<ArchwayStoreAddressModel>> GetArchwayStoreAddressesByCity(string city, string state, bool addSelectAddressItem);
 
         Task<IList<ArchwayStoreEmployeePositionModel>> GetArchwayStoreEmployeePositionsByStore(string storeNumber,
             bool addSelectPositionItem);

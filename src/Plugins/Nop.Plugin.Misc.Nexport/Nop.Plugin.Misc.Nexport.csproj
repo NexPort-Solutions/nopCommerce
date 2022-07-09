@@ -15,8 +15,8 @@
     You need to set this parameter to true if your plugin has a nuget package
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>1.0.0.9</AssemblyVersion>
-    <FileVersion>1.0.0.9</FileVersion>
+    <AssemblyVersion>1.0.0.10</AssemblyVersion>
+    <FileVersion>1.0.0.10</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,11 +34,16 @@
     <None Remove="Areas\Admin\Views\Category\NexportOptions.cshtml" />
     <None Remove="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml" />
     <None Remove="Areas\Admin\Views\Product\Edit.cshtml" />
+    <None Remove="Areas\Admin\Views\Product\ProductMapping\DuplicateProductMapping.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Category\Create.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Category\Edit.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Category\List.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Category\_CreateOrUpdate.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Create.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Customer\AddCustomerRegistrationFieldAnswers.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Customer\EditCustomerRegistrationFieldAnswers.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Customer\_Create.RegistrationFieldAnswer.Control.cshtml" />
+    <None Remove="Areas\Admin\Views\RegistrationField\Customer\_Create.RegistrationFieldAnswer.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Edit.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\List.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Option\Create.cshtml" />
@@ -58,6 +63,7 @@
     <None Remove="Content\nexport-store.css" />
     <None Remove="Content\nexport.css" />
     <None Remove="Content\rowGroup.dataTables.min.css" />
+    <None Remove="Content\uikit.min.css" />
     <None Remove="logo.jpg" />
     <None Remove="plugin.json" />
     <None Remove="Scripts\bootstrap3-typeahead.js" />
@@ -65,6 +71,8 @@
     <None Remove="Scripts\jquery-ui-timepicker-addon.min.js" />
     <None Remove="Scripts\nexport_common.js" />
     <None Remove="Scripts\nexport_plugin_common.js" />
+    <None Remove="Scripts\uikit.min.js" />
+    <None Remove="Scripts\xregexp-all.min.js" />
     <None Remove="Views\Configure.cshtml" />
     <None Remove="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml" />
     <None Remove="Views\NexportCustomer\Login.cshtml" />
@@ -96,7 +104,9 @@
     <None Remove="Views\SupplementalInfo\Question\_CreateOrUpdate.QuestionOptions.cshtml" />
     <None Remove="Views\SupplementalInfo\_CreateOrUpdate.Question.cshtml" />
     <None Remove="Views\ViewOrder.cshtml" />
+    <None Remove="Views\Widget\Customer\AddNexportCustomerAdditionalInfo.cshtml" />
     <None Remove="Views\Widget\Customer\NexportCustomerDetails.cshtml" />
+    <None Remove="Views\Widget\Customer\NexportCustomerDetailsButtons.cshtml" />
     <None Remove="Views\Widget\Customer\NexportCustomerUserSettings.cshtml" />
     <None Remove="Views\Widget\Customer\NexportRegistrationFields.cshtml" />
     <None Remove="Views\Widget\Customer\NexportSettingNavigation.cshtml" />
@@ -114,6 +124,21 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Product\ProductMapping\DuplicateProductMapping.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Customer\AddCustomerRegistrationFieldAnswers.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Customer\EditCustomerRegistrationFieldAnswers.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Customer\_Create.RegistrationFieldAnswer.Control.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\RegistrationField\Customer\_Create.RegistrationFieldAnswer.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\RegistrationField\Option\_CreateOrUpdate.cshtml">
@@ -194,6 +219,9 @@
     <Content Include="Content\rowGroup.dataTables.min.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\uikit.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="logo.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -213,6 +241,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Scripts\nexport_plugin_common.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\uikit.min.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\xregexp-all.min.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml">
@@ -300,10 +334,16 @@
     <Content Include="Views\ViewOrder.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\Widget\Customer\AddNexportCustomerAdditionalInfo.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\Widget\Customer\NexportCustomerDetails.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Widget\Setting\NexportCustomerUserSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Widget\Customer\NexportCustomerDetailsButtons.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Widget\Customer\NexportRegistrationFields.cshtml">

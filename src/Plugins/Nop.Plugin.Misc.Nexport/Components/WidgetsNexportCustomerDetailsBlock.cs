@@ -38,7 +38,11 @@ namespace Nop.Plugin.Misc.Nexport.Components
             var customerModel = (CustomerModel) additionalData;
 
             if (customerModel.Id == 0)
-                return Content("");
+            {
+                var model = _nexportPluginModelFactory.PrepareAddNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
+
+                return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/AddNexportCustomerAdditionalInfo.cshtml", model);
+            }
 
             try
             {
@@ -48,20 +52,37 @@ namespace Nop.Plugin.Misc.Nexport.Components
                 var mapping = await _nexportService.FindUserMappingByCustomerId(customerModel.Id);
                 if (mapping != null)
                 {
-                    var nexportUser = await _nexportService.GetNexportUserAsync(mapping.NexportUserId);
-
-                    if (nexportUser != null)
+                    try
                     {
-                        model.NexportEmail = nexportUser.InternalEmail;
-                        if (nexportUser.OwnerOrgId != null)
+                        var nexportUser = await _nexportService.GetNexportUserAsync(mapping.NexportUserId);
+
+                        if (nexportUser != null)
                         {
-                            model.OwnerOrgId = nexportUser.OwnerOrgId;
+                            model.NexportUserFullName = $"{nexportUser.FirstName} {nexportUser.LastName}";
+                            model.NexportEmail = nexportUser.InternalEmail;
+
+                            if (nexportUser.OwnerOrgId != null)
+                            {
+                                model.OwnerOrgId = nexportUser.OwnerOrgId;
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgShortName))
+                            {
+                                model.OwnerOrgShortName = nexportUser.OwnerOrgShortName;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        var errorMsg = $"Unable to retrieve user information from Nexport for customer {customerModel.Id}";
+
+                        if (ex is ApiException exception)
+                        {
+                            errorMsg += $" ({exception.Message})";
                         }
 
-                        if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgShortName))
-                        {
-                            model.OwnerOrgShortName = nexportUser.OwnerOrgShortName;
-                        }
+                        await _logger.ErrorAsync(errorMsg, ex);
+                        _notificationService.ErrorNotification(errorMsg);
                     }
                 }
 
@@ -71,7 +92,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
             }
             catch (Exception ex)
             {
-                var errorMsg = $"Unable to retrieve user details from Nexport for customer {customerModel.Id}";
+                var errorMsg = $"Unable to retrieve additional information for customer {customerModel.Id}";
 
                 if (ex is ApiException exception)
                 {

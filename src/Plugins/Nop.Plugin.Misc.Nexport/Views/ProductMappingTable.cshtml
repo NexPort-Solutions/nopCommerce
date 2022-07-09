@@ -70,6 +70,13 @@
 </div>
 <nop-alert asp-alert-id="deleteSelectedMappingsFailed" />
 
+<div>
+    <button class="btn bg-blue" id="duplicateProductMappingBtn">
+        <i class="fa fa-clone"></i>
+        Duplicate mapping
+    </button>
+</div>
+
 @await Html.PartialAsync("Table", new NexportDataTablesModel
 {
     Name = "product-mappings-grid",
@@ -271,18 +278,15 @@
     }
 
     $(document).ready(function() {
-        $("#product-mapping-container").on("xhr.dt",
-            "#product-mappings-grid",
+        checkDefaultMappingExisted();
+
+        $("#product-mapping-container").on("xhr.dt", "#product-mappings-grid",
             function(e, settings, json, xhr) {
-                if (json.Data) {
-                    if (json.Data[0].NopProductId !== 0) {
-                        hasDefaultMapping = true;
-                    } else {
-                        hasDefaultMapping = false;
-                    }
+                if (json.data) {
+                    checkDefaultMappingExisted();
                 }
             });
-
+            
         $("#delete-selected-mappings-action-confirmation-submit-button").bind("click", function (e) {
             var submitIds = selectedIds;
             submitIds = $.grep(submitIds, function(value) {
@@ -328,7 +332,50 @@
             // Return false to don't reload a page
             return false;
         });
+
+        $("#duplicateProductMappingBtn").click(function() {
+            duplicateProductMapping();
+
+            return false;
+        });
     });
+
+    function checkDefaultMappingExisted() {
+        var checkDefaultMappingData = {
+            productId: @Model.NopProductId
+        };
+        addAntiForgeryToken(checkDefaultMappingData);
+
+        $.ajax({
+            url: "@Url.Action("HasDefaultMapping","NexportIntegration")",
+            type: "@WebRequestMethods.Http.Post",
+            dataType: "json",
+            data: checkDefaultMappingData,
+            success: function (data, textStatus, jqXHR) {
+                // Display error if returned
+                if (data) {
+                    hasDefaultMapping = data;
+                }
+
+                if (hasDefaultMapping) {
+                    $("#duplicateProductMappingBtn").prop("disabled", false);
+                } else {
+                    $("#duplicateProductMappingBtn").prop("disabled", true);
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                hasDefaultMapping = false;
+            }
+        });
+    }
+
+    function duplicateProductMapping() {
+        var url = "@Url.Action("DuplicateProductMapping", "NexportIntegration")";
+        url += "?productId=@Model.NopProductId";
+        url += "&containerId=product-mapping-container&btnId=btnRefreshMappings";
+
+        OpenWindow(url, 800, 800, true);
+    }
 
     //# sourceURL=ProductMappingTable.js
 </script>

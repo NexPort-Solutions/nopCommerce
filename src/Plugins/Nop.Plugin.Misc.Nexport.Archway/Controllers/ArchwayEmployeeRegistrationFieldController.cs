@@ -68,9 +68,9 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
             return View("~/Plugins/Misc.Nexport.Archway/Areas/Admin/Views/Customer/CustomRegistrationFieldDetails.cshtml", model);
         }
 
-        public async Task<IActionResult> CustomRender(int fieldId)
+        public async Task<IActionResult> CustomRender(int fieldId, bool renderAdminView)
         {
-            var model = await _archwayStudentEmployeeRegistrationFieldModelFactory.PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(fieldId);
+            var model = await _archwayStudentEmployeeRegistrationFieldModelFactory.PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(fieldId, renderAdminView);
 
             ViewData.TemplateInfo.HtmlFieldPrefix = $"{NexportDefaults.NexportRegistrationFieldPrefix}-{fieldId}.{PluginDefaults.HtmlFieldPrefix}";
 
@@ -161,6 +161,17 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
             }
         }
 
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult EditCustomerRegistrationFieldAnswers(int customerId, int fieldId)
+        {
+            var model = _archwayStudentEmployeeRegistrationFieldModelFactory.PrepareEditArchwayStudentEmployeeRegistrationFieldModel(customerId, fieldId);
+
+            ViewData.TemplateInfo.HtmlFieldPrefix = $"{NexportDefaults.NexportRegistrationFieldPrefix}-{fieldId}.{PluginDefaults.HtmlFieldPrefix}";
+
+            return PartialView("~/Plugins/Misc.Nexport.Archway/Views/RegistrationField/EditCustomerRegistrationFieldAnswers.cshtml", model);
+        }
+
         #endregion
 
         #region Custom Render View Actions
@@ -173,9 +184,9 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
         }
 
         [CheckAccessPublicStore(true)]
-        public async Task<IActionResult> GetArchwayStoreAddressesByCity(string city, bool addSelectAddressItem)
+        public async Task<IActionResult> GetArchwayStoreAddressesByCity(string city, string state, bool addSelectAddressItem)
         {
-            var model = await _archwayStudentEmployeeRegistrationFieldModelFactory.GetArchwayStoreAddressesByCity(city, addSelectAddressItem);
+            var model = await _archwayStudentEmployeeRegistrationFieldModelFactory.GetArchwayStoreAddressesByCity(city, state, addSelectAddressItem);
             return Json(model);
         }
 

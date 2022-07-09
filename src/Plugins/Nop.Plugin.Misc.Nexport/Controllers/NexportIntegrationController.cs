@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Net;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NexportApi.Client;
@@ -45,6 +46,7 @@ using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
 using Nop.Plugin.Misc.Nexport.Infrastructure.ModelState;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
@@ -52,6 +54,7 @@ using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
@@ -506,6 +509,46 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetNexportUserDetails(Guid nexportUserId)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return ErrorJson(await _localizationService.GetResourceAsync("Admin.AccessDenied.Description"));
+
+            GetUserResponse nexportUser = null;
+
+            if (nexportUserId != Guid.Empty)
+            {
+                try
+                {
+                    nexportUser = await _nexportService.GetNexportUserAsync(nexportUserId);
+                }
+                catch (Exception ex)
+                {
+                    var errMsg = $"Cannot get detail information of Nexport user {nexportUserId}";
+                    await _logger.ErrorAsync(errMsg, ex);
+
+                    _notificationService.ErrorNotification(errMsg);
+                }
+            }
+
+            if (nexportUser != null)
+            {
+                return Json(new
+                {
+                    id = nexportUser.UserId,
+                    firstName = nexportUser.FirstName,
+                    lastName = nexportUser.LastName,
+                    email = nexportUser.Email,
+                    internalEmail = nexportUser.InternalEmail
+                });
+            }
+
+            return Json(null);
+        }
+
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> SetNexportUser(int customerId, Guid nexportUserId)
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
@@ -513,10 +556,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var customer = await _customerService.GetCustomerByIdAsync(customerId);
             if (customer == null)
+            {
                 return Json(new
                 {
                     redirectUrl = Url.Action("List", "Customer")
                 });
+            }
 
             if (nexportUserId != Guid.Empty)
             {
@@ -535,20 +580,38 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 if (nexportUser != null)
                 {
-                    var currentUserMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
-                    if (currentUserMapping == null)
+                    try
                     {
-                        await _nexportService.InsertUserMapping(new NexportUserMapping
+                        var currentUserMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+                        if (currentUserMapping == null)
                         {
-                            NexportUserId = nexportUserId,
-                            NopUserId = customer.Id
-                        });
-                    }
-                    else
-                    {
-                        currentUserMapping.NexportUserId = nexportUserId;
+                            await _nexportService.InsertUserMapping(new NexportUserMapping
+                            {
+                                NexportUserId = nexportUserId,
+                                NopUserId = customer.Id
+                            });
+                        }
+                        else
+                        {
+                            currentUserMapping.NexportUserId = nexportUserId;
 
-                        await _nexportService.UpdateUserMapping(currentUserMapping);
+                            await _nexportService.UpdateUserMapping(currentUserMapping);
+                        }
+
+                        _notificationService.SuccessNotification("Success update Nexport user mapping");
+                    }
+                    catch (Exception ex)
+                    {
+                        await _logger.ErrorAsync($"Cannot map customer {customer.Id} with Nexport user Id {nexportUserId}", ex);
+
+                        var errMsg = $"Cannot map current customer with Nexport user {nexportUserId}";
+                        if (ex is NexportUserMappingException exception)
+                        {
+                            var customerEditUrl = Url.Action("Edit", "Customer", new { id = exception.ExistingUserMapping.NopUserId });
+                            errMsg += $". {exception.Message}. Click <a href=\"{customerEditUrl}\">here</a> to view the existing customer.";
+                        }
+
+                        _notificationService.ErrorNotification(errMsg, false);
                     }
 
                     try
@@ -560,8 +623,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                         var errMsg = $"Cannot synchronize the contact info for customer {customer.Id} with Nexport user {nexportUserId}";
                         await _logger.ErrorAsync(errMsg, ex);
                     }
-
-                    _notificationService.SuccessNotification("Success update Nexport user mapping");
                 }
             }
 
@@ -569,6 +630,56 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             {
                 redirectUrl = Url.Action("Edit", "Customer", new { id = customer.Id })
             });
+        }
+
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> CanSetNexportUser(int customerId)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return ErrorJson(await _localizationService.GetResourceAsync("Admin.AccessDenied.Description"));
+
+            var customer = await _customerService.GetCustomerByIdAsync(customerId);
+            if (customer == null)
+            {
+                return Json(null);
+            }
+
+            var nexportUserMapping = await _nexportService.FindUserMappingByCustomerId(customerId);
+            if (nexportUserMapping != null)
+            {
+                var customerOrders = await _orderService.SearchOrdersAsync(customerId: customer.Id, pageSize: 10);
+                return Json(!customerOrders.Any());
+            }
+
+            return Json(true);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AutoValidateAntiforgeryToken]
+        [Route("Admin/Customer/Edit/{id}")]
+        [HttpPost, ActionName("Edit")]
+        [FormValueRequired("syncnexportregistrationfields")]
+        public async Task<IActionResult> SyncCustomerRegistrationFieldsWithNexport(CustomerModel model)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = await _customerService.GetCustomerByIdAsync(model.Id);
+            if (customer == null)
+                return RedirectToAction("List", "Customer");
+
+            await _nexportService.InsertNexportRegistrationFieldSynchronizationQueueItem(new NexportRegistrationFieldSynchronizationQueueItem
+            {
+                CustomerId = model.Id,
+                UtcDateCreated = DateTime.UtcNow
+            });
+
+            _notificationService.SuccessNotification("The customer registration fields has been scheduled to be synchronize with Nexport.");
+
+            return RedirectToAction("Edit", "Customer", new { id = model.Id });
         }
 
         #endregion
@@ -821,6 +932,16 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [Area(AreaNames.Admin)]
         [AuthorizeAdmin]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> HasDefaultMapping(int productId)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+                return AccessDeniedView();
+
+            return Json(await _nexportService.HasDefaultMapping(productId));
+        }
+
         [AutoValidateAntiforgeryToken]
         [HttpPost]
         public async Task<IActionResult> DeleteMappings(ICollection<int> selectedIds)
@@ -1060,6 +1181,64 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 _notificationService.ErrorNotification(ex.Message);
                 return RedirectToAction("Edit", "Product", new { id = copyModel.Id });
             }
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        public async Task<IActionResult> DuplicateProductMapping(int productId)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
+                return AccessDeniedView();
+
+            var product = await _productService.GetProductByIdAsync(productId)
+                        ?? throw new Exception($"No product found with the specified id {productId}");
+
+            var model = await _nexportPluginModelFactory.PrepareDuplicateNexportProductMappingModel(product);
+
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}Product/ProductMapping/DuplicateProductMapping.cshtml", model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AutoValidateAntiforgeryToken]
+        [HttpPost]
+        public async Task<IActionResult> DuplicateProductMapping(int productId, DuplicateNexportProductMappingModel model)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
+                return AccessDeniedView();
+
+            var product = await _productService.GetProductByIdAsync(productId)
+                          ?? throw new Exception($"No product found with the specified id {productId}");
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var productMapping = await _nexportService.GetProductMappingByNopProductId(product.Id, model.SourceStoreId);
+
+                    if (productMapping != null)
+                    {
+                        foreach (var storeId in model.DestinationStoreIds)
+                        {
+                            await _nexportService.DuplicateProductMappingAsync(productMapping, storeId);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var errMsg =
+                        $"Unable to duplicate Nexport product mapping for product {product.Id} based on store mapping";
+                    await _logger.ErrorAsync($"Unable to duplicate Nexport product mapping for product {product.Id} based on store mapping", ex);
+                }
+
+                ViewBag.RefreshPage = true;
+
+                ViewBag.ClosePage = true;
+            }
+
+            model = await _nexportPluginModelFactory.PrepareDuplicateNexportProductMappingModel(product);
+
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}Product/ProductMapping/DuplicateProductMapping.cshtml", model);
         }
 
         #endregion
@@ -2358,7 +2537,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(new { url });
         }
 
-        public async Task<IActionResult> GetRegistrationFieldCustomRenderUrl(string systemName, int fieldId)
+        public async Task<IActionResult> GetRegistrationFieldCustomRenderUrl(string systemName, int fieldId, bool renderAdminView)
         {
             if (string.IsNullOrEmpty(systemName))
                 throw new ArgumentNullException(nameof(systemName));
@@ -2367,9 +2546,324 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 await _registrationFieldCustomRenderPluginManager.LoadPluginBySystemNameAsync(systemName)
                 ?? throw new ArgumentException("Registration field custom render could not be loaded");
 
-            var url = registrationFieldCustomRender.GetCustomRenderUrl(fieldId);
+            var url = await registrationFieldCustomRender.GetCustomRenderUrl(fieldId, renderAdminView);
 
             return Json(new { url });
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        public async Task<IActionResult> GetAdminRegistrationFieldCustomRenderUrl(string systemName, int fieldId)
+        {
+            return await GetRegistrationFieldCustomRenderUrl(systemName, fieldId, true);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> LoadRegistrationFieldAnswersByStore(int storeId)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var store = await _storeService.GetStoreByIdAsync(storeId);
+
+            if (store == null)
+                return new EmptyResult();
+
+            var model = _nexportPluginModelFactory.PrepareNexportAddCustomerRegistrationFieldsModel(store);
+
+            return PartialView($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/_Create.RegistrationFieldAnswer.cshtml", model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AutoValidateAntiforgeryToken]
+        [HttpPost]
+        public async Task<IActionResult> GetNexportRegistrationFieldsForCustomer(NexportCustomerRegistrationFieldWithAnswersListSearchModel searchModel)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return await AccessDeniedDataTablesJson();
+
+            var model = await _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldWithAnswersListModel(searchModel);
+
+            return Json(model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AutoValidateAntiforgeryToken]
+        [HttpPost]
+        public async Task<IActionResult> GetNexportRegistrationFieldAnswersForCustomer(NexportCustomerRegistrationFieldAnswerListSearchModel searchModel)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return await AccessDeniedDataTablesJson();
+
+            var model = await _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldAnswerListModel(searchModel);
+
+            return Json(model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetEditCustomerRegistrationFieldAnswersViewUrl(string systemName, int customerId, int fieldId)
+        {
+            if (string.IsNullOrEmpty(systemName))
+                throw new ArgumentNullException(nameof(systemName));
+
+            var registrationFieldCustomRender = await _registrationFieldCustomRenderPluginManager.LoadPluginBySystemNameAsync(systemName)
+                                                ?? throw new ArgumentException("Registration field custom render could not be loaded");
+
+            var url = registrationFieldCustomRender.GetEditCustomerRegistrationFieldAnswersViewUrl(customerId, fieldId);
+
+            return Json(new { url });
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        public async Task<IActionResult> AddCustomerRegistrationFieldAnswers(int customerId, int storeId)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = await _customerService.GetCustomerByIdAsync(customerId)
+                           ?? throw new Exception($"No customer found with the specified id {customerId}");
+
+            var store = await _storeService.GetStoreByIdAsync(storeId)
+                        ?? throw new Exception($"No store found with the specified id {storeId}");
+
+            var model = _nexportPluginModelFactory.PrepareNexportAddCustomerRegistrationFieldsModel(customer, store);
+
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/AddCustomerRegistrationFieldAnswers.cshtml", model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AutoValidateAntiforgeryToken]
+        [HttpPost]
+        public async Task<IActionResult> AddCustomerRegistrationFieldAnswers(int customerId, int storeId, IFormCollection form)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = await _customerService.GetCustomerByIdAsync(customerId)
+                           ?? throw new Exception($"No customer found with the specified id {customerId}");
+
+            var store = await _storeService.GetStoreByIdAsync(storeId)
+                        ?? throw new Exception($"No store found with the specified id {storeId}");
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Parse Nexport registration fields and check for errors
+                    var nexportRegistrationFields = await _nexportService.ParseRegistrationFieldsAsync(form, storeId);
+
+                    // Parse Nexport registration fields with custom type and check for errors
+                    var customRegistrationFields = await _nexportService.ParseCustomRegistrationFieldsAsync(form, storeId);
+
+                    // Save Nexport registration fields
+                    await _nexportService.SaveNexportRegistrationFields(customer, nexportRegistrationFields);
+
+                    // Save Nexport custom registration fields
+                    foreach (var customField in customRegistrationFields)
+                    {
+                        var registrationField = await _nexportService.GetNexportRegistrationFieldById(customField.Key);
+                        if (registrationField != null)
+                        {
+                            var customRender = await _registrationFieldCustomRenderPluginManager.LoadPluginBySystemNameAsync(registrationField.CustomFieldRender);
+                            await customRender?.SaveCustomRegistrationFields(customer, registrationField.Id, customField.Value);
+                        }
+                    }
+
+                    // Schedule synchronization task with Nexport for registration fields
+                    await _nexportService.InsertNexportRegistrationFieldSynchronizationQueueItem(new NexportRegistrationFieldSynchronizationQueueItem
+                    {
+                        CustomerId = customer.Id,
+                        UtcDateCreated = DateTime.UtcNow
+                    });
+
+                    ViewBag.RefreshPage = true;
+
+                    ViewBag.ClosePage = true;
+                }
+                catch (Exception ex)
+                {
+                    await _logger.ErrorAsync("Error occurred while creating Nexport registration fields", ex, customer);
+                    _notificationService.ErrorNotification("Unable to create Nexport registration fields!");
+                }
+            }
+
+            var model = _nexportPluginModelFactory.PrepareNexportAddCustomerRegistrationFieldsModel(customer, store);
+
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/AddCustomerRegistrationFieldAnswers.cshtml", model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        public async Task<IActionResult> EditCustomerRegistrationFieldAnswers(int customerId, int fieldId)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = await _customerService.GetCustomerByIdAsync(customerId)
+                           ?? throw new Exception($"No customer found with the specified id {customerId}");
+
+            var field = await _nexportService.GetNexportRegistrationFieldById(fieldId)
+                           ?? throw new Exception($"No Nexport registration field found with the specified id {fieldId}");
+
+            var model = await _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldAnswersEditModel(customer, field);
+
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/EditCustomerRegistrationFieldAnswers.cshtml", model);
+        }
+
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
+        [AutoValidateAntiforgeryToken]
+        [HttpPost]
+        public async Task<IActionResult> EditCustomerRegistrationFieldAnswers(int customerId, EditRegistrationFieldAnswerRequestModel editModel)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = await _customerService.GetCustomerByIdAsync(customerId)
+                           ?? throw new Exception($"No customer found with the specified id {customerId}");
+
+            var field = await _nexportService.GetNexportRegistrationFieldById(editModel.FieldId)
+                        ?? throw new Exception($"No Nexport registration field found with the specified id {editModel.FieldId}");
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    NexportRegistrationFieldAnswer currentAnswer;
+                    switch (field.Type)
+                    {
+                        case NexportRegistrationFieldType.Text:
+                        case NexportRegistrationFieldType.Email:
+                        case NexportRegistrationFieldType.Numeric:
+                        case NexportRegistrationFieldType.Boolean:
+                        case NexportRegistrationFieldType.DateOnly:
+                        case NexportRegistrationFieldType.DateTime:
+                        case NexportRegistrationFieldType.SelectDropDown:
+                            currentAnswer = await _nexportService.GetNexportRegistrationFieldAnswerById(editModel.PreviousAnswers[0]);
+
+                            if (currentAnswer != null)
+                            {
+                                if (field.Type == NexportRegistrationFieldType.Text ||
+                                    field.Type == NexportRegistrationFieldType.Email)
+                                    currentAnswer.TextValue = editModel.AnswerValue;
+                                else if (field.Type == NexportRegistrationFieldType.Numeric)
+                                    currentAnswer.NumericValue = int.Parse(editModel.AnswerValue);
+                                else if (field.Type == NexportRegistrationFieldType.Boolean)
+                                    currentAnswer.BooleanValue = bool.Parse(editModel.AnswerValue);
+                                else if (field.Type == NexportRegistrationFieldType.DateOnly ||
+                                            field.Type == NexportRegistrationFieldType.DateTime)
+                                    currentAnswer.DateTimeValue = DateTime.Parse(editModel.AnswerValue);
+                                else if (field.Type == NexportRegistrationFieldType.SelectDropDown)
+                                {
+                                    if (editModel.AnswerFieldOptions != null && editModel.AnswerFieldOptions.Count > 0)
+                                    {
+                                        var newOption = editModel.AnswerFieldOptions[0];
+                                        currentAnswer.FieldOptionId = newOption == 0 ? null : (int?)newOption;
+                                    }
+                                    else
+                                        currentAnswer.FieldOptionId = null;
+                                }
+
+                                currentAnswer.UtcDateModified = DateTime.UtcNow;
+                                await _nexportService.UpdateNexportRegistrationFieldAnswer(currentAnswer);
+                            }
+
+                            break;
+
+                        case NexportRegistrationFieldType.SelectCheckbox:
+                            if (editModel.AllowMultipleSelection != null && editModel.AllowMultipleSelection.Value)
+                            {
+                                var currentAnswers = await _nexportService.GetNexportRegistrationFieldAnswers(customerId, editModel.FieldId);
+                                var currentAnswersFieldOptions = currentAnswers
+                                    .Where(x => x.FieldOptionId != null)
+                                    .Select(x => x.FieldOptionId.Value).ToList();
+
+                                var newOptions = editModel.AnswerFieldOptions.Except(currentAnswersFieldOptions);
+
+                                var removingOptions = currentAnswersFieldOptions.Except(editModel.AnswerFieldOptions);
+
+                                foreach (var newOption in newOptions)
+                                {
+                                    var newAnswer = new NexportRegistrationFieldAnswer
+                                    {
+                                        CustomerId = customerId,
+                                        FieldId = editModel.FieldId,
+                                        UtcDateCreated = DateTime.UtcNow,
+                                        UtcDateModified = DateTime.UtcNow,
+                                        FieldOptionId = newOption
+                                    };
+
+                                    await _nexportService.InsertNexportRegistrationFieldAnswer(newAnswer);
+                                }
+
+                                foreach (var removingOption in removingOptions)
+                                {
+                                    currentAnswer = await _nexportService.GetNexportRegistrationFieldAnswerByFieldOption(customerId, editModel.FieldId, removingOption);
+                                    if (currentAnswer != null)
+                                    {
+                                        await _nexportService.DeleteNexportRegistrationFieldAnswer(currentAnswer);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                currentAnswer = await _nexportService.GetNexportRegistrationFieldAnswerById(editModel.PreviousAnswers[0]);
+
+                                if (currentAnswer != null)
+                                {
+                                    if (editModel.AnswerFieldOptions is { Count: > 0 })
+                                        currentAnswer.FieldOptionId = editModel.AnswerFieldOptions[0];
+                                    else
+                                        currentAnswer.FieldOptionId = null;
+
+                                    currentAnswer.UtcDateModified = DateTime.UtcNow;
+                                    await _nexportService.UpdateNexportRegistrationFieldAnswer(currentAnswer);
+                                }
+                            }
+
+                            break;
+
+                        case NexportRegistrationFieldType.CustomType:
+                            var submittingFields = new Dictionary<string, string>();
+                            var customFieldKeys = editModel.FormCollection.Keys.Where(x => x.StartsWith($"NexportCustomProfile-{field.Id}"));
+                            foreach (var key in customFieldKeys)
+                            {
+                                editModel.FormCollection.TryGetValue(key, out var fieldValue);
+                                submittingFields.Add(key, fieldValue);
+                            }
+
+                            var registrationFieldCustomRender = await _registrationFieldCustomRenderPluginManager.LoadPluginBySystemNameAsync(field.CustomFieldRender);
+                            await registrationFieldCustomRender?.UpdateCustomRegistrationFieldAnswers(customer.Id, field.Id, submittingFields);
+
+                            break;
+
+
+                        case NexportRegistrationFieldType.None:
+                            break;
+                    }
+
+                    ViewBag.RefreshPage = true;
+
+                    ViewBag.ClosePage = true;
+                }
+                catch (Exception ex)
+                {
+                    await _logger.ErrorAsync("Error occurred while saving Nexport registration field", ex, customer);
+                    _notificationService.ErrorNotification("Unable to save Nexport registration field!");
+                }
+            }
+
+            var model = _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldAnswersEditModel(customer, field);
+
+            return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/EditCustomerRegistrationFieldAnswers.cshtml", model);
         }
 
         #endregion

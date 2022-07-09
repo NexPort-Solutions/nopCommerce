@@ -20,6 +20,8 @@ namespace Nop.Plugin.Misc.Nexport.Domain.RegistrationField
 
         public string ValidationRegex { get; set; }
 
+        public string ValidationMessage { get; set; }
+
         public int? FieldCategoryId { get; set; }
 
         public int DisplayOrder { get; set; }

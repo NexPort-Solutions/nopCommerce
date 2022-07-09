@@ -6,6 +6,15 @@
 
 @model Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer.NexportCustomerRegistrationFieldsModel
 
+@{
+    Html.AppendScriptParts("~/lib/datatables/moment-with-locales-2.22.2.min.js");
+    Html.AppendScriptParts("~/Plugins/Misc.Nexport/Scripts/xregexp-all.min.js");
+
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
+
+    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/jquery-ui-timepicker-addon.min.css");
+    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/jquery-ui-timepicker-addon.min.js");
+}
 <link rel="stylesheet" href="~/lib/datatables/moment-with-locales-2.22.2.min.js" />
 <link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport.css" />
 <link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/jquery-ui-timepicker-addon.min.css" />
@@ -69,7 +78,27 @@
 
                 if (options.required || value)
                     return moment(value, options.format, true).isValid();
+
+                return true;
             }, "Please enter a valid datetime value");
+
+            jQuery.validator.addMethod("validate-pattern", function (value, element, params) {
+                var options = params ||
+                {
+                    format: "",
+                    required: false
+                };
+
+                if (this.optional(element))
+                    return true;
+
+                if (options.required || value) {
+                    var regEx = XRegExp.build(options.format, null, "x");
+                    return regEx.test(value);
+                }
+
+                return true;
+            }, "Please enter a valid format");
         });
     </script>
 }

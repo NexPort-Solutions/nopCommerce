@@ -12,6 +12,8 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using Nop.Core.Infrastructure.Mapper;
+using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -721,6 +723,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (nexportUserMapping == null)
                 throw new ArgumentNullException(nameof(nexportUserMapping));
 
+            var existingMapping = _nexportUserMappingRepository
+                .Table
+                .FirstOrDefault(user => user.NexportUserId == nexportUserMapping.NexportUserId);
+
+            if (existingMapping != null)
+                throw new NexportUserMappingException(
+                    $"The Nexport user Id {nexportUserMapping.NexportUserId} has been mapped with another users!",
+                    existingMapping);
             if (await _nexportUserMappingRepository.Table.AnyAsync(user => user.NopUserId == nexportUserMapping.NopUserId))
                 return;
 
@@ -865,6 +875,28 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                     await InsertNexportProductGroupMembershipMapping(newGroupMembershipMapping);
                 }
+            }
+        }
+
+        public async Task DuplicateProductMappingAsync(NexportProductMapping productMapping, int storeId)
+        {
+            var newMapping = AutoMapperConfiguration.Mapper.Map<NexportProductMapping>(productMapping);
+            newMapping.StoreId = storeId;
+
+            await InsertNexportProductMapping(newMapping);
+
+            var groupMembershipMappings = await GetProductGroupMembershipMappings(productMapping.Id);
+            foreach (var groupMembershipMapping in groupMembershipMappings)
+            {
+                var newGroupMembershipMapping = new NexportProductGroupMembershipMapping
+                {
+                    NexportGroupId = groupMembershipMapping.NexportGroupId,
+                    NexportGroupName = groupMembershipMapping.NexportGroupName,
+                    NexportGroupShortName = groupMembershipMapping.NexportGroupShortName,
+                    NexportProductMappingId = newMapping.Id
+                };
+
+                await InsertNexportProductGroupMembershipMapping(newGroupMembershipMapping);
             }
         }
 
@@ -1428,6 +1460,65 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
+        public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswersPagination(
+            int customerId, int? storeId = null,
+            int pageIndex = 0, int pageSize = int.MaxValue)
+        {
+            var registrationFieldWithAnswerIds = await
+                _nexportRegistrationFieldAnswerRepository
+                    .Table
+                    .Where(fa => fa.CustomerId == customerId)
+                    .GroupBy(fa => fa.FieldId)
+                    .Select(x => x.FirstOrDefault().FieldId)
+                    .ToListAsync();
+
+            if (storeId != null)
+            {
+                registrationFieldWithAnswerIds = await registrationFieldWithAnswerIds.Where(id =>
+                    _nexportRegistrationFieldStoreMappingRepository.Table
+                        .Where(mapping => mapping.StoreId == storeId)
+                        .Select(mapping => mapping.FieldId).Contains(id) ||
+                    !(_nexportRegistrationFieldStoreMappingRepository.Table
+                        .Where(mapping => mapping.FieldId == id)
+                        .Select(mapping => mapping.FieldId)).Contains(id)).ToListAsync();
+            }
+
+            var query = _nexportRegistrationFieldRepository
+                .Table
+                .Where(f => registrationFieldWithAnswerIds.Contains(f.Id));
+
+            return await query.ToPagedListAsync(pageIndex, pageSize);
+        }
+
+        public async Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswers(int customerId,
+            int? storeId = null)
+        {
+            var registrationFieldWithAnswerIds = await
+                _nexportRegistrationFieldAnswerRepository
+                    .Table
+                    .Where(fa => fa.CustomerId == customerId)
+                    .GroupBy(fa => fa.FieldId)
+                    .Select(x => x.FirstOrDefault().FieldId)
+                    .ToListAsync();
+
+            if (storeId != null)
+            {
+                var registrationFieldIdsByStore = await _nexportRegistrationFieldStoreMappingRepository
+                    .Table
+                    .Where(x => x.StoreId == storeId)
+                    .Select(x => x.FieldId)
+                    .ToListAsync();
+
+                registrationFieldWithAnswerIds = registrationFieldWithAnswerIds.Intersect(registrationFieldIdsByStore).ToList();
+            }
+
+            var query = _nexportRegistrationFieldRepository
+                .Table
+                .Where(f => registrationFieldWithAnswerIds.Contains(f.Id));
+
+            return await query.ToListAsync();
+        }
+
         public async Task InsertNexportRegistrationField(NexportRegistrationField registrationField)
         {
             if (registrationField == null)
@@ -1617,18 +1708,26 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 : await _nexportRegistrationFieldAnswerRepository.GetByIdAsync(fieldAnswerId);
         }
 
-        public async Task<IList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswers(int customerId)
+        public async Task<IList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswers(int customerId,
+            int? fieldId = null)
         {
             if (customerId < 1)
                 return new List<NexportRegistrationFieldAnswer>();
 
-            return await _nexportRegistrationFieldAnswerRepository.Table
-                .Where(fa => fa.CustomerId == customerId)
-                .ToListAsync();
+            var query = _nexportRegistrationFieldAnswerRepository.Table
+                .Where(fa => fa.CustomerId == customerId);
+
+            if (fieldId != null)
+            {
+                query = query.Where(x => x.FieldId == fieldId);
+            }
+
+            return await query.ToListAsync();
         }
 
         public async Task<IPagedList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswersPagination(
             int customerId,
+            int? fieldId = null,
             int pageIndex = 0, int pageSize = int.MaxValue)
         {
             return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldAnswerAllCacheKey, async () =>
@@ -1636,8 +1735,26 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 var query = _nexportRegistrationFieldAnswerRepository
                     .Table.Where(fa => fa.CustomerId == customerId);
 
+                if (fieldId != null)
+                {
+                    query = query.Where(x => x.FieldId == fieldId);
+                }
+
                 return await query.ToPagedListAsync(pageIndex, pageSize);
             });
+        }
+
+        public async Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerByFieldOption(int customerId,
+            int fieldId, int fieldOptionId)
+        {
+            if (customerId < 1 || fieldId < 1)
+                return null;
+
+            return await _nexportRegistrationFieldAnswerRepository.Table
+                .FirstOrDefaultAsync(fa =>
+                fa.CustomerId == customerId &&
+                fa.FieldId == fieldId &&
+                fa.FieldOptionId == fieldOptionId);
         }
 
         public async Task InsertNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)

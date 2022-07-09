@@ -6,3 +6,7 @@
   line-height: 26px;
   color: #444;
 }
+
+.nex-plugin .uk-button-link:disabled {
+  cursor: not-allowed;
+}

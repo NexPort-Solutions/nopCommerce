@@ -29,9 +29,9 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
         }
 
         public async Task<ArchwayStudentEmployeeRegistrationFieldModel>
-            PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(int fieldId)
+            PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(int fieldId, bool renderAdminView)
         {
-            var model = new ArchwayStudentEmployeeRegistrationFieldModel { FieldId = fieldId };
+            var model = new ArchwayStudentEmployeeRegistrationFieldModel { FieldId = fieldId, RenderAdminView = renderAdminView };
 
             var storeRecords = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
 
@@ -41,7 +41,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
                 .Where(s => storeAbbreviations.Contains(s.Abbreviation)).ToList();
             if (states.Any())
             {
-                model.AvailableStates.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectState"), Value = "" });
+                model.AvailableStates.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectState"), Value = null });
 
                 foreach (var s in states)
                 {
@@ -88,12 +88,68 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
             return model;
         }
 
-        public async Task<IList<ArchwayStoreCityModel>> GetArchwayStoreCitiesByState(string state, bool addSelectCityItem)
+        public async Task<ArchwayStudentEmployeeRegistrationFieldModel>
+            PrepareEditArchwayStudentEmployeeRegistrationFieldModel(int customerId, int fieldId)
+        {
+            var model = await PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(fieldId, false);
+
+            var currentAnswers = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
+
+            model.StoreLocationState = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreStateField")?.TextValue;
+
+            model.StoreLocationCity = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreCityField")?.TextValue;
+
+            var citiesFromCurrentState = await GetArchwayStoreCitiesByState(model.StoreLocationState, true);
+            foreach (var city in citiesFromCurrentState)
+            {
+                model.AvailableCities.Add(new SelectListItem
+                {
+                    Text = city.name,
+                    Value = city.name
+                });
+            }
+
+            model.StoreLocationAddress = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreAddressField")?.TextValue;
+
+            var addressFromCurrentCity = await GetArchwayStoreAddressesByCity(model.StoreLocationCity, model.StoreLocationState, true);
+            foreach (var address in addressFromCurrentCity)
+            {
+                model.AvailableAddresses.Add(new SelectListItem
+                {
+                    Text = address.name,
+                    Value = address.name
+                });
+            }
+
+            model.EmployeePosition = currentAnswers.FirstOrDefault(x => x.FieldKey == "EmployeePositionField")?.TextValue;
+
+            model.StoreNumber = int.Parse(currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreIdField")?.TextValue ?? "0");
+            model.StoreType = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreTypeField")?.TextValue;
+
+            var positionFromCurrentAddress = await GetArchwayStoreEmployeePositionsByStore(model.StoreNumber.ToString(), true);
+            foreach(var position in positionFromCurrentAddress)
+            {
+                model.AvailableEmployeePositions.Add(new SelectListItem
+                {
+                    Text = position.name,
+                    Value = position.name
+                });
+            }
+
+            model.EmployeeId = currentAnswers.FirstOrDefault(x => x.FieldKey == "EmployeeIdField")?.TextValue;
+
+            return model;
+        }
+
+        public async Task<IList<ArchwayStoreCityModel>> GetArchwayStoreCitiesByState(string state,
+            bool addSelectCityItem)
         {
             if (string.IsNullOrWhiteSpace(state))
                 return new List<ArchwayStoreCityModel>();
 
-            var stateProvince = (await _stateProvinceService.GetStateProvincesAsync()).FirstOrDefault(x => x.Name == state);
+            var stateProvince = (await _stateProvinceService.GetStateProvincesAsync())
+                .FirstOrDefault(x => x.Name == state);
+
             if (stateProvince == null)
                 return new List<ArchwayStoreCityModel>();
 
@@ -110,15 +166,21 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Factories
         }
 
         public async Task<IList<ArchwayStoreAddressModel>> GetArchwayStoreAddressesByCity(string city,
-            bool addSelectAddressItem)
+            string state, bool addSelectAddressItem)
         {
             if (string.IsNullOrWhiteSpace(city))
+                return new List<ArchwayStoreAddressModel>();
+
+            var stateProvince = (await _stateProvinceService.GetStateProvincesAsync())
+                .FirstOrDefault(x => x.Name == state);
+
+            if (stateProvince == null)
                 return new List<ArchwayStoreAddressModel>();
 
             var storeRecords = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
 
             var records = storeRecords
-                .Where(r => r.City == city)
+                .Where(r => r.City == city && r.State == stateProvince.Abbreviation)
                 .OrderBy(r => r.Address)
                 .ToList();
 

@@ -307,7 +307,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.AllowRepurchasePassedCourses.Hint", "Allowing users to purchase products that associated with courses in Nexport that they have passed previously");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.HideSectionCEUsInProductPage", "Hide Nexport section CEUs");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.HideSectionCEUsInProductPage.Hint", "Hide Nexport section CEUs information in the product page");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.HideAddToCartForIneligibleProducts","Hide Add to cart for ineligible product");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.HideAddToCartForIneligibleProducts", "Hide Add to cart for ineligible product");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.HideAddToCartForIneligibleProducts.Hint", "Hide Add to cart button for any product that customers are not allowed to purchase");
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.NexportProductName", "Product name");
@@ -318,8 +318,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CatalogSyllabusLinkId.Hint", "The Id of the catalog syllabus linking");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CatalogId", "Catalog Id");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CatalogId.Hint", "The Id of the Nexport catalog");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.SyllabusId","Syllabus Id");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.SyllabusId.Hint","The Id of the Nexport syllabus");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.SyllabusId", "Syllabus Id");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.SyllabusId.Hint", "The Id of the Nexport syllabus");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.SubscriptionOrgId", "Subscription organization Id");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.SubscriptionOrgId.Hint", "The Id of the subscription organization in Nexport");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.SubscriptionOrgName", "Subscription organization name");
@@ -388,6 +388,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 "When approval method is set to manual, the administrator will be able to choose the choice between extending or restarting the enrollment when the completion percentage exceeds the completion threshold.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ExtensionPurchaseLimit", "Extension purchase limit");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ExtensionPurchaseLimit.Hint", "Limit how many times the customers can purchase the extension.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.DuplicateSourceStoreMapping", "Mapping duplication source");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.DuplicateSourceStoreMapping.Hint", "The store that contains the product mapping which will be duplicated from.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.DuplicateDestinationStoreMappings", "Mapping duplication destinations");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.DuplicateDestinationStoreMappings.Hint", "The list of stores that the product mapping will be duplicated to.");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Training", "Nexport Training");
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Account.Fields.Nexport.UserId", "Nexport user Id");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Account.Fields.Nexport.UserId.Hint", "The user Id in Nexport");
@@ -395,6 +401,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Account.Fields.Nexport.OwnerOrgId.Hint", "The Id of the owner organization for the user");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Account.Fields.Nexport.OwnerOrgShortName", "Nexport owner organization short name");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Account.Fields.Nexport.OwnerOrgShortName.Hint", "The short name of the owner organization for the user");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Account.Fields.Nexport.UserFullName", "Nexport user full name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Account.Fields.Nexport.UserFullName.Hint", "The full name of the user in Nexport");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Account.Fields.Nexport.Email", "Nexport email");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Account.Fields.Nexport.Email.Hint", "The internal email of the user in Nexport");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Account.Login.Fields.EmailOrUsername", "Email/Username");
@@ -469,6 +477,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.Validation.Hint", "Use custom validation to validate the registration field before submitting it.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex", "Custom validation");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex.Hint", "Regular expression that will be used to validate the field before submitting.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.ValidationMessage", "Validation message");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.ValidationMessage.Hint", "The message that will be displayed when the custom validation has failed.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.StoreMappings", "Stores");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.Stores", "Stores");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.Stores.Hint", "Option to limit display the registration field to a certain store");
@@ -485,7 +495,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.Custom", "Registration field custom option");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Option.Value", "Option value");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Option.Value.Hint", "The value of the option");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Option.DisplayOrder", "Display order");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Option.Value.Required", "The value for option is required");
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Category.Options", "Additional options");
@@ -615,6 +624,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RenewalApprovalMethod.Hint");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ExtensionPurchaseLimit");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ExtensionPurchaseLimit.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.DuplicateSourceStoreMapping");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.DuplicateSourceStoreMapping.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.DuplicateDestinationStoreMappings");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.DuplicateDestinationStoreMappings.Hint");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Training");
 
             await _localizationService.DeleteLocaleResourceAsync("Account.Fields.Nexport.UserId");
             await _localizationService.DeleteLocaleResourceAsync("Account.Fields.Nexport.UserId.Hint");
@@ -622,6 +637,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Account.Fields.Nexport.OwnerOrgId.Hint");
             await _localizationService.DeleteLocaleResourceAsync("Account.Fields.Nexport.OwnerOrgShortName");
             await _localizationService.DeleteLocaleResourceAsync("Account.Fields.Nexport.OwnerOrgShortName.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Account.Fields.Nexport.UserFullName");
+            await _localizationService.DeleteLocaleResourceAsync("Account.Fields.Nexport.UserFullName.Hint");
             await _localizationService.DeleteLocaleResourceAsync("Account.Fields.Nexport.Email");
             await _localizationService.DeleteLocaleResourceAsync("Account.Fields.Nexport.Email.Hint");
             await _localizationService.DeleteLocaleResourceAsync("Account.Login.Fields.EmailOrUsername");
@@ -696,6 +713,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.Validation.Hint");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.ValidationMessage");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.ValidationMessage.Hint");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.StoreMappings");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.Stores");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Field.Stores.Hint");

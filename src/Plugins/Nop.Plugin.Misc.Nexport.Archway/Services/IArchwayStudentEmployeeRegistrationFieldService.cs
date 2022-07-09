@@ -32,11 +32,15 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
 
         Task<ArchwayStudentRegistrationFieldKeyMapping> GetArchwayStudentRegistrationFieldKeyMapping(string fieldControlName);
 
+        ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMappingByFieldKey(string fieldKey);
+
         Task InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping);
 
         Task DeleteArchwayStudentRegistrationFieldKeyMapping(ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping);
 
         Task<IList<ArchwayStudentRegistrationFieldAnswer>> GetArchwayStudentRegistrationFieldAnswers(int customerId, int fieldId);
+
+        Task<ArchwayStudentRegistrationFieldAnswer> GetArchwayStudentRegistrationFieldAnswer(int id);
 
         Task InsertArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer);
 
@@ -44,10 +48,15 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
 
         Task UpdateArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer);
 
+        Task UpdateArchwayStudentRegistrationFieldAnswersForCustomer(int customerId, int fieldId,
+            Dictionary<string, string> fields);
+
         Task<Dictionary<string, string>> ParseArchwayStoreEmployeeRegistrationFields(int fieldId, IFormCollection form);
 
         Task SaveArchwayStoreEmployeeRegistrationFields(Customer customer, int fieldId, Dictionary<string, string> fields);
 
         Task<Dictionary<string, string>> ProcessArchwayStoreEmployeeRegistrationFields(int customerId, int fieldId);
+
+        Task<Dictionary<string, string>> GetCustomFieldNamesAndValues(int customerId, int fieldId);
     }
 }

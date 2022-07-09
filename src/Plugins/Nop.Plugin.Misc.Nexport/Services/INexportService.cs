@@ -123,6 +123,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task CopyProductMappingsAsync(Product originalProduct, Product copyingProduct);
 
+        Task DuplicateProductMappingAsync(NexportProductMapping productMapping, int storeId);
+
         #region Supplemental Info
 
         Task<IPagedList<NexportSupplementalInfoQuestion>> GetAllNexportSupplementalInfoQuestionsPagination(
@@ -169,9 +171,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task UpdateNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping);
 
-        Task<IPagedList<NexportSupplementalInfoOptionGroupAssociation>>
-            GetNexportSupplementalInfoOptionGroupAssociationsPagination(int optionId, int pageIndex = 0,
-                int pageSize = int.MaxValue);
+        Task<IPagedList<NexportSupplementalInfoOptionGroupAssociation>> GetNexportSupplementalInfoOptionGroupAssociationsPagination(
+            int optionId, int pageIndex = 0, int pageSize = int.MaxValue);
 
         Task<IList<NexportSupplementalInfoOptionGroupAssociation>> GetNexportSupplementalInfoOptionGroupAssociations(
             int optionId, bool excludeInactive = false);
@@ -251,8 +252,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsByCategoryId(int categoryId);
 
-        Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(int pageIndex = 0,
-            int pageSize = int.MaxValue);
+        Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(
+            int pageIndex = 0, int pageSize = int.MaxValue);
 
         Task InsertNexportRegistrationField(NexportRegistrationField registrationField);
 
@@ -267,6 +268,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IPagedList<NexportRegistrationFieldOption>> GetNexportRegistrationFieldOptionsPagination(int fieldId,
             int pageIndex = 0, int pageSize = int.MaxValue);
+
+        Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswersPagination(int customerId,
+            int? storeId = null, int pageIndex = 0, int pageSize = int.MaxValue);
+
+        Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswers(int customerId,
+            int? storeId = null);
 
         Task InsertNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption);
 
@@ -293,18 +300,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IList<NexportRegistrationFieldStoreMapping>> GetNexportRegistrationFieldStoreMappings(int fieldId);
 
-        Task InsertNexportRegistrationFieldStoreMapping(
-            NexportRegistrationFieldStoreMapping registrationFieldStoreMapping);
+        Task InsertNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping);
 
-        Task DeleteNexportRegistrationFieldStoreMapping(
-            NexportRegistrationFieldStoreMapping registrationFieldStoreMapping);
+        Task DeleteNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping);
 
         Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerById(int fieldAnswerId);
 
-        Task<IList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswers(int customerId);
+        Task<IList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswers(int customerId, int? fieldId = null);
 
         Task<IPagedList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswersPagination(int customerId,
-            int pageIndex = 0, int pageSize = int.MaxValue);
+            int? fieldId = null, int pageIndex = 0, int pageSize = int.MaxValue);
 
         Task InsertNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
 
@@ -312,14 +317,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task UpdateNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
 
-        Task InsertNexportRegistrationFieldSynchronizationQueueItem(
-            NexportRegistrationFieldSynchronizationQueueItem queueItem);
+        Task InsertNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
 
-        Task DeleteNexportRegistrationFieldSynchronizationQueueItem(
-            NexportRegistrationFieldSynchronizationQueueItem queueItem);
+        Task DeleteNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
 
-        Task UpdateNexportRegistrationFieldSynchronizationQueueItem(
-            NexportRegistrationFieldSynchronizationQueueItem queueItem);
+        Task UpdateNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
+
+        Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerByFieldOption(int customerId, int fieldId,
+            int fieldOptionId);
 
         Task<bool> HasCustomRegistrationFieldRenderForStores(int fieldId, IList<int> storeIds, string customFieldRender);
 

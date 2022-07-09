@@ -21,6 +21,7 @@ using Nop.Plugin.Misc.Nexport.Archway.Data;
 using Nop.Plugin.Misc.Nexport.Archway.Domains;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Localization;
 using Nop.Services.Caching;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Services
@@ -34,6 +35,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
         private readonly IRepository<ArchwayStudentRegistrationFieldAnswer> _archwayStudentRegistrationFieldAnswerRepository;
         private readonly IStaticCacheManager _cacheManager;
         private readonly INopFileProvider _fileProvider;
+        private readonly ILocalizationService _localizationService;
         private readonly NexportService _nexportService;
         private readonly ILogger _logger;
 
@@ -247,6 +249,16 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                 .FirstOrDefaultAsync(x => x.FieldControlName == fieldControlName);
         }
 
+        public ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMappingByFieldKey(string fieldKey)
+        {
+            if (string.IsNullOrWhiteSpace(fieldKey))
+                return null;
+
+            return _archwayStudentRegistrationFieldKeyMappingRepository
+                .Table
+                .FirstOrDefault(x => x.FieldKey == fieldKey);
+        }
+
         public async Task InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(
             ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping)
         {
@@ -295,6 +307,13 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                 .Where(x => x.CustomerId == customerId && x.FieldId == fieldId).ToListAsync();
         }
 
+        public async Task<ArchwayStudentRegistrationFieldAnswer> GetArchwayStudentRegistrationFieldAnswer(int id)
+        {
+            return id < 1
+                ? null
+                : await _archwayStudentRegistrationFieldAnswerRepository.GetByIdAsync(id);
+        }
+
         public async Task InsertArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer)
         {
             if (answer == null)
@@ -315,7 +334,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                     x.FieldKey == answer.FieldKey))
                 return;
 
-            await _archwayStudentRegistrationFieldAnswerRepository.InsertAsync(answer);
+            await _archwayStudentRegistrationFieldAnswerRepository.DeleteAsync(answer);
         }
 
         public async Task UpdateArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer)
@@ -323,10 +342,47 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             if (answer == null)
                 throw new ArgumentNullException(nameof(answer));
 
-            await _archwayStudentRegistrationFieldAnswerRepository.InsertAsync(answer);
+            await _archwayStudentRegistrationFieldAnswerRepository.UpdateAsync(answer);
         }
 
-        public async Task<Dictionary<string, string>> ParseArchwayStoreEmployeeRegistrationFields(int fieldId,
+        public async Task UpdateArchwayStudentRegistrationFieldAnswersForCustomer(int customerId, int fieldId,
+            Dictionary<string, string> fields)
+        {
+            var answers = await GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
+            var prefix = $"{NexportDefaults.NexportRegistrationFieldPrefix}-{fieldId}.{PluginDefaults.HtmlFieldPrefix}";
+            foreach (var (key, value) in fields)
+            {
+                var fieldControl = key[(key.IndexOf(prefix, StringComparison.Ordinal) + prefix.Length + 1)..];
+                var fieldKeyMapping = await GetArchwayStudentRegistrationFieldKeyMapping(fieldControl);
+                if (fieldKeyMapping != null)
+                {
+                    var currentAnswer = answers.FirstOrDefault(x => x.FieldKey == fieldKeyMapping.FieldKey);
+                    if (currentAnswer != null)
+                    {
+                        currentAnswer.TextValue = value;
+                        currentAnswer.UtcDateModified = DateTime.UtcNow;
+
+                        await UpdateArchwayStudentRegistrationFieldAnswer(currentAnswer);
+                    }
+                    else
+                    {
+                        var newAnswer = new ArchwayStudentRegistrationFieldAnswer
+                        {
+                            CustomerId = customerId,
+                            FieldId = fieldId,
+                            FieldKey = fieldKeyMapping.FieldKey,
+                            TextValue = value,
+                            UtcDateCreated = DateTime.UtcNow,
+                            UtcDateModified = DateTime.UtcNow
+                        };
+
+                        await InsertArchwayStudentRegistrationFieldAnswer(newAnswer);
+                    }
+                }
+            }
+        }
+
+        public Task<Dictionary<string, string>> ParseArchwayStoreEmployeeRegistrationFields(int fieldId,
             IFormCollection form)
         {
             if (form == null)
@@ -335,7 +391,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             var result = new Dictionary<string, string>();
 
             if (fieldId < 1)
-                return result;
+                return Task.FromResult(result);
 
             var controlId = $"{NexportDefaults.NexportRegistrationFieldPrefix}-{fieldId}.{PluginDefaults.HtmlFieldPrefix}";
 
@@ -347,7 +403,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
                 result.Add(registrationFieldKey, value);
             }
 
-            return result;
+            return Task.FromResult(result);
         }
 
         public async Task SaveArchwayStoreEmployeeRegistrationFields(Customer customer, int fieldId,
@@ -356,30 +412,54 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
 
-            await _nexportService.InsertNexportRegistrationFieldAnswer(
-                new NexportRegistrationFieldAnswer
-                {
-                    CustomerId = customer.Id,
-                    FieldId = fieldId,
-                    IsCustomField = true,
-                    UtcDateCreated = DateTime.UtcNow
-                });
-
-            foreach (var field in fields)
+            try
             {
-                var fieldKeyMapping = await GetArchwayStudentRegistrationFieldKeyMapping(field.Key);
-                if (fieldKeyMapping != null)
+                if (fields.Count > 0)
                 {
-                    await InsertArchwayStudentRegistrationFieldAnswer(
-                        new ArchwayStudentRegistrationFieldAnswer
+                    var includeStoreIdField = fields.TryGetValue("StoreNumber", out var storeIdFieldValue);
+                    if (!includeStoreIdField || string.IsNullOrWhiteSpace(storeIdFieldValue))
+                        return;
+
+                    int.TryParse(storeIdFieldValue, out var storeId);
+                    if (storeId < 0)
+                        return;
+
+                    var includeEmployeePositionField =
+                        fields.TryGetValue("EmployeePosition", out var employeePositionField);
+                    if (!includeEmployeePositionField || string.IsNullOrWhiteSpace(employeePositionField))
+                        return;
+
+                    await _nexportService.InsertNexportRegistrationFieldAnswer(
+                        new NexportRegistrationFieldAnswer
                         {
                             CustomerId = customer.Id,
                             FieldId = fieldId,
-                            FieldKey = fieldKeyMapping.FieldKey,
-                            TextValue = field.Value,
+                            IsCustomField = true,
                             UtcDateCreated = DateTime.UtcNow
                         });
+
+                    foreach (var field in fields)
+                    {
+                        var fieldKeyMapping = await GetArchwayStudentRegistrationFieldKeyMapping(field.Key);
+                        if (fieldKeyMapping != null)
+                        {
+                            await InsertArchwayStudentRegistrationFieldAnswer(
+                                new ArchwayStudentRegistrationFieldAnswer
+                                {
+                                    CustomerId = customer.Id,
+                                    FieldId = fieldId,
+                                    FieldKey = fieldKeyMapping.FieldKey,
+                                    TextValue = field.Value,
+                                    UtcDateCreated = DateTime.UtcNow
+                                });
+                        }
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                await _logger.ErrorAsync("Unable to save registration field for Archway store employee", ex, customer);
+                throw;
             }
         }
 
@@ -389,6 +469,22 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             var answers = await GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
 
             return answers.ToDictionary(answer => answer.FieldKey, answer => answer.TextValue);
+        }
+
+        public async Task<Dictionary<string, string>> GetCustomFieldNamesAndValues(int customerId, int fieldId)
+        {
+            var result = new Dictionary<string, string>();
+            var answers = await GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
+            foreach (var answer in answers.Where(x=>x.FieldKey != "StoreIdField" && x.FieldKey != "StoreTypeField"))
+            {
+                var fieldKeyInfo = GetArchwayStudentRegistrationFieldKeyMappingByFieldKey(answer.FieldKey);
+                if (fieldKeyInfo != null)
+                {
+                    result.Add(await _localizationService.GetResourceAsync($"Plugins.Misc.Nexport.Archway.Field.{fieldKeyInfo.FieldControlName}"), answer.TextValue);
+                }
+            }
+
+            return result;
         }
     }
 }

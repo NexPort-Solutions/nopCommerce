@@ -52,10 +52,20 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Views\RegistrationField\EditCustomerRegistrationFieldAnswers.cshtml" />
+    <Resource Include="Views\RegistrationField\_CustomerFields.Control.CustomRender.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Update="Areas\Admin\Views\_ViewImports.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Areas\Admin\Views\Customer\CustomRegistrationFieldDetails.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Views\RegistrationField\EditCustomerRegistrationFieldAnswers.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Views\RegistrationField\_CustomerFields.Control.CustomRender.cshtml">

@@ -1,0 +1,64 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer.NexportAddCustomerRegistrationFieldsModel
+
+@{
+    Html.AppendScriptParts("~/Plugins/Misc.Nexport/Scripts/xregexp-all.min.js");
+}
+
+@if (Model != null)
+{
+    <p style="color: #ff2e2e;">Note: Fields with <b>*</b> are only required when customers register by themselves.</p>
+
+    foreach (var registrationField in Model.RegistrationFields)
+    {
+        @await Html.PartialAsync("../Customer/_Create.RegistrationFieldAnswer.Control.cshtml",
+            registrationField)
+    }
+
+    <script>
+        $(document).ready(function () {
+            var parentForm = $("#nexport-registration-field-answers-container").parents().find("form[action='/Admin/Customer/Create']");
+            parentForm.validate({
+                onclick: function () {
+                    parentForm.valid();
+                },
+                errorPlacement: function (error, element) {
+                    error.appendTo(element.parents(".custom-attributes").find(".field-validation-error"));
+                }
+            });
+
+            jQuery.validator.addMethod("validate-datetime", function (value, element, params) {
+                var options = params ||
+                {
+                    format: ["MM/DD/YYYY HH:mm"],
+                    required: false
+                };
+
+                if (this.optional(element))
+                    return true;
+
+                if (options.required || value)
+                    return moment(value, options.format, true).isValid();
+
+                return true;
+            }, "Please enter a valid datetime value");
+
+            jQuery.validator.addMethod("validate-pattern", function (value, element, params) {
+                var options = params ||
+                {
+                    format: "",
+                    required: false
+                };
+
+                if (this.optional(element))
+                    return true;
+
+                if (options.required || value) {
+                    var regEx = XRegExp.build(options.format, null, "x");
+                    return regEx.test(value);
+                }
+
+                return true;
+            }, "Please enter a valid format");
+        });
+    </script>
+}

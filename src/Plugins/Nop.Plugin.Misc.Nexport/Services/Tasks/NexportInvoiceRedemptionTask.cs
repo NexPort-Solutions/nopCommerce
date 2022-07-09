@@ -109,6 +109,10 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                 if (queueItem.RetryCount > MAX_RETRY_COUNT)
                                 {
                                     await DeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem, invoiceItem);
+                                    await CleanUpStoredMappingInfoAsync(queueItem.OrderItemId);
+
+                                    // Complete the order
+                                    await _orderProcessingService.CheckOrderStatusAsync(order);
                                 }
                                 else
                                 {
@@ -196,7 +200,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                             await _logger.InformationAsync(
                                                                 $"Order invoice redemption queue item {queueItemId} for order {order.Id} has been processed and removed!");
 
-                                                            CleanUpStoredMappingInfoAsync(orderItem.Id);
+                                                            await CleanUpStoredMappingInfoAsync(orderItem.Id);
                                                         }
                                                     }
                                                 }

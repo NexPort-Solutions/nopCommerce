@@ -42,6 +42,7 @@ using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Common;
+using Nop.Services.Logging;
 using Nop.Services.Plugins;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
@@ -90,6 +91,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly VendorSettings _vendorSettings;
         private readonly CustomerSettings _customerSettings;
         private readonly CaptchaSettings _captchaSettings;
+        private readonly ILogger _logger;
 
         private readonly NexportService _nexportService;
 
@@ -138,6 +140,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             VendorSettings vendorSettings,
             CustomerSettings customerSettings,
             CaptchaSettings captchaSettings,
+            ILogger logger,
             NexportService nexportService)
         {
             _nexportSettings = nexportSettings;
@@ -180,6 +183,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _vendorSettings = vendorSettings;
             _customerSettings = customerSettings;
             _captchaSettings = captchaSettings;
+            _logger = logger;
             _nexportService = nexportService;
         }
 
@@ -349,6 +353,45 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
+        public async Task<DuplicateNexportProductMappingModel> PrepareDuplicateNexportProductMappingModel(Product product)
+        {
+            var model = new DuplicateNexportProductMappingModel();
+
+            var defaultMapping = await _nexportService.GetProductMappingByNopProductId(product.Id);
+            if (defaultMapping == null)
+                return model;
+
+            model.AvailableStores.Add(new SelectListItem
+            {
+                Text = "Default",
+                Value = ""
+            });
+
+            var availableStores = await _storeService.GetAllStoresAsync();
+            foreach (var store in availableStores)
+            {
+                var mapping = await _nexportService.GetProductMappingByNopProductId(product.Id, store.Id);
+                if (mapping != null)
+                {
+                    model.AvailableStores.Add(new SelectListItem
+                    {
+                        Text = store.Name,
+                        Value = store.Id.ToString()
+                    });
+                }
+                else
+                {
+                    model.DestinationStores.Add(new SelectListItem
+                    {
+                        Text = store.Name,
+                        Value = store.Id.ToString()
+                    });
+                }
+            }
+
+            return model;
+        }
+
         public virtual async Task<NexportCustomerAdditionalInfoModel> PrepareNexportAdditionalInfoModelAsync(Customer customer)
         {
             if (customer == null)
@@ -372,6 +415,42 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             {
                 CustomerId = customer.Id
             };
+
+            var availableStores = await _storeService.GetAllStoresAsync();
+
+            model.NexportCustomerRegistrationFieldWithAnswersListSearchModel = new NexportCustomerRegistrationFieldWithAnswersListSearchModel
+            {
+                CustomerId = customer.Id,
+                AvailableStores = availableStores.Select(store => new SelectListItem
+                {
+                    Text = store.Name,
+                    Value = store.Id.ToString()
+                }).ToList()
+            };
+
+            model.NexportCustomerRegistrationFieldAnswerListSearchModel = new NexportCustomerRegistrationFieldAnswerListSearchModel
+            {
+                CustomerId = customer.Id
+            };
+
+            return model;
+        }
+
+        public async Task<AddNexportCustomerAdditionalInfoModel> PrepareAddNexportAdditionalInfoModel(Customer customer)
+        {
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            var model = new AddNexportCustomerAdditionalInfoModel { CustomerId = customer.Id };
+
+            var availableStores = await _storeService.GetAllStoresAsync();
+            model.AvailableStores = availableStores.Select(store => new SelectListItem
+            {
+                Text = store.Name,
+                Value = store.Id.ToString()
+            }).ToList();
+
+            model.AvailableStores.Insert(0, new SelectListItem("Select store", ""));
 
             return model;
         }
@@ -478,14 +557,106 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
             var redemptionOrganizations =
-                await _nexportService.FindNexportRedemptionOrganizationsByCustomerIdAsync(customer.Id);
+                await _nexportService.FindNexportRedemptionOrganizationsByCustomerId(customer.Id);
 
             var model = new NexportTrainingListModel();
 
-            if (userMapping != null && redemptionOrganizations != null)
+            if (userMapping != null)
             {
-                model.RedemptionOrganizations = redemptionOrganizations;
                 model.UserId = userMapping.NexportUserId;
+                model.RedemptionOrganizations = redemptionOrganizations;
+
+                var customerOrderInvoices = (await _nexportService.GetNexportOrderInvoiceItems(userMapping.NexportUserId))
+                    .Where(x => x.InvoiceItemId != Guid.Empty)
+                    .GroupBy(x => x.RedemptionEnrollmentId)
+                    .Select(x => x.OrderByDescending(invoice => invoice.UtcDateRedemption).First())
+                    .OrderByDescending(x => x.UtcDateRedemption)
+                    .ToList();
+                var trainingList = new List<NexportTrainingItemModel>();
+                foreach (var orderInvoice in customerOrderInvoices)
+                {
+                    try
+                    {
+                        var nexportInvoiceDetails =
+                            await _nexportService.GetNexportInvoiceRedemptionAsync(orderInvoice.InvoiceItemId);
+                        if (nexportInvoiceDetails?.UtcRedemptionDate != null)
+                        {
+                            DateTime? enrollmentStartDate = null;
+                            DateTime? enrollmentExpirationDate = null;
+                            var enrollmentStatus = Enums.PhaseEnum.NotStarted;
+                            if (nexportInvoiceDetails.RedemptionUserId != null)
+                            {
+                                var enrollmentExisted = false;
+
+                                try
+                                {
+                                    if (nexportInvoiceDetails.RedemptionType == null ||
+                                    nexportInvoiceDetails.RedemptionType ==
+                                    InvoiceRedemptionResponse.RedemptionTypeEnum.Section)
+                                    {
+                                        var enrollmentDetails = await _nexportService.GetSectionEnrollmentDetailsAsync(
+                                            nexportInvoiceDetails.OrganizationId,
+                                            nexportInvoiceDetails.RedemptionUserId.Value, nexportInvoiceDetails.SyllabusId);
+                                        if (enrollmentDetails != null)
+                                        {
+                                            enrollmentExisted = true;
+                                            enrollmentStartDate = enrollmentDetails.EnrollmentDate;
+                                            enrollmentExpirationDate = enrollmentDetails.ExpirationDate;
+                                            enrollmentStatus = enrollmentDetails.Phase;
+                                        }
+                                    }
+                                    else if (nexportInvoiceDetails.RedemptionType ==
+                                             InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
+                                    {
+                                        var enrollmentDetails = await _nexportService.GetTrainingPlanEnrollmentDetailsAsync(
+                                            nexportInvoiceDetails.OrganizationId,
+                                            nexportInvoiceDetails.RedemptionUserId.Value, nexportInvoiceDetails.SyllabusId);
+                                        if (enrollmentDetails != null)
+                                        {
+                                            enrollmentExisted = true;
+                                            enrollmentStartDate = enrollmentDetails.EnrollmentDate;
+                                            enrollmentExpirationDate = enrollmentDetails.ExpirationDate;
+                                            enrollmentStatus = enrollmentDetails.Phase;
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    await _logger.WarningAsync($"Unable to get syllabus details for syllabus {nexportInvoiceDetails.SyllabusId}", ex);
+                                }
+
+                                if (enrollmentExisted)
+                                {
+                                    var trainingItem = new NexportTrainingItemModel
+                                    {
+                                        Name = nexportInvoiceDetails.SyllabusTitle,
+                                        Type = nexportInvoiceDetails.RedemptionType ?? InvoiceRedemptionResponse.RedemptionTypeEnum.Section,
+                                        UtcStartDate = enrollmentStartDate,
+                                        UtcExpirationDate = enrollmentExpirationDate,
+                                        UtcRedemptionDate = nexportInvoiceDetails.UtcRedemptionDate,
+                                        EnrollmentId = nexportInvoiceDetails.RedemptionEnrollmentId,
+                                        SyllabusId = nexportInvoiceDetails.SyllabusId,
+                                        OrganizationId = nexportInvoiceDetails.OrganizationId,
+                                        Status = enrollmentStatus
+                                    };
+
+                                    if (!trainingList.Any(x => x.SyllabusId == nexportInvoiceDetails.SyllabusId))
+                                        trainingList.Add(trainingItem);
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await _logger.WarningAsync($"Unable to get Nexport invoice item {orderInvoice.InvoiceItemId}", ex, customer);
+                    }
+                }
+
+                model.Trainings = trainingList
+                    .GroupBy(x => x.OrganizationId)
+                    .ToDictionary(
+                        x => x.Key,
+                        x => x.ToList());
             }
 
             return model;
@@ -1049,9 +1220,206 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
+        public async Task<NexportAddCustomerRegistrationFieldsModel> PrepareNexportAddCustomerRegistrationFieldsModel(
+            Store store)
+        {
+            if (store == null)
+                throw new ArgumentNullException(nameof(store));
+
+            var model = new NexportAddCustomerRegistrationFieldsModel();
+
+            var availableFields = await _nexportService.GetNexportRegistrationFields(store.Id);
+
+            model.RegistrationFields = await availableFields
+                .OrderBy(x => x.Type)
+                .ThenBy(x => x.Name)
+                .SelectAwait(async x =>
+                {
+                    var fieldModel = x.ToModel<NexportRegistrationFieldModel>();
+                    if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox ||
+                        fieldModel.Type == NexportRegistrationFieldType.SelectDropDown)
+                    {
+                        if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox)
+                            fieldModel.AllowMultipleSelection = await _genericAttributeService.GetAttributeAsync(x,
+                                nameof(fieldModel.AllowMultipleSelection), defaultValue: false);
+
+                        fieldModel.DisplayOptionByAscendingOrder = await _genericAttributeService.GetAttributeAsync(x,
+                            nameof(fieldModel.DisplayOptionByAscendingOrder), defaultValue: false);
+                    }
+
+                    return fieldModel;
+                })
+                .ToListAsync();
+
+            return model;
+        }
+
+        public async Task<NexportAddCustomerRegistrationFieldsModel> PrepareNexportAddCustomerRegistrationFieldsModel(
+            Customer customer, Store store)
+        {
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            if (store == null)
+                throw new ArgumentNullException(nameof(store));
+
+            var model = new NexportAddCustomerRegistrationFieldsModel();
+
+            var availableFields = await _nexportService.GetNexportRegistrationFields(store.Id);
+            var customerExistingFields = await _nexportService.GetNexportRegistrationFieldsWithAnswers(customer.Id, store.Id);
+            var fields = availableFields.Where(x => customerExistingFields.All(f => f.Id != x.Id));
+
+            model.RegistrationFields = await fields
+                .OrderBy(x => x.Type)
+                .ThenBy(x => x.Name)
+                .SelectAwait(async x =>
+                {
+                    var fieldModel = x.ToModel<NexportRegistrationFieldModel>();
+                    if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox ||
+                        fieldModel.Type == NexportRegistrationFieldType.SelectDropDown)
+                    {
+                        if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox)
+                            fieldModel.AllowMultipleSelection = await _genericAttributeService.GetAttributeAsync(x,
+                                nameof(fieldModel.AllowMultipleSelection), defaultValue: false);
+
+                        fieldModel.DisplayOptionByAscendingOrder = await _genericAttributeService.GetAttributeAsync(x,
+                            nameof(fieldModel.DisplayOptionByAscendingOrder), defaultValue: false);
+                    }
+
+                    return fieldModel;
+                })
+                .ToListAsync();
+
+            return model;
+        }
+
+        public async Task<NexportCustomerRegistrationFieldAnswerListModel>
+            PrepareNexportCustomerRegistrationFieldAnswerListModel(
+                NexportCustomerRegistrationFieldAnswerListSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var customerNexportRegistrationFieldAnswers = await _nexportService.GetNexportRegistrationFieldAnswersPagination(searchModel.CustomerId, searchModel.FieldId,
+                pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
+
+            var model = await new NexportCustomerRegistrationFieldAnswerListModel().PrepareToGridAsync(searchModel, customerNexportRegistrationFieldAnswers, () =>
+            {
+                return customerNexportRegistrationFieldAnswers.SelectAwait(async answer =>
+                {
+                    var answerModel = answer.ToModel<NexportCustomerRegistrationFieldAnswerModel>();
+                    var registrationField = await _nexportService.GetNexportRegistrationFieldById(answer.FieldId);
+                    if (registrationField != null)
+                    {
+                        if (string.IsNullOrEmpty(registrationField.CustomFieldRender))
+                        {
+                            if (!string.IsNullOrEmpty(answer.TextValue))
+                            {
+                                answerModel.FieldValue = answer.TextValue;
+                            }
+                            else if (answer.NumericValue != null)
+                            {
+                                answerModel.FieldValue = answer.NumericValue.ToString();
+                            }
+                            else if (answer.DateTimeValue != null)
+                            {
+                                answerModel.FieldValue = answer.DateTimeValue.ToString();
+                            }
+                            else if (answer.BooleanValue != null)
+                            {
+                                answerModel.FieldValue = answer.BooleanValue.Value ? "True" : "False";
+                            }
+                            else if (answer.FieldOptionId != null)
+                            {
+                                var fieldOption =
+                                    await _nexportService.GetNexportRegistrationFieldOptionById(answer.FieldOptionId.Value,
+                                        answer.FieldId);
+                                if (fieldOption != null)
+                                {
+                                    answerModel.FieldValue = fieldOption.OptionValue;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var customRender = await _registrationFieldCustomRenderPluginManager.LoadPluginBySystemNameAsync(registrationField.CustomFieldRender);
+
+                            if (customRender != null)
+                            {
+                                var customFieldRenderAnswers = await customRender.GetCustomFieldNamesAndValues(searchModel.CustomerId, registrationField.Id);
+                                answerModel.FieldValue = string.Join("; ",
+                                    customFieldRenderAnswers
+                                        .Select(customAnswer =>
+                                            string.IsNullOrWhiteSpace(customAnswer.Value)
+                                                ? $"{customAnswer.Key}: N/A"
+                                                : $"{customAnswer.Key}: {customAnswer.Value}")
+                                        .ToList());
+                            }
+                        }
+                    }
+
+                    return answerModel;
+                });
+            });
+
+            return model;
+        }
+
+        public async Task<NexportCustomerRegistrationFieldWithAnswersListModel>
+            PrepareNexportCustomerRegistrationFieldWithAnswersListModel(
+                NexportCustomerRegistrationFieldWithAnswersListSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var customerNexportRegistrationFieldsWithAnswers = await _nexportService.GetNexportRegistrationFieldsWithAnswersPagination(searchModel.CustomerId,
+                searchModel.StoreId,
+                pageIndex: searchModel.Page - 1,
+                pageSize: searchModel.PageSize);
+
+            var model = new NexportCustomerRegistrationFieldWithAnswersListModel().PrepareToGrid(searchModel, customerNexportRegistrationFieldsWithAnswers, () =>
+            {
+                return customerNexportRegistrationFieldsWithAnswers.Select(field =>
+                {
+                    var fieldModel = field.ToModel<NexportCustomerRegistrationFieldWithAnswersModel>();
+                    fieldModel.CustomerId = searchModel.CustomerId;
+                    fieldModel.FieldType = field.Type.GetDisplayName();
+                    fieldModel.NexportCustomProfileFieldKey = field.NexportCustomProfileFieldKey;
+
+                    return fieldModel;
+                });
+            });
+
+            return model;
+        }
+
+        public async Task<NexportCustomerRegistrationFieldAnswersEditModel>
+            PrepareNexportCustomerRegistrationFieldAnswersEditModel(Customer customer,
+                NexportRegistrationField registrationField)
+        {
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            if (registrationField == null)
+                throw new ArgumentNullException(nameof(registrationField));
+
+            var currentRegistrationFieldAnswers = await _nexportService.GetNexportRegistrationFieldAnswers(customer.Id, registrationField.Id);
+
+            var registrationFieldModel = registrationField.ToModel<NexportRegistrationFieldModel>();
+            await PrepareNexportRegistrationFieldModelAsync(registrationFieldModel, registrationField);
+
+            var model = new NexportCustomerRegistrationFieldAnswersEditModel
+            {
+                RegistrationField = registrationFieldModel,
+                Options = await _nexportService.GetNexportRegistrationFieldOptions(registrationField.Id),
+                Answers = currentRegistrationFieldAnswers
+            };
+
+            return model;
+        }
+
         public async Task<NexportOrderInvoiceItemListModel> PrepareNexportOrderInvoiceItemListModelAsync(
-            NexportOrderInvoiceItemSearchModel searchModel,
-            bool excludeNonApproval = false)
+            NexportOrderInvoiceItemSearchModel searchModel, bool excludeNonApproval = false)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));

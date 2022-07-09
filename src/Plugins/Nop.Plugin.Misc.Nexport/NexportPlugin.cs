@@ -215,23 +215,23 @@ namespace Nop.Plugin.Misc.Nexport
 
         public Task<IList<string>> GetWidgetZonesAsync()
         {
-            return Task.FromResult<IList<string>>(
-                new List<string>
-                {
-                    AdminWidgetZones.StoreDetailsBottom,
-                    AdminWidgetZones.ProductDetailsButtons,
-                    AdminWidgetZones.ProductDetailsBlock,
-                    AdminWidgetZones.CustomerDetailsBlock,
-                    AdminWidgetZones.CustomerUserDetailsBlock,
-                    AdminWidgetZones.CategoryDetailsBlock,
-                    AdminWidgetZones.OrderDetailsBlock,
-                    PublicWidgetZones.OrderDetailsProductLine,
-                    PublicWidgetZones.AccountNavigationAfter,
-                    PublicWidgetZones.HeaderLinksBefore,
-                    PublicWidgetZones.OrderSummaryCartFooter,
-                    PublicWidgetZones.ProductDetailsOverviewTop,
-                    NexportDefaults.NexportRegistrationFieldsZone
-                });
+            return Task.FromResult<IList<string>>(new List<string>
+            {
+                AdminWidgetZones.StoreDetailsBottom,
+                AdminWidgetZones.ProductDetailsButtons,
+                AdminWidgetZones.ProductDetailsBlock,
+                AdminWidgetZones.CustomerDetailsButtons,
+                AdminWidgetZones.CustomerDetailsBlock,
+                AdminWidgetZones.CustomerUserDetailsBlock,
+                AdminWidgetZones.CategoryDetailsBlock,
+                AdminWidgetZones.OrderDetailsBlock,
+                PublicWidgetZones.OrderDetailsProductLine,
+                PublicWidgetZones.AccountNavigationAfter,
+                PublicWidgetZones.HeaderLinksBefore,
+                PublicWidgetZones.OrderSummaryCartFooter,
+                PublicWidgetZones.ProductDetailsOverviewTop,
+                NexportDefaults.NexportRegistrationFieldsZone
+            });
         }
 
         public string GetWidgetViewComponentName(string widgetZone)
@@ -244,6 +244,9 @@ namespace Nop.Plugin.Misc.Nexport
 
             if (widgetZone == AdminWidgetZones.ProductDetailsButtons)
                 return "WidgetsNexportProductDetailsButtons";
+
+            if (widgetZone == AdminWidgetZones.CustomerDetailsButtons)
+                return "WidgetsNexportCustomerDetailsButtons";
 
             if (widgetZone == AdminWidgetZones.CustomerDetailsBlock)
                 return "WidgetsNexportCustomerDetailsBlock";

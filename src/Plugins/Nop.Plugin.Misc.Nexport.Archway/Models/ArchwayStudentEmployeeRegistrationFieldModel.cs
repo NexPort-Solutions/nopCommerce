@@ -35,5 +35,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Models
         public IList<SelectListItem> AvailableAddresses { get; set; } = new List<SelectListItem>();
 
         public IList<SelectListItem> AvailableEmployeePositions { get; set; } = new List<SelectListItem>();
+
+        public bool RenderAdminView { get; set; }
     }
 }

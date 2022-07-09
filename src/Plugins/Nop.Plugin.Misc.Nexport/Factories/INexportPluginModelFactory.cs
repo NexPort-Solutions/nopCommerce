@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -31,6 +32,10 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         Task<NexportProductGroupMembershipMappingListModel> PrepareNexportProductMappingGroupMembershipListModelAsync(
             NexportProductGroupMembershipMappingSearchModel searchModel, int nexportProductMappingId);
+
+        Task<DuplicateNexportProductMappingModel> PrepareDuplicateNexportProductMappingModel(Product product);
+
+        Task<AddNexportCustomerAdditionalInfoModel> PrepareAddNexportAdditionalInfoModel(Customer customer);
 
         Task<NexportCustomerAdditionalInfoModel> PrepareNexportAdditionalInfoModelAsync(Customer customer);
 
@@ -111,9 +116,23 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         Task<NexportCustomerRegistrationFieldsModel> PrepareNexportCustomerRegistrationFieldsModelAsync(Store store);
 
+        Task<NexportAddCustomerRegistrationFieldsModel> PrepareNexportAddCustomerRegistrationFieldsModel(Store store);
+
+        Task<NexportAddCustomerRegistrationFieldsModel> PrepareNexportAddCustomerRegistrationFieldsModel(
+            Customer customer, Store store);
+
+        Task<NexportCustomerRegistrationFieldAnswerListModel> PrepareNexportCustomerRegistrationFieldAnswerListModel(
+            NexportCustomerRegistrationFieldAnswerListSearchModel searchModel);
+
+        Task<NexportCustomerRegistrationFieldWithAnswersListModel>
+            PrepareNexportCustomerRegistrationFieldWithAnswersListModel(
+                NexportCustomerRegistrationFieldWithAnswersListSearchModel searchModel);
+
+        Task<NexportCustomerRegistrationFieldAnswersEditModel> PrepareNexportCustomerRegistrationFieldAnswersEditModel(
+            Customer customer, NexportRegistrationField registrationField);
+
         Task<NexportOrderInvoiceItemListModel> PrepareNexportOrderInvoiceItemListModelAsync(
-            NexportOrderInvoiceItemSearchModel searchModel,
-            bool excludeNonApproval = false);
+            NexportOrderInvoiceItemSearchModel searchModel, bool excludeNonApproval = false);
 
         Task<NexportOrderInvoiceItemModel> PrepareNexportOrderInvoiceItemModelAsync(NexportOrderInvoiceItemModel model,
             NexportOrderInvoiceItem orderInvoiceItem);

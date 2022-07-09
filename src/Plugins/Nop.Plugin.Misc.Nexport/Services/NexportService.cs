@@ -107,7 +107,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IWorkflowMessageService _workflowMessageService;
         private readonly IMessageTokenProvider _messageTokenProvider;
 
-        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomerRenderPluginManager;
+        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
         private readonly IDateTimeHelper _dateTimeHelper;
         private readonly IUrlHelperFactory _urlHelperFactory;
         private readonly IActionContextAccessor _actionContextAccessor;
@@ -171,7 +171,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IMessageTokenProvider messageTokenProvider,
             IWorkflowMessageService workflowMessageService,
             ILocalizationService localizationService,
-            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomerRenderPluginManager,
+            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
             IDateTimeHelper dateTimeHelper,
             IUrlHelperFactory urlHelperFactory,
             IActionContextAccessor actionContextAccessor,
@@ -231,7 +231,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _messageTokenProvider = messageTokenProvider;
             _workflowMessageService = workflowMessageService;
             _localizationService = localizationService;
-            _registrationFieldCustomerRenderPluginManager = registrationFieldCustomerRenderPluginManager;
+            _registrationFieldCustomRenderPluginManager = registrationFieldCustomRenderPluginManager;
             _dateTimeHelper = dateTimeHelper;
             _urlHelperFactory = urlHelperFactory;
             _actionContextAccessor = actionContextAccessor;
@@ -815,6 +815,41 @@ namespace Nop.Plugin.Misc.Nexport.Services
         {
             var availableOrganizations = await FindAllOrganizationsAsync(orgId);
             var result = availableOrganizations.SingleOrDefault(s => s.OrgId == orgId);
+
+            return result;
+        }
+
+        public async Task<SubscriptionResponse> FindSubscription(Guid userId, Guid orgId)
+        {
+            SubscriptionResponse result;
+
+            try
+            {
+                result = _nexportApiService.GetNexportSubscription(_nexportSettings.Url,
+                    _nexportSettings.AuthenticationToken, userId, orgId);
+            }
+            catch (Exception ex)
+            {
+                var errMsg = $"Error occurred during Web API call GetSubscription for user {userId} with the organization Id {orgId}";
+                await _logger.ErrorAsync($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<SubscriptionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        if (errorResponse.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.SubscriptionNotFound ||
+                            errorResponse.ApiErrorEntity.ErrorMessage.Contains("No subscription"))
+                        {
+                            return null;
+                        }
+
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
 
             return result;
         }
@@ -1759,10 +1794,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task<List<NexportOrganizationModel>> FindNexportRedemptionOrganizationsByCustomerIdAsync(int customerId)
+        public async Task<List<NexportOrganizationModel>> FindNexportRedemptionOrganizationsByCustomerId(int customerId, bool checkSubscription = false)
         {
             var orders = await _orderService.SearchOrdersAsync((await _storeContext.GetCurrentStoreAsync()).Id, customerId: customerId);
             var organizationModelList = new List<NexportOrganizationModel>();
+            NexportUserMapping userMapping = null;
+
+            if (checkSubscription)
+            {
+                userMapping = await FindUserMappingByCustomerId(customerId);
+            }
 
             foreach (var order in orders)
             {
@@ -1784,12 +1825,19 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                                 if (org != null)
                                 {
-                                    organizationModelList.Add(new NexportOrganizationModel
+                                    var model = new NexportOrganizationModel
                                     {
                                         OrgId = org.OrgId,
                                         OrgName = org.Name,
                                         OrgShortName = org.ShortName
-                                    });
+                                    };
+
+                                    if (checkSubscription && userMapping != null)
+                                    {
+                                        model.Subscription = await FindSubscription(userMapping.NexportUserId, org.OrgId);
+                                    }
+
+                                    organizationModelList.Add(model);
                                 }
                             }
                         }
@@ -2169,6 +2217,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                                 var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
                                                 return DateTime.UtcNow >= currentEnrollmentExpirationDate - renewalWindowTimeSpan;
                                             }
+
+                                            // Customer is not allowed to purchase since this is an active enrollment that has no renewal window
+                                            return false;
                                         }
 
                                         // Allow customer to purchase since the enrollment has been expired
@@ -2359,15 +2410,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public async Task<Dictionary<int, string>> ParseRegistrationFieldsAsync(IFormCollection form)
+        public async Task<Dictionary<int, string>> ParseRegistrationFieldsAsync(IFormCollection form,
+            int? storeId = null)
         {
             if (form == null)
                 throw new ArgumentNullException(nameof(form));
 
+            storeId ??= (await _storeContext.GetCurrentStoreAsync()).Id;
+
             var result = new Dictionary<int, string>();
 
             var registrationFields =
-                (await GetNexportRegistrationFields((await _storeContext.GetCurrentStoreAsync()).Id))
+                (await GetNexportRegistrationFields(storeId.Value))
                 .Where(f => f.Type != NexportRegistrationFieldType.CustomType);
 
             foreach (var field in registrationFields)
@@ -2387,15 +2441,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
         }
 
         public async Task<Dictionary<int, Dictionary<string, string>>> ParseCustomRegistrationFieldsAsync(
-            IFormCollection form)
+            IFormCollection form, int? storeId = null)
         {
             if (form == null)
                 throw new ArgumentNullException(nameof(form));
 
+            storeId ??= (await _storeContext.GetCurrentStoreAsync()).Id;
+
             var result = new Dictionary<int, Dictionary<string, string>>();
 
             var registrationFields =
-                (await GetNexportRegistrationFields((await _storeContext.GetCurrentStoreAsync()).Id))
+                (await GetNexportRegistrationFields(storeId.Value))
                 .Where(f => f.Type == NexportRegistrationFieldType.CustomType);
 
             foreach (var field in registrationFields)
@@ -2403,7 +2459,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 if (!field.IsActive)
                     continue;
 
-                var customRender = await _registrationFieldCustomerRenderPluginManager.LoadPluginBySystemNameAsync(field.CustomFieldRender);
+                var customRender = await _registrationFieldCustomRenderPluginManager.LoadPluginBySystemNameAsync(field.CustomFieldRender);
 
                 if (customRender != null)
                 {
@@ -2613,7 +2669,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     continue;
 
                 var customRender =
-                    await _registrationFieldCustomerRenderPluginManager.LoadPluginBySystemNameAsync(field.CustomFieldRender);
+                    await _registrationFieldCustomRenderPluginManager.LoadPluginBySystemNameAsync(field.CustomFieldRender);
                 var processResult = await customRender?.ProcessCustomRegistrationFields(answer.CustomerId, field.Id);
                 if (processResult != null)
                 {
@@ -2628,7 +2684,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public async Task<IList<NexportRegistrationFieldCustomRender>> GetNexportRegistrationFieldCustomRendersAsync()
         {
-            var availablePlugins = await (await _registrationFieldCustomerRenderPluginManager.LoadAllPluginsAsync()).ToListAsync();
+            var availablePlugins = await (await _registrationFieldCustomRenderPluginManager.LoadAllPluginsAsync()).ToListAsync();
 
             var list = new List<NexportRegistrationFieldCustomRender>();
 

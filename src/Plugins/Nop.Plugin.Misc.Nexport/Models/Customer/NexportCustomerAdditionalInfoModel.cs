@@ -1,4 +1,5 @@
 ﻿using System;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
@@ -11,6 +12,9 @@ namespace Nop.Plugin.Misc.Nexport.Models.Customer
 
         [NopResourceDisplayName("Account.Fields.Nexport.UserId")]
         public Guid? NexportUserId { get; set; }
+
+        [NopResourceDisplayName("Account.Fields.Nexport.UserFullName")]
+        public string NexportUserFullName { get; set; }
 
         [NopResourceDisplayName("Account.Fields.Nexport.OwnerOrgId")]
         public Guid? OwnerOrgId { get; set; }
@@ -27,6 +31,10 @@ namespace Nop.Plugin.Misc.Nexport.Models.Customer
         public NexportSupplementalInfoAnswerListSearchModel NexportSupplementalInfoAnswerListSearchModel { get; set; }
 
         public NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel { get; set; }
+
+        public NexportCustomerRegistrationFieldWithAnswersListSearchModel NexportCustomerRegistrationFieldWithAnswersListSearchModel { get; set; }
+
+        public NexportCustomerRegistrationFieldAnswerListSearchModel NexportCustomerRegistrationFieldAnswerListSearchModel { get; set; }
 
         public bool Editable { get; set; }
     }
