@@ -225,7 +225,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             try
             {
-                var result = _nexportService.SearchNexportDirectoryAsync(searchTerm, page);
+                var result = await _nexportService.SearchNexportDirectoryAsync(searchTerm, page);
                 jsonResult = new JsonResult(result);
             }
             catch (Exception ex)

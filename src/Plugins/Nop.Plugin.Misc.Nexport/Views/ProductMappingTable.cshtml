@@ -1,6 +1,8 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Models.ProductMappings
 @using Nop.Services.Helpers
+@using Nop.Web.Framework.TagHelpers.Admin
+@using Nop.Web.Framework.TagHelpers.Shared
 @inject IDateTimeHelper dateTimeHelper
 
 @model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingListSearchModel
@@ -168,7 +170,7 @@
                 if (groupMemberships.length > 0) {
                     groupMembershipNames += "<br>" + "<b>Group Memberships: </b>";
                     for (var i = 0; i < groupMemberships.length; i++) {
-                        groupMembershipNames += groupMemberships[i].NexportGroupName + " (" + 
+                        groupMembershipNames += groupMemberships[i].NexportGroupName + " (" +
                             groupMemberships[i].NexportGroupShortName + ")";
                         if (i < groupMemberships.length - 1) {
                             groupMembershipNames += ", ";
@@ -178,7 +180,7 @@
                     displayText += groupMembershipNames;
                 }
             }
-            
+
             return displayText;
         }
 
@@ -286,7 +288,7 @@
                     checkDefaultMappingExisted();
                 }
             });
-            
+
         $("#delete-selected-mappings-action-confirmation-submit-button").bind("click", function (e) {
             var submitIds = selectedIds;
             submitIds = $.grep(submitIds, function(value) {
@@ -348,7 +350,7 @@
 
         $.ajax({
             url: "@Url.Action("HasDefaultMapping","NexportIntegration")",
-            type: "@WebRequestMethods.Http.Post",
+            type: "POST",
             dataType: "json",
             data: checkDefaultMappingData,
             success: function (data, textStatus, jqXHR) {

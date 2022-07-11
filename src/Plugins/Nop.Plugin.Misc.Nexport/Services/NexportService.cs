@@ -741,7 +741,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         _nexportSettings.AuthenticationToken,
                         _nexportSettings.RootOrganizationId.Value, searchTerm, page);
 
-                    return response.DirectoryList.ToList();
+                    return await response.DirectoryList.ToListAsync();
                 }
             }
             catch (Exception ex)
