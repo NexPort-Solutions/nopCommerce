@@ -15,10 +15,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!--<ProjectReference Include="..\Nop.Plugin.Misc.Nexport\Nop.Plugin.Misc.Nexport.csproj"/>-->
-    <Reference Include="Nop.Plugin.Misc.Nexport">
-      <HintPath>..\..\Presentation\Nop.Web\Plugins\Misc.Nexport\Nop.Plugin.Misc.Nexport.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\Nop.Plugin.Misc.Nexport\Nop.Plugin.Misc.Nexport.csproj">
+      <Private>False</Private>
+    </ProjectReference>
     <ProjectReference Include="..\..\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />
     <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj" />
     <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
@@ -50,6 +49,10 @@
   <Target Name="NopTarget" AfterTargets="Build">
     <!-- Delete unnecessary libraries from plugins path -->
     <MSBuild Projects="@(ClearPluginAssemblies)" Properties="PluginPath=$(MSBuildProjectDirectory)\$(OutDir)" Targets="NopClear" />
+  </Target>
+
+  <Target Name="CopyDllFiles" AfterTargets="NopTarget">
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\$(OutDir)\refs\Nop.Plugin.Misc.Nexport.dll" DestinationFolder="$(MSBuildProjectDirectory)\$(OutDir)" />
   </Target>
 
 </Project>
