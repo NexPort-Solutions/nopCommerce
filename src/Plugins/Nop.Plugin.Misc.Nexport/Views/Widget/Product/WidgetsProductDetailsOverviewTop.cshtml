@@ -4,7 +4,7 @@
 
 @model Nop.Plugin.Misc.Nexport.Domain.NexportProductMapping
 
-@if (Model != null && Model.Id > 0)
+@if (Model is { Id: > 0 })
 {
     if (Model.CreditHours.HasValue)
     {

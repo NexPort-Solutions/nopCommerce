@@ -105,6 +105,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
                 var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
                 try
                 {
+                    runner.MigrateDown(0);
                     ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
                 }
                 catch (MissingMigrationsException)

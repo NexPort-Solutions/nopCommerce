@@ -2,13 +2,14 @@
     Layout = "~/Areas/Admin/Views/Shared/_AdminPopupLayout.cshtml";
 
     //page title
-    ViewBag.Title = "Map product with Nexport";
+    ViewBag.PageTitle = "Map product with Nexport";
 
     var productId = int.Parse(Context.Request.Query["nopProductId"]);
     var containerId = Context.Request.Query["containerId"];
     var refreshMappingBtnId = Context.Request.Query["btnId"];
     var updateProductValue = Context.Request.Query["updateProduct"];
     var updateProduct = !string.IsNullOrWhiteSpace(updateProductValue) && bool.Parse(updateProductValue);
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/js/admin.table.js", excludeFromBundle: true);
 }
 
 @if (ViewBag.RefreshPage == true)
@@ -34,7 +35,7 @@
       asp-route-btnId="@refreshMappingBtnId"
       asp-route-containerId="@containerId" id="map-nexport-product-form">
     <div class="content-header clearfix">
-        <h1 class="pull-left">
+        <h1 class="float-left">
             @if (updateProduct)
             {
                 <text>Update product mapping</text>
@@ -44,14 +45,14 @@
                 <text>Map product</text>
             }
         </h1>
-        <div class="pull-right">
+        <div class="float-right">
         </div>
     </div>
     <div class="content">
         <div class="form-horizontal">
-            <div class="panel-group">
-                <div class="panel panel-default">
-                    <div class="panel-body">
+            <div class="card-group">
+                <div class="card card-default">
+                    <div class="card-body">
                         @await Component.InvokeAsync("NexportOrganizationList")
                         <div id="nexport-product-container">
                             <div id="catalog-panel"></div>
@@ -62,9 +63,9 @@
                         </div>
 
                     </div>
-                    <div class="panel-footer">
-                        <button type="submit" name="save" class="btn bg-blue">
-                            <i class="fa fa-floppy-o"></i>
+                    <div class="card-footer">
+                        <button type="submit" name="save" class="btn btn-primary">
+                            <i class="far fa-save"></i>
                             @*@T("Admin.Common.Save")*@
                             @if (updateProduct)
                             {
@@ -108,7 +109,7 @@
 
                 var serializedData = $(this).serializeArray();
                 serializedData.push({ name: "save", value: "" });
-                serializedData.push({name:"NopProductId", value: "@productId"})
+                serializedData.push({ name:"NopProductId", value: "@productId"})
                 serializedData.push({ name: "StoreId", value: "@Context.Request.Query["storeId"]" });
                 serializedData.push({ name: "BtnId", value: "@refreshMappingBtnId" });
                 serializedData.push({ name: "ContainerId", value: "@containerId" });

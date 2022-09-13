@@ -5,8 +5,8 @@
 
 @if (Model.Id > 0)
 {
-    <div class="panel-body">
-        <div class="form-group" id="allowMultipleSelectionSettingContainer">
+    <div class="card-body">
+        <div class="form-group row" id="allowMultipleSelectionSettingContainer">
             <div class="col-md-3">
                 <nop-label asp-for="AllowMultipleSelection" />
             </div>
@@ -15,7 +15,7 @@
                 <span asp-validation-for="AllowMultipleSelection"></span>
             </div>
         </div>
-        <div class="form-group" id="displayOptionByAscendingOrderSettingContainer">
+        <div class="form-group row" id="displayOptionByAscendingOrderSettingContainer">
             <div class="col-md-3">
                 <nop-label asp-for="DisplayOptionByAscendingOrder" />
             </div>
@@ -25,55 +25,59 @@
             </div>
         </div>
 
-        @await Html.PartialAsync("Table", new NexportDataTablesModel
-        {
-            Name = "registrationfield-options-grid",
-            UrlRead = new DataUrl("ListRegistrationFieldOptions", "NexportIntegration",
-                new RouteValueDictionary
+        <div class="card card-default">
+            <div class="card-body">
+                @await Html.PartialAsync("Table", new NexportDataTablesModel
                 {
-                    [nameof(Model.RegistrationFieldOptionSearchModel.RegistrationFieldId)] = Model.RegistrationFieldOptionSearchModel.RegistrationFieldId
-                }),
-            UrlDelete = new DataUrl("DeleteRegistrationFieldOption", "NexportIntegration", null),
-            UrlUpdate = new DataUrl("EditRegistrationFieldOption","NexportIntegration", null),
-            Length = Model.RegistrationFieldOptionSearchModel.PageSize,
-            LengthMenu = Model.RegistrationFieldOptionSearchModel.AvailablePageSizes,
-            ColumnCollection = new List<ColumnProperty>
-            {
-                new ColumnProperty(nameof(NexportRegistrationFieldOption.OptionValue))
-                {
-                    Title = T("Plugins.Misc.Nexport.RegistrationField.Option.Value").Text,
-                    Editable = true,
-                    EditType = EditType.String
-                },
-                new ColumnProperty(nameof(NexportRegistrationFieldOption.DisplayOrder))
-                {
-                    Title = T("Plugins.Misc.Nexport.RegistrationField.Option.DisplayOrder").Text,
-                    Editable = true,
-                    EditType = EditType.Number
-                },
-                new ColumnProperty(nameof(NexportRegistrationFieldOption.Id))
-                {
-                    Title = T("Admin.Common.Edit").Text,
-                    Width = "100",
-                    ClassName = NopColumnClassDefaults.Button,
-                    Render = new RenderButtonsInlineEdit()
-                },
-                new ColumnProperty(nameof(CustomerAttributeValueModel.Id))
-                {
-                    Title = T("Admin.Common.Delete").Text,
-                    Width = "100",
-                    Render = new RenderButtonRemove(T("Admin.Common.Delete").Text),
-                    ClassName = NopColumnClassDefaults.Button
-                }
-            }
-        })
+                    Name = "registrationfield-options-grid",
+                    UrlRead = new DataUrl("ListRegistrationFieldOptions", "NexportIntegration",
+                        new RouteValueDictionary
+                        {
+                            [nameof(Model.RegistrationFieldOptionSearchModel.RegistrationFieldId)] = Model.RegistrationFieldOptionSearchModel.RegistrationFieldId
+                        }),
+                    UrlDelete = new DataUrl("DeleteRegistrationFieldOption", "NexportIntegration", null),
+                    UrlUpdate = new DataUrl("EditRegistrationFieldOption","NexportIntegration", null),
+                    Length = Model.RegistrationFieldOptionSearchModel.PageSize,
+                    LengthMenu = Model.RegistrationFieldOptionSearchModel.AvailablePageSizes,
+                    ColumnCollection = new List<ColumnProperty>
+                    {
+                        new ColumnProperty(nameof(NexportRegistrationFieldOption.OptionValue))
+                        {
+                            Title = T("Plugins.Misc.Nexport.RegistrationField.Option.Value").Text,
+                            Editable = true,
+                            EditType = EditType.String
+                        },
+                        new ColumnProperty(nameof(NexportRegistrationFieldOption.DisplayOrder))
+                        {
+                            Title = T("Plugins.Misc.Nexport.RegistrationField.Option.DisplayOrder").Text,
+                            Editable = true,
+                            EditType = EditType.Number
+                        },
+                        new ColumnProperty(nameof(NexportRegistrationFieldOption.Id))
+                        {
+                            Title = T("Admin.Common.Edit").Text,
+                            Width = "100",
+                            ClassName = NopColumnClassDefaults.Button,
+                            Render = new RenderButtonsInlineEdit()
+                        },
+                        new ColumnProperty(nameof(CustomerAttributeValueModel.Id))
+                        {
+                            Title = T("Admin.Common.Delete").Text,
+                            Width = "100",
+                            Render = new RenderButtonRemove(T("Admin.Common.Delete").Text),
+                            ClassName = NopColumnClassDefaults.Button
+                        }
+                    }
+                })
+            </div>
+        </div>
         <script>
             function renderEditNexportRegistrationFieldOption(data, type, row, meta) {
                 return '<button onclick=\"javascript:OpenWindow(\'@Url.Content("~/Admin/NexportIntegration/EditRegistrationFieldOption/")' + data + '?btnId=btnRefresh&formId=registrationfield-form\', 800, 400, true); return false;\" class="btn btn-default"><i class="fa fa-pencil"></i>@T("Admin.Common.Edit")</button>';
             }
         </script>
     </div>
-    <div class="panel-footer">
+    <div class="card-footer">
         <button type="submit" id="btnAddNewValue" onclick="javascript:OpenWindow('@(Url.Action("CreateRegistrationFieldOption", "NexportIntegration",
                                                                                       new { fieldId = Model.Id, btnId = "btnRefresh", formId = "registrationfield-form" }))', 800, 400, true); return false;" class="btn btn-primary">
             @T("Admin.Customers.Nexport.RegistrationField.Options.AddNew")
@@ -81,7 +85,7 @@
         <input type="submit" id="btnRefresh" style="display: none" />
         <script>
             $(document).ready(function () {
-                $('#btnRefresh').click(function () {
+                $("#btnRefresh").click(function () {
                     updateTable("#registrationfield-options-grid");
 
                     return false;
@@ -92,7 +96,7 @@
 }
 else
 {
-<div class="panel-body">
+<div class="card-body">
     @T("Admin.Customers.Nexport.RegistrationField.Options.SaveBeforeEdit")
 </div>
 }

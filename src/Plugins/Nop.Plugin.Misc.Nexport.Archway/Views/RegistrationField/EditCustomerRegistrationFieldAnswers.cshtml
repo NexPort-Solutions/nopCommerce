@@ -1,14 +1,12 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Services
-@using Nop.Services.Helpers
 
 @inject NexportService nexportService
-@inject IUserAgentHelper userAgentHelper
 
 @model Nop.Plugin.Misc.Nexport.Archway.Models.ArchwayStudentEmployeeRegistrationFieldModel
 
 @if (Model != null)
 {
-    var registrationField = nexportService.GetNexportRegistrationFieldById(Model.FieldId);
+    var registrationField = await nexportService.GetNexportRegistrationFieldById(Model.FieldId);
 
     if (registrationField != null)
     {

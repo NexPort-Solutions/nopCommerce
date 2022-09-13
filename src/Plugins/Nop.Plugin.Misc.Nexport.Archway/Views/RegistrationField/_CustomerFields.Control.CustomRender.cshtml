@@ -1,8 +1,6 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Services
-@using Nop.Services.Helpers
 
 @inject NexportService nexportService
-@inject IUserAgentHelper userAgentHelper
 
 @model Nop.Plugin.Misc.Nexport.Archway.Models.ArchwayStudentEmployeeRegistrationFieldModel
 
@@ -16,7 +14,7 @@
         {
             if (registrationField.IsRequired)
             {
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-xs-12 col-sm-3">
                         <nop-label asp-for="StoreLocationState" />
                     </div>
@@ -33,7 +31,7 @@
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-xs-12 col-sm-3">
                         <nop-label asp-for="StoreLocationCity" />
                     </div>
@@ -50,7 +48,7 @@
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-xs-12 col-sm-3">
                         <nop-label asp-for="StoreLocationAddress" />
                     </div>
@@ -67,7 +65,7 @@
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-xs-12 col-sm-3">
                         <nop-label asp-for="EmployeePosition" />
                     </div>
@@ -82,7 +80,7 @@
                     </div>
                 </div>
 
-                <div class="form-group" id="storeEmployeeIdContainer">
+                <div class="form-group row" id="storeEmployeeIdContainer">
                     <div class="col-xs-12 col-sm-3">
                         <nop-label asp-for="EmployeeId" />
                     </div>
@@ -102,7 +100,7 @@
             }
             else
             {
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-xs-12 col-sm-3">
                         <nop-label asp-for="StoreLocationState" />
                     </div>
@@ -113,7 +111,7 @@
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-xs-12 col-sm-3">
                         <nop-label asp-for="StoreLocationCity" />
                     </div>
@@ -124,7 +122,7 @@
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-xs-12 col-sm-3">
                         <nop-label asp-for="StoreLocationAddress" />
                     </div>
@@ -135,7 +133,7 @@
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-xs-12 col-sm-3">
                         <nop-label asp-for="EmployeePosition" />
                     </div>
@@ -145,7 +143,7 @@
                     </div>
                 </div>
 
-                <div class="form-group" id="storeEmployeeIdContainer">
+                <div class="form-group row" id="storeEmployeeIdContainer">
                     <div class="col-xs-12 col-sm-3">
                         <nop-label asp-for="EmployeeId" />
                     </div>

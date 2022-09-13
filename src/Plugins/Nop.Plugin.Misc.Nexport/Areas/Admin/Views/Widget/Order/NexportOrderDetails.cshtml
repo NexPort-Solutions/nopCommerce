@@ -3,12 +3,14 @@
 @{
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
 
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
+
     const string hideNexportOrderApprovalBlockAttributeName = "OrderPage.NexportOrderApprovalBlock";
-    var hideNexportOrderApprovalBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideNexportOrderApprovalBlockAttributeName);
+    var hideNexportOrderApprovalBlock = await genericAttributeService.GetAttributeAsync(currentCustomer, hideNexportOrderApprovalBlockAttributeName, defaultValue: true);
 }
 
-<nop-panel asp-name="customersettings-nexportregistrationfields" asp-icon="fa fa-pencil-square-o"
+<nop-card asp-name="customersettings-nexportregistrationfields" asp-icon="fas fa-pencil-square-o"
            asp-title="Nexport order approval"
-           asp-hide-block-attribute-name="@hideNexportOrderApprovalBlockAttributeName" asp-hide="@hideNexportOrderApprovalBlock" asp-advanced="false">
+           asp-hide-block-attribute-name="@hideNexportOrderApprovalBlockAttributeName" asp-hide="@hideNexportOrderApprovalBlock" asp-advanced="true">
     @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/Order/_OrderDetails.NexportOrderApproval.cshtml", Model.NexportOrderApprovalModel)
-</nop-panel>
+</nop-card>

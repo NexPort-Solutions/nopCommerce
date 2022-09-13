@@ -3,10 +3,10 @@
 @{
     var currentCustomer = await workContext.GetCurrentCustomerAsync();
     const string hideInfoBlockAttributeName = "SupplementalInfo.Question.HideInfoBlock";
-    var hideInfoBlock = genericAttributeService.GetAttributeAsync<bool>(currentCustomer, hideInfoBlockAttributeName);
+    var hideInfoBlock = await genericAttributeService.GetAttributeAsync<bool>(currentCustomer, hideInfoBlockAttributeName);
 
     const string hideOptionsBlockAttributeName = "SupplementalInfo.Question.HideOptionsBlock";
-    var hideOptionsBlock = genericAttributeService.GetAttributeAsync(currentCustomer, hideOptionsBlockAttributeName, defaultValue: true);
+    var hideOptionsBlock = await genericAttributeService.GetAttributeAsync(currentCustomer, hideOptionsBlockAttributeName, defaultValue: true);
 }
 
 <div asp-validation-summary="All"></div>
@@ -15,16 +15,16 @@
 <div class="content">
     <div class="form-horizontal">
         <div id="supplemental-info-question-edit">
-            <nop-panels id="supplemental-info-question-panels">
-                <nop-panel asp-name="supplemental-info-question-info" asp-icon="fa fa-info" asp-title="Info"
+            <nop-cards id="supplemental-info-question-panels">
+                <nop-card asp-name="supplemental-info-question-info" asp-icon="fas fa-info" asp-title="Info"
                            asp-hide-block-attribute-name="@hideInfoBlockAttributeName" asp-hide="@hideInfoBlock" asp-advanced="false">
                     @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Question/_CreateOrUpdate.Info.cshtml", Model)
-                </nop-panel>
-                <nop-panel asp-name="supplemental-info-question-options" asp-icon="fa fa-check-square-o" asp-title="Options"
+                </nop-card>
+                <nop-card asp-name="supplemental-info-question-options" asp-icon="fas fa-check-square" asp-title="Options"
                            asp-hide-block-attribute-name="@hideOptionsBlockAttributeName" asp-hide="@hideOptionsBlock" asp-advanced="false">
                     @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Question/_CreateOrUpdate.QuestionOptions.cshtml", Model)
-                </nop-panel>
-            </nop-panels>
+                </nop-card>
+            </nop-cards>
         </div>
     </div>
 </div>

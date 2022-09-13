@@ -1,12 +1,13 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.Category.NexportCategoryModel
 
 @{
+    var customer = await workContext.GetCurrentCustomerAsync();
     const string hideNexportOptionsBlockAttributeName = "CategoryPage.HideNexportOptionsBlock";
-    var hideNexportOptionsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideNexportOptionsBlockAttributeName);
+    var hideNexportOptionsBlock = await genericAttributeService.GetAttributeAsync(customer, hideNexportOptionsBlockAttributeName, defaultValue: true);
 }
 
-<nop-panel asp-name="nexport-category-options"
-           asp-icon="fa fa-sliders" asp-title="@T("Plugins.Misc.Nexport.Category.Options")"
-           asp-hide-block-attribute-name="@hideNexportOptionsBlockAttributeName" asp-hide="@hideNexportOptionsBlock" asp-advanced="false">
+<nop-card asp-name="nexport-category-options" asp-icon="fas fa-sliders-h"
+           asp-hide-block-attribute-name="@hideNexportOptionsBlockAttributeName" asp-hide="@hideNexportOptionsBlock"
+           asp-title="@T("Plugins.Misc.Nexport.Category.Options")" asp-advanced="true">
     @await Html.PartialAsync("../../Category/NexportOptions.cshtml", Model)
-</nop-panel>
+</nop-card>

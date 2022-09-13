@@ -9,6 +9,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.Catalog
         public NexportCatalogSearchModel()
         {
             NexportSyllabusListSearch = new NexportSyllabusListSearchModel();
+            SetGridPageSize();
         }
 
         public Guid? OrgId { get; set; }

@@ -7,7 +7,7 @@
 @{
     Layout = "_AdminPopupLayout";
 
-    ViewBag.Title = "Add customer registration field answers";
+    ViewBag.PageTitle = "Add customer registration field answers";
 }
 
 @if (ViewBag.RefreshPage == true)
@@ -37,9 +37,9 @@
           asp-route-containerId="@Context.Request.Query["containerId"]"
           asp-route-btnId="@Context.Request.Query["btnId"]">
         <div class="content-header clearfix">
-            <div class="pull-right">
-                <button type="submit" name="save" class="btn bg-blue" disabled="@(Model.RegistrationFields.Count == 0)">
-                    <i class="fa fa-floppy-o"></i>
+            <div class="float-right">
+                <button type="submit" name="save" class="btn btn-primary" disabled="@(Model.RegistrationFields.Count == 0)">
+                    <i class="far fa-save"></i>
                     @T("Admin.Common.Save")
                 </button>
             </div>
@@ -48,9 +48,9 @@
             <div class="form-horizontal">
                 @if (Model.RegistrationFields.Count > 0)
                 {
-                    <div class="panel-group">
-                        <div class="panel panel-default panel-popup">
-                            <div class="panel-body">
+                    <div class="card-group">
+                        <div class="card card-default card-popup">
+                            <div class="card-body">
                                 @await Html.PartialAsync("../Customer/_Create.RegistrationFieldAnswer.cshtml", Model)
                             </div>
                         </div>

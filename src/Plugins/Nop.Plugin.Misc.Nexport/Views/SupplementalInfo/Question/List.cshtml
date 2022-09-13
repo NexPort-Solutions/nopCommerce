@@ -5,7 +5,7 @@
 @{
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 
-    ViewBag.Title = "Nexport Supplemental Info Questions";
+    ViewBag.PageTitle = "Nexport Supplemental Info Questions";
     NopHtml.SetActiveMenuItemSystemName(NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME);
 }
 
@@ -13,11 +13,11 @@
 
 <nop-antiforgery-token />
 <div class="content-header clearfix">
-    <h1 class="pull-left">
+    <h1 class="float-left">
         Supplemental Questions
     </h1>
-    <div class="pull-right">
-        <a asp-action="AddSupplementalInfoQuestion" asp-controller="NexportIntegration" class="btn bg-blue">
+    <div class="float-right">
+        <a asp-action="AddSupplementalInfoQuestion" asp-controller="NexportIntegration" class="btn btn-primary">
             <i class="fa fa-plus-square"></i>
             @T("Admin.Common.AddNew")
         </a>
@@ -30,12 +30,12 @@
 </div>
 <div class="content">
     <div class="form-horizontal">
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="card card-default">
+            <div class="card-body">
                 <p>
                     Supplemental question list
                 </p>
-                @await Html.PartialAsync("Table", new NexportDataTablesModel
+                @await Html.PartialAsync("Table", new DataTablesModel
                 {
                    Name = "nexport-supplemental-questions-grid",
                    UrlRead = new DataUrl("ListSupplementalInfoQuestion", "NexportIntegration", null),
@@ -43,37 +43,37 @@
                    LengthMenu = Model.AvailablePageSizes,
                    ColumnCollection = new List<ColumnProperty>
                         {
-                            new ColumnProperty(nameof(NexportSupplementalInfoQuestionModel.Id))
+                            new(nameof(NexportSupplementalInfoQuestionModel.Id))
                             {
                                 IsMasterCheckBox = true,
                                 Render = new RenderCheckBox("checkbox_supplemental_info_question"),
                                 ClassName =  NopColumnClassDefaults.CenterAll,
                                 Width = "50",
                             },
-                            new ColumnProperty(nameof(NexportSupplementalInfoQuestionModel.QuestionText))
+                            new(nameof(NexportSupplementalInfoQuestionModel.QuestionText))
                             {
                                 Title = "Question",
                                 Width = "200"
                             },
-                            new ColumnProperty(nameof(NexportSupplementalInfoQuestionModel.Description))
+                            new(nameof(NexportSupplementalInfoQuestionModel.Description))
                             {
                                 Title = "Description",
                                 Width = "200"
                             },
-                            new ColumnProperty(nameof(NexportSupplementalInfoQuestionModel.UtcDateModified))
+                            new(nameof(NexportSupplementalInfoQuestionModel.UtcDateModified))
                             {
                                 Title = "Modified Date",
                                 Width = "100",
                                 Render = new RenderCustom("renderLocalDateForTableEntry")
                             },
-                            new ColumnProperty(nameof(NexportSupplementalInfoQuestionModel.IsActive))
+                            new(nameof(NexportSupplementalInfoQuestionModel.IsActive))
                             {
                                 Title = "Active",
                                 Width = "50",
                                 ClassName = NopColumnClassDefaults.CenterAll,
                                 Render = new RenderBoolean()
                             },
-                            new ColumnProperty(nameof(NexportSupplementalInfoQuestionModel.Id))
+                            new(nameof(NexportSupplementalInfoQuestionModel.Id))
                             {
                                 Title = "Edit",
                                 Width = "100",

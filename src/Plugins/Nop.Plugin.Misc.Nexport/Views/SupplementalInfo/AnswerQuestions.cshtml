@@ -42,7 +42,7 @@
                                 foreach (var questionId in Model.QuestionWithoutAnswerIds)
                                 {
                                     var question = await nexportService.GetNexportSupplementalInfoQuestionById(questionId);
-                                    if (question != null && question.IsActive)
+                                    if (question is { IsActive: true })
                                     {
                                         var options = await nexportService.GetNexportSupplementalInfoOptionsByQuestionId(question.Id);
                                         if (options.Count > 0)

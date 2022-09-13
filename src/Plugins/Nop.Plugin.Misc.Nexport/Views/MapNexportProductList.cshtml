@@ -3,7 +3,7 @@
 
 @model NexportCatalogSearchModel
 
-@await Html.PartialAsync("Table", new NexportDataTablesModel
+@await Html.PartialAsync("Table", new DataTablesModel
 {
     Name = "nexport-catalog-grid",
     UrlRead = new DataUrl("CatalogList", "NexportIntegration",
@@ -17,30 +17,30 @@
     LengthMenu = Model.AvailablePageSizes,
     ColumnCollection = new List<ColumnProperty>
     {
-        new ColumnProperty(null)
+        new(null)
         {
             Render = new RenderChildCaret(),
             Width = "5",
             Searchable = false,
             ClassName = NopColumnClassDefaults.ChildControl
         },
-        new ColumnProperty(nameof(NexportCatalogResponseItemModel.CatalogId))
+        new(nameof(NexportCatalogResponseItemModel.CatalogId))
         {
             Width = "5",
             Render = new RenderCustom("renderCatalogSelection")
         },
-        new ColumnProperty(nameof(NexportCatalogResponseItemModel.Name))
+        new(nameof(NexportCatalogResponseItemModel.Name))
         {
             Title = "Catalog Name",
             Width = "150"
         },
-        new ColumnProperty(nameof(NexportCatalogResponseItemModel.UtcDateCreated))
+        new(nameof(NexportCatalogResponseItemModel.UtcDateCreated))
         {
             Title = "Created Date",
             Width = "150",
             Render = new RenderDate()
         },
-        new ColumnProperty(nameof(NexportCatalogResponseItemModel.UtcDateLastModified))
+        new(nameof(NexportCatalogResponseItemModel.UtcDateLastModified))
         {
             Title = "Last Modified Date",
             Width = "150",
@@ -60,38 +60,38 @@
         LengthMenu = Model.AvailablePageSizes,
         Filters = new List<FilterParameter>
         {
-            new FilterParameter(nameof(NexportSyllabiResponseItemModel.CatalogId), nameof(NexportCatalogResponseItemModel.CatalogId), true)
+            new(nameof(NexportSyllabiResponseItemModel.CatalogId), nameof(NexportCatalogResponseItemModel.CatalogId), true)
         },
         ColumnCollection = new List<ColumnProperty>
         {
-            new ColumnProperty(nameof(NexportSyllabiResponseItemModel.SyllabusId))
+            new(nameof(NexportSyllabiResponseItemModel.SyllabusId))
             {
                 Width = "5",
                 Render = new RenderCustom("renderSyllabusSelection")
             },
-            new ColumnProperty(nameof(NexportSyllabiResponseItemModel.Name))
+            new(nameof(NexportSyllabiResponseItemModel.Name))
             {
                 Title = "Name",
                 Width = "150"
             },
-            new ColumnProperty(nameof(NexportSyllabiResponseItemModel.UniqueName))
+            new(nameof(NexportSyllabiResponseItemModel.UniqueName))
             {
                 Title = "Unique Name",
                 Width = "100"
             },
-            new ColumnProperty(nameof(NexportSyllabiResponseItemModel.SectionNumber))
+            new(nameof(NexportSyllabiResponseItemModel.SectionNumber))
             {
                 Title = "Section Number",
                 Width = "100"
             },
-            new ColumnProperty(nameof(NexportSyllabiResponseItemModel.Type))
+            new(nameof(NexportSyllabiResponseItemModel.Type))
             {
                 Title = "Type",
                 Width = "50",
                 Render = new RenderCustom("renderSyllabusType"),
                 AutoWidth = false
             },
-            new ColumnProperty(nameof(NexportSyllabiResponseItemModel.ProductId))
+            new(nameof(NexportSyllabiResponseItemModel.ProductId))
             {
                 Title = "Product Id",
                 Width = "150"

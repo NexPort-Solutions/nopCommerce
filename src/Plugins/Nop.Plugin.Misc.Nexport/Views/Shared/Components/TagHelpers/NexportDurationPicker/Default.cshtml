@@ -1,15 +1,17 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.Components.NexportDurationPickerModel
 
-<div class="nex-duration-picker-element col-sm-4">
-    <input class="form-control input-sm" type="number" min="0" data-duration="days">
+<div class="row">
+    <div class="nex-duration-picker-element col-sm-4">
+        <input class="form-control input-sm" type="number" min="0" data-duration="days">
+    </div>
+    <div class="nex-duration-picker-element col-sm-4">
+        <input class="form-control input-sm" type="number" min="0" max="23" data-duration="hours">
+    </div>
+    <div class="nex-duration-picker-element col-sm-4">
+        <input class="form-control input-sm" type="number" min="0" max="59" data-duration="minutes">
+    </div>
+    <input type="hidden" id="@Model.Name" name="@Model.Name" value="@Model.Value" />
 </div>
-<div class="nex-duration-picker-element col-sm-4">
-    <input class="form-control input-sm" type="number" min="0" max="23" data-duration="hours">
-</div>
-<div class="nex-duration-picker-element col-sm-4">
-    <input class="form-control input-sm" type="number" min="0" max="59" data-duration="minutes">
-</div>
-<input type="hidden" id="@Model.Name" name="@Model.Name" value="@Model.Value" />
 
 <script>
     function convertTimeSpan(ts) {
@@ -46,30 +48,39 @@
     }
 
     $(document).ready(function() {
-        var touchSpinConfig = {
-            decimals: 0,
-            verticalbuttons: true,
-            verticalupclass: "glyphicon glyphicon-chevron-up",
-            verticaldownclass: "glyphicon glyphicon-chevron-down",
-            buttondown_class: "btn",
-            buttonup_class: "btn"
-        };
-
         var container = $("#@Model.ContainerId");
         var submitInputElement = $("#@Model.Name");
 
         var durationPickerDaysElement = container.find("input[data-duration=days]");
-        durationPickerDaysElement.TouchSpin($.extend({ min: 0, max: 10000, postfix: "days" }, touchSpinConfig)).change(function () {
+        durationPickerDaysElement.kendoNumericTextBox({
+            min: 0,
+            max: 10000,
+            decimals: 0,
+            restrictDecimals: true,
+            format: "# days"
+        }).change(function () {
             durationPickerChanged(container, submitInputElement);
         });
 
         var durationPickerHoursElement = container.find("input[data-duration=hours]");
-        durationPickerHoursElement.TouchSpin($.extend({ min: 0, max: 23, postfix: "hours" }, touchSpinConfig)).change(function () {
+        durationPickerHoursElement.kendoNumericTextBox({
+            min: 0,
+            max: 23,
+            decimals: 0,
+            restrictDecimals: true,
+            format: "# hours"
+        }).change(function () {
             durationPickerChanged(container, submitInputElement);
         });
 
         var durationPickerMinutesElement = container.find("input[data-duration=minutes]");
-        durationPickerMinutesElement.TouchSpin($.extend({ min: 0, max: 59, postfix: "minutes" }, touchSpinConfig)).change(function () {
+        durationPickerMinutesElement.kendoNumericTextBox({
+            min: 0,
+            max: 59,
+            decimals: 0,
+            restrictDecimals: true,
+            format: "# minutes"
+        }).change(function () {
             durationPickerChanged(container, submitInputElement);
         });
 
@@ -77,9 +88,9 @@
 
         if (value && value.indexOf(":") !== -1) {
             var duration = convertTimeSpan(value);
-            durationPickerDaysElement.val(duration.days);
-            durationPickerHoursElement.val(duration.hours);
-            durationPickerMinutesElement.val(duration.minutes);
+            durationPickerDaysElement.value(duration.days);
+            durationPickerHoursElement.value(duration.hours);
+            durationPickerMinutesElement.value(duration.minutes);
         }
     });
 </script>

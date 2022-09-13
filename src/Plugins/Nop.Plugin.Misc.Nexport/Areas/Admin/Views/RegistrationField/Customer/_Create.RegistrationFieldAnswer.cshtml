@@ -1,7 +1,7 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer.NexportAddCustomerRegistrationFieldsModel
 
 @{
-    Html.AppendScriptParts("~/Plugins/Misc.Nexport/Scripts/xregexp-all.min.js");
+    NopHtml.AppendScriptParts(ResourceLocation.Auto, "~/Plugins/Misc.Nexport/Scripts/xregexp-all.min.js");
 }
 
 @if (Model != null)

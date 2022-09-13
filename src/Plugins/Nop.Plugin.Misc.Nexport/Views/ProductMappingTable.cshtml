@@ -10,49 +10,49 @@
 @{
     var tableColumns = new List<ColumnProperty>
     {
-        new ColumnProperty(nameof(NexportProductMappingModel.Id))
+        new(nameof(NexportProductMappingModel.Id))
         {
             Width = "50",
             IsMasterCheckBox = true,
             Render = new RenderCustom("deleteMappingCheckBox")
         },
-        new ColumnProperty(nameof(NexportProductMappingModel.StoreName))
+        new(nameof(NexportProductMappingModel.StoreName))
         {
             Title = "Store",
             Width = "150",
             Render = new RenderCustom("renderStoreName")
         },
-        new ColumnProperty(nameof(NexportProductMappingModel.NexportProductName))
+        new(nameof(NexportProductMappingModel.NexportProductName))
         {
             Title = "Nexport Product Name",
             Width = "150"
         },
-        new ColumnProperty(nameof(NexportProductMappingModel.Id))
+        new(nameof(NexportProductMappingModel.Id))
         {
             Title = "Nexport Product Details",
             Width = "550",
             Render = new RenderCustom("renderNexportProductDetails")
         },
-        new ColumnProperty(nameof(NexportProductMappingModel.Id))
+        new(nameof(NexportProductMappingModel.Id))
         {
             Title = "Subscription Information",
             Width = "250",
             Render = new RenderCustom("renderSubscriptionInformation")
         },
-        new ColumnProperty(nameof(NexportProductMappingModel.UtcLastModifiedDate))
+        new(nameof(NexportProductMappingModel.UtcLastModifiedDate))
         {
             Title = "Last Modified Date",
             Width = "150",
             Render = new RenderCustom("renderLocalDateForTableEntry")
         },
-        new ColumnProperty(nameof(NexportProductMappingModel.Id))
+        new(nameof(NexportProductMappingModel.Id))
         {
             Width = "100",
             Render = new RenderCustom("renderViewMappingDetails"),
             ClassName = NopColumnClassDefaults.Button,
             AutoWidth = false
         },
-        new ColumnProperty(nameof(NexportProductMappingModel.Id))
+        new(nameof(NexportProductMappingModel.Id))
         {
             Width = "100",
             Render = new RenderCustom("renderModifyProductMapping"),
@@ -61,39 +61,37 @@
         }
     };
 }
-<div class="clearfix">
-    <div class="pull-right">
+<div class="row">
+    <div class="col-md-12">
         <button type="button" id="delete-selected-mappings" class="btn bg-red">
             <i class="fa fa-trash-o"></i>
             @T("Admin.Common.Delete.Selected")
         </button>
+        <button class="btn btn-primary" id="duplicateProductMappingBtn">
+            <i class="fa fa-clone"></i>
+            Duplicate mapping
+        </button>
         <nop-action-confirmation asp-button-id="delete-selected-mappings" />
+        <nop-alert asp-alert-id="deleteSelectedMappingsFailed" />
+    </div>
+    <div class="col-md-12">
+        @await Html.PartialAsync("Table", new NexportDataTablesModel
+        {
+            Name = "product-mappings-grid",
+            UrlRead = new DataUrl("GetProductMappings", "NexportIntegration",
+                new RouteValueDictionary {
+                    { "nexportProductId", Model.NexportProductId },
+                    { "nexportProductType", Model.NexportProductType },
+                    { "nopProductId", Model.NopProductId }
+                }),
+            UrlDelete = new DataUrl("DeleteMapping", "NexportIntegration", null),
+            UrlUpdate = new DataUrl("EditMapping", "NexportIntegration", null),
+            Length = Model.PageSize,
+            LengthMenu = Model.AvailablePageSizes,
+            ColumnCollection = tableColumns
+        })
     </div>
 </div>
-<nop-alert asp-alert-id="deleteSelectedMappingsFailed" />
-
-<div>
-    <button class="btn bg-blue" id="duplicateProductMappingBtn">
-        <i class="fa fa-clone"></i>
-        Duplicate mapping
-    </button>
-</div>
-
-@await Html.PartialAsync("Table", new NexportDataTablesModel
-{
-    Name = "product-mappings-grid",
-    UrlRead = new DataUrl("GetProductMappings", "NexportIntegration",
-                    new RouteValueDictionary {
-                        { "nexportProductId", Model.NexportProductId },
-                        { "nexportProductType", Model.NexportProductType },
-                        { "nopProductId", Model.NopProductId }
-                    }),
-    UrlDelete = new DataUrl("DeleteMapping", "NexportIntegration", null),
-    UrlUpdate = new DataUrl("EditMapping", "NexportIntegration", null),
-    Length = Model.PageSize,
-    LengthMenu = Model.AvailablePageSizes,
-    ColumnCollection = tableColumns
-})
 
 <span style="color: red;">* Default mapping cannot be removed once it has been mapped. However, it can be modified to a different product.</span>
 
@@ -231,10 +229,10 @@
         var buttonFunction = "javascript:OpenWindow('" + url + "', 800, 800, true); return false;";
 
         if (renderCreateMapping && row.StoreId && !hasDefaultMapping) {
-            return renderCustomButton(buttonFunction, "fa fa-info", buttonName, true);
+            return renderCustomButton(buttonFunction, "fas fa-info", buttonName, true);
         }
 
-        return renderCustomButton(buttonFunction, "fa fa-info", buttonName);;
+        return renderCustomButton(buttonFunction, "fas fa-info", buttonName);;
     }
 
     function renderModifyProductMapping(data, type, row, meta) {

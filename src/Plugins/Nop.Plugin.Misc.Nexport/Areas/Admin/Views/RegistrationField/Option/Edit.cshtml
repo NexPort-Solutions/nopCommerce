@@ -3,19 +3,19 @@
 @{
     Layout = "_AdminPopupLayout";
 
-    ViewBag.Title = T("Admin.Customers.Nexport.RegistrationField.Options.EditOptionValueDetails").Text;
+    ViewBag.PageTitle = T("Admin.Customers.Nexport.RegistrationField.Options.EditOptionValueDetails").Text;
 }
 
 <form asp-controller="NexportIntegration" asp-action="EditRegistrationFieldOption"
       asp-route-btnId="@Context.Request.Query["btnId"]"
       asp-route-formId="@Context.Request.Query["formId"]">
     <div class="content-header clearfix">
-        <h1 class="pull-left">
+        <h1 class="float-left">
             @T("Admin.Customers.Nexport.RegistrationField.Options.EditOptionValueDetails")
         </h1>
-        <div class="pull-right">
-            <button type="submit" name="save" class="btn bg-blue">
-                <i class="fa fa-floppy-o"></i>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
                 @T("Admin.Common.Save")
             </button>
         </div>

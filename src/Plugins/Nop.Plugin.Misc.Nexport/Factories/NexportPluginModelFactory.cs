@@ -331,13 +331,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         public virtual async Task<NexportProductGroupMembershipMappingListModel>
             PrepareNexportProductMappingGroupMembershipListModelAsync(
-                NexportProductGroupMembershipMappingSearchModel searchModel, int nexportProductMappingId)
+                NexportProductGroupMembershipMappingListSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             var groupMembershipMappings =
-                await _nexportService.GetProductGroupMembershipMappingsPagination(nexportProductMappingId,
+                await _nexportService.GetProductGroupMembershipMappingsPagination(searchModel.NexportProductMappingId,
                     searchModel.Page - 1, searchModel.PageSize);
 
             var model = new NexportProductGroupMembershipMappingListModel().PrepareToGrid(searchModel, groupMembershipMappings, () =>
@@ -908,13 +908,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         public async Task<NexportSupplementalInfoOptionGroupAssociationListModel>
             PrepareNexportSupplementalInfoOptionGroupAssociationListModelAsync(
-                NexportSupplementalInfoOptionGroupAssociationSearchModel searchModel, int optionId)
+                NexportSupplementalInfoOptionGroupAssociationListSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             var groupAssociations =
-                await _nexportService.GetNexportSupplementalInfoOptionGroupAssociationsPagination(optionId,
+                await _nexportService.GetNexportSupplementalInfoOptionGroupAssociationsPagination(searchModel.OptionId,
                     searchModel.Page - 1, searchModel.PageSize);
 
             var model = new NexportSupplementalInfoOptionGroupAssociationListModel().PrepareToGrid(searchModel, groupAssociations, () =>

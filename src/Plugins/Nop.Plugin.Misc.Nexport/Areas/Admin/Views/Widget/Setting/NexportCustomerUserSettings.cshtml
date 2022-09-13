@@ -6,12 +6,14 @@
 @model Nop.Plugin.Misc.Nexport.Models.Customer.NexportCustomerAdditionalSettingsModel
 
 @{
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
     const string hideNexportRegistrationFieldsBlockAttributeName = "CustomerUserSettingsPage.NexportRegistrationFieldsBlock";
-    var hideNexportRegistrationFieldsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideNexportRegistrationFieldsBlockAttributeName);
+    var hideNexportRegistrationFieldsBlock = await genericAttributeService.GetAttributeAsync(currentCustomer, hideNexportRegistrationFieldsBlockAttributeName, defaultValue: true);
 }
 
-<nop-panel asp-name="customersettings-nexportregistrationfields" asp-icon="fa fa-id-card-o"
-           asp-title="@T("Admin.Configuration.Settings.CustomerUser.Nexport.RegistrationFields")"
-           asp-hide-block-attribute-name="@hideNexportRegistrationFieldsBlockAttributeName" asp-hide="@hideNexportRegistrationFieldsBlock" asp-advanced="false">
+<nop-card asp-name="customersettings-registrationfield" asp-icon="fas fa-id-card"
+          asp-hide-block-attribute-name="@hideNexportRegistrationFieldsBlockAttributeName"
+          asp-hide="@hideNexportRegistrationFieldsBlock" asp-advanced="true"
+          asp-title="@T("Admin.Configuration.Settings.CustomerUser.Nexport.RegistrationFields")">
     @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/Setting/_CustomerUser.NexportRegistrationFields.cshtml", Model)
-</nop-panel>
+</nop-card>

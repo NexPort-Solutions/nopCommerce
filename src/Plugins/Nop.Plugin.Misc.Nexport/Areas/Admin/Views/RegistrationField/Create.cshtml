@@ -1,28 +1,28 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
 
 @{
-    ViewBag.Title = T("Admin.Customers.Nexport.RegistrationField.Fields.AddNew").Text;
+    ViewBag.PageTitle = T("Admin.Customers.Nexport.RegistrationField.Fields.AddNew").Text;
     NopHtml.SetActiveMenuItemSystemName("Customer and user settings");
 }
 
 <form asp-controller="NexportIntegration" asp-action="CreateRegistrationField" method="post" id="registrationfield-form">
     <div class="content-header clearfix">
-        <h1 class="pull-left">
+        <h1 class="float-left">
             @T("Admin.Customers.Nexport.RegistrationField.Fields.AddNew")
             <small>
-                <i class="fa fa-arrow-circle-left"></i>
+                <i class="fas fa-arrow-circle-left"></i>
                 <a asp-action="ListRegistrationField" asp-controller="NexportIntegration">
                     @T("Admin.Customers.Nexport.RegistrationField.Fields.BackToList")
                 </a>
             </small>
         </h1>
-        <div class="pull-right">
-            <button type="submit" name="save" class="btn bg-blue">
-                <i class="fa fa-floppy-o"></i>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
                 @T("Admin.Common.Save")
             </button>
-            <button type="submit" name="save-continue" class="btn bg-blue">
-                <i class="fa fa-floppy-o"></i>
+            <button type="submit" name="save-continue" class="btn btn-primary">
+                <i class="far fa-save"></i>
                 @T("Admin.Common.SaveContinue")
             </button>
         </div>

@@ -1,10 +1,8 @@
 ﻿@using System.Net
 @using System.Reflection
-@using Nop.Services.Common
 @using Nop.Services.Localization
 @using Nop.Web.Framework.Mvc.ModelBinding
 
-@inject IGenericAttributeService genericAttributeService
 @inject ILocalizationService localizationService
 @inject IWorkContext workContext
 
@@ -21,7 +19,7 @@
         var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
         if (type == typeof(string))
         {
-            <div class="form-group">
+            <div class="form-group row">
                 <div class="col-md-3">
                     <div class="label-wrapper">
                         @{
@@ -33,7 +31,7 @@
                                     resourceDisplayName.ResourceKey + ".Hint", langId, returnEmptyIfNotFound: true,
                                     logIfNotFound: false);
 
-                                <label class="control-label" for="@prop.Name">@WebUtility.HtmlEncode(resourceDisplayName.DisplayName)</label>
+                                <label class="col-form-label" for="@prop.Name">@WebUtility.HtmlEncode(resourceDisplayName.DisplayName)</label>
 
                                 if (!string.IsNullOrEmpty(hintResource))
                                 {
@@ -44,7 +42,7 @@
                             }
                             else
                             {
-                                <label class="control-label" for="@prop.Name">@prop.Name</label>
+                                <label class="col-form-label" for="@prop.Name">@prop.Name</label>
                             }
                         }
                     </div>
@@ -57,10 +55,10 @@
         }
     }
 
-    <div class="form-group">
+    <div class="form-group row">
         <div class="col-md-3">
             <div class="label-wrapper">
-                <label class="control-label">@T("Plugins.Misc.Nexport.Archway.Fields.Options.UploadStoreData")</label>
+                <label class="col-form-label">@T("Plugins.Misc.Nexport.Archway.Fields.Options.UploadStoreData")</label>
                 <div title="@T("Plugins.Misc.Nexport.Archway.Fields.Options.UploadStoreData.Hint")" data-toggle="tooltip" class="ico-help"><i class="fa fa-question-circle"></i></div>
             </div>
         </div>
@@ -140,7 +138,7 @@
         });
     </script>
 
-    <div class="form-group">
+    <div class="form-group row">
         <div class="col-md-3">
         </div>
         <div class="col-md-9 ">

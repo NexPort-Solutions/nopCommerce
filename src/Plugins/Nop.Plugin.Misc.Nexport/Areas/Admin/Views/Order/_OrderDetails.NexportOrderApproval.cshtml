@@ -3,8 +3,8 @@
 
 @model Nop.Plugin.Misc.Nexport.Models.Order.NexportOrderApprovalModel
 
-<div class="panel-group">
-    <div class="panel panel-body">
+<div class="card-group">
+    <div class="card card-body">
         @await Html.PartialAsync("Table", new DataTablesModel
    {
        Name = "nexport-order-invoice-items-grid",
@@ -14,38 +14,38 @@
        LengthMenu = Model.SearchModel.AvailablePageSizes,
        ColumnCollection = new List<ColumnProperty>
             {
-                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.ProductName))
+                new(nameof(NexportOrderInvoiceItemModel.ProductName))
                 {
                     Title = "Product",
                     Width = "50",
                 },
-                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.NexportProductName))
+                new(nameof(NexportOrderInvoiceItemModel.NexportProductName))
                 {
                     Title = "Nexport Product",
                     Width = "50",
                 },
-                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.NexportSyllabusId))
+                new(nameof(NexportOrderInvoiceItemModel.NexportSyllabusId))
                 {
                     Title = "Nexport Syllabus Id",
                     Width = "100",
                 },
-                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.InvoiceItemId))
+                new(nameof(NexportOrderInvoiceItemModel.InvoiceItemId))
                 {
                     Title = "Invoice Item Id",
                     Width = "100"
                 },
-                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.ExistingEnrollmentId))
+                new(nameof(NexportOrderInvoiceItemModel.ExistingEnrollmentId))
                 {
                     Title = "Nexport Enrollment Id",
                     Width = "100",
                 },
-                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.UtcExistingEnrollmentExpirationDate))
+                new(nameof(NexportOrderInvoiceItemModel.UtcExistingEnrollmentExpirationDate))
                 {
                     Title = "Nexport Enrollment Expiration",
                     Width = "100",
                     Render = new RenderCustom("renderLocalDateForTableEntry")
                 },
-                new ColumnProperty(nameof(NexportOrderInvoiceItemModel.Id))
+                new(nameof(NexportOrderInvoiceItemModel.Id))
                 {
                     Width = "200",
                     ClassName = NopColumnClassDefaults.Button,

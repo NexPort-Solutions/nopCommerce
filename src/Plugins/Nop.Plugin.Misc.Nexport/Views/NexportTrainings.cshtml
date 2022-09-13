@@ -8,9 +8,9 @@
 @{
     Layout = "_ColumnsOne";
 
-Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
-    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/uikit.min.css");
-    Html.AddScriptParts(ResourceLocation.Footer, "https://kit.fontawesome.com/e4adf0b7ea.js", "", true);
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/uikit.min.css");
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "https://kit.fontawesome.com/e4adf0b7ea.js", "", true);
 
     NopHtml.AddTitleParts("Nexport Trainings");
     NopHtml.AppendPageCssClassParts("html-account-page");
@@ -94,7 +94,7 @@ Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uik
                                                 @if (training.UtcExpirationDate != null)
                                                 {
                                                     <div class="uk-margin-small-bottom">
-                                                        <strong>End date: </strong>@dateTimeHelper.ConvertToUserTime(training.UtcExpirationDate.Value).ToString() (@dateTimeHelper.CurrentTimeZone.StandardName)
+                                                        <strong>End date: </strong>@(await dateTimeHelper.ConvertToUserTimeAsync(training.UtcExpirationDate.Value)).ToString() (@(await dateTimeHelper.GetCurrentTimeZoneAsync()).StandardName)
                                                     </div>
                                                 }
                                                 <div>

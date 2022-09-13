@@ -18,13 +18,13 @@
 
 <div class="content">
     <div class="form-horizontal">
-        <div class="panel-group">
-            <div class="panel panel-default panel-popup">
-                <div class="panel-heading">
+        <div class="card-body">
+            <div class="card card-default card-popup">
+                <div class="card-header">
                     Option info
                 </div>
-                <div class="panel-body">
-                    <div class="form-group">
+                <div class="card-body">
+                    <div class="form-group row">
                         <div class="col-sm-3">
                             <nop-label asp-for="OptionText" />
                         </div>
@@ -39,20 +39,21 @@
             {
                 NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
 
-                <div class="panel panel-default panel-popup">
-                    <div class="panel-heading">
+                <div class="card card-default card-popup">
+                    <div class="card-header">
                         Group membership associations
                     </div>
-                    <div class="panel-body">
-                        <div class="sub-panel">
-                            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Option/GroupAssociation.cshtml", new NexportSupplementalInfoOptionGroupAssociationListSearchModel { OptionId = Model.Id })
+                    <div class="card-body">
+                        <div class="">
+                            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Option/GroupAssociation.cshtml",
+                                new NexportSupplementalInfoOptionGroupAssociationListSearchModel { OptionId = Model.Id })
                         </div>
-                        <div class="panel panel-default" style="margin-top: 0.5em;">
-                            <div class="panel-heading">
+                        <div class="card card-default" style="margin-top: 0.5em;">
+                            <div class="card-header">
                                 Add new group membership
                             </div>
-                            <div class="panel-body">
-                                <div class="form-group">
+                            <div class="card-body">
+                                <div class="form-group row">
                                     <div class="col-sm-5 col-md-3">
                                         <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupId" />
                                     </div>
@@ -60,7 +61,7 @@
                                         <input class="form-control text-box single-line" id="AddGroupMembership_GroupId" type="text">
                                     </div>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group row">
                                     <div class="col-sm-5 col-md-3">
                                         <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupName" />
                                     </div>
@@ -69,7 +70,7 @@
                                         <div class="form-text-row" id="AddGroupMembership_GroupName_Display"></div>
                                     </div>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group row">
                                     <div class="col-sm-5 col-md-3">
                                         <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupShortName" />
                                     </div>
@@ -78,8 +79,8 @@
                                         <div class="form-text-row" id="AddGroupMembership_GroupShortName_Display"></div>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <div class="col-sm-7 col-md-9 col-sm-offset-5 col-md-offset-3">
+                                <div class="form-group row">
+                                    <div class="col-sm-7 col-md-9 offset-sm-5 offset-md-3">
                                         <button type="button" id="addGroupMembership" class="btn btn-primary" disabled>Add group membership</button>
                                     </div>
                                 </div>

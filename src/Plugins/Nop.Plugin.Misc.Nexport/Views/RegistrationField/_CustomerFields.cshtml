@@ -7,13 +7,13 @@
 @model Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer.NexportCustomerRegistrationFieldsModel
 
 @{
-    Html.AppendScriptParts("~/lib/datatables/moment-with-locales-2.22.2.min.js");
-    Html.AppendScriptParts("~/Plugins/Misc.Nexport/Scripts/xregexp-all.min.js");
+    NopHtml.AppendScriptParts(ResourceLocation.Auto, "~/lib/datatables/moment-with-locales-2.22.2.min.js");
+    NopHtml.AppendScriptParts(ResourceLocation.Auto, "~/Plugins/Misc.Nexport/Scripts/xregexp-all.min.js");
 
-    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/nexport.css");
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/nexport.css");
 
-    Html.AddCssFileParts(ResourceLocation.Head, "~/Plugins/Misc.Nexport/Content/jquery-ui-timepicker-addon.min.css");
-    Html.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/jquery-ui-timepicker-addon.min.js");
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/jquery-ui-timepicker-addon.min.css");
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/jquery-ui-timepicker-addon.min.js");
 }
 <link rel="stylesheet" href="~/lib/datatables/moment-with-locales-2.22.2.min.js" />
 <link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport.css" />

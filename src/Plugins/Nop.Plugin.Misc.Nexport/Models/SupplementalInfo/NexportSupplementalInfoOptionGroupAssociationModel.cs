@@ -6,8 +6,6 @@ namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 {
     public record NexportSupplementalInfoOptionGroupAssociationModel : BaseNopEntityModel
     {
-        public int NexportProductMappingId { get; set; }
-
         [NopResourceDisplayName("Plugins.Misc.Nexport.GroupId")]
         public Guid NexportGroupId { get; set; }
 

@@ -1,9 +1,7 @@
-﻿@using Nop.Services.Common
-@using Nop.Plugin.Misc.Nexport.Domain.Enums
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Extensions
 @using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 @using System.Net
-@using Nop.Plugin.Misc.Nexport.Models
 @using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer
 @using Nop.Services.Stores
 
@@ -13,10 +11,13 @@
 @model Nop.Plugin.Misc.Nexport.Models.Customer.NexportCustomerAdditionalInfoModel
 
 <script src="~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js"></script>
-<script src="~/Plugins/Misc.Nexport/Scripts/dataTables.rowGroup.min.js"></script>
 <link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/rowGroup.dataTables.min.css" />
 
-@if (Model is {Editable: true })
+@{
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/dataTables.rowGroup.min.js", excludeFromBundle: true);
+}
+
+@if (Model is { Editable: true })
 {
     var customer = await workContext.GetCurrentCustomerAsync();
     const string hideNexportCustomerDetailsBlockAttributeName = "CustomerPage.HideNexportCustomerDetailsBlock";
@@ -26,12 +27,12 @@
     var hideNexportSupplementalInfoAnswersBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideNexportSupplementalInfoAnswersBlockAttributeName);
 
     const string hideNexportCustomerRegistrationFieldAnswersBlockAttributeName = "CustomerPage.HideNexportCustomerRegistrationFieldAnswersBlock";
-    var hideNexportCustomerRegistrationFieldAnswersBlock = genericAttributeService.GetAttribute<bool>(workContext.CurrentCustomer, hideNexportCustomerRegistrationFieldAnswersBlockAttributeName);
+    var hideNexportCustomerRegistrationFieldAnswersBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideNexportCustomerRegistrationFieldAnswersBlockAttributeName);
 
-    <nop-panel asp-name="nexport-customer-details" asp-icon="fa fa-sticky-note-o" asp-title="Nexport Customer Info"
+    <nop-card asp-name="nexport-customer-details" asp-icon="fa fa-sticky-note-o" asp-title="Nexport Customer Info"
                asp-hide-block-attribute-name="@hideNexportCustomerDetailsBlockAttributeName" asp-hide="@hideNexportCustomerDetailsBlock" asp-advanced="false">
-        <div class="panel-body">
-            <div class="form-group">
+        <div class="card-body">
+            <div class="form-group row">
                 <div class="col-md-3">
                     <nop-label asp-for="NexportUserId" />
                 </div>
@@ -50,7 +51,7 @@
             {
                 if (!string.IsNullOrEmpty(Model.NexportUserFullName))
                 {
-                    <div class="form-group">
+                    <div class="form-group row">
                         <div class="col-md-3">
                             <nop-label asp-for="NexportUserFullName" />
                         </div>
@@ -61,7 +62,7 @@
                 }
                 if (!string.IsNullOrEmpty(Model.NexportEmail))
                 {
-                    <div class="form-group">
+                    <div class="form-group row">
                         <div class="col-md-3">
                             <nop-label asp-for="NexportEmail" />
                         </div>
@@ -72,7 +73,7 @@
                 }
                 if (Model.OwnerOrgId != null)
                 {
-                    <div class="form-group">
+                    <div class="form-group row">
                         <div class="col-md-3">
                             <nop-label asp-for="OwnerOrgId" />
                         </div>
@@ -80,7 +81,7 @@
                             <div class="form-text-row">@Model.OwnerOrgId</div>
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group row">
                         <div class="col-md-3">
                             <nop-label asp-for="OwnerOrgShortName" />
                         </div>
@@ -90,24 +91,24 @@
                     </div>
                 }
                 var userInfoUrlCreated = Uri.TryCreate(new Uri(_nexportSettings.Url.TrimEnd('/')), $"Account/Info.nex?user={Model.NexportUserId}", out var userInfoUrl);
-                if (userInfoUrlCreated && userInfoUrl != null)
+                if (userInfoUrlCreated)
                 {
-                    <div class="form-group">
+                    <div class="form-group row">
                         <div class="col-md-3">
                         </div>
                         <div class="col-md-9">
-                            <a class="btn bg-blue" target="_blank" href="@userInfoUrl.AbsoluteUri">View user info in Nexport</a>
+                            <a class="btn btn-primary" target="_blank" href="@userInfoUrl.AbsoluteUri">View user info in Nexport</a>
                         </div>
                     </div>
                 }
             }
         </div>
-    </nop-panel>
-    <nop-panel asp-name="nexport-customer-supplemental-info-answers" asp-icon="fa fa-sticky-note-o"
+    </nop-card>
+    <nop-card asp-name="nexport-customer-supplemental-info-answers" asp-icon="fa fa-sticky-note-o"
                asp-title="Nexport Supplemental Info Answers"
                asp-hide-block-attribute-name="@hideNexportSupplementalInfoAnswersBlockAttributeName"
                asp-hide="@hideNexportSupplementalInfoAnswersBlock" asp-advanced="false">
-        <div class="panel-body">
+        <div class="card-body">
             @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel()
             {
                Name = "nexport-customer-supplemental-info-questions",
@@ -121,7 +122,7 @@
                PrimaryKeyColumn = nameof(NexportCustomerSupplementalInfoAnsweredQuestionModel.Id),
                ColumnCollection = new List<ColumnProperty>
                {
-                    new ColumnProperty(null)
+                    new(null)
                     {
                         Render = new RenderChildCaret(),
                         Width = "5px",
@@ -129,7 +130,7 @@
                         ClassName = NopColumnClassDefaults.ChildControl,
                         AutoWidth = false
                     },
-                    new ColumnProperty(nameof(NexportCustomerSupplementalInfoAnsweredQuestionModel.QuestionText))
+                    new(nameof(NexportCustomerSupplementalInfoAnsweredQuestionModel.QuestionText))
                     {
                         Title = "Question",
                         Width = "100"
@@ -147,7 +148,7 @@
                     LengthMenu = Model.NexportSupplementalInfoAnswerListSearchModel.AvailablePageSizes,
                     Filters = new List<FilterParameter>
                     {
-                        new FilterParameter(nameof(NexportSupplementalInfoAnswerModel.QuestionId),
+                        new(nameof(NexportSupplementalInfoAnswerModel.QuestionId),
                             nameof(NexportCustomerSupplementalInfoAnsweredQuestionModel.Id), true)
                     },
                     RowGrouping = true,
@@ -155,35 +156,35 @@
                     CustomRowStartRender = "renderCustomGroupingRow",
                     ColumnCollection = new List<ColumnProperty>
                     {
-                        new ColumnProperty(nameof(NexportSupplementalInfoAnswerModel.OptionText))
+                        new(nameof(NexportSupplementalInfoAnswerModel.OptionText))
                         {
                             Title = "Option",
                             Width = "100"
                         },
-                        new ColumnProperty(nameof(NexportSupplementalInfoAnswerModel.Status))
+                        new(nameof(NexportSupplementalInfoAnswerModel.Status))
                         {
                             Title = "Status",
                             Width = "50",
                             Render = new RenderCustom("renderSupplementalInfoAnswerStatusInfo")
                         },
-                        new ColumnProperty(nameof(NexportSupplementalInfoAnswerModel.NexportMemberships))
+                        new(nameof(NexportSupplementalInfoAnswerModel.NexportMemberships))
                         {
                             Title = "Membership Id",
                             Width = "100"
                         },
-                        new ColumnProperty(nameof(NexportSupplementalInfoAnswerModel.UtcDateModified))
+                        new(nameof(NexportSupplementalInfoAnswerModel.UtcDateModified))
                         {
                             Title = "Modified Date",
                             Width = "100",
                             Render = new RenderCustom("renderLocalDateForTableEntry")
                         },
-                        new ColumnProperty(nameof(NexportSupplementalInfoAnswerModel.UtcDateCreated))
+                        new(nameof(NexportSupplementalInfoAnswerModel.UtcDateCreated))
                         {
                             Title = "Created Date",
                             Width = "100",
                             Render = new RenderCustom("renderLocalDateForTableEntry")
                         },
-                        new ColumnProperty(nameof(NexportCustomerSupplementalInfoAnsweredQuestionModel.Id))
+                        new(nameof(NexportCustomerSupplementalInfoAnsweredQuestionModel.Id))
                         {
                             Width = "50",
                             Render = new RenderCustom("renderDeleteCustomerSupplementalInfoAnswer"),
@@ -196,12 +197,12 @@
 
             <input type="submit" id="btnRefreshAnswerList" style="display: none">
         </div>
-    </nop-panel>
-    <nop-panel asp-name="nexport-customer-registration-field-answers" asp-icon="fa fa-id-card-o"
+    </nop-card>
+    <nop-card asp-name="nexport-customer-registration-field-answers" asp-icon="fa fa-id-card-o"
                asp-title="Nexport Registration Field Answers"
                asp-hide-block-attribute-name="@hideNexportCustomerRegistrationFieldAnswersBlockAttributeName"
                asp-hide="@hideNexportCustomerRegistrationFieldAnswersBlock" asp-advanced="false">
-        <div class="panel-body">
+        <div class="card-body">
             <div style="display: flex;">
                 <div style="flex-grow: 1;">
                     <nop-select asp-for="@Model.NexportCustomerRegistrationFieldWithAnswersListSearchModel.StoreId"
@@ -209,10 +210,10 @@
                                 asp-multiple="false" />
                 </div>
                 <div style="margin-left: 8px">
-                    <button type="button" id="addRegistrationFieldAnswers" class="btn bg-blue">Add field answers</button>
+                    <button type="button" id="addRegistrationFieldAnswers" class="btn btn-primary">Add field answers</button>
                 </div>
             </div>
-            
+
             @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
             {
                 Name = "nexport-customer-registration-fields",
@@ -227,14 +228,14 @@
                 LengthMenu = Model.NexportCustomerRegistrationFieldWithAnswersListSearchModel.AvailablePageSizes,
                 Filters = new List<FilterParameter>
                 {
-                    new FilterParameter(
-                        nameof(Model.NexportCustomerRegistrationFieldWithAnswersListSearchModel.StoreId), 
+                    new(
+                        nameof(Model.NexportCustomerRegistrationFieldWithAnswersListSearchModel.StoreId),
                         nameof(Model.NexportCustomerRegistrationFieldWithAnswersListSearchModel))
                 },
                 PrimaryKeyColumn = nameof(NexportCustomerRegistrationFieldWithAnswersModel.Id),
                 ColumnCollection = new List<ColumnProperty>
                 {
-                    new ColumnProperty(null)
+                    new(null)
                     {
                         Render = new RenderChildCaret(),
                         Width = "5",
@@ -242,22 +243,22 @@
                         ClassName = NopColumnClassDefaults.ChildControl,
                         AutoWidth = false
                     },
-                    new ColumnProperty(nameof(NexportCustomerRegistrationFieldWithAnswersModel.FieldName))
+                    new(nameof(NexportCustomerRegistrationFieldWithAnswersModel.FieldName))
                     {
                         Title = "Name",
                         Width = "200"
                     },
-                    new ColumnProperty(nameof(NexportCustomerRegistrationFieldWithAnswersModel.FieldType))
+                    new(nameof(NexportCustomerRegistrationFieldWithAnswersModel.FieldType))
                     {
                         Title = "Type",
                         Width = "100"
                     },
-                    new ColumnProperty(nameof(NexportCustomerRegistrationFieldWithAnswersModel.NexportCustomProfileFieldKey))
+                    new(nameof(NexportCustomerRegistrationFieldWithAnswersModel.NexportCustomProfileFieldKey))
                     {
                         Title = "Custom profile field",
                         Width = "200"
                     },
-                    new ColumnProperty(nameof(NexportCustomerRegistrationFieldWithAnswersModel.Id))
+                    new(nameof(NexportCustomerRegistrationFieldWithAnswersModel.Id))
                     {
                         Width = "50",
                         Render = new RenderCustom("renderEditCustomerRegistrationFieldAnswer"),
@@ -278,13 +279,13 @@
                     LengthMenu = Model.NexportCustomerRegistrationFieldAnswerListSearchModel.AvailablePageSizes,
                     Filters = new List<FilterParameter>
                     {
-                        new FilterParameter(nameof(NexportCustomerRegistrationFieldAnswerModel.FieldId),
+                        new(nameof(NexportCustomerRegistrationFieldAnswerModel.FieldId),
                             nameof(NexportCustomerRegistrationFieldWithAnswersModel.Id), true)
                     },
                     CustomRowStartRender = "renderCustomerRegistrationFieldGroupingRow",
                     ColumnCollection = new List<ColumnProperty>
                     {
-                        new ColumnProperty(nameof(NexportCustomerRegistrationFieldAnswerModel.FieldValue))
+                        new(nameof(NexportCustomerRegistrationFieldAnswerModel.FieldValue))
                         {
                             Title = "Value"
                         }
@@ -293,7 +294,7 @@
             })
             <input type="submit" id="btnRefreshRegistrationAnswerList" style="display: none">
         </div>
-    </nop-panel>
+    </nop-card>
     <script>
         $(document).ready(function() {
             jQuery.validator.addMethod("dotnet-guid",
@@ -410,7 +411,7 @@
                     }
                 });
 
-                
+
             } else{
                 element.rules("remove", "dotnet-guid");
                 alert("Please input the correct GUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) for Nexport user Id!");

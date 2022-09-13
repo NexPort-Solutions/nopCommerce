@@ -7,26 +7,26 @@
 
 <form asp-controller="CancelPendingOrderRequests" asp-action="CancellationRequestReasonEdit" method="post">
     <div class="content-header clearfix">
-        <h1 class="pull-left">
+        <h1 class="float-left">
             @T("Admin.Configuration.Settings.Order.CancellationRequestReasons.EditDetails") - @Model.Name
             <small>
-                <i class="fa fa-arrow-circle-left"></i>
+                <i class="fas fa-arrow-circle-left"></i>
                 <a asp-controller="CancelPendingOrderRequests" asp-action="CancellationRequestReasonList">
                     @T("Admin.Configuration.Settings.Order.CancellationRequestReasons.BackToList")
                 </a>
             </small>
         </h1>
-        <div class="pull-right">
-            <button type="submit" name="save" class="btn bg-blue">
-                <i class="fa fa-floppy-o"></i>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
                 @T("Admin.Common.Save")
             </button>
-            <button type="submit" name="save-continue" class="btn bg-blue">
-                <i class="fa fa-floppy-o"></i>
+            <button type="submit" name="save-continue" class="btn btn-primary">
+                <i class="far fa-save"></i>
                 @T("Admin.Common.SaveContinue")
             </button>
-            <span id="cancellationrequestreason-delete" class="btn bg-red">
-                <i class="fa fa-trash-o"></i>
+            <span id="cancellationrequestreason-delete" class="btn btn-danger">
+                <i class="far fa-trash-alt"></i>
                 @T("Admin.Common.Delete")
             </span>
         </div>

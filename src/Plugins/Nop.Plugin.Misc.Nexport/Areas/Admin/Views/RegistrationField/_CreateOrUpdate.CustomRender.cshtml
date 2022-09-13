@@ -2,9 +2,9 @@
 
 @if (Model.Id > 0)
 {
-    NopHtml.AddCssFileParts("~/lib/fineuploader/fine-uploader.min.css");
+    <link rel="stylesheet" href="~/lib_npm/fine-uploader/fine-uploader/fine-uploader.min.css" />
+    <script asp-exclude-from-bundle="true" src="~/lib_npm/fine-uploader/jquery.fine-uploader/jquery.fine-uploader.min.js" asp-location="Footer"></script>
 
-    <script src="~/lib/fineuploader/jquery.fine-uploader.min.js"></script>
     <script>
         $(document).ready(function() {
             $("#@Html.IdFor(model => model.AvailableCustomFieldRenders)").change(loadNewCustomFieldRender);
@@ -30,7 +30,7 @@
                     }
                 });
             } else {
-                $('#customerFieldPlaceholder').html("");
+                $("#customerFieldPlaceholder").html("");
             }
         };
 
@@ -48,8 +48,8 @@
             });
         }
     </script>
-    <div class="panel-body">
-        <div class="form-group">
+    <div class="card-body">
+        <div class="form-group row">
             <div class="col-md-3">
                 <nop-label asp-for="CustomFieldRender" />
             </div>
@@ -64,7 +64,7 @@
 }
 else
 {
-    <div class="panel-body">
+    <div class="card-body">
         @T("Admin.Customers.Nexport.RegistrationField.Customs.SaveBeforeEdit")
     </div>
 }

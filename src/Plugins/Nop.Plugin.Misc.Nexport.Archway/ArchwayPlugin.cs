@@ -102,10 +102,18 @@ namespace Nop.Plugin.Misc.Nexport.Archway
 
             try
             {
-                var runner = EngineContext.Current.Resolve<IMigrationRunner>();
-                runner.MigrateDown(0);
-
-                ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
+                var migratorRunnerService = PluginStartup.CreateFluentMigratorRunnerService();
+                using var serviceScope = migratorRunnerService.CreateScope();
+                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+                try
+                {
+                    runner.MigrateDown(0);
+                    ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
+                }
+                catch (MissingMigrationsException)
+                {
+                    // ignored
+                }
             }
             catch (Exception ex)
             {

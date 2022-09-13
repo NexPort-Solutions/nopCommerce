@@ -688,18 +688,18 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        public async Task<IActionResult> GetCatalogList(Guid? orgId, int nopProductId)
+        //public async Task<IActionResult> GetCatalogList(Guid? orgId, int nopProductId)
+        public async Task<IActionResult> GetCatalogList(NexportCatalogSearchModel searchModel)
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
                 !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
                 string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return await AccessDeniedDataTablesJson();
 
-            var model = new NexportCatalogSearchModel { OrgId = orgId, NopProductId = nopProductId };
+            //var searchModel = new NexportCatalogSearchModel { OrgId = orgId, NopProductId = nopProductId };
+            //searchModel.SetGridPageSize();
 
-            model.SetGridPageSize();
-
-            return View("~/Plugins/Misc.Nexport/Views/MapNexportProductList.cshtml", model);
+            return View("~/Plugins/Misc.Nexport/Views/MapNexportProductList.cshtml", searchModel);
         }
 
         [AuthorizeAdmin]
@@ -976,15 +976,14 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AutoValidateAntiforgeryToken]
-        public async Task<IActionResult> GetProductGroupMembershipMappings(int nexportProductMappingId)
+        public async Task<IActionResult> GetProductGroupMembershipMappings(NexportProductGroupMembershipMappingListSearchModel searchModel)
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
                 !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
                 string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return await AccessDeniedDataTablesJson();
 
-            var model = await _nexportPluginModelFactory.PrepareNexportProductMappingGroupMembershipListModelAsync(
-                new NexportProductGroupMembershipMappingSearchModel(), nexportProductMappingId);
+            var model = await _nexportPluginModelFactory.PrepareNexportProductMappingGroupMembershipListModelAsync(searchModel);
 
             return Json(model);
         }
@@ -1714,7 +1713,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area("Admin")]
         [HttpPost]
         [AutoValidateAntiforgeryToken]
-        public async Task<IActionResult> GetSupplementalInfoOptionGroupAssociations(int optionId)
+        public async Task<IActionResult> GetSupplementalInfoOptionGroupAssociations(NexportSupplementalInfoOptionGroupAssociationListSearchModel searchModel)
         {
             if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
                 return await AccessDeniedDataTablesJson();
@@ -1722,8 +1721,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return await AccessDeniedDataTablesJson();
 
-            var model = await _nexportPluginModelFactory.PrepareNexportSupplementalInfoOptionGroupAssociationListModelAsync(
-                new NexportSupplementalInfoOptionGroupAssociationSearchModel(), optionId);
+            var model = await _nexportPluginModelFactory.PrepareNexportSupplementalInfoOptionGroupAssociationListModelAsync(searchModel);
 
             return Json(model);
         }
@@ -2081,7 +2079,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
 
-            var model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldCategoryModelAsync(
+            var model = await _nexportPluginModelFactory.PrepareNexportRegistrationFieldCategoryModelAsync(
                 new NexportRegistrationFieldCategoryModel(), null);
 
             return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Category/Create.cshtml", model);
@@ -2403,7 +2401,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var registrationField = await _nexportService.GetNexportRegistrationFieldById(searchModel.RegistrationFieldId)
                                     ?? throw new ArgumentException("No Nexport registration field found with the specified id");
 
-            var model = _nexportPluginModelFactory.PrepareNexportRegistrationFieldOptionListModelAsync(searchModel, registrationField);
+            var model = await _nexportPluginModelFactory.PrepareNexportRegistrationFieldOptionListModelAsync(searchModel, registrationField);
 
             return Json(model);
         }
@@ -2571,7 +2569,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (store == null)
                 return new EmptyResult();
 
-            var model = _nexportPluginModelFactory.PrepareNexportAddCustomerRegistrationFieldsModel(store);
+            var model = await _nexportPluginModelFactory.PrepareNexportAddCustomerRegistrationFieldsModel(store);
 
             return PartialView($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/_Create.RegistrationFieldAnswer.cshtml", model);
         }
@@ -2633,7 +2631,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var store = await _storeService.GetStoreByIdAsync(storeId)
                         ?? throw new Exception($"No store found with the specified id {storeId}");
 
-            var model = _nexportPluginModelFactory.PrepareNexportAddCustomerRegistrationFieldsModel(customer, store);
+            var model = await _nexportPluginModelFactory.PrepareNexportAddCustomerRegistrationFieldsModel(customer, store);
 
             return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/AddCustomerRegistrationFieldAnswers.cshtml", model);
         }
@@ -2695,7 +2693,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 }
             }
 
-            var model = _nexportPluginModelFactory.PrepareNexportAddCustomerRegistrationFieldsModel(customer, store);
+            var model = await _nexportPluginModelFactory.PrepareNexportAddCustomerRegistrationFieldsModel(customer, store);
 
             return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/AddCustomerRegistrationFieldAnswers.cshtml", model);
         }

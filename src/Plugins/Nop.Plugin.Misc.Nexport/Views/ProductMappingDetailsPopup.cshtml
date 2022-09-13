@@ -10,7 +10,7 @@
     Layout = "~/Areas/Admin/Views/Shared/_AdminPopupLayout.cshtml";
 
     //page title
-    ViewBag.Title = "Product mapping details";
+    ViewBag.PageTitle = "Product mapping details";
 }
 
 @if (ViewBag.RefreshPage == true)
@@ -30,7 +30,7 @@
     </script>
 }
 
-@if (Model != null && Model.Id > 0)
+@if (Model is { Id: > 0 })
 {
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
 
@@ -40,86 +40,86 @@
           asp-route-containerId="@Context.Request.Query["containerId"]"
           asp-route-btnId="@Context.Request.Query["btnId"]">
         <div class="content-header clearfix">
-            <div class="pull-right">
-                <button type="submit" name="save" class="btn bg-blue">
-                    <i class="fa fa-floppy-o"></i>
+            <div class="float-right">
+                <button type="submit" name="save" class="btn btn-primary">
+                    <i class="far fa-save"></i>
                     @T("Admin.Common.Save")
                 </button>
-                <button type="submit" name="save-continue" class="btn bg-blue">
-                    <i class="fa fa-floppy-o"></i>
+                <button type="submit" name="save-continue" class="btn btn-primary">
+                    <i class="far fa-save"></i>
                     @T("Admin.Common.SaveContinue")
                 </button>
             </div>
         </div>
         <div class="content">
             <div class="form-horizontal">
-                <div class="panel-group">
-                    <div class="panel panel-default panel-popup">
-                        <div class="panel-heading">
+                <div class="card-body">
+                    <div class="card card-default card-popup">
+                        <div class="card-header">
                             Product mapping info
                         </div>
-                        <div class="panel-body">
+                        <div class="card-body">
                             @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappingDetails.cshtml", Model)
-                            <div class="form-group">
-                                <div class="col-sm-5 col-md-3">
+                            <div class="form-group row">
+                                <div class="col-sm-5 col-md-4">
                                     <nop-label asp-for="NexportSubscriptionOrgId" />
                                 </div>
-                                <div class="col-sm-7 col-md-9">
+                                <div class="col-sm-7 col-md-8">
                                     <nop-editor asp-for="NexportSubscriptionOrgId" asp-render-form-control-class="true" />
                                     <span asp-validation-for="NexportSubscriptionOrgId"></span>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <div class="col-sm-5 col-md-3">
+                            <div class="form-group row">
+                                <div class="col-sm-5 col-md-4">
                                     <nop-label asp-for="NexportSubscriptionOrgName" />
                                 </div>
-                                <div class="col-sm-7 col-md-9">
+                                <div class="col-sm-7 col-md-8">
                                     <input type="hidden" name="NexportSubscriptionOrgName" value="@Model.NexportSubscriptionOrgName" />
                                     <div class="form-text-row" id="NexportSubscriptionOrgName">@Model.NexportSubscriptionOrgName</div>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <div class="col-sm-5 col-md-3">
+                            <div class="form-group row">
+                                <div class="col-sm-5 col-md-4">
                                     <nop-label asp-for="NexportSubscriptionOrgShortName" />
                                 </div>
-                                <div class="col-sm-7 col-md-9">
+                                <div class="col-sm-7 col-md-8">
                                     <input type="hidden" name="NexportSubscriptionOrgShortName" value="@Model.NexportSubscriptionOrgShortName" />
                                     <div class="form-text-row" id="NexportSubscriptionOrgShortName">@Model.NexportSubscriptionOrgShortName</div>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <div class="col-sm-5 col-md-3">
+                            <div class="form-group row">
+                                <div class="col-sm-5 col-md-4">
                                     <nop-label asp-for="AutoRedeem" />
                                 </div>
-                                <div class="col-sm-7 col-md-9">
+                                <div class="col-sm-7 col-md-8">
                                     <nop-editor asp-for="AutoRedeem" />
                                     <span asp-validation-for="AutoRedeem"></span>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <div class="col-sm-5 col-md-3">
+                            <div class="form-group row">
+                                <div class="col-sm-5 col-md-4">
                                     <nop-label asp-for="StoreName" />
                                 </div>
-                                <div class="col-sm-7 col-md-9">
-                                    <input type="hidden" name="StoreId" value="@Model.StoreId" />
+                                <div class="col-sm-7 col-md-8">
+                                        <input type="hidden" name="StoreId" value="@Model.StoreId" />
                                     <div class="form-text-row">@Model.StoreName</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="panel panel-default panel-popup">
-                        <div class="panel-heading">
+                    <div class="card card-default card-popup">
+                        <div class="card-header">
                             <span>Product access expiration</span>
                         </div>
-                        <div class="panel-body">
-                            <div class="form-group">
-                                <div class="col-sm-5 col-md-3">
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <div class="col-sm-5 col-md-4">
                                     <div class="label-wrapper">
-                                        <label class="control-label" for="trainingExpirationOption">@T("Plugins.Misc.Nexport.ProductAccessExpirationOption")</label>
+                                        <label class="col-form-label" for="trainingExpirationOption">@T("Plugins.Misc.Nexport.ProductAccessExpirationOption")</label>
                                         <div title="@T("Plugins.Misc.Nexport.ProductAccessExpirationOption.Hint")" data-toggle="tooltip" class="ico-help"><i class="fa fa-question-circle"></i></div>
                                     </div>
                                 </div>
-                                <div class="col-sm-7 col-md-9">
+                                <div class="col-sm-7 col-md-8">
                                     <select class="form-control" id="trainingExpirationOption">
                                         <option value="noExpiration">No expiration</option>
                                         <option value="accessExpirationDate">Use access expiration date</option>
@@ -127,82 +127,82 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-group hidden" id="accessLimitOption">
-                                <div class="col-sm-5 col-md-3">
+                            <div class="form-group row d-none" id="accessLimitOption">
+                                <div class="col-sm-5 col-md-4">
                                     <nop-label asp-for="AccessTimeLimit" />
                                 </div>
-                                <div class="col-sm-7 col-md-9">
+                                <div class="col-sm-7 col-md-8">
                                     <nex-duration-picker asp-for="AccessTimeLimit" asp-value="@Model.AccessTimeLimit" asp-id="access-time-limit-duration-picker" />
                                     <span asp-validation-for="AccessTimeLimit"></span>
                                 </div>
                             </div>
-                            <div class="form-group hidden" id="accessExpirationDateOption">
-                                <div class="col-sm-5 col-md-3">
+                            <div class="form-group row d-none" id="accessExpirationDateOption">
+                                <div class="col-sm-5 col-md-4">
                                     <nop-label asp-for="UtcAccessExpirationDate" />
                                 </div>
-                                <div class="col-sm-7 col-md-9">
+                                <div class="col-sm-7 col-md-8">
                                     <nop-editor asp-for="UtcAccessExpirationDate" asp-disabled="true" />
                                     <span asp-validation-for="UtcAccessExpirationDate"></span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="panel panel-default panel-popup">
-                        <div class="panel-heading">
+                    <div class="card card-default card-popup">
+                        <div class="card-header">
                             <span>Product extension settings</span>
                         </div>
-                        <div class="panel-body">
-                            <div class="form-group">
-                                <div class="col-md-3 col-sm-5">
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <div class="col-md-4 col-sm-5">
                                     <nop-label asp-for="AllowExtension" />
                                 </div>
-                                <div class="col-md-9 col-sm-7">
+                                <div class="col-md-8 col-sm-7">
                                     <nop-editor asp-for="AllowExtension" />
                                     <span asp-validation-for="AllowExtension"></span>
                                 </div>
                             </div>
                             <nop-nested-setting asp-for="AllowExtension">
-                                <div class="form-group" id="extensionProductOption">
-                                    <div class="col-md-3 col-sm-5">
+                                <div class="form-group row" id="extensionProductOption">
+                                    <div class="col-md-4 col-sm-5">
                                         <nop-label asp-for="IsExtensionProduct" />
                                     </div>
-                                    <div class="col-md-9 col-sm-7">
+                                    <div class="col-md-8 col-sm-7">
                                         <nop-editor asp-for="IsExtensionProduct" />
                                         <span asp-validation-for="IsExtensionProduct"></span>
                                     </div>
                                 </div>
-                                <div class="form-group" id="renewalWindowOption">
-                                    <div class="col-md-3 col-sm-5">
+                                <div class="form-group row" id="renewalWindowOption">
+                                    <div class="col-md-4 col-sm-5">
                                         <nop-label asp-for="RenewalWindow" />
                                     </div>
-                                    <div class="col-md-9 col-sm-7">
+                                    <div class="col-md-8 col-sm-7">
                                         <nex-duration-picker asp-for="RenewalWindow" asp-value="@Model.RenewalWindow" asp-id="renewal-window-duration-picker" />
                                         <span asp-validation-for="RenewalWindow"></span>
                                     </div>
                                 </div>
-                                <div class="form-group" id="renewalDurationOption">
-                                    <div class="col-md-3 col-sm-5">
+                                <div class="form-group row" id="renewalDurationOption">
+                                    <div class="col-md-4 col-sm-5">
                                         <nop-label asp-for="RenewalDuration" />
                                     </div>
-                                    <div class="col-md-9 col-sm-7">
+                                    <div class="col-md-8 col-sm-7">
                                         <nex-duration-picker asp-for="RenewalDuration" asp-value="@Model.RenewalDuration" asp-id="renewal-duration-picker" />
                                         <span asp-validation-for="RenewalDuration"></span>
                                     </div>
                                 </div>
-                                <div class="form-group" id="renewalCompletionThresholdOption">
-                                    <div class="col-md-3 col-sm-5">
+                                <div class="form-group row" id="renewalCompletionThresholdOption">
+                                    <div class="col-md-4 col-sm-5">
                                         <nop-label asp-for="RenewalCompletionThreshold" />
                                     </div>
-                                    <div class="col-md-9 col-sm-7">
+                                    <div class="col-md-8 col-sm-7">
                                         <nop-editor asp-for="RenewalCompletionThreshold" asp-postfix="%" />
                                         <span asp-validation-for="RenewalCompletionThreshold"></span>
                                     </div>
                                 </div>
-                                <div class="form-group" id="renewalApprovalMethodOption">
-                                    <div class="col-md-3 col-sm-5">
+                                <div class="form-group row" id="renewalApprovalMethodOption">
+                                    <div class="col-md-4 col-sm-5">
                                         <nop-label asp-for="RenewalApprovalMethod" />
                                     </div>
-                                    <div class="col-md-9 col-sm-7">
+                                    <div class="col-md-8 col-sm-7">
                                         @{
                                             var renewalApprovalMethods = Model.RenewalApprovalMethod.HasValue
                                                 ? Model.RenewalApprovalMethod.Value.ToNexportSelectList()
@@ -212,11 +212,11 @@
                                         <span asp-validation-for="RenewalApprovalMethod"></span>
                                     </div>
                                 </div>
-                                <div class="form-group" id="extensionPurchaseLimitOption">
-                                    <div class="col-md-3 col-sm-5">
+                                <div class="form-group row" id="extensionPurchaseLimitOption">
+                                    <div class="col-md-4 col-sm-5">
                                         <nop-label asp-for="ExtensionPurchaseLimit" />
                                     </div>
-                                    <div class="col-md-9 col-sm-7">
+                                    <div class="col-md-8 col-sm-7">
                                         <nop-editor asp-for="ExtensionPurchaseLimit" />
                                         <span asp-validation-for="ExtensionPurchaseLimit"></span>
                                     </div>
@@ -227,49 +227,49 @@
 
                     @if (Model.NexportSubscriptionOrgId != null)
                     {
-                        <div class="panel panel-default panel-popup">
-                            <div class="panel-heading">
+                        <div class="card card-default card-popup">
+                            <div class="card-header">
                                 Product group membership mapping info
                             </div>
-                            <div class="panel-body">
-                                <div class="sub-panel">
+                            <div class="card-body">
+                                <div>
                                     @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappingGroupMembership.cshtml",
                                         new NexportProductGroupMembershipMappingListSearchModel { NexportProductMappingId = Model.Id })
                                 </div>
 
-                                <div class="panel panel-default" style="margin-top: 0.5em;">
-                                    <div class="panel-heading">
+                                <div class="card card-default" style="margin-top: 0.5em;">
+                                    <div class="card-header">
                                         Add new group membership
                                     </div>
-                                    <div class="panel-body">
-                                        <div class="form-group">
-                                            <div class="col-sm-5 col-md-3">
+                                    <div class="card-body">
+                                        <div class="form-group row">
+                                            <div class="col-sm-5 col-md-4">
                                                 <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupId" />
                                             </div>
-                                            <div class="col-sm-7 col-md-9">
+                                            <div class="col-sm-7 col-md-8">
                                                 <input class="form-control text-box single-line" id="AddGroupMembership_GroupId" type="text">
                                             </div>
                                         </div>
-                                        <div class="form-group">
-                                            <div class="col-sm-5 col-md-3">
+                                        <div class="form-group row">
+                                            <div class="col-sm-5 col-md-4">
                                                 <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupName" />
                                             </div>
-                                            <div class="col-sm-7 col-md-9">
-                                                <input type="hidden" id="AddGroupMembership_GroupName" />
+                                            <div class="col-sm-7 col-md-8">
+                                                        <input type="hidden" id="AddGroupMembership_GroupName" />
                                                 <div class="form-text-row" id="AddGroupMembership_GroupName_Display"></div>
                                             </div>
                                         </div>
-                                        <div class="form-group">
-                                            <div class="col-sm-5 col-md-3">
+                                        <div class="form-group row">
+                                            <div class="col-sm-5 col-md-4">
                                                 <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupShortName" />
                                             </div>
-                                            <div class="col-sm-7 col-md-9">
-                                                <input type="hidden" id="AddGroupMembership_GroupShortName" />
+                                            <div class="col-sm-7 col-md-8">
+                                                        <input type="hidden" id="AddGroupMembership_GroupShortName" />
                                                 <div class="form-text-row" id="AddGroupMembership_GroupShortName_Display"></div>
                                             </div>
                                         </div>
-                                        <div class="form-group">
-                                            <div class="col-sm-7 col-md-9 col-sm-offset-5 col-md-offset-3">
+                                        <div class="form-group row">
+                                            <div class="col-sm-7 col-md-8 offset-sm-5 offset-md-4">
                                                 <button type="button" id="addGroupMembership" class="btn btn-primary" disabled>Add group membership</button>
                                             </div>
                                         </div>
@@ -278,16 +278,16 @@
                             </div>
                         </div>
                     }
-                    <div class="panel panel-default panel-popup">
-                        <div class="panel-heading">
+                    <div class="card card-default card-popup">
+                        <div class="card-header">
                             Supplemental Info Question
                         </div>
-                        <div class="panel-body">
-                            <div class="form-group">
-                                <div class="col-md-3">
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <div class="col-md-4">
                                     <nop-label asp-for="SupplementalInfoQuestionIds" />
                                 </div>
-                                <div class="col-md-9">
+                                <div class="col-md-8">
                                     <nop-select asp-for="SupplementalInfoQuestionIds" asp-items="Model.AvailableSupplementalInfoQuestions" asp-multiple="true" />
                                     <script>
                                         $(document).ready(function() {
@@ -413,7 +413,7 @@
                 $("#UtcAccessExpirationDate").data("kendoDateTimePicker").enable(false);
             } else {
                 $("#trainingExpirationOption").val("accessExpirationDate");
-                $("#accessExpirationDateOption").removeClass("hidden");
+                $("#accessExpirationDateOption").removeClass("d-none");
             }
 
             var hasAccessTimeLimitValue = @Json.Serialize(!string.IsNullOrWhiteSpace(Model.AccessTimeLimit));
@@ -421,26 +421,26 @@
                 $("#AccessTimeLimit").prop("disabled", true);
             } else {
                 $("#trainingExpirationOption").val("accessTimeLimit");
-                $("#accessLimitOption").removeClass("hidden");
+                $("#accessLimitOption").removeClass("d-none");
             }
 
             $("#trainingExpirationOption").on("change",
                 function(e) {
                     if ($(this).val() === "accessTimeLimit") {
-                        $("#accessLimitOption").removeClass("hidden");
-                        $("#accessExpirationDateOption").addClass("hidden");
+                        $("#accessLimitOption").removeClass("d-none");
+                        $("#accessExpirationDateOption").addClass("d-none");
 
                         $("#AccessTimeLimit").prop("disabled", false);
                         $("#UtcAccessExpirationDate").data("kendoDateTimePicker").enable(false);
                     } else if ($(this).val() === "accessExpirationDate") {
-                        $("#accessLimitOption").addClass("hidden");
-                        $("#accessExpirationDateOption").removeClass("hidden");
+                        $("#accessLimitOption").addClass("d-none");
+                        $("#accessExpirationDateOption").removeClass("d-none");
 
                         $("#UtcAccessExpirationDate").data("kendoDateTimePicker").enable(true);
                         $("#AccessTimeLimit").prop("disabled", true);
                     } else if ($(this).val() === "noExpiration") {
-                        $("#accessLimitOption").addClass("hidden");
-                        $("#accessExpirationDateOption").addClass("hidden");
+                        $("#accessLimitOption").addClass("d-none");
+                        $("#accessExpirationDateOption").addClass("d-none");
 
                         $("#UtcAccessExpirationDate").data("kendoDateTimePicker").enable(false);
                         $("#AccessTimeLimit").prop("disabled", true);

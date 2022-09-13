@@ -92,7 +92,7 @@ namespace Nop.Plugin.Misc.Nexport
                 SystemName = "Nexport",
                 Visible = true,
                 Title = "Nexport Integration",
-                IconClass = "fa-plug",
+                IconClass = "fas fa-plug",
             };
 
             node.ChildNodes.Add(new SiteMapNode()
@@ -102,7 +102,7 @@ namespace Nop.Plugin.Misc.Nexport
                 SystemName = "Nexport Integration - Configuration",
                 ControllerName = "NexportIntegration",
                 ActionName = "Configure",
-                IconClass = "fa fa-cog"
+                IconClass = "far fa-dot-circle"
             });
 
             node.ChildNodes.Add(new SiteMapNode()
@@ -112,7 +112,7 @@ namespace Nop.Plugin.Misc.Nexport
                 SystemName = "Nexport Integration - Store Configuration",
                 ControllerName = "Store",
                 ActionName = "List",
-                IconClass = "fa fa-cog"
+                IconClass = "far fa-dot-circle"
             });
 
             node.ChildNodes.Add(new SiteMapNode()
@@ -122,7 +122,7 @@ namespace Nop.Plugin.Misc.Nexport
                 SystemName = NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME,
                 ControllerName = "NexportIntegration",
                 ActionName = "ListSupplementalInfoQuestion",
-                IconClass = "fa fa-cog"
+                IconClass = "far fa-dot-circle"
             });
 
             rootNode.ChildNodes.Add(node);
@@ -198,10 +198,19 @@ namespace Nop.Plugin.Misc.Nexport
 
             try
             {
-                var runner = EngineContext.Current.Resolve<IMigrationRunner>();
-                runner.MigrateDown(0);
+                var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
+                using var serviceScope = migrationServiceProvider.CreateScope();
+                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+                try
+                {
+                    runner.MigrateDown(0);
 
-                ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
+                    ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
+                }
+                catch (MissingMigrationsException)
+                {
+                    // ignored
+                }
             }
             catch (Exception)
             {

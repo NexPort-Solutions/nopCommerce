@@ -7,11 +7,12 @@
 @model Nop.Plugin.Sale.CancelPendingOrderRequests.Models.CancellationRequestSettingsModel
 
 @{
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
     const string hideCancellationRequestBlockAttributeName = "OrderSettingsPage.HideCancellationRequestBlock";
-    var hideCancellationRequestBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideCancellationRequestBlockAttributeName);
+    var hideCancellationRequestBlock = await genericAttributeService.GetAttributeAsync(currentCustomer, hideCancellationRequestBlockAttributeName, defaultValue: true);
 }
 
-<nop-panel asp-name="ordersettings-cancellation-request" asp-icon="fa fa-stop-circle"
+<nop-panel asp-name="ordersettings-cancellation-request" asp-icon="fas fa-stop-circle"
            asp-title="@T("Admin.Configuration.Settings.Order.CancellationRequestSettings")"
            asp-hide-block-attribute-name="@hideCancellationRequestBlockAttributeName" asp-hide="@hideCancellationRequestBlock" asp-advanced="false">
     @await Html.PartialAsync("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/Setting/_Order.CancellationRequestSettings.cshtml", Model)

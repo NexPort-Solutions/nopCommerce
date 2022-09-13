@@ -8,7 +8,7 @@
 @{
     Layout = "_AdminPopupLayout";
 
-    ViewBag.Title = "Edit customer registration field answers";
+    ViewBag.PageTitle = "Edit customer registration field answers";
 }
 
 @if (ViewBag.RefreshPage == true)
@@ -40,18 +40,18 @@
           asp-route-containerId="@Context.Request.Query["containerId"]"
           asp-route-btnId="@Context.Request.Query["btnId"]">
         <div class="content-header clearfix">
-            <div class="pull-right">
-                <button type="submit" name="save" class="btn bg-blue">
-                    <i class="fa fa-floppy-o"></i>
+            <div class="float-right">
+                <button type="submit" name="save" class="btn btn-primary">
+                    <i class="far fa-save"></i>
                     @T("Admin.Common.Save")
                 </button>
             </div>
         </div>
         <div class="content">
             <div class="form-horizontal">
-                <div class="panel-group">
-                    <div class="panel panel-default panel-popup">
-                        <div class="panel-body">
+                <div class="card-group">
+                        <div class="card card-default card-popup">
+                        <div class="card-body">
                             <div>
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="fieldId" value="@Model.RegistrationField.Id" />

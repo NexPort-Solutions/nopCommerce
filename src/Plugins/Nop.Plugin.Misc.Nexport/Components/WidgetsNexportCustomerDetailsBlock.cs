@@ -39,7 +39,8 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
             if (customerModel.Id == 0)
             {
-                var model = _nexportPluginModelFactory.PrepareAddNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
+                var model =
+                    await _nexportPluginModelFactory.PrepareAddNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
 
                 return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/AddNexportCustomerAdditionalInfo.cshtml", model);
             }
@@ -54,7 +55,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
                 {
                     try
                     {
-                        var nexportUser = await _nexportService.GetNexportUserAsync(mapping.NexportUserId);
+                        var nexportUser = await _nexportService.GetNexportUserAsync(mapping.NexportUserId)!;
 
                         if (nexportUser != null)
                         {

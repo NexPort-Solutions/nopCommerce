@@ -31,7 +31,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             NexportProductMappingSearchModel searchModel, int nopProductId);
 
         Task<NexportProductGroupMembershipMappingListModel> PrepareNexportProductMappingGroupMembershipListModelAsync(
-            NexportProductGroupMembershipMappingSearchModel searchModel, int nexportProductMappingId);
+            NexportProductGroupMembershipMappingListSearchModel searchModel);
 
         Task<DuplicateNexportProductMappingModel> PrepareDuplicateNexportProductMappingModel(Product product);
 
@@ -83,7 +83,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         Task<NexportSupplementalInfoOptionGroupAssociationListModel>
             PrepareNexportSupplementalInfoOptionGroupAssociationListModelAsync(
-                NexportSupplementalInfoOptionGroupAssociationSearchModel searchModel, int optionId);
+                NexportSupplementalInfoOptionGroupAssociationListSearchModel searchModel);
 
         Task<NexportSupplementalInfoAnswerQuestionModel> PrepareNexportSupplementalInfoAnswerQuestionModelAsync(
             IList<int> questionIds, Customer customer, Store store);

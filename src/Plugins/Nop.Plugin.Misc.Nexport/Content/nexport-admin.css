@@ -3,10 +3,10 @@
   padding-right: 7.5px;
 }
 
-  .nex-duration-picker-element:first-child {
+  /*.nex-duration-picker-element:first-child {
     padding-left: 0;
     padding-right: 7.5px;
-  }
+  }*/
 
   .nex-duration-picker-element:last-of-type {
     padding-left: 7.5px;
