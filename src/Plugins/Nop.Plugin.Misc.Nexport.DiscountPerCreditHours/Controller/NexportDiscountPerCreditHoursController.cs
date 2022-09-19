@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Domain.Discounts;
+using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Factories;
 using Nop.Services.Catalog;
 using Nop.Services.Configuration;
 using Nop.Services.Discounts;
@@ -12,6 +15,8 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Models;
+using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Models.Plugins;
+using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Services;
 
 namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Controller
 {
@@ -19,6 +24,7 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Controller
     [Area(AreaNames.Admin)]
     public class NexportDiscountPerCreditHoursController : BasePluginController
     {
+        private readonly INexportDiscountPerCreditHourModelFactory _nexportDiscountPerCreditHourModelFactory;
         private readonly ILocalizationService _localizationService;
         private readonly IPermissionService _permissionService;
         private readonly IDiscountService _discountService;
@@ -27,6 +33,7 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Controller
         private readonly IStoreService _storeService;
 
         public NexportDiscountPerCreditHoursController(
+            INexportDiscountPerCreditHourModelFactory nexportDiscountPerCreditHourModelFactory,
             ILocalizationService localizationService,
             IPermissionService permissionService,
             IDiscountService discountService,
@@ -34,12 +41,80 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Controller
             IProductService productService,
             IStoreService storeService)
         {
+            _nexportDiscountPerCreditHourModelFactory = nexportDiscountPerCreditHourModelFactory;
             _localizationService = localizationService;
             _permissionService = permissionService;
             _discountService = discountService;
             _settingService = settingService;
             _productService = productService;
             _storeService = storeService;
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetModifiedLocaleResources(
+            DiscountPerCreditHoursPluginResourceListSearchModel searchModel, string friendlyName)
+        {
+            var model = await _nexportDiscountPerCreditHourModelFactory
+                .PrepareDiscountPerCreditHourPluginResourceListModelAsync(searchModel);
+
+            return Json(model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+                return AccessDeniedView();
+
+            if (selectedIds != null && selectedIds.Count != 0)
+            {
+                foreach (var id in selectedIds)
+                {
+                    var localeStringResourceById = await _localizationService.GetLocaleStringResourceByIdAsync(id);
+
+                    if (localeStringResourceById != null)
+                    {
+                        var discountPerCreditLocaleResources =
+                            NexportDiscountPerCreditHoursPluginService.GetLocaleResources();
+                        var overridingResourceValue = discountPerCreditLocaleResources.Where(l =>
+                                l.Key.ToLower() == localeStringResourceById.ResourceName.ToLower())
+                            .Select(l => l.Value)
+                            .First();
+
+                        if (overridingResourceValue != null)
+                        {
+                            localeStringResourceById.ResourceValue = overridingResourceValue;
+
+                            await _localizationService.UpdateLocaleStringResourceAsync(localeStringResourceById);
+                        }
+                    }
+                }
+
+                if (allChecked)
+                {
+                    var discountPerCreditSetting =
+                        await _settingService.GetSettingAsync(
+                            "Plugin.Misc.Nexport.DiscountPerCreditHours.HasModifiedLocaleResources");
+
+                    if (discountPerCreditSetting != null)
+                    {
+                        await _settingService.DeleteSettingAsync(discountPerCreditSetting);
+                    }
+                }
+
+            }
+            else
+            {
+                return NoContent();
+            }
+
+            return Json(new { success = true });
         }
 
         public async Task<IActionResult> Configure(int discountId, int? discountRequirementId)

@@ -27,7 +27,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer
         }
 
         public override async Task InstallAsync()
-        {
+        {   
             if (!_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
             {
                 _widgetSettings.ActiveWidgetSystemNames.Add(PluginDefaults.SystemName);
@@ -53,13 +53,14 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer
         }
 
         public bool HideInWidgetList => true;
-
+            
         public Task<IList<string>> GetWidgetZonesAsync()
         {
             return Task.FromResult<IList<string>>(
                 new List<string>
                 {
-                    AdminWidgetZones.ProductDetailsButtons
+                    AdminWidgetZones.ProductDetailsButtons,
+                    AdminWidgetZones.PluginDetailsBottom
                 });
         }
 
@@ -67,6 +68,8 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer
         {
             if (widgetZone == AdminWidgetZones.ProductDetailsButtons)
                 return "ProductDetailsButtonWidget";
+            if (widgetZone == AdminWidgetZones.PluginDetailsBottom)
+                return "WidgetsPurchaseForCustomerModifiedLocaleResourcesDataTableBlock";
 
             return "";
         }

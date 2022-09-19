@@ -170,7 +170,7 @@ namespace Nop.Plugin.Misc.Nexport
             await _nexportPluginService.AddActivityLogTypesAsync();
 
             await _nexportPluginService.AddOrUpdateResourcesAsync();
-
+                
             await _nexportPluginService.InstallPermissionProviderAsync();
 
             await base.InstallAsync();
@@ -234,6 +234,7 @@ namespace Nop.Plugin.Misc.Nexport
                 AdminWidgetZones.CustomerUserDetailsBlock,
                 AdminWidgetZones.CategoryDetailsBlock,
                 AdminWidgetZones.OrderDetailsBlock,
+                AdminWidgetZones.PluginDetailsBottom,
                 PublicWidgetZones.OrderDetailsProductLine,
                 PublicWidgetZones.AccountNavigationAfter,
                 PublicWidgetZones.HeaderLinksBefore,
@@ -245,6 +246,9 @@ namespace Nop.Plugin.Misc.Nexport
 
         public string GetWidgetViewComponentName(string widgetZone)
         {
+            if (widgetZone == AdminWidgetZones.PluginDetailsBottom)
+                return "WidgetsNexportModifiedLocaleResourcesDataTableBlock";
+
             if (widgetZone == AdminWidgetZones.StoreDetailsBottom)
                 return "WidgetsNexportStoreDetails";
 

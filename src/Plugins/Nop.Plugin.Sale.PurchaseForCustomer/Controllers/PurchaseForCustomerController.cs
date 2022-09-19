@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Infrastructure;
@@ -15,7 +16,9 @@ using Nop.Services.Orders;
 using Nop.Services.Security;
 using Nop.Plugin.Sale.PurchaseForCustomer.Factories;
 using Nop.Plugin.Sale.PurchaseForCustomer.Models;
+using Nop.Plugin.Sale.PurchaseForCustomer.Models.Plugins;
 using Nop.Plugin.Sale.PurchaseForCustomer.Services;
+using Nop.Services.Configuration;
 
 namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
 {
@@ -27,6 +30,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
         private readonly IPurchaseForCustomerModelFactory _purchaseForCustomerModelFactory;
         private readonly IPurchaseForCustomerService _purchaseForCustomerService;
         private readonly ICustomerService _customerService;
+        private readonly ISettingService _settingService;
         private readonly IProductService _productService;
         private readonly IStoreService _storeService;
         private readonly IPermissionService _permissionService;
@@ -38,6 +42,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
             IPurchaseForCustomerModelFactory purchaseForCustomerModelFactory,
             IPurchaseForCustomerService purchaseForCustomerService,
             ICustomerService customerService,
+            ISettingService settingService,
             IProductService productService,
             IStoreService storeService,
             IPermissionService permissionService,
@@ -48,12 +53,76 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
             _purchaseForCustomerModelFactory = purchaseForCustomerModelFactory;
             _purchaseForCustomerService = purchaseForCustomerService;
             _customerService = customerService;
+            _settingService = settingService;
             _productService = productService;
             _storeService = storeService;
             _permissionService = permissionService;
             _notificationService = notificationService;
             _localizationService = localizationService;
             _logger = logger;
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetModifiedLocaleResources(PurchaseForCustomerPluginResourceListSearchModel searchModel, string friendlyName)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+                return await AccessDeniedDataTablesJson();
+
+            var model = await _purchaseForCustomerModelFactory
+                .PreparePurchaseForCustomerPluginResourceListModelAsync(searchModel);
+
+            return Json(model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+                return AccessDeniedView();
+
+            if (selectedIds != null && selectedIds.Count != 0)
+            {
+                foreach (var id in selectedIds)
+                {
+                    var localeStringResourceById = await _localizationService.GetLocaleStringResourceByIdAsync(id);
+
+                    if (localeStringResourceById != null)
+                    {
+                        var purchaseForCustomerLocaleResources = PurchaseForCustomerPluginService.GetLocaleResource();
+                        var overridingResourceValue = purchaseForCustomerLocaleResources.Where(l => l.Key.ToLower() == localeStringResourceById.ResourceName.ToLower())
+                            .Select(l => l.Value)
+                            .First();
+
+                        if (overridingResourceValue != null)
+                        {
+                            localeStringResourceById.ResourceValue = overridingResourceValue;
+
+                            await _localizationService.UpdateLocaleStringResourceAsync(localeStringResourceById);
+                        }
+                    }
+                }
+                if (allChecked)
+                {
+                    var purchaseForCustomerSetting = await _settingService.GetSettingAsync("Plugin.Sale.PurchaseForCustomer.HasModifiedLocaleResources");
+
+                    if (purchaseForCustomerSetting != null)
+                    {
+                        await _settingService.DeleteSettingAsync(purchaseForCustomerSetting);
+                    }
+                }
+            }
+            else
+            {
+                return NoContent();
+            }
+
+            return Json(new { success = true });
         }
 
         public async Task<IActionResult> PurchaseDetails(int productId)

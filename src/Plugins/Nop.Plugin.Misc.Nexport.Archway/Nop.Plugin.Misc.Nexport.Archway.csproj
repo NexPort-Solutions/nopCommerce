@@ -18,12 +18,21 @@
 
   <ItemGroup>
     <None Remove="Areas\Admin\Views\Customer\CustomRegistrationFieldDetails.cshtml" />
+    <None Remove="Areas\Admin\Views\Widget\Plugin\ArchwayModifiedLocaleResources.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewImports.cshtml" />
     <None Remove="logo.jpg" />
     <None Remove="plugin.json" />
     <None Remove="Views\RegistrationField\EditCustomerRegistrationFieldAnswers.cshtml" />
     <None Remove="Views\RegistrationField\_CustomerFields.Control.CustomRender.cshtml" />
     <None Remove="Views\_ViewImports.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Areas\Admin\Views\Customer\CustomRegistrationFieldDetails.cshtml" />
+    <Content Include="Areas\Admin\Views\Widget\Plugin\ArchwayModifiedLocaleResources.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    
   </ItemGroup>
 
   <ItemGroup>

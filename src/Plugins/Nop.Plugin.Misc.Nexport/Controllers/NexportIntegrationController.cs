@@ -61,6 +61,13 @@ using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using System.Threading.Tasks;
+using Nop.Core.Domain.Common;
+using Nop.Core.Domain.Localization;
+using Nop.Plugin.Misc.Nexport.Models.Plugins;
+using Nop.Web.Areas.Admin.Models.Plugins;
+using Nop.Web.Framework.Models.DataTables;
+using Nop.Core.Domain.Configuration;
+using LinqToDB;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
@@ -80,6 +87,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<NexportProductMapping> _nexportProductRepository;
+        private readonly IRepository<GenericAttribute> _genericAttributeRepository;
+        private readonly IRepository<LocaleStringResource> _localeStringResourceRepository;
+        private readonly IRepository<Setting> _settingRepository;
 
         private readonly NexportSettings _nexportSettings;
         private readonly NexportService _nexportService;
@@ -125,6 +135,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             NexportService nexportService,
             IRepository<NexportProductMapping> nexportProductRepository,
             IRepository<Product> productRepository,
+            IRepository<GenericAttribute> genericAttributeRepository,
+            IRepository<LocaleStringResource> localeStringResourceRepository,
+            IRepository<Setting> settingRepository,
             INexportPluginModelFactory nexportPluginModelFactory,
             IProductModelFactory productModelFactory,
             IOrderModelFactory orderModelFactory,
@@ -155,6 +168,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         {
             _productRepository = productRepository;
             _nexportProductRepository = nexportProductRepository;
+            _genericAttributeRepository = genericAttributeRepository;
+            _localeStringResourceRepository = localeStringResourceRepository;
+            _settingRepository = settingRepository;
             _productModelFactory = productModelFactory;
             _nexportPluginModelFactory = nexportPluginModelFactory;
             _orderModelFactory = orderModelFactory;
@@ -243,6 +259,67 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return jsonResult;
         }
 
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetModifiedLocaleResources(NexportPluginResourceListSearchModel searchModel, string friendlyName)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+                return await AccessDeniedDataTablesJson();
+
+            var model = await _nexportPluginModelFactory.PrepareNexportPluginResourceListModelAsync(searchModel);
+
+            return Json(model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+                return AccessDeniedView();
+
+            if (selectedIds != null && selectedIds.Count != 0)
+            {
+                foreach (var id in selectedIds)
+                {
+                    var localeStringResourceById = await _localizationService.GetLocaleStringResourceByIdAsync(id);
+
+                    if (localeStringResourceById != null)
+                    {
+                        var nexportLocaleResources = NexportPluginService.GetLocaleResource();
+                        var overridingResourceValue = nexportLocaleResources.Where(l => l.Key.ToLower() == localeStringResourceById.ResourceName.ToLower())
+                            .Select(l => l.Value)
+                            .First();
+
+                        if (overridingResourceValue != null)
+                        {
+                            localeStringResourceById.ResourceValue = overridingResourceValue;
+
+                            await _localizationService.UpdateLocaleStringResourceAsync(localeStringResourceById);
+                        }
+                    }
+                }
+                if (allChecked)
+                {
+                    var nexportSetting = await _settingService.GetSettingAsync("Plugin.Misc.Nexport.HasModifiedLocaleResources");
+
+                    if (nexportSetting != null)
+                    {
+                        await _settingService.DeleteSettingAsync(nexportSetting);
+                    }
+                }
+            }
+            else
+            {
+                return NoContent();
+            }
+
+            return Json(new { success = true });
+        }
         #endregion
 
         #region Plugin Configuration Actions
@@ -942,6 +1019,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(await _nexportService.HasDefaultMapping(productId));
         }
 
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
         [AutoValidateAntiforgeryToken]
         [HttpPost]
         public async Task<IActionResult> DeleteMappings(ICollection<int> selectedIds)

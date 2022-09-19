@@ -10,6 +10,7 @@ using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Order;
+using Nop.Plugin.Misc.Nexport.Models.Plugins;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
@@ -20,6 +21,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 {
     public partial interface INexportPluginModelFactory
     {
+        Task<NexportPluginResourceListModel> PrepareNexportPluginResourceListModelAsync(
+            NexportPluginResourceListSearchModel searchModel);
+
         Task<NexportProductMappingModel> PrepareNexportProductMappingModelAsync(NexportProductMapping productMapping,
             bool isEditable);
 

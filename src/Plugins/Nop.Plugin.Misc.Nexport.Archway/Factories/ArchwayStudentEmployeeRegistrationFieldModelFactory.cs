@@ -4,28 +4,70 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Nop.Core;
+using Nop.Core.Domain.Localization;
+using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Archway.Extensions;
 using Nop.Plugin.Misc.Nexport.Archway.Models;
+using Nop.Plugin.Misc.Nexport.Archway.Models.Plugins;
 using Nop.Plugin.Misc.Nexport.Archway.Services;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
+using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
+using Nop.Web.Areas.Admin.Models.Localization;
+using Nop.Web.Framework.Models.Extensions;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Factories
 {
     public class ArchwayStudentEmployeeRegistrationFieldModelFactory : IArchwayStudentEmployeeRegistrationFieldModelFactory
     {
+        private readonly IRepository<LocaleStringResource> _localeStringResourceRepository;
         private readonly IArchwayStudentEmployeeRegistrationFieldService _archwayStudentEmployeeRegistrationFieldService;
         private readonly IStateProvinceService _stateProvinceService;
         private readonly ILocalizationService _localizationService;
 
         public ArchwayStudentEmployeeRegistrationFieldModelFactory(
+            IRepository<LocaleStringResource> localeStringResourceRepository,
             IArchwayStudentEmployeeRegistrationFieldService archwayStudentEmployeeRegistrationFieldService,
             IStateProvinceService stateProvinceService,
             ILocalizationService localizationService)
         {
+            _localeStringResourceRepository = localeStringResourceRepository;
             _archwayStudentEmployeeRegistrationFieldService = archwayStudentEmployeeRegistrationFieldService;
             _stateProvinceService = stateProvinceService;
             _localizationService = localizationService;
+        }
+
+        public Task<ArchwayPluginResourceListModel> PrepareArchwayPluginResourceListModelAsync(ArchwayPluginResourceListSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var results = new List<LocaleStringResource>();
+
+            foreach (var localeResource in ArchwayPluginService.GetLocaleResource())
+            {
+                var localeStringResources = _localeStringResourceRepository.Table
+                    .Where(l => l.ResourceName == localeResource.Key && l.ResourceValue != localeResource.Value)
+                    .ToList();
+
+                results.AddRange(localeStringResources);
+            }
+
+            var resources = new PagedList<LocaleStringResource>(results, searchModel.Page - 1, searchModel.PageSize);
+
+            // prepare to grid
+            var model = new ArchwayPluginResourceListModel().PrepareToGrid(searchModel, resources, () =>
+            {
+                return resources.Select(resource =>
+                {
+                    var localeResourceModel = resource.ToModel<LocaleResourceModel>();
+                    return localeResourceModel;
+                });
+            });
+
+            // the interface allows asynchronous callers, but this method is synchronous
+            return Task.FromResult(model);
         }
 
         public async Task<ArchwayStudentEmployeeRegistrationFieldModel>

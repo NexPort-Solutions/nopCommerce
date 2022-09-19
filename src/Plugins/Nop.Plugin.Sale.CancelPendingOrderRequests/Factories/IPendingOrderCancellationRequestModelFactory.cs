@@ -2,11 +2,15 @@
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
+using Nop.Plugin.Sale.CancelPendingOrderRequests.Models.Plugins;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
 {
     public interface IPendingOrderCancellationRequestModelFactory
     {
+        Task<CancelPendingOrderRequestsPluginResourceListModel> PrepareCancelPendingOrderRequestsPluginResourceListModelAsync(
+            CancelPendingOrderRequestsPluginResourceListSearchModel searchModel);
+
         Task<PendingOrderCancellationRequestSearchModel> PreparePendingOrderCancellationRequestSearchModelAsync
             (PendingOrderCancellationRequestSearchModel searchModel);
 

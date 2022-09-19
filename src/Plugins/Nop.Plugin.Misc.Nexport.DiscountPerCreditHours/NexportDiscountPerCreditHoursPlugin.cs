@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Nop.Core;
+using Nop.Core.Domain.Cms;
 using Nop.Core.Domain.Orders;
+using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Configuration;
 using Nop.Services.Discounts;
@@ -13,12 +17,15 @@ using Nop.Services.Logging;
 using Nop.Services.Orders;
 using Nop.Services.Plugins;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Cms;
 using Nop.Services.Localization;
+using Nop.Web.Framework.Infrastructure;
 
 namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours
 {
-    public class NexportDiscountPerCreditHoursPlugin : BasePlugin, IDiscountRequirementRule
+    public class NexportDiscountPerCreditHoursPlugin : BasePlugin, IWidgetPlugin, IDiscountRequirementRule
     {
+        private readonly NexportDiscountPerCreditHoursPluginService _nexportDiscountPerCreditHoursPluginService;
         private readonly IUrlHelperFactory _urlHelperFactory;
         private readonly IActionContextAccessor _actionContextAccessor;
         private readonly IDiscountService _discountService;
@@ -28,10 +35,14 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours
         private readonly IShoppingCartService _shoppingCartService;
         private readonly ISpecificationAttributeService _specificationAttributeService;
         private readonly ILocalizationService _localizationService;
+        private readonly IPluginLocalizationService _pluginLocalizationService;
+        private readonly WidgetSettings _widgetSettings;
 
         private readonly NexportService _nexportService;
 
+        
         public NexportDiscountPerCreditHoursPlugin(
+            NexportDiscountPerCreditHoursPluginService nexportDiscountPerCreditHoursPluginService,
             IUrlHelperFactory urlHelperFactory,
             IActionContextAccessor actionContextAccessor,
             IDiscountService discountService,
@@ -41,8 +52,11 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours
             IShoppingCartService shoppingCartService,
             ISpecificationAttributeService specificationAttributeService,
             ILocalizationService localizationService,
+            IPluginLocalizationService pluginLocalizationService,
+            WidgetSettings widgetSettings,
             NexportService nexportService)
         {
+            _nexportDiscountPerCreditHoursPluginService = nexportDiscountPerCreditHoursPluginService;
             _urlHelperFactory = urlHelperFactory;
             _actionContextAccessor = actionContextAccessor;
             _discountService = discountService;
@@ -52,15 +66,14 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours
             _shoppingCartService = shoppingCartService;
             _specificationAttributeService = specificationAttributeService;
             _localizationService = localizationService;
+            _pluginLocalizationService = pluginLocalizationService;
+            _widgetSettings = widgetSettings;
             _nexportService = nexportService;
         }
 
         public override async Task InstallAsync()
         {
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours",
-                "Credit hours");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours.Hint",
-                "Minimum credit hours for the discount to be effective");
+            await _nexportDiscountPerCreditHoursPluginService.AddOrUpdateResourcesAsync();
 
             await base.InstallAsync();
         }
@@ -75,10 +88,9 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours
                 await _discountService.DeleteDiscountRequirementAsync(discountRequirement, true);
             }
 
-            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours");
-            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours.Hint");
+            await _nexportDiscountPerCreditHoursPluginService.DeleteResourcesAsync();
 
-            await base.UninstallAsync();
+           await base.UninstallAsync();
         }
 
         public async Task<DiscountRequirementValidationResult> CheckRequirementAsync(DiscountRequirementValidationRequest request)
@@ -121,6 +133,25 @@ namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours
 
             return urlHelper.Action("Configure", "NexportDiscountPerCreditHours",
                 new { discountId, discountRequirementId }, _webHelper.GetCurrentRequestProtocol());
+        }
+
+        public bool HideInWidgetList => true;
+
+        public Task<IList<string>> GetWidgetZonesAsync()
+        {
+            return Task.FromResult<IList<string>>(
+                new List<string>
+                {
+                    AdminWidgetZones.PluginDetailsBottom
+                });
+        }
+
+        public string GetWidgetViewComponentName(string widgetZone)
+        {
+            if (widgetZone == AdminWidgetZones.PluginDetailsBottom)
+                return "WidgetsDiscountPerCreditHoursModifiedLocaleResourcesDataTableBlock";
+
+            return "";
         }
     }
 }

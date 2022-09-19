@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Bibliography;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
@@ -20,7 +23,9 @@ using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Factories;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
+using Nop.Plugin.Sale.CancelPendingOrderRequests.Models.Plugins;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
+using Nop.Services.Configuration;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
 {
@@ -33,6 +38,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         private readonly IPendingOrderCancellationRequestService _pendingOrderCancellationRequestService;
         private readonly IPermissionService _permissionService;
         private readonly IOrderService _orderService;
+        private readonly ISettingService _settingService;
         private readonly IOrderProcessingService _orderProcessingService;
         private readonly ICustomerActivityService _customerActivityService;
         private readonly ILocalizationService _localizationService;
@@ -42,12 +48,14 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         private readonly IStoreContext _storeContext;
         private readonly ILogger _logger;
         private readonly IWebHelper _webHelper;
+        
 
         public CancelPendingOrderRequestsController(
             LocalizationSettings localizationSettings,
             IPendingOrderCancellationRequestModelFactory pendingOrderCancellationRequestModelFactory,
             IPendingOrderCancellationRequestService pendingOrderCancellationRequestService,
             IOrderService orderService,
+            ISettingService settingService,
             IOrderProcessingService orderProcessingService,
             IPermissionService permissionService,
             ICustomerActivityService customerActivityService,
@@ -63,6 +71,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
             _pendingOrderCancellationRequestModelFactory = pendingOrderCancellationRequestModelFactory;
             _pendingOrderCancellationRequestService = pendingOrderCancellationRequestService;
             _orderService = orderService;
+            _settingService = settingService;
             _orderProcessingService = orderProcessingService;
             _permissionService = permissionService;
             _customerActivityService = customerActivityService;
@@ -89,6 +98,73 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
         }
 
         #endregion
+
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetModifiedLocaleResources(
+            CancelPendingOrderRequestsPluginResourceListSearchModel searchModel, string friendlyName)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+                return await AccessDeniedDataTablesJson();
+
+            var model = await _pendingOrderCancellationRequestModelFactory
+                .PrepareCancelPendingOrderRequestsPluginResourceListModelAsync(searchModel);
+
+            return Json(model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+                return AccessDeniedView();
+
+            if (selectedIds != null && selectedIds.Count != 0)
+            {
+                foreach (var id in selectedIds)
+                {
+                    var localeStringResourceById = await _localizationService.GetLocaleStringResourceByIdAsync(id);
+
+                    if (localeStringResourceById != null)
+                    {
+                        var cancelPendingOrderRequestsLocaleResources = CancelPendingOrderRequestsPluginService.GetLocaleResource();
+                        var overridingResourceValue = cancelPendingOrderRequestsLocaleResources.Where(l => l.Key.ToLower() == localeStringResourceById.ResourceName.ToLower())
+                            .Select(l => l.Value)
+                            .First();
+
+                        if (overridingResourceValue != null)
+                        {
+                            localeStringResourceById.ResourceValue = overridingResourceValue;
+
+                            await _localizationService.UpdateLocaleStringResourceAsync(localeStringResourceById);
+                        }
+                    }
+                }
+
+                if (allChecked)
+                {
+                    var cancelPendingOrderRequestsSetting = await _settingService.GetSettingAsync("Plugin.Sale.CancelPendingOrderRequests.HasModifiedLocaleResources");
+
+                    if (cancelPendingOrderRequestsSetting != null)
+                    {
+                        await _settingService.DeleteSettingAsync(cancelPendingOrderRequestsSetting);
+                    }
+                }
+            }
+            else
+            {
+                return NoContent();
+            }
+
+            return Json(new { success = true });
+        }
+
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]

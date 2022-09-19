@@ -10,6 +10,7 @@ using Nop.Plugin.Sale.PurchaseForCustomer.Services;
 using Nop.Plugin.Sale.PurchaseForCustomer.Factories;
 using iTextSharp.text;
 using System.Threading.Tasks;
+using Nop.Plugin.Sale.PurchaseForCustomer.Filters;
 
 namespace Nop.Plugin.Sale.PurchaseForCustomer.Infrastructure
 {
@@ -22,9 +23,15 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Infrastructure
                 options.ViewLocationExpanders.Add(new ViewLocationExpander());
             });
 
+            services.AddMvc(options =>
+            {
+                options.Filters.Add<DashboardNotificationActionFilter>();
+            });
+
             services.AddScoped<IPurchaseForCustomerService, PurchaseForCustomerService>();
             services.AddScoped<IPurchaseForCustomerModelFactory, PurchaseForCustomerModelFactory>();
             services.AddScoped<PurchaseForCustomerPluginService>();
+            services.AddScoped<IPluginLocalizationService, PluginLocalizationService>();
         }
 
         public void Configure(IApplicationBuilder application)
@@ -57,6 +64,8 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Infrastructure
 
                         Task.Run(() => pluginService.AddOrUpdateResourcesAsync());
                     }
+
+                    
                 }
             }
         }

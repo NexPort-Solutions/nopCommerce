@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -11,6 +12,7 @@ using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
+using Nop.Web.Areas.Admin.Models.Localization;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure
 {
@@ -23,6 +25,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
         protected void CreateNexportPluginAdminMaps()
         {
+            CreateMap<LocaleStringResource, LocaleResourceModel>();
+
             CreateMap<NexportProductMapping, NexportProductMappingModel>()
                 .ForMember(model => model.AddGroupMembershipMappingModel, opts => opts.Ignore())
                 .ForMember(model => model.GroupMembershipMappingModels, opts => opts.Ignore())

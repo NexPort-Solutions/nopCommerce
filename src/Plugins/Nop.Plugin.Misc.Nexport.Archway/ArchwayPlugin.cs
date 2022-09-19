@@ -21,6 +21,7 @@ using Nop.Plugin.Misc.Nexport.Archway.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Archway.Services;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Web.Framework.Infrastructure;
 
 namespace Nop.Plugin.Misc.Nexport.Archway
 {
@@ -187,6 +188,9 @@ namespace Nop.Plugin.Misc.Nexport.Archway
             if (widgetZone == NexportDefaults.NexportCustomRegistrationFieldZone)
                 return "CustomRegistrationFieldDetails";
 
+            if (widgetZone == AdminWidgetZones.PluginDetailsBottom)
+                return "WidgetsArchwayModifiedLocaleResourcesDataTableBlock";
+
             return "";
         }
 
@@ -194,7 +198,9 @@ namespace Nop.Plugin.Misc.Nexport.Archway
         {
             return Task.FromResult<IList<string>>(new List<string>
             {
-                NexportDefaults.NexportCustomRegistrationFieldZone
+                NexportDefaults.NexportCustomRegistrationFieldZone,
+                AdminWidgetZones.PluginDetailsBottom
+
             });
         }
     }

@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Messages;
 using Nop.Data;
+using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
@@ -16,22 +18,96 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
         private readonly EmailAccountSettings _emailAccountSettings;
         private readonly ICustomerActivityService _customerActivityService;
         private readonly ILocalizationService _localizationService;
+        private readonly IPluginLocalizationService _pluginLocalizationService;
         private readonly IMessageTemplateService _messageTemplateService;
+        private readonly ISettingService _settingService;
         private readonly ILogger _logger;
+        
+        private static readonly Dictionary<string, string> _localeResources = new()
+        {
+            {"CancellationRequests.ActiveNotice", "Note: You have an active cancellation request for this order"},
+            {"CancellationRequests.WhyCancelling", "Why are you want to cancel this order?"},
+            {"CancellationRequests.CancelReason", "Cancel reason"},
+            {"CancellationRequests.Comments", "Comments"},
+            {"CancellationRequests.Submit", "Submit Cancellation Request"},
+            {"CancellationRequests.Submitted", "Your cancellation request has been submitted successfully."},
+            {"Admin.CancellationRequests", "Cancellation requests"},
+            {"Admin.CancellationRequests.EditCancellationRequestDetails", "Edit cancellation request details"},
+            {"Admin.CancellationRequests.BackToList", "back to cancellation request list"},
+            {"Admin.CancellationRequests.SearchCancellationRequestStatus.All", "All"},
+            {"Admin.CancellationRequests.NotifyCustomer", "Notify customer about status change"},
+            {"Admin.CancellationRequests.Deleted", "The cancellation request has been deleted successfully."},
+            {"Admin.CancellationRequests.Updated", "The cancellation request has been updated successfully."},
+            {"Admin.CancellationRequests.CannotModified", "This cancellation request has been processed and cannot be modified."},
+            {"Admin.PendingOrderCancellationRequests", "Pending order cancellation requests"},
+            {"Admin.PendingOrderCancellationRequests.Description", "The cancellation request feature enables customers to request cancellation for any pending order. Here you can find all submitted cancellation requests."},
+            {"Admin.PendingOrderCancellationRequests.SearchStartDate", "Start date"},
+            {"Admin.PendingOrderCancellationRequests.SearchStartDate.Hint", "The start date for the search"},
+            {"Admin.PendingOrderCancellationRequests.SearchEndDate", "End date"},
+            {"Admin.PendingOrderCancellationRequests.SearchEndDate.Hint", "The end date for the search"},
+            {"Admin.PendingOrderCancellationRequests.RequestStatus", "Request status"},
+            {"Admin.PendingOrderCancellationRequests.RequestStatus.Hint", "Search by a specific cancellation request status e.g. Received."},
+            {"Admin.PendingOrderCancellationRequests.Fields.OrderId", "Order Id"},
+            {"Admin.PendingOrderCancellationRequests.Fields.OrderId.Hint", "The Id of the order"},
+            {"Admin.PendingOrderCancellationRequests.Fields.Customer", "Customer"},
+            {"Admin.PendingOrderCancellationRequests.Fields.Customer.Hint", "The customer that requested the cancellation"},
+            {"Admin.PendingOrderCancellationRequests.Fields.CustomerComments", "Customer comments"},
+            {"Admin.PendingOrderCancellationRequests.Fields.CustomerComments.Hint", "The comments of the customer when requesting the cancellation"},
+            {"Admin.PendingOrderCancellationRequests.Fields.RequestStatus", "Request status"},
+            {"Admin.PendingOrderCancellationRequests.Fields.RequestStatus.Hint", "The status of the request"},
+            {"Admin.PendingOrderCancellationRequests.Fields.ReasonForCancellation", "Cancellation reason"},
+            {"Admin.PendingOrderCancellationRequests.Fields.ReasonForCancellation.Hint", "The reason for cancellation"},
+            {"Admin.PendingOrderCancellationRequests.Fields.StaffNotes", "Staff notes"},
+            {"Admin.PendingOrderCancellationRequests.Fields.StaffNotes.Hint", "The notes from staff member"},
+            {"Admin.PendingOrderCancellationRequests.Fields.UtcCreatedDate", "Created on"},
+            {"Admin.PendingOrderCancellationRequests.Fields.UtcCreatedDate.Hint", "The date/time the request was made"},
+            {"Admin.PendingOrderCancellationRequests.Errors.ModifiedLocaleResources",
+                "There are modified resource values within the <b>Cancel pending order requests plugin</b> that conflicts with the default value. Review them <a href=\"javascript:OpenWindow(\'{0}\', 800, 500, true)\">here</a>."},
+            {"ActivityLog.EditCancellationRequest", "Edited a cancellation request (ID = {0})"},
+            {"ActivityLog.DeleteCancellationRequest", "Deleted a cancellation request (ID = {0})"},
+
+            {"Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.StoreOwnerNotification", "This message template is used when a new cancellation request is created. The message is received by a store owner."},
+            {"Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.CustomerNotification", "This message template is used to notify a customer about a new cancellation request submitted from his/her account."},
+            {"Admin.ContentManagement.MessageTemplates.Description.CancellationRequestAccepted.CustomerNotification", "This message template is used to notify a customer that the cancellation request has been accepted."},
+            {"Admin.ContentManagement.MessageTemplates.Description.CancellationRequestRejected.CustomerNotification", "This message template is used to notify a customer that the cancellation request has been rejected."},
+
+            {"Admin.Configuration.Settings.Order.CancellationRequestSettings", "Cancellation request settings"},
+            {"Admin.Configuration.Settings.Order.CancellationRequestReasons.Name", "Name"},
+            {"Admin.Configuration.Settings.Order.CancellationRequestReasons.Name.Hint", "The cancellation request reason name"},
+            {"Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder", "Display order"},
+            {"Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder.Hint", "The cancellation request reason display order. 1 represents the first item in the list."},
+            {"Admin.Configuration.Settings.Order.CancellationRequestReasons", "Cancellation request reasons"},
+            {"Admin.Configuration.Settings.Order.CancellationRequestReasons.Hint", "List of reasons a customer will be able to choose when submitting a cancellation request."},
+            {"Admin.Configuration.Settings.Order.CancellationRequestReasons.AddNew", "Add new cancellation request reason"},
+            {"Admin.Configuration.Settings.Order.CancellationRequestReasons.BackToList", "back to cancellation request reason list"},
+            {"Admin.Configuration.Settings.Order.CancellationRequestReasons.EditDetails", "Edit cancellation request reason details"},
+            {"Admin.Configuration.Settings.Order.CancellationRequestReasons.Added", "The new cancellation request reason has been added successfully."},
+            {"Admin.Configuration.Settings.Order.CancellationRequestReasons.Deleted", "The cancellation request reason has been deleted successfully."},
+            {"Admin.Configuration.Settings.Order.CancellationRequestReasons.Updated", "The cancellation request reason has been updated successfully."}
+        };
+
+        public static Dictionary<string, string> GetLocaleResource()
+        {
+            return _localeResources;
+        }
 
         public CancelPendingOrderRequestsPluginService(
             IRepository<ActivityLogType> activityLogTypeRepository,
             EmailAccountSettings emailAccountSettings,
             ICustomerActivityService customerActivityService,
             ILocalizationService localizationService,
+            IPluginLocalizationService pluginLocalizationService,
             IMessageTemplateService messageTemplateService,
+            ISettingService settingService,
             ILogger logger)
         {
             _activityLogTypeRepository = activityLogTypeRepository;
             _emailAccountSettings = emailAccountSettings;
             _customerActivityService = customerActivityService;
             _localizationService = localizationService;
+            _pluginLocalizationService = pluginLocalizationService;
             _messageTemplateService = messageTemplateService;
+            _settingService = settingService;
             _logger = logger;
         }
 
@@ -140,126 +216,33 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services
             }
         }
 
+        public async Task AddOrUpdateResourceAsync(string resourceName, string resourceValue, int languageId = 1)
+        {
+            // if this returns back false, then it didn't exist
+            if (await _pluginLocalizationService.CheckForExistingResourceAndAddNonExistingResource(resourceName, resourceValue))
+            {
+                // this is if we have multiple modified values
+                var cancelPendingOrderRequestsSetting =
+                    await _settingService.GetSettingAsync("Plugin.Sale.CancelPendingOrderRequests.HasModifiedLocaleResources");
+              
+                if (cancelPendingOrderRequestsSetting == null)
+                {
+                    await _settingService.SetSettingAsync<bool>("Plugin.Sale.CancelPendingOrderRequests.HasModifiedLocaleResources", true);
+                }
+            }
+        }
+
         public async Task AddOrUpdateResourcesAsync()
         {
-            await _localizationService.AddOrUpdateLocaleResourceAsync("CancellationRequests.ActiveNotice", "Note: You have an active cancellation request for this order");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("CancellationRequests.WhyCancelling", "Why are you want to cancel this order?");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("CancellationRequests.CancelReason", "Cancel reason");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("CancellationRequests.Comments", "Comments");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("CancellationRequests.Submit", "Submit Cancellation Request");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("CancellationRequests.Submitted", "Your cancellation request has been submitted successfully.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.CancellationRequests", "Cancellation requests");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.CancellationRequests.EditCancellationRequestDetails", "Edit cancellation request details");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.CancellationRequests.BackToList", "back to cancellation request list");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.CancellationRequests.SearchCancellationRequestStatus.All", "All");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.CancellationRequests.NotifyCustomer", "Notify customer about status change");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.CancellationRequests.Deleted", "The cancellation request has been deleted successfully.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.CancellationRequests.Updated", "The cancellation request has been updated successfully.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.CancellationRequests.CannotModified", "This cancellation request has been processed and cannot be modified.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests", "Pending order cancellation requests");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Description", "The cancellation request feature enables customers to request cancellation for any pending order. Here you can find all submitted cancellation requests.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.SearchStartDate", "Start date");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.SearchStartDate.Hint", "The start date for the search");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.SearchEndDate", "End date");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.SearchEndDate.Hint", "The end date for the search");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.RequestStatus", "Request status");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.RequestStatus.Hint", "Search by a specific cancellation request status e.g. Received.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.OrderId", "Order Id");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.OrderId.Hint", "The Id of the order");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.Customer", "Customer");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.Customer.Hint", "The customer that requested the cancellation");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.CustomerComments", "Customer comments");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.CustomerComments.Hint", "The comments of the customer when requesting the cancellation");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.RequestStatus", "Request status");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.RequestStatus.Hint", "The status of the request");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.ReasonForCancellation", "Cancellation reason");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.ReasonForCancellation.Hint", "The reason for cancellation");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.StaffNotes", "Staff notes");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.StaffNotes.Hint", "The notes from staff member");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.UtcCreatedDate", "Created on");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.UtcCreatedDate.Hint", "The date/time the request was made");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("ActivityLog.EditCancellationRequest", "Edited a cancellation request (ID = {0})");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("ActivityLog.DeleteCancellationRequest", "Deleted a cancellation request (ID = {0})");
-
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.StoreOwnerNotification", "This message template is used when a new cancellation request is created. The message is received by a store owner.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.CustomerNotification", "This message template is used to notify a customer about a new cancellation request submitted from his/her account.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.ContentManagement.MessageTemplates.Description.CancellationRequestAccepted.CustomerNotification", "This message template is used to notify a customer that the cancellation request has been accepted.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.ContentManagement.MessageTemplates.Description.CancellationRequestRejected.CustomerNotification", "This message template is used to notify a customer that the cancellation request has been rejected.");
-
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestSettings", "Cancellation request settings");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name", "Name");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name.Hint", "The cancellation request reason name");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder", "Display order");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder.Hint", "The cancellation request reason display order. 1 represents the first item in the list.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons", "Cancellation request reasons");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Hint", "List of reasons a customer will be able to choose when submitting a cancellation request.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.AddNew", "Add new cancellation request reason");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.BackToList", "back to cancellation request reason list");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.EditDetails", "Edit cancellation request reason details");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Added", "The new cancellation request reason has been added successfully.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Deleted", "The cancellation request reason has been deleted successfully.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Updated", "The cancellation request reason has been updated successfully.");
+            foreach (var localeResource in _localeResources)
+            {
+                await AddOrUpdateResourceAsync(localeResource.Key, localeResource.Value);
+            }
         }
 
         public async Task DeleteResourcesAsync()
         {
-            await _localizationService.DeleteLocaleResourceAsync("CancellationRequests.ActiveNotice");
-            await _localizationService.DeleteLocaleResourceAsync("CancellationRequests.WhyCancelling");
-            await _localizationService.DeleteLocaleResourceAsync("CancellationRequests.CancelReason");
-            await _localizationService.DeleteLocaleResourceAsync("CancellationRequests.Comments");
-            await _localizationService.DeleteLocaleResourceAsync("CancellationRequests.Submit");
-            await _localizationService.DeleteLocaleResourceAsync("CancellationRequests.Submitted");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.CancellationRequests");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.CancellationRequests.EditCancellationRequestDetails");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.CancellationRequests.BackToList");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.CancellationRequests.SearchCancellationRequestStatus.All");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.CancellationRequests.NotifyCustomer");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.CancellationRequests.Deleted");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.CancellationRequests.Updated");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.CancellationRequests.CannotModified");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Description");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.SearchStartDate");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.SearchStartDate.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.SearchEndDate");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.SearchEndDate.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.RequestStatus");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.RequestStatus.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.OrderId");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.OrderId.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.Customer");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.Customer.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.CustomerComments");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.CustomerComments.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.RequestStatus");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.RequestStatus.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.ReasonForCancellation");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.ReasonForCancellation.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.StaffNotes");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.StaffNotes.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.UtcCreatedDate");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.PendingOrderCancellationRequests.Fields.UtcCreatedDate.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("ActivityLog.EditCancellationRequest");
-            await _localizationService.DeleteLocaleResourceAsync("ActivityLog.DeleteCancellationRequest");
-
-            await _localizationService.DeleteLocaleResourceAsync("Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.StoreOwnerNotification");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.ContentManagement.MessageTemplates.Description.NewCancellationRequest.CustomerNotification");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.ContentManagement.MessageTemplates.Description.CancellationRequestAccepted.CustomerNotification");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.ContentManagement.MessageTemplates.Description.CancellationRequestRejected.CustomerNotification");
-
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestSettings");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.AddNew");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.BackToList");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.EditDetails");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Added");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Deleted");
-            await _localizationService.DeleteLocaleResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Updated");
+            await _localizationService.DeleteLocaleResourcesAsync(_localeResources.Keys.ToList());
         }
     }
 }

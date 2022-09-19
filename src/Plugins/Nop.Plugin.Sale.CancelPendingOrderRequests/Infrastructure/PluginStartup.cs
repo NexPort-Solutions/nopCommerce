@@ -17,6 +17,7 @@ using Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
 using ILogger = Nop.Services.Logging.ILogger;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Factories;
+using Nop.Plugin.Sale.CancelPendingOrderRequests.Filters;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
 {
@@ -29,10 +30,16 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
                 options.ViewLocationExpanders.Add(new ViewLocationExpander());
             });
 
+            services.AddMvc(options =>
+            {
+                options.Filters.Add<CancelPendingOrderRequestsDashboardNotificationActionFilter>();
+            });
+
             services.AddScoped<CancelPendingOrderRequestsPluginService>();
             services.AddScoped<IPendingOrderCancellationRequestService, PendingOrderCancellationRequestService>();
             services.AddScoped<CancelPendingOrderRequestsController>();
             services.AddScoped<IPendingOrderCancellationRequestModelFactory, PendingOrderCancellationRequestModelFactory>();
+            services.AddScoped<IPluginLocalizationService, PluginLocalizationService>();
         }
 
         public static IServiceProvider CreateFluentMigratorRunnerService()

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -15,8 +16,10 @@ using Nop.Plugin.Misc.Nexport.Archway.Domains;
 using Nop.Plugin.Misc.Nexport.Archway.Extensions;
 using Nop.Plugin.Misc.Nexport.Archway.Factories;
 using Nop.Plugin.Misc.Nexport.Archway.Models;
+using Nop.Plugin.Misc.Nexport.Archway.Models.Plugins;
 using Nop.Plugin.Misc.Nexport.Archway.Services;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Configuration;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
 {
@@ -30,6 +33,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
         private readonly IPermissionService _permissionService;
         private readonly INotificationService _notificationService;
         private readonly ILocalizationService _localizationService;
+        private readonly ISettingService _settingService;
 
         #endregion
 
@@ -42,7 +46,8 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
             IPermissionService permissionService,
             INotificationService notificationService,
             INopFileProvider fileProvider,
-            ILocalizationService localizationService)
+            ILocalizationService localizationService,
+            ISettingService settingService)
         {
             _archwayStudentEmployeeRegistrationFieldModelFactory = archwayStudentEmployeeRegistrationFieldModelFactory;
             _archwayStudentEmployeeRegistrationFieldService = archwayStudentEmployeeRegistrationFieldService;
@@ -50,6 +55,74 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Controllers
             _permissionService = permissionService;
             _notificationService = notificationService;
             _localizationService = localizationService;
+            _settingService = settingService;
+        }
+
+        #endregion
+
+        #region General Actions
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetModifiedLocaleResources(ArchwayPluginResourceListSearchModel searchModel, string friendlyName)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+                return await AccessDeniedDataTablesJson();
+
+            var model = await _archwayStudentEmployeeRegistrationFieldModelFactory
+                .PrepareArchwayPluginResourceListModelAsync(searchModel);
+
+            return Json(model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+                return AccessDeniedView();
+
+            if (selectedIds != null && selectedIds.Count != 0)
+            {
+                foreach (var id in selectedIds)
+                {
+                    var localeStringResourceById = await _localizationService.GetLocaleStringResourceByIdAsync(id);
+
+                    if (localeStringResourceById != null)
+                    {
+                        var archwayLocaleResources = ArchwayPluginService.GetLocaleResource();
+                        var overridingResourceValue = archwayLocaleResources.Where(l => l.Key.ToLower() == localeStringResourceById.ResourceName.ToLower())
+                            .Select(l => l.Value)
+                            .First();
+
+                        if (overridingResourceValue != null)
+                        {
+                            localeStringResourceById.ResourceValue = overridingResourceValue;
+
+                            await _localizationService.UpdateLocaleStringResourceAsync(localeStringResourceById);
+                        }
+                    }
+                }
+                if (allChecked)
+                {
+                    var archwaySetting = await _settingService.GetSettingAsync("Plugin.Misc.Nexport.Archway.HasModifiedLocaleResources");
+
+                    if (archwaySetting != null)
+                    {
+                        await _settingService.DeleteSettingAsync(archwaySetting);
+                    }
+                }
+            }
+            else
+            {
+                return NoContent();
+            }
+
+            return Json(new { success = true });
         }
 
         #endregion

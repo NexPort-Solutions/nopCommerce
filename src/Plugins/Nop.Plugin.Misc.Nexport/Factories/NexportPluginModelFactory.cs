@@ -2,17 +2,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.VariantTypes;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
+using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Tax;
 using Nop.Core.Domain.Vendors;
+using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Services.Catalog;
 using Nop.Services.Customers;
@@ -35,6 +39,7 @@ using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Order;
+using Nop.Plugin.Misc.Nexport.Models.Plugins;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
@@ -44,6 +49,8 @@ using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Common;
 using Nop.Services.Logging;
 using Nop.Services.Plugins;
+using Nop.Web.Areas.Admin.Models.Localization;
+using Pipelines.Sockets.Unofficial;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -54,6 +61,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly NexportSettings _nexportSettings;
         private readonly CatalogSettings _catalogSettings;
         private readonly CurrencySettings _currencySettings;
+        private readonly IRepository<GenericAttribute> _genericAttributeRepository;
+        private readonly IRepository<LocaleStringResource> _localeStringResourceRepository;
         private readonly IAclSupportedModelFactory _aclSupportedModelFactory;
         private readonly IBaseAdminModelFactory _baseAdminModelFactory;
         private readonly ICategoryService _categoryService;
@@ -95,6 +104,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         private readonly NexportService _nexportService;
 
+
         #endregion
 
         #region Constructor
@@ -103,6 +113,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             NexportSettings nexportSettings,
             CatalogSettings catalogSettings,
             CurrencySettings currencySettings,
+            IRepository<GenericAttribute> genericAttributeRepository,
+            IRepository<LocaleStringResource> localeStringResourceRepository,
             IAclSupportedModelFactory aclSupportedModelFactory,
             IBaseAdminModelFactory baseAdminModelFactory,
             ICategoryService categoryService,
@@ -146,6 +158,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _nexportSettings = nexportSettings;
             _catalogSettings = catalogSettings;
             _currencySettings = currencySettings;
+            _genericAttributeRepository = genericAttributeRepository;
+            _localeStringResourceRepository = localeStringResourceRepository;
             _aclSupportedModelFactory = aclSupportedModelFactory;
             _baseAdminModelFactory = baseAdminModelFactory;
             _cacheManager = cacheManager;
@@ -188,6 +202,38 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         }
 
         #endregion
+
+        public virtual Task<NexportPluginResourceListModel> PrepareNexportPluginResourceListModelAsync(NexportPluginResourceListSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var results = new List<LocaleStringResource>();
+
+            foreach (var localeResource in NexportPluginService.GetLocaleResource())
+            {
+                var localeStringResources = _localeStringResourceRepository.Table
+                    .Where(l => l.ResourceName == localeResource.Key && l.ResourceValue != localeResource.Value)
+                    .ToList();
+
+                results.AddRange(localeStringResources);
+            }
+
+            var resources = new PagedList<LocaleStringResource>(results, searchModel.Page - 1, searchModel.PageSize);
+
+            // prepare to grid
+            var model = new NexportPluginResourceListModel().PrepareToGrid(searchModel, resources, () =>
+            {
+                return resources.Select(resource =>
+                {
+                    var localeResourceModel = resource.ToModel<LocaleResourceModel>();
+                    return localeResourceModel;
+                });
+            });
+
+            // the interface allows asynchronous callers, but this method is synchronous
+            return Task.FromResult(model);
+        }
 
         public virtual async Task<NexportProductMappingModel> PrepareNexportProductMappingModelAsync(NexportProductMapping productMapping, bool isEditable)
         {
@@ -1214,7 +1260,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                             nameof(fieldModel.DisplayOptionByAscendingOrder), defaultValue: false);
                     }
 
-                    return fieldModel;                })
+                    return fieldModel;
+                })
                 .ToListAsync();
 
             return model;

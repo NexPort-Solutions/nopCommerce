@@ -1,0 +1,109 @@
+﻿@using Microsoft.AspNetCore.Routing
+@using Nop.Web.Areas.Admin.Models.Localization
+@using Nop.Web.Framework.Models.DataTables
+@model Nop.Plugin.Sale.CancelPendingOrderRequests.Models.Plugins.CancelPendingOrderRequestsPluginResourceListSearchModel
+
+<div class="card card-default card-popup">
+    <div class="card-header with-border clearfix">
+        <div class="card-title">
+            <i class="fas fa-database"></i>
+            Modified String Resources
+        </div>
+        <div class="card-tools float-right">
+            <button class="btn btn-tool" data-card-widget="collapse" type="button">
+                <i class="fa toggle-icon fa-minus">
+                </i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <p>
+            Please select the string resource(s) you want to be overriden.
+        </p>
+        <div class="clearfix">
+            <div class="pull-right">
+                <button type="button" id="override-selected-resources" class="btn bg-green" style="margin-bottom: 16px">
+                    <i class="fa fa-check"></i>
+                    Override (selected)
+                </button>
+                <nop-action-confirmation asp-button-id="override-selected-resources"/>
+            </div>
+        </div>
+        <nop-alert asp-alert-id="overrideSelectedResourcesFailed"/>
+
+        @await Html.PartialAsync("Table", new DataTablesModel
+        {
+            Name = "cancelpendingorderrequests-resources-grid",
+            UrlRead = new DataUrl("GetModifiedLocaleResources", "CancelPendingOrderRequests",
+                new RouteValueDictionary()
+                {
+                    { "friendlyName", Model.FriendlyName }
+                }),
+            Length = Model.PageSize,
+            LengthMenu = Model.AvailablePageSizes,
+            ColumnCollection = new List<ColumnProperty>
+            {
+                new ColumnProperty(nameof(LocaleResourceModel.Id))
+                {
+                    IsMasterCheckBox = true,
+                    Render = new RenderCheckBox("overrideResourcesCheckBox"),
+                    ClassName = NopColumnClassDefaults.CenterAll,
+                    Width = "50"
+                },
+                new ColumnProperty(nameof(LocaleResourceModel.ResourceName))
+                {
+                    Title = "Resource Name",
+                    Editable = false,
+                    AutoWidth = true
+                },
+                new ColumnProperty(nameof(LocaleResourceModel.ResourceValue))
+                {
+                    Title = "Resource Value",
+                    Editable = false,
+                    AutoWidth = true
+                }
+            }
+        })
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $("#override-selected-resources-action-confirmation-submit-button").on("click", function(e) {
+            var allIdsChecked = false;
+
+            var table = $("#cancelpendingorderrequests-resources-grid").DataTable();
+            if (selectedIds.length === table.data().count()) 
+            {
+                allIdsChecked = true;
+            }
+
+            var postData = {
+                selectedIds: selectedIds,
+                allChecked: allIdsChecked
+            };
+           
+            addAntiForgeryToken(postData);
+            $.ajax({
+                type: "POST",   
+                url: "@Url.Action("OverrideResources", "CancelPendingOrderRequests")",
+                dataType: "json", // we are expecting back a result that is in JSON
+                data: postData,
+                error: function(jqXHR, textStatus, errorThrown) {
+                    $("#overrideSelectedResourcesFailed-info").text(errorThrown);
+                    $("#overrideSelectedResourcesFailed").click();
+                },
+                complete: function(jqXHR, textStatus) {
+                    if (jqXHR.status === 204) {
+                        showAlert("overrideSelectedResourcesFailed", "No string resource selected");
+                        return;
+                    }
+                    updateTable('#cancelpendingorderrequests-resources-grid');
+                }
+            });
+
+            $("#override-selected-resources-action-confirmation").modal("toggle");
+            return false;
+        });
+    });
+</script>

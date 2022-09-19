@@ -48,6 +48,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 options.Filters.Add<ProductDetailsActionFilter>();
                 options.Filters.Add<ShoppingCartActionFilter>();
                 options.Filters.Add<OrderDetailsActionFilter>();
+                options.Filters.Add<NexportDashboardNotificationActionFilter>();
             });
 
             var apiConfiguration = new Configuration();
@@ -66,6 +67,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             services.AddScoped<NexportPluginService>();
             services.AddScoped<INexportPluginModelFactory, NexportPluginModelFactory>();
             services.AddScoped<NexportIntegrationController>();
+            services.AddScoped<IPluginLocalizationService, PluginLocalizationService>();
         }
 
         public static IServiceProvider CreateFluentMigratorRunnerService()
@@ -122,6 +124,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                     installedAssemblyVersion =
                         Version.Parse(versionSettingValue);
                 }
+
+                
 
                 if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
                 {

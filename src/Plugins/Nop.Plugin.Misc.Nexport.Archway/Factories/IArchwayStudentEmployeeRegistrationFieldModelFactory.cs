@@ -1,11 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Nop.Plugin.Misc.Nexport.Archway.Models;
+using Nop.Plugin.Misc.Nexport.Archway.Models.Plugins;
+using Nop.Plugin.Misc.Nexport.Models.Plugins;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Factories
 {
     public interface IArchwayStudentEmployeeRegistrationFieldModelFactory
     {
+        Task<ArchwayPluginResourceListModel> PrepareArchwayPluginResourceListModelAsync(
+            ArchwayPluginResourceListSearchModel searchModel);
+
         Task<ArchwayStudentEmployeeRegistrationFieldModel> PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(
             int fieldId, bool renderAdminView);
 

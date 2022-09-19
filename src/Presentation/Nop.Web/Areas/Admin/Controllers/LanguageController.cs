@@ -105,7 +105,7 @@ namespace Nop.Web.Areas.Admin.Controllers
         {
             return RedirectToAction("List");
         }
-
+        
         public virtual async Task<IActionResult> List()
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageLanguages))

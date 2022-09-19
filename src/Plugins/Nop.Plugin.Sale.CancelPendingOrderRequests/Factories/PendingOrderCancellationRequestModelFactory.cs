@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Orders;
+using Nop.Data;
 using Nop.Services;
 using Nop.Services.Customers;
 using Nop.Services.Helpers;
@@ -16,14 +19,17 @@ using Nop.Web.Framework.Factories;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
+using Nop.Plugin.Sale.CancelPendingOrderRequests.Models.Plugins;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
 using Nop.Services.Caching;
 using Nop.Web.Areas.Admin.Models.Common;
+using Nop.Web.Areas.Admin.Models.Localization;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
 {
     public class PendingOrderCancellationRequestModelFactory : IPendingOrderCancellationRequestModelFactory
     {
+        private readonly IRepository<LocaleStringResource> _localeStringResourceRepository;
         private readonly ILocalizedModelFactory _localizedModelFactory;
         private readonly IStaticCacheManager _cacheManager;
         private readonly ICustomerService _customerService;
@@ -33,6 +39,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
         private readonly IWorkContext _workContext;
 
         public PendingOrderCancellationRequestModelFactory(
+            IRepository<LocaleStringResource> localeStringResourceRepository,
             ILocalizedModelFactory localizedModelFactory,
             IStaticCacheManager cacheManager,
             ICustomerService customerService,
@@ -41,6 +48,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             IPendingOrderCancellationRequestService pendingOrderCancellationRequestService,
             IWorkContext workContext)
         {
+            _localeStringResourceRepository = localeStringResourceRepository;
             _localizedModelFactory = localizedModelFactory;
             _cacheManager = cacheManager;
             _customerService = customerService;
@@ -48,6 +56,39 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Factories
             _dateTimeHelper = dateTimeHelper;
             _pendingOrderCancellationRequestService = pendingOrderCancellationRequestService;
             _workContext = workContext;
+        }
+
+        public Task<CancelPendingOrderRequestsPluginResourceListModel> PrepareCancelPendingOrderRequestsPluginResourceListModelAsync(
+            CancelPendingOrderRequestsPluginResourceListSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var results = new List<LocaleStringResource>();
+
+            foreach (var localeResource in CancelPendingOrderRequestsPluginService.GetLocaleResource())
+            {
+                var localeStringResources = _localeStringResourceRepository.Table
+                    .Where(l => l.ResourceName == localeResource.Key && l.ResourceValue != localeResource.Value)
+                    .ToList();
+
+                results.AddRange(localeStringResources);
+            }
+
+            var resources = new PagedList<LocaleStringResource>(results, searchModel.Page - 1, searchModel.PageSize);
+
+            var model = new CancelPendingOrderRequestsPluginResourceListModel().PrepareToGrid(searchModel, resources,
+                () =>
+                {
+                    return resources.Select(resource =>
+                    {
+                        var localeResourceModel = resource.ToModel<LocaleResourceModel>();
+                        return localeResourceModel;
+                    });
+                });
+
+            // the interface allows asynchronous callers, but this method is synchronous
+            return Task.FromResult(model);
         }
 
         public async Task<PendingOrderCancellationRequestSearchModel>

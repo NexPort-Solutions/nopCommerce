@@ -19,6 +19,7 @@ using Nop.Plugin.Misc.Nexport.Archway.Migrations;
 using Nop.Plugin.Misc.Nexport.Archway.Services;
 using ILogger = Nop.Services.Logging.ILogger;
 using Nop.Plugin.Misc.Nexport.Archway.Factories;
+using Nop.Plugin.Misc.Nexport.Archway.Filters;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
 {
@@ -29,6 +30,12 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
             services.Configure<RazorViewEngineOptions>(options =>
             {
                 options.ViewLocationExpanders.Add(new ViewLocationExpander());
+            });
+
+            // Add action filters
+            services.AddMvc(options =>
+            {
+                options.Filters.Add<ArchwayDashboardNotificationActionFilter>();
             });
 
             services.AddScoped<IArchwayStudentEmployeeRegistrationFieldModelFactory, ArchwayStudentEmployeeRegistrationFieldModelFactory>();
@@ -105,7 +112,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
                 var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
 
                 var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-                var versionSettingValue = settingService.GetSettingByKeyAsync<string>(NexportDefaults.ASSEMBLY_VERSION_KEY).Result;
+                var versionSettingValue = settingService.GetSettingByKeyAsync<string>(PluginDefaults.ASSEMBLY_VERSION_KEY).Result;
                 Version installedAssemblyVersion = null;
 
                 if (!string.IsNullOrEmpty(versionSettingValue))
@@ -116,13 +123,14 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
 
                 if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
                 {
-                    settingService.SetSettingAsync(PluginDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
-
+                    settingService.SetSettingAsync(PluginDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion?.ToString());
+                   
                     var pluginService =
                         serviceScope.ServiceProvider.GetRequiredService<ArchwayPluginService>();
 
                     Task.Run(() => pluginService.AddOrUpdateResourcesAsync());
                 }
+                
 
                 var customEnrollmentRouteControl =
                     (settingService.GetSettingByKeyAsync<bool>(PluginDefaults.CustomEnrollmentRouteControlSettingKey)).Result;
