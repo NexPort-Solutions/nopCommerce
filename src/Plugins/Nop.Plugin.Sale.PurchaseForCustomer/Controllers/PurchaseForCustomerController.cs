@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Infrastructure;
 using Nop.Services.Catalog;
 using Nop.Services.Customers;
@@ -65,6 +67,42 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
             return View("~/Plugins/Sale.PurchaseForCustomer/Areas/Admin/Views/PurchaseForCustomer/PurchaseDetails.cshtml", model);
         }
 
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AdminAntiForgery]
+        public IActionResult VerifyUserEmail(string userEmail)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return ErrorJson(_localizationService.GetResource("Admin.AccessDenied.Description"));
+
+            Customer customer = null;
+
+            if (!string.IsNullOrWhiteSpace(userEmail))
+            {
+                try
+                {
+                    customer = _customerService.GetCustomerByEmail(userEmail);
+                }
+                catch (Exception ex)
+                {
+                    var errMsg = $"Could not find customer with email {userEmail}!";
+                    _logger.Error(errMsg, ex);
+
+                    _notificationService.ErrorNotification(errMsg);
+                }
+            }
+
+            if (customer != null)
+            {
+                return Json(new
+                {
+                    customerId = customer.Id
+                });
+            }
+
+            return Json(null);
+        }
+
         [HttpPost]
         public IActionResult PurchaseForCustomer(PurchaseForCustomerOrderModel model)
         {
@@ -81,13 +119,22 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
                     var product = _productService.GetProductById(model.ProductId);
                     if (product != null)
                     {
-                        foreach (var customerId in model.CustomerIds)
+                        // Disable multi customer purchase temporarily due to performance issue
+                        // See case https://darwin-global.fogbugz.com/f/cases/166496/
+
+                        //foreach (var customerId in model.CustomerIds)
+                        //{
+                        //    var customer = _customerService.GetCustomerById(customerId);
+                        //    if (customer != null)
+                        //    {
+                        //        result = _purchaseForCustomerService.PurchaseProductForCustomer(product, customer, store, model.NotifyCustomer);
+                        //    }
+                        //}
+
+                        var customer = _customerService.GetCustomerById(model.CustomerId);
+                        if (customer != null)
                         {
-                            var customer = _customerService.GetCustomerById(customerId);
-                            if (customer != null)
-                            {
-                                result = _purchaseForCustomerService.PurchaseProductForCustomer(product, customer, store, model.NotifyCustomer);
-                            }
+                            result = _purchaseForCustomerService.PurchaseProductForCustomer(product, customer, store, model.NotifyCustomer);
                         }
                     }
                 }
@@ -109,13 +156,16 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
                 {
                     ViewBag.OrderResultMessage = _localizationService.GetResource("Admin.Catalog.Products.PurchaseForCustomer.Error");
 
-                    var logError = result.Errors.Aggregate("Error while placing order. ",
-                        (current, next) => $"{current}Error {result.Errors.IndexOf(next) + 1}: {next}. ");
-                    foreach (var customerId in model.CustomerIds)
-                    {
-                        var customer = _customerService.GetCustomerById(customerId);
-                        _logger.Error(logError, customer: customer);
-                    }
+                    //var logError = result.Errors.Aggregate("Error while placing order. ",
+                    //    (current, next) => $"{current}Error {result.Errors.IndexOf(next) + 1}: {next}. ");
+                    //foreach (var customerId in model.CustomerIds)
+                    //{
+                    //    var customer = _customerService.GetCustomerById(customerId);
+                    //    _logger.Error(logError, customer: customer);
+                    //}
+
+                    var customer = _customerService.GetCustomerById(model.CustomerId);
+                    _logger.Error($"Error while placing order for customer {model.CustomerId}!", customer: customer);
                 }
             }
 

@@ -45,7 +45,7 @@ else
                     <div class="panel panel-default panel-popup">
                         <div class="panel-body">
                             <div>
-                                <div class="form-group">
+                                @*<div class="form-group">
                                     <div class="col-sm-3">
                                         <nop-label asp-for="CustomerIds" />
                                     </div>
@@ -73,6 +73,23 @@ else
                                                 }
                                             });
                                         </script>
+                                    </div>
+                                </div>*@
+                                <div class="form-group">
+                                    <div class="col-sm-3">
+                                        <nop-label asp-for="CustomerEmail" />
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <div class="input-group">
+                                            <nop-editor asp-for="CustomerEmail" asp-render-form-control-class="true" />
+                                            <div class="input-group-btn">
+                                                <button id="verifyCustomerEmail" class="btn btn-info">
+                                                    Verify
+                                                </button>
+                                            </div>
+                                            <input type="hidden" asp-for="CustomerId" />
+                                        </div>
+                                        <div id="verifyResult"></div>
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -112,4 +129,46 @@ else
             </div>
         </div>
     </form>
+
+    <script>
+        $(document).ready(function() {
+            $("#verifyCustomerEmail").on("click",
+                function(e) {
+                    e.preventDefault();
+
+                    var userIdElement = $("#@Html.IdFor(model => model.CustomerEmail)");
+
+                    verifyCustomerEmail(userIdElement);
+                });
+        });
+
+        function verifyCustomerEmail(element) {
+            var userEmail = element.val();
+            if (element.valid()) {
+                var verifyUserData = {
+                    userEmail: userEmail
+                }
+
+                addAntiForgeryToken(verifyUserData);
+
+                $.ajax({
+                    url: "@Url.Action("VerifyUserEmail", "PurchaseForCustomer")",
+                    type: "POST",
+                    dataType: "json",
+                    data: verifyUserData,
+                    success: function(customerDetail, textStatus, jqXHR) {
+                        if (customerDetail !== undefined && customerDetail) {
+                            $("#@Html.IdFor(model => model.CustomerId)").val(customerDetail.customerId);
+                            $("#verifyResult").html("* Customer exists.").css("margin-top", "5px").css("margin-bottom", "5px").css("color", "green");
+                        } else {
+                            $("#verifyResult").html("* Customer is not found!").css("margin-top", "5px").css("margin-bottom", "5px").css("color", "red");
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            }
+        }
+    </script>
 }

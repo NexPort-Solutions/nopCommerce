@@ -18,6 +18,10 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Models
         [NopResourceDisplayName("Plugins.Sale.Nexport.PurchaseForCustomer.Customers")]
         public IList<int> CustomerIds { get; set; }
 
+        public int CustomerId { get; set; }
+
+        public string CustomerEmail { get; set; }
+
         [NopResourceDisplayName("Plugins.Sale.Nexport.PurchaseForCustomer.Store")]
         public int StoreId { get; set; }
 
