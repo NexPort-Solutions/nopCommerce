@@ -34,19 +34,19 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Factories
                 Value = store.Id.ToString()
             }).ToList();
 
-            var availableCustomers = _customerService.GetAllCustomers().ToList()
-                .Where(x => !x.IsSystemAccount &&
-                            !string.IsNullOrWhiteSpace(x.Email) && x.IsRegistered())
-                .OrderBy(x => x.Email);
-            model.AvailableCustomers = availableCustomers.Select(customer =>
-            {
-                var customerFullName = _customerService.GetCustomerFullName(customer);
-                return new SelectListItem()
-                {
-                    Text = $"{customer.Email} - {customerFullName}",
-                    Value = customer.Id.ToString()
-                };
-            }).ToList();
+            //var availableCustomers = _customerService.GetAllCustomers().ToList()
+            //    .Where(x => !x.IsSystemAccount &&
+            //                !string.IsNullOrWhiteSpace(x.Email) && x.IsRegistered())
+            //    .OrderBy(x => x.Email);
+            //model.AvailableCustomers = availableCustomers.Select(customer =>
+            //{
+            //    var customerFullName = _customerService.GetCustomerFullName(customer);
+            //    return new SelectListItem()
+            //    {
+            //        Text = $"{customer.Email} - {customerFullName}",
+            //        Value = customer.Id.ToString()
+            //    };
+            //}).ToList();
 
             return model;
         }
