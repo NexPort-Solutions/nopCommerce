@@ -1808,7 +1808,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             model.ReturnUrl = returnUrl;
 
-            return View("~/Plugins/Misc.Nexport/Views/SupplementalInfo/AnswerQuestions.cshtml", model);
+            var customSupplementalInfoAnswerViewLocationSetting =
+                _settingService.GetSetting("nexport.supplementalinfo.answer.view", _storeContext.CurrentStore.Id, true);
+
+            return View(customSupplementalInfoAnswerViewLocationSetting != null
+                    ? customSupplementalInfoAnswerViewLocationSetting.Value
+                    : "~/Plugins/Misc.Nexport/Views/SupplementalInfo/AnswerQuestions.cshtml", model);
         }
 
         [HttpPost]
@@ -3082,6 +3087,14 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             try
             {
+                var hasRequiredSupplementalInfo =
+                    _nexportService.HasRequiredSupplementalInfo(_workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id);
+
+                if (hasRequiredSupplementalInfo)
+                {
+                    return AnswerSupplementalInfoQuestion("/customer/nexporttraining");
+                }
+
                 var model = _nexportPluginModelFactory.PrepareNexportTrainingListModel(_workContext.CurrentCustomer);
 
                 var myTrainingViewLocationSetting =
