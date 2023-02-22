@@ -18,11 +18,6 @@
 
 <link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport-store.css" />
 
-@section left
-{
-    @await Component.InvokeAsync("CustomerNavigation", new { selectedTabId = 1001 })
-}
-
 <div class="page account-page order-list-page">
     <div class="page-title">
         <h1>@T("Account.MyAccount") - @T("Plugins.Misc.Nexport.Training")</h1>

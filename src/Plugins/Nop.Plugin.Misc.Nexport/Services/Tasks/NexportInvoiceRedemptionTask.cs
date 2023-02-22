@@ -157,7 +157,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                                 invoiceItem, queueItem.RedeemingUserId,
                                                                 queueItem.ManualApprovalAction);
 
-                                                            await _nexportService.AddOrderNote(order,
+                                                            await _nexportService.AddOrderNoteAsync(order,
                                                                 $"Nexport invoice item {invoiceItem.InvoiceItemId} has been redeemed for user {queueItem.RedeemingUserId}");
 
                                                             // Find the list of supplemental question Ids that match the current product mapping
@@ -215,9 +215,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                                         if (queueItem.RetryCount <= MAX_RETRY_COUNT)
                                         {
-                                            await _nexportService.AddOrderNote(order,
-                                                $"Nexport invoice item {invoiceItem.InvoiceItemId} cannot be redeemed for user {queueItem.RedeemingUserId} and will be retry again for {MAX_RETRY_COUNT - queueItem.RetryCount} time(s)",
-                                                updateOrder: true);
+                                            await _nexportService.AddOrderNoteAsync(order,
+                                                $"Nexport invoice item {invoiceItem.InvoiceItemId} cannot be redeemed for user {queueItem.RedeemingUserId} and will be retry again for {MAX_RETRY_COUNT - queueItem.RetryCount} time(s)");
 
                                             await _nexportService.UpdateNexportOrderInvoiceRedemptionQueueItem(queueItem);
                                         }
@@ -360,9 +359,9 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
         private async Task DeleteRedemptionQueueItemAndAddFinalOrderNote(Order order,
             NexportOrderInvoiceRedemptionQueueItem queueItem, NexportOrderInvoiceItem invoiceItem)
         {
-            await _nexportService.AddOrderNote(order,
+            await _nexportService.AddOrderNoteAsync(order,
                 $"Nexport invoice item {invoiceItem.InvoiceItemId} cannot be automatically redeemed for user {queueItem.RedeemingUserId}. " +
-                "However, this invoice item can still be manually redeem by the user in the order history page.", updateOrder: true);
+                "However, this invoice item can still be manually redeem by the user in the order history page.");
 
             await _nexportService.DeleteNexportOrderInvoiceRedemptionQueueItem(queueItem);
         }

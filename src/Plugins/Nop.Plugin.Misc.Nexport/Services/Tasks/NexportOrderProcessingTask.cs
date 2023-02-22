@@ -312,7 +312,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         if (!requireManualApproval)
                                         {
                                             completeOrder = true;
-                                            await _nexportService.AddOrderNote(order, "Nexport invoice has been successfully processed");
+                                            await _nexportService.AddOrderNoteAsync(order, "Nexport invoice has been successfully processed");
                                         }
                                         else
                                         {
@@ -408,7 +408,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                             Fax = currentBillingAddress.FaxNumber
                         };
 
-                        await _nexportService.UpdateNexportUserContactInfoAsync(userMapping.NexportUserId, updatedInfo);
+                        await _nexportService.UpdateNexportUserContactInfoAsync(userMapping.NexportUserId, updatedInfo)!;
 
                         await _logger.InformationAsync($"Successfully update contact information in Nexport for customer {userMapping.NopUserId}");
                     }
@@ -497,7 +497,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         orderInvoiceId,
                                         productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus, productCost,
                                         subscriptionOrgId, groupMembershipIds,
-                                        productMapping.UtcAccessExpirationDate, productMapping.AccessTimeLimit);
+                                        productMapping.UtcAccessExpirationDate, productMapping.AccessTimeLimit)!;
 
                                     extensionAction = 2;
                                 }
@@ -508,7 +508,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus,
                                         productCost,
                                         subscriptionOrgId, groupMembershipIds,
-                                        productMapping.UtcAccessExpirationDate, productMapping.RenewalDuration);
+                                        productMapping.UtcAccessExpirationDate, productMapping.RenewalDuration)!;
 
                                     requireManualApproval = productMapping.RenewalApprovalMethod == NexportEnrollmentRenewalApprovalMethodEnum.Manual;
                                 }
@@ -524,7 +524,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus,
                                     productCost,
                                     subscriptionOrgId, groupMembershipIds,
-                                    productMapping.UtcAccessExpirationDate, newAccessTimeLimit);
+                                    productMapping.UtcAccessExpirationDate, newAccessTimeLimit)!;
                             }
 
                             break;
@@ -542,7 +542,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     orderInvoiceId,
                                     productMapping.NexportCatalogId, Enums.ProductTypeEnum.Catalog, productCost,
                                     subscriptionOrgId, groupMembershipIds,
-                                    productMapping.UtcAccessExpirationDate, productMapping.AccessTimeLimit);
+                                    productMapping.UtcAccessExpirationDate, productMapping.AccessTimeLimit)!;
                             }
                             else
                             {
@@ -550,7 +550,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     orderInvoiceId,
                                     productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus, productCost,
                                     subscriptionOrgId, groupMembershipIds,
-                                    productMapping.UtcAccessExpirationDate, productMapping.AccessTimeLimit);
+                                    productMapping.UtcAccessExpirationDate, productMapping.AccessTimeLimit)!;
                             }
 
                             break;
@@ -566,7 +566,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             ex = ex ?? new Exception(errMsg);
             await _logger.ErrorAsync(errMsg, ex);
 
-            await _nexportService.AddOrderNote(order, errMsg);
+            await _nexportService.AddOrderNoteAsync(order, errMsg);
         }
     }
 }

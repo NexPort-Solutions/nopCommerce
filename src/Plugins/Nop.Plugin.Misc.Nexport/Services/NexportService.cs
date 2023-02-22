@@ -1927,26 +1927,20 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                     await UpdateNexportProductMapping(productMapping);
 
-                    _logger.DebugAsync($"Successfully synchronized product {productMapping.NopProductId} with Nexport using the information from mapping {productMapping.Id}");
+                    await _logger.DebugAsync($"Successfully synchronized product {productMapping.NopProductId} with Nexport using the information from mapping {productMapping.Id}");
                 }
             }
         }
 
-        //TODO: Switch to use built-in order service method
-        public async Task AddOrderNote(Order order, string note, bool? displayToCustomer = null,
-            DateTime? utcNoteCreationDate = null, bool updateOrder = false)
+        public async Task AddOrderNoteAsync(Order order, string note, bool? displayToCustomer = null, DateTime? utcNoteCreationDate = null)
         {
-            //order.OrderNotes.Add(new OrderNote
-            //{
-            //    Note = note,
-            //    DisplayToCustomer = displayToCustomer.GetValueOrDefault(false),
-            //    CreatedOnUtc = utcNoteCreationDate.GetValueOrDefault(DateTime.UtcNow)
-            //});
-
-            //if (updateOrder)
-            //{
-            //    _orderService.UpdateOrder(order);
-            //}
+            await _orderService.InsertOrderNoteAsync(new OrderNote
+            {
+                OrderId = order.Id,
+                Note = note,
+                DisplayToCustomer = displayToCustomer.GetValueOrDefault(false),
+                CreatedOnUtc = utcNoteCreationDate.GetValueOrDefault(DateTime.UtcNow)
+            });
         }
 
         public async Task CreateAndMapNewNexportUserAsync(Customer customer)

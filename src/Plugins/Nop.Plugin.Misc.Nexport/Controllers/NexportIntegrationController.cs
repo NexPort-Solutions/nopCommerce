@@ -3242,13 +3242,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 {
                     await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem, redeemingUserId.Value);
 
-                    await _nexportService.AddOrderNote(order,
-                        $"Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} has been redeemed for user {redeemingUserId}", updateOrder: true);
+                    await _nexportService.AddOrderNoteAsync(order,
+                        $"Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} has been redeemed for user {redeemingUserId}");
                 }
                 catch (Exception e)
                 {
-                    await _nexportService.AddOrderNote(order,
-                        $"Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} cannot be redeemed for user {redeemingUserId}", updateOrder: true);
+                    await _nexportService.AddOrderNoteAsync(order,
+                        $"Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} cannot be redeemed for user {redeemingUserId}");
 
                     var errorMsg = string.Format(await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Errors.FailedToRedeemForUser"),
                         nexportOrderInvoiceItem.InvoiceItemId, redeemingUserId);

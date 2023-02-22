@@ -171,6 +171,6 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
         /// <summary>
         /// Gets order of this startup configuration implementation
         /// </summary>
-        public int Order => 11;
+        public int Order => 2000;
     }
 }

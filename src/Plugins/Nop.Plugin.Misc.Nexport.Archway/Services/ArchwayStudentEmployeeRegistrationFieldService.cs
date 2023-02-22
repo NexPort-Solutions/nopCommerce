@@ -47,6 +47,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             IStaticCacheManager cacheManager,
             INopFileProvider fileProvider,
             INopDataProvider nopDataProvider,
+            ILocalizationService localizationService,
             NexportService nexportService,
             ILogger logger)
         {
@@ -57,6 +58,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Services
             _cacheManager = cacheManager;
             _fileProvider = fileProvider;
             _nopDataProvider = nopDataProvider;
+            _localizationService = localizationService;
             _nexportService = nexportService;
             _logger = logger;
         }
