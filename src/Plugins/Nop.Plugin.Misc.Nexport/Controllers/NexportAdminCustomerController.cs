@@ -218,42 +218,40 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 customer.LastActivityDateUtc = DateTime.UtcNow;
                 customer.RegisteredInStoreId = currentStore.Id;
 
-                await _customerService.InsertCustomerAsync(customer);
-
                 //form fields
                 if (_dateTimeSettings.AllowCustomersToSetTimeZone)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.TimeZoneIdAttribute, model.TimeZoneId);
+                    customer.TimeZoneId = model.TimeZoneId;
                 if (_customerSettings.GenderEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.GenderAttribute, model.Gender);
+                    customer.Gender = model.Gender;
                 if (_customerSettings.FirstNameEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.FirstNameAttribute, model.FirstName);
+                    customer.FirstName = model.FirstName;
                 if (_customerSettings.LastNameEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.LastNameAttribute, model.LastName);
+                    customer.LastName = model.LastName;
                 if (_customerSettings.DateOfBirthEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.DateOfBirthAttribute, model.DateOfBirth);
+                    customer.DateOfBirth = model.DateOfBirth;
                 if (_customerSettings.CompanyEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CompanyAttribute, model.Company);
+                    customer.Company = model.Company;
                 if (_customerSettings.StreetAddressEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.StreetAddressAttribute, model.StreetAddress);
+                    customer.StreetAddress = model.StreetAddress;
                 if (_customerSettings.StreetAddress2Enabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.StreetAddress2Attribute, model.StreetAddress2);
+                    customer.StreetAddress2 = model.StreetAddress2;
                 if (_customerSettings.ZipPostalCodeEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.ZipPostalCodeAttribute, model.ZipPostalCode);
+                    customer.ZipPostalCode = model.ZipPostalCode;
                 if (_customerSettings.CityEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CityAttribute, model.City);
+                    customer.City = model.City;
                 if (_customerSettings.CountyEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CountyAttribute, model.County);
+                    customer.County = model.County;
                 if (_customerSettings.CountryEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CountryIdAttribute, model.CountryId);
+                    customer.CountryId = model.CountryId;
                 if (_customerSettings.CountryEnabled && _customerSettings.StateProvinceEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.StateProvinceIdAttribute, model.StateProvinceId);
+                    customer.StateProvinceId = model.StateProvinceId;
                 if (_customerSettings.PhoneEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.PhoneAttribute, model.Phone);
+                    customer.Phone = model.Phone;
                 if (_customerSettings.FaxEnabled)
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.FaxAttribute, model.Fax);
+                    customer.Fax = model.Fax;
+                customer.CustomCustomerAttributesXML = customerAttributesXml;
 
-                //custom customer attributes
-                await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CustomCustomerAttributes, customerAttributesXml);
+                await _customerService.InsertCustomerAsync(customer);
 
                 //newsletter subscriptions
                 if (!string.IsNullOrEmpty(customer.Email))

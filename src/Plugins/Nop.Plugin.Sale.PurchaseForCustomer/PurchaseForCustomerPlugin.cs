@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Nop.Core.Domain.Cms;
+using Nop.Plugin.Sale.PurchaseForCustomer.Components;
 using Nop.Plugin.Sale.PurchaseForCustomer.Services;
 using Nop.Services.Cms;
 using Nop.Services.Common;
@@ -63,12 +65,12 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer
                 });
         }
 
-        public string GetWidgetViewComponentName(string widgetZone)
+        public Type GetWidgetViewComponent(string widgetZone)
         {
-            if (widgetZone == AdminWidgetZones.ProductDetailsButtons)
-                return "ProductDetailsButtonWidget";
+            if (widgetZone == null)
+                throw new ArgumentNullException(nameof(widgetZone));
 
-            return "";
+            return typeof(ProductDetailsButtonWidget);
         }
     }
 }

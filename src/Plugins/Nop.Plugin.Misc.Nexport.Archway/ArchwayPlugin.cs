@@ -12,6 +12,7 @@ using Nop.Core;
 using Nop.Core.Domain.Cms;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Infrastructure;
+using Nop.Plugin.Misc.Nexport.Archway.Components;
 using Nop.Services.Cms;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
@@ -25,7 +26,7 @@ using Nop.Plugin.Misc.Nexport.Services;
 namespace Nop.Plugin.Misc.Nexport.Archway
 {
     [CustomRegistrationFieldRender]
-    public class ArchwayPlugin : BasePlugin, IMiscPlugin, IWidgetPlugin, IRegistrationFieldCustomRender
+    public class ArchwayPlugin : BasePlugin, IMiscPlugin, IRegistrationFieldCustomRender
     {
         private readonly ArchwayPluginService _archwayPluginService;
         private readonly IArchwayStudentEmployeeRegistrationFieldService _archwayStudentEmployeeRegistrationFieldService;
@@ -182,20 +183,23 @@ namespace Nop.Plugin.Misc.Nexport.Archway
 
         public bool HideInWidgetList => true;
 
-        public string GetWidgetViewComponentName(string widgetZone)
-        {
-            if (widgetZone == NexportDefaults.NexportCustomRegistrationFieldZone)
-                return "CustomRegistrationFieldDetails";
+        //public Type GetWidgetViewComponent(string widgetZone)
+        //{
+        //    if (widgetZone == null)
+        //        throw new ArgumentNullException(nameof(widgetZone));
 
-            return "";
-        }
+        //    if (widgetZone == NexportDefaults.NexportCustomRegistrationFieldZone)
+        //        return typeof(ArchwayCustomRegistrationFieldDetailsWidget);
 
-        public Task<IList<string>> GetWidgetZonesAsync()
-        {
-            return Task.FromResult<IList<string>>(new List<string>
-            {
-                NexportDefaults.NexportCustomRegistrationFieldZone
-            });
-        }
+        //    return null;
+        //}
+
+        //public Task<IList<string>> GetWidgetZonesAsync()
+        //{
+        //    return Task.FromResult<IList<string>>(new List<string>
+        //    {
+        //        NexportDefaults.NexportCustomRegistrationFieldZone
+        //    });
+        //}
     }
 }

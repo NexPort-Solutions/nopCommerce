@@ -45,6 +45,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IMultiFactorAuthenticationPluginManager _multiFactorAuthenticationPluginManager;
         private readonly INewsLetterSubscriptionService _newsLetterSubscriptionService;
         private readonly INotificationService _notificationService;
+        private readonly IPermissionService _permissionService;
         private readonly IRewardPointService _rewardPointService;
         private readonly IShoppingCartService _shoppingCartService;
         private readonly IStoreContext _storeContext;
@@ -71,6 +72,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IMultiFactorAuthenticationPluginManager multiFactorAuthenticationPluginManager,
             INewsLetterSubscriptionService newsLetterSubscriptionService,
             INotificationService notificationService,
+            IPermissionService permissionService,
             IRewardPointService rewardPointService,
             IShoppingCartService shoppingCartService,
             IStoreContext storeContext,
@@ -84,7 +86,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             ILogger logger)
         : base(customerSettings, actionContextAccessor, authenticationService, customerActivityService, customerService,
             encryptionService, eventPublisher, genericAttributeService, localizationService, multiFactorAuthenticationPluginManager,
-            newsLetterSubscriptionService, notificationService, rewardPointService,
+            newsLetterSubscriptionService, notificationService, permissionService, rewardPointService,
             shoppingCartService, storeContext, storeService, urlHelperFactory,
             workContext, workflowMessageService, rewardPointsSettings)
         {
@@ -95,6 +97,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _genericAttributeService = genericAttributeService;
             _localizationService = localizationService;
             _newsLetterSubscriptionService = newsLetterSubscriptionService;
+            _permissionService = permissionService;
             _rewardPointService = rewardPointService;
             _storeService = storeService;
             _workContext = workContext;
@@ -116,7 +119,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             if (customer == null)
             {
-                var nexportUserResponse = await _nexportService.AuthenticateUserAsync(usernameOrEmail, password);
+                var nexportUserResponse = await _nexportService.AuthenticateUserAsync(usernameOrEmail, password)!;
 
                 if (nexportUserResponse == null)
                     throw new Exception($"Cannot authenticate the user with the login {usernameOrEmail}");
@@ -155,12 +158,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     if (!registrationResult.Success)
                         return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.NotRegistered };
 
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.FirstNameAttribute,
-                        nexportUserResponse.FirstName);
-                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.LastNameAttribute,
-                        nexportUserResponse.LastName);
+                    customer.FirstName = nexportUserResponse.FirstName;
+                    customer.LastName = nexportUserResponse.LastName;
 
-                    await _nexportService.InsertUserMapping(new NexportUserMapping()
+                    await _customerService.UpdateCustomerAsync(customer);
+
+                    await _nexportService.InsertUserMapping(new NexportUserMapping
                     {
                         NexportUserId = nexportUserId,
                         NopUserId = customer.Id

@@ -14,6 +14,7 @@ using Nop.Web.Framework.Infrastructure;
 using Nop.Web.Framework.Menu;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
+using Nop.Plugin.Sale.CancelPendingOrderRequests.Components;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests
 {
@@ -139,19 +140,22 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests
                 });
         }
 
-        public string GetWidgetViewComponentName(string widgetZone)
+        public Type GetWidgetViewComponent(string widgetZone)
         {
+            if (widgetZone == null)
+                throw new ArgumentNullException(nameof(widgetZone));
+
             if (widgetZone == PublicWidgetZones.OrderDetailsPageOverview)
             {
-                return "WidgetsOrderDetailsPageOverview";
+                return typeof(WidgetsOrderDetailsPageOverview);
             }
 
             if (widgetZone == AdminWidgetZones.OrderSettingsDetailsBlock)
             {
-                return "WidgetsOrderSettingsDetailsBlock";
+                return typeof(WidgetsOrderSettingsDetailsBlock);
             }
 
-            return "";
+            return null;
         }
     }
 }

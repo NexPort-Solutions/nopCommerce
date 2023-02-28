@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using FluentMigrator.Runner;
@@ -8,8 +9,6 @@ using FluentMigrator.Runner.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core;
 using Nop.Core.Domain.Cms;
-using Nop.Core.Infrastructure;
-using Nop.Data;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
@@ -19,19 +18,17 @@ using Nop.Services.Plugins;
 using Nop.Services.Discounts;
 using Nop.Web.Framework.Menu;
 using Nop.Web.Framework.Infrastructure;
-using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
-using System.Threading.Tasks;
+using Nop.Plugin.Misc.Nexport.Components;
 
 namespace Nop.Plugin.Misc.Nexport
 {
     public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
     {
-        private readonly IRepository<NexportProductMapping> _nexportProductRepository;
         private readonly NexportSettings _nexportSettings;
         private readonly NexportPluginService _nexportPluginService;
 
@@ -47,7 +44,6 @@ namespace Nop.Plugin.Misc.Nexport
         private readonly ILogger _logger;
 
         public NexportPlugin(
-            IRepository<NexportProductMapping> nexportProductRepository,
             NexportSettings nexportSettings,
             NexportPluginService nexportPluginService,
             IUrlHelperFactory urlHelperFactory,
@@ -60,8 +56,6 @@ namespace Nop.Plugin.Misc.Nexport
             IScheduleTaskService scheduleTaskService,
             IWebHelper webHelper, ILogger logger)
         {
-            _nexportProductRepository = nexportProductRepository;
-
             _nexportSettings = nexportSettings;
             _nexportPluginService = nexportPluginService;
 
@@ -243,51 +237,54 @@ namespace Nop.Plugin.Misc.Nexport
             });
         }
 
-        public string GetWidgetViewComponentName(string widgetZone)
+        public Type GetWidgetViewComponent(string widgetZone)
         {
+            if (widgetZone == null)
+                throw new ArgumentNullException(nameof(widgetZone));
+
             if (widgetZone == AdminWidgetZones.StoreDetailsBottom)
-                return "WidgetsNexportStoreDetails";
+                return typeof(WidgetsNexportStoreDetails);
 
             if (widgetZone == AdminWidgetZones.ProductDetailsBlock)
-                return "WidgetsNexportProductMappingsInProductPage";
+                return typeof(WidgetsNexportProductMappingsInProductPage);
 
             if (widgetZone == AdminWidgetZones.ProductDetailsButtons)
-                return "WidgetsNexportProductDetailsButtons";
+                return typeof(WidgetsNexportProductDetailsButtons);
 
             if (widgetZone == AdminWidgetZones.CustomerDetailsButtons)
-                return "WidgetsNexportCustomerDetailsButtons";
+                return typeof(WidgetsNexportCustomerDetailsButtons);
 
             if (widgetZone == AdminWidgetZones.CustomerDetailsBlock)
-                return "WidgetsNexportCustomerDetailsBlock";
+                return typeof(WidgetsNexportCustomerDetailsBlock);
 
             if (widgetZone == AdminWidgetZones.CustomerUserDetailsBlock)
-                return "WidgetsNexportCustomerUserDetailsBlock";
+                return typeof(WidgetsNexportCustomerUserDetailsBlock);
 
             if (widgetZone == AdminWidgetZones.CategoryDetailsBlock)
-                return "WidgetsNexportCategoryDetailsBlock";
+                return typeof(WidgetsNexportCategoryDetailsBlock);
 
             if (widgetZone == AdminWidgetZones.OrderDetailsBlock)
-                return "WidgetsNexportOrderDetailsBlock";
+                return typeof(WidgetsNexportOrderDetailsBlock);
 
             if (widgetZone == PublicWidgetZones.OrderDetailsProductLine)
-                return "WidgetsNexportOrderDetailsProductLine";
+                return typeof(WidgetsNexportOrderDetailsProductLine);
 
             if (widgetZone == PublicWidgetZones.AccountNavigationAfter)
-                return "WidgetsAccountNavigationAfter";
+                return typeof(WidgetsAccountNavigationAfter);
 
             if (widgetZone == PublicWidgetZones.HeaderLinksBefore)
-                return "WidgetsHeaderLinksBefore";
+                return typeof(WidgetsHeaderLinksBefore);
 
             if (widgetZone == PublicWidgetZones.OrderSummaryCartFooter)
-                return "WidgetsOrderSummaryCartFooter";
+                return typeof(WidgetsOrderSummaryCartFooter);
 
             if (widgetZone == PublicWidgetZones.ProductDetailsOverviewTop)
-                return "WidgetsProductDetailsOverviewTop";
+                return typeof(WidgetsProductDetailsOverviewTop);
 
             if (widgetZone == NexportDefaults.NexportRegistrationFieldsZone)
-                return "WidgetsNexportRegistrationFields";
+                return typeof(WidgetsNexportRegistrationFields);
 
-            return "";
+            return null;
         }
     }
 }

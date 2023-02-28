@@ -1164,7 +1164,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     return RedirectToAction("List", "Product");
 
                 var newProduct =
-                    await _copyProductService.CopyProductAsync(originalProduct, copyModel.Name, copyModel.Published, copyModel.CopyImages);
+                    await _copyProductService.CopyProductAsync(originalProduct, copyModel.Name, copyModel.Published, copyModel.CopyMultimedia);
 
                 if (copyProductMapping)
                 {

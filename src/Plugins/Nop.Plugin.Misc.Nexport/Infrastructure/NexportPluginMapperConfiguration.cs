@@ -1,4 +1,10 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using AutoMapper;
+using AutoMapper.Internal;
+using AutoMapper.Configuration;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Infrastructure.Mapper;
@@ -14,6 +20,36 @@ using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure
 {
+    /// <summary>
+    /// Workaround for AutoMapper removal of ForAllOtherMembers
+    /// </summary>
+    public static class AutoMapperExtensions
+    {
+        private static readonly PropertyInfo TypeMapActionsProperty = typeof(TypeMapConfiguration).GetProperty("TypeMapActions", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        // not needed in AutoMapper 12.0.1
+        private static readonly PropertyInfo DestinationTypeDetailsProperty = typeof(TypeMap).GetProperty("DestinationTypeDetails", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        public static void ForAllOtherMembers<TSource, TDestination>(this IMappingExpression<TSource, TDestination> expression, Action<IMemberConfigurationExpression<TSource, TDestination, object>> memberOptions)
+        {
+            var typeMapConfiguration = (TypeMapConfiguration)expression;
+
+            var typeMapActions = (List<Action<TypeMap>>)TypeMapActionsProperty.GetValue(typeMapConfiguration);
+
+            typeMapActions?.Add(typeMap =>
+            {
+                var destinationTypeDetails = (TypeDetails)DestinationTypeDetailsProperty.GetValue(typeMap);
+
+                if (destinationTypeDetails == null) return;
+                foreach (var accessor in destinationTypeDetails.WriteAccessors.Where(m =>
+                             typeMapConfiguration.GetDestinationMemberConfiguration(m) == null))
+                {
+                    expression.ForMember(accessor.Name, memberOptions);
+                }
+            });
+        }
+    }
+
     public class NexportPluginMapperConfiguration : Profile, IOrderedMapperProfile
     {
         public NexportPluginMapperConfiguration()

@@ -30,6 +30,7 @@ using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Security;
 using Nop.Services.Shipping;
+using Nop.Services.Stores;
 using Nop.Services.Tax;
 using Nop.Services.Vendors;
 
@@ -71,6 +72,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
         private readonly IShippingService _shippingService;
         private readonly IShoppingCartService _shoppingCartService;
         private readonly IStateProvinceService _stateProvinceService;
+        private readonly IStoreService _storeService;
         private readonly ITaxService _taxService;
         private readonly IVendorService _vendorService;
         private readonly IWebHelper _webHelper;
@@ -121,6 +123,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
             IShippingService shippingService,
             IShoppingCartService shoppingCartService,
             IStateProvinceService stateProvinceService,
+            IStoreService storeService,
             ITaxService taxService,
             IVendorService vendorService,
             IWebHelper webHelper,
@@ -132,10 +135,12 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
             RewardPointsSettings rewardPointsSettings,
             ShippingSettings shippingSettings,
             TaxSettings taxSettings) :
-            base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter, countryService, currencyService, customerActivityService, customerService,
-                customNumberFormatter, discountService, encryptionService, eventPublisher, genericAttributeService, giftCardService, languageService, localizationService, logger,
-                orderService, orderTotalCalculationService, paymentPluginManager, paymentService, pdfService, priceCalculationService, priceFormatter, productAttributeFormatter,
-                productAttributeParser, productService, returnRequestService, rewardPointService, shipmentService, shippingService, shoppingCartService, stateProvinceService, taxService, vendorService,
+            base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter, countryService, currencyService,
+                customerActivityService, customerService, customNumberFormatter, discountService, encryptionService, eventPublisher, genericAttributeService,
+                giftCardService, languageService, localizationService, logger,
+                orderService, orderTotalCalculationService, paymentPluginManager, paymentService, pdfService, priceCalculationService, priceFormatter,
+                productAttributeFormatter, productAttributeParser, productService, returnRequestService, rewardPointService,
+                shipmentService, shippingService, shoppingCartService, stateProvinceService, storeService, taxService, vendorService,
                 webHelper, workContext, workflowMessageService, localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
         {
             _currencySettings = currencySettings;
@@ -170,6 +175,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
             _shippingService = shippingService;
             _shoppingCartService = shoppingCartService;
             _stateProvinceService = stateProvinceService;
+            _storeService = storeService;
             _taxService = taxService;
             _vendorService = vendorService;
             _webHelper = webHelper;
@@ -230,52 +236,72 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
         protected virtual async Task<PlaceOrderContainer> PreparePlaceOrderForCustomerDetailsAsync(ProcessPaymentRequest processPaymentRequest,
             IList<ShoppingCartItem> shoppingCartItems)
         {
-            var details = new PlaceOrderContainer
-            {
-                //customer
-                Customer = await _customerService.GetCustomerByIdAsync(processPaymentRequest.CustomerId)
-            };
-            if (details.Customer == null)
-                throw new ArgumentException("Customer is not set");
+            var details = new PlaceOrderContainer();
+
+            var currentCurrency = await _workContext.GetWorkingCurrencyAsync();
+            await PrepareAndValidateCustomerAsync(details, processPaymentRequest, currentCurrency);
+            await PrepareAndValidateCheckoutAttributesAsync(details, processPaymentRequest, currentCurrency);
+            await PrepareAndValidateBillingAddressAsync(details);
+            await PrepareAndValidateShippingInfoAsync(details, processPaymentRequest);
+            await PrepareAndValidateTotalsAsync(details, processPaymentRequest);
 
             //affiliate
             var affiliate = await _affiliateService.GetAffiliateByIdAsync(details.Customer.AffiliateId);
             if (affiliate != null && affiliate.Active && !affiliate.Deleted)
                 details.AffiliateId = affiliate.Id;
 
-            //check whether customer is guest
-            if (await _customerService.IsGuestAsync(details.Customer) && !_orderSettings.AnonymousCheckoutAllowed)
-                throw new NopException("Anonymous checkout is not allowed");
+            //tax display type
+            //TODO: this code duplicates method IWorkContext.GetTaxDisplayTypeAsync(), let's move it to a ICustomerService with "customer" parameter passing
+            var taxDisplayType = _taxSettings.TaxDisplayType;
+            if (_taxSettings.AllowCustomersToSelectTaxDisplayType && details.Customer.TaxDisplayTypeId.HasValue)
+                taxDisplayType = (TaxDisplayType)details.Customer.TaxDisplayTypeId.Value;
+            else
+            {
+                var defaultRoleTaxDisplayType = await _customerService.GetCustomerDefaultTaxDisplayTypeAsync(details.Customer);
+                if (defaultRoleTaxDisplayType.HasValue)
+                    taxDisplayType = defaultRoleTaxDisplayType.Value;
+            }
+            details.CustomerTaxDisplayType = taxDisplayType;
 
-            //customer currency
-            var currencyTmp = await _currencyService.GetCurrencyByIdAsync(
-                await _genericAttributeService.GetAttributeAsync<int>(details.Customer, NopCustomerDefaults.CurrencyIdAttribute, processPaymentRequest.StoreId));
-            var currentCurrency = await _workContext.GetWorkingCurrencyAsync();
-            var customerCurrency = currencyTmp != null && currencyTmp.Published ? currencyTmp : currentCurrency;
-            var primaryStoreCurrency = await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId);
-            details.CustomerCurrencyCode = customerCurrency.CurrencyCode;
-            details.CustomerCurrencyRate = customerCurrency.Rate / primaryStoreCurrency.Rate;
+            //recurring or standard shopping cart?
+            details.IsRecurringShoppingCart = await _shoppingCartService.ShoppingCartIsRecurringAsync(details.Cart);
+            if (!details.IsRecurringShoppingCart)
+                return details;
 
-            //customer language
-            details.CustomerLanguage = await _languageService.GetLanguageByIdAsync(
-                await _genericAttributeService.GetAttributeAsync<int>(details.Customer, NopCustomerDefaults.LanguageIdAttribute, processPaymentRequest.StoreId));
-            if (details.CustomerLanguage == null || !details.CustomerLanguage.Published)
-                details.CustomerLanguage = await _workContext.GetWorkingLanguageAsync();
+            await PrepareAndValidateRecurringShoppingAsync(details, processPaymentRequest);
 
-            //billing address
-            if (details.Customer.BillingAddressId is null)
-                throw new NopException("Billing address is not provided");
+            return details;
+        }
 
-            var billingAddress = await _customerService.GetCustomerBillingAddressAsync(details.Customer);
+        /// <summary>
+        /// Prepare and validate recurring shopping cart
+        /// </summary>
+        /// <param name="details">PlaceOrder container</param>
+        /// <param name="processPaymentRequest">payment info holder</param>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        /// <exception cref="NopException">Validation problems</exception>
+        private async Task PrepareAndValidateRecurringShoppingAsync(PlaceOrderContainer details, ProcessPaymentRequest processPaymentRequest)
+        {
+            var (recurringCyclesError, recurringCycleLength, recurringCyclePeriod, recurringTotalCycles) = await _shoppingCartService.GetRecurringCycleInfoAsync(details.Cart);
 
-            if (!CommonHelper.IsValidEmail(billingAddress?.Email))
-                throw new NopException("Email is not valid");
+            if (!string.IsNullOrEmpty(recurringCyclesError))
+                throw new NopException(recurringCyclesError);
 
-            details.BillingAddress = _addressService.CloneAddress(billingAddress);
+            processPaymentRequest.RecurringCycleLength = recurringCycleLength;
+            processPaymentRequest.RecurringCyclePeriod = recurringCyclePeriod;
+            processPaymentRequest.RecurringTotalCycles = recurringTotalCycles;
+        }
 
-            if (await _countryService.GetCountryByAddressAsync(details.BillingAddress) is Country billingCountry && !billingCountry.AllowsBilling)
-                throw new NopException($"Country '{billingCountry.Name}' is not allowed for billing");
-
+        /// <summary>
+        /// Prepare and validate shopping cart and checkout attributes
+        /// </summary>
+        /// <param name="details">PlaceOrder container</param>
+        /// <param name="processPaymentRequest">payment info holder</param>
+        /// <param name="currentCurrency">The working currency</param>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        /// <exception cref="NopException">Validation problems</exception>
+        protected async Task PrepareAndValidateCheckoutAttributesAsync(PlaceOrderContainer details, ProcessPaymentRequest processPaymentRequest, Currency currentCurrency)
+        {
             //checkout attributes
             details.CheckoutAttributesXml = await _genericAttributeService.GetAttributeAsync<string>(details.Customer, NopCustomerDefaults.CheckoutAttributes, processPaymentRequest.StoreId);
             details.CheckoutAttributeDescription = await _checkoutAttributeFormatter.FormatAttributesAsync(details.CheckoutAttributesXml, details.Customer);
@@ -317,144 +343,6 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
                 throw new NopException(string.Format(await _localizationService.GetResourceAsync("Checkout.MinOrderTotalAmount"),
                     await _priceFormatter.FormatPriceAsync(minOrderTotalAmount, true, false)));
             }
-
-            //tax display type
-            if (_taxSettings.AllowCustomersToSelectTaxDisplayType)
-                details.CustomerTaxDisplayType = (TaxDisplayType)await _genericAttributeService.GetAttributeAsync<int>(details.Customer, NopCustomerDefaults.TaxDisplayTypeIdAttribute, processPaymentRequest.StoreId);
-            else
-                details.CustomerTaxDisplayType = _taxSettings.TaxDisplayType;
-
-            //sub total (incl tax)
-            var (orderSubTotalDiscountAmount, orderSubTotalAppliedDiscounts, subTotalWithoutDiscountBase, _, _) = await _orderTotalCalculationService.GetShoppingCartSubTotalAsync(details.Cart, true);
-            details.OrderSubTotalInclTax = subTotalWithoutDiscountBase;
-            details.OrderSubTotalDiscountInclTax = orderSubTotalDiscountAmount;
-
-            //discount history
-            foreach (var disc in orderSubTotalAppliedDiscounts)
-                if (!_discountService.ContainsDiscount(details.AppliedDiscounts, disc))
-                    details.AppliedDiscounts.Add(disc);
-
-            //sub total (excl tax)
-            (orderSubTotalDiscountAmount, _, subTotalWithoutDiscountBase, _, _) = await _orderTotalCalculationService.GetShoppingCartSubTotalAsync(details.Cart, false);
-            details.OrderSubTotalExclTax = subTotalWithoutDiscountBase;
-            details.OrderSubTotalDiscountExclTax = orderSubTotalDiscountAmount;
-
-            //shipping info
-            if (await _shoppingCartService.ShoppingCartRequiresShippingAsync(details.Cart))
-            {
-                var pickupPoint = await _genericAttributeService.GetAttributeAsync<PickupPoint>(details.Customer,
-                    NopCustomerDefaults.SelectedPickupPointAttribute, processPaymentRequest.StoreId);
-                if (_shippingSettings.AllowPickupInStore && pickupPoint != null)
-                {
-                    var country = await _countryService.GetCountryByTwoLetterIsoCodeAsync(pickupPoint.CountryCode);
-                    var state = await _stateProvinceService.GetStateProvinceByAbbreviationAsync(pickupPoint.StateAbbreviation, country?.Id);
-
-                    details.PickupInStore = true;
-                    details.PickupAddress = new Address
-                    {
-                        Address1 = pickupPoint.Address,
-                        City = pickupPoint.City,
-                        County = pickupPoint.County,
-                        CountryId = country?.Id,
-                        StateProvinceId = state?.Id,
-                        ZipPostalCode = pickupPoint.ZipPostalCode,
-                        CreatedOnUtc = DateTime.UtcNow
-                    };
-                }
-                else
-                {
-                    if (details.Customer.ShippingAddressId == null)
-                        throw new NopException("Shipping address is not provided");
-
-                    var shippingAddress = await _customerService.GetCustomerShippingAddressAsync(details.Customer);
-
-                    if (!CommonHelper.IsValidEmail(shippingAddress?.Email))
-                        throw new NopException("Email is not valid");
-
-                    //clone shipping address
-                    details.ShippingAddress = _addressService.CloneAddress(shippingAddress);
-
-                    if (await _countryService.GetCountryByAddressAsync(details.ShippingAddress) is Country shippingCountry && !shippingCountry.AllowsShipping)
-                        throw new NopException($"Country '{shippingCountry.Name}' is not allowed for shipping");
-                }
-
-                var shippingOption = await _genericAttributeService.GetAttributeAsync<ShippingOption>(details.Customer,
-                    NopCustomerDefaults.SelectedShippingOptionAttribute, processPaymentRequest.StoreId);
-                if (shippingOption != null)
-                {
-                    details.ShippingMethodName = shippingOption.Name;
-                    details.ShippingRateComputationMethodSystemName = shippingOption.ShippingRateComputationMethodSystemName;
-                }
-
-                details.ShippingStatus = ShippingStatus.NotYetShipped;
-            }
-            else
-                details.ShippingStatus = ShippingStatus.ShippingNotRequired;
-
-            //shipping total
-            var (orderShippingTotalInclTax, _, shippingTotalDiscounts) = await _orderTotalCalculationService.GetShoppingCartShippingTotalAsync(details.Cart, true);
-            var (orderShippingTotalExclTax, _, _) = await _orderTotalCalculationService.GetShoppingCartShippingTotalAsync(details.Cart, false);
-            if (!orderShippingTotalInclTax.HasValue || !orderShippingTotalExclTax.HasValue)
-                throw new NopException("Shipping total couldn't be calculated");
-
-            details.OrderShippingTotalInclTax = orderShippingTotalInclTax.Value;
-            details.OrderShippingTotalExclTax = orderShippingTotalExclTax.Value;
-
-            foreach (var disc in shippingTotalDiscounts)
-                if (!_discountService.ContainsDiscount(details.AppliedDiscounts, disc))
-                    details.AppliedDiscounts.Add(disc);
-
-            //payment total
-            var paymentAdditionalFee = await _paymentService.GetAdditionalHandlingFeeAsync(details.Cart, processPaymentRequest.PaymentMethodSystemName);
-            details.PaymentAdditionalFeeInclTax = (await _taxService.GetPaymentMethodAdditionalFeeAsync(paymentAdditionalFee, true, details.Customer)).price;
-            details.PaymentAdditionalFeeExclTax = (await _taxService.GetPaymentMethodAdditionalFeeAsync(paymentAdditionalFee, false, details.Customer)).price;
-
-            //tax amount
-            SortedDictionary<decimal, decimal> taxRatesDictionary;
-            (details.OrderTaxTotal, taxRatesDictionary) = await _orderTotalCalculationService.GetTaxTotalAsync(details.Cart);
-
-            //VAT number
-            var customerVatStatus = (VatNumberStatus)await _genericAttributeService.GetAttributeAsync<int>(details.Customer, NopCustomerDefaults.VatNumberStatusIdAttribute);
-            if (_taxSettings.EuVatEnabled && customerVatStatus == VatNumberStatus.Valid)
-                details.VatNumber = await _genericAttributeService.GetAttributeAsync<string>(details.Customer, NopCustomerDefaults.VatNumberAttribute);
-
-            //tax rates
-            details.TaxRates = taxRatesDictionary.Aggregate(string.Empty, (current, next) =>
-                $"{current}{next.Key.ToString(CultureInfo.InvariantCulture)}:{next.Value.ToString(CultureInfo.InvariantCulture)};   ");
-
-            //order total (and applied discounts, gift cards, reward points)
-            var (orderTotal, orderDiscountAmount, orderAppliedDiscounts, appliedGiftCards, redeemedRewardPoints, redeemedRewardPointsAmount) = await _orderTotalCalculationService.GetShoppingCartTotalAsync(details.Cart);
-            if (!orderTotal.HasValue)
-                throw new NopException("Order total couldn't be calculated");
-
-            details.OrderDiscountAmount = orderDiscountAmount;
-            details.RedeemedRewardPoints = redeemedRewardPoints;
-            details.RedeemedRewardPointsAmount = redeemedRewardPointsAmount;
-            details.AppliedGiftCards = appliedGiftCards;
-            details.OrderTotal = orderTotal.Value;
-
-            //discount history
-            foreach (var disc in orderAppliedDiscounts)
-                if (!_discountService.ContainsDiscount(details.AppliedDiscounts, disc))
-                    details.AppliedDiscounts.Add(disc);
-
-            processPaymentRequest.OrderTotal = details.OrderTotal;
-
-            //recurring or standard shopping cart?
-            details.IsRecurringShoppingCart = await _shoppingCartService.ShoppingCartIsRecurringAsync(details.Cart);
-            if (!details.IsRecurringShoppingCart)
-                return details;
-
-            var (recurringCyclesError, recurringCycleLength, recurringCyclePeriod, recurringTotalCycles) = await _shoppingCartService.GetRecurringCycleInfoAsync(details.Cart);
-
-            if (!string.IsNullOrEmpty(recurringCyclesError))
-                throw new NopException(recurringCyclesError);
-
-            processPaymentRequest.RecurringCycleLength = recurringCycleLength;
-            processPaymentRequest.RecurringCyclePeriod = recurringCyclePeriod;
-            processPaymentRequest.RecurringTotalCycles = recurringTotalCycles;
-
-            return details;
         }
 
         public async Task<PlaceOrderResult> PlaceOrderForCustomerAsync(ProcessPaymentRequest processPaymentRequest,
@@ -541,8 +429,8 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
                         details.AppliedDiscounts.Add(disc);
 
                 //attributes
-                var attributeDescription =
-                    await _productAttributeFormatter.FormatAttributesAsync(product, sc.AttributesXml, details.Customer);
+                var store = await _storeService.GetStoreByIdAsync(sc.StoreId);
+                var attributeDescription = await _productAttributeFormatter.FormatAttributesAsync(product, sc.AttributesXml, details.Customer, store);
 
                 var itemWeight = await _shippingService.GetShoppingCartItemWeightAsync(sc);
 
@@ -579,6 +467,9 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
                 await _productService.AdjustInventoryAsync(product, -sc.Quantity, sc.AttributesXml,
                     string.Format(await _localizationService.GetResourceAsync("Admin.StockQuantityHistory.Messages.PlaceOrder"), order.Id));
             }
+
+            //clear shopping cart
+            await Task.WhenAll(details.Cart.ToList().Select(sci => _shoppingCartService.DeleteShoppingCartItemAsync(sci, false)));
         }
 
         protected virtual async Task SendNotificationsToCustomerAndSaveNotesAsync(Order order)
@@ -594,7 +485,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
                 await AddOrderNoteAsync(order, $"\"Order placed\" email (to store owner) has been queued. Queued email identifiers: {string.Join(", ", orderPlacedStoreOwnerNotificationQueuedEmailIds)}.");
 
             var orderPlacedAttachmentFilePath = _orderSettings.AttachPdfInvoiceToOrderPlacedEmail ?
-                (await _pdfService.PrintOrderToPdfAsync(order)) : null;
+                (await _pdfService.SaveOrderPdfToDiskAsync(order)) : null;
             var orderPlacedAttachmentFileName = _orderSettings.AttachPdfInvoiceToOrderPlacedEmail ?
                 (string.Format(await _localizationService.GetResourceAsync("PDFInvoice.FileName"), order.CustomOrderNumber) + ".pdf") : null;
             var orderPlacedCustomerNotificationQueuedEmailIds = await _workflowMessageService

@@ -1509,7 +1509,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     invoiceItem.RedemptionEnrollmentId = redeemInvoiceResult.RedemptionEnrollmentId;
                 }
 
-                UpdateNexportOrderInvoiceItem(invoiceItem);
+                await UpdateNexportOrderInvoiceItem(invoiceItem);
             }
             catch (Exception ex)
             {
@@ -1956,8 +1956,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var login = Guid.NewGuid().ToString();
             var password = CommonHelper.GenerateRandomDigitCode(20);
-            var firstName = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.FirstNameAttribute);
-            var lastName = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.LastNameAttribute);
 
             UserContactInfoRequest contactInfo = null;
 
@@ -1990,7 +1988,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 }
             }
 
-            var nexportUser = await CreateNexportUserAsync(login, password, firstName, lastName,
+            var nexportUser = await CreateNexportUserAsync(login, password, customer.FirstName, customer.LastName,
                 customer.Email, _nexportSettings.RootOrganizationId.Value, contactInfo)!;
 
             if (nexportUser != null)
@@ -2022,13 +2020,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                             x.ThreeLetterIsoCode.Contains(userContactInfo.Country) ||
                             x.TwoLetterIsoCode.Contains(userContactInfo.Country));
 
-                var customerFirstName = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.FirstNameAttribute);
-                var customerLastName = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.LastNameAttribute);
-
                 var address = new Address
                 {
-                    FirstName = customerFirstName,
-                    LastName = customerLastName,
+                    FirstName = customer.FirstName,
+                    LastName = customer.LastName,
                     Address1 = userContactInfo.AddressLine1,
                     Address2 = userContactInfo.AddressLine2,
                     City = userContactInfo.City,

@@ -23,6 +23,7 @@ using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Security;
 using Nop.Services.Shipping;
+using Nop.Services.Stores;
 using Nop.Services.Tax;
 using Nop.Services.Vendors;
 
@@ -69,6 +70,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IShippingService shippingService,
             IShoppingCartService shoppingCartService,
             IStateProvinceService stateProvinceService,
+            IStoreService storeService,
             ITaxService taxService,
             IVendorService vendorService,
             IWebHelper webHelper,
@@ -88,7 +90,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 logger, orderService, orderTotalCalculationService, paymentPluginManager, paymentService,
                 pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser, productService,
                 returnRequestService, rewardPointService, shipmentService, shippingService, shoppingCartService,
-                stateProvinceService, taxService, vendorService, webHelper, workContext, workflowMessageService,
+                stateProvinceService, storeService, taxService, vendorService, webHelper, workContext, workflowMessageService,
                 localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
         {
             _orderService = orderService;
