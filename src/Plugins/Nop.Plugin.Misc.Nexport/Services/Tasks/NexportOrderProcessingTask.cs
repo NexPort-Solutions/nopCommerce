@@ -21,7 +21,7 @@ using Nop.Services.ScheduleTasks;
 using Nop.Services.Stores;
 using ILogger = Nop.Services.Logging.ILogger;
 
-namespace Nop.Plugin.Misc.Nexport.Services.ScheduleTasks
+namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 {
     public class NexportOrderProcessingTask : IScheduleTask
     {

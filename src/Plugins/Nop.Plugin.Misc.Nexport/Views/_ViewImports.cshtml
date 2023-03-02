@@ -1,9 +1,13 @@
 ﻿@inherits Nop.Web.Framework.Mvc.Razor.NopRazorPage<TModel>
+
 @inject Nop.Services.Common.IGenericAttributeService genericAttributeService
 @inject IWorkContext workContext
 @inject INopHtmlHelper NopHtml
+
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@removeTagHelper Microsoft.AspNetCore.Mvc.TagHelpers.InputTagHelper, Microsoft.AspNetCore.Mvc.TagHelpers
 @addTagHelper *, Nop.Web.Framework
+@addTagHelper *, MiniProfiler.AspNetCore.Mvc
 @addTagHelper *, Nop.Plugin.Misc.Nexport
 
 @using Microsoft.AspNetCore.Mvc.ViewFeatures
@@ -12,17 +16,26 @@
 @using Nop.Core.Domain.Common
 @using Nop.Core.Infrastructure
 @using Nop.Services.Events
+@using System.Globalization;
+@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@using Microsoft.Extensions.Primitives
+@using static Nop.Services.Common.NopLinksDefaults
+@using Nop.Web.Components
 @using Nop.Web.Extensions
 @using Nop.Web.Framework
 @using Nop.Web.Framework.Events
+@using Nop.Web.Framework.Extensions
 @using Nop.Web.Framework.Infrastructure
 @using Nop.Web.Framework.Models
 @using Nop.Web.Framework.Models.DataTables
+@using Nop.Web.Framework.Mvc.Routing
 @using Nop.Web.Framework.Security.Captcha
 @using Nop.Web.Framework.Security.Honeypot
+@using Nop.Web.Framework.TagHelpers.Admin
+@using Nop.Web.Framework.TagHelpers.Shared
 @using Nop.Web.Framework.Themes
 @using Nop.Web.Framework.UI
-@using Nop.Web.Framework.Extensions
 @using System.Text.Encodings.Web
 @using Nop.Plugin.Misc.Nexport
 @using Nop.Plugin.Misc.Nexport.Models

@@ -7,11 +7,13 @@
 
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Mvc.ViewFeatures
+@using Microsoft.AspNetCore.Mvc.TagHelpers
 @using Microsoft.AspNetCore.Routing
 @using Nop.Core
-@using Nop.Core.Domain.Common
+@using Nop.Core.Domain.Catalog
 @using Nop.Core.Infrastructure
 @using Nop.Services.Events
+@using Nop.Web.Areas.Admin.Components
 @using Nop.Web.Areas.Admin.Models.Affiliates
 @using Nop.Web.Areas.Admin.Models.Blogs
 @using Nop.Web.Areas.Admin.Models.Catalog
@@ -43,14 +45,18 @@
 @using Nop.Web.Areas.Admin.Models.Templates
 @using Nop.Web.Areas.Admin.Models.Topics
 @using Nop.Web.Areas.Admin.Models.Vendors
+@using Nop.Web.Components
 @using Nop.Web.Extensions
 @using Nop.Web.Framework
-@using Nop.Web.Framework.Models
 @using Nop.Web.Framework.Events
 @using Nop.Web.Framework.Extensions
 @using Nop.Web.Framework.Infrastructure
+@using Nop.Web.Framework.Models
 @using Nop.Web.Framework.Models.DataTables
+@using Nop.Web.Framework.Mvc.Routing
 @using Nop.Web.Framework.Security.Captcha
 @using Nop.Web.Framework.Security.Honeypot
+@using Nop.Web.Framework.TagHelpers.Admin
+@using Nop.Web.Framework.TagHelpers.Shared
 @using Nop.Web.Framework.Themes
 @using Nop.Web.Framework.UI

@@ -1,4 +1,4 @@
-﻿using Nop.Plugin.Misc.Nexport.Services.ScheduleTasks;
+﻿using Nop.Plugin.Misc.Nexport.Services.Tasks;
 
 namespace Nop.Plugin.Misc.Nexport
 {

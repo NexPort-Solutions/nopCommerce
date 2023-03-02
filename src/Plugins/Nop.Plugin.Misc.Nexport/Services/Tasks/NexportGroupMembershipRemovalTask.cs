@@ -12,7 +12,7 @@ using Nop.Services.Customers;
 using Nop.Services.Logging;
 using Nop.Services.ScheduleTasks;
 
-namespace Nop.Plugin.Misc.Nexport.Services.ScheduleTasks
+namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 {
     public class NexportGroupMembershipRemovalTask : IScheduleTask
     {

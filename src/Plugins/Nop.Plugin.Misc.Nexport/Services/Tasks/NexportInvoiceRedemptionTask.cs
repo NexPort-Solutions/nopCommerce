@@ -18,7 +18,7 @@ using Nop.Services.Orders;
 using Nop.Services.ScheduleTasks;
 using Nop.Services.Stores;
 
-namespace Nop.Plugin.Misc.Nexport.Services.ScheduleTasks
+namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 {
     public class NexportInvoiceRedemptionTask : IScheduleTask
     {
@@ -88,7 +88,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.ScheduleTasks
             try
             {
                 foreach (var queueItemId in queueItemIds)
-                {
                     try
                     {
                         var queueItem = await _nexportOrderInvoiceRedemptionQueueRepository.GetByIdAsync(queueItemId);
@@ -105,7 +104,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.ScheduleTasks
                             var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
 
                             if (order != null)
-                            {
                                 if (queueItem.RetryCount > MAX_RETRY_COUNT)
                                 {
                                     await DeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem, invoiceItem);
@@ -115,7 +113,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.ScheduleTasks
                                     await _orderProcessingService.CheckOrderStatusAsync(order);
                                 }
                                 else
-                                {
                                     try
                                     {
                                         var orderItem = await _orderService.GetOrderItemByIdAsync(queueItem.OrderItemId);
@@ -172,7 +169,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.ScheduleTasks
 
                                                             // Generate new requirement entities for each missing supplemental question
                                                             foreach (var questionId in questionWithoutAnswerIds)
-                                                            {
                                                                 await _nexportService.InsertNexportRequiredSupplementalInfo(
                                                                     new NexportRequiredSupplementalInfo
                                                                     {
@@ -181,7 +177,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.ScheduleTasks
                                                                         QuestionId = questionId,
                                                                         UtcDateCreated = DateTime.UtcNow
                                                                     });
-                                                            }
 
                                                             // Schedule a registration field synchronization for the customer
                                                             await _nexportService.InsertNexportRegistrationFieldSynchronizationQueueItem(
@@ -229,15 +224,12 @@ namespace Nop.Plugin.Misc.Nexport.Services.ScheduleTasks
                                             await _orderProcessingService.CheckOrderStatusAsync(order);
                                         }
                                     }
-                                }
-                            }
                         }
                     }
                     catch (Exception ex)
                     {
                         await _logger.ErrorAsync($"Cannot process the NexportOrderInvoiceRedemptionQueue item with Id {queueItemId}", ex);
                     }
-                }
             }
             catch (Exception ex)
             {
@@ -271,7 +263,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.ScheduleTasks
             var existingEnrollmentStatus = await _nexportService.VerifyNexportEnrollmentStatusAsync(productMapping, userMapping);
 
             if (existingEnrollmentStatus != null)
-            {
                 switch (existingEnrollmentStatus)
                 {
                     case var status
@@ -295,65 +286,44 @@ namespace Nop.Plugin.Misc.Nexport.Services.ScheduleTasks
                         {
                             var currentEnrollmentExpirationDate = status.Value.EnrollmentExpirationDate;
                             if (currentEnrollmentExpirationDate.HasValue && currentEnrollmentExpirationDate >= DateTime.UtcNow)
-                            {
                                 // Renew the enrollment since the current enrollment has not expired yet
                                 await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
                                     RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption);
-                            }
                             else
-                            {
                                 if (status.Value.Phase == Enums.PhaseEnum.InProgress ||
                                     status.Value.Phase == Enums.PhaseEnum.NotStarted && productMapping.AllowExtension)
-                                {
-                                    if (productMapping.RenewalApprovalMethod == NexportEnrollmentRenewalApprovalMethodEnum.Auto)
+                                if (productMapping.RenewalApprovalMethod == NexportEnrollmentRenewalApprovalMethodEnum.Auto)
+                                    // Renew or delete depends on the threshold setting if the product type is section
+                                    if (productMapping.Type == NexportProductTypeEnum.Section)
                                     {
-                                        // Renew or delete depends on the threshold setting if the product type is section
-                                        if (productMapping.Type == NexportProductTypeEnum.Section)
-                                        {
-                                            var completionThreshold = productMapping.RenewalCompletionThreshold;
-                                            if (completionThreshold.HasValue)
-                                            {
-                                                await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
-                                                    completionThreshold > status.Value.CompletionPercentage
-                                                        ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
-                                                        : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            // Only renew the enrollment for training plan and catalog
+                                        var completionThreshold = productMapping.RenewalCompletionThreshold;
+                                        if (completionThreshold.HasValue)
                                             await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
-                                                RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (extensionAction != null)
-                                        {
-                                            await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
-                                                extensionAction == 1
+                                                completionThreshold > status.Value.CompletionPercentage
                                                     ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
                                                     : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment);
-                                        }
                                     }
-                                }
+                                    else
+                                        // Only renew the enrollment for training plan and catalog
+                                        await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
+                                            RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption);
                                 else
-                                {
-                                    // Delete current enrollment and create new enrollment when the enrollment has been started
-                                    // and the product does not allow extension.
+                                    if (extensionAction != null)
                                     await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
-                                        RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
-                                }
-                            }
+                                        extensionAction == 1
+                                            ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
+                                            : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment);
+                            else
+                                // Delete current enrollment and create new enrollment when the enrollment has been started
+                                // and the product does not allow extension.
+                                await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
+                                    RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
 
                             break;
                         }
                 }
-            }
             else
-            {
                 await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId);
-            }
         }
 
         private async Task DeleteRedemptionQueueItemAndAddFinalOrderNote(Order order,

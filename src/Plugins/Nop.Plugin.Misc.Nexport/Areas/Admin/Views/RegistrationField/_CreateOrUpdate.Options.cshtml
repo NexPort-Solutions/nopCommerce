@@ -41,26 +41,26 @@
                     LengthMenu = Model.RegistrationFieldOptionSearchModel.AvailablePageSizes,
                     ColumnCollection = new List<ColumnProperty>
                     {
-                        new ColumnProperty(nameof(NexportRegistrationFieldOption.OptionValue))
+                        new(nameof(NexportRegistrationFieldOption.OptionValue))
                         {
                             Title = T("Plugins.Misc.Nexport.RegistrationField.Option.Value").Text,
                             Editable = true,
                             EditType = EditType.String
                         },
-                        new ColumnProperty(nameof(NexportRegistrationFieldOption.DisplayOrder))
+                        new(nameof(NexportRegistrationFieldOption.DisplayOrder))
                         {
                             Title = T("Plugins.Misc.Nexport.RegistrationField.Option.DisplayOrder").Text,
                             Editable = true,
                             EditType = EditType.Number
                         },
-                        new ColumnProperty(nameof(NexportRegistrationFieldOption.Id))
+                        new(nameof(NexportRegistrationFieldOption.Id))
                         {
                             Title = T("Admin.Common.Edit").Text,
                             Width = "100",
                             ClassName = NopColumnClassDefaults.Button,
                             Render = new RenderButtonsInlineEdit()
                         },
-                        new ColumnProperty(nameof(CustomerAttributeValueModel.Id))
+                        new(nameof(CustomerAttributeValueModel.Id))
                         {
                             Title = T("Admin.Common.Delete").Text,
                             Width = "100",

@@ -9,7 +9,7 @@ using Nop.Services.Cms;
 using Nop.Services.Logging;
 using Nop.Services.ScheduleTasks;
 
-namespace Nop.Plugin.Misc.Nexport.Services.ScheduleTasks
+namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 {
     public class NexportSynchronizationTask : IScheduleTask
     {
