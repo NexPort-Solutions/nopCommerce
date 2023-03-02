@@ -97,7 +97,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
 
-            var model = _pendingOrderCancellationRequestModelFactory
+            var model = await _pendingOrderCancellationRequestModelFactory
                 .PreparePendingOrderCancellationRequestSearchModelAsync(new PendingOrderCancellationRequestSearchModel());
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/List.cshtml", model);
@@ -112,8 +112,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
                 return await AccessDeniedDataTablesJson();
 
-            var model = _pendingOrderCancellationRequestModelFactory
-                .PreparePendingOrderCancellationRequestListModelAsync(searchModel);
+            var model = await _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestListModelAsync(searchModel);
 
             return Json(model);
         }
@@ -126,13 +125,12 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
 
-            var returnRequest =
-                await _pendingOrderCancellationRequestService.GetCancellationRequestByIdAsync(requestId);
+            var returnRequest = await _pendingOrderCancellationRequestService.GetCancellationRequestByIdAsync(requestId);
             if (returnRequest == null)
                 return RedirectToAction("List");
 
             var model =
-                _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestModelAsync(null, returnRequest);
+                await _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestModelAsync(null, returnRequest);
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/Edit.cshtml", model);
         }
@@ -328,7 +326,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
                 return await AccessDeniedDataTablesJson();
 
-            var model = _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestReasonListModelAsync(searchModel);
+            var model = await _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestReasonListModelAsync(searchModel);
 
             return Json(model);
         }
@@ -340,7 +338,7 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
 
-            var model = _pendingOrderCancellationRequestModelFactory.
+            var model = await _pendingOrderCancellationRequestModelFactory.
                 PreparePendingOrderCancellationRequestReasonModelAsync(new PendingOrderCancellationRequestReasonModel(), null);
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/CancellationRequest/CancellationRequestReasonCreate.cshtml", model);
