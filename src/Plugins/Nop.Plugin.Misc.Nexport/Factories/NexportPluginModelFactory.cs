@@ -543,7 +543,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         {
             return Task.FromResult(new NexportLoginModel
             {
-                UsernamesEnabled = true,
+                UsernamesEnabled = false,
                 RegistrationType = _customerSettings.UserRegistrationType,
                 CheckoutAsGuest = checkoutAsGuest.GetValueOrDefault(),
                 DisplayCaptcha = _captchaSettings.Enabled && _captchaSettings.ShowOnLoginPage

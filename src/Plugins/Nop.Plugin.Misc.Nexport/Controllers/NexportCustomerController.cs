@@ -425,10 +425,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     var validationResult =
                         await nexportCustomerRegistrationService.ValidateNexportCustomerAsync(model.EmailOrUsername, model.Password);
 
-
-                        //await (_customerRegistrationService as NexportCustomerRegistrationService)?
-                        //    .ValidateNexportCustomerAsync(model.EmailOrUsername, model.Password);
-
                     if (validationResult != null)
                     {
                         var loginResult = validationResult.LoginResult;
