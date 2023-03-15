@@ -44,6 +44,12 @@ using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Common;
 using Nop.Services.Logging;
 using Nop.Services.Plugins;
+using Microsoft.AspNetCore.Mvc;
+using Nop.Services.Security;
+using Nop.Web.Areas.Admin.Models.Catalog;
+using Nop.Web.Areas.Admin.Models.Orders;
+using System.ComponentModel.DataAnnotations;
+using Nop.Plugin.Misc.Nexport.Migrations;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -232,75 +238,91 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public virtual async Task<NexportProductMappingListModel> PrepareNexportProductMappingListModelAsync(
-            NexportProductMappingSearchModel searchModel, Guid nexportProductId,
-            NexportProductTypeEnum nexportProductType)
+        /// <summary>
+        /// Prepare product search model to add to the order
+        /// </summary>
+        /// <param name="searchModel">Product search model to add to the order</param>
+        /// <param name="order">Order</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the product search model to add to the order
+        /// </returns>
+        public virtual async Task<NexportProductMappingListSearchModel> PrepareNexportProductMappingListSearchModelAsync(NexportProductMappingListSearchModel searchModel, ProductModel productModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var mappings = await _nexportService.GetProductMappingsPagination(nexportProductId, nexportProductType,
-                searchModel.Page - 1, searchModel.PageSize);
+            if (productModel == null)
+                throw new ArgumentNullException(nameof(productModel));
 
-            // Prepare grid model
-            var model = await new NexportProductMappingListModel().PrepareToGridAsync(searchModel, mappings, () =>
+            searchModel.NopProductId = productModel.Id;
+
+            //prepare all the stores for the store search filter
+            await _baseAdminModelFactory.PrepareStoresAsync(searchModel.AvailableStores);
+
+            //prepare available product types
+            searchModel.AvailableNexportProductTypes.Add(new SelectListItem {Value = null, Text = "All"});
+            
+            //for each nexportproducttype enum create a selectlistitem and add it for the product type filter
+            foreach (var e in Enum.GetValues(typeof(NexportProductTypeEnum)))
             {
-                return mappings.SelectAwait(async mapping =>
+                searchModel.AvailableNexportProductTypes.Add(new SelectListItem
                 {
-                    // Fill in model values from the entity
-                    var mappingModel = mapping.ToModel<NexportProductMappingModel>();
-                    if (mappingModel.StoreId.HasValue)
-                    {
-                        mappingModel.StoreName = await _nexportService.GetStoreNameAsync(mappingModel.StoreId.Value);
-                    }
-
-                    return mappingModel;
+                    Value = e.ToString(),
+                    Text = e.GetDisplayName()
                 });
-            });
+            }
 
-            return model;
+            //prepare page parameters
+            searchModel.SetGridPageSize();
+
+            return searchModel;
         }
 
         public virtual async Task<NexportProductMappingListModel> PrepareNexportProductMappingListModelAsync(
-            NexportProductMappingSearchModel searchModel, int nopProductId)
+            NexportProductMappingListSearchModel searchModel, int nopProductId)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var availableStores = await _storeService.GetAllStoresAsync();
-            var mappingCollection = new List<NexportProductMapping>();
-            foreach (var store in availableStores)
-            {
-                var mapping = await _nexportService.GetProductMappingByNopProductId(nopProductId, store.Id);
-                if (mapping != null)
-                {
-                    mappingCollection.Add(mapping);
-                }
-                else
-                {
-                    mappingCollection.Add(new NexportProductMapping()
-                    {
-                        NexportCatalogId = Guid.Empty,
-                        StoreId = store.Id
-                    });
-                }
-            }
+            var mappings = await _nexportService.GetAllNexportProductMappingsAsync(productName: searchModel.SearchNexportProductName,
+                productType: searchModel.NexportProductType,
+                storeId: searchModel.SearchStoreId,
+                productId: nopProductId,
+                pageIndex: searchModel.Page - 1, 
+                pageSize: searchModel.PageSize,
+                excludeDefault:true);
+
+
 
             var defaultMapping = await _nexportService.GetProductMappingByNopProductId(nopProductId);
             if (defaultMapping != null)
             {
-                mappingCollection.Insert(0, defaultMapping);
+                mappings.Insert(0, defaultMapping);
+                bool defaultRemoved = false;
+                if(searchModel.SearchNexportProductName!=null)
+                {
+                    if (!defaultMapping.NexportProductName.Contains(searchModel.SearchNexportProductName))
+                    {
+                        mappings.Remove(defaultMapping);
+                        defaultRemoved = true;
+                    }
+
+                }
+
+                if (!defaultRemoved && searchModel.NexportProductType != null)
+                {
+                    if(defaultMapping.Type!=searchModel.NexportProductType)
+                        mappings.Remove(defaultMapping);
+                }
             }
             else
             {
-                mappingCollection.Insert(0, new NexportProductMapping()
+                mappings.Insert(0,new NexportProductMapping()
                 {
                     NexportCatalogId = Guid.Empty
                 });
             }
-
-            var mappings = new PagedList<NexportProductMapping>(mappingCollection, searchModel.Page - 1,
-                searchModel.PageSize);
 
             // Prepare grid model
             var model = await new NexportProductMappingListModel().PrepareToGridAsync(searchModel, mappings, () =>

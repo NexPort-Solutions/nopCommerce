@@ -37,13 +37,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
         NexportProductMapping FindProductTrainingPlan(IList<NexportProductMapping> source, int productId,
             Guid trainingPlan, int? storeId = null);
 
-        Task<IPagedList<NexportProductMapping>> GetProductMappingsPagination(int? nopProductId = null,
-            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
-
-        Task<IPagedList<NexportProductMapping>> GetProductMappingsPagination(Guid nexportProductId,
-            NexportProductTypeEnum nexportProductType,
-            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
-
         Task<IList<NexportProductMapping>> GetProductMappingsByStoreId(int storeId);
 
         Task<NexportProductMapping> GetProductMappingByNopProductId(int nopProductId, int? storeId = null);
@@ -329,5 +322,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Task<bool> HasCustomRegistrationFieldRenderForStores(int fieldId, IList<int> storeIds, string customFieldRender);
 
         #endregion
+
+        Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string productName, NexportProductTypeEnum? productType, int storeId, int productId, int pageIndex = 0, int pageSize = int.MaxValue, bool excludeDefault = false);
     }
 }

@@ -15,6 +15,7 @@ using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
+using Nop.Web.Areas.Admin.Models.Catalog;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -23,12 +24,11 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         Task<NexportProductMappingModel> PrepareNexportProductMappingModelAsync(NexportProductMapping productMapping,
             bool isEditable);
 
-        Task<NexportProductMappingListModel> PrepareNexportProductMappingListModelAsync(
-            NexportProductMappingSearchModel searchModel, Guid nexportProductId,
-            NexportProductTypeEnum nexportProductType);
+        Task<NexportProductMappingListSearchModel> PrepareNexportProductMappingListSearchModelAsync(
+            NexportProductMappingListSearchModel searchModel, ProductModel productModel);
 
         Task<NexportProductMappingListModel> PrepareNexportProductMappingListModelAsync(
-            NexportProductMappingSearchModel searchModel, int nopProductId);
+            NexportProductMappingListSearchModel searchModel, int nopProductId);
 
         Task<NexportProductGroupMembershipMappingListModel> PrepareNexportProductMappingGroupMembershipListModelAsync(
             NexportProductGroupMembershipMappingListSearchModel searchModel);

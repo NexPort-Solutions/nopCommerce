@@ -428,7 +428,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.SupplementalInfoAnswers", "Supplemental info answers");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.PageTitle", "Supplemental info answers");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.Edit.PageTitle", "Modify your answer(s)");
-
             await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.CustomerUser.Nexport.RegistrationFields", "Nexport registration fields");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Customers.Nexport.RegistrationFields.Description", "You can create and manage the registration fields and its categories available during registration below.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Customers.Nexport.RegistrationField.Categories", "Registration field categories");
@@ -515,6 +514,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Errors.SingleProductInCatalog", "You can only purchase single product within the same catalog.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart", "Cannot purchase more than one for some products in this shopping cart due to store restriction.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase", "Cannot purchase this product.");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName","Product Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName.Hint","Filter product mapping list by nexport product name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType","Type");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType.Hint","Filter product mapping list by nexport product type");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStore","Store");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStore.Hint","Filter product mapping list by store");
         }
 
         public async Task DeleteResourcesAsync()
@@ -749,6 +755,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Errors.SingleProductInCatalog");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStore");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStore.Hint");
         }
 
         public async Task InstallPermissionProviderAsync()
