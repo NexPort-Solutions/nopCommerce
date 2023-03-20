@@ -515,12 +515,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart", "Cannot purchase more than one for some products in this shopping cart due to store restriction.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase", "Cannot purchase this product.");
 
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName","Product Name");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName.Hint","Filter product mapping list by nexport product name");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType","Type");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType.Hint","Filter product mapping list by nexport product type");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStore","Store");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStore.Hint","Filter product mapping list by store");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName", "Product Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName.Hint", "Filter product mapping list by nexport product name.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType", "Type");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType.Hint", "Filter product mapping list by nexport product type.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStore", "Store");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStore.Hint", "Filter product mapping list by store.");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreName", "Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreName.Hint", "Filter stores list by name.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreUrl", "URL");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreUrl.Hint", "Filter stores list by URL.");
         }
 
         public async Task DeleteResourcesAsync()
@@ -762,6 +767,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType.Hint");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStore");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStore.Hint");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreName.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreUrl");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreUrl.Hint");
         }
 
         public async Task InstallPermissionProviderAsync()

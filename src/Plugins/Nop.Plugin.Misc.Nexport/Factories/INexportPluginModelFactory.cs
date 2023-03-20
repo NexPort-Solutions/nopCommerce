@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Domain;
-using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
@@ -13,9 +11,11 @@ using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
+using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Web.Areas.Admin.Models.Catalog;
+using Nop.Web.Areas.Admin.Models.Stores;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -136,5 +136,23 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         Task<NexportOrderInvoiceItemModel> PrepareNexportOrderInvoiceItemModelAsync(NexportOrderInvoiceItemModel model,
             NexportOrderInvoiceItem orderInvoiceItem);
+        /// <summary>
+        /// Prepare store search model
+        /// </summary>
+        /// <param name="searchModel">Store search model</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the store search model
+        /// </returns>
+        Task<NexportStoreSearchModel> PrepareStoreSearchModel(NexportStoreSearchModel nexportStoreSearchModel);
+        /// <summary>
+        /// Prepare paged store list model
+        /// </summary>
+        /// <param name="searchModel">Store search model</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the store list model
+        /// </returns>
+        Task<StoreListModel> PrepareStoreListModel(NexportStoreSearchModel searchModel);
     }
 }

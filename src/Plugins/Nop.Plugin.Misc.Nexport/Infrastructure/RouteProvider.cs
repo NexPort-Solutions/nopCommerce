@@ -19,7 +19,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
 
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.MapProductPopup",
                 "Admin/NexportIntegration/MapProductPopup",
-                new { controller = "NexportIntegration", action = "MapProductPopup"});
+                new { controller = "NexportIntegration", action = "MapProductPopup" });
 
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.MyTraining",
                 "customer/nexporttraining",
@@ -46,7 +46,9 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             endpointRouteBuilder.MapControllerRoute("NexportRegistration",
                 "register/",
                 new { controller = "NexportCustomer", action = "Register" });
-
+            endpointRouteBuilder.MapControllerRoute("StoreList",
+                "admin/store/list",
+                new { area = "Admin", controller = "NexportStore", action = "List" });
         }
     }
 }

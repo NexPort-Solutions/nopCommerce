@@ -61,7 +61,7 @@
         }
     };
 }
-<div class="container">
+<div class="container mapping-search-div">
     <div class="row">
         <div class="col-md-2">
             <nop-label asp-for="SearchStoreId" />
@@ -369,13 +369,11 @@
 
             return false;
         });
-        
-        $("#SearchNexportProductName").keypress(
-            function (event) {
-                if (event.which == '13') {
-                    event.preventDefault();
-                }
-            });
+        $("div.mapping-search-div").keypress(function (n) {
+            if (n.which == 13 || n.keyCode == 13)
+                return $("#search-mappings").click(),
+                    !1
+        });
     });
 
     function checkDefaultMappingExisted() {
