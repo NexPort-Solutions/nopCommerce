@@ -936,6 +936,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(await _nexportService.HasDefaultMapping(productId));
         }
 
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
         [AutoValidateAntiforgeryToken]
         [HttpPost]
         public async Task<IActionResult> DeleteMappings(ICollection<int> selectedIds)
