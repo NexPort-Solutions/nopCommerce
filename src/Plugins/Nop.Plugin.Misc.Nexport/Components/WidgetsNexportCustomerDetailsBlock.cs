@@ -59,6 +59,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
                         if (nexportUser != null)
                         {
+                            ViewBag.GotUserFromNexport = true;
                             model.NexportUserFullName = $"{nexportUser.FirstName} {nexportUser.LastName}";
                             model.NexportEmail = nexportUser.InternalEmail;
 
@@ -75,6 +76,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
                     }
                     catch (Exception ex)
                     {
+                        ViewBag.GotUserFromNexport = false;
                         var errorMsg = $"Unable to retrieve user information from Nexport for customer {customerModel.Id}";
 
                         if (ex is ApiException exception)
