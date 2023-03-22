@@ -119,10 +119,10 @@
     }
 
     function renderNexportProductInfo(data, type, row, meta) {
-        if (data > 0) {
-            var displayText = "";
+        if (data !== null) {
+            var displayText = "<b>Name: </b>" + data + "<br>";
             if (row.NexportCatalogId !== "00000000-0000-0000-0000-000000000000") {
-                displayText += "<b>Type: </b>";
+                displayText += "<br><b>Type: </b>";
                 if (row.Type === +"@((int)NexportProductTypeEnum.Catalog)") {
                     displayText += "Catalog";
                 } else if (row.Type === +"@((int)NexportProductTypeEnum.Section)") {
@@ -130,23 +130,17 @@
                 } else if (row.Type === +"@((int)NexportProductTypeEnum.TrainingPlan)") {
                     displayText += "Training Plain";
                 }
-
                 displayText += "<br>" + "<b>Nexport Catalog Id: </b>" + row.NexportCatalogId;
-
                 if (row.NexportSyllabusId || row.NexportSyllabus !== "00000000-0000-0000-0000-000000000000") {
                     displayText += "<br>" + "<b>Nexport Syllabus Id: </b>" + row.NexportSyllabusId;
                 }
-
                 displayText += "<br>" + "<b>Nexport Product Id: </b>" + row.NexportCatalogSyllabusLinkId;
-
                 if (row.UtcLastSynchronizationDate) {
                     displayText += "<br>" + "<b>Last Synchronized Date: </b>" + renderLocalDateForTableEntry(row.UtcLastSynchronizationDate, null, null, null);
                 }
             }
-
             return displayText;
         }
-
         return "";
     }
 
