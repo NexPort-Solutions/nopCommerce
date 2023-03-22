@@ -24,14 +24,9 @@
         },
         new(nameof(NexportProductMappingModel.NexportProductName))
         {
-            Title = "Nexport Product Name",
-            Width = "150"
-        },
-        new(nameof(NexportProductMappingModel.Id))
-        {
-            Title = "Nexport Product Details",
+            Title = "Product Info",
             Width = "550",
-            Render = new RenderCustom("renderNexportProductDetails")
+            Render = new RenderCustom("renderNexportProductInfo")
         },
         new(nameof(NexportProductMappingModel.Id))
         {
@@ -68,7 +63,7 @@
     };
 }
 <div class="row">
-    <div class="col-md-12">
+    <div class="col-md-12" style="text-align: right;">
         <button type="button" id="delete-selected-mappings" class="btn bg-red">
             <i class="fa fa-trash-o"></i>
             @T("Admin.Common.Delete.Selected")
@@ -123,7 +118,7 @@
             : '<input name="checkbox_delete_product_mappings" value="' + row.Id + '" type="checkbox" class="checkboxGroups" />';
     }
 
-    function renderNexportProductDetails(data, type, row, meta) {
+    function renderNexportProductInfo(data, type, row, meta) {
         if (data > 0) {
             var displayText = "";
             if (row.NexportCatalogId !== "00000000-0000-0000-0000-000000000000") {
@@ -195,9 +190,9 @@
         if (data > 0) {
             var displayText = "";
             displayText += "<b>NexportProductMappingId: </b>" + row.NexportProductMappingId;
-            displayText += "<b>NexportGroupId: </b>" + row.NexportGroupId;
-            displayText += "<b>NexportGroupName: </b>" + row.NexportGroupName;
-            displayText += "<b>NexportGroupShortName: </b>" + row.NexportGroupShortName;
+            displayText += "<br><b>NexportGroupId: </b>" + row.NexportGroupId;
+            displayText += "<br><b>NexportGroupName: </b>" + row.NexportGroupName;
+            displayText += "<br><b>NexportGroupShortName: </b>" + row.NexportGroupShortName;
             return displayText;
         }
         return "";
