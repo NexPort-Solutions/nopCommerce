@@ -61,6 +61,28 @@
         }
     };
 }
+<div class="container mapping-search-div">
+    <div class="row">
+        <div class="col-md-2">
+            <nop-label asp-for="SearchStoreId" />
+        </div>
+        <div class="col-md-2">
+            <nop-select asp-for="SearchStoreId" asp-items="Model.AvailableStores" />
+        </div>
+        <div class="col-md-2">
+            <nop-label asp-for="SearchNexportProductName"/>
+        </div>
+        <div class="col-md-2">
+            <nop-editor asp-for="SearchNexportProductName"/>
+        </div>
+        <div class="col-md-2">
+            <nop-label asp-for="NexportProductType"/>
+        </div>
+        <div class="col-md-2">
+            <nop-select asp-for="NexportProductType" asp-items="Model.AvailableNexportProductTypes"/>
+        </div>
+    </div>
+</div>
 <div class="row">
     <div class="col-md-12">
         <button type="button" id="delete-selected-mappings" class="btn bg-red">
@@ -71,19 +93,28 @@
             <i class="fa fa-clone"></i>
             Duplicate mapping
         </button>
+        <button type="button" id="search-mappings" class="btn btn-primary">
+            <i class="fa fa-search"></i>
+            Search
+        </button>
         <nop-action-confirmation asp-button-id="delete-selected-mappings" />
         <nop-alert asp-alert-id="deleteSelectedMappingsFailed" />
     </div>
     <div class="col-md-12">
-        @await Html.PartialAsync("Table", new NexportDataTablesModel
+        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
         {
             Name = "product-mappings-grid",
-            UrlRead = new DataUrl("GetProductMappings", "NexportIntegration",
-                new RouteValueDictionary {
-                    { "nexportProductId", Model.NexportProductId },
-                    { "nexportProductType", Model.NexportProductType },
-                    { "nopProductId", Model.NopProductId }
-                }),
+        UrlRead = new DataUrl("GetProductMappings", "NexportIntegration",
+            new RouteValueDictionary {
+                { "nopProductId",Model.NopProductId }
+            }),
+            Filters = new List<FilterParameter>
+            {
+                new FilterParameter(nameof(Model.SearchNexportProductName)),
+                new FilterParameter(nameof(Model.SearchStoreId)),
+                new FilterParameter(nameof(Model.NexportProductType))
+            },
+            SearchButtonId = "search-mappings",
             UrlDelete = new DataUrl("DeleteMapping", "NexportIntegration", null),
             UrlUpdate = new DataUrl("EditMapping", "NexportIntegration", null),
             Length = Model.PageSize,
@@ -277,11 +308,11 @@
         return data ? moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss") : null;
     }
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         checkDefaultMappingExisted();
 
         $("#product-mapping-container").on("xhr.dt", "#product-mappings-grid",
-            function(e, settings, json, xhr) {
+            function (e, settings, json, xhr) {
                 if (json.data) {
                     checkDefaultMappingExisted();
                 }
@@ -289,7 +320,7 @@
 
         $("#delete-selected-mappings-action-confirmation-submit-button").bind("click", function (e) {
             var submitIds = selectedIds;
-            submitIds = $.grep(submitIds, function(value) {
+            submitIds = $.grep(submitIds, function (value) {
                 return value !== "0";
             });
 
@@ -325,7 +356,7 @@
             return false;
         });
 
-        $("#btnRefreshMappings").click(function() {
+        $("#btnRefreshMappings").click(function () {
             // Refresh grid
             $("#product-mappings-grid").DataTable().draw(false);
 
@@ -333,17 +364,22 @@
             return false;
         });
 
-        $("#duplicateProductMappingBtn").click(function() {
+        $("#duplicateProductMappingBtn").click(function () {
             duplicateProductMapping();
 
             return false;
+        });
+        $("div.mapping-search-div").keypress(function (n) {
+            if (n.which == 13 || n.keyCode == 13)
+                return $("#search-mappings").click(),
+                    !1
         });
     });
 
     function checkDefaultMappingExisted() {
         var checkDefaultMappingData = {
             productId: @Model.NopProductId
-        };
+            };
         addAntiForgeryToken(checkDefaultMappingData);
 
         $.ajax({
@@ -377,5 +413,5 @@
         OpenWindow(url, 800, 800, true);
     }
 
-    //# sourceURL=ProductMappingTable.js
+        //# sourceURL=ProductMappingTable.js
 </script>

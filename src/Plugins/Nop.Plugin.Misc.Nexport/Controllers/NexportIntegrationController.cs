@@ -786,7 +786,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AutoValidateAntiforgeryToken]
-        public async Task<IActionResult> GetProductMappings(NexportProductMappingSearchModel searchModel, Guid? nexportProductId, NexportProductTypeEnum? nexportProductType, int? nopProductId)
+        public async Task<IActionResult> GetProductMappings(NexportProductMappingListSearchModel searchModel, int? nopProductId)
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
                 !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
@@ -795,15 +795,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var model = new NexportProductMappingListModel();
 
-            if (nexportProductId.HasValue)
-            {
-                model = await _nexportPluginModelFactory.PrepareNexportProductMappingListModelAsync(searchModel, nexportProductId.Value, nexportProductType.Value);
-            }
-            else if (nopProductId.HasValue)
-            {
+            if(nopProductId.HasValue)
                 model = await _nexportPluginModelFactory.PrepareNexportProductMappingListModelAsync(searchModel, nopProductId.Value);
-            }
-
+            
             return Json(model);
         }
 
@@ -942,6 +936,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(await _nexportService.HasDefaultMapping(productId));
         }
 
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
         [AutoValidateAntiforgeryToken]
         [HttpPost]
         public async Task<IActionResult> DeleteMappings(ICollection<int> selectedIds)

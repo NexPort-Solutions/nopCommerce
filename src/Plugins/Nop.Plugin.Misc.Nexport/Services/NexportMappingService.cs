@@ -6,8 +6,6 @@ using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Orders;
-using Nop.Core.Events;
-using Nop.Services.Events;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
@@ -256,64 +254,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                                            productTrainingPlanMapping.NexportSyllabusId == trainingPlanId &&
                                                            productTrainingPlanMapping.Type == NexportProductTypeEnum.TrainingPlan &&
                                                            productTrainingPlanMapping.StoreId == storeId);
-        }
-
-        public async Task<IPagedList<NexportProductMapping>> GetProductMappingsPagination(int? nopProductId = null,
-            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
-        {
-            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
-                (await _storeContext.GetCurrentStoreAsync()).Id,
-                string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
-                showHidden, "", true);
-
-            return await _cacheManager.GetAsync(cacheKey, async () =>
-            {
-                var query = _nexportProductMappingRepository.Table;
-
-                if (nopProductId != null)
-                    query = query.Where(np => np.NopProductId == nopProductId);
-
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
-        }
-
-        public async Task<IPagedList<NexportProductMapping>> GetProductMappingsPagination(Guid nexportProductId,
-            NexportProductTypeEnum nexportProductType,
-            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
-        {
-            if (nexportProductId == Guid.Empty)
-            {
-                return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
-            }
-
-            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
-                (await _storeContext.GetCurrentStoreAsync()).Id,
-                string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
-                showHidden, "", false);
-
-            return await _cacheManager.GetAsync(cacheKey, async () =>
-            {
-                var query = _nexportProductMappingRepository.Table
-                    .Where(np => np.Type == nexportProductType);
-
-                switch (nexportProductType)
-                {
-                    case NexportProductTypeEnum.Catalog:
-                        query = query.Where(np => np.NexportCatalogId == nexportProductId);
-                        break;
-
-                    case NexportProductTypeEnum.Section:
-                    case NexportProductTypeEnum.TrainingPlan:
-                        query = query.Where(np =>
-                            np.NexportCatalogSyllabusLinkId == nexportProductId);
-                        break;
-
-                    default:
-                        goto case NexportProductTypeEnum.Catalog;
-                }
-
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
         }
 
         public async Task<IList<NexportProductMapping>> GetProductMappingsByStoreId(int storeId)
@@ -1857,6 +1797,26 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
 
             return false;
+        }
+
+        public virtual async Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string productName, NexportProductTypeEnum? productType, int storeId, int productId, int pageIndex = 0, int pageSize = int.MaxValue, bool excludeDefault = false)
+        {
+            var productMappings = await _nexportProductMappingRepository.GetAllAsync(async query =>
+            {
+                query = query.Where(x => x.NopProductId == productId);
+                if (excludeDefault)
+                    query = query.Where(x => x.StoreId != null);
+                if (storeId > 0)
+                    query = query.Where(x => x.StoreId == storeId);
+                if(productName!=null) 
+                    query = query.Where(x => x.NexportProductName.Contains(productName));
+                if(productType!=null)
+                    query = query.Where(x => x.Type == productType);
+                return query;
+            });
+
+            //paging
+            return new PagedList<NexportProductMapping>(productMappings, pageIndex, pageSize);
         }
     }
 }
