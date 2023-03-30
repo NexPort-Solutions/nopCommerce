@@ -202,5 +202,21 @@ namespace Nop.Plugin.Misc.Nexport
         public static string NexportCustomRegistrationFieldZone = "admin_nexport_custom_registration_field";
 
         public static string NexportRegistrationFieldPrefix = "NexportCustomProfile";
+
+        public const string DELETE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.DeleteProductMapping";
+
+        public const string EDIT_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.EditProductMapping";
+
+        public const string MODIFY_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.ModifyProductMapping";
+
+        public const string DUPLICATE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.DuplicateProductMapping";
+
+        public const string DELETE_NEXPORT_GROUP_MEMBERSHIP_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.DeleteGroupMembershipMapping";
+
+        public const string INSERT_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE =
+            "Nexport.InsertSupplementalInfoQuestion";
+
+        public const string DELETE_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE =
+            "Nexport.DeleteSupplementalInfoQuestion";
     }
 }
