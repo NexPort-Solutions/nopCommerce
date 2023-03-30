@@ -218,5 +218,7 @@ namespace Nop.Plugin.Misc.Nexport
 
         public const string DELETE_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE =
             "Nexport.DeleteSupplementalInfoQuestion";
+
+        public const string NEXPORT_PURCHASE_PRODUCT_FOR_CUSTOMER = "Nexport.PurchaseForCustomer";
     }
 }

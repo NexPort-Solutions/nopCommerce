@@ -310,6 +310,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     Enabled = true
                 });
             }
+
+            if (!customerActivityLogTypes.Any(x =>
+                    x.SystemKeyword.Equals(NexportDefaults.DELETE_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE)))
+            {
+                await _activityLogTypeRepository.InsertAsync(new ActivityLogType
+                {
+                    Name = "Purchase product for customer",
+                    SystemKeyword = NexportDefaults.NEXPORT_PURCHASE_PRODUCT_FOR_CUSTOMER,
+                    Enabled = true
+                });
+            }
         }
 
         public async Task DeleteActivityLogTypesAsync()
