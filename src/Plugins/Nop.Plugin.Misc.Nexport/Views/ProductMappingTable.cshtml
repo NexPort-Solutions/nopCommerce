@@ -34,12 +34,6 @@
             Width = "250",
             Render = new RenderCustom("renderSubscriptionInformation")
         },
-        new(nameof(NexportProductMappingModel.Id))
-        {
-            Title = "Group Membership",
-            Width = "250",
-            Render = new RenderCustom("renderGroupMembership")
-        },
         new(nameof(NexportProductMappingModel.UtcLastModifiedDate))
         {
             Title = "Last Modified Date",
@@ -177,18 +171,6 @@
             return displayText;
         }
 
-        return "";
-    }
-
-    function renderGroupMembership(data, type, row, meta) {
-        if (data > 0) {
-            var displayText = "";
-            displayText += "<b>NexportProductMappingId: </b>" + row.NexportProductMappingId;
-            displayText += "<br><b>NexportGroupId: </b>" + row.NexportGroupId;
-            displayText += "<br><b>NexportGroupName: </b>" + row.NexportGroupName;
-            displayText += "<br><b>NexportGroupShortName: </b>" + row.NexportGroupShortName;
-            return displayText;
-        }
         return "";
     }
 
