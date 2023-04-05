@@ -987,14 +987,29 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public Task<NexportCustomerAdditionalSettingsModel> PrepareNexportCustomerAdditionalSettingsModelAsync()
+        public async Task<NexportCustomerAdditionalSettingsModel> PrepareNexportCustomerAdditionalSettingsModelAsync()
         {
             var model = new NexportCustomerAdditionalSettingsModel();
 
             model.NexportRegistrationFieldCategorySearchModel.SetGridPageSize();
-            model.NexportRegistrationFieldSearchModel.SetGridPageSize();
+            model.NexportRegistrationFieldSearchModel =
+                await PrepareNexportRegistrationFieldSearchModelAsync(model.NexportRegistrationFieldSearchModel);
 
-            return Task.FromResult(model);
+            return model;
+        }
+
+        public async Task<NexportRegistrationFieldSearchModel> PrepareNexportRegistrationFieldSearchModelAsync(NexportRegistrationFieldSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            //prepare all the stores for the store search filter
+            await _baseAdminModelFactory.PrepareStoresAsync(searchModel.AvailableStores);
+
+            //prepare page parameters
+            searchModel.SetGridPageSize();
+
+            return searchModel;
         }
 
         public async Task<NexportRegistrationFieldCategoryListModel> PrepareNexportRegistrationFieldCategoryListModelAsync(
@@ -1078,6 +1093,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                     fieldModel.StoreMappings += $"{store.Name}, ";
                                 else
                                     fieldModel.StoreMappings += $"{store.Name}";
+                                fieldModel.StoreMappingIds.Add(store.Id);
                             }
                         }
 
@@ -1090,6 +1106,16 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         }
 
                         return fieldModel;
+                    }).Where(x=>
+                    {
+                        if (searchModel.SearchStoreId > 0)
+                        {
+                            return x.StoreMappingIds.Contains(searchModel.SearchStoreId);
+                        }
+                        else
+                        {
+                            return true;
+                        }
                     });
                 });
 

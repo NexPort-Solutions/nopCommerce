@@ -34,7 +34,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
 
         public IList<SelectListItem> AvailableNexportProductTypes { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.ProductMapping.SearchStore")]
+        [NopResourceDisplayName("Plugins.Misc.Nexport.SearchStoreId")]
         public int SearchStoreId { get; set; }
 
         public IList<SelectListItem> AvailableStores { get; set; }

@@ -9,111 +9,131 @@
 <div class="card-header">
         @T("Admin.Customers.Nexport.RegistrationField.Fields")
 </div>
-<div class="card-body">
-    <p>
-        <em>@T("Admin.Customers.Nexport.RegistrationField.Fields.Description")</em>
-    </p>
-    @await Html.PartialAsync("Table", new NexportDataTablesModel
-    {
-        Name = "nexport-registrationfields-grid",
-        UrlRead = new DataUrl("ListRegistrationField", "NexportIntegration", null),
-        Length = Model.PageSize,
-        LengthMenu = Model.AvailablePageSizes,
-        ColumnCollection = new List<ColumnProperty>
-        {
-            new(nameof(NexportRegistrationFieldModel.Name))
-            {
-                Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Name").Text,
-                Width = "100"
-            },
-            new(nameof(NexportRegistrationFieldModel.Type))
-            {
-                Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Type").Text,
-                Width = "100",
-                Render = new RenderCustom("renderRegistrationFieldType")
-            },
-            new(nameof(NexportRegistrationFieldModel.IsActive))
-            {
-                Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Active").Text,
-                Width = "200",
-                ClassName =  NopColumnClassDefaults.CenterAll,
-                Render = new RenderBoolean()
-            },
-            new(nameof(NexportRegistrationFieldModel.IsRequired))
-            {
-                Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Required").Text,
-                Width = "200",
-                ClassName =  NopColumnClassDefaults.CenterAll,
-                Render = new RenderBoolean()
-            },
-            new(nameof(NexportRegistrationFieldModel.NexportCustomProfileFieldKey))
-            {
-                Title = T("Plugins.Misc.Nexport.RegistrationField.Field.CustomProfileFieldKey").Text,
-                Width = "100",
-                ClassName =  NopColumnClassDefaults.CenterAll
-            },
-            new(nameof(NexportRegistrationFieldModel.DisplayOrder))
-            {
-                Title = T("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder").Text,
-                Width = "100",
-                ClassName =  NopColumnClassDefaults.CenterAll
-            },
-            new(nameof(NexportRegistrationFieldModel.FieldCategoryName))
-            {
-                Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Category").Text,
-                Width = "100",
-                ClassName =  NopColumnClassDefaults.CenterAll
-            },
-            new(nameof(NexportRegistrationFieldModel.StoreMappings))
-            {
-                Title = T("Plugins.Misc.Nexport.RegistrationField.Field.StoreMappings").Text,
-                Width = "100",
-                ClassName =  NopColumnClassDefaults.CenterAll
-            },
-            new(nameof(NexportRegistrationFieldModel.CustomFieldRenderDescription))
-            {
-                Title = T("Plugins.Misc.Nexport.RegistrationField.Field.CustomRender").Text,
-                Width = "100",
-                ClassName =  NopColumnClassDefaults.CenterAll
-            },
-            new(nameof(NexportRegistrationFieldModel.Id))
-            {
-                Title = T("Admin.Common.Edit").Text,
-                Width = "100",
-                ClassName =  NopColumnClassDefaults.Button,
-                Render = new RenderButtonEdit(new DataUrl("~/Admin/NexportIntegration/EditRegistrationField/"))
-            }
-        }
-    })
+    <div class="card-body">
 
-    <script>
+        <div class="row">
+            <div class="col-md-1">
+                <nop-label asp-for="SearchStoreId" />
+            </div>
+            <div class="col-md-3">
+                <nop-select asp-for="SearchStoreId" asp-items="Model.AvailableStores" />
+            </div>
+        </div>
+        <div class="row" style="padding-left: 7.5px">
+            <button type="button" id="search-registration-fields" class="btn btn-primary" style="margin-right: 7px">
+                <i class="fa fa-search"></i>
+                Search
+            </button>
+            <p style="display: flex; align-items: center; margin: 0">
+                <em>@T("Admin.Customers.Nexport.RegistrationField.Fields.Description")</em>
+            </p>
+        </div>
+        @await Html.PartialAsync("Table", new NexportDataTablesModel
+        {
+            Name = "nexport-registrationfields-grid",
+            UrlRead = new DataUrl("ListRegistrationField", "NexportIntegration", null),
+            Filters = new List<FilterParameter>
+            {
+                new FilterParameter(nameof(Model.SearchStoreId))
+            },
+            SearchButtonId = "search-registration-fields",
+            Length = Model.PageSize,
+            LengthMenu = Model.AvailablePageSizes,
+            ColumnCollection = new List<ColumnProperty>
+            {
+                new(nameof(NexportRegistrationFieldModel.Name))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Name").Text,
+                    Width = "100"
+                },
+                new(nameof(NexportRegistrationFieldModel.Type))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Type").Text,
+                    Width = "100",
+                    Render = new RenderCustom("renderRegistrationFieldType")
+                },
+                new(nameof(NexportRegistrationFieldModel.IsActive))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Active").Text,
+                    Width = "200",
+                    ClassName = NopColumnClassDefaults.CenterAll,
+                    Render = new RenderBoolean()
+                },
+                new(nameof(NexportRegistrationFieldModel.IsRequired))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Required").Text,
+                    Width = "200",
+                    ClassName = NopColumnClassDefaults.CenterAll,
+                    Render = new RenderBoolean()
+                },
+                new(nameof(NexportRegistrationFieldModel.NexportCustomProfileFieldKey))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Field.CustomProfileFieldKey").Text,
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.CenterAll
+                },
+                new(nameof(NexportRegistrationFieldModel.DisplayOrder))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder").Text,
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.CenterAll
+                },
+                new(nameof(NexportRegistrationFieldModel.FieldCategoryName))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Category").Text,
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.CenterAll
+                },
+                new(nameof(NexportRegistrationFieldModel.StoreMappings))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Field.StoreMappings").Text,
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.CenterAll
+                },
+                new(nameof(NexportRegistrationFieldModel.CustomFieldRenderDescription))
+                {
+                    Title = T("Plugins.Misc.Nexport.RegistrationField.Field.CustomRender").Text,
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.CenterAll
+                },
+                new(nameof(NexportRegistrationFieldModel.Id))
+                {
+                    Title = T("Admin.Common.Edit").Text,
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.Button,
+                    Render = new RenderButtonEdit(new DataUrl("~/Admin/NexportIntegration/EditRegistrationField/"))
+                }
+            }
+        })
+
+        <script>
         function renderRegistrationFieldType(data, type, row, meta) {
-            if (data === +"@((int)NexportRegistrationFieldType.Text)") {
+            if (data === +"@((int) NexportRegistrationFieldType.Text)") {
                 return "@NexportRegistrationFieldType.Text.GetDisplayName()";
-            } else if (data === +"@((int)NexportRegistrationFieldType.DateTime)") {
+            } else if (data === +"@((int) NexportRegistrationFieldType.DateTime)") {
                 return "@NexportRegistrationFieldType.DateTime.GetDisplayName()";
-            } else if (data === +"@((int)NexportRegistrationFieldType.Boolean)") {
+            } else if (data === +"@((int) NexportRegistrationFieldType.Boolean)") {
                 return "@NexportRegistrationFieldType.Boolean.GetDisplayName()";
-            } else if (data === +"@((int)NexportRegistrationFieldType.Numeric)") {
+            } else if (data === +"@((int) NexportRegistrationFieldType.Numeric)") {
                 return "@NexportRegistrationFieldType.Numeric.GetDisplayName()";
-            } else if (data === +"@((int)NexportRegistrationFieldType.Email)") {
+            } else if (data === +"@((int) NexportRegistrationFieldType.Email)") {
                 return "@NexportRegistrationFieldType.Email.GetDisplayName()";
-            } else if (data === +"@((int)NexportRegistrationFieldType.SelectDropDown)") {
+            } else if (data === +"@((int) NexportRegistrationFieldType.SelectDropDown)") {
                 return "@NexportRegistrationFieldType.SelectDropDown.GetDisplayName()";
-            } else if (data === +"@((int)NexportRegistrationFieldType.DateOnly)") {
+            } else if (data === +"@((int) NexportRegistrationFieldType.DateOnly)") {
                 return "@NexportRegistrationFieldType.DateOnly.GetDisplayName()";
-            } else if (data === +"@((int)NexportRegistrationFieldType.SelectCheckbox)") {
+            } else if (data === +"@((int) NexportRegistrationFieldType.SelectCheckbox)") {
                 return "@NexportRegistrationFieldType.SelectCheckbox.GetDisplayName()";
-            } else if (data === +"@((int)NexportRegistrationFieldType.CustomType)") {
+            } else if (data === +"@((int) NexportRegistrationFieldType.CustomType)") {
                 return "@NexportRegistrationFieldType.CustomType.GetDisplayName()";
-            } else if (data === +"@((int)NexportRegistrationFieldType.None)") {
+            } else if (data === +"@((int) NexportRegistrationFieldType.None)") {
                 return "None";
             } else {
                 return "";
             }
         }
     </script>
-</div>
+    </div>
 <div class="card-footer">
     <a class="btn btn-primary" href="@Url.Action("CreateRegistrationField", "NexportIntegration")">
         <i class="fa fa-plus-square"></i>
