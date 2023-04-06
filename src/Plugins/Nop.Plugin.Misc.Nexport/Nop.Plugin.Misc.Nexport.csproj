@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <None Remove="Areas\Admin\Views\Category\NexportOptions.cshtml" />
+    <None Remove="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml" />
     <None Remove="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml" />
     <None Remove="Areas\Admin\Views\Product\Edit.cshtml" />
     <None Remove="Areas\Admin\Views\Product\ProductMapping\DuplicateProductMapping.cshtml" />
@@ -120,6 +121,9 @@
 
   <ItemGroup>
     <Content Include="Areas\Admin\Views\Category\NexportOptions.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml">
