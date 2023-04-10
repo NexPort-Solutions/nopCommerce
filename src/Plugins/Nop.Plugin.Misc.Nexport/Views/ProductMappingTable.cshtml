@@ -61,28 +61,6 @@
         }
     };
 }
-<div class="container mapping-search-div">
-    <div class="row">
-        <div class="col-md-2">
-            <nop-label asp-for="SearchStoreId" />
-        </div>
-        <div class="col-md-2">
-            <nop-select asp-for="SearchStoreId" asp-items="Model.AvailableStores" />
-        </div>
-        <div class="col-md-2">
-            <nop-label asp-for="SearchNexportProductName"/>
-        </div>
-        <div class="col-md-2">
-            <nop-editor asp-for="SearchNexportProductName"/>
-        </div>
-        <div class="col-md-2">
-            <nop-label asp-for="NexportProductType"/>
-        </div>
-        <div class="col-md-2">
-            <nop-select asp-for="NexportProductType" asp-items="Model.AvailableNexportProductTypes"/>
-        </div>
-    </div>
-</div>
 <div class="row">
     <div class="col-md-12">
         <button type="button" id="delete-selected-mappings" class="btn bg-red">
@@ -92,10 +70,6 @@
         <button class="btn btn-primary" id="duplicateProductMappingBtn">
             <i class="fa fa-clone"></i>
             Duplicate mapping
-        </button>
-        <button type="button" id="search-mappings" class="btn btn-primary">
-            <i class="fa fa-search"></i>
-            Search
         </button>
         <nop-action-confirmation asp-button-id="delete-selected-mappings" />
         <nop-alert asp-alert-id="deleteSelectedMappingsFailed" />
@@ -111,7 +85,7 @@
             Filters = new List<FilterParameter>
             {
                 new FilterParameter(nameof(Model.SearchNexportProductName)),
-                new FilterParameter(nameof(Model.SearchStoreId)),
+                new FilterParameter(nameof(Model.SearchStoreName)),
                 new FilterParameter(nameof(Model.NexportProductType))
             },
             SearchButtonId = "search-mappings",

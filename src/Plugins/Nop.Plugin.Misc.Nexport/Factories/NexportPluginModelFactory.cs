@@ -254,9 +254,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             searchModel.NopProductId = productModel.Id;
 
-            //prepare all the stores for the store search filter
-            await _baseAdminModelFactory.PrepareStoresAsync(searchModel.AvailableStores);
-
             //prepare available product types
             searchModel.AvailableNexportProductTypes.Add(new SelectListItem { Value = null, Text = "All" });
 
@@ -284,42 +281,10 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var mappings = await _nexportService.GetAllNexportProductMappingsAsync(productName: searchModel.SearchNexportProductName,
                 productType: searchModel.NexportProductType,
-                storeId: searchModel.SearchStoreId,
+                storeName: searchModel.SearchStoreName,
                 productId: nopProductId,
                 pageIndex: searchModel.Page - 1,
-                pageSize: searchModel.PageSize,
-                excludeDefault: true);
-
-
-
-            var defaultMapping = await _nexportService.GetProductMappingByNopProductId(nopProductId);
-            if (defaultMapping != null)
-            {
-                mappings.Insert(0, defaultMapping);
-                bool defaultRemoved = false;
-                if (searchModel.SearchNexportProductName != null)
-                {
-                    if (!defaultMapping.NexportProductName.Contains(searchModel.SearchNexportProductName))
-                    {
-                        mappings.Remove(defaultMapping);
-                        defaultRemoved = true;
-                    }
-
-                }
-
-                if (!defaultRemoved && searchModel.NexportProductType != null)
-                {
-                    if (defaultMapping.Type != searchModel.NexportProductType)
-                        mappings.Remove(defaultMapping);
-                }
-            }
-            else
-            {
-                mappings.Insert(0, new NexportProductMapping()
-                {
-                    NexportCatalogId = Guid.Empty
-                });
-            }
+                pageSize: searchModel.PageSize);
 
             // Prepare grid model
             var model = await new NexportProductMappingListModel().PrepareToGridAsync(searchModel, mappings, () =>
@@ -1106,7 +1071,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         }
 
                         return fieldModel;
-                    }).Where(x=>
+                    }).Where(x =>
                     {
                         if (searchModel.SearchStoreId > 0)
                         {
