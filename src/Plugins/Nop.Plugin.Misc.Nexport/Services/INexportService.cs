@@ -245,7 +245,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsByCategoryId(int categoryId);
 
-        Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(
+        Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(IList<int> storeIds,
             int pageIndex = 0, int pageSize = int.MaxValue);
 
         Task InsertNexportRegistrationField(NexportRegistrationField registrationField);

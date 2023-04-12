@@ -607,8 +607,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName.Hint", "Filter product mapping list by nexport product name.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType", "Type");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType.Hint", "Filter product mapping list by nexport product type.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.SearchStoreId", "Store");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.SearchStoreId.Hint", "Filter product mapping list by store.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CustomerSettings.RegistrationFields.SearchStoreId", "Store");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CustomerSettings.RegistrationFields.SearchStoreId.Hint", "Filter product mapping list by store.");
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStoreName", "Store");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStoreName.Hint", "Filter product mapping list by store.");
@@ -859,8 +859,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName.Hint");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.SearchStoreId");
-            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.SearchStoreId.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.CustomerSettings.RegistrationFields.SearchStoreId");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.CustomerSettings.RegistrationFields.SearchStoreId.Hint");
 
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStoreName");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStoreName.Hint");

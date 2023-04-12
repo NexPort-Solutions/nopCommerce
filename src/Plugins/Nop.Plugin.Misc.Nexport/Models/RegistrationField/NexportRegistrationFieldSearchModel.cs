@@ -10,15 +10,10 @@ namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
         public NexportRegistrationFieldSearchModel()
         {
             AvailableStores = new List<SelectListItem>();
-
-            SetGridPageSize();
         }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName")]
-        public string SearchRegistrationFieldName { get; set; }
-
         [NopResourceDisplayName("Plugins.Misc.Nexport.SearchStoreId")]
-        public int SearchStoreId { get; set; }
+        public IList<int> SelectedStoreIds { get; set; }
 
         public IList<SelectListItem> AvailableStores { get; set; }
     }

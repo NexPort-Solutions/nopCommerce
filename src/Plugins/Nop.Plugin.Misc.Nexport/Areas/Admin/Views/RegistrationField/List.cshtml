@@ -6,35 +6,39 @@
 @model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldSearchModel
 
 <div class="card card-default">
-<div class="card-header">
+    <div class="card-header">
         @T("Admin.Customers.Nexport.RegistrationField.Fields")
-</div>
+    </div>
     <div class="card-body">
-
-        <div class="row">
-            <div class="col-md-1">
-                <nop-label asp-for="SearchStoreId" />
-            </div>
-            <div class="col-md-3">
-                <nop-select asp-for="SearchStoreId" asp-items="Model.AvailableStores" />
+        <div class="row search-registration-div">
+            <div class="col-md-5">
+                <div class="form-group row">
+                    <div class="col-md-5">
+                        <nop-label asp-for="SelectedStoreIds" />
+                    </div>
+                    <div class="col-md-7">
+                        <nop-select asp-for="SelectedStoreIds" asp-items="Model.AvailableStores" asp-multiple="true" />
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="row" style="padding-left: 7.5px">
-            <button type="button" id="search-registration-fields" class="btn btn-primary" style="margin-right: 7px">
-                <i class="fa fa-search"></i>
-                Search
-            </button>
-            <p style="display: flex; align-items: center; margin: 0">
-                <em>@T("Admin.Customers.Nexport.RegistrationField.Fields.Description")</em>
-            </p>
+        <div class="form-group row">
+            <div class="text-center col-12">
+                <button type="button" id="search-registration-fields" class="btn btn-primary btn-search"><i class="fas fa-search"></i>@T("Admin.Common.Search")</button>
+            </div>
         </div>
+    </div>
+    <div class="card-body">
+        <p style="display: flex; align-items: center; margin: 0">
+            <em>@T("Admin.Customers.Nexport.RegistrationField.Fields.Description")</em>
+        </p>
         @await Html.PartialAsync("Table", new NexportDataTablesModel
         {
             Name = "nexport-registrationfields-grid",
             UrlRead = new DataUrl("ListRegistrationField", "NexportIntegration", null),
             Filters = new List<FilterParameter>
             {
-                new FilterParameter(nameof(Model.SearchStoreId))
+               new FilterParameter(nameof(Model.SelectedStoreIds))
             },
             SearchButtonId = "search-registration-fields",
             Length = Model.PageSize,
@@ -105,39 +109,46 @@
                 }
             }
         })
-
+        
         <script>
-        function renderRegistrationFieldType(data, type, row, meta) {
-            if (data === +"@((int) NexportRegistrationFieldType.Text)") {
-                return "@NexportRegistrationFieldType.Text.GetDisplayName()";
-            } else if (data === +"@((int) NexportRegistrationFieldType.DateTime)") {
-                return "@NexportRegistrationFieldType.DateTime.GetDisplayName()";
-            } else if (data === +"@((int) NexportRegistrationFieldType.Boolean)") {
-                return "@NexportRegistrationFieldType.Boolean.GetDisplayName()";
-            } else if (data === +"@((int) NexportRegistrationFieldType.Numeric)") {
-                return "@NexportRegistrationFieldType.Numeric.GetDisplayName()";
-            } else if (data === +"@((int) NexportRegistrationFieldType.Email)") {
-                return "@NexportRegistrationFieldType.Email.GetDisplayName()";
-            } else if (data === +"@((int) NexportRegistrationFieldType.SelectDropDown)") {
-                return "@NexportRegistrationFieldType.SelectDropDown.GetDisplayName()";
-            } else if (data === +"@((int) NexportRegistrationFieldType.DateOnly)") {
-                return "@NexportRegistrationFieldType.DateOnly.GetDisplayName()";
-            } else if (data === +"@((int) NexportRegistrationFieldType.SelectCheckbox)") {
-                return "@NexportRegistrationFieldType.SelectCheckbox.GetDisplayName()";
-            } else if (data === +"@((int) NexportRegistrationFieldType.CustomType)") {
-                return "@NexportRegistrationFieldType.CustomType.GetDisplayName()";
-            } else if (data === +"@((int) NexportRegistrationFieldType.None)") {
-                return "None";
-            } else {
-                return "";
-            }
-        }
+            function renderRegistrationFieldType(data, type, row, meta) {
+                if (data === +"@((int) NexportRegistrationFieldType.Text)") {
+                    return "@NexportRegistrationFieldType.Text.GetDisplayName()";
+                } else if (data === +"@((int) NexportRegistrationFieldType.DateTime)") {
+                    return "@NexportRegistrationFieldType.DateTime.GetDisplayName()";
+                } else if (data === +"@((int) NexportRegistrationFieldType.Boolean)") {
+                    return "@NexportRegistrationFieldType.Boolean.GetDisplayName()";
+                } else if (data === +"@((int) NexportRegistrationFieldType.Numeric)") {
+                    return "@NexportRegistrationFieldType.Numeric.GetDisplayName()";
+                } else if (data === +"@((int) NexportRegistrationFieldType.Email)") {
+                    return "@NexportRegistrationFieldType.Email.GetDisplayName()";
+                } else if (data === +"@((int) NexportRegistrationFieldType.SelectDropDown)") {
+                    return "@NexportRegistrationFieldType.SelectDropDown.GetDisplayName()";
+                } else if (data === +"@((int) NexportRegistrationFieldType.DateOnly)") {
+                    return "@NexportRegistrationFieldType.DateOnly.GetDisplayName()";
+                } else if (data === +"@((int) NexportRegistrationFieldType.SelectCheckbox)") {
+                    return "@NexportRegistrationFieldType.SelectCheckbox.GetDisplayName()";
+                } else if (data === +"@((int) NexportRegistrationFieldType.CustomType)") {
+                    return "@NexportRegistrationFieldType.CustomType.GetDisplayName()";
+                } else if (data === +"@((int) NexportRegistrationFieldType.None)") {
+                    return "None";
+                } else {
+                    return "";
+                }
+          }
+            $(document).ready(function () {
+                $("div.search-registration-div").keypress(function (n) {
+                    if (n.which == 13 || n.keyCode == 13)
+                        return $("#search-registration-fields").click(),
+                            !1
+                });
+            });
     </script>
     </div>
-<div class="card-footer">
-    <a class="btn btn-primary" href="@Url.Action("CreateRegistrationField", "NexportIntegration")">
-        <i class="fa fa-plus-square"></i>
+    <div class="card-footer">
+        <a class="btn btn-primary" href="@Url.Action("CreateRegistrationField", "NexportIntegration")">
+            <i class="fa fa-plus-square"></i>
             @T("Admin.Common.AddNew")
-    </a>
-</div>
+        </a>
+    </div>
 </div>

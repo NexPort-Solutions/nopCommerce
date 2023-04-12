@@ -1390,14 +1390,22 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     .Where(f => f.FieldCategoryId == categoryId).ToListAsync();
         }
 
-        public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(int pageIndex = 0, int pageSize = int.MaxValue)
+        public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(IList<int> storeIds, int pageIndex = 0, int pageSize = int.MaxValue)
         {
-            return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldAllCacheKey, async () =>
-            {
-                var query = _nexportRegistrationFieldRepository.Table;
-
+            var query = _nexportRegistrationFieldRepository.Table;
+            
+            //check if contains 0 because nopselect puts 0 in list of ids if "all" is selected
+            if (storeIds==null || storeIds.Contains(0))
                 return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
+
+            var storeQuery = _storeRepository.Table
+                .Where(s => storeIds.Contains(s.Id)).Select(s => s.Id).ToList();
+
+            var storeMappingQuery = _nexportRegistrationFieldStoreMappingRepository.Table.Where(sm => storeQuery.Contains(sm.StoreId)).Select(sm => sm.FieldId).ToList();
+
+            query = query.Where(f => storeMappingQuery.Contains(f.Id));
+
+            return await query.ToPagedListAsync(pageIndex, pageSize);
         }
 
         public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswersPagination(
