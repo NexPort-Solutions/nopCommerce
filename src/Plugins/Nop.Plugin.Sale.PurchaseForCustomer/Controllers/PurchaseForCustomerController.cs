@@ -33,6 +33,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
         private readonly INotificationService _notificationService;
         private readonly ILocalizationService _localizationService;
         private readonly ILogger _logger;
+        private readonly ICustomerActivityService _customerActivityService;
 
         public PurchaseForCustomerController(
             IPurchaseForCustomerModelFactory purchaseForCustomerModelFactory,
@@ -43,7 +44,8 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
             IPermissionService permissionService,
             INotificationService notificationService,
             ILocalizationService localizationService,
-            ILogger logger)
+            ILogger logger,
+            ICustomerActivityService customerActivityService)
         {
             _purchaseForCustomerModelFactory = purchaseForCustomerModelFactory;
             _purchaseForCustomerService = purchaseForCustomerService;
@@ -54,6 +56,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
             _notificationService = notificationService;
             _localizationService = localizationService;
             _logger = logger;
+            _customerActivityService = customerActivityService;
         }
 
         public async Task<IActionResult> PurchaseDetails(int productId)
@@ -89,6 +92,13 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
                             {
                                 result = await _purchaseForCustomerService
                                     .PurchaseProductForCustomerAsync(product, customer, store, model.NotifyCustomer);
+
+                                if (result != null && result.Success)
+                                {
+                                    //activity log
+                                    await _customerActivityService.InsertActivityAsync(PluginDefaults.NEXPORT_PURCHASE_PRODUCT_FOR_CUSTOMER,
+                                        $"Purchased product (ID:{product.Id}, Name:{product.Name}) for customer (ID:{customer.Id}, First Name:{customer.FirstName}, Last Name:{customer.LastName}, Email: {customer.Email}",product);
+                                }
                             }
                         }
                     }

@@ -13,8 +13,6 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
         {
             AvailableNexportProductTypes = new List<SelectListItem>();
 
-            AvailableStores = new List<SelectListItem>();
-
             SetGridPageSize();
         }
 
@@ -34,9 +32,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
 
         public IList<SelectListItem> AvailableNexportProductTypes { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.ProductMapping.SearchStore")]
-        public int SearchStoreId { get; set; }
+        [NopResourceDisplayName("Plugins.Misc.Nexport.ProductMapping.SearchStoreName")]
+        public string SearchStoreName { get; set; }
 
-        public IList<SelectListItem> AvailableStores { get; set; }
     }
 }

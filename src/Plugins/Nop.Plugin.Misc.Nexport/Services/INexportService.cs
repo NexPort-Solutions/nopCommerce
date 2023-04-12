@@ -245,7 +245,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsByCategoryId(int categoryId);
 
-        Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(
+        Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(IList<int> storeIds,
             int pageIndex = 0, int pageSize = int.MaxValue);
 
         Task InsertNexportRegistrationField(NexportRegistrationField registrationField);
@@ -323,6 +323,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         #endregion
 
-        Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string productName, NexportProductTypeEnum? productType, int storeId, int productId, int pageIndex = 0, int pageSize = int.MaxValue, bool excludeDefault = false);
+        Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string productName, NexportProductTypeEnum? productType, string storeName, int productId, int pageIndex = 0, int pageSize = int.MaxValue);
     }
 }

@@ -254,9 +254,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             searchModel.NopProductId = productModel.Id;
 
-            //prepare all the stores for the store search filter
-            await _baseAdminModelFactory.PrepareStoresAsync(searchModel.AvailableStores);
-
             //prepare available product types
             searchModel.AvailableNexportProductTypes.Add(new SelectListItem { Value = null, Text = "All" });
 
@@ -284,42 +281,10 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var mappings = await _nexportService.GetAllNexportProductMappingsAsync(productName: searchModel.SearchNexportProductName,
                 productType: searchModel.NexportProductType,
-                storeId: searchModel.SearchStoreId,
+                storeName: searchModel.SearchStoreName,
                 productId: nopProductId,
                 pageIndex: searchModel.Page - 1,
-                pageSize: searchModel.PageSize,
-                excludeDefault: true);
-
-
-
-            var defaultMapping = await _nexportService.GetProductMappingByNopProductId(nopProductId);
-            if (defaultMapping != null)
-            {
-                mappings.Insert(0, defaultMapping);
-                bool defaultRemoved = false;
-                if (searchModel.SearchNexportProductName != null)
-                {
-                    if (!defaultMapping.NexportProductName.Contains(searchModel.SearchNexportProductName))
-                    {
-                        mappings.Remove(defaultMapping);
-                        defaultRemoved = true;
-                    }
-
-                }
-
-                if (!defaultRemoved && searchModel.NexportProductType != null)
-                {
-                    if (defaultMapping.Type != searchModel.NexportProductType)
-                        mappings.Remove(defaultMapping);
-                }
-            }
-            else
-            {
-                mappings.Insert(0, new NexportProductMapping()
-                {
-                    NexportCatalogId = Guid.Empty
-                });
-            }
+                pageSize: searchModel.PageSize);
 
             // Prepare grid model
             var model = await new NexportProductMappingListModel().PrepareToGridAsync(searchModel, mappings, () =>
@@ -987,14 +952,29 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public Task<NexportCustomerAdditionalSettingsModel> PrepareNexportCustomerAdditionalSettingsModelAsync()
+        public async Task<NexportCustomerAdditionalSettingsModel> PrepareNexportCustomerAdditionalSettingsModelAsync()
         {
             var model = new NexportCustomerAdditionalSettingsModel();
 
             model.NexportRegistrationFieldCategorySearchModel.SetGridPageSize();
-            model.NexportRegistrationFieldSearchModel.SetGridPageSize();
+            model.NexportRegistrationFieldSearchModel =
+                await PrepareNexportRegistrationFieldSearchModelAsync(model.NexportRegistrationFieldSearchModel);
 
-            return Task.FromResult(model);
+            return model;
+        }
+
+        public async Task<NexportRegistrationFieldSearchModel> PrepareNexportRegistrationFieldSearchModelAsync(NexportRegistrationFieldSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            //prepare all the stores for the store search filter
+            await _baseAdminModelFactory.PrepareStoresAsync(searchModel.AvailableStores);
+
+            //prepare page parameters
+            searchModel.SetGridPageSize();
+
+            return searchModel;
         }
 
         public async Task<NexportRegistrationFieldCategoryListModel> PrepareNexportRegistrationFieldCategoryListModelAsync(
@@ -1041,7 +1021,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             searchModel.RegistrationFieldId = registrationField.Id;
 
-            searchModel.SetGridPageSize();
+          //  searchModel.SetGridPageSize();
 
             return Task.FromResult(searchModel);
         }
@@ -1053,7 +1033,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 throw new ArgumentNullException(nameof(searchModel));
 
             var registrationFields =
-                await _nexportService.GetNexportRegistrationFieldsPagination(searchModel.Page - 1, searchModel.PageSize);
+                await _nexportService.GetNexportRegistrationFieldsPagination(searchModel.SelectedStoreIds, searchModel.Page - 1, searchModel.PageSize);
 
             var model = await new NexportRegistrationFieldListModel().PrepareToGridAsync(searchModel,
                 registrationFields, () =>
@@ -1063,7 +1043,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         var fieldModel = field.ToModel<NexportRegistrationFieldModel>();
 
                         if (fieldModel.FieldCategoryId.HasValue)
-                            fieldModel.FieldCategoryName = (await _nexportService.GetNexportRegistrationFieldCategoryById(
+                            fieldModel.FieldCategoryName =
+                                (await _nexportService.GetNexportRegistrationFieldCategoryById(
                                     fieldModel.FieldCategoryId.Value)).Title;
 
                         var storeMappings = await _nexportService
@@ -1078,6 +1059,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                     fieldModel.StoreMappings += $"{store.Name}, ";
                                 else
                                     fieldModel.StoreMappings += $"{store.Name}";
+                                fieldModel.StoreMappingIds.Add(store.Id);
                             }
                         }
 
@@ -1540,7 +1522,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             var stores = await _nexportService.GetAllStoresAsync(storeName: searchModel.SearchStoreName,
                 storeUrl: searchModel.SearchStoreUrl, pageIndex: searchModel.Page - 1,
                 pageSize: searchModel.PageSize);
-            //var stores = (await _storeService.GetAllStoresAsync()).ToPagedList(searchModel);
 
             //prepare list model
             var model = new StoreListModel().PrepareToGrid(searchModel, stores, () =>

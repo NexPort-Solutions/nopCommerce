@@ -90,6 +90,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         Task<NexportCustomerAdditionalSettingsModel> PrepareNexportCustomerAdditionalSettingsModelAsync();
 
+        Task<NexportRegistrationFieldSearchModel> PrepareNexportRegistrationFieldSearchModelAsync(
+            NexportRegistrationFieldSearchModel searchModel);
+
         Task<NexportRegistrationFieldCategoryListModel> PrepareNexportRegistrationFieldCategoryListModelAsync(
             NexportRegistrationFieldCategorySearchModel searchModel);
 
