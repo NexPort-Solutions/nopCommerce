@@ -318,7 +318,7 @@
                 return false;
             });
 
-            canSetNexportUserId(@(ViewBag.GotUserFromNexport?@Model.CustomerId:null));
+            canSetNexportUserId(@Model.CustomerId);
 
             $("#setNexportUserId").on("click",
                 function(e) {
