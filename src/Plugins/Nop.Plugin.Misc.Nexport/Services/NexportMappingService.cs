@@ -1810,7 +1810,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public virtual async Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string productName, NexportProductTypeEnum? productType, string storeName, int productId, int pageIndex = 0, int pageSize = int.MaxValue)
         {
             //left join so we get the product mappings with null storeid (default mappings)
-            var productMappingsQuery = _nexportProductMappingRepository.Table
+            var productMappingsQuery = _nexportProductMappingRepository.Table.Where(x=>x.NopProductId==productId)
                 .GroupJoin(_storeRepository.Table, pmr => pmr.StoreId, sr => sr.Id,
                     (pmr, sr) => new {pmr, sr})
                 .SelectMany(joined => joined.sr.DefaultIfEmpty(),
@@ -1837,6 +1837,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 productMappingsQuery = productMappingsQuery.Where(productMappingStoreJoin => productMappingStoreJoin.productMapping.Type == productType);
 
             IList<NexportProductMapping> productMappingsList = await productMappingsQuery.Select(productMappingStoreJoin=>productMappingStoreJoin.productMapping).ToListAsync();
+
+            var defaultMapping = await GetProductMappingByNopProductId(productId);
+            if (defaultMapping == null)
+            {
+                productMappingsList.Insert(0, new NexportProductMapping()
+                {
+                    NexportCatalogId = Guid.Empty
+                });
+            }
 
             //paging
             return new PagedList<NexportProductMapping>(productMappingsList, pageIndex, pageSize);
