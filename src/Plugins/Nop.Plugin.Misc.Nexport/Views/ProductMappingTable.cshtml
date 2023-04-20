@@ -60,19 +60,70 @@
             AutoWidth = false
         }
     };
+
+    const string hideSearchNexportMappingsBlockAttributeName = "ProductPage.HideSearchNexportMappingsBlock";
+    var hideSearchNexportMappingsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchNexportMappingsBlockAttributeName);
 }
 <div class="row">
-    <div class="col-md-12">
-        <button type="button" id="delete-selected-mappings" class="btn bg-red">
-            <i class="fa fa-trash-o"></i>
-            @T("Admin.Common.Delete.Selected")
-        </button>
+    <div class="col-md-12" style="text-align: right; margin-bottom: 1rem;">
         <button class="btn btn-primary" id="duplicateProductMappingBtn">
             <i class="fa fa-clone"></i>
             Duplicate mapping
         </button>
-        <nop-action-confirmation asp-button-id="delete-selected-mappings" />
-        <nop-alert asp-alert-id="deleteSelectedMappingsFailed" />
+        <button type="button" id="delete-selected-mappings" class="btn bg-red">
+            <i class="fa fa-trash-o"></i>
+            @T("Admin.Common.Delete.Selected")
+        </button>
+        <nop-action-confirmation asp-button-id="delete-selected-mappings"/>
+        <nop-alert asp-alert-id="deleteSelectedMappingsFailed"/>
+    </div>
+    <div class="col-md-12">
+        <div class="card card-default card-search">
+            <div class="card-body">
+                <div class="row search-row @(!hideSearchNexportMappingsBlock ? "opened" : "")" data-hideAttribute="@hideSearchNexportMappingsBlockAttributeName">
+                    <div class="search-text">@T("Admin.Common.Search")</div>
+                    <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
+                    <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchNexportMappingsBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                </div>
+                <div class="search-body @(hideSearchNexportMappingsBlock ? "closed" : "")">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <div class="form-group row">
+                                <div class="col-md-4">
+                                    <nop-label asp-for="SearchStoreName" />
+                                </div>
+                                <div class="col-md-8">
+                                    <nop-editor asp-for="SearchStoreName" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-4">
+                                    <nop-label asp-for="NexportProductType" />
+                                </div>
+                                <div class="col-md-8">
+                                    <nop-select asp-for="NexportProductType" asp-items="Model.AvailableNexportProductTypes" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="form-group row">
+                                <div class="col-md-4">
+                                    <nop-label asp-for="SearchNexportProductName" />
+                                </div>
+                                <div class="col-md-8">
+                                    <nop-editor asp-for="SearchNexportProductName" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="text-center col-12">
+                            <button type="button" id="search-mappings" class="btn btn-primary btn-search"><i class="fas fa-search"></i>@T("Admin.Common.Search")</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="col-md-12">
         @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel

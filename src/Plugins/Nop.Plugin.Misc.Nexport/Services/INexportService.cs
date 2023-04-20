@@ -323,6 +323,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         #endregion
 
-        Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string productName, NexportProductTypeEnum? productType, string storeName, int productId, int pageIndex = 0, int pageSize = int.MaxValue);
+        Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchproductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue);
     }
 }

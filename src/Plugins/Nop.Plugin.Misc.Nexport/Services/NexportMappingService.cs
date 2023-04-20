@@ -1807,48 +1807,71 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return false;
         }
 
-        public virtual async Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string productName, NexportProductTypeEnum? productType, string storeName, int productId, int pageIndex = 0, int pageSize = int.MaxValue)
+        public virtual async Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchProductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue)
         {
-            //left join so we get the product mappings with null storeid (default mappings)
-            var productMappingsQuery = _nexportProductMappingRepository.Table.Where(x=>x.NopProductId==productId)
-                .GroupJoin(_storeRepository.Table, pmr => pmr.StoreId, sr => sr.Id,
-                    (pmr, sr) => new {pmr, sr})
-                .SelectMany(joined => joined.sr.DefaultIfEmpty(),
-                    (joined, store) => new {productMapping = joined.pmr, store = store});
+            //get product mappings for the product
+            var productMappings = _nexportProductMappingRepository.Table.Where(x => x.NopProductId == productId);
 
-            if (!string.IsNullOrEmpty(storeName))
+            //this checks if a default mapping exists for the product. if it does not then set insert empty default to true and if
+            //it doesnt get filtered out we insert it at the end
+            var insertEmptyDefault = await _nexportProductMappingRepository.Table.FirstOrDefaultAsync(x => x.NopProductId == productId && x.StoreId == null) == null;
+
+            var left = _storeRepository.Table
+                .GroupJoin(productMappings,
+                    s => s.Id,
+                    pm => pm.StoreId,
+                    (s, pm) => new { s, pm })
+                .SelectMany(joined => joined.pm.DefaultIfEmpty(),
+                    (joined, pm) => new { joined.s, pm });
+
+            var right = productMappings
+                .GroupJoin(_storeRepository.Table,
+                    pm => pm.StoreId,
+                    s => s.Id,
+                    (pm, s) => new { s, pm })
+                .SelectMany(joined => joined.s.DefaultIfEmpty(),
+                    (joined, s) => new { s = s, joined.pm });
+
+            var productMappingsQuery = left.Union(right);
+
+            if (!string.IsNullOrEmpty(searchStoreName))
             {
-                //insures that default mapping is included if user searches for it by store name
-                if ("Default".Contains(storeName,StringComparison.OrdinalIgnoreCase))
+                if ("Default".Contains(searchStoreName, StringComparison.OrdinalIgnoreCase))
                 {
-                    productMappingsQuery = productMappingsQuery.Where(productMappingStoreJoin =>
-                        productMappingStoreJoin.store.Name.Contains(storeName,StringComparison.OrdinalIgnoreCase) || productMappingStoreJoin.store.Name == null);
+                    productMappingsQuery = productMappingsQuery.Where(x =>
+                        x.s.Name.Contains(searchStoreName, StringComparison.OrdinalIgnoreCase) || x.s.Name==null);
                 }
                 else
                 {
-                    productMappingsQuery = productMappingsQuery.Where(productMappingStoreJoin =>
-                        productMappingStoreJoin.store.Name.Contains(storeName,StringComparison.OrdinalIgnoreCase));
+                    productMappingsQuery = productMappingsQuery.Where(x =>
+                        x.s.Name.Contains(searchStoreName, StringComparison.OrdinalIgnoreCase));
+                    insertEmptyDefault = false;
                 }
+                
             }
 
-            if (!string.IsNullOrEmpty(productName))
-                productMappingsQuery = productMappingsQuery.Where(productMappingStoreJoin => productMappingStoreJoin.productMapping.NexportProductName.Contains(productName,StringComparison.OrdinalIgnoreCase));
-            if (productType != null)
-                productMappingsQuery = productMappingsQuery.Where(productMappingStoreJoin => productMappingStoreJoin.productMapping.Type == productType);
-
-            IList<NexportProductMapping> productMappingsList = await productMappingsQuery.Select(productMappingStoreJoin=>productMappingStoreJoin.productMapping).ToListAsync();
-
-            var defaultMapping = await GetProductMappingByNopProductId(productId);
-            if (defaultMapping == null)
+            if (!string.IsNullOrEmpty(searchProductName))
             {
-                productMappingsList.Insert(0, new NexportProductMapping()
-                {
-                    NexportCatalogId = Guid.Empty
-                });
+                productMappingsQuery = productMappingsQuery.Where(x =>
+                    x.pm.NexportProductName.Contains(searchProductName, StringComparison.OrdinalIgnoreCase));
+                insertEmptyDefault = false;
             }
 
-            //paging
+            if (searchProductType != null)
+            {
+                productMappingsQuery = productMappingsQuery.Where(x => x.pm.Type == searchProductType);
+                insertEmptyDefault = false;
+            }
+
+            var productMappingsList = await productMappingsQuery.Select(x => x.pm ?? new NexportProductMapping() { StoreId = x.s.Id, NexportCatalogId = Guid.Empty }).ToListAsync();
+
+            // insert an empty value for default if there is no default for the product and it wasnt filtered out by the search
+            if (insertEmptyDefault)
+                productMappingsList.Insert(0, new NexportProductMapping {NexportCatalogId = Guid.Empty});
+            
+
             return new PagedList<NexportProductMapping>(productMappingsList, pageIndex, pageSize);
+
         }
     }
 }
