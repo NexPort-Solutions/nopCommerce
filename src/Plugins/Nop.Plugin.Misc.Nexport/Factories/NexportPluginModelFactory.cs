@@ -279,9 +279,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            var mappings = await _nexportService.GetAllNexportProductMappingsAsync(productName: searchModel.SearchNexportProductName,
-                productType: searchModel.NexportProductType,
-                storeName: searchModel.SearchStoreName,
+            var mappings = await _nexportService.GetAllNexportProductMappingsAsync(searchProductName: searchModel.SearchNexportProductName,
+                searchProductType: searchModel.NexportProductType,
+                searchStoreName: searchModel.SearchStoreName,
                 productId: nopProductId,
                 pageIndex: searchModel.Page - 1,
                 pageSize: searchModel.PageSize);
