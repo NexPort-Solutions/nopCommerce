@@ -246,9 +246,8 @@
 
         var renderCreateMapping = row.NexportCatalogId === "00000000-0000-0000-0000-000000000000";
         var buttonName;
-        var nopProductIdAvailable = @Json.Serialize(Model.NopProductId.HasValue);
 
-        if (nopProductIdAvailable) {
+        if (renderCreateMapping) {
             buttonName = "Create/edit mapping";
         } else {
             buttonName = "View/edit mapping details";
@@ -332,9 +331,9 @@
     function renderLocalDateForTableEntry(data, type, row, meta) {
         return data ? moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss") : null;
     }
+    checkDefaultMappingExisted();
 
     $(document).ready(function () {
-        checkDefaultMappingExisted();
 
         $("#product-mapping-container").on("xhr.dt", "#product-mappings-grid",
             function (e, settings, json, xhr) {
