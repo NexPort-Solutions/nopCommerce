@@ -44,6 +44,14 @@ using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Common;
 using Nop.Services.Logging;
 using Nop.Services.Plugins;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
+using Newtonsoft.Json;
+using Nop.Core.Domain.Common;
+using Nop.Services.Configuration;
+using Nop.Services.Payments;
+using Nop.Web.Areas.Admin.Models.Common;
+using Nop.Web.Areas.Admin.Models.Orders;
+using Nop.Web.Framework.Extensions;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -92,8 +100,14 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly CustomerSettings _customerSettings;
         private readonly CaptchaSettings _captchaSettings;
         private readonly ILogger _logger;
-
+        private readonly ICountryService _countryService;
+        private readonly IPaymentPluginManager _paymentPluginManager;
+        private readonly ISettingService _settingService;
+        private readonly NopHttpClient _nopHttpClient;
+        private readonly AddressSettings _addressSettings;
         private readonly NexportService _nexportService;
+        private readonly IAddressService _addressService;
+        private readonly IPriceFormatter _priceFormatter;
 
         #endregion
 
@@ -141,7 +155,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             CustomerSettings customerSettings,
             CaptchaSettings captchaSettings,
             ILogger logger,
-            NexportService nexportService)
+            NexportService nexportService, ICountryService countryService, IPaymentPluginManager paymentPluginManager, ISettingService settingService, NopHttpClient nopHttpClient, AddressSettings addressSettings, IAddressService addressService, IPriceFormatter priceFormatter)
         {
             _nexportSettings = nexportSettings;
             _catalogSettings = catalogSettings;
@@ -185,6 +199,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _captchaSettings = captchaSettings;
             _logger = logger;
             _nexportService = nexportService;
+            _countryService = countryService;
+            _paymentPluginManager = paymentPluginManager;
+            _settingService = settingService;
+            _nopHttpClient = nopHttpClient;
+            _addressSettings = addressSettings;
+            _addressService = addressService;
+            _priceFormatter = priceFormatter;
         }
 
         #endregion
@@ -1483,5 +1504,167 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             return Task.FromResult(model);
         }
+    
+        //public async Task<NexportOrderSearchModel> PrepareOrderSearchModelAsync(NexportOrderSearchModel searchModel)
+        //{
+        //    if (searchModel == null)
+        //        throw new ArgumentNullException(nameof(searchModel));
+
+        //    searchModel.IsLoggedInAsVendor = await _workContext.GetCurrentVendorAsync() != null;
+        //    searchModel.BillingPhoneEnabled = _addressSettings.PhoneEnabled;
+        //    var licenseCheckModel = new LicenseCheckModel();
+        //    try
+        //    {
+        //        var result = await _nopHttpClient.GetLicenseCheckDetailsAsync();
+        //        if (!string.IsNullOrEmpty(result))
+        //        {
+        //            licenseCheckModel = JsonConvert.DeserializeObject<LicenseCheckModel>(result);
+        //            if (licenseCheckModel.DisplayWarning == false && licenseCheckModel.BlockPages == false)
+        //            {
+        //                await _settingService.SetSettingAsync(
+        //                    $"{nameof(AdminAreaSettings)}.{nameof(AdminAreaSettings.CheckLicense)}", false);
+        //            }
+        //        }
+        //    }
+        //    catch { }
+        //    searchModel.LicenseCheckModel = licenseCheckModel;
+        //    await _baseAdminModelFactory.PrepareOrderStatusesAsync(searchModel.AvailableOrderStatuses);
+        //    if (searchModel.AvailableOrderStatuses.Any())
+        //    {
+        //        if (searchModel.OrderStatusIds?.Any() ?? false)
+        //        {
+        //            var ids = searchModel.OrderStatusIds.Select(id => id.ToString());
+        //            var statusItems = searchModel.AvailableOrderStatuses.Where(statusItem => ids.Contains(statusItem.Value)).ToList();
+        //            foreach(var statusItem in statusItems)
+        //            {
+        //                statusItem.Selected = true;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            searchModel.AvailableOrderStatuses.FirstOrDefault().Selected = true;
+        //        }
+        //    }
+
+        //    await _baseAdminModelFactory.PreparePaymentStatusesAsync(searchModel.AvailablePaymentStatuses);
+        //    if (searchModel.AvailablePaymentStatuses.Any())
+        //    {
+        //        if (searchModel.PaymentStatusIds?.Any() ?? false)
+        //        {
+        //            var ids = searchModel.PaymentStatusIds.Select(id => id.ToString());
+        //            var statusItems = searchModel.AvailablePaymentStatuses.Where(statusItem => ids.Contains(statusItem.Value)).ToList();
+        //            foreach(var statusItem in statusItems)
+        //            {
+        //                statusItem.Selected = true;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            searchModel.AvailablePaymentStatuses.FirstOrDefault().Selected = true;
+        //        }
+        //    }
+
+        //    await _baseAdminModelFactory.PrepareShippingStatusesAsync(searchModel.AvailableShippingStatuses);
+        //    if (searchModel.AvailableShippingStatuses.Any())
+        //    {
+        //        if (searchModel.ShippingStatusIds?.Any() ?? false)
+        //        {
+        //            var ids = searchModel.ShippingStatusIds.Select(id => id.ToString());
+        //            var statusItems = searchModel.AvailableShippingStatuses.Where(statusItem => ids.Contains(statusItem.Value)).ToList();
+        //            foreach(var statusItem in statusItems)
+        //            {
+        //                statusItem.Selected = true;
+        //            }
+        //        }
+        //        else
+        //            searchModel.AvailableShippingStatuses.FirstOrDefault().Selected = true;
+        //    }
+        //    await _baseAdminModelFactory.PrepareStoresAsync(searchModel.AvailableStores);
+        //    await _baseAdminModelFactory.PrepareVendorsAsync(searchModel.AvailableVendors);
+        //    await _baseAdminModelFactory.PrepareWarehousesAsync(searchModel.AvailableWarehouses);
+        //    searchModel.AvailablePaymentMethods = (await _paymentPluginManager.LoadAllPluginsAsync()).Select(method =>
+        //        new SelectListItem { Text = method.PluginDescriptor.FriendlyName, Value = method.PluginDescriptor.SystemName }).ToList();
+        //    searchModel.AvailablePaymentMethods.Insert(0, new SelectListItem { Text = await _localizationService.GetResourceAsync("Admin.Common.All"), Value = string.Empty });
+        //    searchModel.AvailableCountries = (await _countryService.GetAllCountriesForBillingAsync(showHidden: true))
+        //        .Select(country => new SelectListItem { Text = country.Name, Value = country.Id.ToString() }).ToList();
+        //    searchModel.AvailableCountries.Insert(0, new SelectListItem { Text = await _localizationService.GetResourceAsync("Admin.Common.All"), Value = "0" });
+        //    searchModel.SetGridPageSize();
+        //    searchModel.HideStoresList = _catalogSettings.IgnoreStoreLimitations || searchModel.AvailableStores.SelectionIsNotPossible();
+            
+        //    //var store = await _storeService.GetStoreByIdAsync(searchModel.StoreId);
+        //    //searchModel.StoreUrl = store.Url;
+        //    return searchModel;
+        //}
+        public async Task<NexportOrderListModel> PrepareOrderListModelAsync(OrderSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            //get parameters to filter orders
+            var orderStatusIds = (searchModel.OrderStatusIds?.Contains(0) ?? true) ? null : searchModel.OrderStatusIds.ToList();
+            var paymentStatusIds = (searchModel.PaymentStatusIds?.Contains(0) ?? true) ? null : searchModel.PaymentStatusIds.ToList();
+            var shippingStatusIds = (searchModel.ShippingStatusIds?.Contains(0) ?? true) ? null : searchModel.ShippingStatusIds.ToList();
+            var currentVendor = await _workContext.GetCurrentVendorAsync();
+            if (currentVendor != null)
+                searchModel.VendorId = currentVendor.Id;
+            var startDateValue = !searchModel.StartDate.HasValue ? null
+                : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.StartDate.Value, await _dateTimeHelper.GetCurrentTimeZoneAsync());
+            var endDateValue = !searchModel.EndDate.HasValue ? null
+                : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.EndDate.Value, await _dateTimeHelper.GetCurrentTimeZoneAsync()).AddDays(1);
+            var product = await _productService.GetProductByIdAsync(searchModel.ProductId);
+            var filterByProductId = product != null && (currentVendor == null || product.VendorId == currentVendor.Id)
+                ? searchModel.ProductId : 0;
+
+            //get orders
+            var orders = await _orderService.SearchOrdersAsync(storeId: searchModel.StoreId,
+                vendorId: searchModel.VendorId,
+                productId: filterByProductId,
+                warehouseId: searchModel.WarehouseId,
+                paymentMethodSystemName: searchModel.PaymentMethodSystemName,
+                createdFromUtc: startDateValue,
+                createdToUtc: endDateValue,
+                osIds: orderStatusIds,
+                psIds: paymentStatusIds,
+                ssIds: shippingStatusIds,
+                billingPhone: searchModel.BillingPhone,
+                billingEmail: searchModel.BillingEmail,
+                billingLastName: searchModel.BillingLastName,
+                billingCountryId: searchModel.BillingCountryId,
+                orderNotes: searchModel.OrderNotes,
+                pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
+
+            //prepare list model
+            var model = await new NexportOrderListModel().PrepareToGridAsync(searchModel, orders, () =>
+            {
+                //fill in model values from the entity
+                return orders.SelectAwait(async order =>
+                {
+                    var billingAddress = await _addressService.GetAddressByIdAsync(order.BillingAddressId);
+                    var storeById = await _storeService.GetStoreByIdAsync(order.StoreId);
+                    var orderModel = new NexportOrderModel
+                    {
+                        Id = order.Id,
+                        OrderStatusId = order.OrderStatusId,
+                        PaymentStatusId = order.PaymentStatusId,
+                        ShippingStatusId = order.ShippingStatusId,
+                        CustomerEmail = billingAddress.Email,
+                        CustomerFullName = $"{billingAddress.FirstName} {billingAddress.LastName}",
+                        CustomerId = order.CustomerId,
+                        CustomOrderNumber = order.CustomOrderNumber,
+                        StoreUrl = storeById?.Url,
+                        //convert dates to the user time
+                        CreatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(order.CreatedOnUtc, DateTimeKind.Utc),
+                        StoreName = storeById?.Name ?? "Deleted",
+                        OrderStatus = await _localizationService.GetLocalizedEnumAsync(order.OrderStatus),
+                        PaymentStatus = await _localizationService.GetLocalizedEnumAsync(order.PaymentStatus),
+                        ShippingStatus = await _localizationService.GetLocalizedEnumAsync(order.ShippingStatus),
+                        OrderTotal = await _priceFormatter.FormatPriceAsync(order.OrderTotal, true, false)
+                    };
+                    return orderModel;
+                });
+            });
+            return model;
+        }
+
     }
 }

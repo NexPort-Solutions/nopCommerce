@@ -32,7 +32,9 @@
   <ItemGroup>
     <None Remove="Areas\Admin\Views\Category\NexportOptions.cshtml" />
     <None Remove="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml" />
-    <None Remove="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportOrder\List.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportOrder\_OrderDetails.Info.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportOrder\_OrderDetails.NexportOrderApproval.cshtml" />
     <None Remove="Areas\Admin\Views\Product\Edit.cshtml" />
     <None Remove="Areas\Admin\Views\Product\ProductMapping\DuplicateProductMapping.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Category\Create.cshtml" />
@@ -82,7 +84,6 @@
     <None Remove="Views\MapNexportProductList.cshtml" />
     <None Remove="Views\NexportTrainings.cshtml" />
     <None Remove="Views\Order\CustomerOrders.cshtml" />
-    <None Remove="Views\Order\_OrderDetails.Info.cshtml" />
     <None Remove="Views\ProductMappingDetails.cshtml" />
     <None Remove="Views\ProductMappingDetailsPopup.cshtml" />
     <None Remove="Views\ProductMappingGroupMembership.cshtml" />
@@ -127,7 +128,13 @@
     <Content Include="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml">
+    <Content Include="Areas\Admin\Views\NexportOrder\List.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportOrder\_OrderDetails.Info.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportOrder\_OrderDetails.NexportOrderApproval.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Product\ProductMapping\DuplicateProductMapping.cshtml">
@@ -278,9 +285,6 @@
     <Content Include="Views\Order\CustomerOrders.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\Order\_OrderDetails.Info.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Views\ProductMappingDetails.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -410,6 +414,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Areas\Admin\Factories\" />
     <Folder Include="Services\Caching\" />
   </ItemGroup>
 

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Stores;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
@@ -15,6 +16,7 @@ using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
+using Nop.Web.Areas.Admin.Models.Orders;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -136,5 +138,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         Task<NexportOrderInvoiceItemModel> PrepareNexportOrderInvoiceItemModelAsync(NexportOrderInvoiceItemModel model,
             NexportOrderInvoiceItem orderInvoiceItem);
+
+        Task<NexportOrderListModel> PrepareOrderListModelAsync(OrderSearchModel searchModel);
     }
 }

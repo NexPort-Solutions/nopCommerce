@@ -1,7 +1,9 @@
 ﻿@model OrderSearchModel
 
-@inject IStoreService storeService
+@inject IStoreService StoreService
 @using Nop.Services.Stores
+@using Nop.Services.Common
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders
 
 @{
     //page title
@@ -285,13 +287,13 @@
 
                         <div class="card card-default">
                             <div class="card-body">
-                                <nop-doc-reference asp-string-resource="@T("Admin.Documentation.Reference.Orders", Docs.Orders + Utm.OnAdmin)" />
+                                <nop-doc-reference asp-string-resource="@T("Admin.Documentation.Reference.Orders", NopLinksDefaults.Docs.Orders + NopLinksDefaults.Utm.OnAdmin)" />
 
                                 @{
                                     var gridModel = new DataTablesModel
                                     {
                                         Name = "orders-grid",
-                                        UrlRead = new DataUrl("OrderList", "Order", null),
+                                        UrlRead = new DataUrl("OrderList", "NexportOrder", null),
                                         SearchButtonId = "search-orders",
                                         Length = Model.PageSize,
                                         LengthMenu = Model.AvailablePageSizes,
@@ -360,11 +362,12 @@
                                         Title = T("Admin.Orders.Fields.Customer").Text,
                                         Render = new RenderLink(new DataUrl("~/Admin/Customer/Edit", nameof(OrderModel.CustomerId)))
                                     });
-                                    gridModel.ColumnCollection.Add(new ColumnProperty(nameof(OrderModel.StoreName))
+                                    gridModel.ColumnCollection.Add(new ColumnProperty(nameof(NexportOrderModel.StoreName))
                                     {
                                         Title = T("Admin.Orders.Fields.Store").Text,
                                         Width = "100",
-                                        Visible = (await storeService.GetAllStoresAsync()).Count > 1
+                                        Visible = (await StoreService.GetAllStoresAsync()).Count >= 1,
+                                        Render = new RenderCustom("renderStoreName")
                                     });
                                     gridModel.ColumnCollection.Add(new ColumnProperty(nameof(OrderModel.CreatedOn))
                                     {
@@ -504,6 +507,13 @@
             });
         }
     });
+
+    function renderStoreName(data, type, row, meta) {
+        const openTag1 = "<a href=\"";
+        const openTag2 = "\">";
+        const closeTag = "<\a >";
+        return openTag1 + row.StoreUrl + openTag2 + data + closeTag;
+    }
 </script>
 <div id="license-window" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
