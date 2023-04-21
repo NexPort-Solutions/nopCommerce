@@ -381,6 +381,9 @@
         });
 
         $("#btnRefreshMappings").click(function () {
+            
+            checkDefaultMappingExisted()
+
             // Refresh grid
             $("#product-mappings-grid").DataTable().draw(false);
 
