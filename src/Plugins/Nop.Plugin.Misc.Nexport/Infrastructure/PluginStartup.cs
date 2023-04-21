@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Exceptions;
 using FluentMigrator.Runner.Initialization;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using NexportApi.Client;
 using Nop.Core.Infrastructure;
 using Nop.Data;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
 using Nop.Plugin.Misc.Nexport.Controllers;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Services.Configuration;
@@ -21,6 +23,7 @@ using Nop.Plugin.Misc.Nexport.Migrations;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Customers;
 using Nop.Services.Orders;
+using Nop.Web.Areas.Admin.Factories;
 using ILogger = Nop.Services.Logging.ILogger;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure
