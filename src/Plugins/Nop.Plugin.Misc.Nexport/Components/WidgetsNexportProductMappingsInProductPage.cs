@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Caching;
+using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Components;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
@@ -17,17 +18,20 @@ namespace Nop.Plugin.Misc.Nexport.Components
         private readonly IStaticCacheManager _cacheManager;
         private readonly NexportService _nexportService;
         private readonly IPermissionService _permissionService;
+        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
 
         public WidgetsNexportProductMappingsInProductPage(
             NexportSettings nexportSettings,
             NexportService nexportService,
             IStaticCacheManager cacheManager,
-            IPermissionService permissionService)
+            IPermissionService permissionService,
+        INexportPluginModelFactory nexportPluginModelFactory)
         {
             _nexportSettings = nexportSettings;
             _nexportService = nexportService;
             _cacheManager = cacheManager;
             _permissionService = permissionService;
+            _nexportPluginModelFactory = nexportPluginModelFactory;
         }
 
         public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
@@ -41,7 +45,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
             if (productModel == null || productModel.Id < 1)
                 return Content("");
 
-            var model = new NexportProductMappingListSearchModel { NopProductId = productModel.Id };
+            var model = await _nexportPluginModelFactory.PrepareNexportProductMappingListSearchModelAsync(new NexportProductMappingListSearchModel(), productModel);
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductMappingsInProductPage.cshtml", model);
         }

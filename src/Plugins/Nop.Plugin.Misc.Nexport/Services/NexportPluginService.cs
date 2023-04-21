@@ -233,6 +233,94 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     Enabled = true
                 });
             }
+
+            if (!customerActivityLogTypes.Any(x =>
+                    x.SystemKeyword.Equals(NexportDefaults.DELETE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE)))
+            {
+                await _activityLogTypeRepository.InsertAsync(new ActivityLogType
+                {
+                    Name = "Delete Nexport product mapping",
+                    SystemKeyword = NexportDefaults.DELETE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
+                    Enabled = true
+                });
+            }
+
+            if (!customerActivityLogTypes.Any(x =>
+                    x.SystemKeyword.Equals(NexportDefaults.EDIT_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE)))
+            {
+                await _activityLogTypeRepository.InsertAsync(new ActivityLogType
+                {
+                    Name = "Edit Nexport product mapping",
+                    SystemKeyword = NexportDefaults.EDIT_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
+                    Enabled = true
+                });
+            }
+
+            if (!customerActivityLogTypes.Any(x =>
+                    x.SystemKeyword.Equals(NexportDefaults.MODIFY_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE)))
+            {
+                await _activityLogTypeRepository.InsertAsync(new ActivityLogType
+                {
+                    Name = "Modify Nexport product mapping",
+                    SystemKeyword = NexportDefaults.MODIFY_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
+                    Enabled = true
+                });
+            }
+
+            if (!customerActivityLogTypes.Any(x =>
+                    x.SystemKeyword.Equals(NexportDefaults.DUPLICATE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE)))
+            {
+                await _activityLogTypeRepository.InsertAsync(new ActivityLogType
+                {
+                    Name = "Duplicate Nexport product mapping",
+                    SystemKeyword = NexportDefaults.DUPLICATE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
+                    Enabled = true
+                });
+            }
+
+            if (!customerActivityLogTypes.Any(x =>
+                    x.SystemKeyword.Equals(NexportDefaults.DELETE_NEXPORT_GROUP_MEMBERSHIP_MAPPING_ACTIVITY_LOG_TYPE)))
+            {
+                await _activityLogTypeRepository.InsertAsync(new ActivityLogType
+                {
+                    Name = "Duplicate Nexport product mapping group membership",
+                    SystemKeyword = NexportDefaults.DELETE_NEXPORT_GROUP_MEMBERSHIP_MAPPING_ACTIVITY_LOG_TYPE,
+                    Enabled = true
+                });
+            }
+
+            if (!customerActivityLogTypes.Any(x =>
+                    x.SystemKeyword.Equals(NexportDefaults.INSERT_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE)))
+            {
+                await _activityLogTypeRepository.InsertAsync(new ActivityLogType
+                {
+                    Name = "Insert Nexport product mapping supplemental info question ",
+                    SystemKeyword = NexportDefaults.INSERT_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
+                    Enabled = true
+                });
+            }
+
+            if (!customerActivityLogTypes.Any(x =>
+                    x.SystemKeyword.Equals(NexportDefaults.DELETE_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE)))
+            {
+                await _activityLogTypeRepository.InsertAsync(new ActivityLogType
+                {
+                    Name = "Delete Nexport product mapping supplemental info question",
+                    SystemKeyword = NexportDefaults.DELETE_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
+                    Enabled = true
+                });
+            }
+
+            if (!customerActivityLogTypes.Any(x =>
+                    x.SystemKeyword.Equals(NexportDefaults.DELETE_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE)))
+            {
+                await _activityLogTypeRepository.InsertAsync(new ActivityLogType
+                {
+                    Name = "Purchase product for customer",
+                    SystemKeyword = NexportDefaults.NEXPORT_PURCHASE_PRODUCT_FOR_CUSTOMER,
+                    Enabled = true
+                });
+            }
         }
 
         public async Task DeleteActivityLogTypesAsync()
@@ -428,7 +516,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.SupplementalInfoAnswers", "Supplemental info answers");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.PageTitle", "Supplemental info answers");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.Edit.PageTitle", "Modify your answer(s)");
-
             await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Configuration.Settings.CustomerUser.Nexport.RegistrationFields", "Nexport registration fields");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Customers.Nexport.RegistrationFields.Description", "You can create and manage the registration fields and its categories available during registration below.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Customers.Nexport.RegistrationField.Categories", "Registration field categories");
@@ -515,6 +602,24 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Errors.SingleProductInCatalog", "You can only purchase single product within the same catalog.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart", "Cannot purchase more than one for some products in this shopping cart due to store restriction.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase", "Cannot purchase this product.");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName", "Product Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName.Hint", "Filter product mapping list by nexport product name.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType", "Type");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType.Hint", "Filter product mapping list by nexport product type.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CustomerSettings.RegistrationFields.SearchStoreId", "Store");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CustomerSettings.RegistrationFields.SearchStoreId.Hint", "Filter product mapping list by store.");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStoreName", "Store");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStoreName.Hint", "Filter product mapping list by store.");
+            
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreName", "Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreName.Hint", "Filter stores list by name.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreUrl", "URL");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreUrl.Hint", "Filter stores list by URL.");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName", "Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName.Hint", "Filter registration fields list by name.");
         }
 
         public async Task DeleteResourcesAsync()
@@ -749,6 +854,24 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Errors.SingleProductInCatalog");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Errors.OverMaximumQuantityAllowedInShoppingCart");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductName.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.CustomerSettings.RegistrationFields.SearchStoreId");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.CustomerSettings.RegistrationFields.SearchStoreId.Hint");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStoreName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStoreName.Hint");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreName.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreUrl");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreUrl.Hint");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName.Hint");
         }
 
         public async Task InstallPermissionProviderAsync()

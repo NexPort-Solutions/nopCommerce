@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -17,6 +18,25 @@ using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Vendors;
 using Nop.Core.Events;
 using Nop.Data;
+using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
+using Nop.Plugin.Misc.Nexport.Infrastructure.ModelState;
+using Nop.Plugin.Misc.Nexport.Models;
+using Nop.Plugin.Misc.Nexport.Models.Catalog;
+using Nop.Plugin.Misc.Nexport.Models.Category;
+using Nop.Plugin.Misc.Nexport.Models.Order;
+using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
+using Nop.Plugin.Misc.Nexport.Models.Stores;
+using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
+using Nop.Plugin.Misc.Nexport.Models.Syllabus;
+using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
@@ -41,26 +61,6 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
-using Nop.Plugin.Misc.Nexport.Domain;
-using Nop.Plugin.Misc.Nexport.Domain.Enums;
-using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
-using Nop.Plugin.Misc.Nexport.Extensions;
-using Nop.Plugin.Misc.Nexport.Factories;
-using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
-using Nop.Plugin.Misc.Nexport.Infrastructure.ModelState;
-using Nop.Plugin.Misc.Nexport.Models;
-using Nop.Plugin.Misc.Nexport.Models.Catalog;
-using Nop.Plugin.Misc.Nexport.Models.Category;
-using Nop.Plugin.Misc.Nexport.Models.Order;
-using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
-using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
-using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
-using Nop.Plugin.Misc.Nexport.Models.Stores;
-using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
-using Nop.Plugin.Misc.Nexport.Models.Syllabus;
-using Nop.Plugin.Misc.Nexport.Services;
-using Nop.Plugin.Misc.Nexport.Services.Security;
-using System.Threading.Tasks;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
@@ -786,7 +786,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [Area(AreaNames.Admin)]
         [HttpPost]
         [AutoValidateAntiforgeryToken]
-        public async Task<IActionResult> GetProductMappings(NexportProductMappingSearchModel searchModel, Guid? nexportProductId, NexportProductTypeEnum? nexportProductType, int? nopProductId)
+        public async Task<IActionResult> GetProductMappings(NexportProductMappingListSearchModel searchModel, int? nopProductId)
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
                 !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
@@ -795,14 +795,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var model = new NexportProductMappingListModel();
 
-            if (nexportProductId.HasValue)
-            {
-                model = await _nexportPluginModelFactory.PrepareNexportProductMappingListModelAsync(searchModel, nexportProductId.Value, nexportProductType.Value);
-            }
-            else if (nopProductId.HasValue)
-            {
+            if (nopProductId.HasValue)
                 model = await _nexportPluginModelFactory.PrepareNexportProductMappingListModelAsync(searchModel, nopProductId.Value);
-            }
 
             return Json(model);
         }
@@ -853,8 +847,27 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                     await _nexportService.UpdateNexportProductMapping(productMapping);
 
+                    // get nop product for activity log
+                    var nopProduct = await _productService.GetProductByIdAsync(model.NopProductId);
+
+                    //get store for activity log
+                    var storeText = "Store Name: Default";
+                    if (productMapping.StoreId.HasValue)
+                    {
+                        var currStore = await _storeService.GetStoreByIdAsync(productMapping.StoreId.Value);
+                        if (currStore != null)
+                        {
+                            storeText = $"Store ID: {currStore.Id}, Name: {currStore.Name}";
+                        }
+
+                    }
+
+                    //activity log
+                    await _customerActivityService.InsertActivityAsync(
+                        NexportDefaults.EDIT_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE, $"Edited Nexport product mapping ({storeText}, Nexport product ID: {productMapping.NexportCatalogSyllabusLinkId}, Name: {productMapping.NexportProductName}) in  product (ID: {nopProduct.Id}, Name: {nopProduct.Name})", productMapping);
+
                     var questionMappings =
-                        await _nexportService.GetNexportSupplementalInfoQuestionMappingsByProductMappingId(productMapping.Id);
+                    await _nexportService.GetNexportSupplementalInfoQuestionMappingsByProductMappingId(productMapping.Id);
 
                     var currentQuestionIds = questionMappings.Select(x => x.QuestionId).ToList();
                     var removalQuestionIds = currentQuestionIds.Except(model.SupplementalInfoQuestionIds);
@@ -869,6 +882,11 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                                         QuestionId = questionId,
                                         UtcDateCreated = DateTime.UtcNow
                                     });
+
+                        //activity log
+                        await _customerActivityService.InsertActivityAsync(
+                            NexportDefaults.INSERT_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE, $"Inserted question (ID:{questionId}) for product mapping ({storeText}, Nexport product ID: {productMapping.NexportCatalogSyllabusLinkId}, Name: {productMapping.NexportProductName}) in  product (ID: {nopProduct.Id}, Name: {nopProduct.Name})", productMapping);
+
                     }
 
                     foreach (var questionId in removalQuestionIds)
@@ -878,6 +896,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                         {
                             await _nexportService.DeleteNexportSupplementalInfoQuestionMapping(deletingMapping);
                         }
+
+                        //activity log
+                        await _customerActivityService.InsertActivityAsync(
+                            NexportDefaults.DELETE_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE, $"Deleted question (ID:{questionId}) from product mapping ({storeText}, Nexport product ID: {productMapping.NexportCatalogSyllabusLinkId}, Name: {productMapping.NexportProductName}) in  product (ID: {nopProduct.Id}, Name: {nopProduct.Name})", productMapping);
                     }
 
                     if (!continueEditing)
@@ -942,6 +964,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(await _nexportService.HasDefaultMapping(productId));
         }
 
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
         [AutoValidateAntiforgeryToken]
         [HttpPost]
         public async Task<IActionResult> DeleteMappings(ICollection<int> selectedIds)
@@ -959,11 +983,31 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     {
                         await _nexportService.DeleteNexportProductMapping(mapping);
 
+                        var nopProduct = await _productService.GetProductByIdAsync(mapping.NopProductId);
+
+                        string storeText = "";
+
+                        if (mapping.StoreId.HasValue)
+                        {
+                            var store = await _storeService.GetStoreByIdAsync(mapping.StoreId.Value);
+                            if (store != null)
+                                storeText = $"Store ID: {store.Id}, Name: {store.Name}";
+                        }
+
+
+                        //activity log
+                        await _customerActivityService.InsertActivityAsync(NexportDefaults.DELETE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
+                            $"Deleted Nexport product mapping ({storeText}, Nexport Product ID: {mapping.NexportCatalogSyllabusLinkId}, Name: {mapping.NexportProductName}) in product (ID: {nopProduct.Id}, Name: {nopProduct.Name})", mapping);
+
                         var groupMembershipMappings =
                             await _nexportService.GetProductGroupMembershipMappings(mapping.Id);
                         foreach (var groupMembershipMapping in groupMembershipMappings)
                         {
                             await _nexportService.DeleteGroupMembershipMapping(groupMembershipMapping);
+
+                            //activity log
+                            await _customerActivityService.InsertActivityAsync(NexportDefaults.DELETE_NEXPORT_GROUP_MEMBERSHIP_MAPPING_ACTIVITY_LOG_TYPE,
+                                $"Deleted Nexport group membership mapping (Group ID: {groupMembershipMapping.NexportGroupId}, Group Name: {groupMembershipMapping.NexportGroupName}) from product mapping (ID: {mapping.NexportCatalogSyllabusLinkId}, Name: {mapping.NexportProductName}) in product (ID: {nopProduct.Id}, Name: {nopProduct.Name})", mapping);
                         }
                     }
                 }
@@ -1068,6 +1112,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             {
                 try
                 {
+                    // get mapping before it was modified for activity log
+                    var oldMapping = await _nexportService.GetProductMappingByNopProductId(model.NopProductId, model.StoreId);
+
                     await _nexportService.MapNexportProduct(model);
 
                     ViewBag.RefreshPage = true;
@@ -1077,6 +1124,26 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     var newMapping = await _nexportService.GetProductMappingByNopProductId(model.NopProductId, model.StoreId);
 
                     result.MappingId = newMapping.Id;
+
+                    // get nop product for activity log
+                    var nopProduct = await _productService.GetProductByIdAsync(model.NopProductId);
+
+                    //get store for activity log
+                    var storeText = "Store Name: Default";
+                    if (newMapping.StoreId.HasValue)
+                    {
+                        var currStore = await _storeService.GetStoreByIdAsync(newMapping.StoreId.Value);
+                        if (currStore != null)
+                        {
+                            storeText = $"Store ID: {currStore.Id}, Name: {currStore.Name}";
+                        }
+
+                    }
+
+                    //activity log
+                    await _customerActivityService
+                        .InsertActivityAsync(NexportDefaults.MODIFY_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
+                        $"Modified Nexport product mapping from ({storeText}, Nexport product ID: {oldMapping.NexportCatalogSyllabusLinkId}, Name: {oldMapping.NexportProductName}, Type: {oldMapping.Type}, Catalog ID: {oldMapping.NexportCatalogId}, Syllabus ID: {oldMapping.NexportSyllabusId}) to ({storeText}, Nexport product ID: {newMapping.NexportCatalogSyllabusLinkId}, Name: {newMapping.NexportProductName}, Type: {newMapping.Type}, Catalog ID: {oldMapping.NexportCatalogId}, Syllabus ID: {newMapping.NexportSyllabusId}) in product (ID: {nopProduct.Id}, Name: {nopProduct.Name})", newMapping);
                 }
                 catch (Exception ex)
                 {
@@ -1217,9 +1284,31 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                     if (productMapping != null)
                     {
+                        //get product for activity log
+                        var nopProduct = await _productService.GetProductByIdAsync(productMapping.NopProductId);
+
+                        //get store for activity log
+                        var storeText = "Store Name: Default";
+                        if (productMapping.StoreId.HasValue)
+                        {
+                            var currStore = await _storeService.GetStoreByIdAsync(productMapping.StoreId.Value);
+                            if (currStore != null)
+                            {
+                                storeText = $"Store ID: {currStore.Id}, Name: {currStore.Name}";
+                            }
+
+                        }
+
                         foreach (var storeId in model.DestinationStoreIds)
                         {
                             await _nexportService.DuplicateProductMappingAsync(productMapping, storeId);
+
+                            // new store for activity log
+                            var newStore = await _storeService.GetStoreByIdAsync(storeId);
+
+                            //activity log
+                            await _customerActivityService.InsertActivityAsync(NexportDefaults.DUPLICATE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
+                                $"Duplicated Nexport product mapping from ({storeText}, Nexport product ID: {productMapping.NexportCatalogSyllabusLinkId}, Name: {productMapping.NexportProductName}) for Store (ID: {newStore.Id}, Name: {newStore.Name}) in Product (ID: {nopProduct.Id}, Name: {nopProduct.Name}) ", productMapping);
                         }
                     }
                 }

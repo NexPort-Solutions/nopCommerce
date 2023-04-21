@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,29 +24,26 @@ using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Events;
 using Nop.Data;
-using Nop.Services.Catalog;
-using Nop.Services.Configuration;
-using Nop.Services.Events;
-using Nop.Services.Localization;
-using Nop.Services.Logging;
-using Nop.Services.Messages;
-using Nop.Services.Security;
-using Nop.Services.Stores;
-using Nop.Services.Common;
-using Nop.Services.Orders;
-using Nop.Services.Customers;
-using Nop.Services.Directory;
-using Nop.Services.Helpers;
-using Nop.Services.Plugins;
-using Nop.Web.Framework;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
-using Nop.Services.Caching;
-using System.Threading.Tasks;
+using Nop.Services.Catalog;
+using Nop.Services.Common;
+using Nop.Services.Configuration;
+using Nop.Services.Customers;
+using Nop.Services.Directory;
+using Nop.Services.Helpers;
+using Nop.Services.Localization;
+using Nop.Services.Logging;
+using Nop.Services.Messages;
+using Nop.Services.Orders;
+using Nop.Services.Plugins;
+using Nop.Services.Security;
+using Nop.Services.Stores;
+using Nop.Web.Framework;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -114,6 +112,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IWorkContext _workContext;
         private readonly IStoreContext _storeContext;
         private readonly ILogger _logger;
+        private readonly IRepository<Store> _storeRepository;
 
         #endregion
 
@@ -177,7 +176,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IActionContextAccessor actionContextAccessor,
             IWorkContext workContext,
             IStoreContext storeContext,
-            ILogger logger)
+            ILogger logger,
+            IRepository<Store> storeRepository)
         {
             _nexportApiService = nexportApiService;
             _emailAccountSettings = emailAccountSettings;
@@ -238,6 +238,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _workContext = workContext;
             _storeContext = storeContext;
             _logger = logger;
+            _storeRepository = storeRepository;
         }
 
         #endregion
@@ -2712,6 +2713,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
 
             return result;
+        }
+
+        public virtual async Task<PagedList<Store>> GetAllStoresAsync(string storeName, string storeUrl, int pageIndex = 0, int pageSize = int.MaxValue)
+        {
+            var stores = await _storeRepository.GetAllAsync(async query =>
+            {
+                if (!string.IsNullOrEmpty(storeName))
+                    query = query.Where(x => x.Name.Contains(storeName));
+                if (!string.IsNullOrEmpty(storeUrl))
+                    query = query.Where(x => x.Url.Contains(storeUrl));
+                return query;
+            });
+
+            //paging
+            return new PagedList<Store>(stores, pageIndex, pageSize);
         }
     }
 }
