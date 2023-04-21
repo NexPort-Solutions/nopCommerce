@@ -37,7 +37,10 @@
 
   <ItemGroup>
     <None Remove="Areas\Admin\Views\Category\NexportOptions.cshtml" />
-    <None Remove="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml" />
+    <None Remove="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportOrder\List.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportOrder\_OrderDetails.Info.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportOrder\_OrderDetails.NexportOrderApproval.cshtml" />
     <None Remove="Areas\Admin\Views\Product\Edit.cshtml" />
     <None Remove="Areas\Admin\Views\Product\ProductMapping\DuplicateProductMapping.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\Category\Create.cshtml" />
@@ -129,7 +132,16 @@
     <Content Include="Areas\Admin\Views\Category\NexportOptions.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml">
+    <Content Include="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportOrder\List.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportOrder\_OrderDetails.Info.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportOrder\_OrderDetails.NexportOrderApproval.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Product\ProductMapping\DuplicateProductMapping.cshtml">
@@ -412,6 +424,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Areas\Admin\Factories\" />
     <Folder Include="Services\Caching\" />
   </ItemGroup>
 
