@@ -62,12 +62,6 @@
     };
     var groupMembershipChildTableColumns = new List<ColumnProperty>
     {
-        new(nameof(NexportProductGroupMembershipMappingModel.Id))
-        {
-            Title = "Id",
-            Width = "400",
-            Render = new RenderCustom("renderId")
-        },
         new(nameof(NexportProductGroupMembershipMappingModel.NexportGroupId))
         {
             Title = "Group Id",
@@ -85,19 +79,7 @@
             Title = "Group Short Name",
             Width = "400",
             Render = new RenderCustom("renderNexportGroupShortName")
-        },
-        new(nameof(NexportProductGroupMembershipMappingModel.NexportProductMappingId))
-        {
-            Title = "Product Mapping Id",
-            Width = "400",
-            Render = new RenderCustom("renderNexportProductMappingId")
-        },
-        new(nameof(NexportProductGroupMembershipMappingModel.CustomProperties))
-        {
-            Title = "Custom Properties",
-            Width = "400",
-            Render = new RenderCustom("renderCustomProperties")
-        },
+        }
     };
     var childGroupTable = new DataTablesModel
     {
@@ -129,6 +111,8 @@
         ColumnCollection = productMappingTableColumns,
         ChildTable = childGroupTable
     };
+    const string hideSearchNexportMappingsBlockAttributeName = "ProductPage.HideSearchNexportMappingsBlock";
+    var hideSearchNexportMappingsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchNexportMappingsBlockAttributeName);
 }
 <div class="row">
     <div class="col-md-12" style="text-align: right; margin-bottom: 1rem;">
@@ -375,51 +359,15 @@
     }
     checkDefaultMappingExisted();
 
-    function renderId(data, type, row, meta) {
-        console.log(data);
-        console.log(type);
-        console.log(row);
-        console.log(meta);
-        return data;
-    }
-
     function renderNexportGroupId(data, type, row, meta) {
-        console.log(data);
-        console.log(type);
-        console.log(row);
-        console.log(meta);
         return data;
     }
 
     function renderNexportGroupName(data, type, row, meta) {
-        console.log(data);
-        console.log(type);
-        console.log(row);
-        console.log(meta);
         return data;
     }
 
     function renderNexportGroupShortName(data, type, row, meta) {
-        console.log(data);
-        console.log(type);
-        console.log(row);
-        console.log(meta);
-        return data;
-    }
-
-    function renderNexportProductMappingId(data, type, row, meta) {
-        console.log(data);
-        console.log(type);
-        console.log(row);
-        console.log(meta);
-        return data;
-    }
-
-    function renderCustomProperties(data, type, row, meta) {
-        console.log(data);
-        console.log(type);
-        console.log(row);
-        console.log(meta);
         return data;
     }
 
