@@ -1,15 +1,20 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Models.ProductMappings
 @using Nop.Services.Helpers
-@using Nop.Web.Framework.TagHelpers.Admin
-@using Nop.Web.Framework.TagHelpers.Shared
-@inject IDateTimeHelper dateTimeHelper
+@inject IDateTimeHelper DateTimeHelper
 
 @model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingListSearchModel
 
 @{
-    var tableColumns = new List<ColumnProperty>
+    var productMappingTableColumns = new List<ColumnProperty>
     {
+        new(nameof(NexportProductMappingModel.Id))
+        {
+            Render = new RenderChildCaret(),
+            Width = "5",
+            Searchable = false,
+            ClassName =  NopColumnClassDefaults.ChildControl
+        },
         new(nameof(NexportProductMappingModel.Id))
         {
             Width = "50",
@@ -55,6 +60,75 @@
             AutoWidth = false
         }
     };
+    var groupMembershipChildTableColumns = new List<ColumnProperty>
+    {
+        new(nameof(NexportProductGroupMembershipMappingModel.Id))
+        {
+            Title = "Id",
+            Width = "400",
+            Render = new RenderCustom("renderId")
+        },
+        new(nameof(NexportProductGroupMembershipMappingModel.NexportGroupId))
+        {
+            Title = "Group Id",
+            Width = "400",
+            Render = new RenderCustom("renderNexportGroupId")
+        },
+        new(nameof(NexportProductGroupMembershipMappingModel.NexportGroupName))
+        {
+            Title = "Group Name",
+            Width = "400",
+            Render = new RenderCustom("renderNexportGroupName")
+        },
+        new(nameof(NexportProductGroupMembershipMappingModel.NexportGroupShortName))
+        {
+            Title = "Group Short Name",
+            Width = "400",
+            Render = new RenderCustom("renderNexportGroupShortName")
+        },
+        new(nameof(NexportProductGroupMembershipMappingModel.NexportProductMappingId))
+        {
+            Title = "Product Mapping Id",
+            Width = "400",
+            Render = new RenderCustom("renderNexportProductMappingId")
+        },
+        new(nameof(NexportProductGroupMembershipMappingModel.CustomProperties))
+        {
+            Title = "Custom Properties",
+            Width = "400",
+            Render = new RenderCustom("renderCustomProperties")
+        },
+    };
+    var childGroupTable = new DataTablesModel
+    {
+        Name = "product-mapping-group-memberships-grid",
+        UrlRead = new DataUrl("GetProductGroupMembershipMappings", "NexportIntegration", null),
+        IsChildTable = true,
+        Length = Model.PageSize,
+        LengthMenu = Model.AvailablePageSizes,
+        ColumnCollection = groupMembershipChildTableColumns,
+        Filters = new List<FilterParameter>
+        {
+            new FilterParameter(nameof(NexportProductGroupMembershipMappingModel.NexportProductMappingId), "Id", true)
+        }
+    };
+    var productMappingTable = new NexportDataTablesModel
+    {
+        Name = "product-mappings-grid",
+        PrimaryKeyColumn = nameof(NexportProductMappingModel.Id),
+        UrlRead = new DataUrl("GetProductMappings", "NexportIntegration",
+            new RouteValueDictionary {
+                { "nexportProductId", Model.NexportProductId },
+                { "nexportProductType", Model.NexportProductType },
+                { "nopProductId", Model.NopProductId }
+            }),
+        UrlDelete = new DataUrl("DeleteMapping", "NexportIntegration", null),
+        UrlUpdate = new DataUrl("EditMapping", "NexportIntegration", null),
+        Length = Model.PageSize,
+        LengthMenu = Model.AvailablePageSizes,
+        ColumnCollection = productMappingTableColumns,
+        ChildTable = childGroupTable
+    };
 }
 <div class="row">
     <div class="col-md-12">
@@ -70,21 +144,7 @@
         <nop-alert asp-alert-id="deleteSelectedMappingsFailed" />
     </div>
     <div class="col-md-12">
-        @await Html.PartialAsync("Table", new NexportDataTablesModel
-        {
-            Name = "product-mappings-grid",
-            UrlRead = new DataUrl("GetProductMappings", "NexportIntegration",
-                new RouteValueDictionary {
-                    { "nexportProductId", Model.NexportProductId },
-                    { "nexportProductType", Model.NexportProductType },
-                    { "nopProductId", Model.NopProductId }
-                }),
-            UrlDelete = new DataUrl("DeleteMapping", "NexportIntegration", null),
-            UrlUpdate = new DataUrl("EditMapping", "NexportIntegration", null),
-            Length = Model.PageSize,
-            LengthMenu = Model.AvailablePageSizes,
-            ColumnCollection = tableColumns
-        })
+        @await Html.PartialAsync("Table", productMappingTable)
     </div>
 </div>
 
@@ -99,7 +159,6 @@
         if (data === null) {
             return "Default";
         }
-
         return data;
     }
 
@@ -129,13 +188,14 @@
                     displayText += "<br>" + "<b>Nexport Syllabus Id: </b>" + row.NexportSyllabusId;
                 }
                 displayText += "<br>" + "<b>Nexport Product Id: </b>" + row.NexportCatalogSyllabusLinkId;
+                displayText += "<br>" + "<b>Nexport Product Mapping Id: </b>" + row.NexportProductMappingId;
                 if (row.UtcLastSynchronizationDate) {
                     displayText += "<br>" + "<b>Last Synchronized Date: </b>" + renderLocalDateForTableEntry(row.UtcLastSynchronizationDate, null, null, null);
                 }
             }
             return displayText;
         }
-        return "";
+        return data;
     }
 
     function renderSubscriptionInformation(data, type, row, meta) {
@@ -152,7 +212,8 @@
 
             var groupMembershipNames = "";
             var groupMemberships = row.GroupMembershipMappingModels;
-
+            console.log("group memberships:");
+            console.log(groupMemberships);
             if (groupMemberships) {
                 if (groupMemberships.length > 0) {
                     groupMembershipNames += "<br>" + "<b>Group Memberships: </b>";
@@ -261,12 +322,60 @@
 
         return buttonElement;
     }
-
+    
     function renderLocalDateForTableEntry(data, type, row, meta) {
         return data ? moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss") : null;
     }
 
-    $(document).ready(function() {
+    function renderId(data, type, row, meta) {
+        console.log(data);
+        console.log(type);
+        console.log(row);
+        console.log(meta);
+        return data;
+    }
+
+    function renderNexportGroupId(data, type, row, meta) {
+        console.log(data);
+        console.log(type);
+        console.log(row);
+        console.log(meta);
+        return data;
+    }
+
+    function renderNexportGroupName(data, type, row, meta) {
+        console.log(data);
+        console.log(type);
+        console.log(row);
+        console.log(meta);
+        return data;
+    }
+
+    function renderNexportGroupShortName(data, type, row, meta) {
+        console.log(data);
+        console.log(type);
+        console.log(row);
+        console.log(meta);
+        return data;
+    }
+
+    function renderNexportProductMappingId(data, type, row, meta) {
+        console.log(data);
+        console.log(type);
+        console.log(row);
+        console.log(meta);
+        return data;
+    }
+
+    function renderCustomProperties(data, type, row, meta) {
+        console.log(data);
+        console.log(type);
+        console.log(row);
+        console.log(meta);
+        return data;
+    }
+
+    $(document).ready(function () {
         checkDefaultMappingExisted();
 
         $("#product-mapping-container").on("xhr.dt", "#product-mappings-grid",
