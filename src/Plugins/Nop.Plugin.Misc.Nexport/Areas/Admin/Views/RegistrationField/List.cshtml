@@ -6,8 +6,8 @@
 @model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldSearchModel
 
 @{
-    const string hideSearchNexportMappingsBlockAttributeName = "ProductPage.HideSearchNexportMappingsBlock";
-    var hideSearchNexportMappingsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchNexportMappingsBlockAttributeName);
+    const string hideSearchRegistrationFieldsBlockAttributeName = "ProductPage.HideSearchNexportMappingsBlock";
+    var hideSearchRegistrationFieldsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchRegistrationFieldsBlockAttributeName);
 }
 
 <div class="card card-default">
@@ -17,12 +17,12 @@
     <div class="card-body">
         <div class="card card-default card-search">
             <div class="card-body">
-                <div class="row search-row @(!hideSearchNexportMappingsBlock ? "opened" : "")" data-hideAttribute="@hideSearchNexportMappingsBlockAttributeName">
+                <div class="row search-row @(!hideSearchRegistrationFieldsBlock ? "opened" : "")" data-hideAttribute="@hideSearchRegistrationFieldsBlockAttributeName">
                     <div class="search-text">@T("Admin.Common.Search")</div>
                     <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
-                    <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchNexportMappingsBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                    <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchRegistrationFieldsBlock ? "up" : "down")" aria-hidden="true"></i></div>
                 </div>
-                <div class="search-body @(hideSearchNexportMappingsBlock ? "closed" : "")">
+                <div class="search-body @(hideSearchRegistrationFieldsBlock ? "closed" : "")">
                     <div class="row">
                         <div class="col-md-5">
                             <div class="form-group row">
