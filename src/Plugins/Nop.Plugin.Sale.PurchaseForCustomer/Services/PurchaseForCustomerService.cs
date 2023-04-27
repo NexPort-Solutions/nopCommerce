@@ -236,7 +236,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
         protected virtual async Task<PlaceOrderContainer> PreparePlaceOrderForCustomerDetailsAsync(ProcessPaymentRequest processPaymentRequest,
             IList<ShoppingCartItem> shoppingCartItems)
         {
-            var details = new PlaceOrderContainer();
+            var details = new PlaceOrderContainer{Cart=shoppingCartItems};
 
             var currentCurrency = await _workContext.GetWorkingCurrencyAsync();
             await PrepareAndValidateCustomerAsync(details, processPaymentRequest, currentCurrency);
@@ -306,8 +306,6 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
             details.CheckoutAttributesXml = await _genericAttributeService.GetAttributeAsync<string>(details.Customer, NopCustomerDefaults.CheckoutAttributes, processPaymentRequest.StoreId);
             details.CheckoutAttributeDescription = await _checkoutAttributeFormatter.FormatAttributesAsync(details.CheckoutAttributesXml, details.Customer);
 
-            //load shopping cart
-            details.Cart = await _shoppingCartService.GetShoppingCartAsync(details.Customer, ShoppingCartType.ShoppingCart, processPaymentRequest.StoreId);
 
             if (!details.Cart.Any())
                 throw new NopException("Cart is empty");
