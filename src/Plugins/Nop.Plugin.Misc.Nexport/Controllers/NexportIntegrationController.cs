@@ -1140,10 +1140,22 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                     }
 
-                    //activity log
-                    await _customerActivityService
-                        .InsertActivityAsync(NexportDefaults.MODIFY_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
-                        $"Modified Nexport product mapping from ({storeText}, Nexport product ID: {oldMapping.NexportCatalogSyllabusLinkId}, Name: {oldMapping.NexportProductName}, Type: {oldMapping.Type}, Catalog ID: {oldMapping.NexportCatalogId}, Syllabus ID: {oldMapping.NexportSyllabusId}) to ({storeText}, Nexport product ID: {newMapping.NexportCatalogSyllabusLinkId}, Name: {newMapping.NexportProductName}, Type: {newMapping.Type}, Catalog ID: {oldMapping.NexportCatalogId}, Syllabus ID: {newMapping.NexportSyllabusId}) in product (ID: {nopProduct.Id}, Name: {nopProduct.Name})", newMapping);
+                    if (oldMapping != null)
+                    {
+                        //activity log
+                        await _customerActivityService
+                            .InsertActivityAsync(NexportDefaults.MODIFY_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
+                                $"Modified Nexport product mapping from ({storeText}, Nexport product ID: {oldMapping.NexportCatalogSyllabusLinkId}, Name: {oldMapping.NexportProductName}, Type: {oldMapping.Type}, Catalog ID: {oldMapping.NexportCatalogId}, Syllabus ID: {oldMapping.NexportSyllabusId}) to ({storeText}, Nexport product ID: {newMapping.NexportCatalogSyllabusLinkId}, Name: {newMapping.NexportProductName}, Type: {newMapping.Type}, Catalog ID: {newMapping.NexportCatalogId}, Syllabus ID: {newMapping.NexportSyllabusId}) in product (ID: {nopProduct.Id}, Name: {nopProduct.Name})",
+                                newMapping);
+                    }
+                    else
+                    {
+                        //activity log
+                        await _customerActivityService
+                            .InsertActivityAsync(NexportDefaults.MODIFY_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
+                                $"Created Nexport product mapping - Nexport product ID: {newMapping.NexportCatalogSyllabusLinkId}, Name: {newMapping.NexportProductName}, Type: {newMapping.Type}, Catalog ID: {newMapping.NexportCatalogId}, Syllabus ID: {newMapping.NexportSyllabusId}) in product (ID: {nopProduct.Id}, Name: {nopProduct.Name})",
+                                newMapping);
+                    }
                 }
                 catch (Exception ex)
                 {
