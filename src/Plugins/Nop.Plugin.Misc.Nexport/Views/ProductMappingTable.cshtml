@@ -100,10 +100,15 @@
         PrimaryKeyColumn = nameof(NexportProductMappingModel.Id),
         UrlRead = new DataUrl("GetProductMappings", "NexportIntegration",
             new RouteValueDictionary {
-                { "nexportProductId", Model.NexportProductId },
-                { "nexportProductType", Model.NexportProductType },
                 { "nopProductId", Model.NopProductId }
             }),
+        Filters = new List<FilterParameter>
+        {
+            new FilterParameter(nameof(Model.SearchNexportProductName)),
+            new FilterParameter(nameof(Model.SearchStoreName)),
+            new FilterParameter(nameof(Model.NexportProductType))
+        },
+        SearchButtonId = "search-mappings",
         UrlDelete = new DataUrl("DeleteMapping", "NexportIntegration", null),
         UrlUpdate = new DataUrl("EditMapping", "NexportIntegration", null),
         Length = Model.PageSize,
@@ -356,7 +361,7 @@
     function renderLocalDateForTableEntry(data, type, row, meta) {
         return data ? moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss") : null;
     }
-    checkDefaultMappingExisted();
+    
 
     function renderNexportGroupId(data, type, row, meta) {
         return data;
@@ -370,8 +375,9 @@
         return data;
     }
 
+    checkDefaultMappingExisted();
+
     $(document).ready(function () {
-        checkDefaultMappingExisted();
 
         $("#product-mapping-container").on("xhr.dt", "#product-mappings-grid",
             function (e, settings, json, xhr) {

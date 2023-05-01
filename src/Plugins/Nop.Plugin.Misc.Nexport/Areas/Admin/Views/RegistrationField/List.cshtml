@@ -5,30 +5,44 @@
 
 @model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldSearchModel
 
+@{
+    const string hideSearchRegistrationFieldsBlockAttributeName = "ProductPage.HideSearchNexportMappingsBlock";
+    var hideSearchRegistrationFieldsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchRegistrationFieldsBlockAttributeName);
+}
+
 <div class="card card-default">
     <div class="card-header">
         @T("Admin.Customers.Nexport.RegistrationField.Fields")
     </div>
     <div class="card-body">
-        <div class="row search-registration-div">
-            <div class="col-md-5">
-                <div class="form-group row">
-                    <div class="col-md-5">
-                        <nop-label asp-for="SelectedStoreIds" />
+        <div class="card card-default card-search">
+            <div class="card-body">
+                <div class="row search-row @(!hideSearchRegistrationFieldsBlock ? "opened" : "")" data-hideAttribute="@hideSearchRegistrationFieldsBlockAttributeName">
+                    <div class="search-text">@T("Admin.Common.Search")</div>
+                    <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
+                    <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchRegistrationFieldsBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                </div>
+                <div class="search-body @(hideSearchRegistrationFieldsBlock ? "closed" : "")">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <div class="form-group row">
+                                <div class="col-md-4">
+                                    <nop-label asp-for="SelectedStoreIds" />
+                                </div>
+                                <div class="col-md-8">
+                                    <nop-select asp-for="SelectedStoreIds" asp-items="Model.AvailableStores" asp-multiple="true" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-7">
-                        <nop-select asp-for="SelectedStoreIds" asp-items="Model.AvailableStores" asp-multiple="true" />
+                    <div class="row">
+                        <div class="text-center col-12">
+                            <button type="button" id="search-registration-fields" class="btn btn-primary btn-search"><i class="fas fa-search"></i>@T("Admin.Common.Search")</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="form-group row">
-            <div class="text-center col-12">
-                <button type="button" id="search-registration-fields" class="btn btn-primary btn-search"><i class="fas fa-search"></i>@T("Admin.Common.Search")</button>
-            </div>
-        </div>
-    </div>
-    <div class="card-body">
         <p style="display: flex; align-items: center; margin: 0">
             <em>@T("Admin.Customers.Nexport.RegistrationField.Fields.Description")</em>
         </p>
@@ -38,7 +52,7 @@
             UrlRead = new DataUrl("ListRegistrationField", "NexportIntegration", null),
             Filters = new List<FilterParameter>
             {
-               new FilterParameter(nameof(Model.SelectedStoreIds))
+                new FilterParameter(nameof(Model.SelectedStoreIds))
             },
             SearchButtonId = "search-registration-fields",
             Length = Model.PageSize,
@@ -109,7 +123,7 @@
                 }
             }
         })
-        
+
         <script>
             function renderRegistrationFieldType(data, type, row, meta) {
                 if (data === +"@((int) NexportRegistrationFieldType.Text)") {

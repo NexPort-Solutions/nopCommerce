@@ -240,10 +240,11 @@ namespace Nop.Plugin.Misc.Nexport.Filters
 
                             if (items.Count > 0)
                             {
+                                // If the nexport product is restricted to one and is already in the cart we just want to redirect to the cart
                                 context.Result = new JsonResult(new
                                 {
                                     success = false,
-                                    message = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Errors.DuplicatedProduct")
+                                    redirect = "cart"
                                 });
                             }
                             else if (quantity > 1)
