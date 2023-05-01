@@ -237,6 +237,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 }
             }
 
+            if (model.NexportCatalogId != default)
+            {
+                model.NexportCatalogName =
+                    (await _nexportService.GetCatalogDetailsAsync(productMapping.NexportCatalogId)).Name;
+            }
+
             model.SupplementalInfoQuestionIds =
                 (await _nexportService.GetNexportSupplementalInfoQuestionMappingsByProductMappingId(productMapping.Id))
                     .Select(x => x.QuestionId).ToList();
@@ -319,6 +325,28 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         mappingModel.StoreName = await _nexportService.GetStoreNameAsync(mappingModel.StoreId.Value);
                     }
 
+                    if (mappingModel.NexportSyllabusId != null)
+                    {
+                        if (mappingModel.Type == NexportProductTypeEnum.Section)
+                        {
+                            var sectionDetails =
+                                await _nexportService.GetSectionDetailsAsync(mappingModel.NexportSyllabusId.Value);
+                            mappingModel.SectionNumber = sectionDetails?.SectionNumber;
+                            mappingModel.UniqueName = sectionDetails?.UniqueName;
+                        }
+                        else if (mappingModel.Type == NexportProductTypeEnum.TrainingPlan)
+                        {
+                            var trainingPlanDetails =
+                                await _nexportService.GetTrainingPlanDetailsAsync(mappingModel.NexportSyllabusId.Value);
+                            mappingModel.UniqueName = trainingPlanDetails?.UniqueName;
+                        }
+                    }
+
+                    if (mappingModel.NexportCatalogId != default)
+                    {
+                        mappingModel.NexportCatalogName =
+                            (await _nexportService.GetCatalogDetailsAsync(mapping.NexportCatalogId)).Name;
+                    }
                     var groupMemberships =
                         await _nexportService.GetProductGroupMembershipMappings(mappingModel.Id);
                     foreach (var groupMembership in groupMemberships)

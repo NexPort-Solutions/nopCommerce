@@ -215,12 +215,11 @@
                 } else if (row.Type === +"@((int)NexportProductTypeEnum.TrainingPlan)") {
                     displayText += "Training Plain";
                 }
-                displayText += "<br>" + "<b>Nexport Catalog Id: </b>" + row.NexportCatalogId;
+                displayText += "<br>" + "<b>Nexport Catalog: </b>" + row.NexportCatalogName + " (" + row.NexportCatalogId + ")";
                 if (row.NexportSyllabusId || row.NexportSyllabus !== "00000000-0000-0000-0000-000000000000") {
-                    displayText += "<br>" + "<b>Nexport Syllabus Id: </b>" + row.NexportSyllabusId;
+                    displayText += "<br>" + "<b>Nexport Syllabus: </b>" + row.UniqueName + " (" + row.NexportSyllabusId + ")";
                 }
-                displayText += "<br>" + "<b>Nexport Product Id: </b>" + row.NexportCatalogSyllabusLinkId;
-                displayText += "<br>" + "<b>Nexport Product Mapping Id: </b>" + row.NexportProductMappingId;
+                displayText += "<br>" + "<b>NexPort Product Id: </b>" + row.NexportCatalogSyllabusLinkId;
                 if (row.UtcLastSynchronizationDate) {
                     displayText += "<br>" + "<b>Last Synchronized Date: </b>" + renderLocalDateForTableEntry(row.UtcLastSynchronizationDate, null, null, null);
                 }
