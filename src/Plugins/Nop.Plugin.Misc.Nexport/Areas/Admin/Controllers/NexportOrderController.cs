@@ -25,6 +25,14 @@ namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers
             _orderModelFactory = orderModelFactory;
         }
 
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public virtual async Task<IActionResult> WholesaleOrder()
+        {
+            return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Order/WholesaleOrder.cshtml");
+        }
+
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         public virtual async Task<IActionResult> List(List<int> orderStatuses = null, List<int> paymentStatuses = null, List<int> shippingStatuses = null)
