@@ -28,6 +28,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
         [NopResourceDisplayName("Plugins.Misc.Nexport.CatalogId")]
         public Guid NexportCatalogId { get; set; }
 
+        public string NexportCatalogName { get; set; }
+
         [NopResourceDisplayName("Plugins.Misc.Nexport.SyllabusId")]
         public Guid? NexportSyllabusId { get; set; }
 

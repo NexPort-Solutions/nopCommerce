@@ -39,7 +39,7 @@ namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers
                 PaymentStatusIds = paymentStatuses,
                 ShippingStatusIds = shippingStatuses
             });
-            return View(model);
+            return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Order/List.cshtml", model);
         }
 
         [HttpPost]
