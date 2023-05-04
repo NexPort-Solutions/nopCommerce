@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
-using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Localization;
@@ -16,13 +14,13 @@ using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Tax;
 using Nop.Core.Events;
 using Nop.Core.Infrastructure;
+using Nop.Data;
 using Nop.Services.Affiliates;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Discounts;
-using Nop.Services.Events;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
@@ -84,6 +82,8 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
         private readonly RewardPointsSettings _rewardPointsSettings;
         private readonly ShippingSettings _shippingSettings;
         private readonly TaxSettings _taxSettings;
+        private readonly IRepository<Customer> _customerRepository;
+        private readonly IRepository<CustomerCustomerRoleMapping> _customerCustomerRoleMappingRepository;
 
         #endregion
 
@@ -134,7 +134,9 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
             PaymentSettings paymentSettings,
             RewardPointsSettings rewardPointsSettings,
             ShippingSettings shippingSettings,
-            TaxSettings taxSettings) :
+            TaxSettings taxSettings,
+            IRepository<Customer> customerRepository,
+            IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMappingRepository) :
             base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter, countryService, currencyService,
                 customerActivityService, customerService, customNumberFormatter, discountService, encryptionService, eventPublisher, genericAttributeService,
                 giftCardService, languageService, localizationService, logger,
@@ -187,6 +189,8 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
             _rewardPointsSettings = rewardPointsSettings;
             _shippingSettings = shippingSettings;
             _taxSettings = taxSettings;
+            _customerRepository = customerRepository;
+            _customerCustomerRoleMappingRepository = customerCustomerRoleMappingRepository;
         }
 
         #endregion
@@ -505,6 +509,27 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
             var orderPlacedAffiliateNotificationQueuedEmailIds = await _workflowMessageService.SendOrderPlacedAffiliateNotificationAsync(order, _localizationSettings.DefaultAdminLanguageId);
             if (orderPlacedAffiliateNotificationQueuedEmailIds.Any())
                 await AddOrderNoteAsync(order, $"\"Order placed\" email (to affiliate) has been queued. Queued email identifiers: {string.Join(", ", orderPlacedAffiliateNotificationQueuedEmailIds)}.");
+        }
+
+        public virtual async Task<IList<Customer>> SearchCustomersAsync(string searchNameAndEmail)
+        {
+            var query = _customerRepository.Table.Where(c => !c.Deleted && !c.IsSystemAccount && !string.IsNullOrWhiteSpace(c.Email));
+
+            query = query.Where(c => (c.FirstName +" "+ c.LastName).Contains(searchNameAndEmail) || c.Email.Contains(searchNameAndEmail));
+
+            var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync(NopCustomerDefaults.RegisteredRoleName);
+            if (registeredRole != null)
+            {
+                query = query.Join(_customerCustomerRoleMappingRepository.Table, x => x.Id, y => y.CustomerId,
+                        (x, y) => new { Customer = x, Mapping = y })
+                    .Where(z => z.Mapping.CustomerRoleId == registeredRole.Id)
+                    .Select(z => z.Customer)
+                    .Distinct();
+            }
+
+            query = query.OrderBy(c => c.Email);
+
+            return await query.ToListAsync();
         }
     }
 }
