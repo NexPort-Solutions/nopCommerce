@@ -1,6 +1,7 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Models.ProductMappings
 @using Nop.Services.Helpers
+@using Nop.Web.Areas.Admin.Models.Customers
 @inject IDateTimeHelper DateTimeHelper
 
 @model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingListSearchModel
@@ -442,11 +443,9 @@
         });
         $("div.mapping-search-div").keypress(function (n) {
             if (n.which == 13 || n.keyCode == 13)
-                return $("#search-mappings").click(),
-                    !1
+                $("#search-mappings").click();
         });
     });
-
     function checkDefaultMappingExisted() {
         var checkDefaultMappingData = {
             productId: @Model.NopProductId

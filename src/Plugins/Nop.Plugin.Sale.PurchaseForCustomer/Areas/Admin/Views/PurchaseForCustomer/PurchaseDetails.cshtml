@@ -1,4 +1,13 @@
-﻿@model Nop.Plugin.Sale.PurchaseForCustomer.Models.PurchaseForCustomerOrderModel
+﻿@using Nop.Web.Framework.Models.DataTables
+@using Nop.Web.Framework.TagHelpers.Admin
+@using Nop.Web.Framework.TagHelpers.Shared
+@using Microsoft.AspNetCore.Routing
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using Newtonsoft.Json
+@using Nop.Plugin.Sale.PurchaseForCustomer.Models
+@using Nop.Web.Areas.Admin.Models.Customers
+
+@model Nop.Plugin.Sale.PurchaseForCustomer.Models.PurchaseForCustomerOrderModel
 
 @inject IProductService productService
 
@@ -8,6 +17,32 @@
     ViewBag.PageTitle = "Purchase product for customers";
 
     var product = await productService.GetProductByIdAsync(Model.ProductId);
+
+    var purchaseForCustomersColumns = new List<ColumnProperty>
+    {
+        new(nameof(CustomerModel.Id))
+        {
+            Width = "30",
+            Render = new RenderCustom("customerDelBtn")
+        },
+        new(nameof(CustomerModel.FullName))
+        {
+            Title = "Purchase for Customers",
+            Render = new RenderCustom("nameAndEmail")
+        },
+
+    };
+
+    var purchaseForCustomersTable = new DataTablesModel
+            {
+                Name = "purchase-for-customers-grid",
+                ServerSide = false,
+                Paging = true,
+                Length = 5,
+                Data = JsonConvert.SerializeObject(new List<CustomerModel>()),
+                ColumnCollection = purchaseForCustomersColumns
+
+            };
 }
 
 @if (ViewBag.RefreshPage == true)
@@ -45,33 +80,12 @@ else
                         <div class="card-body">
                             <div>
                                 <div class="form-group row">
-                                    <div class="col-sm-3">
-                                        <nop-label asp-for="CustomerIds" />
+                                    <div class="col-sm-3 col-md-3">
+                                        <nop-label asp-for="CustomerIds"/>
                                     </div>
-                                    <div class="col-sm-9">
-                                        <nop-select asp-for="CustomerIds" asp-items="Model.AvailableCustomers" asp-multiple="true" asp-required="true" />
-                                        <script>
-                                            $(document).ready(function() {
-                                                var customerIdsInput = $("#@Html.IdFor(model => model.CustomerIds)")
-                                                    .data("kendoMultiSelect");
-                                                customerIdsInput.setOptions({
-                                                    autoClose: false,
-                                                    filter: "contains"
-                                                });
-
-                                                @if (Model.AvailableCustomers.Count == 0)
-                                                {
-                                                    <text>
-                                                        customerIdsInput.setOptions({
-                                                            enable: false,
-                                                            placeholder: "No customer available"
-                                                        });
-                                                        customerIdsInput._placeholder();
-                                                        customerIdsInput._enable();
-                                                    </text>
-                                                }
-                                            });
-                                        </script>
+                                    <div class="col-sm-9 col-md-9">
+                                        <input type="text" id="search-customer-name-email" autocomplete="off" class="form-control"/>
+                                        @await Html.PartialAsync("Table", purchaseForCustomersTable)
                                     </div>
                                 </div>
                                 <div class="form-group row">
@@ -111,4 +125,50 @@ else
             </div>
         </div>
     </form>
+    <script>
+        function nameAndEmail(data, type, row, meta){
+            return data + " (" + row.Email + ")" + '<input name="CustomerIds" value="'+row.Id+'" hidden/>';
+        }
+
+        function customerDelBtn(data, type, row, meta) {
+            var delBtn = '<button id="customer_del_' + row.Id + '" data-customer-id="'+row.Id+'" class="btn btn-default del-btn" type="button"><i style="padding-right:0px;color:red" class="fas fa-trash"></i></button>';
+            return delBtn;
+        }
+
+        $(document).ready(function () {
+
+            $('#purchase-for-customers-grid_wrapper').hide();
+
+            var purchaseForCustomersDataTable = $('#purchase-for-customers-grid').DataTable();
+
+            $('#purchase-for-customers-grid tbody').on('click', ".del-btn", function () {
+                var purchaseForCustomersRow = purchaseForCustomersDataTable.row($(this).parents('tr'));
+
+                purchaseForCustomersDataTable.row(purchaseForCustomersRow).remove().draw();
+
+                if ($('#purchase-for-customers-grid td.dataTables_empty').length)
+                {
+                    $('#purchase-for-customers-grid_wrapper').hide();
+                }
+            });
+
+            $('#search-customer-name-email').autocomplete({
+                delay: 500,
+                minLength: 3,
+                source: '@Url.Action("SearchCustomers", "PurchaseForCustomer")',
+                select: function (event, ui) {
+                    if (!$("#customer_del_" + ui.item.customer.Id).length)
+                    {
+                        if ($('#purchase-for-customers-grid_wrapper').is(':hidden'))
+                            $('#purchase-for-customers-grid_wrapper').show();
+
+                        purchaseForCustomersDataTable.row.add(ui.item.customer).draw();
+                    }
+                    $('#search-customer-name-email').val('');
+                    event.preventDefault();
+                }
+            });
+        });
+    
+    </script>
 }

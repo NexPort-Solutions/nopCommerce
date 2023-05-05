@@ -16,6 +16,7 @@ using Nop.Services.Security;
 using Nop.Plugin.Sale.PurchaseForCustomer.Factories;
 using Nop.Plugin.Sale.PurchaseForCustomer.Models;
 using Nop.Plugin.Sale.PurchaseForCustomer.Services;
+using Nop.Web.Areas.Admin.Models.Customers;
 
 namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
 {
@@ -134,6 +135,30 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
             ViewBag.RefreshPage = true;
 
             return View("~/Plugins/Sale.PurchaseForCustomer/Areas/Admin/Views/PurchaseForCustomer/PurchaseDetails.cshtml", model);
+        }
+
+        public virtual async Task<IActionResult> SearchCustomers(string term)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return Content(string.Empty);
+
+            const int searchTermMinimumLength = 3;
+            if (string.IsNullOrWhiteSpace(term) || term.Length < searchTermMinimumLength)
+                return Content(string.Empty);
+
+            var customers = await _purchaseForCustomerService.SearchCustomersAsync(term);
+
+            var result = customers.Select(c=> new{
+                label=$"{c.FirstName} {c.LastName} ({c.Email})",
+                customer=new CustomerModel()
+                {
+                    FullName=$"{c.FirstName} {c.LastName}",
+                    Email = c.Email,
+                    Id = c.Id
+                }
+            }).ToList();
+
+            return Json(result);
         }
     }
 }
