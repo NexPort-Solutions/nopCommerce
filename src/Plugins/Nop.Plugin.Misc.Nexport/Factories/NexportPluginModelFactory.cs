@@ -1536,25 +1536,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         }
 
         /// <summary>
-        /// Prepare store search model
-        /// </summary>
-        /// <param name="searchModel">Store search model</param>
-        /// <returns>
-        /// A task that represents the asynchronous operation
-        /// The task result contains the store search model
-        /// </returns>
-        public virtual Task<NexportStoreSearchModel> PrepareStoreSearchModel(NexportStoreSearchModel searchModel)
-        {
-            if (searchModel == null)
-                throw new ArgumentNullException(nameof(searchModel));
-
-            //prepare page parameters
-            searchModel.SetGridPageSize();
-
-            return Task.FromResult(searchModel);
-        }
-
-        /// <summary>
         /// Prepare paged store list model
         /// </summary>
         /// <param name="searchModel">Store search model</param>
