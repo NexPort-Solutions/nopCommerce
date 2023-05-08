@@ -11,6 +11,7 @@ using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
+using Nop.Services.Plugins;
 using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
 
@@ -608,7 +609,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType", "Type");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchNexportProductType.Hint", "Filter product mapping list by nexport product type.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CustomerSettings.RegistrationFields.SearchStoreId", "Store");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CustomerSettings.RegistrationFields.SearchStoreId.Hint", "Filter product mapping list by store.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CustomerSettings.RegistrationFields.SearchStoreId.Hint", "Filter registration fields list by store.");
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStoreName", "Store");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStoreName.Hint", "Filter product mapping list by store.");

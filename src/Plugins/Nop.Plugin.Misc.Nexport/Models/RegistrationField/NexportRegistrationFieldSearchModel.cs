@@ -12,7 +12,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
             AvailableStores = new List<SelectListItem>();
         }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.SearchStoreId")]
+        [NopResourceDisplayName("Plugins.Misc.Nexport.CustomerSettings.RegistrationFields.SearchStoreId")]
         public IList<int> SelectedStoreIds { get; set; }
 
         public IList<SelectListItem> AvailableStores { get; set; }
