@@ -907,7 +907,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                         ViewBag.ClosePage = true;
                     }
 
-                    ViewBag.RefreshPage = true;
                 }
                 catch (Exception ex)
                 {
