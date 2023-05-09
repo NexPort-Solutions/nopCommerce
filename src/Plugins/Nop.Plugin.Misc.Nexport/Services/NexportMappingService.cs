@@ -318,18 +318,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (nexportProductMappingId < 1)
                 return new PagedList<NexportProductGroupMembershipMapping>(new List<NexportProductGroupMembershipMapping>(), pageIndex, pageSize);
 
-            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductGroupMembershipMappingsAllCacheKey,
-                (await _storeContext.GetCurrentStoreAsync()).Id,
-                string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
-                showHidden, "", false);
+            var query = _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
+                np.NexportProductMappingId == nexportProductMappingId);
 
-            return await _cacheManager.GetAsync(cacheKey, async () =>
-            {
-                var query = _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
-                    np.NexportProductMappingId == nexportProductMappingId);
-
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
+            return await query.ToPagedListAsync(pageIndex, pageSize);
         }
 
         public async Task<IList<Guid>> GetProductGroupMembershipIds(int nexportProductMappingId)
