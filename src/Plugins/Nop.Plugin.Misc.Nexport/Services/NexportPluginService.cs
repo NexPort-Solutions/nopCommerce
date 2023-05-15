@@ -545,6 +545,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Admin.Customers.Nexport.RegistrationField.Customs.SaveBeforeEdit", "You need to save the registration field before you can select its custom render.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Category.Title", "Title");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Category.Title.Hint", "The name of the registration field category");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Category.Title.Required", "Registration field category is required to have a title.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Category.Description", "Description");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Category.Description.Hint", "Description of the registration field category");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Category.DisplayOrder", "Display order");
@@ -799,6 +800,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Admin.Customers.Nexport.RegistrationField.Customs.SaveBeforeEdit");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Category.Title");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Category.Title.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Category.Title.Required");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Category.Description");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Category.Description.Hint");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationField.Category.DisplayOrder");
