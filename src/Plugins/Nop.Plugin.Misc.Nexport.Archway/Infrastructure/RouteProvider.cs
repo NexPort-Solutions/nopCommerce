@@ -35,9 +35,6 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
             endpointRouteBuilder.MapControllerRoute("GetArchwayEmployeePositionsByStore", "ArchwayEmployeeRegistrationField/getarchwayemployeepositionsbystore/",
                 new { controller = "ArchwayEmployeeRegistrationField", action = "GetArchwayStoreEmployeePositionsByStore" });
 
-            endpointRouteBuilder.MapControllerRoute("OrderList", "admin/order/list",
-                new { area = "Admin", controller = "NexportOrder", action = "List" });
-
             if (settingService != null && storeContext != null)
             {
                 var customEnrollmentRouteSetting = (settingService.GetSettingAsync(PluginDefaults.CustomEnrollmentRouteSettingKey,
