@@ -24,7 +24,6 @@ using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
 using Nop.Plugin.Misc.Nexport.Components;
-using Nop.Plugin.Misc.Nexport.Areas.Admin.Components;
 
 namespace Nop.Plugin.Misc.Nexport
 {
@@ -285,9 +284,6 @@ namespace Nop.Plugin.Misc.Nexport
 
             if (widgetZone == NexportDefaults.NexportRegistrationFieldsZone)
                 return typeof(WidgetsNexportRegistrationFields);
-
-            if (widgetZone == AdminWidgetZones.OrderListButtons)
-                return typeof(WidgetsOrderWholesale);
 
             return null;
         }

@@ -428,6 +428,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Areas\Admin\Components\" />
     <Folder Include="Areas\Admin\Factories\" />
     <Folder Include="Services\Caching\" />
   </ItemGroup>
