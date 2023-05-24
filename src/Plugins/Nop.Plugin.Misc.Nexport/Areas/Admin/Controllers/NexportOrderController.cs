@@ -9,33 +9,17 @@ using Nop.Web.Areas.Admin.Models.Orders;
 
 namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers
 {
-    public class OrderController : BaseAdminController
+    public class NexportOrderController : BaseAdminController
     {
         private readonly INexportPluginModelFactory _nexportPluginModelFactory;
         private readonly IOrderModelFactory _orderModelFactory;
         private readonly IPermissionService _permissionService;
 
-        public OrderController(INexportPluginModelFactory nexportPluginModelFactory, IPermissionService permissionService, IOrderModelFactory orderModelFactory)
+        public NexportOrderController(INexportPluginModelFactory nexportPluginModelFactory, IPermissionService permissionService, IOrderModelFactory orderModelFactory)
         {
             _nexportPluginModelFactory = nexportPluginModelFactory;
             _permissionService = permissionService;
             _orderModelFactory = orderModelFactory;
-        }
-
-        [HttpGet]
-        public virtual async Task<IActionResult> List(List<int> orderStatuses = null, List<int> paymentStatuses = null, List<int> shippingStatuses = null)
-        {
-            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders))
-            {
-                return AccessDeniedView();
-            }
-            var model = await _orderModelFactory.PrepareOrderSearchModelAsync(new OrderSearchModel
-            {
-                OrderStatusIds = orderStatuses,
-                PaymentStatusIds = paymentStatuses,
-                ShippingStatusIds = shippingStatuses
-            });
-            return View(model);
         }
 
         [HttpPost]
