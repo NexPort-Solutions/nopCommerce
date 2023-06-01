@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Caching;
-using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
@@ -59,8 +58,6 @@ namespace Nop.Plugin.Misc.Nexport.Components
                 NexportDefaults.HIDE_SECTION_CEUS_IN_PRODUCT_PAGE_SETTING_KEY, store.Id);
             model.HideAddToCartForIneligibleProducts = await _genericAttributeService.GetAttributeAsync<bool>(store,
                 NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id);
-            model.SaleModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(store,
-                NexportDefaults.NEXPORT_STORE_SALE_MODEL_SETTING_KEY, store.Id);
             model.AllowRepurchaseFailedCourses = await _genericAttributeService.GetAttributeAsync<bool>(store,
                     NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
             model.AllowRepurchasePassedCourses = await _genericAttributeService.GetAttributeAsync<bool>(store,
