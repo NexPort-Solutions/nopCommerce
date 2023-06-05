@@ -1,0 +1,117 @@
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders
+@model WholesaleCreateModel
+@inject CatalogSettings CatalogSettings
+
+<div class="card card-default">
+    <div class="card-body">
+        <div class="form-group row">
+            <form asp-controller="Wholesale" asp-action="PlaceWholesaleOrder"
+                  asp-route-containerId="@Context.Request.Query["containerId"]"
+                  asp-route-btnId="@Context.Request.Query["btnId"]">
+                @{
+                    var stores = Model.Stores;
+                    var storeItems = stores.Select(store => new SelectListItem(store.Name, store.Id.ToString())).ToList();
+
+                    var mockStores = new List<SelectListItem>()
+                    {
+                        new()
+                        {
+                            Text = "Mock 1",
+                            Value = "101"
+                        },
+                        new()
+                        {
+                            Text = "Mock 2",
+                            Value = "102"
+                        },
+                    };
+                    storeItems.AddRange(mockStores);
+                }
+                <div class="float-left" style="padding-right: 1em;">
+                    <label style="padding-top: 9px;">
+                        Store
+                    </label>
+                </div>
+                <nop-select asp-for-name="storeId" asp-items="@storeItems" asp-multiple="false" title="Select store" asp-required="true" style="width: 100%; max-width: 350px;"/>
+
+                @{
+                    var organizations = Model.Organizations.Select(organization => new SelectListItem
+                    {
+                        Text = $"{organization.Name} ({organization.ShortName})",
+                        Value = organization.OrgId.ToString()
+                    }).ToList();
+                    organizations.Insert(0, new SelectListItem
+                    {
+                        Text = "Select the organization",
+                        Value = null
+                    });
+                    var mockData = new List<SelectListItem>()
+                    {
+                        new()
+                        {
+                            Text = "Mock 1",
+                            Value = "101"
+                        },
+                        new()
+                        {
+                            Text = "Mock 2",
+                            Value = "102"
+                        },
+                    };
+                    organizations.AddRange(mockData);
+                }
+                <div class="float-left" style="padding-right: 1em;">
+                    <label style="padding-top: 9px;">
+                        Organization
+                    </label>
+                </div>
+                <nop-select asp-for-name="organizationId" asp-items="@organizations" asp-multiple="false" title="Select organization" asp-required="true" style="width: 100%; max-width: 350px;"/>
+                <br />
+                <div class="float-left" style="padding-right: 1em;">
+                    <label style="padding-top: 9px;">
+                        Redeem By
+                    </label>
+                </div>
+                <nop-date-picker asp-day-name="redeemByDay"
+                                 asp-month-name="redeemByMonth"
+                                 asp-year-name="redeemByYear"
+                                 asp-begin-year="@DateTime.UtcNow"
+                                 asp-end-year="@DateTime.UtcNow.AddYears(CatalogSettings.CountDisplayedYearsDatePicker)"
+                                 asp-selected-date="@DateTime.UtcNow" />
+                <br />
+                <div class="float-left" style="padding-right: 1em;">
+                    <label style="padding-top: 9px; padding-right: 5px;">
+                        No limit
+                    </label>
+                    <input type="checkbox" name="isRedemptionPeriodUnlimited" />
+                </div>
+                <br />
+                <div class="float-left" style="padding-right: 1em;">
+                    <label style="padding-top: 9px; padding-right: 5px;">
+                        Product
+                    </label>
+                    <input type="number" name="productId" />
+                </div>
+                <br/>
+                <div class="float-left" style="padding-right: 1em;">
+                    <label style="padding-top: 9px; padding-right: 5px;">
+                        Purchasing Agent
+                    </label>
+                    <input type="number" name="purchasingAgentCustomerId" />
+                </div>
+                <br />
+                <div class="float-left" style="padding-right: 1em;">
+                    <label style="padding-top: 9px; padding-right: 5px;">
+                        Quantity
+                    </label>
+                    <input type="number" name="quantity" />
+                </div>
+                <br />
+                @*<br>Scholarship configuration*@
+                @*<br>-Funding Pool*@
+                <button class="bg-green btn" type="submit">Place Order</button>
+            </form>
+        
+            </div>
+    </div>
+</div>

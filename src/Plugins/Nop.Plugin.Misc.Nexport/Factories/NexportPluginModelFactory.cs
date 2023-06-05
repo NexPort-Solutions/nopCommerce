@@ -111,6 +111,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly NexportService _nexportService;
         private readonly IAddressService _addressService;
         private readonly IPriceFormatter _priceFormatter;
+        private readonly NexportApiService _nexportApiService;
 
         #endregion
 
@@ -158,7 +159,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             CustomerSettings customerSettings,
             CaptchaSettings captchaSettings,
             ILogger logger,
-            NexportService nexportService, ICountryService countryService, IPaymentPluginManager paymentPluginManager, ISettingService settingService, NopHttpClient nopHttpClient, AddressSettings addressSettings, IAddressService addressService, IPriceFormatter priceFormatter)
+            NexportService nexportService, ICountryService countryService, IPaymentPluginManager paymentPluginManager, ISettingService settingService, NopHttpClient nopHttpClient, AddressSettings addressSettings, IAddressService addressService, IPriceFormatter priceFormatter, NexportApiService nexportApiService)
         {
             _nexportSettings = nexportSettings;
             _catalogSettings = catalogSettings;
@@ -209,6 +210,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _addressSettings = addressSettings;
             _addressService = addressService;
             _priceFormatter = priceFormatter;
+            _nexportApiService = nexportApiService;
         }
 
         #endregion
@@ -1634,5 +1636,16 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
+        public virtual async Task<WholesaleCreateModel> PrepareWholesaleOrderModelAsync()
+        {
+            var stores = await _storeService.GetAllStoresAsync();
+            var organizations = _nexportApiService.GetNexportOrganizations(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, _nexportSettings.RootOrganizationId.Value);
+            return new WholesaleCreateModel
+            {
+                Organizations = organizations.OrganizationList,
+                Stores = stores
+            };
+        }
     }
 }

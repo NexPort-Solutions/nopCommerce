@@ -145,5 +145,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         Task<StoreListModel> PrepareStoreListModel(NexportStoreSearchModel searchModel);
 
         Task<NexportOrderListModel> PrepareOrderListModelAsync(OrderSearchModel searchModel);
+
+        Task<WholesaleCreateModel> PrepareWholesaleOrderModelAsync();
+
     }
 }

@@ -25,6 +25,7 @@ using Nop.Services.Customers;
 using Nop.Services.Orders;
 using Nop.Web.Areas.Admin.Factories;
 using ILogger = Nop.Services.Logging.ILogger;
+using Nop.Plugin.Misc.Nexport.Areas.Admin;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure
 {
@@ -69,6 +70,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             services.AddScoped<NexportPluginService>();
             services.AddScoped<INexportPluginModelFactory, NexportPluginModelFactory>();
             services.AddScoped<NexportIntegrationController>();
+            services.AddScoped<IWholesaleService, WholesaleService>();
         }
 
         public static IServiceProvider CreateFluentMigratorRunnerService()
