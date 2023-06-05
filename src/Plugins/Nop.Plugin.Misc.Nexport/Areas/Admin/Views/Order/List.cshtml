@@ -291,7 +291,7 @@
                                     var gridModel = new DataTablesModel
                                     {
                                         Name = "orders-grid",
-                                        UrlRead = new DataUrl("OrderList", "Order", null),
+                                        UrlRead = new DataUrl("OrderList", "NexportOrder", null),
                                         SearchButtonId = "search-orders",
                                         Length = Model.PageSize,
                                         LengthMenu = Model.AvailablePageSizes,
@@ -602,7 +602,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="importexcel-window-title">@T("Admin.Common.ImportFromExcel")</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>                
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <form asp-controller="Order" asp-action="ImportFromXlsx" method="post" enctype="multipart/form-data">
                 <div class="form-horizontal">
