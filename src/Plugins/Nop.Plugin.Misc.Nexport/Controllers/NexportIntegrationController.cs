@@ -438,8 +438,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (store == null)
                 return RedirectToAction("List", "Store");
 
-            await _genericAttributeService.SaveAttributeAsync(store, NexportDefaults.NEXPORT_STORE_SALE_MODEL_SETTING_KEY,
-                model.SaleModel, store.Id);
             await _genericAttributeService.SaveAttributeAsync(store, NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY,
                 model.AllowRepurchaseFailedCourses, store.Id);
             await _genericAttributeService.SaveAttributeAsync(store, NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY,
