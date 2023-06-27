@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Nop.Core.Domain.Orders;
+﻿using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Infrastructure;
 using Nop.Core;
@@ -36,15 +32,14 @@ using System.Globalization;
 
 #nullable enable
 
-namespace Nop.Plugin.Misc.Nexport.Areas.Admin;
+namespace Nop.Plugin.Misc.Nexport.Services;
 
-public interface IWholesaleService
+public interface INexportWholesaleService
 {
-    Task<PlaceOrderResult> PlaceOrderForCustomerAsync(ProcessPaymentRequest processPaymentRequest,
-        List<ShoppingCartItem> shoppingCartItems, bool notifyCustomer = false);
+    Task<PlaceOrderResult> PlaceWholesaleOrderAsync(ProcessPaymentRequest processPaymentRequest, List<ShoppingCartItem> shoppingCartItems);
 }
 
-public class WholesaleService : IWholesaleService
+public class NexportNexportWholesaleService : INexportWholesaleService
 {
     #region Fields
 
@@ -92,7 +87,7 @@ public class WholesaleService : IWholesaleService
 
     #region Constructors
 
-    public WholesaleService(
+    public NexportNexportWholesaleService(
         CurrencySettings currencySettings,
         IAddressService addressService,
         IAffiliateService affiliateService,
@@ -183,7 +178,7 @@ public class WholesaleService : IWholesaleService
 
     #endregion
 
-    public async Task<PlaceOrderResult> PlaceOrderForCustomerAsync(ProcessPaymentRequest processPaymentRequest, List<ShoppingCartItem> shoppingCartItems, bool notifyCustomer = false)
+    public async Task<PlaceOrderResult> PlaceWholesaleOrderAsync(ProcessPaymentRequest processPaymentRequest, List<ShoppingCartItem> shoppingCartItems)
     {
         var result = new PlaceOrderResult();
         if (processPaymentRequest.OrderGuid == Guid.Empty)
@@ -204,9 +199,7 @@ public class WholesaleService : IWholesaleService
             }
         }
         if (!result.Success)
-        {
             await logOrderError();
-        }
         return result;
 
         async Task handleUnsuccessfulPayment(ProcessPaymentResult? processPaymentResult)
@@ -237,10 +230,6 @@ public class WholesaleService : IWholesaleService
                 var order = await SaveOrderDetailsAsync(processPaymentRequest, processPaymentResult, details);
                 result.PlacedOrder = order;
                 await MoveTempShoppingCartItemToOrderItemsAsync(details, order);
-                if (notifyCustomer)
-                {
-                    await SendNotificationsToCustomerAndSaveNotesAsync(order);
-                }
                 var currentOrderProcessor = EngineContext.Current.Resolve<IOrderProcessingService>();
                 await currentOrderProcessor.CheckOrderStatusAsync(order);
                 await _eventPublisher.PublishAsync(new OrderPlacedEvent(order));
@@ -269,13 +258,9 @@ public class WholesaleService : IWholesaleService
         var customer = await _customerService.GetCustomerByIdAsync(processPaymentRequest.CustomerId);
         var paymentMethod = await _paymentPluginManager.LoadPluginBySystemNameAsync(processPaymentRequest.PaymentMethodSystemName, customer, processPaymentRequest.StoreId);
         if (paymentMethod is null)
-        {
             throw new NopException("Payment method couldn't be loaded");
-        }
         if (!_paymentPluginManager.IsPluginActive(paymentMethod))
-        {
             throw new NopException("Payment method is not active");
-        }
 
         var result = details.IsRecurringShoppingCart ?
             await ProcessRecurringPaymentAsync(processPaymentRequest)
@@ -303,9 +288,7 @@ public class WholesaleService : IWholesaleService
     private async Task<Order> SaveOrderDetailsAsync(ProcessPaymentRequest processPaymentRequest, ProcessPaymentResult processPaymentResult, PlaceOrderContainer details)
     {
         if (details.BillingAddress is null)
-        {
             throw new NopException("Billing address is not provided");
-        }
 
         var order = new Order
         {
@@ -378,9 +361,7 @@ public class WholesaleService : IWholesaleService
         await _orderService.UpdateOrderAsync(order);
         //reward points history
         if (details.RedeemedRewardPointsAmount <= decimal.Zero)
-        {
             return order;
-        }
         var message = string.Format(await _localizationService.GetResourceAsync("RewardPoints.Message.RedeemedForOrder", order.CustomerLanguageId), order.CustomOrderNumber);
         order.RedeemedRewardPointsEntryId = await _rewardPointService.AddRewardPointsHistoryEntryAsync(details.Customer, -details.RedeemedRewardPoints, order.StoreId, message, order, details.RedeemedRewardPointsAmount);
         await _customerService.UpdateCustomerAsync(details.Customer);
@@ -397,33 +378,25 @@ public class WholesaleService : IWholesaleService
             //we should not send it for free ($0 total) orders?
             //remove this "if" statement if you want to send it in this case
             var orderPaidAttachmentFilePath = _orderSettings.AttachPdfInvoiceToOrderPaidEmail ? await _pdfService.SaveOrderPdfToDiskAsync(order) : null;
-            var orderPaidAttachmentFileName = _orderSettings.AttachPdfInvoiceToOrderPaidEmail ? (string.Format(await _localizationService.GetResourceAsync("PDFInvoice.FileName"), order.CustomOrderNumber) + ".pdf") : null;
+            var orderPaidAttachmentFileName = _orderSettings.AttachPdfInvoiceToOrderPaidEmail ? string.Format(await _localizationService.GetResourceAsync("PDFInvoice.FileName"), order.CustomOrderNumber) + ".pdf" : null;
             var orderPaidCustomerNotificationQueuedEmailIds = await _workflowMessageService.SendOrderPaidCustomerNotificationAsync(order, order.CustomerLanguageId, orderPaidAttachmentFilePath, orderPaidAttachmentFileName);
             if (orderPaidCustomerNotificationQueuedEmailIds.Any())
-            {
                 await AddOrderNoteAsync(order, buildNote("customer", orderPaidCustomerNotificationQueuedEmailIds));
-            }
             var orderPaidStoreOwnerNotificationQueuedEmailIds = await _workflowMessageService.SendOrderPaidStoreOwnerNotificationAsync(order, _localizationSettings.DefaultAdminLanguageId);
             if (orderPaidStoreOwnerNotificationQueuedEmailIds.Any())
-            {
                 await AddOrderNoteAsync(order, buildNote("store owner", orderPaidStoreOwnerNotificationQueuedEmailIds));
-            }
             var vendors = await GetVendorsInOrderAsync(order);
             foreach (var vendor in vendors)
             {
                 var orderPaidVendorNotificationQueuedEmailIds = await _workflowMessageService.SendOrderPaidVendorNotificationAsync(order, vendor, _localizationSettings.DefaultAdminLanguageId);
                 if (orderPaidVendorNotificationQueuedEmailIds.Any())
-                {
                     await AddOrderNoteAsync(order, buildNote("vendor", orderPaidVendorNotificationQueuedEmailIds));
-                }
             }
             if (order.AffiliateId != 0)
             {
                 var orderPaidAffiliateNotificationQueuedEmailIds = await _workflowMessageService.SendOrderPaidAffiliateNotificationAsync(order, _localizationSettings.DefaultAdminLanguageId);
                 if (orderPaidAffiliateNotificationQueuedEmailIds.Any())
-                {
                     await AddOrderNoteAsync(order, buildNote("affiliate", orderPaidAffiliateNotificationQueuedEmailIds));
-                }
             }
         }
 
@@ -441,7 +414,10 @@ public class WholesaleService : IWholesaleService
     {
         await _orderService.InsertOrderNoteAsync(new OrderNote
         {
-            OrderId = order.Id, Note = note, DisplayToCustomer = false, CreatedOnUtc = DateTime.UtcNow
+            OrderId = order.Id,
+            Note = note,
+            DisplayToCustomer = false,
+            CreatedOnUtc = DateTime.UtcNow
         });
     }
 
@@ -466,25 +442,15 @@ public class WholesaleService : IWholesaleService
             .Where(customerRole => purchasedProductIds.Contains(customerRole.PurchasedWithProductId))
             .ToList();
         if (!customerRoles.Any())
-        {
             return;
-        }
 
         var customer = await _customerService.GetCustomerByIdAsync(order.CustomerId);
         foreach (var customerRole in customerRoles)
-        {
             if (!await _customerService.IsInCustomerRoleAsync(customer, customerRole.SystemName))
-            {
                 if (add)
-                {
                     await _customerService.AddCustomerRoleMappingAsync(new CustomerCustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = customerRole.Id });
-                }
-            }
-            else if (!add)
-            {
-                await _customerService.RemoveCustomerRoleMappingAsync(customer, customerRole);
-            }
-        }
+                else if (!add)
+                    await _customerService.RemoveCustomerRoleMappingAsync(customer, customerRole);
         await _customerService.UpdateCustomerAsync(customer);
     }
 
@@ -501,41 +467,31 @@ public class WholesaleService : IWholesaleService
             : "Order placed");
         var orderPlacedStoreOwnerNotificationQueuedEmailIds = await _workflowMessageService.SendOrderPlacedStoreOwnerNotificationAsync(order, _localizationSettings.DefaultAdminLanguageId);
         if (orderPlacedStoreOwnerNotificationQueuedEmailIds.Any())
-        {
             await AddOrderNoteAsync(order, $"\"Order placed\" email (to store owner) has been queued. Queued email identifiers: {string.Join(", ", orderPlacedStoreOwnerNotificationQueuedEmailIds)}.");
-        }
 
-        var orderPlacedAttachmentFilePath = _orderSettings.AttachPdfInvoiceToOrderPlacedEmail ? (await _pdfService.SaveOrderPdfToDiskAsync(order)) : null;
-        var orderPlacedAttachmentFileName = _orderSettings.AttachPdfInvoiceToOrderPlacedEmail ? (string.Format(await _localizationService.GetResourceAsync("PDFInvoice.FileName"), order.CustomOrderNumber) + ".pdf") : null;
+        var orderPlacedAttachmentFilePath = _orderSettings.AttachPdfInvoiceToOrderPlacedEmail ? await _pdfService.SaveOrderPdfToDiskAsync(order) : null;
+        var orderPlacedAttachmentFileName = _orderSettings.AttachPdfInvoiceToOrderPlacedEmail ? string.Format(await _localizationService.GetResourceAsync("PDFInvoice.FileName"), order.CustomOrderNumber) + ".pdf" : null;
         var orderPlacedCustomerNotificationQueuedEmailIds = await _workflowMessageService.SendOrderPlacedCustomerNotificationAsync(order, order.CustomerLanguageId, orderPlacedAttachmentFilePath, orderPlacedAttachmentFileName);
         if (orderPlacedCustomerNotificationQueuedEmailIds.Any())
-        {
             await AddOrderNoteAsync(order, $"\"Order placed\" email (to customer) has been queued. Queued email identifiers: {string.Join(", ", orderPlacedCustomerNotificationQueuedEmailIds)}.");
-        }
 
         var vendors = await GetVendorsInOrderAsync(order);
         foreach (var vendor in vendors)
         {
             var orderPlacedVendorNotificationQueuedEmailIds = await _workflowMessageService.SendOrderPlacedVendorNotificationAsync(order, vendor, _localizationSettings.DefaultAdminLanguageId);
             if (orderPlacedVendorNotificationQueuedEmailIds.Any())
-            {
                 await AddOrderNoteAsync(order, $"\"Order placed\" email (to vendor) has been queued. Queued email identifiers: {string.Join(", ", orderPlacedVendorNotificationQueuedEmailIds)}.");
-            }
         }
 
         if (order.AffiliateId is 0)
-        {
             return;
-        }
 
         var orderPlacedAffiliateNotificationQueuedEmailIds = await _workflowMessageService.SendOrderPlacedAffiliateNotificationAsync(order, _localizationSettings.DefaultAdminLanguageId);
         if (orderPlacedAffiliateNotificationQueuedEmailIds.Any())
-        {
             await AddOrderNoteAsync(order, $"\"Order placed\" email (to affiliate) has been queued. Queued email identifiers: {string.Join(", ", orderPlacedAffiliateNotificationQueuedEmailIds)}.");
-        }
     }
 
-    private async Task MoveTempShoppingCartItemToOrderItemsAsync(WholesaleService.PlaceOrderContainer details, Order order)
+    private async Task MoveTempShoppingCartItemToOrderItemsAsync(PlaceOrderContainer details, Order order)
     {
         foreach (var sc in details.Cart)
         {
@@ -586,13 +542,10 @@ public class WholesaleService : IWholesaleService
     private async Task AddGiftCardsAsync(Product product, string attributesXml, int quantity, OrderItem orderItem, decimal? unitPriceExclTax = null, decimal? amount = null)
     {
         if (!product.IsGiftCard)
-        {
             return;
-        }
 
         _productAttributeParser.GetGiftCardAttribute(attributesXml, out var giftCardRecipientName, out var giftCardRecipientEmail, out var giftCardSenderName, out var giftCardSenderEmail, out var giftCardMessage);
         for (var i = 0; i < quantity; i++)
-        {
             await _giftCardService.InsertGiftCardAsync(new GiftCard
             {
                 GiftCardType = product.GiftCardType,
@@ -608,7 +561,6 @@ public class WholesaleService : IWholesaleService
                 IsRecipientNotified = false,
                 CreatedOnUtc = DateTime.UtcNow
             });
-        }
     }
 
     private class PlaceOrderContainer
@@ -653,21 +605,15 @@ public class WholesaleService : IWholesaleService
     private async Task PrepareAndValidateBillingAddressAsync(PlaceOrderContainer details)
     {
         if (details.Customer.BillingAddressId is null)
-        {
             throw new NopException("Billing address is not provided");
-        }
 
         var billingAddress = await _customerService.GetCustomerBillingAddressAsync(details.Customer);
         if (!CommonHelper.IsValidEmail(billingAddress?.Email))
-        {
             throw new NopException("Email is not valid");
-        }
 
         details.BillingAddress = _addressService.CloneAddress(billingAddress);
         if (await _countryService.GetCountryByAddressAsync(details.BillingAddress) is { AllowsBilling: false } billingCountry)
-        {
             throw new NopException($"Country '{billingCountry.Name}' is not allowed for billing");
-        }
     }
 
     private async Task PrepareAndValidateShippingInfoAsync(PlaceOrderContainer details, ProcessPaymentRequest processPaymentRequest)
@@ -695,15 +641,11 @@ public class WholesaleService : IWholesaleService
             else
             {
                 if (details.Customer.ShippingAddressId is null)
-                {
                     throw new NopException("Shipping address is not provided");
-                }
 
                 var shippingAddress = await _customerService.GetCustomerShippingAddressAsync(details.Customer);
                 if (!CommonHelper.IsValidEmail(shippingAddress?.Email))
-                {
                     throw new NopException("Email is not valid");
-                }
 
                 //clone shipping address
                 details.ShippingAddress = _addressService.CloneAddress(shippingAddress);
@@ -711,9 +653,7 @@ public class WholesaleService : IWholesaleService
                     {
                         AllowsShipping: false
                     } shippingCountry)
-                {
                     throw new NopException($"Country '{shippingCountry.Name}' is not allowed for shipping");
-                }
             }
 
             var shippingOption = await _genericAttributeService.GetAttributeAsync<ShippingOption>(details.Customer, NopCustomerDefaults.SelectedShippingOptionAttribute, processPaymentRequest.StoreId);
@@ -726,9 +666,7 @@ public class WholesaleService : IWholesaleService
             details.ShippingStatus = ShippingStatus.NotYetShipped;
         }
         else
-        {
             details.ShippingStatus = ShippingStatus.ShippingNotRequired;
-        }
     }
 
     private async Task PrepareAndValidateTotalsAsync(PlaceOrderContainer details, ProcessPaymentRequest processPaymentRequest)
@@ -746,19 +684,13 @@ public class WholesaleService : IWholesaleService
         //shipping total
         var (orderShippingTotalInclTax, orderShippingTotalExclTax, _, shippingTotalDiscounts) = await _orderTotalCalculationService.GetShoppingCartShippingTotalsAsync(details.Cart);
         if (!orderShippingTotalInclTax.HasValue || !orderShippingTotalExclTax.HasValue)
-        {
             throw new NopException("Shipping total couldn't be calculated");
-        }
 
         details.OrderShippingTotalInclTax = orderShippingTotalInclTax.Value;
         details.OrderShippingTotalExclTax = orderShippingTotalExclTax.Value;
         foreach (var disc in shippingTotalDiscounts)
-        {
             if (!_discountService.ContainsDiscount(details.AppliedDiscounts, disc))
-            {
                 details.AppliedDiscounts.Add(disc);
-            }
-        }
 
         //payment total
         var paymentAdditionalFee = await _paymentService.GetAdditionalHandlingFeeAsync(details.Cart, processPaymentRequest.PaymentMethodSystemName);
@@ -769,9 +701,7 @@ public class WholesaleService : IWholesaleService
         (details.OrderTaxTotal, taxRatesDictionary) = await _orderTotalCalculationService.GetTaxTotalAsync(details.Cart);
         //VAT number
         if (_taxSettings.EuVatEnabled && details.Customer.VatNumberStatus is VatNumberStatus.Valid)
-        {
             details.VatNumber = details.Customer.VatNumber;
-        }
 
         //tax rates
         details.TaxRates = taxRatesDictionary.Aggregate(string.Empty, (current, next) =>
@@ -779,9 +709,7 @@ public class WholesaleService : IWholesaleService
         //order total (and applied discounts, gift cards, reward points)
         var (orderTotal, orderDiscountAmount, orderAppliedDiscounts, appliedGiftCards, redeemedRewardPoints, redeemedRewardPointsAmount) = await _orderTotalCalculationService.GetShoppingCartTotalAsync(details.Cart);
         if (!orderTotal.HasValue)
-        {
             throw new NopException("Order total couldn't be calculated");
-        }
 
         details.OrderDiscountAmount = orderDiscountAmount;
         details.RedeemedRewardPoints = redeemedRewardPoints;
@@ -790,12 +718,8 @@ public class WholesaleService : IWholesaleService
         details.OrderTotal = orderTotal.Value;
         //discount history
         foreach (var disc in orderAppliedDiscounts)
-        {
             if (!_discountService.ContainsDiscount(details.AppliedDiscounts, disc))
-            {
                 details.AppliedDiscounts.Add(disc);
-            }
-        }
         processPaymentRequest.OrderTotal = details.OrderTotal;
     }
 
@@ -811,32 +735,24 @@ public class WholesaleService : IWholesaleService
         //affiliate
         var affiliate = await _affiliateService.GetAffiliateByIdAsync(details.Customer.AffiliateId);
         if (affiliate is { Active: true, Deleted: false })
-        {
             details.AffiliateId = affiliate.Id;
-        }
 
         //tax display type
         //TODO: this code duplicates method IWorkContext.GetTaxDisplayTypeAsync(), let's move it to a ICustomerService with "customer" parameter passing
         var taxDisplayType = _taxSettings.TaxDisplayType;
         if (_taxSettings.AllowCustomersToSelectTaxDisplayType && details.Customer.TaxDisplayTypeId.HasValue)
-        {
             taxDisplayType = (TaxDisplayType)details.Customer.TaxDisplayTypeId.Value;
-        }
         else
         {
             var defaultRoleTaxDisplayType = await _customerService.GetCustomerDefaultTaxDisplayTypeAsync(details.Customer);
             if (defaultRoleTaxDisplayType.HasValue)
-            {
                 taxDisplayType = defaultRoleTaxDisplayType.Value;
-            }
         }
         details.CustomerTaxDisplayType = taxDisplayType;
         //recurring or standard shopping cart?
         details.IsRecurringShoppingCart = await _shoppingCartService.ShoppingCartIsRecurringAsync(details.Cart);
         if (!details.IsRecurringShoppingCart)
-        {
             return details;
-        }
 
         await PrepareAndValidateRecurringShoppingAsync(details, processPaymentRequest);
         return details;
@@ -846,9 +762,7 @@ public class WholesaleService : IWholesaleService
     {
         var (recurringCyclesError, recurringCycleLength, recurringCyclePeriod, recurringTotalCycles) = await _shoppingCartService.GetRecurringCycleInfoAsync(details.Cart);
         if (!string.IsNullOrEmpty(recurringCyclesError))
-        {
             throw new NopException(recurringCyclesError);
-        }
 
         processPaymentRequest.RecurringCycleLength = recurringCycleLength;
         processPaymentRequest.RecurringCyclePeriod = recurringCyclePeriod;
@@ -859,14 +773,10 @@ public class WholesaleService : IWholesaleService
     {
         details.Customer = await _customerService.GetCustomerByIdAsync(processPaymentRequest.CustomerId);
         if (details.Customer is null)
-        {
             throw new ArgumentException("Customer is not set");
-        }
 
         if (await _customerService.IsGuestAsync(details.Customer) && !_orderSettings.AnonymousCheckoutAllowed)
-        {
             throw new NopException("Anonymous checkout is not allowed");
-        }
 
         var currencyTmp = await _currencyService.GetCurrencyByIdAsync(details.Customer.CurrencyId ?? 0);
         var customerCurrency = currencyTmp is { Published: true } ? currencyTmp : currentCurrency;
@@ -875,9 +785,7 @@ public class WholesaleService : IWholesaleService
         details.CustomerCurrencyRate = customerCurrency.Rate / primaryStoreCurrency.Rate;
         details.CustomerLanguage = await _languageService.GetLanguageByIdAsync(details.Customer.LanguageId ?? 0);
         if (details.CustomerLanguage is null || !details.CustomerLanguage.Published)
-        {
             details.CustomerLanguage = await _workContext.GetWorkingLanguageAsync();
-        }
     }
 
     private async Task PrepareAndValidateCheckoutAttributesAsync(PlaceOrderContainer details, ProcessPaymentRequest processPaymentRequest, Currency currentCurrency)
@@ -886,9 +794,7 @@ public class WholesaleService : IWholesaleService
         details.CheckoutAttributeDescription = await _checkoutAttributeFormatter.FormatAttributesAsync(details.CheckoutAttributesXml, details.Customer);
 
         if (!details.Cart.Any())
-        {
             throw new NopException("Cart is empty");
-        }
 
         if (!await ValidateMinOrderSubtotalAmountAsync(details.Cart))
         {
@@ -913,9 +819,7 @@ public class WholesaleService : IWholesaleService
     private async Task<bool> ValidateMinOrderSubtotalAmountAsync(IList<ShoppingCartItem> cart)
     {
         if (!cart.Any() || _orderSettings.MinOrderSubtotalAmount <= decimal.Zero)
-        {
             return true;
-        }
         var (_, _, subTotalWithoutDiscountBase, _, _) =
             await _orderTotalCalculationService.GetShoppingCartSubTotalAsync(cart,
                 _orderSettings.MinOrderSubtotalAmountIncludingTax);
@@ -925,9 +829,7 @@ public class WholesaleService : IWholesaleService
     private async Task<bool> ValidateMinOrderTotalAmountAsync(IList<ShoppingCartItem> cart)
     {
         if (!cart.Any() || _orderSettings.MinOrderTotalAmount <= decimal.Zero)
-        {
             return true;
-        }
         var shoppingCartTotal = await _orderTotalCalculationService.GetShoppingCartTotalAsync(cart);
         return !shoppingCartTotal.shoppingCartTotal.HasValue || shoppingCartTotal.shoppingCartTotal.Value >= _orderSettings.MinOrderTotalAmount;
     }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
+﻿using System.Net;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -811,8 +807,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await FindAllOrganizationsAsync(_nexportSettings.RootOrganizationId.Value);
         }
 
-        [CanBeNull]
-        public async Task<OrganizationResponseItem> GetOrganizationDetailsAsync(Guid orgId)
+        public async Task<OrganizationResponseItem?> GetOrganizationDetailsAsync(Guid orgId)
         {
             var availableOrganizations = await FindAllOrganizationsAsync(orgId);
             var result = availableOrganizations.SingleOrDefault(s => s.OrgId == orgId);

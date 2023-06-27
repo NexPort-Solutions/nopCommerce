@@ -233,58 +233,44 @@ namespace Nop.Plugin.Misc.Nexport
                 PublicWidgetZones.HeaderLinksBefore,
                 PublicWidgetZones.OrderSummaryCartFooter,
                 PublicWidgetZones.ProductDetailsOverviewTop,
-                NexportDefaults.NexportRegistrationFieldsZone
+                NexportDefaults.NexportRegistrationFieldsZone,
+                AdminWidgetZones.OrderListButtons
             });
         }
 
-        public Type GetWidgetViewComponent(string widgetZone)
+        public Type? GetWidgetViewComponent(string widgetZone)
         {
-            if (widgetZone == null)
-                throw new ArgumentNullException(nameof(widgetZone));
-
             if (widgetZone == AdminWidgetZones.StoreDetailsBottom)
                 return typeof(WidgetsNexportStoreDetails);
-
-            if (widgetZone == AdminWidgetZones.ProductDetailsBlock)
+            else if (widgetZone == AdminWidgetZones.ProductDetailsBlock)
                 return typeof(WidgetsNexportProductMappingsInProductPage);
-
-            if (widgetZone == AdminWidgetZones.ProductDetailsButtons)
+            else if (widgetZone == AdminWidgetZones.ProductDetailsButtons)
                 return typeof(WidgetsNexportProductDetailsButtons);
-
-            if (widgetZone == AdminWidgetZones.CustomerDetailsButtons)
+            else if (widgetZone == AdminWidgetZones.CustomerDetailsButtons)
                 return typeof(WidgetsNexportCustomerDetailsButtons);
-
-            if (widgetZone == AdminWidgetZones.CustomerDetailsBlock)
+            else if (widgetZone == AdminWidgetZones.CustomerDetailsBlock)
                 return typeof(WidgetsNexportCustomerDetailsBlock);
-
-            if (widgetZone == AdminWidgetZones.CustomerUserDetailsBlock)
+            else if (widgetZone == AdminWidgetZones.CustomerUserDetailsBlock)
                 return typeof(WidgetsNexportCustomerUserDetailsBlock);
-
-            if (widgetZone == AdminWidgetZones.CategoryDetailsBlock)
+            else if (widgetZone == AdminWidgetZones.CategoryDetailsBlock)
                 return typeof(WidgetsNexportCategoryDetailsBlock);
-
-            if (widgetZone == AdminWidgetZones.OrderDetailsBlock)
+            else if (widgetZone == AdminWidgetZones.OrderDetailsBlock)
                 return typeof(WidgetsNexportOrderDetailsBlock);
-
-            if (widgetZone == PublicWidgetZones.OrderDetailsProductLine)
+            else if (widgetZone == PublicWidgetZones.OrderDetailsProductLine)
                 return typeof(WidgetsNexportOrderDetailsProductLine);
-
-            if (widgetZone == PublicWidgetZones.AccountNavigationAfter)
+            else if (widgetZone == PublicWidgetZones.AccountNavigationAfter)
                 return typeof(WidgetsAccountNavigationAfter);
-
-            if (widgetZone == PublicWidgetZones.HeaderLinksBefore)
+            else if (widgetZone == PublicWidgetZones.HeaderLinksBefore)
                 return typeof(WidgetsHeaderLinksBefore);
-
-            if (widgetZone == PublicWidgetZones.OrderSummaryCartFooter)
+            else if (widgetZone == PublicWidgetZones.OrderSummaryCartFooter)
                 return typeof(WidgetsOrderSummaryCartFooter);
-
-            if (widgetZone == PublicWidgetZones.ProductDetailsOverviewTop)
+            else if (widgetZone == PublicWidgetZones.ProductDetailsOverviewTop)
                 return typeof(WidgetsProductDetailsOverviewTop);
-
-            if (widgetZone == NexportDefaults.NexportRegistrationFieldsZone)
+            else if (widgetZone == NexportDefaults.NexportRegistrationFieldsZone)
                 return typeof(WidgetsNexportRegistrationFields);
-
-            return null;
+            else if (widgetZone == AdminWidgetZones.OrderListButtons)
+                return typeof(WidgetsNexportOrderListButtons);
+            else return null;
         }
     }
 }

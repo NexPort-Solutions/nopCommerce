@@ -1,0 +1,35 @@
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders
+@using OrderController = Nop.Web.Areas.Admin.Controllers.OrderController
+@model NextportWholesaleOrderCreationResponse
+
+<section class="content">
+    <section class="container-fluid">
+        <div class="form-horizontal">
+            <div class="cards-group">
+                <div class="card card-default card-search">
+                    <div class="card-body">
+                        <form asp-controller="Order" asp-action="List" method="post">
+                            <div class="form-group row">
+                                <a class="btn bg-green" href="@Url.Action(nameof(WholesaleController.Create), "Wholesale")">Create new wholesale order</a>
+                                <a class="btn bg-green" href="@Url.Action(nameof(OrderController.List), "Order")">Return to Orders</a>
+                            </div>
+                            <div class="form-group row">
+                                <input name="GoDirectlyToCustomOrderNumber" value="@Model.Id" hidden />
+                                <div class="col-md-8">
+                                    <div class="input-group input-group-short">
+                                        <span class="input-group-append">
+                                            <button type="submit" id="go-to-order-by-number" name="go-to-order-by-number" class="btn btn-info btn-flat">
+                                                @T("Plugins.Misc.Nexport.Wholesale.Go")
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</section>

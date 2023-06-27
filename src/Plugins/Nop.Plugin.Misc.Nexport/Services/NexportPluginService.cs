@@ -622,6 +622,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName", "Name");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName.Hint", "Filter registration fields list by name.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Go", "Go to created order");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.RedeemBy", "Redeem-By Date");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited", "Unlimited redemption");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Organization", "Organization");
         }
 
         public async Task DeleteResourcesAsync()
@@ -875,6 +879,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Go");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.RedeemBy");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Organization");
         }
 
         public async Task InstallPermissionProviderAsync()
