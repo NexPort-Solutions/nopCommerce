@@ -626,6 +626,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.RedeemBy", "Redeem-By Date");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited", "Unlimited redemption");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Organization", "Organization");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Order.GroupId", "Purchasing For Group/Org:");
         }
 
         public async Task DeleteResourcesAsync()
@@ -883,6 +884,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.RedeemBy");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Organization");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Order.GroupId");
         }
 
         public async Task InstallPermissionProviderAsync()

@@ -3008,6 +3008,18 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     }
                 }
             }
+
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            var orderStore = await _storeContext.GetCurrentStoreAsync();
+            var groupId = await _genericAttributeService.GetAttributeAsync<Guid>(customer, "GroupForCustomer", orderStore.Id);
+
+            // reset generic attribute group for customer for future purchases
+            await _genericAttributeService.SaveAttributeAsync(customer, $"GroupForCustomer",
+                Guid.Empty,orderStore.Id);
+
+            // set attribute group for order
+            await _genericAttributeService.SaveAttributeAsync<Guid>(order, $"GroupForOrder",
+                groupId, orderStore.Id);
         }
 
         public async Task HandleEventAsync(EntityDeletedEvent<Product> eventMessage)

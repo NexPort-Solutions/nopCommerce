@@ -164,6 +164,11 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         await _logger.InformationAsync($"While processing order {order.Id} - orgid set to root organization id value");
                                     }
 
+                                    //get group id for order
+                                    var groupId = await _genericAttributeService.GetAttributeAsync<Guid>(order, $"GroupForOrder", store.Id);
+
+                                    //TODO - JS: If there is a group id then treat as wholesale order, otherwise do retail
+
                                     // Check if there is an existing invoice. If not, begin a new invoice transaction.
                                     var orderInvoiceId =
                                         await _nexportService.FindExistingInvoiceForOrder(order.Id) ??

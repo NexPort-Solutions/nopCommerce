@@ -147,6 +147,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         Task<NexportOrderListModel> PrepareOrderListModelAsync(OrderSearchModel searchModel);
 
         Task<WholesaleCreateModel> PrepareWholesaleOrderModelAsync();
+        Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(
+            OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer customer, Store store);
 
     }
 }
