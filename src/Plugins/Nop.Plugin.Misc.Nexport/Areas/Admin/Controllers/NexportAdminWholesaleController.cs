@@ -19,7 +19,7 @@ using Nop.Web.Areas.Admin.Models.Payments;
 
 namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
 
-public class WholesaleController : BaseAdminController
+public class NexportAdminWholesaleController : BaseAdminController
 {
     private readonly INexportPluginModelFactory _nexportPluginModelFactory;
     private readonly IPermissionService _permissionService;
@@ -31,7 +31,7 @@ public class WholesaleController : BaseAdminController
     private readonly IProductService _productService;
     private readonly IPluginService _pluginService;
 
-    public WholesaleController(INexportPluginModelFactory nexportPluginModelFactory, IPermissionService permissionService, IOrderService orderService, IStoreService storeService, INexportWholesaleService nexportWholesaleService, IWorkContext workContext, NexportService nexportService, IPaymentPluginManager paymentPluginManager, IProductService productService, IPluginService pluginService)
+    public NexportAdminWholesaleController(INexportPluginModelFactory nexportPluginModelFactory, IPermissionService permissionService, IOrderService orderService, IStoreService storeService, INexportWholesaleService nexportWholesaleService, IWorkContext workContext, NexportService nexportService, IPaymentPluginManager paymentPluginManager, IProductService productService, IPluginService pluginService)
     {
         _nexportPluginModelFactory = nexportPluginModelFactory;
         _permissionService = permissionService;

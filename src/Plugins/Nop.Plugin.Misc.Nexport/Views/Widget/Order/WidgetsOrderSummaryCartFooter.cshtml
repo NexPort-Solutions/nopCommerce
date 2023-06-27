@@ -1,9 +1,71 @@
 ﻿@using Nop.Core.Domain.Discounts
+@model Nop.Plugin.Misc.Nexport.Models.Order.OrderSummaryCartFooterModel
 
 @{
     var discounts = ViewData["DiscountList"] as List<Discount>;
+    var hideGroupSelect = ViewData["HideGroupSelect"] as bool?;
+
 }
 
+@if (Model.IsPurchasingAgent)
+{
+    <div style="@((hideGroupSelect.HasValue && hideGroupSelect.Value==true) ? "display:none" : "")">
+        <div style="margin: 0 0 5px;">
+            <strong style="font-size: 18px; font-weight: normal;">
+                Group
+            </strong>
+        </div>
+        <div style="margin: 0 0 10px;">
+            Select the group you would like to purchase for
+        </div>
+        <div>
+            <nop-select asp-for="GroupId" asp-items="Model.AvailableGroups" id="groupselect" />
+        </div>
+    </div>
+    <div style="min-height: 60px;overflow: hidden;">
+        <div id="selectedgroupdiv" style="float: right; margin: 30px 0; padding: 0 10px;color: #444;">
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            var selected = $("#groupselect").children(":selected");
+
+            if (selected.index() != 0)
+                $("#selectedgroupdiv").html("Purchasing for group:" + selected.html());
+
+            $("#groupselect").on("change", function () {
+                selected = $("#groupselect").children(":selected");
+                var postData = {
+                    selectedId: selected.attr("value"),
+                };
+
+                addAntiForgeryToken(postData);
+
+                $.ajax({
+                    cache: false,
+                    type: "POST",
+                    url: "@Url.Action("SetPurchaseGroupForCustomer", "NexportWholesale")",
+                    data: postData,
+                    success: function (data, textStatus, jqXHR) {
+                        if (data.Result) {
+                            if (selected.index() != 0) {
+                                $("#selectedgroupdiv").html("Purchasing for group:" + selected.html());
+                            }
+                            else {
+                                $("#selectedgroupdiv").html("");
+                            }
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+
+                    }
+                });
+                return false;
+
+            });
+        });
+    </script>
+}
 @if (discounts is { Count: > 0 })
 {
     <div style="float: left;">

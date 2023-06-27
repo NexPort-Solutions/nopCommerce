@@ -37,6 +37,15 @@ using Nop.Web.Areas.Admin.Models.Payments;
 using Nop.Web.Areas.Admin.Models.Stores;
 using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Models.Extensions;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
+using Newtonsoft.Json;
+using Nop.Core.Domain.Common;
+using Nop.Services.Configuration;
+using Nop.Services.Payments;
+using Nop.Web.Areas.Admin.Models.Common;
+using Nop.Web.Areas.Admin.Models.Orders;
+using Nop.Web.Framework.Extensions;
+using Nop.Web.Models.Common;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -1529,7 +1538,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             });
             return model;
         }
-        
+
         public virtual async Task<WholesaleCreateModel> PrepareWholesaleOrderModelAsync()
         {
             var root = _nexportSettings.RootOrganizationId.Value;
@@ -1553,6 +1562,63 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             SelectListItem productToListItem(NexportProductMapping mapping) => new(mapping.DisplayName, mapping.NopProductId.ToString());
             async ValueTask<IList<NexportProductMapping>> storeToProducts(Store store) => await _nexportService.GetProductMappingsByStoreId(store.Id);
             SelectListItem paymentMethodToListItem(IPaymentMethod paymentMethod) => new(paymentMethod.PaymentMethodType.ToString(), paymentMethod.ToPluginModel<PaymentMethodModel>().SystemName);
+        }
+
+        public async Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer customer, Store store)
+        {
+            if (orderSummaryCartFooterModel == null)
+                throw new ArgumentNullException(nameof(orderSummaryCartFooterModel));
+
+            //TODO - JS: api call to check if customer is purchasing agent
+            //check if customer is purchasing agent. if so then display dropdown of groups that can be purchased for
+            orderSummaryCartFooterModel.IsPurchasingAgent = true;
+
+            if (orderSummaryCartFooterModel.IsPurchasingAgent)
+            {
+                var selectedGroupId = await _genericAttributeService.GetAttributeAsync<Guid>(customer,"GroupForCustomer",store.Id);
+
+                if (selectedGroupId != Guid.Empty)
+                {
+                    orderSummaryCartFooterModel.GroupId = selectedGroupId;
+                }
+                else
+                {
+                    //set groupforcustomer attribute so we don't run into null later
+                    await _genericAttributeService.SaveAttributeAsync(customer, $"GroupForCustomer",
+                        selectedGroupId, store.Id);
+                }
+
+                //TODO - JS: api call to get groups for purchasing agent
+                //prepare groups
+                orderSummaryCartFooterModel.AvailableGroups = new List<SelectListItem>
+                {
+                    new SelectListItem("organization 1", "8fc17e71-7cad-4e98-9cad-ee576fb18d55"), new SelectListItem("organization 2", "ed850ffa-c341-4a20-935c-f2afe17601c0"), new SelectListItem("organization 3", "305bb0a8-f586-4f5b-884f-f36917d956fc")
+                };
+
+                // set default value of 0 that displays an empty string as the first item in the dropdown
+                await PrepareDefaultItemAsync(orderSummaryCartFooterModel.AvailableGroups, "None",$"{Guid.Empty}");
+            }
+
+            return orderSummaryCartFooterModel;
+        }
+
+        /// <summary>
+        /// Prepare default item
+        /// </summary>
+        /// <param name="items">Available items</param>
+        /// <param name="defaultItemText">Default item text; pass null to use "All" text</param>
+        /// <param name="defaultItemValue">Default item value; defaults 0</param>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        protected virtual async Task PrepareDefaultItemAsync(IList<SelectListItem> items, string defaultItemText = null, string defaultItemValue = "0")
+        {
+            if (items == null)
+                throw new ArgumentNullException(nameof(items));
+
+            //prepare item text
+            defaultItemText ??= await _localizationService.GetResourceAsync("Admin.Common.All");
+
+            //insert this default item at first
+            items.Insert(0, new SelectListItem { Text = defaultItemText, Value = defaultItemValue });
         }
     }
 }
