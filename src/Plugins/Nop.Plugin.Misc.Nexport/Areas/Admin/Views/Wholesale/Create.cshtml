@@ -1,0 +1,166 @@
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders
+@model WholesaleCreateModel
+<section class="content">
+    <section class="container-fluid">
+        <div class="form-horizontal">
+            <div class="cards-group">
+                <div class="card card-default card-search">
+                    <div class="card-body">
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <form id="target" asp-controller="Wholesale" asp-action="PlaceWholesaleOrder" onchange="checkValidForm();">
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="StoreId"></nop-label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <input id="search-store-friendly" type="text" autocomplete="on" class="form-control" />
+                                            @Html.TextBoxFor(model => model.StoreId, new { style = "display:none" })
+                                            <script>
+                                                $(document).ready(function () {
+                                                    $('#search-store-friendly').autocomplete({
+                                                        delay: 0,
+                                                        minLength: 0,
+                                                        source: @Html.Raw(Json.Serialize(Model.AvailableStores.Select(store => new { label = store.Text, value = store.Value}))),
+                                                        select: function (event, ui) {
+                                                            console.log(ui);
+                                                            $('#search-store-friendly').val(ui.item.label);
+                                                            $('#@Html.IdFor(model => model.StoreId)').val(ui.item.value);
+                                                            return false;
+                                                        }
+                                                    });
+                                                });
+                                            </script>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="OrganizationId"></nop-label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <input id="search-organization-friendly" type="text" autocomplete="on" class="form-control" />
+                                            @Html.TextBoxFor(model => model.OrganizationId, new { style = "display:none" })
+                                            <script>
+                                                $(document).ready(function () {
+                                                    $('#search-organization-friendly').autocomplete({
+                                                        delay: 0,
+                                                        minLength: 0,
+                                                        source: @Html.Raw(Json.Serialize(Model.AvailableOrganizations.Select(item => new { label = item.Text, value = item.Value }))),
+                                                        select: function (event, ui) {
+                                                            console.log(ui);
+                                                            $('#search-organization-friendly').val(ui.item.label);
+                                                            $('#@Html.IdFor(model => model.OrganizationId)').val(ui.item.value);
+                                                            return false;
+                                                        }
+                                                    });
+                                                });
+                                            </script>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="RedeemByUtc"></nop-label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-editor style="display: inline;" asp-for="RedeemByUtc" asp-required="" html-attributes="@(new { value = DateTime.UtcNow.Date.ToShortDateString() })" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="IsRedemptionPeriodUnlimited"></nop-label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            @Html.CheckBoxFor(model => model.IsRedemptionPeriodUnlimited,  new { onchange = " onRedeemByCheckboxValueChanged();" })
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="ProductId"></nop-label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <input id="search-product-friendly" type="text" autocomplete="on" class="form-control" required=""/>
+                                            @Html.TextBoxFor(model => model.ProductId, new { style = "display:none" })
+                                            <script>
+                                                $(document).ready(function () {
+                                                    $('#search-product-friendly').autocomplete({
+                                                        delay: 0,
+                                                        minLength: 0,
+                                                        source: @Html.Raw(Json.Serialize(Model.AvailableProducts.Select(item => new { label = item.Text, value = item.Value }))),
+                                                        select: function (event, ui) {
+                                                            console.log(ui);
+                                                            $('#search-product-friendly').val(ui.item.label);
+                                                            $('#@Html.IdFor(model => model.ProductId)').val(ui.item.value);
+                                                            return false;
+                                                        }
+                                                    });
+                                                });
+                                            </script>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="Quantity"></nop-label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-editor style="display: inline;" asp-for="Quantity"/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="PaymentMethod"></nop-label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <input id="search-payment-friendly" type="text" autocomplete="on" class="form-control" />
+                                            @Html.TextBoxFor(model => model.PaymentMethod, new { style = "display:none" })
+                                            <script>
+                                                $(document).ready(function () {
+                                                    $('#search-payment-friendly').autocomplete({
+                                                        delay: 0,
+                                                        minLength: 0,
+                                                        source: @Html.Raw(Json.Serialize(Model.AvailablePaymentMethods.Select(item => new { label = item.Text, value = item.Value }))),
+                                                        select: function (event, ui) {
+                                                            console.log(ui);
+                                                            $('#search-payment-friendly').val(ui.item.label);
+                                                            $('#@Html.IdFor(model => model.PaymentMethod)').val(ui.item.value);
+                                                            return false;
+                                                        }
+                                                    });
+                                                });
+                                            </script>
+                                        </div>
+                                    </div>
+                                    <button class="bg-green btn float-left" id="create-submit" type="submit" disabled onclick="this.disabled = true;">Place Order</button>
+                                    <script type="text/javascript">
+                                        const storeInput = $('#@Html.IdFor(model => model.StoreId)');
+                                        const organizationInput = $('#@Html.IdFor(model => model.OrganizationId)');
+                                        const redeemByInput = $('#@Html.IdFor(model => model.RedeemByUtc)');
+                                        const redeemByCheckboxInput = $('#@Html.IdFor(model => model.IsRedemptionPeriodUnlimited)');
+                                        const productInput = $('#@Html.IdFor(model => model.ProductId)');
+                                        const quantityInput = $('#@Html.IdFor(model => model.Quantity)');
+                                        const paymentMethodInput = $('#@Html.IdFor(model => model.PaymentMethod)');
+                                        const submitButton = $('#create-submit')
+
+                                        function onRedeemByCheckboxValueChanged() {
+                                            redeemByInput.data("kendoDatePicker").enable(!redeemByCheckboxInput.is(':checked'));
+                                        }
+
+                                        function checkValidForm() {
+                                            var isValid = (storeInput.val() != null
+                                                && organizationInput.val() != null
+                                                && (redeemByInput.val() != 0 || redeemByCheckboxInput.val() != "off")
+                                                && productInput.val() != 0
+                                                && quantityInput.val() != 0
+                                                && paymentMethodInput.val() != 0);
+                                            submitButton.prop("disabled", !isValid);
+                                        }
+                                    </script>
+                                </form>
+                            </div>
+                            <p id="error-message" style="color: red;" disabled="@string.IsNullOrEmpty(Model.Error)">There was an error submitting the form: @Model.Error</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</section>
