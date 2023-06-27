@@ -16,6 +16,8 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AssemblyVersion>1.0.0.10</AssemblyVersion>
     <FileVersion>1.0.0.10</FileVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,6 +34,7 @@
   <ItemGroup>
     <None Remove="Areas\Admin\Views\Category\NexportOptions.cshtml" />
     <None Remove="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml" />
+    <None Remove="Areas\Admin\Views\Order\Create.cshtml" />
     <None Remove="Areas\Admin\Views\Order\List.cshtml" />
     <None Remove="Areas\Admin\Views\Order\_OrderDetails.Info.cshtml" />
     <None Remove="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml" />
@@ -56,8 +59,10 @@
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Info.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Options.cshtml" />
     <None Remove="Areas\Admin\Views\Setting\_CustomerUser.NexportRegistrationFields.cshtml" />
+    <None Remove="Areas\Admin\Views\Wholesale\Redirect.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Category\NexportCategoryDetails.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Order\NexportOrderDetails.cshtml" />
+    <None Remove="Areas\Admin\Views\Widget\Order\Wholesale.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewImports.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewStart.cshtml" />
     <None Remove="Content\jquery-ui-timepicker-addon.min.css" />
@@ -132,6 +137,9 @@
     <Content Include="Areas\Admin\Views\Order\List.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Areas\Admin\Views\Wholesale\Create.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Areas\Admin\Views\Order\_OrderDetails.Info.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -202,6 +210,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Setting\_CustomerUser.NexportRegistrationFields.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Wholesale\Redirect.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Widget\Category\NexportCategoryDetails.cshtml">
@@ -419,6 +430,12 @@
 
   <ItemGroup>
     <Folder Include="Services\Caching\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Areas\Admin\Views\Widget\Order\Wholesale.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <!-- This target execute after "Build" target -->

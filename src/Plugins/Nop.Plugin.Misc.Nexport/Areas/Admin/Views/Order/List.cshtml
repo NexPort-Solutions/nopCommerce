@@ -1,7 +1,5 @@
 ﻿@model OrderSearchModel
 
-@inject IStoreService StoreService
-@using Nop.Services.Stores
 @using Nop.Services.Common
 @using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders
 
@@ -366,7 +364,7 @@
                                     {
                                         Title = T("Admin.Orders.Fields.Store").Text,
                                         Width = "100",
-                                        Visible = (await StoreService.GetAllStoresAsync()).Count >= 1,
+                                        Visible = Model.AvailableStores.Count >= 1,
                                         Render = new RenderCustom("renderStoreName")
                                     });
                                     gridModel.ColumnCollection.Add(new ColumnProperty(nameof(OrderModel.CreatedOn))

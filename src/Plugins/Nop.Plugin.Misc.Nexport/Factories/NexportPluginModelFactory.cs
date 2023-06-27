@@ -1,18 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using NexportApi.Model;
 using Nop.Core;
-using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
-using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
-using Nop.Core.Domain.Tax;
-using Nop.Core.Domain.Vendors;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
@@ -29,32 +22,21 @@ using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
-using Nop.Services.Customers;
-using Nop.Services.Directory;
-using Nop.Services.Discounts;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
-using Nop.Services.Media;
 using Nop.Services.Orders;
+using Nop.Services.Payments;
 using Nop.Services.Plugins;
-using Nop.Services.Seo;
-using Nop.Services.Shipping;
 using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Catalog;
+using Nop.Web.Areas.Admin.Models.Orders;
+using Nop.Web.Areas.Admin.Models.Payments;
 using Nop.Web.Areas.Admin.Models.Stores;
 using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Models.Extensions;
-using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
-using Newtonsoft.Json;
-using Nop.Core.Domain.Common;
-using Nop.Services.Configuration;
-using Nop.Services.Payments;
-using Nop.Web.Areas.Admin.Models.Common;
-using Nop.Web.Areas.Admin.Models.Orders;
-using Nop.Web.Framework.Extensions;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -63,51 +45,20 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         #region Fields
 
         private readonly NexportSettings _nexportSettings;
-        private readonly CatalogSettings _catalogSettings;
-        private readonly CurrencySettings _currencySettings;
-        private readonly IAclSupportedModelFactory _aclSupportedModelFactory;
         private readonly IBaseAdminModelFactory _baseAdminModelFactory;
-        private readonly ICategoryService _categoryService;
-        private readonly ICurrencyService _currencyService;
-        private readonly ICustomerService _customerService;
         private readonly IDateTimeHelper _dateTimeHelper;
-        private readonly IDiscountService _discountService;
-        private readonly IDiscountSupportedModelFactory _discountSupportedModelFactory;
         private readonly ILocalizationService _localizationService;
         private readonly ILocalizedModelFactory _localizedModelFactory;
         private readonly IGenericAttributeService _genericAttributeService;
-        private readonly IManufacturerService _manufacturerService;
-        private readonly IMeasureService _measureService;
         private readonly IOrderService _orderService;
-        private readonly IPictureService _pictureService;
-        private readonly IProductAttributeFormatter _productAttributeFormatter;
-        private readonly IProductAttributeParser _productAttributeParser;
-        private readonly IProductAttributeService _productAttributeService;
         private readonly IProductService _productService;
-        private readonly IProductTagService _productTagService;
-        private readonly IProductTemplateService _productTemplateService;
-        private readonly ISettingModelFactory _settingModelFactory;
-        private readonly IShipmentService _shipmentService;
-        private readonly IShippingService _shippingService;
-        private readonly IShoppingCartService _shoppingCartService;
-        private readonly ISpecificationAttributeService _specificationAttributeService;
-        private readonly IStaticCacheManager _cacheManager;
-        private readonly IStoreMappingSupportedModelFactory _storeMappingSupportedModelFactory;
         private readonly IStoreService _storeService;
-        private readonly IUrlRecordService _urlRecordService;
         private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
         private readonly IWorkContext _workContext;
-        private readonly MeasureSettings _measureSettings;
-        private readonly TaxSettings _taxSettings;
-        private readonly VendorSettings _vendorSettings;
         private readonly CustomerSettings _customerSettings;
         private readonly CaptchaSettings _captchaSettings;
         private readonly ILogger _logger;
-        private readonly ICountryService _countryService;
         private readonly IPaymentPluginManager _paymentPluginManager;
-        private readonly ISettingService _settingService;
-        private readonly NopHttpClient _nopHttpClient;
-        private readonly AddressSettings _addressSettings;
         private readonly NexportService _nexportService;
         private readonly IAddressService _addressService;
         private readonly IPriceFormatter _priceFormatter;
@@ -118,95 +69,40 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         public NexportPluginModelFactory(
             NexportSettings nexportSettings,
-            CatalogSettings catalogSettings,
-            CurrencySettings currencySettings,
-            IAclSupportedModelFactory aclSupportedModelFactory,
             IBaseAdminModelFactory baseAdminModelFactory,
-            ICategoryService categoryService,
-            ICurrencyService currencyService,
-            ICustomerService customerService,
             IDateTimeHelper dateTimeHelper,
-            IDiscountService discountService,
-            IDiscountSupportedModelFactory discountSupportedModelFactory,
             ILocalizationService localizationService,
             ILocalizedModelFactory localizedModelFactory,
             IGenericAttributeService genericAttributeService,
-            IManufacturerService manufacturerService,
-            IMeasureService measureService,
             IOrderService orderService,
-            IPictureService pictureService,
-            IProductAttributeFormatter productAttributeFormatter,
-            IProductAttributeParser productAttributeParser,
-            IProductAttributeService productAttributeService,
             IProductService productService,
-            IProductTagService productTagService,
-            IProductTemplateService productTemplateService,
-            ISettingModelFactory settingModelFactory,
-            IShipmentService shipmentService,
-            IShippingService shippingService,
-            IShoppingCartService shoppingCartService,
-            ISpecificationAttributeService specificationAttributeService,
-            IStaticCacheManager cacheManager,
-            IStoreMappingSupportedModelFactory storeMappingSupportedModelFactory,
             IStoreService storeService,
-            IUrlRecordService urlRecordService,
             IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
             IWorkContext workContext,
-            MeasureSettings measureSettings,
-            TaxSettings taxSettings,
-            VendorSettings vendorSettings,
             CustomerSettings customerSettings,
             CaptchaSettings captchaSettings,
             ILogger logger,
-            NexportService nexportService, ICountryService countryService, IPaymentPluginManager paymentPluginManager, ISettingService settingService, NopHttpClient nopHttpClient, AddressSettings addressSettings, IAddressService addressService, IPriceFormatter priceFormatter)
+            NexportService nexportService,
+            IPaymentPluginManager paymentPluginManager,
+            IAddressService addressService,
+            IPriceFormatter priceFormatter)
         {
             _nexportSettings = nexportSettings;
-            _catalogSettings = catalogSettings;
-            _currencySettings = currencySettings;
-            _aclSupportedModelFactory = aclSupportedModelFactory;
             _baseAdminModelFactory = baseAdminModelFactory;
-            _cacheManager = cacheManager;
-            _categoryService = categoryService;
-            _currencyService = currencyService;
-            _customerService = customerService;
             _dateTimeHelper = dateTimeHelper;
-            _discountService = discountService;
-            _discountSupportedModelFactory = discountSupportedModelFactory;
             _localizationService = localizationService;
             _localizedModelFactory = localizedModelFactory;
             _genericAttributeService = genericAttributeService;
-            _manufacturerService = manufacturerService;
-            _measureService = measureService;
-            _measureSettings = measureSettings;
             _orderService = orderService;
-            _pictureService = pictureService;
-            _productAttributeFormatter = productAttributeFormatter;
-            _productAttributeParser = productAttributeParser;
-            _productAttributeService = productAttributeService;
             _productService = productService;
-            _productTagService = productTagService;
-            _productTemplateService = productTemplateService;
-            _settingModelFactory = settingModelFactory;
-            _shipmentService = shipmentService;
-            _shippingService = shippingService;
-            _shoppingCartService = shoppingCartService;
-            _specificationAttributeService = specificationAttributeService;
-            _storeMappingSupportedModelFactory = storeMappingSupportedModelFactory;
             _storeService = storeService;
-            _urlRecordService = urlRecordService;
             _registrationFieldCustomRenderPluginManager = registrationFieldCustomRenderPluginManager;
             _workContext = workContext;
-            _taxSettings = taxSettings;
-            _vendorSettings = vendorSettings;
             _customerSettings = customerSettings;
             _captchaSettings = captchaSettings;
             _logger = logger;
             _nexportService = nexportService;
-            _countryService = countryService;
             _paymentPluginManager = paymentPluginManager;
-            _settingService = settingService;
-            _nopHttpClient = nopHttpClient;
-            _addressSettings = addressSettings;
             _addressService = addressService;
             _priceFormatter = priceFormatter;
         }
@@ -1633,6 +1529,30 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             });
             return model;
         }
-
+        
+        public virtual async Task<WholesaleCreateModel> PrepareWholesaleOrderModelAsync()
+        {
+            var root = _nexportSettings.RootOrganizationId.Value;
+            var stores = await _storeService.GetAllStoresAsync();
+            var storesList = stores.Select(store => new SelectListItem(store.Name, store.Id.ToString())).ToList();
+            var organizations = await _nexportService.FindAllOrganizationsAsync(root);
+            var organizationsList = organizations.Select(organizationToListItem).ToList();
+            var products = (await stores.SelectAwait(storeToProducts).ToListAsync()).SelectMany(collectionSelector).ToList();
+            var paymentMethods = await _paymentPluginManager.LoadActivePluginsAsync();
+            var paymentMethodsList = paymentMethods.Select(paymentMethodToListItem).ToList();
+            var wholesaleCreateModel = new WholesaleCreateModel
+            {
+                AvailableOrganizations = organizationsList,
+                AvailableStores = storesList,
+                AvailableProducts = products,
+                AvailablePaymentMethods = paymentMethodsList
+            };
+            return wholesaleCreateModel;
+            SelectListItem organizationToListItem(OrganizationResponseItem organization) => new(organization.ShortName + $" ({organization.Name})", organization.OrgId.ToString());
+            IEnumerable<SelectListItem> collectionSelector(IList<NexportProductMapping> productMappings) => productMappings.Select(productToListItem);
+            SelectListItem productToListItem(NexportProductMapping mapping) => new(mapping.DisplayName, mapping.NopProductId.ToString());
+            async ValueTask<IList<NexportProductMapping>> storeToProducts(Store store) => await _nexportService.GetProductMappingsByStoreId(store.Id);
+            SelectListItem paymentMethodToListItem(IPaymentMethod paymentMethod) => new(paymentMethod.PaymentMethodType.ToString(), paymentMethod.ToPluginModel<PaymentMethodModel>().SystemName);
+        }
     }
 }
