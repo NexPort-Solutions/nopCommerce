@@ -115,15 +115,15 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 context.ActionArguments.TryGetValue("form", out var formValue);
                 if (formValue is FormCollection form)
                 {
-                    var store = await _storeContext.GetCurrentStoreAsync();
-                    var cart = await _shoppingCartService.GetShoppingCartAsync(await _workContext.GetCurrentCustomerAsync(),
-                        ShoppingCartType.ShoppingCart, store.Id);
-
-                    var storeModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(
-                        store, "NexportStoreSaleModel", store.Id);
-
-                    if (storeModel == NexportStoreSaleModel.Retail)
+                    //var storeModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(
+                    //    store, "NexportStoreSaleModel", store.Id);
+                    //TODO - JS: get ispurchasingagent from api permission call
+                    var isPurchasingAgent = true;
+                    if (!isPurchasingAgent) //storeModel == NexportStoreSaleModel.Retail)
                     {
+                        var store = await _storeContext.GetCurrentStoreAsync();
+                        var cart = await _shoppingCartService.GetShoppingCartAsync(await _workContext.GetCurrentCustomerAsync(),
+                            ShoppingCartType.ShoppingCart, store.Id);
                         var formCollection = form
                             .ToDictionary(x => x.Key, x => x.Value)
                             .AsNameValueCollection();
@@ -165,47 +165,51 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             }
             else
             {
-                var quantity = 1;
+                var customer = await _workContext.GetCurrentCustomerAsync();
+                var store = await _storeContext.GetCurrentStoreAsync();
 
-                context.ActionArguments.TryGetValue("productId", out var productIdValue);
-                context.ActionArguments.TryGetValue("shoppingCartTypeId", out var shoppingCartTypeValue);
-
-                if (productIdValue is int productId and > 0 &&
-                    shoppingCartTypeValue is int shoppingCartType && (ShoppingCartType)shoppingCartType == ShoppingCartType.ShoppingCart)
+                
+                //var storeModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(
+                //    store, "NexportStoreSaleModel", store.Id);
+                //TODO - JS: get ispurchasingagent from api permission call
+                var isPurchasingAgent = true;
+                
+                if (!isPurchasingAgent) //storeModel == NexportStoreSaleModel.Retail)
                 {
-                    if (actionDescriptor.ActionName == nameof(ShoppingCartController.AddProductToCart_Catalog))
+
+                    var quantity = 1;
+
+                    context.ActionArguments.TryGetValue("productId", out var productIdValue);
+                    context.ActionArguments.TryGetValue("shoppingCartTypeId", out var shoppingCartTypeValue);
+
+                    if (productIdValue is int productId and > 0 &&
+                        shoppingCartTypeValue is int shoppingCartType && (ShoppingCartType)shoppingCartType == ShoppingCartType.ShoppingCart)
                     {
-                        if (context.ActionArguments.TryGetValue("quantity", out var value)
-                            && value is int quantityValue)
+                        if (actionDescriptor.ActionName == nameof(ShoppingCartController.AddProductToCart_Catalog))
                         {
-                            quantity = quantityValue;
+                            if (context.ActionArguments.TryGetValue("quantity", out var value)
+                                && value is int quantityValue)
+                            {
+                                quantity = quantityValue;
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (context.ActionArguments.TryGetValue("form", out var value)
-                            && value is IFormCollection form)
+                        else
                         {
-                            foreach (var formKey in form.Keys)
-                                if (formKey.Equals($"addtocart_{productId}.EnteredQuantity", StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    int.TryParse(form[formKey], out quantity);
-                                    break;
-                                }
+                            if (context.ActionArguments.TryGetValue("form", out var value)
+                                && value is IFormCollection form)
+                            {
+                                foreach (var formKey in form.Keys)
+                                    if (formKey.Equals($"addtocart_{productId}.EnteredQuantity", StringComparison.InvariantCultureIgnoreCase))
+                                    {
+                                        int.TryParse(form[formKey], out quantity);
+                                        break;
+                                    }
+                            }
                         }
-                    }
 
-                    var customer = await _workContext.GetCurrentCustomerAsync();
-                    var store = await _storeContext.GetCurrentStoreAsync();
+                        var items = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart,
+                            store.Id, productId);
 
-                    var items = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart,
-                        store.Id, productId);
-
-                    var storeModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(
-                        store, "NexportStoreSaleModel", store.Id);
-
-                    if (storeModel == NexportStoreSaleModel.Retail)
-                    {
                         var nexportProductMapping =
                             await _nexportService.GetProductMappingByNopProductId(productId, store.Id) ??
                             await _nexportService.GetProductMappingByNopProductId(productId);
