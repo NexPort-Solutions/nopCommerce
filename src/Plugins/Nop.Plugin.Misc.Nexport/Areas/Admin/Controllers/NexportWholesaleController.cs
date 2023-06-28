@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Wholesale.PurchasingAgent;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
@@ -14,8 +16,13 @@ using Nop.Services.Plugins;
 using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Controllers;
+using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
+using Nop.Web.Areas.Admin.Models.Catalog;
+using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Web.Areas.Admin.Models.Payments;
+using Nop.Web.Framework.Mvc.Filters;
+using Nop.Web.Framework;
 
 namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
 
@@ -30,8 +37,11 @@ public class NexportWholesaleController : BaseAdminController
     private readonly IPaymentPluginManager _paymentPluginManager;
     private readonly IProductService _productService;
     private readonly IPluginService _pluginService;
+    private readonly ICustomerModelFactory _customerModelFactory;
+    private readonly IProductModelFactory _productModelFactory;
 
-    public NexportWholesaleController(INexportPluginModelFactory nexportPluginModelFactory, IPermissionService permissionService, IOrderService orderService, IStoreService storeService, INexportWholesaleService nexportWholesaleService, IWorkContext workContext, NexportService nexportService, IPaymentPluginManager paymentPluginManager, IProductService productService, IPluginService pluginService)
+    public NexportWholesaleController(INexportPluginModelFactory nexportPluginModelFactory, IPermissionService permissionService, IOrderService orderService, IStoreService storeService, INexportWholesaleService nexportWholesaleService, IWorkContext workContext, NexportService nexportService, IPaymentPluginManager paymentPluginManager, IProductService productService, IPluginService pluginService,ICustomerModelFactory customerModelFactory,
+        IProductModelFactory productModelFactory)
     {
         _nexportPluginModelFactory = nexportPluginModelFactory;
         _permissionService = permissionService;
@@ -42,6 +52,8 @@ public class NexportWholesaleController : BaseAdminController
         _paymentPluginManager = paymentPluginManager;
         _productService = productService;
         _pluginService = pluginService;
+        _customerModelFactory = customerModelFactory;
+        _productModelFactory = productModelFactory;
     }
 
     [Route("Admin/Wholesale/Create")]
@@ -174,5 +186,133 @@ public class NexportWholesaleController : BaseAdminController
 
         public record BadResult(string? Error) : WholesaleOrderValidationResult;
     };
+
+
+    public virtual async Task<IActionResult> PurchasingAgentList()
+    {
+        //permission for purchasing agent list here
+        //if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+        //    return AccessDeniedView();
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/PurchasingAgent/List.cshtml", new NexportPurchasingAgentSearchModel());
+    }
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public virtual async Task<IActionResult> PurchasingAgentList(NexportPurchasingAgentSearchModel searchModel)
+    {
+        //need permission for purchasing agent management
+        //if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+        //    return await AccessDeniedDataTablesJson();
+
+        var smodel = await _customerModelFactory.PrepareCustomerSearchModelAsync(new CustomerSearchModel
+        {
+            AvailableCustomerRoles = new List<SelectListItem>(),
+            AvailablePageSizes = null,
+            CompanyEnabled = false,
+            DateOfBirthEnabled = false,
+            Draw = "1",
+            FirstNameEnabled = false,
+            LastNameEnabled = false,
+            SearchDayOfBirth = "0",
+            SearchMonthOfBirth = "0"
+        });
+
+        //prepare model
+        var model = await _customerModelFactory.PrepareCustomerListModelAsync(smodel);
+
+        return Json(model);
+    }
+
+
+    public async Task<IActionResult> AddPurchasingAgentGroup()
+    {
+        //if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
+        //    return AccessDeniedView();
+
+        //var product = await _productService.GetProductByIdAsync(productId)
+        //              ?? throw new Exception($"No product found with the specified id {productId}");
+
+        //var model = await _nexportPluginModelFactory.PrepareDuplicateNexportProductMappingModel(product);
+
+        return View($"{NexportDefaults.NexportPluginAdminViewBasePath}NexportWholesale/PurchasingAgent/Create.cshtml");
+    }
+
+
+    public async Task<IActionResult> ViewPurchasingAgentGroup()
+    {
+        //if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
+        //    return AccessDeniedView();
+
+        //var product = await _productService.GetProductByIdAsync(productId)
+        //              ?? throw new Exception($"No product found with the specified id {productId}");
+
+        //var model = await _nexportPluginModelFactory.PrepareDuplicateNexportProductMappingModel(product);
+        var model = await _productModelFactory.PrepareProductSearchModelAsync(new ProductSearchModel());
+        return View($"{NexportDefaults.NexportPluginAdminViewBasePath}NexportWholesale/GroupProduct/List.cshtml", model);
+    }
+
+
+    public async Task<IActionResult> EditPurchasingAgentGroup()
+    {
+        //if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
+        //    return AccessDeniedView();
+
+        //var product = await _productService.GetProductByIdAsync(productId)
+        //              ?? throw new Exception($"No product found with the specified id {productId}");
+
+        //var model = await _nexportPluginModelFactory.PrepareDuplicateNexportProductMappingModel(product);
+
+        return View($"{NexportDefaults.NexportPluginAdminViewBasePath}NexportWholesale/PurchasingAgent/Edit.cshtml");
+    }
+
+
+    public async Task<IActionResult> DeletePurchasingAgentGroups()
+    {
+        //if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
+        //    !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
+        //    return AccessDeniedView();
+
+        //if (selectedIds != null)
+        //{
+        //    foreach (var id in selectedIds)
+        //    {
+        //        var mapping = await _nexportService.GetProductMappingById(id);
+        //        if (mapping != null)
+        //        {
+        //            await _nexportService.DeleteNexportProductMapping(mapping);
+
+        //            var nopProduct = await _productService.GetProductByIdAsync(mapping.NopProductId);
+
+        //            string storeText = "";
+
+        //            if (mapping.StoreId.HasValue)
+        //            {
+        //                var store = await _storeService.GetStoreByIdAsync(mapping.StoreId.Value);
+        //                if (store != null)
+        //                    storeText = $"Store ID: {store.Id}, Name: {store.Name}";
+        //            }
+
+
+        //            //activity log
+        //            await _customerActivityService.InsertActivityAsync(NexportDefaults.DELETE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
+        //                $"Deleted Nexport product mapping ({storeText}, Nexport Product ID: {mapping.NexportCatalogSyllabusLinkId}, Name: {mapping.NexportProductName}) in product (ID: {nopProduct.Id}, Name: {nopProduct.Name})", mapping);
+
+        //            var groupMembershipMappings =
+        //                await _nexportService.GetProductGroupMembershipMappings(mapping.Id);
+        //            foreach (var groupMembershipMapping in groupMembershipMappings)
+        //            {
+        //                await _nexportService.DeleteGroupMembershipMapping(groupMembershipMapping);
+
+        //                //activity log
+        //                await _customerActivityService.InsertActivityAsync(NexportDefaults.DELETE_NEXPORT_GROUP_MEMBERSHIP_MAPPING_ACTIVITY_LOG_TYPE,
+        //                    $"Deleted Nexport group membership mapping (Group ID: {groupMembershipMapping.NexportGroupId}, Group Name: {groupMembershipMapping.NexportGroupName}) from product mapping (ID: {mapping.NexportCatalogSyllabusLinkId}, Name: {mapping.NexportProductName}) in product (ID: {nopProduct.Id}, Name: {nopProduct.Name})", mapping);
+        //            }
+        //        }
+        //    }
+        //}
+
+        return Json(new { Result = true });
+    }
 
 }

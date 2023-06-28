@@ -1,0 +1,221 @@
+﻿@using Newtonsoft.Json
+@using Nop.Plugin.Misc.Nexport.Models.Organization
+@model Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Wholesale.PurchasingAgent.NexportPurchasingAgentGroupsSearchModel
+@{
+    const string hideNexportPurchasingAgentGroupsBlockAttributeName = "CustomerPage.HideNexportPurchasingAgentGroupsBlock";
+    var hideNexportPurchasingAgentGroupsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideNexportPurchasingAgentGroupsBlockAttributeName);
+
+    var purchasingAgentGroupsColumns = new List<ColumnProperty>
+    {
+        new(nameof(NexportOrganizationModel.OrgId))
+        {
+            Width = "50",
+            IsMasterCheckBox = true,
+            Render = new RenderCustom("deleteGroupCheckBox")
+        },
+        new(nameof(NexportOrganizationModel.OrgId))
+        {
+            Title = "ID",
+            Width = "300px"
+        },
+        new(nameof(NexportOrganizationModel.OrgName))
+        {
+            Title = "Name"
+        },
+        new(nameof(NexportOrganizationModel.OrgShortName))
+        {
+            Title = "Short Name"
+        },
+        new(nameof(NexportOrganizationModel.OrgId))
+        {
+            Title = "View",
+            Width = "80",
+            Render = new RenderCustom("renderViewPurchasingAgentGroup"),
+            ClassName = NopColumnClassDefaults.Button,
+        },
+        new(nameof(NexportOrganizationModel.OrgId))
+        {
+            Title = "Edit",
+            Width = "80",
+            Render = new RenderCustom("renderEditPurchasingAgentGroup"),
+            ClassName = NopColumnClassDefaults.Button,
+        }
+    };
+
+    var purchasingAgentGroupsTable = new DataTablesModel
+    {
+        Name = "purchasing-agents-table-grid",
+        ServerSide = false,
+        Paging = true,
+        Length = 5,
+        Data = JsonConvert.SerializeObject(new List<NexportOrganizationModel>()
+        {
+            new NexportOrganizationModel
+            {
+                OrgId = Guid.NewGuid(),
+                OrgName = "My test org",
+                OrgShortName = "test_org"
+            },
+            new NexportOrganizationModel
+            {
+                OrgId = Guid.NewGuid(),
+                OrgName = "My test org 2",
+                OrgShortName = "test_org2"
+            },
+            new NexportOrganizationModel
+            {
+                OrgId = Guid.NewGuid(),
+                OrgName = "My test org 3",
+                OrgShortName = "test_org3"
+            }
+        }),
+        ColumnCollection = purchasingAgentGroupsColumns
+
+    };
+
+    const string hideSearchNexportPurchasingAgentGroupsBlockAttributeName = "ProductPage.HideSearchNexportPurchasingAgentGroupsBlock";
+    var hideSearchNexportPurchasingAgentGroupsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchNexportPurchasingAgentGroupsBlockAttributeName);
+}
+
+<nop-card asp-name="nexport-purchasing-agent-groups" asp-icon="fa fa-id-card-o"
+          asp-title="Nexport Groups "
+          asp-hide-block-attribute-name="@hideNexportPurchasingAgentGroupsBlockAttributeName"
+          asp-hide="@hideNexportPurchasingAgentGroupsBlock" asp-advanced="false">
+    <div class="card-body">
+        <div class="col-md-12" style="text-align: right; margin-bottom: 1rem;">
+            <button class="btn btn-primary" id="addPurchasingAgentGroupBtn">
+                <i class="fa fa-plus"></i>
+                Add
+            </button>
+            <button type="button" id="delete-selected-groups" class="btn bg-red">
+                <i class="far fa-trash-alt"></i>
+                @T("Admin.Common.Delete.Selected")
+            </button>
+            <nop-action-confirmation asp-button-id="delete-selected-groups"/>
+            <nop-alert asp-alert-id="deleteSelectedGroupsFailed"/>
+        </div>
+        These are the groups this customer is a purchasing agent for
+        <div class="col-md-12">
+            <div class="card card-default card-search">
+                <div class="card-body">
+                    <div class="row search-row @(!hideSearchNexportPurchasingAgentGroupsBlock ? "opened" : "")" data-hideAttribute="@hideSearchNexportPurchasingAgentGroupsBlockAttributeName">
+                        <div class="search-text">@T("Admin.Common.Search")</div>
+                        <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
+                        <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchNexportPurchasingAgentGroupsBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                    </div>
+                    <div class="search-body @(hideSearchNexportPurchasingAgentGroupsBlock ? "closed" : "")">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="form-group row">
+                                    <div class="col-md-4">
+                                        <nop-label asp-for="SearchName" />
+                                    </div>
+                                    <div class="col-md-8">
+                                        <nop-editor asp-for="SearchName" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="form-group row">
+                                    <div class="col-md-4">
+                                        <nop-label asp-for="SearchShortName" />
+                                    </div>
+                                    <div class="col-md-8">
+                                        <nop-editor asp-for="SearchShortName" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="text-center col-12">
+                                <button type="button" id="search-mappings" class="btn btn-primary btn-search"><i class="fas fa-search"></i>@T("Admin.Common.Search")</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @await Html.PartialAsync("Table", purchasingAgentGroupsTable)
+    </div>
+</nop-card>
+
+<script>
+    function addPurchasingAgentGroup() {
+        var url = "@Url.Action("AddPurchasingAgentGroup", "NexportWholesale")";
+
+        OpenWindow(url, 800, 800, true);
+    }
+    function renderViewPurchasingAgentGroup(data, type, row, meta) {
+        var url = "@Url.Action("ViewPurchasingAgentGroup", "NexportWholesale")" + "?orgId=" + row.OrgId;
+        var buttonElement = "<button class=\"btn btn-default\" onclick=\"location.href = \'"+ url + "\';return false;\" >"
+        +"<i class=\"fa fa-eye\"></i>View</button>";
+
+        return buttonElement;
+    }
+    function renderEditPurchasingAgentGroup(data, type, row, meta) {
+        var url = "@Url.Action("EditPurchasingAgentGroup", "NexportWholesale")" + "?orgId=" + row.OrgId;
+        var buttonElement = "<button class=\"btn btn-default\" onclick=\"javascript: OpenWindow('" + url + "', 800, 800, true); return false;\" >"
+        +"<i class=\"fas fa-pencil-alt\"></i>Edit</button>";
+
+        return buttonElement;
+    }
+    function deleteGroupCheckBox(data, type, row, meta) {
+
+
+        return (data === true)
+            ? '<input name="checkbox_delete_purchasing_agent_groups" value="' + row.OrgId + '" type="checkbox" class="checkboxGroups" checked="checked" />'
+            : '<input name="checkbox_delete_purchasing_agent_groups" value="' + row.OrgId + '" type="checkbox" class="checkboxGroups" />';
+    }
+    $(document).ready(function () {
+        $("#addPurchasingAgentGroupBtn").click(function () {
+           addPurchasingAgentGroup();
+
+            return false;
+        });
+        
+        $("#editPurchasingAgentGroupBtn").click(function () {
+            editPurchasingAgentGroup();
+
+            return false;
+        });
+        
+        $("#delete-selected-groups-action-confirmation-submit-button").bind("click", function (e) {
+            var submitIds = selectedIds;
+            submitIds = $.grep(submitIds, function (value) {
+                return value !== "0";
+            });
+
+            var noDeletion = false;
+            if (submitIds.length < 1) {
+                noDeletion = true;
+            }
+
+            var postData = {
+                selectedIds: submitIds
+            };
+            addAntiForgeryToken(postData);
+
+            $.ajax({
+                cache: false,
+                type: "POST",
+                url: "@Url.Action("DeletePurchasingAgentGroups", "NexportWholesale")",
+                data: postData,
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $("#deleteSelectedGroupsFailed-info").text(errorThrown);
+                    $("#deleteSelectedGroupsFailed").click();
+                },
+                complete: function (jqXHR, textStatus) {
+                    updateTable("#product-mappings-grid");
+                }
+            });
+
+            $("#delete-selected-groups-action-confirmation").modal("toggle");
+
+            if (noDeletion)
+                alert("No groups selected");
+
+            return false;
+        });
+    });
+
+</script>
