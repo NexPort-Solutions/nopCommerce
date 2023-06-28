@@ -1,0 +1,54 @@
+﻿@using Nop.Services.Helpers
+
+@inject IDateTimeHelper dateTimeHelper
+
+@model Nop.Plugin.Misc.Nexport.Models.Customer.CustomerNexportGroupsModel
+
+@{
+    Layout = "_ColumnsOne";
+
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/uikit.min.css");
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "https://kit.fontawesome.com/e4adf0b7ea.js", "", true);
+
+    NopHtml.AddTitleParts("Nexport Groups");
+    NopHtml.AppendPageCssClassParts("html-account-page");
+
+}
+
+<link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport-store.css" />
+
+<div class="page account-page order-list-page">
+    <div class="page-title">
+        <h1>@T("Account.MyAccount") - @T("Plugins.Misc.Nexport.Groups")</h1>
+    </div>
+    <div class="page-body">
+        @if (Model.NexportGroups.Count > 0)
+        {
+            foreach (var group in Model.NexportGroups)
+            {
+                <div>
+                    @(group.Name) - <a href="@(Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products")+$"?GroupGuId={group.Guid}")" class="inactive">
+                        View
+                    </a>
+                </div>
+            }
+            var pager = await Html.PagerAsync(Model.PagerModel);
+            if (!string.IsNullOrEmpty(await pager.RenderHtmlContentAsync()))
+            {
+                <div class="pager">
+                    @pager
+                </div>
+            }
+        }
+        else
+        {
+            <div class="no-data">
+                @T("Account.CustomerProductReviews.NoRecords")
+            </div>
+        }
+    </div>
+</div>
+<script asp-location="Footer">
+    
+</script>

@@ -9,6 +9,7 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using Nop.Web.Areas.Admin.Models.Catalog;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -324,5 +325,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
         #endregion
 
         Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchproductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue);
+
+        Task<IList<OrganizationResponseItem>> FindNexportGroupsByCustomerAsync(int customerId);
+
+        Task<IList<ProductModel>> FindProductsByNexportGroupAsync(Guid groupId);
     }
 }
