@@ -1620,5 +1620,80 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             //insert this default item at first
             items.Insert(0, new SelectListItem { Text = defaultItemText, Value = defaultItemValue });
         }
+
+        public virtual async Task<CustomerNexportGroupsModel> PrepareCustomerNexportGroupsModelAsync(int customerId,int? page)
+        {
+            var pageSize = 5;
+            var pageIndex = 0;
+
+            if (page > 0)
+            {
+                pageIndex = page.Value - 1;
+            }
+
+            //TODO JS: - Using mock api service right now. this may be different for actual implementation
+            var groups = (await _nexportService.FindNexportGroupsByCustomerAsync(customerId)).Select(x=>new CustomerNexportGroupModel{Guid = x.OrgId, Name=x.Name, ShortName = x.ShortName}).ToList();
+           
+
+            var pagedGroups = new PagedList<CustomerNexportGroupModel>(groups, pageIndex, pageSize);
+
+            var pagerModel = new PagerModel(_localizationService)
+            {
+                PageSize = pageSize,
+                TotalRecords = pagedGroups.TotalCount,
+                PageIndex = pageIndex,
+                ShowTotalSummary = false,
+                RouteActionName = "CustomerNexportGroupsPaged",
+                UseRouteLinks = true,
+                RouteValues = new CustomerNexportGroupsModel.CustomerNexportGroupsRouteValues { PageNumber = pageIndex }
+            };
+
+            var model = new CustomerNexportGroupsModel
+            {
+                NexportGroups = pagedGroups,
+                PagerModel = pagerModel
+            };
+
+            return model;
+        }
+
+
+        public virtual async Task<CustomerNexportGroupProductsModel> PrepareCustomerNexportGroupProductsModelAsync(Guid groupId,int? page)
+        {
+            var pageSize = 5;
+            var pageIndex = 0;
+
+            if (page > 0)
+            {
+                pageIndex = page.Value - 1;
+            }
+
+            //TODO JS: - Using mock in service method right now. this may be different for actual implementation
+            var groups = (await _nexportService.FindProductsByNexportGroupAsync(groupId)).Select(x=>new CustomerNexportGroupProductModel{Name=x.Name}).ToList();
+           
+
+            var pagedGroups = new PagedList<CustomerNexportGroupProductModel>(groups, pageIndex, pageSize);
+
+            var pagerModel = new PagerModel(_localizationService)
+            {
+                PageSize = pageSize,
+                TotalRecords = pagedGroups.TotalCount,
+                PageIndex = pageIndex,
+                ShowTotalSummary = false,
+                RouteActionName = "CustomerNexportGroupProductsPaged",
+                UseRouteLinks = true,
+                RouteValues = new CustomerNexportGroupProductsModel.CustomerNexportGroupProductsRouteValues { PageNumber = pageIndex }
+            };
+
+            var model = new CustomerNexportGroupProductsModel
+            {
+                NexportGroupProducts = pagedGroups,
+                PagerModel = pagerModel
+            };
+
+            model.GroupModel = new CustomerNexportGroupModel {Guid = groupId, Name = $"organization test"};
+
+            return model;
+        }
     }
 }

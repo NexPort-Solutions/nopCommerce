@@ -91,6 +91,66 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             });
         }
 
+        [HttpsRequirement]
+        public async Task<IActionResult> CustomerNexportGroups(int? pageNumber)
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(customer))
+                return Challenge();
+
+            try
+            {
+                
+                var model = await _nexportPluginModelFactory.PrepareCustomerNexportGroupsModelAsync(customer.Id, pageNumber);
+
+                var myGroupsViewLocationSetting =
+                    await _settingService.GetSettingAsync("nexport.mygroups.view", (await _storeContext.GetCurrentStoreAsync()).Id, true);
+
+                return View(myGroupsViewLocationSetting != null
+                        ? myGroupsViewLocationSetting.Value
+                        : "~/Plugins/Misc.Nexport/Views/NexportGroups.cshtml",model
+                    );
+            }
+            catch (Exception ex)
+            {
+                var errorMsg = "Cannot display groups details.";
+                await _logger.ErrorAsync(errorMsg, ex, customer);
+                _notificationService.ErrorNotification(errorMsg);
+            }
+
+            return new EmptyResult();
+        }
+
+        [HttpsRequirement]
+        public async Task<IActionResult> CustomerNexportGroupProducts(Guid groupGuid, int? pageNumber)
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(customer))
+                return Challenge();
+
+            try
+            {
+
+                //#TODO JS - get list of products for group from model factory
+                var model = await _nexportPluginModelFactory.PrepareCustomerNexportGroupProductsModelAsync(groupGuid, pageNumber);
+
+                var myGroupProductsViewLocationSetting =
+                    await _settingService.GetSettingAsync("nexport.mygroupproducts.view", (await _storeContext.GetCurrentStoreAsync()).Id, true);
+
+                return View(myGroupProductsViewLocationSetting != null
+                        ? myGroupProductsViewLocationSetting.Value
+                        : "~/Plugins/Misc.Nexport/Views/NexportGroupProducts.cshtml",model
+                );
+            }
+            catch (Exception ex)
+            {
+                var errorMsg = "Cannot display group product details.";
+                await _logger.ErrorAsync(errorMsg, ex, customer);
+                _notificationService.ErrorNotification(errorMsg);
+            }
+
+            return new EmptyResult();
+        }
         #endregion
     }
 }

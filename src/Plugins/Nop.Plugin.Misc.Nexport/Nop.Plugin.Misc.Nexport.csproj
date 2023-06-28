@@ -59,7 +59,7 @@
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Info.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Options.cshtml" />
     <None Remove="Areas\Admin\Views\Setting\_CustomerUser.NexportRegistrationFields.cshtml" />
-    <None Remove="Areas\Admin\Views\Wholesale\Redirect.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\Redirect.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Category\NexportCategoryDetails.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Order\NexportOrderDetails.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Order\Wholesale.cshtml" />
@@ -87,6 +87,8 @@
     <None Remove="Views\NexportCustomer\Register.cshtml" />
     <None Remove="Views\MapNexportProduct.cshtml" />
     <None Remove="Views\MapNexportProductList.cshtml" />
+    <None Remove="Views\NexportGroupProducts.cshtml" />
+    <None Remove="Views\NexportGroups.cshtml" />
     <None Remove="Views\NexportStore\List.cshtml" />
     <None Remove="Views\NexportTrainings.cshtml" />
     <None Remove="Views\Order\CustomerOrders.cshtml" />
@@ -137,7 +139,7 @@
     <Content Include="Areas\Admin\Views\Order\List.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\Wholesale\Create.cshtml">
+    <Content Include="Areas\Admin\Views\NexportWholesale\Create.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Order\_OrderDetails.Info.cshtml">
@@ -212,7 +214,7 @@
     <Content Include="Areas\Admin\Views\Setting\_CustomerUser.NexportRegistrationFields.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\Wholesale\Redirect.cshtml">
+    <Content Include="Areas\Admin\Views\NexportWholesale\Redirect.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Widget\Category\NexportCategoryDetails.cshtml">
@@ -289,6 +291,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\MapNexportProductList.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportGroupProducts.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportGroups.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\NexportStore\List.cshtml">

@@ -70,6 +70,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             services.AddScoped<INexportPluginModelFactory, NexportPluginModelFactory>();
             services.AddScoped<NexportIntegrationController>();
             services.AddScoped<INexportWholesaleService, NexportNexportWholesaleService>();
+            //remove when implemented for real
+            services.AddScoped<MockNexportApiService>();
         }
 
         public static IServiceProvider CreateFluentMigratorRunnerService()

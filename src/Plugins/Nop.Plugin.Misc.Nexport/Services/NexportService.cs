@@ -1,4 +1,8 @@
-﻿using System.Net;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -39,6 +43,7 @@ using Nop.Services.Orders;
 using Nop.Services.Plugins;
 using Nop.Services.Security;
 using Nop.Services.Stores;
+using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework;
 
 namespace Nop.Plugin.Misc.Nexport.Services
@@ -48,6 +53,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         #region Fields
 
         private readonly NexportApiService _nexportApiService;
+        private readonly MockNexportApiService _mockApiService;
 
         private readonly EmailAccountSettings _emailAccountSettings;
         private readonly NexportSettings _nexportSettings;
@@ -173,7 +179,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IWorkContext workContext,
             IStoreContext storeContext,
             ILogger logger,
-            IRepository<Store> storeRepository)
+            IRepository<Store> storeRepository,
+            MockNexportApiService mockApiService)
         {
             _nexportApiService = nexportApiService;
             _emailAccountSettings = emailAccountSettings;
@@ -235,6 +242,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _storeContext = storeContext;
             _logger = logger;
             _storeRepository = storeRepository;
+            _mockApiService = mockApiService;
         }
 
         #endregion
@@ -2142,17 +2150,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 throw new ArgumentNullException(nameof(customer));
 
             var store = await _storeContext.GetCurrentStoreAsync();
-            var storeModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(
-                store, "NexportStoreSaleModel", store.Id);
-
-            if (storeModel != NexportStoreSaleModel.Retail)
-                return true;
 
             var existingEnrollmentStatus = await VerifyNexportEnrollmentStatusAsync(product, customer, store.Id);
             var mapping = await GetProductMappingByNopProductId(product.Id, store.Id) ?? await GetProductMappingByNopProductId(product.Id);
 
             if (mapping != null)
             {
+                //TODO - JS:
+                //if (mapping.SaleModel != NexportSaleModel.Retail)
+                  //  return true;
                 if (existingEnrollmentStatus == null)
                 {
                     if (mapping.IsExtensionProduct)
@@ -2723,6 +2729,59 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             //paging
             return new PagedList<Store>(stores, pageIndex, pageSize);
+        }
+
+        public async Task<IList<OrganizationResponseItem>> FindNexportGroupsByCustomerAsync(int customerId)
+        {
+            var items = new List<OrganizationResponseItem>();
+
+            var result = _mockApiService.GetNexportGroupsForCustomer(customerId);
+            items.AddRange(result.OrganizationList);
+            //try
+            //{
+            //    var page = 1;
+            //    int remainderItemsCount;
+            //    do
+            //    {
+                    
+            //        //var result = _mockApiService.GetNexportGroupsForCustomer(_nexportSettings.Url,
+            //        //    _nexportSettings.AuthenticationToken, baseOrgId, page);
+            //        items.AddRange(result.OrganizationList);
+
+            //        remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+            //        page++;
+            //    } while (remainderItemsCount > -1);
+            //}
+            //catch (Exception ex)
+            //{
+            //    var errMsg = $"Error occurred during Web API call GetNexportGroupsForCustomer with the parameter: customer_id - {customerId}";
+            //    await _logger.ErrorAsync($"{errMsg}", ex);
+
+            //    if (ex is ApiException exception)
+            //    {
+            //        var errorResponse = JsonConvert.DeserializeObject<OrganizationResponseItem>(exception.ErrorContent.ToString());
+            //        if (errorResponse != null)
+            //        {
+            //            throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+            //        }
+            //    }
+
+            //    throw;
+            //}
+
+            return items;
+        }
+
+        public async Task<IList<ProductModel>> FindProductsByNexportGroupAsync(Guid groupId)
+        {
+            var items = new List<ProductModel>();
+
+            for (int i = 0; i < 10; i++)
+            {
+               items.Add(new ProductModel {Name = $"product {i}"});
+            }
+
+            return items;
         }
     }
 }

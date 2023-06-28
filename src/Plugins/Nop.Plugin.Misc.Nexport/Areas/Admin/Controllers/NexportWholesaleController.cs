@@ -19,7 +19,7 @@ using Nop.Web.Areas.Admin.Models.Payments;
 
 namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
 
-public class NexportAdminWholesaleController : BaseAdminController
+public class NexportWholesaleController : BaseAdminController
 {
     private readonly INexportPluginModelFactory _nexportPluginModelFactory;
     private readonly IPermissionService _permissionService;
@@ -31,7 +31,7 @@ public class NexportAdminWholesaleController : BaseAdminController
     private readonly IProductService _productService;
     private readonly IPluginService _pluginService;
 
-    public NexportAdminWholesaleController(INexportPluginModelFactory nexportPluginModelFactory, IPermissionService permissionService, IOrderService orderService, IStoreService storeService, INexportWholesaleService nexportWholesaleService, IWorkContext workContext, NexportService nexportService, IPaymentPluginManager paymentPluginManager, IProductService productService, IPluginService pluginService)
+    public NexportWholesaleController(INexportPluginModelFactory nexportPluginModelFactory, IPermissionService permissionService, IOrderService orderService, IStoreService storeService, INexportWholesaleService nexportWholesaleService, IWorkContext workContext, NexportService nexportService, IPaymentPluginManager paymentPluginManager, IProductService productService, IPluginService pluginService)
     {
         _nexportPluginModelFactory = nexportPluginModelFactory;
         _permissionService = permissionService;
@@ -44,6 +44,7 @@ public class NexportAdminWholesaleController : BaseAdminController
         _pluginService = pluginService;
     }
 
+    [Route("Admin/Wholesale/Create")]
     public virtual async Task<IActionResult> Create()
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders))
