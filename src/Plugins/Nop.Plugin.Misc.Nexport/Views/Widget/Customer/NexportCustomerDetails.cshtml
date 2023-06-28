@@ -4,6 +4,7 @@
 @using System.Net
 @using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer
 @using Nop.Services.Stores
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Wholesale.PurchasingAgent
 
 @inject NexportSettings _nexportSettings
 @inject IStoreService storeService
@@ -199,9 +200,9 @@
         </div>
     </nop-card>
     <nop-card asp-name="nexport-customer-registration-field-answers" asp-icon="fa fa-id-card-o"
-               asp-title="Nexport Registration Field Answers"
-               asp-hide-block-attribute-name="@hideNexportCustomerRegistrationFieldAnswersBlockAttributeName"
-               asp-hide="@hideNexportCustomerRegistrationFieldAnswersBlock" asp-advanced="false">
+              asp-title="Nexport Registration Field Answers"
+              asp-hide-block-attribute-name="@hideNexportCustomerRegistrationFieldAnswersBlockAttributeName"
+              asp-hide="@hideNexportCustomerRegistrationFieldAnswersBlock" asp-advanced="false">
         <div class="card-body">
             <div style="display: flex;">
                 <div style="flex-grow: 1;">
@@ -295,6 +296,8 @@
             <input type="submit" id="btnRefreshRegistrationAnswerList" style="display: none">
         </div>
     </nop-card>
+    @await Html.PartialAsync("NexportCustomerDetails_PurchasingAgentGroups.cshtml", new NexportPurchasingAgentGroupsSearchModel())
+    ;
     <script>
         $(document).ready(function() {
             jQuery.validator.addMethod("dotnet-guid",
