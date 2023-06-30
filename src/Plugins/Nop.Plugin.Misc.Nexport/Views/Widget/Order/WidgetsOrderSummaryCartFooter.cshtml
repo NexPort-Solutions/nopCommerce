@@ -19,7 +19,9 @@
             Select the group you would like to purchase for
         </div>
         <div>
-            <nop-select asp-for="GroupId" asp-items="Model.AvailableGroups" id="groupselect" />
+            @*<nop-select asp-for="GroupGuid" asp-items="Model.AvailableGroups" id="groupselect" />*@
+            <input id="search-customer-groups" type="text" autocomplete="on" class="form-control" />
+            @Html.TextBoxFor(model => model.GroupGuid, new { style = "display:none" })
         </div>
     </div>
     <div style="min-height: 60px;overflow: hidden;">
@@ -28,40 +30,53 @@
     </div>
     <script>
         $(document).ready(function () {
-            var selected = $("#groupselect").children(":selected");
-
-            if (selected.index() != 0)
-                $("#selectedgroupdiv").html("Purchasing for group:" + selected.html());
-
-            $("#groupselect").on("change", function () {
-                selected = $("#groupselect").children(":selected");
-                var postData = {
-                    selectedId: selected.attr("value"),
-                };
-
-                addAntiForgeryToken(postData);
-
-                $.ajax({
-                    cache: false,
-                    type: "POST",
-                    url: "@Url.Action("SetPurchaseGroupForCustomer", "NexportWholesale")",
-                    data: postData,
-                    success: function (data, textStatus, jqXHR) {
-                        if (data.Result) {
-                            if (selected.index() != 0) {
-                                $("#selectedgroupdiv").html("Purchasing for group:" + selected.html());
-                            }
-                            else {
-                                $("#selectedgroupdiv").html("");
-                            }
-                        }
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-
+            var source = @Html.Raw(Json.Serialize(Model.AvailableGroups.Select(item => new { label = item.Text, value = item.Value })));
+            $('#search-customer-groups').autocomplete({
+                delay: 0,
+                minLength: 0,
+                source: source,
+                create: function (event, ui) {
+                    var selectme = source.find(x=>x.value==="@Model.GroupGuid");
+                    $('#search-customer-groups').data('ui-autocomplete')._trigger('select', 'autocompleteselect', { item: { label:selectme.label,value: selectme.value } });
+                    $("#selectedgroupdiv").html("Purchasing for group:" + $('#search-customer-groups').val());
+                    return false;
+                },
+                select: function (event, ui) {
+                    if(ui.item){
+                        $('#search-customer-groups').val(ui.item.label);
+                        $('#@Html.IdFor(model => model.GroupGuid)').val(ui.item.value);
+                        return false;
                     }
-                });
-                return false;
+                },
+                change: function (event, ui) {
+                    if (ui.item) {
+                        var postData = {
+                            selectedId: ui.item.value,
+                        };
 
+                        addAntiForgeryToken(postData);
+
+                        $.ajax({
+                            cache: false,
+                            type: "POST",
+                            url: "@Url.Action("SetPurchaseGroupForCustomer", "NexportWholesale")",
+                            data: postData,
+                            success: function (data, textStatus, jqXHR) {
+                                if (data.Result) {
+                                    $("#selectedgroupdiv").html("Purchasing for group:" + $('#search-customer-groups').val());
+                                }
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+
+                            }
+                        });
+                        
+                    }
+                    else{
+                        $("#selectedgroupdiv").html("");
+                    }
+                    return false;
+                }
             });
         });
     </script>

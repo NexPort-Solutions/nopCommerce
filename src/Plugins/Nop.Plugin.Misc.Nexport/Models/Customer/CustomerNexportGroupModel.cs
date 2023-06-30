@@ -11,7 +11,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.Customer
         {
             //AdditionalProductReviewList = new List<ProductReviewReviewTypeMappingModel>();
         }
-        public Guid Guid { get; set; }
+        public Guid GroupGuid { get; set; }
         public string Name { get; set; }
         public string ShortName { get; set; }
         

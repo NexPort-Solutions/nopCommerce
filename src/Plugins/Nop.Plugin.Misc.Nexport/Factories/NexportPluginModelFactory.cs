@@ -1579,7 +1579,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
                 if (selectedGroupId != Guid.Empty)
                 {
-                    orderSummaryCartFooterModel.GroupId = selectedGroupId;
+                    orderSummaryCartFooterModel.GroupGuid = selectedGroupId;
                 }
                 else
                 {
@@ -1588,15 +1588,20 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         selectedGroupId, store.Id);
                 }
 
-                //TODO - JS: api call to get groups for purchasing agent
+                //TODO - JS: use api call that narrows groups down to this customer instead of all groups
                 //prepare groups
-                orderSummaryCartFooterModel.AvailableGroups = new List<SelectListItem>
-                {
-                    new SelectListItem("organization 1", "8fc17e71-7cad-4e98-9cad-ee576fb18d55"), new SelectListItem("organization 2", "ed850ffa-c341-4a20-935c-f2afe17601c0"), new SelectListItem("organization 3", "305bb0a8-f586-4f5b-884f-f36917d956fc")
-                };
+                var orgs = await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync();
+                orderSummaryCartFooterModel.AvailableGroups = orgs.Select(x=>
+                    new SelectListItem(x.Name,$"{x.OrgId}")
+                ).ToList();
+
+                //orderSummaryCartFooterModel.AvailableGroups = new List<SelectListItem>
+                //{
+                //    new SelectListItem("organization 1", "8fc17e71-7cad-4e98-9cad-ee576fb18d55"), new SelectListItem("organization 2", "ed850ffa-c341-4a20-935c-f2afe17601c0"), new SelectListItem("organization 3", "305bb0a8-f586-4f5b-884f-f36917d956fc")
+                //};
 
                 // set default value of 0 that displays an empty string as the first item in the dropdown
-                await PrepareDefaultItemAsync(orderSummaryCartFooterModel.AvailableGroups, "None",$"{Guid.Empty}");
+               // await PrepareDefaultItemAsync(orderSummaryCartFooterModel.AvailableGroups, "None",$"{Guid.Empty}");
             }
 
             return orderSummaryCartFooterModel;
@@ -1632,7 +1637,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             }
 
             //TODO JS: - Using mock api service right now. this may be different for actual implementation
-            var groups = (await _nexportService.FindNexportGroupsByCustomerAsync(customerId)).Select(x=>new CustomerNexportGroupModel{Guid = x.OrgId, Name=x.Name, ShortName = x.ShortName}).ToList();
+            var groups = (await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync()).Select(x=>new CustomerNexportGroupModel{GroupGuid = x.OrgId, Name=x.Name, ShortName = x.ShortName}).ToList();
+           // var groups = (await _nexportService.FindNexportGroupsByCustomerAsync(customerId)).Select(x=>new CustomerNexportGroupModel{GroupGuid = x.OrgId, Name=x.Name, ShortName = x.ShortName}).ToList();
            
 
             var pagedGroups = new PagedList<CustomerNexportGroupModel>(groups, pageIndex, pageSize);
@@ -1669,10 +1675,10 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             }
 
             //TODO JS: - Using mock in service method right now. this may be different for actual implementation
-            var groups = (await _nexportService.FindProductsByNexportGroupAsync(groupId)).Select(x=>new CustomerNexportGroupProductModel{Name=x.Name}).ToList();
-           
+            var products = (await _nexportService.FindProductsByNexportGroupAsync(groupId)).Select(x => new CustomerNexportGroupProductModel { Name = x.Name }).ToList();
 
-            var pagedGroups = new PagedList<CustomerNexportGroupProductModel>(groups, pageIndex, pageSize);
+
+            var pagedGroups = new PagedList<CustomerNexportGroupProductModel>(products, pageIndex, pageSize);
 
             var pagerModel = new PagerModel(_localizationService)
             {
@@ -1690,8 +1696,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 NexportGroupProducts = pagedGroups,
                 PagerModel = pagerModel
             };
-
-            model.GroupModel = new CustomerNexportGroupModel {Guid = groupId, Name = $"organization test"};
+            var group = await _nexportService.GetOrganizationDetailsAsync(groupId);
+            model.GroupModel = new CustomerNexportGroupModel {GroupGuid = group.OrgId, Name = group.Name, ShortName = group.ShortName};
 
             return model;
         }

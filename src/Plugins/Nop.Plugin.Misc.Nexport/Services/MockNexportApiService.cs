@@ -12,7 +12,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 {
     public class MockNexportApiService
     {
-        public static List<OrganizationResponseItem> orgs = new List<OrganizationResponseItem>
+        public List<OrganizationResponseItem> orgs = new List<OrganizationResponseItem>
         {
             new OrganizationResponseItem(Guid.NewGuid(), $"organization 1", $"org_1",new ApiErrorEntity()),
             new OrganizationResponseItem(Guid.NewGuid(), $"organization 2", $"org_2",new ApiErrorEntity()),
@@ -28,26 +28,35 @@ namespace Nop.Plugin.Misc.Nexport.Services
             new OrganizationResponseItem(Guid.NewGuid(), $"organization 12", $"org_12",new ApiErrorEntity()),
         };
 
+        public List<ProductModel> products = new List<ProductModel>
+        {
+            new ProductModel{Name="Product 1"},
+            new ProductModel{Name="Product 2"},
+            new ProductModel{Name="Product 3"},
+            new ProductModel{Name="Product 4"},
+            new ProductModel{Name="Product 5"},
+            new ProductModel{Name="Product 6"},
+            new ProductModel{Name="Product 7"}
+            
+        };
+
+        public static bool IsPurchasingAgent = true;
+
+        public bool CheckPurchasingAgentPermissionForCustomer(int customerId)
+        {
+            return true;
+        }
+
         public NexportOrganizationResponse GetNexportGroupsForCustomer(int customerId)
         {
             var response = new NexportOrganizationResponse();
             response.OrganizationList = orgs;
-                //new List<OrganizationResponseItem>();
-            //for (int i = 0; i < 20; i++)
-            //{
-            //    var item = new OrganizationResponseItem(Guid.NewGuid(), $"organization {i}", $"org_{i}",new ApiErrorEntity());
-            //    response.OrganizationList.Add(item);
-            //}
             return response;
         }
 
         public IList<ProductModel> GetProductsForGroup(Guid groupGuid)
         {
-            var list = new List<ProductModel>();
-            for (int i = 0; i < 20; i++)
-            {
-                list.Add(new ProductModel {Name=$"product {i}"});
-            }
+            var list = products;
             return list;
         }
 
