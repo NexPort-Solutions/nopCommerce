@@ -25,26 +25,42 @@
     <div class="page-body">
         @if (Model.NexportGroups.Count > 0)
         {
-            foreach (var group in Model.NexportGroups)
-            {
-                <div>
-                    @(group.Name) - <a href="@(Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products")+$"?GroupGuId={group.Guid}")" class="inactive">
-                        View
-                    </a>
-                </div>
-            }
+            <table class="data-table">
+                <tr>
+                    <th>Name</th>
+                    <th>Short Name</th>
+                    <th></th>
+                </tr>
+                @foreach (var group in Model.NexportGroups)
+                {
+                    <tr>
+                        <td>
+                            @(group.Name)
+                        </td>
+                        <td>
+                            @(group.ShortName)
+                        </td>
+                        <td>
+                            <a href="@(Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products") + $"?GroupGuId={group.GroupGuid}")" class="inactive">
+                                View Products
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </table>
             var pager = await Html.PagerAsync(Model.PagerModel);
             if (!string.IsNullOrEmpty(await pager.RenderHtmlContentAsync()))
             {
-                <div class="pager">
+                <div class="pager" style="margin-top:20px">
                     @pager
                 </div>
+
             }
         }
         else
         {
             <div class="no-data">
-                @T("Account.CustomerProductReviews.NoRecords")
+                There are no groups
             </div>
         }
     </div>

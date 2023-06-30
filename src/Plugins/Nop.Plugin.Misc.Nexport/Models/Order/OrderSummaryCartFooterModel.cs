@@ -9,7 +9,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.Order
     public record OrderSummaryCartFooterModel : BaseNopModel
     {
         [NopResourceDisplayName("Plugins.Misc.Nexport.Order.GroupId")]
-        public Guid GroupId { get; set; }
+        public Guid GroupGuid { get; set; }
 
         public bool IsPurchasingAgent{ get; set; }
 

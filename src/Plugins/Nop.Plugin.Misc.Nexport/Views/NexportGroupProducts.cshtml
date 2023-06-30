@@ -23,26 +23,36 @@
         <h1>@(Model.GroupModel.Name) - Products</h1>
     </div>
     <div class="page-body">
+        
         @if (Model.NexportGroupProducts.Count > 0)
         {
-            foreach (var product in Model.NexportGroupProducts)
-            {
-                <div>
-                    @(product.Name)
-                </div>
-            }
-            @*var pager = await Html.PagerAsync(Model.PagerModel);
+            <table class="data-table">
+                <tr>
+                    <th>
+                        Name
+                    </th>
+                </tr>
+                @foreach (var product in Model.NexportGroupProducts)
+                {
+                    <tr>
+                        <td>
+                            @(product.Name)
+                        </td>
+                    </tr>
+                }
+            </table>
+            var pager = await Html.PagerAsync(Model.PagerModel);
             if (!string.IsNullOrEmpty(await pager.RenderHtmlContentAsync()))
             {
-                <div class="pager">
+                <div class="pager" style="margin-top:20px">
                     @pager
                 </div>
-            }*@
+            }
         }
         else
         {
             <div class="no-data">
-                @T("Account.CustomerProductReviews.NoRecords")
+                There are no products
             </div>
         }
     </div>

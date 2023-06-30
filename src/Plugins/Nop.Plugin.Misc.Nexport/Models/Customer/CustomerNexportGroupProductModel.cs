@@ -12,7 +12,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.Customer
         {
             
         }
-        public Guid Guid { get; set; }
+        public Guid ProductGuid { get; set; }
         public string Name { get; set; }
         
        
