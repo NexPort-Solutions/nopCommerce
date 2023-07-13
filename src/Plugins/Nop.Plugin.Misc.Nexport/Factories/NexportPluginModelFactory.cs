@@ -1551,7 +1551,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             //get stores
             var stores = await _nexportService.GetAllStoresAsync(storeName: searchModel.SearchStoreName,
                 storeUrl: searchModel.SearchStoreUrl, pageIndex: searchModel.Page - 1,
-                pageSize: searchModel.PageSize);
+                pageSize: searchModel.PageSize, excludeDeleted:true);
 
             //prepare list model
             var model = new StoreListModel().PrepareToGrid(searchModel, stores, () =>
