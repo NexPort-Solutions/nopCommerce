@@ -2716,10 +2716,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public virtual async Task<PagedList<Store>> GetAllStoresAsync(string storeName, string storeUrl, int pageIndex = 0, int pageSize = int.MaxValue)
+        public virtual async Task<PagedList<Store>> GetAllStoresAsync(string storeName, string storeUrl, int pageIndex = 0, int pageSize = int.MaxValue, bool excludeDeleted = true)
         {
             var stores = await _storeRepository.GetAllAsync(async query =>
             {
+                if(excludeDeleted)
+                    query = query.Where(s => !s.Deleted);
                 if (!string.IsNullOrEmpty(storeName))
                     query = query.Where(x => x.Name.Contains(storeName));
                 if (!string.IsNullOrEmpty(storeUrl))
