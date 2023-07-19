@@ -40,6 +40,7 @@ using Nop.Web.Framework.Models.Extensions;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Newtonsoft.Json;
 using Nop.Core.Domain.Common;
+using Nop.Core.Domain.Orders;
 using Nop.Services.Configuration;
 using Nop.Services.Payments;
 using Nop.Web.Areas.Admin.Models.Common;
@@ -1564,7 +1565,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             SelectListItem paymentMethodToListItem(IPaymentMethod paymentMethod) => new(paymentMethod.PaymentMethodType.ToString(), paymentMethod.ToPluginModel<PaymentMethodModel>().SystemName);
         }
 
-        public async Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer customer, Store store)
+        public async Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer? customer, Store? store,IList<ShoppingCartItem?> cart)
         {
             if (orderSummaryCartFooterModel == null)
                 throw new ArgumentNullException(nameof(orderSummaryCartFooterModel));
@@ -1595,13 +1596,25 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     new SelectListItem(x.Name,$"{x.OrgId}")
                 ).ToList();
 
-                //orderSummaryCartFooterModel.AvailableGroups = new List<SelectListItem>
-                //{
-                //    new SelectListItem("organization 1", "8fc17e71-7cad-4e98-9cad-ee576fb18d55"), new SelectListItem("organization 2", "ed850ffa-c341-4a20-935c-f2afe17601c0"), new SelectListItem("organization 3", "305bb0a8-f586-4f5b-884f-f36917d956fc")
-                //};
+                // hide group select if autoredeem
+                foreach (var shoppingCartItem in cart)
+                {
+                    var npmInCart =
+                        await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId,
+                            store.Id) ??
+                        await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId);
+                    if (npmInCart == null)
+                        continue;
 
-                // set default value of 0 that displays an empty string as the first item in the dropdown
-               // await PrepareDefaultItemAsync(orderSummaryCartFooterModel.AvailableGroups, "None",$"{Guid.Empty}");
+                    if(npmInCart.AutoRedeem)
+                    {
+                        orderSummaryCartFooterModel.IsPurchasingAgent = false;
+                        //set groupforcustomer attribute so we don't run into null later
+                        await _genericAttributeService.SaveAttributeAsync(customer, $"GroupForCustomer",
+                            Guid.Empty, store.Id);
+                        break;
+                    }
+                }
             }
 
             return orderSummaryCartFooterModel;

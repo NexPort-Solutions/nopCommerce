@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core;
-using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Order;
-using Nop.Services.Common;
 using Nop.Services.Orders;
 using Nop.Web.Framework.Components;
 
@@ -25,7 +19,6 @@ namespace Nop.Plugin.Misc.Nexport.Components
         private readonly IShoppingCartService _shoppingCartService;
         private readonly IActionContextAccessor _actionContextAccessor;
         private readonly INexportPluginModelFactory _modelFactory;
-        private readonly IGenericAttributeService _genericAttributeService;
 
         public WidgetsOrderSummaryCartFooter(
             IWorkContext workContext,
@@ -33,8 +26,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
             IOrderTotalCalculationService orderTotalCalculationService,
             IShoppingCartService shoppingCartService,
             IActionContextAccessor actionContextAccessor,
-            INexportPluginModelFactory modelFactory,
-            IGenericAttributeService genericAttributeService)
+            INexportPluginModelFactory modelFactory)
         {
             _workContext = workContext;
             _storeContext = storeContext;
@@ -42,14 +34,15 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _shoppingCartService = shoppingCartService;
             _actionContextAccessor = actionContextAccessor;
             _modelFactory = modelFactory;
-            _genericAttributeService = genericAttributeService;
         }
 
         public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
-            var cart = await _shoppingCartService.GetShoppingCartAsync(
-                await _workContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart,
-                (await _storeContext.GetCurrentStoreAsync()).Id);
+            var store = await _storeContext.GetCurrentStoreAsync();
+            var customer = await _workContext.GetCurrentCustomerAsync();
+
+            var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
+
             var (_, appliedDiscounts, _, _, _) = await _orderTotalCalculationService.GetShoppingCartSubTotalAsync(cart, false);
 
 
@@ -61,9 +54,12 @@ namespace Nop.Plugin.Misc.Nexport.Components
             }
 
             //TODO - JS: prepare model in the model factory - set purchasing agent boolean and list of available groups
-            var model = await _modelFactory.PrepareOrderSummaryCartFooterModel(new OrderSummaryCartFooterModel(),await _workContext.GetCurrentCustomerAsync(),await _storeContext.GetCurrentStoreAsync());
+            var model = await _modelFactory.PrepareOrderSummaryCartFooterModel(new OrderSummaryCartFooterModel(), customer, store, cart);
 
-            return View("~/Plugins/Misc.Nexport/Views/Widget/Order/WidgetsOrderSummaryCartFooter.cshtml",model);
+
+
+
+            return View("~/Plugins/Misc.Nexport/Views/Widget/Order/WidgetsOrderSummaryCartFooter.cshtml", model);
         }
     }
 }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
+﻿using System.Net;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -59,12 +55,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly NexportSettings _nexportSettings;
 
         private readonly IAddressService _addressService;
-        private readonly IAclService _aclService;
         private readonly IStaticCacheManager _cacheManager;
-        private readonly IEventPublisher _eventPublisher;
         private readonly ILocalizationService _localizationService;
         private readonly IProductService _productService;
-        private readonly IRepository<AclRecord> _aclRepository;
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
         private readonly IRepository<NexportProductGroupMembershipMapping> _nexportProductGroupMembershipMappingRepository;
@@ -87,11 +80,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<NexportRegistrationFieldStoreMapping> _nexportRegistrationFieldStoreMappingRepository;
         private readonly IRepository<NexportRegistrationFieldAnswer> _nexportRegistrationFieldAnswerRepository;
         private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
-        private readonly IRepository<StoreMapping> _storeMappingRepository;
-        private readonly IStaticCacheManager _staticCacheManager;
-        private readonly IStoreMappingService _storeMappingService;
         private readonly ICustomerService _customerService;
-        private readonly ICustomerActivityService _customerActivityService;
         private readonly IOrderService _orderService;
         private readonly ICategoryService _categoryService;
         private readonly ISettingService _settingService;
@@ -125,11 +114,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             EmailAccountSettings emailAccountSettings,
             NexportSettings nexportSettings,
             IAddressService addressService,
-            IAclService aclService,
             IStaticCacheManager cacheManager,
-            IEventPublisher eventPublisher,
             IProductService productService,
-            IRepository<AclRecord> aclRepository,
             IRepository<Product> productRepository,
             IRepository<NexportProductMapping> nexportProductMappingRepository,
             IRepository<NexportProductGroupMembershipMapping> nexportProductGroupMembershipMappingRepository,
@@ -152,11 +138,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<NexportRegistrationFieldStoreMapping> nexportRegistrationFieldStoreMappingRepository,
             IRepository<NexportRegistrationFieldAnswer> nexportRegistrationFieldAnswerRepository,
             IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
-            IRepository<StoreMapping> storeMappingRepository,
-            IStaticCacheManager staticCacheManager,
-            IStoreMappingService storeMappingService,
             ICustomerService customerService,
-            ICustomerActivityService customerActivityService,
             IOrderService orderService,
             ICategoryService categoryService,
             ISettingService settingService,
@@ -186,12 +168,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _emailAccountSettings = emailAccountSettings;
             _nexportSettings = nexportSettings;
             _addressService = addressService;
-            _aclService = aclService;
             _cacheManager = cacheManager;
-            _eventPublisher = eventPublisher;
             _localizationService = localizationService;
             _productService = productService;
-            _aclRepository = aclRepository;
             _productRepository = productRepository;
             _nexportProductMappingRepository = nexportProductMappingRepository;
             _nexportProductGroupMembershipMappingRepository = nexportProductGroupMembershipMappingRepository;
@@ -214,11 +193,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportRegistrationFieldStoreMappingRepository = nexportRegistrationFieldStoreMappingRepository;
             _nexportRegistrationFieldAnswerRepository = nexportRegistrationFieldAnswerRepository;
             _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
-            _storeMappingRepository = storeMappingRepository;
-            _staticCacheManager = staticCacheManager;
-            _storeMappingService = storeMappingService;
             _customerService = customerService;
-            _customerActivityService = customerActivityService;
             _orderService = orderService;
             _categoryService = categoryService;
             _settingService = settingService;
@@ -2158,7 +2133,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 //TODO - JS:
                 //if (mapping.SaleModel != NexportSaleModel.Retail)
-                  //  return true;
+                //  return true;
                 if (existingEnrollmentStatus == null)
                 {
                     if (mapping.IsExtensionProduct)
@@ -2720,7 +2695,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         {
             var stores = await _storeRepository.GetAllAsync(async query =>
             {
-                if(excludeDeleted)
+                if (excludeDeleted)
                     query = query.Where(s => !s.Deleted);
                 if (!string.IsNullOrEmpty(storeName))
                     query = query.Where(x => x.Name.Contains(storeName));
@@ -2745,7 +2720,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             //    int remainderItemsCount;
             //    do
             //    {
-                    
+
             //        //var result = _mockApiService.GetNexportGroupsForCustomer(_nexportSettings.Url,
             //        //    _nexportSettings.AuthenticationToken, baseOrgId, page);
             //        items.AddRange(result.OrganizationList);
@@ -2780,7 +2755,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             for (int i = 0; i < 10; i++)
             {
-               items.Add(new ProductModel {Name = $"product {i}"});
+                items.Add(new ProductModel { Name = $"product {i}" });
             }
 
             return items;
