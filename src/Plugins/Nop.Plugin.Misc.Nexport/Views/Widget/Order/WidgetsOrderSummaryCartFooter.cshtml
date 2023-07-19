@@ -7,9 +7,9 @@
 
 }
 
-@if (Model.IsPurchasingAgent)
+@if (Model.ShowPurchasingGroupArea)
 {
-    <div style="@((hideGroupSelect.HasValue && hideGroupSelect.Value==true) ? "display:none" : "")">
+    <div style="@(Model.PurchasingGroupSelectBoxStyle)">
         <div style="margin: 0 0 5px;">
             <strong style="font-size: 18px; font-weight: normal;">
                 Group
@@ -19,7 +19,6 @@
             Select the group you would like to purchase for
         </div>
         <div>
-            @*<nop-select asp-for="GroupGuid" asp-items="Model.AvailableGroups" id="groupselect" />*@
             <input id="search-customer-groups" type="text" autocomplete="on" class="form-control" />
             @Html.TextBoxFor(model => model.GroupGuid, new { style = "display:none" })
         </div>

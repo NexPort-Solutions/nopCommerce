@@ -11,7 +11,9 @@ namespace Nop.Plugin.Misc.Nexport.Models.Order
         [NopResourceDisplayName("Plugins.Misc.Nexport.Order.GroupId")]
         public Guid GroupGuid { get; set; }
 
-        public bool IsPurchasingAgent{ get; set; }
+        public bool ShowPurchasingGroupArea { get; set; } = true;
+
+        public string PurchasingGroupSelectBoxStyle { get; set; } = "";
 
         public IList<SelectListItem> AvailableGroups { get; set; } = new List<SelectListItem>();
     }

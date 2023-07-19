@@ -1569,12 +1569,34 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         {
             if (orderSummaryCartFooterModel == null)
                 throw new ArgumentNullException(nameof(orderSummaryCartFooterModel));
+            if (store == null)
+                throw new ArgumentNullException(nameof(store));
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
+
+            // hide group select if autoredeem
+            foreach (var shoppingCartItem in cart)
+            {
+                if (shoppingCartItem == null)
+                    continue;
+
+                var npmInCart =
+                    await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId,
+                        store.Id);
+
+                if(npmInCart.AutoRedeem)
+                {
+                    orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
+                }
+            }
 
             //TODO - JS: api call to check if customer is purchasing agent
+            // we may not need this call if we just check if user gets back groups from api or not to determine if purchasing agent
             //check if customer is purchasing agent. if so then display dropdown of groups that can be purchased for
-            orderSummaryCartFooterModel.IsPurchasingAgent = true;
+            //var purchasingAgent = true;
+            //purchasingAgent && 
 
-            if (orderSummaryCartFooterModel.IsPurchasingAgent)
+            if (orderSummaryCartFooterModel.ShowPurchasingGroupArea)
             {
                 var selectedGroupId = await _genericAttributeService.GetAttributeAsync<Guid>(customer,"GroupForCustomer",store.Id);
 
@@ -1591,30 +1613,15 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
                 //TODO - JS: use api call that narrows groups down to this customer instead of all groups
                 //prepare groups
-                var orgs = await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync();
-                orderSummaryCartFooterModel.AvailableGroups = orgs.Select(x=>
+                var organizations = await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync();
+
+                orderSummaryCartFooterModel.AvailableGroups = organizations.Select(x=>
                     new SelectListItem(x.Name,$"{x.OrgId}")
                 ).ToList();
 
-                // hide group select if autoredeem
-                foreach (var shoppingCartItem in cart)
-                {
-                    var npmInCart =
-                        await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId,
-                            store.Id) ??
-                        await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId);
-                    if (npmInCart == null)
-                        continue;
+                if (orderSummaryCartFooterModel.AvailableGroups.Count < 1)
+                    orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
 
-                    if(npmInCart.AutoRedeem)
-                    {
-                        orderSummaryCartFooterModel.IsPurchasingAgent = false;
-                        //set groupforcustomer attribute so we don't run into null later
-                        await _genericAttributeService.SaveAttributeAsync(customer, $"GroupForCustomer",
-                            Guid.Empty, store.Id);
-                        break;
-                    }
-                }
             }
 
             return orderSummaryCartFooterModel;

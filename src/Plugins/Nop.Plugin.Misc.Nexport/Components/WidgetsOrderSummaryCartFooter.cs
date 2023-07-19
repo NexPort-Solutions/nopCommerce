@@ -46,17 +46,15 @@ namespace Nop.Plugin.Misc.Nexport.Components
             var (_, appliedDiscounts, _, _, _) = await _orderTotalCalculationService.GetShoppingCartSubTotalAsync(cart, false);
 
 
+            //TODO - JS: prepare model in the model factory - set purchasing agent boolean and list of available groups
+            var model = await _modelFactory.PrepareOrderSummaryCartFooterModel(new OrderSummaryCartFooterModel(), customer, store, cart);
+
             if ((_actionContextAccessor.ActionContext?.ActionDescriptor as ControllerActionDescriptor)?.ActionName !=
                 "Cart")
             {
                 ViewData["DiscountList"] = appliedDiscounts;
-                ViewData["HideGroupSelect"] = true;
+                model.PurchasingGroupSelectBoxStyle = "display:none";
             }
-
-            //TODO - JS: prepare model in the model factory - set purchasing agent boolean and list of available groups
-            var model = await _modelFactory.PrepareOrderSummaryCartFooterModel(new OrderSummaryCartFooterModel(), customer, store, cart);
-
-
 
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Order/WidgetsOrderSummaryCartFooter.cshtml", model);
