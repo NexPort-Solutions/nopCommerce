@@ -818,8 +818,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public InvoiceRedemptionResponse RedeemNexportInvoice([NotNull] string url, [NotNull] string accessToken, Guid invoiceItemId,
-            Guid redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction)
+        public InvoiceRedemptionResponse RedeemNexportInvoice([NotNull] string url, [NotNull] string accessToken,
+            Guid redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction,string? invoiceItemRedemptionCode)
         {
             if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
@@ -836,7 +836,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             };
 
             var result = nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
-                    new RedeemInvoiceItemRequest(invoiceItemId, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction));
+                    new RedeemInvoiceItemRequest(invoiceItemRedemptionCode:invoiceItemRedemptionCode, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction));
 
             return result;
         }

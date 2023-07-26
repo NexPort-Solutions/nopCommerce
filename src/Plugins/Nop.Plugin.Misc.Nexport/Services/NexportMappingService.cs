@@ -1865,5 +1865,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return new PagedList<NexportProductMapping>(productMappingsList, pageIndex, pageSize);
 
         }
+
+        public async Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemByGuid(Guid? orderInvoiceItemId)
+        {
+            if(orderInvoiceItemId==null)
+                throw new ArgumentNullException(nameof(orderInvoiceItemId));
+
+            return _nexportOrderInvoiceItemRepository.Table.First(x =>
+                x.InvoiceItemId == orderInvoiceItemId);
+        }
     }
 }

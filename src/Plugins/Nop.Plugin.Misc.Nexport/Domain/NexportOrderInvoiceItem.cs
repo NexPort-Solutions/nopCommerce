@@ -22,5 +22,9 @@ namespace Nop.Plugin.Misc.Nexport.Domain
         public DateTime? UtcDateRedemption { get; set; }
 
         public bool? RequireManualApproval { get; set; }
+
+        public string? InvoiceRedemptionCode { get; set; }
+
+        public string? InvoiceItemRedemptionCode { get; set; }
     }
 }

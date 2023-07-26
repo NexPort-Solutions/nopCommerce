@@ -80,6 +80,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<NexportRegistrationFieldStoreMapping> _nexportRegistrationFieldStoreMappingRepository;
         private readonly IRepository<NexportRegistrationFieldAnswer> _nexportRegistrationFieldAnswerRepository;
         private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
+        private readonly IRepository<NexportProductRedemptionItem> _nexportProductRedemptionItemRepository;
         private readonly ICustomerService _customerService;
         private readonly IOrderService _orderService;
         private readonly ICategoryService _categoryService;
@@ -138,6 +139,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<NexportRegistrationFieldStoreMapping> nexportRegistrationFieldStoreMappingRepository,
             IRepository<NexportRegistrationFieldAnswer> nexportRegistrationFieldAnswerRepository,
             IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
+            IRepository<NexportProductRedemptionItem> nexportProductRedemptionItemRepository,
             ICustomerService customerService,
             IOrderService orderService,
             ICategoryService categoryService,
@@ -193,6 +195,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportRegistrationFieldStoreMappingRepository = nexportRegistrationFieldStoreMappingRepository;
             _nexportRegistrationFieldAnswerRepository = nexportRegistrationFieldAnswerRepository;
             _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
+            _nexportProductRedemptionItemRepository = nexportProductRedemptionItemRepository;
             _customerService = customerService;
             _orderService = orderService;
             _categoryService = categoryService;
@@ -1402,11 +1405,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return addInvoiceItemResult?.InvoiceItemId;
         }
 
-        public async Task CommitNexportOrderInvoiceTransactionAsync(Guid invoiceId)
+        public async Task<CommitInvoiceResponse?> CommitNexportOrderInvoiceTransactionAsync(Guid invoiceId)
         {
+            CommitInvoiceResponse commitInvoiceResult;
             try
             {
-                _nexportApiService.CommitNexportInvoiceTransaction(_nexportSettings.Url,
+                commitInvoiceResult = _nexportApiService.CommitNexportInvoiceTransaction(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, invoiceId);
             }
             catch (Exception ex)
@@ -1426,6 +1430,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 throw;
             }
+            return commitInvoiceResult;
         }
 
         public async Task AddPaymentToNexportOrderInvoiceAsync(Guid invoiceId, decimal totalCost, Guid payeeId, int nopOrderId,
@@ -1473,7 +1478,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             try
             {
                 var redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId, redeemingUserId, redemptionAction);
+                    _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction,invoiceItem.InvoiceItemRedemptionCode);
 
                 if (redeemInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
                     throw new ApiException((int)redeemInvoiceResult.ApiErrorEntity.ErrorCode,

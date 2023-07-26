@@ -329,5 +329,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Task<IList<OrganizationResponseItem>> FindNexportGroupsByCustomerAsync(int customerId);
 
         Task<IList<ProductModel>> FindProductsByNexportGroupAsync(Guid groupId);
+
+        Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemByGuid(Guid? orderInvoiceItemId);
     }
 }
