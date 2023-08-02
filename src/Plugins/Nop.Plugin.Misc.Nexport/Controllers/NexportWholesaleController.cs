@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.InkML;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale;
+using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
@@ -18,6 +23,8 @@ using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
+using Nop.Web.Framework.Models;
+using Nop.Web.Framework.Models.Extensions;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
@@ -100,15 +107,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             try
             {
-                
-                var model = await _nexportPluginModelFactory.PrepareCustomerNexportGroupsModelAsync(customer.Id, pageNumber);
 
                 var myGroupsViewLocationSetting =
                     await _settingService.GetSettingAsync("nexport.mygroups.view", (await _storeContext.GetCurrentStoreAsync()).Id, true);
 
                 return View(myGroupsViewLocationSetting != null
                         ? myGroupsViewLocationSetting.Value
-                        : "~/Plugins/Misc.Nexport/Views/NexportGroups.cshtml",model
+                        : "~/Plugins/Misc.Nexport/Views/NexportGroups.cshtml",new NexportGroupListSearchModel()
                     );
             }
             catch (Exception ex)
@@ -121,35 +126,35 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return new EmptyResult();
         }
 
-        [HttpsRequirement]
-        public async Task<IActionResult> CustomerNexportGroupProducts(Guid groupGuid, int? pageNumber)
+
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
         {
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            if (!await _customerService.IsRegisteredAsync(customer))
-                return Challenge();
 
-            try
-            {
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel);
+            
+            return Json(model);
+        }
 
-                //#TODO JS - get list of products for group from model factory
-                var model = await _nexportPluginModelFactory.PrepareCustomerNexportGroupProductsModelAsync(groupGuid, pageNumber);
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetNexportGroupProducts(NexportGroupListSearchModel searchModel,Guid groupId)
+        {
 
-                var myGroupProductsViewLocationSetting =
-                    await _settingService.GetSettingAsync("nexport.mygroupproducts.view", (await _storeContext.GetCurrentStoreAsync()).Id, true);
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel,groupId);
+            
+            return Json(model);
+        }
 
-                return View(myGroupProductsViewLocationSetting != null
-                        ? myGroupProductsViewLocationSetting.Value
-                        : "~/Plugins/Misc.Nexport/Views/NexportGroupProducts.cshtml",model
-                );
-            }
-            catch (Exception ex)
-            {
-                var errorMsg = "Cannot display group product details.";
-                await _logger.ErrorAsync(errorMsg, ex, customer);
-                _notificationService.ErrorNotification(errorMsg);
-            }
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetNexportGroupProductCustomers(NexportGroupListSearchModel searchModel,Guid groupId,int productId)
+        {
 
-            return new EmptyResult();
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductCustomerListModelAsync(searchModel,groupId,productId);
+            
+            return Json(model);
         }
         #endregion
     }

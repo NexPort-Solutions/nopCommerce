@@ -19,6 +19,8 @@ using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Areas.Admin.Models.Stores;
 using Nop.Core.Domain.Orders;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale;
+using Nop.Web.Areas.Admin.Models.Customers;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -148,10 +150,17 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         Task<NexportOrderListModel> PrepareOrderListModelAsync(OrderSearchModel searchModel);
 
         Task<WholesaleCreateModel> PrepareWholesaleOrderModelAsync();
+
         Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(
             OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer? customer, Store? store,IList<ShoppingCartItem?> cart);
-        Task<CustomerNexportGroupsModel> PrepareCustomerNexportGroupsModelAsync(int customerId,int? page);
-        Task<CustomerNexportGroupProductsModel> PrepareCustomerNexportGroupProductsModelAsync(Guid groupId, int? page);
 
+        Task<NexportGroupListModel> PrepareNexportGroupListModelAsync(
+            NexportGroupListSearchModel searchModel);
+
+        Task<NexportGroupProductListModel> PrepareNexportGroupProductListModelAsync(
+            NexportGroupListSearchModel searchModel,Guid groupId);
+
+        Task<NexportGroupProductCustomerListModel> PrepareNexportGroupProductCustomerListModelAsync(
+            NexportGroupListSearchModel searchModel, Guid groupId, int productId);
     }
 }

@@ -3,6 +3,8 @@ using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Directory;
+using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
@@ -19,6 +21,7 @@ using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
@@ -37,16 +40,6 @@ using Nop.Web.Areas.Admin.Models.Payments;
 using Nop.Web.Areas.Admin.Models.Stores;
 using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Models.Extensions;
-using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
-using Newtonsoft.Json;
-using Nop.Core.Domain.Common;
-using Nop.Core.Domain.Orders;
-using Nop.Services.Configuration;
-using Nop.Services.Payments;
-using Nop.Web.Areas.Admin.Models.Common;
-using Nop.Web.Areas.Admin.Models.Orders;
-using Nop.Web.Framework.Extensions;
-using Nop.Web.Models.Common;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -976,7 +969,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             searchModel.RegistrationFieldId = registrationField.Id;
 
-          //  searchModel.SetGridPageSize();
+            //  searchModel.SetGridPageSize();
 
             return Task.FromResult(searchModel);
         }
@@ -1457,7 +1450,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             //get stores
             var stores = await _nexportService.GetAllStoresAsync(storeName: searchModel.SearchStoreName,
                 storeUrl: searchModel.SearchStoreUrl, pageIndex: searchModel.Page - 1,
-                pageSize: searchModel.PageSize, excludeDeleted:true);
+                pageSize: searchModel.PageSize, excludeDeleted: true);
 
             //prepare list model
             var model = new StoreListModel().PrepareToGrid(searchModel, stores, () =>
@@ -1468,7 +1461,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             return model;
         }
-    
+
         public async Task<NexportOrderListModel> PrepareOrderListModelAsync(OrderSearchModel searchModel)
         {
             if (searchModel == null)
@@ -1565,7 +1558,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             SelectListItem paymentMethodToListItem(IPaymentMethod paymentMethod) => new(paymentMethod.PaymentMethodType.ToString(), paymentMethod.ToPluginModel<PaymentMethodModel>().SystemName);
         }
 
-        public async Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer? customer, Store? store,IList<ShoppingCartItem?> cart)
+        public async Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer? customer, Store? store, IList<ShoppingCartItem?> cart)
         {
             if (orderSummaryCartFooterModel == null)
                 throw new ArgumentNullException(nameof(orderSummaryCartFooterModel));
@@ -1584,9 +1577,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId,
                         store.Id);
 
-                if(npmInCart.AutoRedeem)
+                if (npmInCart != null)
                 {
-                    orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
+                    if (npmInCart.AutoRedeem)
+                    {
+                        orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
+                    }
+
                 }
             }
 
@@ -1598,7 +1595,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             if (orderSummaryCartFooterModel.ShowPurchasingGroupArea)
             {
-                var selectedGroupId = await _genericAttributeService.GetAttributeAsync<Guid>(customer,"GroupForCustomer",store.Id);
+                var selectedGroupId = await _genericAttributeService.GetAttributeAsync<Guid>(customer, "GroupForCustomer", store.Id);
 
                 if (selectedGroupId != Guid.Empty)
                 {
@@ -1615,8 +1612,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 //prepare groups
                 var organizations = await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync();
 
-                orderSummaryCartFooterModel.AvailableGroups = organizations.Select(x=>
-                    new SelectListItem(x.Name,$"{x.OrgId}")
+                orderSummaryCartFooterModel.AvailableGroups = organizations.Select(x =>
+                    new SelectListItem(x.Name, $"{x.OrgId}")
                 ).ToList();
 
                 if (orderSummaryCartFooterModel.AvailableGroups.Count < 1)
@@ -1627,99 +1624,127 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return orderSummaryCartFooterModel;
         }
 
-        /// <summary>
-        /// Prepare default item
-        /// </summary>
-        /// <param name="items">Available items</param>
-        /// <param name="defaultItemText">Default item text; pass null to use "All" text</param>
-        /// <param name="defaultItemValue">Default item value; defaults 0</param>
-        /// <returns>A task that represents the asynchronous operation</returns>
-        protected virtual async Task PrepareDefaultItemAsync(IList<SelectListItem> items, string defaultItemText = null, string defaultItemValue = "0")
+        public virtual async Task<NexportGroupListModel> PrepareNexportGroupListModelAsync(
+            NexportGroupListSearchModel searchModel)
         {
-            if (items == null)
-                throw new ArgumentNullException(nameof(items));
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
 
-            //prepare item text
-            defaultItemText ??= await _localizationService.GetResourceAsync("Admin.Common.All");
-
-            //insert this default item at first
-            items.Insert(0, new SelectListItem { Text = defaultItemText, Value = defaultItemValue });
-        }
-
-        public virtual async Task<CustomerNexportGroupsModel> PrepareCustomerNexportGroupsModelAsync(int customerId,int? page)
-        {
-            var pageSize = 5;
-            var pageIndex = 0;
-
-            if (page > 0)
+            var groups = new List<NexportGroupModel>
             {
-                pageIndex = page.Value - 1;
+                new NexportGroupModel{Id= Guid.Parse("7cf6fb76-f909-4ce3-8c08-875a5eed9f6e"), Name= "Joe's Sub Org 2", ShortName= "JSO2"},
+                new NexportGroupModel{Id= Guid.Parse("f78b50a2-d330-444f-8178-54effbf38cda"), Name= "Joe's Sub Org 3", ShortName= "JSO3"},
+                new NexportGroupModel{Id= Guid.Parse("6a07e8a0-ed14-4f5e-a50d-44b209e65739"), Name= "Joe's Sub Org 4", ShortName= "JSO4"}
+            };
+            foreach (var group in groups)
+            {
+                group.NumberOfProducts = await _nexportService.GetInvoiceItemCountForGroupByGuid(group.Id);
             }
 
-            //TODO JS: - Using mock api service right now. this may be different for actual implementation
-            var groups = (await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync()).Select(x=>new CustomerNexportGroupModel{GroupGuid = x.OrgId, Name=x.Name, ShortName = x.ShortName}).ToList();
-           // var groups = (await _nexportService.FindNexportGroupsByCustomerAsync(customerId)).Select(x=>new CustomerNexportGroupModel{GroupGuid = x.OrgId, Name=x.Name, ShortName = x.ShortName}).ToList();
-           
+            groups.RemoveAll(g => g.NumberOfProducts < 1);
 
-            var pagedGroups = new PagedList<CustomerNexportGroupModel>(groups, pageIndex, pageSize);
 
-            var pagerModel = new PagerModel(_localizationService)
+            var pagedGroups = new PagedList<NexportGroupModel>(groups, 0, 5, groups.Count);
+
+            var model = await new NexportGroupListModel().PrepareToGridAsync(searchModel, pagedGroups, () =>
             {
-                PageSize = pageSize,
-                TotalRecords = pagedGroups.TotalCount,
-                PageIndex = pageIndex,
-                ShowTotalSummary = false,
-                RouteActionName = "CustomerNexportGroupsPaged",
-                UseRouteLinks = true,
-                RouteValues = new CustomerNexportGroupsModel.CustomerNexportGroupsRouteValues { PageNumber = pageIndex }
-            };
-
-            var model = new CustomerNexportGroupsModel
-            {
-                NexportGroups = pagedGroups,
-                PagerModel = pagerModel
-            };
+                return pagedGroups.SelectAwait(async group =>
+                {
+                    return group;
+                });
+            });
 
             return model;
         }
 
-
-        public virtual async Task<CustomerNexportGroupProductsModel> PrepareCustomerNexportGroupProductsModelAsync(Guid groupId,int? page)
+        public virtual async Task<NexportGroupProductListModel> PrepareNexportGroupProductListModelAsync(
+           NexportGroupListSearchModel searchModel, Guid groupId)
         {
-            var pageSize = 5;
-            var pageIndex = 0;
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
 
-            if (page > 0)
+            if (groupId == Guid.Empty)
+                throw new ArgumentException(nameof(groupId));
+
+            var products = await _nexportService.GetGroupProductModelForGroupId(groupId);
+
+            var pagedProducts = new PagedList<NexportGroupProductModel>(products, 0, 5, products.Count);
+
+            var model = await new NexportGroupProductListModel().PrepareToGridAsync(searchModel, pagedProducts, () =>
             {
-                pageIndex = page.Value - 1;
-            }
+                return pagedProducts.SelectAwait(async products =>
+                {
+                    return products;
+                });
+            });
 
-            //TODO JS: - Using mock in service method right now. this may be different for actual implementation
-            var products = (await _nexportService.FindProductsByNexportGroupAsync(groupId)).Select(x => new CustomerNexportGroupProductModel { Name = x.Name }).ToList();
-
-
-            var pagedGroups = new PagedList<CustomerNexportGroupProductModel>(products, pageIndex, pageSize);
-
-            var pagerModel = new PagerModel(_localizationService)
-            {
-                PageSize = pageSize,
-                TotalRecords = pagedGroups.TotalCount,
-                PageIndex = pageIndex,
-                ShowTotalSummary = false,
-                RouteActionName = "CustomerNexportGroupProductsPaged",
-                UseRouteLinks = true,
-                RouteValues = new CustomerNexportGroupProductsModel.CustomerNexportGroupProductsRouteValues { PageNumber = pageIndex }
-            };
-
-            var model = new CustomerNexportGroupProductsModel
-            {
-                NexportGroupProducts = pagedGroups,
-                PagerModel = pagerModel
-            };
-            var group = await _nexportService.GetOrganizationDetailsAsync(groupId);
-            model.GroupModel = new CustomerNexportGroupModel {GroupGuid = group.OrgId, Name = group.Name, ShortName = group.ShortName};
 
             return model;
         }
+
+        public virtual async Task<NexportGroupProductCustomerListModel> PrepareNexportGroupProductCustomerListModelAsync(
+            NexportGroupListSearchModel searchModel, Guid groupId, int productId)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            if (productId < 1)
+                throw new ArgumentOutOfRangeException(nameof(productId));
+
+            if (groupId == Guid.Empty)
+                throw new ArgumentException(nameof(groupId));
+
+            var customers = new List<NexportGroupProductCustomerModel>();
+
+            var invoiceItems = await _nexportService.GetInvoiceItemsForGroupIdAndProductId(groupId, productId);
+            if (invoiceItems != null)
+            {
+                foreach (var invoiceItem in invoiceItems)
+                {
+                    var groupCustomer = new NexportGroupProductCustomerModel();
+                    if (invoiceItem.RedeemingUserId == null)
+                    {
+                        groupCustomer.Status = "Available";
+
+                    }
+                    else if (invoiceItem.RedeemingUserId != null && invoiceItem.UtcDateRedemption == null)
+                    {
+                        groupCustomer.Status = "Awaiting";
+                        var redeemer = await _nexportService.FindCustomerByGuid(invoiceItem.RedeemingUserId);
+                        if (redeemer != null)
+                        {
+                            groupCustomer.Name = $"{redeemer.FirstName} {redeemer.LastName}";
+                            groupCustomer.Email = redeemer.Email;
+                        }
+
+                    }
+                    else
+                    {
+                        groupCustomer.Status = "Redeemed";
+                        var redeemer = await _nexportService.FindCustomerByGuid(invoiceItem.RedeemingUserId);
+                        if (redeemer != null)
+                        {
+                            groupCustomer.Name = $"{redeemer.FirstName} {redeemer.LastName}";
+                            groupCustomer.Email = redeemer.Email;
+                        }
+                    }
+
+                    customers.Add(groupCustomer);
+                }
+            }
+
+            var pagedCustomers = new PagedList<NexportGroupProductCustomerModel>(customers, 0, 5, customers.Count);
+
+            var model = await new NexportGroupProductCustomerListModel().PrepareToGridAsync(searchModel, pagedCustomers, () =>
+            {
+                return pagedCustomers.SelectAwait(async custs =>
+                {
+                    return custs;
+                });
+            });
+
+            return model;
+        }
+
     }
 }

@@ -460,8 +460,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\Wholesale\" />
     <Folder Include="Services\Caching\" />
+    <Folder Include="Views\NexportWholesale\" />
   </ItemGroup>
 
   <ItemGroup>

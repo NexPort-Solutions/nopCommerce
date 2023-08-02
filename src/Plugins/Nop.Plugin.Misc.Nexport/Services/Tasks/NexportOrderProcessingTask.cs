@@ -310,9 +310,12 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                             {
                                                 var invoiceItem =
                                                    await _nexportService.FindNexportOrderInvoiceItemByGuid(Guid.Parse(code.Key));
-
-                                                invoiceItem.InvoiceRedemptionCode = commitResult.InvoiceRedemptionCode;
-                                                invoiceItem.InvoiceItemRedemptionCode = code.Value;
+                                                if (invoiceItem != null)
+                                                {
+                                                    invoiceItem.InvoiceRedemptionCode =
+                                                        commitResult.InvoiceRedemptionCode;
+                                                    invoiceItem.InvoiceItemRedemptionCode = code.Value;
+                                                }
 
                                                 await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
 

@@ -372,7 +372,8 @@
                     // Add event listener for opening and closing childs
                     $('#@curModel.Name tbody').on('click', 'td.child-control', function () {
                         var tr = $(this).closest('tr');
-                        var tdi = tr.find('i.fa');
+                        // fixed bug with caret on child table changed 'i.fa' to 'i.fas'
+                        var tdi = tr.find('i.fas');
                         var row = $('#@curModel.Name').DataTable().row(tr);
 
                         if (row.child.isShown()) {

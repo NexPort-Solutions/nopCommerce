@@ -52,16 +52,6 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Groups",
                 "customer/nexportgroups",
                 new { controller = "NexportWholesale", action = "CustomerNexportGroups" });
-            endpointRouteBuilder.MapControllerRoute(name: "CustomerNexportGroupsPaged",
-                pattern: $"customer/nexportgroups/page/{{pageNumber:min(0)}}",
-                defaults: new { controller = "NexportWholesale", action = "CustomerNexportGroups" });
-
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Groups.Products",
-                "customer/nexportgroup/products",
-                new { controller = "NexportWholesale", action = "CustomerNexportGroupProducts" });
-            endpointRouteBuilder.MapControllerRoute(name: "CustomerNexportGroupProductsPaged",
-                pattern: $"customer/nexportgroup/products/page/{{pageNumber:min(0)}}",
-                defaults: new { controller = "NexportWholesale", action = "CustomerNexportGroupProducts" });
         }
     }
 }

@@ -4,11 +4,13 @@ using System.Threading.Tasks;
 using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Web.Areas.Admin.Models.Catalog;
 
 namespace Nop.Plugin.Misc.Nexport.Services
@@ -81,7 +83,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task UpdateNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
 
+        //TODO @JS - this probably needs to go away in favor of the one that return list of invoiceitems
         Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItem(int orderId, int orderItemId);
+        
+        Task<IList<NexportOrderInvoiceItem>?> FindNexportOrderInvoiceItems(int orderId, int orderItemId);
 
         Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemById(int orderInvoiceItemId);
 
@@ -326,10 +331,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchproductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue);
 
-        Task<IList<OrganizationResponseItem>> FindNexportGroupsByCustomerAsync(int customerId);
+        Task<NexportOrderInvoiceItem?> FindNexportOrderInvoiceItemByGuid(Guid? orderInvoiceItemId);
 
-        Task<IList<ProductModel>> FindProductsByNexportGroupAsync(Guid groupId);
+        Task<Customer> FindCustomerByGuid(Guid? customerId);
 
-        Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemByGuid(Guid? orderInvoiceItemId);
+        Task<int> GetInvoiceItemCountForGroupByGuid(Guid groupId);
+
+        Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemByInvoiceItemGuid(Guid invoiceItemId);
+
+        Task<IList<NexportGroupProductModel>> GetGroupProductModelForGroupId(Guid groupId);
+
+        Task<IList<NexportOrderInvoiceItem>> GetInvoiceItemsForGroupIdAndProductId(Guid groupId, int productId);
+
     }
 }

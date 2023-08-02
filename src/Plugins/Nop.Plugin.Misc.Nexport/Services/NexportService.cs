@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using NexportApi.Client;
@@ -80,6 +81,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<NexportRegistrationFieldStoreMapping> _nexportRegistrationFieldStoreMappingRepository;
         private readonly IRepository<NexportRegistrationFieldAnswer> _nexportRegistrationFieldAnswerRepository;
         private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
+        private readonly IRepository<GenericAttribute> _genericAttributeRepository;
+        private readonly IRepository<Order> _orderRepository;
+        private readonly IRepository<OrderItem> _orderItemRepository;
         private readonly ICustomerService _customerService;
         private readonly IOrderService _orderService;
         private readonly ICategoryService _categoryService;
@@ -138,6 +142,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<NexportRegistrationFieldStoreMapping> nexportRegistrationFieldStoreMappingRepository,
             IRepository<NexportRegistrationFieldAnswer> nexportRegistrationFieldAnswerRepository,
             IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
+            IRepository<GenericAttribute> genericAttributeRepository,
+            IRepository<Order> orderRepository,
+            IRepository<OrderItem> orderItemRepository,
             ICustomerService customerService,
             IOrderService orderService,
             ICategoryService categoryService,
@@ -193,6 +200,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportRegistrationFieldStoreMappingRepository = nexportRegistrationFieldStoreMappingRepository;
             _nexportRegistrationFieldAnswerRepository = nexportRegistrationFieldAnswerRepository;
             _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
+            _genericAttributeRepository = genericAttributeRepository;
+            _orderRepository = orderRepository;
+            _orderItemRepository = orderItemRepository;
             _customerService = customerService;
             _orderService = orderService;
             _categoryService = categoryService;
@@ -2708,59 +2718,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             //paging
             return new PagedList<Store>(stores, pageIndex, pageSize);
-        }
-
-        public async Task<IList<OrganizationResponseItem>> FindNexportGroupsByCustomerAsync(int customerId)
-        {
-            var items = new List<OrganizationResponseItem>();
-
-            var result = _mockApiService.GetNexportGroupsForCustomer(customerId);
-            items.AddRange(result.OrganizationList);
-            //try
-            //{
-            //    var page = 1;
-            //    int remainderItemsCount;
-            //    do
-            //    {
-
-            //        //var result = _mockApiService.GetNexportGroupsForCustomer(_nexportSettings.Url,
-            //        //    _nexportSettings.AuthenticationToken, baseOrgId, page);
-            //        items.AddRange(result.OrganizationList);
-
-            //        remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
-            //        page++;
-            //    } while (remainderItemsCount > -1);
-            //}
-            //catch (Exception ex)
-            //{
-            //    var errMsg = $"Error occurred during Web API call GetNexportGroupsForCustomer with the parameter: customer_id - {customerId}";
-            //    await _logger.ErrorAsync($"{errMsg}", ex);
-
-            //    if (ex is ApiException exception)
-            //    {
-            //        var errorResponse = JsonConvert.DeserializeObject<OrganizationResponseItem>(exception.ErrorContent.ToString());
-            //        if (errorResponse != null)
-            //        {
-            //            throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
-            //        }
-            //    }
-
-            //    throw;
-            //}
-
-            return items;
-        }
-
-        public async Task<IList<ProductModel>> FindProductsByNexportGroupAsync(Guid groupId)
-        {
-            var items = new List<ProductModel>();
-
-            for (int i = 0; i < 10; i++)
-            {
-                items.Add(new ProductModel { Name = $"product {i}" });
-            }
-
-            return items;
         }
     }
 }
