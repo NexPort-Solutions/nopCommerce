@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Nop.Core.Domain.Catalog;
+﻿using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -15,8 +14,9 @@ using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
-using Nop.Web.Areas.Admin.Models.Orders;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Web.Areas.Admin.Models.Catalog;
+using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Web.Areas.Admin.Models.Stores;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
@@ -147,10 +147,21 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         Task<NexportOrderListModel> PrepareOrderListModelAsync(OrderSearchModel searchModel);
 
         Task<WholesaleCreateModel> PrepareWholesaleOrderModelAsync();
-        Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(
-            OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer customer, Store store);
-        Task<CustomerNexportGroupsModel> PrepareCustomerNexportGroupsModelAsync(int customerId,int? page);
-        Task<CustomerNexportGroupProductsModel> PrepareCustomerNexportGroupProductsModelAsync(Guid groupId, int? page);
 
+        Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(
+            OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer? customer, Store? store, IList<ShoppingCartItem?> cart);
+
+        Task<NexportGroupListModel> PrepareNexportGroupListModelAsync(
+            NexportGroupListSearchModel searchModel);
+
+        Task<NexportGroupProductListModel> PrepareNexportGroupProductListModelAsync(
+            NexportGroupProductListSearchModel searchModel, Guid groupId);
+
+        Task<NexportGroupProductRedemptionListModel> PrepareNexportGroupProductCustomerListModelAsync(
+            NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId);
+
+        Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(Guid groupId);
+
+        Task<NexportGroupProductRedemptionListSearchModel> PrepareNexportGroupProductRedemptionListSearchModelAsync(Guid groupId, int productId);
     }
 }

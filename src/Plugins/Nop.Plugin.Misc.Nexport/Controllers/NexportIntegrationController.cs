@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
+﻿using System.Dynamic;
 using System.Net;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -779,7 +775,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             return View("~/Plugins/Misc.Nexport/Views/ProductMappingDetailsPopup.cshtml", model);
         }
-        
+
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
@@ -3011,15 +3007,15 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var customer = await _workContext.GetCurrentCustomerAsync();
             var orderStore = await _storeContext.GetCurrentStoreAsync();
-            var groupGuid = await _genericAttributeService.GetAttributeAsync<Guid>(customer, "GroupForCustomer", orderStore.Id);
+            var groupForCustomer = await _genericAttributeService.GetAttributeAsync<string>(customer, "GroupForCustomer", orderStore.Id);
 
             // reset generic attribute group for customer for future purchases
-            await _genericAttributeService.SaveAttributeAsync(customer, $"GroupForCustomer",
-                Guid.Empty,orderStore.Id);
+            await _genericAttributeService.SaveAttributeAsync<string>(customer, $"GroupForCustomer",
+                null, orderStore.Id);
 
             // set attribute group for order
-            await _genericAttributeService.SaveAttributeAsync<Guid>(order, $"GroupForOrder",
-                groupGuid, orderStore.Id);
+            await _genericAttributeService.SaveAttributeAsync<string>(order, $"GroupForOrder",
+                groupForCustomer, orderStore.Id);
         }
 
         public async Task HandleEventAsync(EntityDeletedEvent<Product> eventMessage)

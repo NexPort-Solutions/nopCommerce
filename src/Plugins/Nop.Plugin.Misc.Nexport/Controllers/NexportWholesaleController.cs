@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
-using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Factories;
-using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
@@ -14,11 +9,7 @@ using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Security;
 using Nop.Web.Areas.Admin.Factories;
-using Nop.Web.Areas.Admin.Models.Catalog;
-using Nop.Web.Areas.Admin.Models.Customers;
-using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
@@ -75,15 +66,14 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [AutoValidateAntiforgeryToken]
         [HttpPost]
-        public async Task<IActionResult> SetPurchaseGroupForCustomer(Guid selectedId)
+        public async Task<IActionResult> SetPurchaseGroupForCustomer(string groupSelected)
         {
-            
             var customer = await _workContext.GetCurrentCustomerAsync();
             var store = await _storeContext.GetCurrentStoreAsync();
 
-            // save group id for customer in generic attribute so it can be saved for the order later
+            //save group id for customer in generic attribute so it can be saved for the order later
             await _genericAttributeService.SaveAttributeAsync(customer, $"GroupForCustomer",
-                selectedId, store.Id);
+                groupSelected, store.Id);
 
             return Json(new
             {
@@ -98,58 +88,66 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            try
-            {
-                
-                var model = await _nexportPluginModelFactory.PrepareCustomerNexportGroupsModelAsync(customer.Id, pageNumber);
 
-                var myGroupsViewLocationSetting =
-                    await _settingService.GetSettingAsync("nexport.mygroups.view", (await _storeContext.GetCurrentStoreAsync()).Id, true);
+            return View("~/Plugins/Misc.Nexport/Views/NexportGroups.cshtml", new NexportGroupListSearchModel());
 
-                return View(myGroupsViewLocationSetting != null
-                        ? myGroupsViewLocationSetting.Value
-                        : "~/Plugins/Misc.Nexport/Views/NexportGroups.cshtml",model
-                    );
-            }
-            catch (Exception ex)
-            {
-                var errorMsg = "Cannot display groups details.";
-                await _logger.ErrorAsync(errorMsg, ex, customer);
-                _notificationService.ErrorNotification(errorMsg);
-            }
-
-            return new EmptyResult();
         }
 
         [HttpsRequirement]
-        public async Task<IActionResult> CustomerNexportGroupProducts(Guid groupGuid, int? pageNumber)
+        public async Task<IActionResult> CustomerNexportGroupProducts(Guid groupId)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            try
-            {
+            var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
 
-                //#TODO JS - get list of products for group from model factory
-                var model = await _nexportPluginModelFactory.PrepareCustomerNexportGroupProductsModelAsync(groupGuid, pageNumber);
+            return View("~/Plugins/Misc.Nexport/Views/NexportGroupProducts.cshtml", nexportGroupProductListSearchModel);
+        }
 
-                var myGroupProductsViewLocationSetting =
-                    await _settingService.GetSettingAsync("nexport.mygroupproducts.view", (await _storeContext.GetCurrentStoreAsync()).Id, true);
+        [HttpsRequirement]
+        public async Task<IActionResult> CustomerNexportGroupProductRedemptions(Guid groupId, int productId)
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(customer))
+                return Challenge();
 
-                return View(myGroupProductsViewLocationSetting != null
-                        ? myGroupProductsViewLocationSetting.Value
-                        : "~/Plugins/Misc.Nexport/Views/NexportGroupProducts.cshtml",model
-                );
-            }
-            catch (Exception ex)
-            {
-                var errorMsg = "Cannot display group product details.";
-                await _logger.ErrorAsync(errorMsg, ex, customer);
-                _notificationService.ErrorNotification(errorMsg);
-            }
+            var nexportGroupProductRedemptionListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId);
+            
+            return View("~/Plugins/Misc.Nexport/Views/NexportGroupProductRedemptions.cshtml", nexportGroupProductRedemptionListSearchModel);
+        }
 
-            return new EmptyResult();
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
+        {
+
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel);
+
+            return Json(model);
+        }
+
+
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid groupId)
+        {
+
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId);
+
+            return Json(model);
+        }
+
+
+
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
+        {
+
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductCustomerListModelAsync(searchModel, groupId, productId);
+
+            return Json(model);
         }
         #endregion
     }

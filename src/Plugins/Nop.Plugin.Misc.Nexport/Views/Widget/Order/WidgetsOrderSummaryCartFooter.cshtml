@@ -7,9 +7,9 @@
 
 }
 
-@if (Model.IsPurchasingAgent)
+@if (Model.ShowPurchasingGroupArea)
 {
-    <div style="@((hideGroupSelect.HasValue && hideGroupSelect.Value==true) ? "display:none" : "")">
+    <div style="@(Model.PurchasingGroupSelectBoxStyle)">
         <div style="margin: 0 0 5px;">
             <strong style="font-size: 18px; font-weight: normal;">
                 Group
@@ -19,7 +19,6 @@
             Select the group you would like to purchase for
         </div>
         <div>
-            @*<nop-select asp-for="GroupGuid" asp-items="Model.AvailableGroups" id="groupselect" />*@
             <input id="search-customer-groups" type="text" autocomplete="on" class="form-control" />
             @Html.TextBoxFor(model => model.GroupGuid, new { style = "display:none" })
         </div>
@@ -30,28 +29,30 @@
     </div>
     <script>
         $(document).ready(function () {
-            var source = @Html.Raw(Json.Serialize(Model.AvailableGroups.Select(item => new { label = item.Text, value = item.Value })));
+            var source = @Html.Raw(Json.Serialize(Model.AvailableGroups2.Select(group => new { label = group.Name, value = group })));
             $('#search-customer-groups').autocomplete({
                 delay: 0,
                 minLength: 0,
                 source: source,
                 create: function (event, ui) {
-                    var selectme = source.find(x=>x.value==="@Model.GroupGuid");
-                    $('#search-customer-groups').data('ui-autocomplete')._trigger('select', 'autocompleteselect', { item: { label:selectme.label,value: selectme.value } });
-                    $("#selectedgroupdiv").html("Purchasing for group:" + $('#search-customer-groups').val());
+                    var selectedGroup = source.find(x=>x.value.Id==="@(Model.Group?.Id)");
+                    if(selectedGroup){
+                        $('#search-customer-groups').data('ui-autocomplete')._trigger('select', 'autocompleteselect', { item: { label:selectedGroup.label,value: selectedGroup.value } });
+                        $("#selectedgroupdiv").html("Purchasing for group:" + $('#search-customer-groups').val());
+                    }
                     return false;
                 },
                 select: function (event, ui) {
                     if(ui.item){
                         $('#search-customer-groups').val(ui.item.label);
-                        $('#@Html.IdFor(model => model.GroupGuid)').val(ui.item.value);
+                        $('#@Html.IdFor(model => model.Group)').val(ui.item.value);
                         return false;
                     }
                 },
                 change: function (event, ui) {
                     if (ui.item) {
                         var postData = {
-                            selectedId: ui.item.value,
+                            groupSelected:JSON.stringify(ui.item.value)
                         };
 
                         addAntiForgeryToken(postData);

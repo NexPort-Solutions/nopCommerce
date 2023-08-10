@@ -629,6 +629,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Order.GroupId", "Purchasing For Group/Org:");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.Groups", "My nexport groups");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Groups", "Nexport Groups");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Products", "Products");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions", "Redemptions");
         }
 
         public async Task DeleteResourcesAsync()
@@ -889,6 +891,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Order.GroupId");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.Groups");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Groups");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Products");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions");
         }
 
         public async Task InstallPermissionProviderAsync()

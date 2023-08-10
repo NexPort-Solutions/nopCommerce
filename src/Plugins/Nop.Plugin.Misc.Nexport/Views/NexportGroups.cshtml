@@ -1,70 +1,91 @@
-﻿@using Nop.Services.Helpers
-
-@inject IDateTimeHelper dateTimeHelper
-
-@model Nop.Plugin.Misc.Nexport.Models.Customer.CustomerNexportGroupsModel
+﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupListSearchModel
 
 @{
     Layout = "_ColumnsOne";
 
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
-    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/uikit.min.css");
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "https://kit.fontawesome.com/e4adf0b7ea.js", "", true);
-
-    NopHtml.AddTitleParts("Nexport Groups");
     NopHtml.AppendPageCssClassParts("html-account-page");
 
+    string GetUrl(DataUrl dataUrl)
+    {
+        return !string.IsNullOrEmpty(dataUrl?.ActionName) && !string.IsNullOrEmpty(dataUrl.ControllerName)
+            ? Url.Action(dataUrl.ActionName, dataUrl.ControllerName, dataUrl.RouteValues)
+            : !string.IsNullOrEmpty(dataUrl.Url)
+                ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
+                : string.Empty;
+    }
 }
 
-<link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport-store.css" />
+<link rel="stylesheet" href="~/lib_npm/datatables.net-bs4/css/dataTables.bootstrap4.min.css" />
+<link rel="stylesheet" href="~/lib_npm/bootstrap/css/bootstrap.min.css" />
+<link rel="stylesheet" href=@("~/lib_npm/@fortawesome/fontawesome-free/css/all.min.css") />
 
-<div class="page account-page order-list-page">
+<div class="page account-page">
+
     <div class="page-title">
+        <div class="breadcrumb">
+            <ul itemscope itemtype="http://schema.org/BreadcrumbList">
+                <li>
+                    <a href="@Url.RouteUrl("Homepage")" title="@T("Categories.Breadcrumb.Top")">@T("Categories.Breadcrumb.Top")</a>
+                    <span class="delimiter">/</span>
+                </li>
+                @{ int position = 1; }
+                <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                    <strong class="current-item" itemprop="name">@T("Plugins.Misc.Nexport.Groups")</strong>
+                    <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@Url.RouteUrl("Plugins.Misc.Nexport.Groups")">
+                    </span>
+                    <meta itemprop="position" content="1" />
+                </li>
+            </ul>
+        </div>
         <h1>@T("Account.MyAccount") - @T("Plugins.Misc.Nexport.Groups")</h1>
     </div>
     <div class="page-body">
-        @if (Model.NexportGroups.Count > 0)
-        {
-            <table class="data-table">
-                <tr>
-                    <th>Name</th>
-                    <th>Short Name</th>
-                    <th></th>
-                </tr>
-                @foreach (var group in Model.NexportGroups)
-                {
-                    <tr>
-                        <td>
-                            @(group.Name)
-                        </td>
-                        <td>
-                            @(group.ShortName)
-                        </td>
-                        <td>
-                            <a href="@(Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products") + $"?GroupGuId={group.GroupGuid}")" class="inactive">
-                                View Products
-                            </a>
-                        </td>
-                    </tr>
-                }
-            </table>
-            var pager = await Html.PagerAsync(Model.PagerModel);
-            if (!string.IsNullOrEmpty(await pager.RenderHtmlContentAsync()))
-            {
-                <div class="pager" style="margin-top:20px">
-                    @pager
-                </div>
-
-            }
-        }
-        else
-        {
-            <div class="no-data">
-                There are no groups
-            </div>
-        }
+        <table id="groups_table" class="table table-bordered" style="width:100%">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Short Name</th>
+                <th>Products Purchased</th>
+                <th></th>
+            </tr>
+            </thead>
+        </table>
     </div>
 </div>
-<script asp-location="Footer">
+
+<script src="~/lib_npm/jquery/jquery.min.js"></script>
+<script src="~/lib_npm/jquery-ui-dist/jquery-ui.min.js"></script>
+<script src="~/lib_npm/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="~/lib_npm/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
+
+<script>    
+    let groupsTable = new DataTable('#groups_table', {
+        ajax:
+        {
+            url: "@Html.Raw(GetUrl(new DataUrl("GetNexportGroups", "NexportWholesale", null)))",
+            type: "POST",
+            dataType: "json",
+            dataSrc: "Data",
+            data: function(data) {
+                addAntiForgeryToken(data);
+                return data;
+            }
+        },
+        columns: [
+            { data: 'Name' },
+            { data: 'ShortName' },
+            { data: 'NumberOfProducts' },
+            {
+                "mData": "Id",
+                "mRender": function (data, type, row) {
+                    return '<center><button class="btn btn-secondary" onClick="goToGroupProduct(\''+data+'\')" ><i class="far fa-eye"/><span>View</span></button></center>';
+                }
+            }
+        ],
+        order: [[1, 'asc']]
+    });
     
+    function goToGroupProduct(e){
+        window.location.href = "@(Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products"))?GroupId="+e;
+    }
 </script>
