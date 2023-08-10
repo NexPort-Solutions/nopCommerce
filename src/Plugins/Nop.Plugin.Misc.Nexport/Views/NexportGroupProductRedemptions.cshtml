@@ -1,10 +1,9 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupProductListSearchModel
+﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupProductRedemptionListSearchModel
 
 @{
     Layout = "_ColumnsOne";
 
     NopHtml.AppendPageCssClassParts("html-account-page");
-    
 
     string GetUrl(DataUrl dataUrl)
     {
@@ -13,20 +12,6 @@
             : !string.IsNullOrEmpty(dataUrl.Url)
                 ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
                 : string.Empty;
-    }
-
-    string ReplaceName(string str)
-    {
-        return str.Replace("-", "_");
-    }
-
-    void GetAllModels(DataTablesModel model, List<DataTablesModel> models)
-    {
-        models.Add(model);
-        if (!string.IsNullOrEmpty(model.ChildTable?.Name))
-        {
-            GetAllModels(model.ChildTable, models);
-        }
     }
 }
 
@@ -51,23 +36,29 @@
                     <meta itemprop="position" content="1" />
                 </li>
                 <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                    <strong class="current-item" itemprop="name">@Model.CurrentGroup.Name - @T("Plugins.Misc.Nexport.Group.Products")</strong>
-                    <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@Url.RouteUrl("Plugin.Misc.Nexport.Group.Products")">
-                    </span>
+                    <a href="@Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products")@("?groupId="+Model.CurrentGroup.Id)" title="@T("Plugins.Misc.Nexport.Group.Products")" itemprop="item">
+                        <span itemprop="name">@Model.CurrentGroup.Name</span>
+                    </a>
+                    <span class="delimiter">/</span>
                     <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                    <strong class="current-item" itemprop="name">@Model.CurrentProduct.Name - Redemptions</strong>
+                    <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products.Redemptions")">
+                    </span>
+                    <meta itemprop="position" content="3" />
                 </li>
             </ul>
         </div>
-        <h1>@Model.CurrentGroup.Name - @T("Plugins.Misc.Nexport.Group.Products")</h1>
+        <h1>@Model.CurrentProduct.Name - Redemptions</h1>
     </div>
     <div class="page-body">
-        <table id="products_table" class="table table-bordered" style="width:100%">
+        <table id="redemptions_table" class="table table-bordered" style="width:100%">
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Available</th>
-                    <th>Awaiting</th>
-                    <th>Redeemed</th>
+                    <th>Email</th>
+                    <th>Status</th>
                     <th></th>
                 </tr>
             </thead>
@@ -81,10 +72,10 @@
 <script src="~/lib_npm/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
 
 <script>
-    let productsTable = new DataTable('#products_table', {
+    let groupsTable = new DataTable('#redemptions_table', {
         ajax:
             {
-                url: "@Html.Raw(GetUrl(new DataUrl("GetNexportGroupProducts", "NexportWholesale", null)))?groupId=@(Model.CurrentGroup.Id)",
+                url: "@Html.Raw(GetUrl(new DataUrl("GetNexportGroupProductRedemptions", "NexportWholesale", null)))?groupId=@(Model.CurrentGroup.Id)&productId=@(Model.CurrentProduct.Id)",
                 type: "POST",
                 dataType: "json",
                 dataSrc: "Data",
@@ -93,22 +84,27 @@
                     return data;
                 }
             },
-            columns:[
+            columns: [
                 { data: "Name" },
-                { data: "Available" },
-                { data: "Awaiting" },
-                { data: "Redeemed" },
+                { data: "Email" },
+                { data: "Status" },
                 {
-                "mData": "Id",
-                "mRender": function (data, type, row) {
-                    return '<center><button class="btn btn-secondary" onClick="goToGroupProductRedemptions('+row.Id+',\''+row.GroupId+'\')" ><i class="far fa-eye"/><span>View</span></button></center>';
+                    "mData": "Status",
+                    "mRender": function (data, type, row) {
+                        if(data=="Available"){
+                            return '<center><button class="btn btn-secondary">Redeem</button></center>';
+                        }
+                        else if(data=="Awaiting"){
+                            return '<center><button class="btn btn-secondary">Cancel</button></center>';
+                        }
+                        else if(data=="Redeemed"){
+                            return '<center><button class="btn btn-secondary">Unassign</button></center>';
+                        }
+                        return '';
+                    }
                 }
-            }
             ],
         order: [[1, 'asc']]
     });
-    function goToGroupProductRedemptions(productId,groupId){
-        window.location.href = "@(Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products.Redemptions"))?GroupId="+groupId+"&ProductId="+productId;
-    }
 
 </script>

@@ -49,9 +49,21 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             endpointRouteBuilder.MapControllerRoute("StoreList",
                 "admin/store/list",
                 new { area = "Admin", controller = "NexportStore", action = "List" });
+
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Groups",
                 "customer/nexportgroups",
                 new { controller = "NexportWholesale", action = "CustomerNexportGroups" });
+
+            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Groups.Products",
+                "customer/nexportgroups/products",
+                new { controller = "NexportWholesale", action = "CustomerNexportGroupProducts" });
+
+            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Groups.Products.Redemptions",
+                "customer/nexportgroups/products/redemptions",
+                new { controller = "NexportWholesale", action = "CustomerNexportGroupProductRedemptions" });
+
+            
         }
     }
 }
+ 

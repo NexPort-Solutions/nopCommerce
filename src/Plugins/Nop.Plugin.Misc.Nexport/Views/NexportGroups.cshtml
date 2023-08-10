@@ -13,20 +13,6 @@
                 ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
                 : string.Empty;
     }
-
-    string ReplaceName(string str)
-    {
-        return str.Replace("-", "_");
-    }
-
-    void GetAllModels(DataTablesModel model, List<DataTablesModel> models)
-    {
-        models.Add(model);
-        if (!string.IsNullOrEmpty(model.ChildTable?.Name))
-        {
-            GetAllModels(model.ChildTable, models);
-        }
-    }
 }
 
 <link rel="stylesheet" href="~/lib_npm/datatables.net-bs4/css/dataTables.bootstrap4.min.css" />
@@ -36,16 +22,31 @@
 <div class="page account-page">
 
     <div class="page-title">
+        <div class="breadcrumb">
+            <ul itemscope itemtype="http://schema.org/BreadcrumbList">
+                <li>
+                    <a href="@Url.RouteUrl("Homepage")" title="@T("Categories.Breadcrumb.Top")">@T("Categories.Breadcrumb.Top")</a>
+                    <span class="delimiter">/</span>
+                </li>
+                @{ int position = 1; }
+                <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                    <strong class="current-item" itemprop="name">@T("Plugins.Misc.Nexport.Groups")</strong>
+                    <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@Url.RouteUrl("Plugins.Misc.Nexport.Groups")">
+                    </span>
+                    <meta itemprop="position" content="1" />
+                </li>
+            </ul>
+        </div>
         <h1>@T("Account.MyAccount") - @T("Plugins.Misc.Nexport.Groups")</h1>
     </div>
     <div class="page-body">
         <table id="groups_table" class="table table-bordered" style="width:100%">
             <thead>
             <tr>
-                <th></th>
                 <th>Name</th>
                 <th>Short Name</th>
                 <th>Products Purchased</th>
+                <th></th>
             </tr>
             </thead>
         </table>
@@ -57,8 +58,7 @@
 <script src="~/lib_npm/datatables.net/js/jquery.dataTables.min.js"></script>
 <script src="~/lib_npm/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
 
-<script>
-    
+<script>    
     let groupsTable = new DataTable('#groups_table', {
         ajax:
         {
@@ -72,143 +72,20 @@
             }
         },
         columns: [
-            {
-                className: 'groups-td dt-control',
-                orderable: false,
-                data: null,
-                defaultContent: ''
-            },
             { data: 'Name' },
             { data: 'ShortName' },
             { data: 'NumberOfProducts' },
+            {
+                "mData": "Id",
+                "mRender": function (data, type, row) {
+                    return '<center><button class="btn btn-secondary" onClick="goToGroupProduct(\''+data+'\')" ><i class="far fa-eye"/><span>View</span></button></center>';
+                }
+            }
         ],
         order: [[1, 'asc']]
     });
-
-    // Add event listener for opening and closing details
-    groupsTable.on('click', 'td.groups-td.dt-control', function (e) {
-        let tr = e.target.closest('tr');
-        let row = groupsTable.row(tr);
-
-        if (row.child.isShown()) {
-            // This row is already open - close it
-            destroyChild(row);
-            //row.child.hide();
-        }
-        else {
-            // Open this row
-            createProductsTable(row);
-           // row.child(format(row.data())).show();
-        }
-    });
-    function createProductsTable(row) {
-        // This is the table we'll convert into a DataTable
-        var productsTableElem = $('<table class="table table-bordered" width="100%"><thead><tr><th></th><th>Product Name</th><th>Available</th><th>Awaiting</th><th>Redeemed</th></tr></thead></table>');
-        
-        var rowData = row.data();
-        
-        // Display it the child row
-        row.child(productsTableElem).show();
-        
-        var url = "@Html.Raw(GetUrl(new DataUrl("GetNexportGroupProducts", "NexportWholesale", null)))";
-        url+="?groupId="+rowData.Id;
-        // Initialise as a DataTable
-        var productsTable = productsTableElem.DataTable({
-            ajax:
-            {
-                url: url,
-                type: "POST",
-                dataType: "json",
-                dataSrc: "Data",
-                data: function(data) {
-                    addAntiForgeryToken(data);
-                    return data;
-                }
-            },
-            columns:[
-                {
-                    className: 'products-td dt-control',
-                    orderable: false,
-                    data: null,
-                    defaultContent: ''
-                },
-                { data: "Name" },
-                { data: "Available" },
-                { data: "Awaiting" },
-                { data: "Redeemed" }
-            ]
-        });
-        
-        productsTable.on('click', 'td.products-td.dt-control', function (e) {
-            let tr = e.target.closest('tr');
-            let row = productsTable.row(tr);
-
-            if (row.child.isShown()) {
-                // This row is already open - close it
-                destroyChild(row);
-            }
-            else {
-                // Open this row
-                createCustomersTable(row);
-            }
-        });
-    }
     
-    function createCustomersTable(row) {
-        // This is the table we'll convert into a DataTable
-        var customersTableElem = $('<table class="table table-bordered" width="100%"><thead><tr><th>Name</th><th>email</th><th>status</th><th></th></tr></thead></table>');
-        
-        var rowData = row.data();
-
-        // Display the child row
-        row.child(customersTableElem).show();
-        
-        var url="@Html.Raw(GetUrl(new DataUrl("GetNexportGroupProductCustomers", "NexportWholesale", null)))";
-        url+="?GroupId="+rowData.GroupId
-        url+="&ProductId="+rowData.Id
-
-        // Initialize as a DataTable
-        var customersTable = customersTableElem.DataTable({
-            ajax:
-            {
-                url: url,
-                type: "POST",
-                dataType: "json",
-                dataSrc: "Data",
-                data: function(data) {
-                    addAntiForgeryToken(data);
-                    return data;
-                }
-            },
-            columns: [
-                { data: "Name" },
-                { data: "Email" },
-                { data: "Status" },
-                {
-                    "mData": "Status",
-                    "mRender": function (data, type, row) {
-                        if(data=="Available"){
-                            return '<center><button class="btn btn-secondary">Redeem</button></center>';
-                        }
-                        else if(data=="Awaiting"){
-                            return '<center><button class="btn btn-secondary">Cancel</button></center>';
-                        }
-                        else if(data=="Redeemed"){
-                            return '<center><button class="btn btn-secondary">Unassign</button></center>';
-                        }
-                        return '';
-                    }
-                }
-            ]
-        });
-    }
-
-    function destroyChild(row) {
-        var childTable = $("table", row.child());
-        childTable.detach();
-        childTable.DataTable().destroy();
-
-        // And then hide the row
-        row.child.hide();
+    function goToGroupProduct(e){
+        window.location.href = "@(Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products"))?GroupId="+e;
     }
 </script>

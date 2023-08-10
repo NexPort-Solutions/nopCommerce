@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using NexportApi.Model;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Messages;
@@ -164,8 +160,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         await _logger.InformationAsync($"While processing order {order.Id} - orgid set to root organization id value");
                                     }
 
-                                    //get group id for order
-                                    var groupId = await _genericAttributeService.GetAttributeAsync<Guid>(order, $"GroupForOrder", store.Id);
+                                    //get group for order
+                                    var group = await _genericAttributeService.GetAttributeAsync<string>(order, $"GroupForOrder", store.Id);
 
                                     //TODO - JS: If there is a group id then treat as wholesale order, otherwise do retail
 
@@ -176,7 +172,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                                     // Get the invoice details from Nexport (if existing)
                                     var invoiceDetails = await _nexportService.GetNexportInvoiceAsync(orderInvoiceId);
-                                    
+
                                     // Continue to process only if the invoice is opening
                                     if (invoiceDetails == null ||
                                         (invoiceDetails.State != GetInvoiceResponse.StateEnum.Committed &&
