@@ -8,6 +8,7 @@ using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Wholesale.PurchasingAgent;
 using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Orders;
@@ -40,7 +41,7 @@ public class NexportWholesaleController : BaseAdminController
     private readonly ICustomerModelFactory _customerModelFactory;
     private readonly IProductModelFactory _productModelFactory;
 
-    public NexportWholesaleController(INexportPluginModelFactory nexportPluginModelFactory, IPermissionService permissionService, IOrderService orderService, IStoreService storeService, INexportWholesaleService nexportWholesaleService, IWorkContext workContext, NexportService nexportService, IPaymentPluginManager paymentPluginManager, IProductService productService, IPluginService pluginService,ICustomerModelFactory customerModelFactory,
+    public NexportWholesaleController(INexportPluginModelFactory nexportPluginModelFactory, IPermissionService permissionService, IOrderService orderService, IStoreService storeService, INexportWholesaleService nexportWholesaleService, IWorkContext workContext, NexportService nexportService, IPaymentPluginManager paymentPluginManager, IProductService productService, IPluginService pluginService, ICustomerModelFactory customerModelFactory,
         IProductModelFactory productModelFactory)
     {
         _nexportPluginModelFactory = nexportPluginModelFactory;
@@ -187,6 +188,91 @@ public class NexportWholesaleController : BaseAdminController
         public record BadResult(string? Error) : WholesaleOrderValidationResult;
     };
 
+    public virtual async Task<IActionResult> AdminNexportGroups()
+    {
+        //TODO @js - permission for nexport groups list here
+        //if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+        //    return AccessDeniedView();
+
+        var searchModel = new NexportGroupListSearchModel();
+        searchModel.AdminView = true;
+       // searchModel.GroupProductsRoute = "Plugin.Misc.Nexport.Admin.Groups.Products";
+        ViewData["NexportGroupsPath"] = "~/Plugins/Misc.Nexport/Views/NexportGroups.cshtml";
+        ViewData["NexportGroupsSearchModel"] = searchModel;
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/NexportGroups/List.cshtml");
+    }
+
+    [HttpsRequirement]
+    public async Task<IActionResult> AdminNexportGroupProducts(Guid groupId)
+    {
+        //var customer = await _workContext.GetCurrentCustomerAsync();
+        //if (!await _customerService.IsRegisteredAsync(customer))
+        //    return Challenge();
+
+        var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
+        searchModel.AdminView = true;
+        ViewData["NexportGroupsPath"] = "~/Plugins/Misc.Nexport/Views/NexportGroupProducts.cshtml";
+        ViewData["NexportGroupsSearchModel"] = searchModel;
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/NexportGroups/List.cshtml");
+    }
+
+    [HttpsRequirement]
+    public async Task<IActionResult> AdminNexportGroupProductRedemptions(Guid groupId, int productId)
+    {
+        //var customer = await _workContext.GetCurrentCustomerAsync();
+        //if (!await _customerService.IsRegisteredAsync(customer))
+        //    return Challenge();
+
+        var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId);
+
+        searchModel.AdminView = true;
+        ViewData["NexportGroupsPath"] = "~/Plugins/Misc.Nexport/Views/NexportGroupProductRedemptions.cshtml";
+        ViewData["NexportGroupsSearchModel"] = searchModel;
+            
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/NexportGroups/List.cshtml");
+    }
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
+    {
+
+        var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel);
+
+        return Json(model);
+    }
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid groupId)
+    {
+
+        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId);
+
+        return Json(model);
+    }
+
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
+    {
+
+        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductCustomerListModelAsync(searchModel, groupId, productId);
+
+        return Json(model);
+    }
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
+    {
+        var count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCount(groupId,productId);
+        return Json(
+            new {result = count}
+        );
+    }
 
     public virtual async Task<IActionResult> PurchasingAgentList()
     {

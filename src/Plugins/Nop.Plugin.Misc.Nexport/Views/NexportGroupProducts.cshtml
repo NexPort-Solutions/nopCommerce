@@ -1,11 +1,6 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupProductListSearchModel
 
 @{
-    Layout = "_ColumnsOne";
-
-    NopHtml.AppendPageCssClassParts("html-account-page");
-    
-
     string GetUrl(DataUrl dataUrl)
     {
         return !string.IsNullOrEmpty(dataUrl?.ActionName) && !string.IsNullOrEmpty(dataUrl.ControllerName)
@@ -14,20 +9,9 @@
                 ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
                 : string.Empty;
     }
-
-    string ReplaceName(string str)
-    {
-        return str.Replace("-", "_");
-    }
-
-    void GetAllModels(DataTablesModel model, List<DataTablesModel> models)
-    {
-        models.Add(model);
-        if (!string.IsNullOrEmpty(model.ChildTable?.Name))
-        {
-            GetAllModels(model.ChildTable, models);
-        }
-    }
+    var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
+    var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
+    var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
 }
 
 <link rel="stylesheet" href="~/lib_npm/datatables.net-bs4/css/dataTables.bootstrap4.min.css" />
@@ -44,7 +28,7 @@
                     <span class="delimiter">/</span>
                 </li>
                 <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                    <a href="@Url.RouteUrl("Plugin.Misc.Nexport.Groups")" title="@T("Plugins.Misc.Nexport.Groups")" itemprop="item">
+                    <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")" itemprop="item">
                         <span itemprop="name">@T("Plugins.Misc.Nexport.Groups")</span>
                     </a>
                     <span class="delimiter">/</span>
@@ -52,7 +36,7 @@
                 </li>
                 <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
                     <strong class="current-item" itemprop="name">@Model.CurrentGroup.Name - @T("Plugins.Misc.Nexport.Group.Products")</strong>
-                    <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@Url.RouteUrl("Plugin.Misc.Nexport.Group.Products")">
+                    <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@(groupProductsRouteUrl+"?groupId="+Model.CurrentGroup.Id)">
                     </span>
                     <meta itemprop="position" content="2" />
                 </li>
@@ -108,7 +92,7 @@
         order: [[1, 'asc']]
     });
     function goToGroupProductRedemptions(productId,groupId){
-        window.location.href = "@(Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products.Redemptions"))?GroupId="+groupId+"&ProductId="+productId;
+        window.location.href = "@groupProductRedemptionsRouteUrl?GroupId="+groupId+"&ProductId="+productId;
     }
 
 </script>

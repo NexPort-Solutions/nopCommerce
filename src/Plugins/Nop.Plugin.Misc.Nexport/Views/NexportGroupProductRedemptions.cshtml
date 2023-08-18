@@ -1,10 +1,6 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupProductRedemptionListSearchModel
 
 @{
-    Layout = "_ColumnsOne";
-
-    NopHtml.AppendPageCssClassParts("html-account-page");
-
     string GetUrl(DataUrl dataUrl)
     {
         return !string.IsNullOrEmpty(dataUrl?.ActionName) && !string.IsNullOrEmpty(dataUrl.ControllerName)
@@ -13,6 +9,9 @@
                 ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
                 : string.Empty;
     }
+    var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
+    var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
+    var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
 }
 
 <link rel="stylesheet" href="~/lib_npm/datatables.net-bs4/css/dataTables.bootstrap4.min.css" />
@@ -29,14 +28,14 @@
                     <span class="delimiter">/</span>
                 </li>
                 <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                    <a href="@Url.RouteUrl("Plugin.Misc.Nexport.Groups")" title="@T("Plugins.Misc.Nexport.Groups")" itemprop="item">
+                    <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")" itemprop="item">
                         <span itemprop="name">@T("Plugins.Misc.Nexport.Groups")</span>
                     </a>
                     <span class="delimiter">/</span>
                     <meta itemprop="position" content="1" />
                 </li>
                 <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                    <a href="@Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products")@("?groupId="+Model.CurrentGroup.Id)" title="@T("Plugins.Misc.Nexport.Group.Products")" itemprop="item">
+                    <a href="@(groupProductsRouteUrl+"?groupId="+Model.CurrentGroup.Id)" title="@T("Plugins.Misc.Nexport.Group.Products")" itemprop="item">
                         <span itemprop="name">@Model.CurrentGroup.Name</span>
                     </a>
                     <span class="delimiter">/</span>
@@ -44,7 +43,7 @@
                 </li>
                 <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
                     <strong class="current-item" itemprop="name">@Model.CurrentProduct.Name - Redemptions</strong>
-                    <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products.Redemptions")">
+                    <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@(groupProductRedemptionsRouteUrl+"?groupId="+Model.CurrentGroup.Id+"&productId="+Model.CurrentProduct.Id)">
                     </span>
                     <meta itemprop="position" content="3" />
                 </li>
@@ -53,14 +52,20 @@
         <h1>@Model.CurrentProduct.Name - Redemptions</h1>
     </div>
     <div class="page-body">
-        <table id="redemptions_table" class="table table-bordered" style="width:100%">
+        <div style="text-align: right;padding-bottom: 1rem;">
+            <input type="submit" id="btnRefreshGroupRedemptions" style="display: none">
+            Redemptions Available: 
+            <span style="margin-left: 7px; margin-right: 12px;" id="redemptionsAvailable"></span>
+            <button id="redeemBtn" class="btn btn-secondary">Redeem</button>
+        </div>
+        <table id="redemptions_table" class="table table-bordered" style="width: 100%">
             <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
             </thead>
         </table>
     </div>
@@ -91,14 +96,11 @@
                 {
                     "mData": "Status",
                     "mRender": function (data, type, row) {
-                        if(data=="Available"){
-                            return '<center><button class="btn btn-secondary">Redeem</button></center>';
-                        }
-                        else if(data=="Awaiting"){
-                            return '<center><button class="btn btn-secondary">Cancel</button></center>';
+                        if(data=="Awaiting"){
+                            return '<center><button class="btn btn-secondary">Modify</button></center>';
                         }
                         else if(data=="Redeemed"){
-                            return '<center><button class="btn btn-secondary">Unassign</button></center>';
+                            return '<center><button class="btn btn-secondary">Modify</button></center>';
                         }
                         return '';
                     }
@@ -106,5 +108,40 @@
             ],
         order: [[1, 'asc']]
     });
+    function updateAvailableRedemptions() {
+        var redemptionData = { groupId:"@Model.CurrentGroup.Id",productId:"@Model.CurrentProduct.Id" };
+        addAntiForgeryToken(redemptionData);
 
+        $.ajax({
+
+            url: "@Html.Raw(GetUrl(new DataUrl("GetAvailableNexportGroupProductRedemptionsCount", "NexportWholesale", null)))",
+            type: "POST",
+            data:redemptionData,
+            success: function (data) {
+                if(data.result!=null){
+                    $("#redemptionsAvailable").html(data.result);
+                    if(data.result<1){
+                        $("#redeemBtn").prop("disabled", true);
+                    }
+                    else{
+                        $("#redeemBtn").prop("disabled", false);
+                    }
+                }
+            },
+            error: function (error) {
+                console.log(`Error ${error}`);
+            }
+        });
+    }
+    $(document).ready(function () {
+        updateAvailableRedemptions();
+        $("#btnRefreshGroupRedemptions").click(function () {
+
+            updateAvailableRedemptions();
+            updateTable('#redemptions_table');
+
+            // Return false to not reload a page
+            return false;
+        });
+    });
 </script>

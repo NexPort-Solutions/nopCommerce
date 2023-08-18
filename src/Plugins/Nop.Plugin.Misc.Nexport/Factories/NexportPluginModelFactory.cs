@@ -1721,17 +1721,18 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             try
             {
-                var invoiceItems = await _nexportService.GetInvoiceItemsForGroupIdAndProductId(groupId, productId);
+                var invoiceItems = await _nexportService.GetInvoiceItemsForGroupIdAndProductIdAndRedeemingUserIdHasValue(groupId, productId);
 
                 foreach (var invoiceItem in invoiceItems)
                 {
                     var groupCustomer = new NexportGroupProductRedemptionModel();
-                    if (invoiceItem.RedeemingUserId == null)
-                    {
-                        groupCustomer.Status = "Available";
+                    //if (invoiceItem.RedeemingUserId == null)
+                    //{
+                    //    groupCustomer.Status = "Available";
 
-                    }
-                    else if (invoiceItem.RedeemingUserId != null && invoiceItem.UtcDateRedemption == null)
+                    //}
+                    //else
+                    if (invoiceItem.RedeemingUserId != null && invoiceItem.UtcDateRedemption == null)
                     {
                         groupCustomer.Status = "Awaiting";
                         var redeemer = await _nexportService.FindCustomerByGuid(invoiceItem.RedeemingUserId);

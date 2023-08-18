@@ -1977,7 +1977,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToListAsync();
         }
 
-        public async Task<IList<NexportOrderInvoiceItem>> GetInvoiceItemsForGroupIdAndProductId(Guid groupId,
+        public async Task<IList<NexportOrderInvoiceItem>> GetInvoiceItemsForGroupIdAndProductIdAndRedeemingUserIdHasValue(Guid groupId,
             int productId)
         {
             var query = _genericAttributeRepository.Table
@@ -1987,7 +1987,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 .Where(x => x.pr.Id == productId)
                 .Join(_nexportOrderInvoiceItemRepository.Table, oripr => new { a = oripr.ori.OrderId, b = oripr.ori.Id },
                     noii => new { a = noii.OrderId, b = noii.OrderItemId },
-                    (oripr, noii) => noii);
+                    (oripr, noii) => noii)
+                .Where(x=>x.RedeemingUserId.HasValue);
 
             return await query.ToListAsync();
         }
@@ -2007,6 +2008,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var attr = _genericAttributeRepository.Table.FirstOrDefault(x => x.Key == "GroupForOrder" && x.Value.Contains("{\"Id\":\"" + groupId + "\""));
 
             return attr;
+        }
+
+        public async Task<int> GetAvailableNexportGroupProductRedemptionsCount(Guid groupId, int productId) 
+        {
+            var query = _genericAttributeRepository.Table
+                .Where(x => x.Key == "GroupForOrder" && x.Value.Contains("{\"Id\":\"" + groupId + "\""))
+                .Join(_orderItemRepository.Table, gar => gar.EntityId, ori => ori.OrderId, (gar, ori) => ori)
+                .Join(_productRepository.Table, ori => ori.ProductId, pr => pr.Id, (ori, pr) => new { ori, pr })
+                .Where(x => x.pr.Id == productId)
+                .Join(_nexportOrderInvoiceItemRepository.Table, oripr => new { a = oripr.ori.OrderId, b = oripr.ori.Id },
+                    noii => new { a = noii.OrderId, b = noii.OrderItemId },
+                    (oripr, noii) => noii)
+                .Where(x=>x.RedeemingUserId==null);
+
+            return await query.CountAsync();
         }
     }
 }

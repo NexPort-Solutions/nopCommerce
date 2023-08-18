@@ -6,6 +6,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.Wholesale
     {
         public NexportGroupModel CurrentGroup { get; set; }
 
+        public bool AdminView = false;
+
         public NexportGroupProductListSearchModel()
         {
             SetGridPageSize();

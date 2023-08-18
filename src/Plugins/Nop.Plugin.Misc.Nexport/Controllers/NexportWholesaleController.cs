@@ -2,6 +2,7 @@
 using Nop.Core;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Wholesale;
+using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
@@ -27,6 +28,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         private readonly INotificationService _notificationService;
         private readonly ICustomerService _customerService;
         private readonly ISettingService _settingService;
+        private readonly NexportService _nexportService;
         private readonly ILogger _logger;
 
         #endregion
@@ -44,6 +46,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             INotificationService notificationService,
             ICustomerService customerService,
             ISettingService settingService,
+            NexportService nexportService,
             ILogger logger)
         {
             _permissionService = permissionService;
@@ -56,6 +59,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _notificationService = notificationService;
             _customerService = customerService;
             _settingService = settingService;
+            _nexportService = nexportService;
             _logger = logger;
         }
 
@@ -88,8 +92,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-
-            return View("~/Plugins/Misc.Nexport/Views/NexportGroups.cshtml", new NexportGroupListSearchModel());
+            var searchModel = new NexportGroupListSearchModel();
+            searchModel.AdminView = false;
+            //searchModel.ViewButtonPath = "Plugin.Misc.Nexport.Groups.Products";
+            ViewData["NexportGroupsPath"] = "~/Plugins/Misc.Nexport/Views/NexportGroups.cshtml";
+            ViewData["NexportGroupsSearchModel"] = searchModel;
+            
+            return View("~/Plugins/Misc.Nexport/Views/MyNexportGroups.cshtml");
 
         }
 
@@ -102,7 +111,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
 
-            return View("~/Plugins/Misc.Nexport/Views/NexportGroupProducts.cshtml", nexportGroupProductListSearchModel);
+            ViewData["NexportGroupsPath"] = "~/Plugins/Misc.Nexport/Views/NexportGroupProducts.cshtml";
+            ViewData["NexportGroupsSearchModel"] = nexportGroupProductListSearchModel;
+
+            return View("~/Plugins/Misc.Nexport/Views/MyNexportGroups.cshtml");
         }
 
         [HttpsRequirement]
@@ -113,8 +125,11 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 return Challenge();
 
             var nexportGroupProductRedemptionListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId);
+
+            ViewData["NexportGroupsPath"] = "~/Plugins/Misc.Nexport/Views/NexportGroupProductRedemptions.cshtml";
+            ViewData["NexportGroupsSearchModel"] = nexportGroupProductRedemptionListSearchModel;
             
-            return View("~/Plugins/Misc.Nexport/Views/NexportGroupProductRedemptions.cshtml", nexportGroupProductRedemptionListSearchModel);
+            return View("~/Plugins/Misc.Nexport/Views/MyNexportGroups.cshtml");
         }
 
         [HttpPost]
@@ -149,6 +164,18 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             return Json(model);
         }
+
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(
+            NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
+        {
+            var count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCount(groupId,productId);
+            return Json(
+                new {result = count}
+            );
+        }
+
         #endregion
     }
 }

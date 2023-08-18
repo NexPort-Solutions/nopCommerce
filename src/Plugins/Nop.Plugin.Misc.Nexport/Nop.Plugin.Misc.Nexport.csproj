@@ -35,6 +35,7 @@
     <None Remove="Areas\Admin\Views\Category\NexportOptions.cshtml" />
     <None Remove="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\GroupProduct\List.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\NexportGroups\List.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\PurchasingAgent\Create.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\PurchasingAgent\Edit.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\PurchasingAgent\List.cshtml" />
@@ -85,6 +86,7 @@
     <None Remove="Scripts\uikit.min.js" />
     <None Remove="Scripts\xregexp-all.min.js" />
     <None Remove="Views\Configure.cshtml" />
+    <None Remove="Views\MyNexportGroups.cshtml" />
     <None Remove="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml" />
     <None Remove="Views\NexportCustomer\Login.cshtml" />
     <None Remove="Views\NexportCustomer\NexportSupplementalInfoAnswers.cshtml" />
@@ -93,7 +95,7 @@
     <None Remove="Views\MapNexportProductList.cshtml" />
     <None Remove="Views\NexportGroupProductRedemptions.cshtml" />
     <None Remove="Views\NexportGroupProducts.cshtml" />
-    <None Remove="Views\NexportGroups.cshtml" />
+    <None Remove="Views\NexportGroups_BreadCrumbs.cshtml" />
     <None Remove="Views\NexportStore\List.cshtml" />
     <None Remove="Views\NexportTrainings.cshtml" />
     <None Remove="Views\Order\CustomerOrders.cshtml" />
@@ -146,6 +148,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\NexportGroups\List.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\NexportWholesale\PurchasingAgent\Create.cshtml">
@@ -318,6 +323,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\NexportGroupProducts.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\MyNexportGroups.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportGroups_BreadCrumbs.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\NexportGroups.cshtml">

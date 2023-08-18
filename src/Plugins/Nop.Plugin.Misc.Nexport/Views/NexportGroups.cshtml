@@ -1,10 +1,6 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupListSearchModel
 
 @{
-    Layout = "_ColumnsOne";
-
-    NopHtml.AppendPageCssClassParts("html-account-page");
-
     string GetUrl(DataUrl dataUrl)
     {
         return !string.IsNullOrEmpty(dataUrl?.ActionName) && !string.IsNullOrEmpty(dataUrl.ControllerName)
@@ -13,6 +9,9 @@
                 ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
                 : string.Empty;
     }
+
+    var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
+    var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
 }
 
 <link rel="stylesheet" href="~/lib_npm/datatables.net-bs4/css/dataTables.bootstrap4.min.css" />
@@ -31,7 +30,7 @@
                 @{ int position = 1; }
                 <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
                     <strong class="current-item" itemprop="name">@T("Plugins.Misc.Nexport.Groups")</strong>
-                    <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@Url.RouteUrl("Plugins.Misc.Nexport.Groups")">
+                    <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@groupsRouteUrl">
                     </span>
                     <meta itemprop="position" content="1" />
                 </li>
@@ -86,6 +85,6 @@
     });
     
     function goToGroupProduct(e){
-        window.location.href = "@(Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products"))?GroupId="+e;
+        window.location.href = "@groupProductsRouteUrl?GroupId=" + e;
     }
 </script>

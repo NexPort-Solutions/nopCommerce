@@ -1,0 +1,41 @@
+﻿@{
+    //Layout = "_ColumnsOne";
+
+    //NopHtml.AppendPageCssClassParts("html-account-page");
+
+    var path = ViewData["NexportGroupsPath"] as string;
+    var searchModel = ViewData["NexportGroupsSearchModel"];
+}
+<style>
+    .content-wrapper {
+        background-color: white;
+    }
+    ul {
+        margin-bottom: 1rem;
+        list-style-type: none;
+        display: flex;
+        padding-left: 0px;
+    }
+    a {
+        color: inherit;
+    }
+    .breadcrumb li * {
+        display: inline-block;
+        margin: 0 5px;
+        font-size: 14px;
+        line-height: 32px;
+    }
+    .breadcrumb strong {
+        font-weight: normal;
+    }
+    .page-title {
+        margin-top: 30px;
+    }
+    h1 {
+        text-align: center;
+    }
+     
+</style>
+<div class="container">
+    @await Html.PartialAsync(path,searchModel)
+</div>

@@ -121,14 +121,24 @@ namespace Nop.Plugin.Misc.Nexport
 
             node.ChildNodes.Add(new SiteMapNode()
             {
-                //manage purchasing agents permission
                 Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo),
-                Title = "Purchasing Agents",
-                SystemName = NexportDefaults.PURCHASING_AGENTS_MENU_SYSTEM_NAME,
+                Title = "Nexport Groups",
+                SystemName = "Nexport Groups",
                 ControllerName = "NexportWholesale",
-                ActionName = "PurchasingAgentList",
+                ActionName = "AdminNexportGroups",
                 IconClass = "far fa-dot-circle"
             });
+
+            //node.ChildNodes.Add(new SiteMapNode()
+            //{
+            //    //manage purchasing agents permission
+            //    Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo),
+            //    Title = "Purchasing Agents",
+            //    SystemName = NexportDefaults.PURCHASING_AGENTS_MENU_SYSTEM_NAME,
+            //    ControllerName = "NexportWholesale",
+            //    ActionName = "PurchasingAgentList",
+            //    IconClass = "far fa-dot-circle"
+            //});
 
             rootNode.ChildNodes.Add(node);
         }

@@ -1,0 +1,11 @@
+﻿
+@{
+    Layout = "_ColumnsOne";
+
+    var path = ViewData["NexportGroupsPath"] as string;
+    var searchModel = ViewData["NexportGroupsSearchModel"];
+
+    
+}
+
+@await Html.PartialAsync(path,searchModel)
