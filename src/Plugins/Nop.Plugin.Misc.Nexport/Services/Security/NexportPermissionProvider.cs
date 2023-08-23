@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Nop.Core.Domain.Customers;
+﻿using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Security;
 using Nop.Services.Security;
 
@@ -13,6 +12,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Security
             new() { Name = "Manage Nexport supplemental info", SystemName = "ManageSupplementalInfo", Category = "Nexport" };
         public static readonly PermissionRecord ManageNexportOrderInvoice =
             new() { Name = "Manage Nexport order invoice", SystemName = "ManageNexportOrderInvoice", Category = "Nexport" };
+        public static readonly PermissionRecord ManageNexportWholesaleRedemptions =
+            new() { Name = "Manage Nexport wholesale redemptions", SystemName = "ManageNexportWholesaleRedemptions", Category = "Nexport" };
 
         public HashSet<(string systemRoleName, PermissionRecord[] permissions)> GetDefaultPermissions()
         {
@@ -22,7 +23,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Security
                 {
                     ManageNexportProductMapping,
                     ManageSupplementalInfo,
-                    ManageNexportOrderInvoice
+                    ManageNexportOrderInvoice,
+                    ManageNexportWholesaleRedemptions
                 })
             };
         }
@@ -33,7 +35,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Security
             {
                 ManageNexportProductMapping,
                 ManageSupplementalInfo,
-                ManageNexportOrderInvoice
+                ManageNexportOrderInvoice,
+                ManageNexportWholesaleRedemptions
             };
         }
     }

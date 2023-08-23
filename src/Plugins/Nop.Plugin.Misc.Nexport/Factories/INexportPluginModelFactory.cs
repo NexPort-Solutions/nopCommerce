@@ -163,5 +163,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(Guid groupId);
 
         Task<NexportGroupProductRedemptionListSearchModel> PrepareNexportGroupProductRedemptionListSearchModelAsync(Guid groupId, int productId);
+        
+        Task <RedeemProductOrModifyProductRedemptionModel>PrepareRedeemProductOrModifyProductRedemptionModel(Guid groupId, int productId, Guid? invoiceItemId = null);
     }
 }

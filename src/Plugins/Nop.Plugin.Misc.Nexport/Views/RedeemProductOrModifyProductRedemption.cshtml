@@ -1,0 +1,54 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProductOrModifyProductRedemptionModel
+@{
+    string GetUrl(DataUrl dataUrl)
+    {
+        return !string.IsNullOrEmpty(dataUrl?.ActionName) && !string.IsNullOrEmpty(dataUrl.ControllerName)
+            ? Url.Action(dataUrl.ActionName, dataUrl.ControllerName, dataUrl.RouteValues)
+            : !string.IsNullOrEmpty(dataUrl.Url)
+                ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
+                : string.Empty;
+    }
+    var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
+    var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
+    var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
+    var redeemOrModifyText = Model.HasBeenAssigned ? T("Plugins.Misc.Nexport.Group.Product.Redemptions.Modify") + " - " + Model.CurrentProduct.Name : T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem") + " - " + Model.CurrentProduct.Name;
+}
+<div class="page-title">
+    <div class="breadcrumb">
+        <ul itemscope itemtype="http://schema.org/BreadcrumbList">
+            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")" itemprop="item">
+                    <span itemprop="name">@T("Plugins.Misc.Nexport.Groups")</span>
+                </a>
+                <span>/</span>
+                <meta itemprop="position" content="1" />
+            </li>
+            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                <a href="@(groupProductsRouteUrl+"?groupId="+Model.CurrentGroup.Id)" title="@T("Plugins.Misc.Nexport.Group.Products")" itemprop="item">
+                    <span itemprop="name">@Model.CurrentGroup.Name</span>
+                </a>
+                <span>/</span>
+                <meta itemprop="position" content="2" />
+            </li>
+            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                <a href="@(groupProductRedemptionsRouteUrl+"?groupId="+Model.CurrentGroup.Id+"&productId="+Model.CurrentProduct.Id)" title="Redemptions" itemprop="item">
+                    <span itemprop="name">@Model.CurrentProduct.Name</span>
+                </a>
+                <span>/</span>
+                <meta itemprop="position" content="3" />
+            </li>
+            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                <strong class="current-item" itemprop="name">@redeemOrModifyText</strong>
+                <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@(groupProductRedemptionsRouteUrl+"?groupId="+Model.CurrentGroup.Id+"&productId="+Model.CurrentProduct.Id)">
+                </span>
+                <meta itemprop="position" content="4" />
+            </li>
+        </ul>
+    </div>
+    <h1>@redeemOrModifyText</h1>
+</div>
+<div class="page-body">
+     Code to redeem product or modify product redemption goes here...
+</div>
+<script>
+</script>

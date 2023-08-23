@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using NexportApi.Client;
@@ -17,9 +16,7 @@ using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
-using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
-using Nop.Core.Events;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -38,9 +35,7 @@ using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
 using Nop.Services.Plugins;
-using Nop.Services.Security;
 using Nop.Services.Stores;
-using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework;
 
 namespace Nop.Plugin.Misc.Nexport.Services
@@ -50,7 +45,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
         #region Fields
 
         private readonly NexportApiService _nexportApiService;
-        private readonly MockNexportApiService _mockApiService;
 
         private readonly EmailAccountSettings _emailAccountSettings;
         private readonly NexportSettings _nexportSettings;
@@ -168,8 +162,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IWorkContext workContext,
             IStoreContext storeContext,
             ILogger logger,
-            IRepository<Store> storeRepository,
-            MockNexportApiService mockApiService)
+            IRepository<Store> storeRepository)
         {
             _nexportApiService = nexportApiService;
             _emailAccountSettings = emailAccountSettings;
@@ -227,7 +220,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _storeContext = storeContext;
             _logger = logger;
             _storeRepository = storeRepository;
-            _mockApiService = mockApiService;
         }
 
         #endregion
@@ -1485,7 +1477,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             try
             {
                 var redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction,invoiceItem.InvoiceItemRedemptionCode);
+                    _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode);
 
                 if (redeemInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
                     throw new ApiException((int)redeemInvoiceResult.ApiErrorEntity.ErrorCode,

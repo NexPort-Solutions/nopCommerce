@@ -1993,6 +1993,22 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToListAsync();
         }
 
+        public async Task<NexportOrderInvoiceItem> GetFirstAvailableInvoiceItemForGroupIdAndProductId(Guid groupId,
+            int productId)
+        {
+            var query = _genericAttributeRepository.Table
+                .Where(x => x.Key == "GroupForOrder" && x.Value.Contains("{\"Id\":\"" + groupId + "\""))
+                .Join(_orderItemRepository.Table, gar => gar.EntityId, ori => ori.OrderId, (gar, ori) => ori)
+                .Join(_productRepository.Table, ori => ori.ProductId, pr => pr.Id, (ori, pr) => new { ori, pr })
+                .Where(x => x.pr.Id == productId)
+                .Join(_nexportOrderInvoiceItemRepository.Table, oripr => new { a = oripr.ori.OrderId, b = oripr.ori.Id },
+                    noii => new { a = noii.OrderId, b = noii.OrderItemId },
+                    (oripr, noii) => noii)
+                .Where(x=>!(x.RedeemingUserId.HasValue && x.UtcDateRedemption.HasValue));
+
+            return await query.FirstOrDefaultAsync();
+        }
+
         public async Task<IList<GenericAttribute?>> GetAllGroupForOrdersAsync()
         {
             var query = _genericAttributeRepository.Table.AsEnumerable()
