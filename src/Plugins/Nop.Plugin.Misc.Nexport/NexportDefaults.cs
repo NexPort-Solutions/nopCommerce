@@ -14,8 +14,6 @@ namespace Nop.Plugin.Misc.Nexport
 
         public static string NexportPluginAdminViewBasePath = "~/Plugins/Misc.Nexport/Areas/Admin/Views/";
 
-        public const string PURCHASING_AGENTS_MENU_SYSTEM_NAME = "Nexport Integration - Purchasing Agents";
-
         /// <summary>
         /// Name of the Nexport redemption processing schedule task
         /// </summary>

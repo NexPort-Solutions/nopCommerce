@@ -1,11 +1,6 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupProductListSearchModel
 
 @{
-    Layout = "_ColumnsOne";
-
-    NopHtml.AppendPageCssClassParts("html-account-page");
-    
-
     string GetUrl(DataUrl dataUrl)
     {
         return !string.IsNullOrEmpty(dataUrl?.ActionName) && !string.IsNullOrEmpty(dataUrl.ControllerName)
@@ -14,72 +9,45 @@
                 ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
                 : string.Empty;
     }
+    var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
+    var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
+    var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
 
-    string ReplaceName(string str)
-    {
-        return str.Replace("-", "_");
-    }
-
-    void GetAllModels(DataTablesModel model, List<DataTablesModel> models)
-    {
-        models.Add(model);
-        if (!string.IsNullOrEmpty(model.ChildTable?.Name))
-        {
-            GetAllModels(model.ChildTable, models);
-        }
-    }
+    var groupProductText = T("Plugins.Misc.Nexport.Group.Products")+" - "+ Model.CurrentGroup.Name;
 }
-
-<link rel="stylesheet" href="~/lib_npm/datatables.net-bs4/css/dataTables.bootstrap4.min.css" />
-<link rel="stylesheet" href="~/lib_npm/bootstrap/css/bootstrap.min.css" />
-<link rel="stylesheet" href=@("~/lib_npm/@fortawesome/fontawesome-free/css/all.min.css") />
-
-<div class="page account-page">
-
-    <div class="page-title">
-        <div class="breadcrumb">
-            <ul itemscope itemtype="http://schema.org/BreadcrumbList">
-                <li>
-                    <a href="@Url.RouteUrl("Homepage")" title="@T("Categories.Breadcrumb.Top")">@T("Categories.Breadcrumb.Top")</a>
-                    <span class="delimiter">/</span>
-                </li>
-                <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                    <a href="@Url.RouteUrl("Plugin.Misc.Nexport.Groups")" title="@T("Plugins.Misc.Nexport.Groups")" itemprop="item">
-                        <span itemprop="name">@T("Plugins.Misc.Nexport.Groups")</span>
-                    </a>
-                    <span class="delimiter">/</span>
-                    <meta itemprop="position" content="1" />
-                </li>
-                <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                    <strong class="current-item" itemprop="name">@Model.CurrentGroup.Name - @T("Plugins.Misc.Nexport.Group.Products")</strong>
-                    <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@Url.RouteUrl("Plugin.Misc.Nexport.Group.Products")">
-                    </span>
-                    <meta itemprop="position" content="2" />
-                </li>
-            </ul>
-        </div>
-        <h1>@Model.CurrentGroup.Name - @T("Plugins.Misc.Nexport.Group.Products")</h1>
+<div class="page-title">
+    <div class="breadcrumb">
+        <ul itemscope itemtype="http://schema.org/BreadcrumbList">
+            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")" itemprop="item">
+                    <span itemprop="name">@T("Plugins.Misc.Nexport.Groups")</span>
+                </a>
+                <span>/</span>
+                <meta itemprop="position" content="1" />
+            </li>
+            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                <strong class="current-item" itemprop="name">@groupProductText </strong>
+                <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@(groupProductsRouteUrl+"?groupId="+Model.CurrentGroup.Id)">
+                </span>
+                <meta itemprop="position" content="2" />
+            </li>
+        </ul>
     </div>
-    <div class="page-body">
-        <table id="products_table" class="table table-bordered" style="width:100%">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Available</th>
-                    <th>Awaiting</th>
-                    <th>Redeemed</th>
-                    <th></th>
-                </tr>
-            </thead>
-        </table>
-    </div>
+    <h1>@groupProductText</h1>
 </div>
-
-<script src="~/lib_npm/jquery/jquery.min.js"></script>
-<script src="~/lib_npm/jquery-ui-dist/jquery-ui.min.js"></script>
-<script src="~/lib_npm/datatables.net/js/jquery.dataTables.min.js"></script>
-<script src="~/lib_npm/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
-
+<div class="page-body">
+    <table id="products_table" class="display stripe hover cell-border" style="width:100%">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Available</th>
+                <th>Awaiting</th>
+                <th>Redeemed</th>
+                <th></th>
+            </tr>
+        </thead>
+    </table>
+</div>
 <script>
     let productsTable = new DataTable('#products_table', {
         ajax:
@@ -101,14 +69,13 @@
                 {
                 "mData": "Id",
                 "mRender": function (data, type, row) {
-                    return '<center><button class="btn btn-secondary" onClick="goToGroupProductRedemptions('+row.Id+',\''+row.GroupId+'\')" ><i class="far fa-eye"/><span>View</span></button></center>';
+                    return '<center><button onClick="goToGroupProductRedemptions(' + row.Id + ',\'' + row.GroupId + '\')" ><i class="far fa-eye"/><span style="margin-left:5px;">View</span></button></center>';
                 }
             }
             ],
         order: [[1, 'asc']]
     });
     function goToGroupProductRedemptions(productId,groupId){
-        window.location.href = "@(Url.RouteUrl("Plugin.Misc.Nexport.Groups.Products.Redemptions"))?GroupId="+groupId+"&ProductId="+productId;
+        window.location.href = "@groupProductRedemptionsRouteUrl?GroupId="+groupId+"&ProductId="+productId;
     }
-
 </script>

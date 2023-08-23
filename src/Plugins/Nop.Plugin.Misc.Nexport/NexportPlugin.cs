@@ -121,12 +121,11 @@ namespace Nop.Plugin.Misc.Nexport
 
             node.ChildNodes.Add(new SiteMapNode()
             {
-                //manage purchasing agents permission
-                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo),
-                Title = "Purchasing Agents",
-                SystemName = NexportDefaults.PURCHASING_AGENTS_MENU_SYSTEM_NAME,
+                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions),
+                Title = "Nexport Groups",
+                SystemName = "Nexport Groups",
                 ControllerName = "NexportWholesale",
-                ActionName = "PurchasingAgentList",
+                ActionName = "AdminNexportGroups",
                 IconClass = "far fa-dot-circle"
             });
 

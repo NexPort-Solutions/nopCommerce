@@ -341,7 +341,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IList<NexportGroupProductModel>> GetGroupProductModelForGroupId(Guid groupId);
 
-        Task<IList<NexportOrderInvoiceItem>> GetInvoiceItemsForGroupIdAndProductId(Guid groupId, int productId);
+        Task<IList<NexportOrderInvoiceItem>> GetInvoiceItemsForGroupIdAndProductIdAndRedeemingUserIdHasValue(Guid groupId, int productId);
 
     }
 }
