@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -9,18 +6,16 @@ using Microsoft.Extensions.Primitives;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Orders;
-using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
+using Nop.Services.Customers;
 using Nop.Services.Localization;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
 using Nop.Web.Controllers;
 using Nop.Web.Models.ShoppingCart;
-using Nop.Plugin.Misc.Nexport.Domain.Enums;
-using Nop.Plugin.Misc.Nexport.Extensions;
-using Nop.Plugin.Misc.Nexport.Services;
-using Nop.Services.Customers;
 
 namespace Nop.Plugin.Misc.Nexport.Filters
 {
@@ -132,7 +127,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                             await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId, store.Id) ??
                             await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId);
 
-                        if (nexportProductMapping is not {AutoRedeem: true})
+                        if (nexportProductMapping is not { AutoRedeem: true })
                             continue;
 
                         var fieldName = $"itemquantity{shoppingCartItem.Id}";
@@ -220,7 +215,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                                     context.Result = new JsonResult(new
                                     {
                                         success = false,
-                                        message = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase")
+                                        message = await _localizationService.GetResourceAsync(
+                                            "Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase")
                                     });
                                 }
                                 else
@@ -247,12 +243,12 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                             if (npmInCart == null)
                                 continue;
 
-                            if(nexportProductMapping.AutoRedeem!=npmInCart.AutoRedeem){
+                            if (nexportProductMapping.AutoRedeem != npmInCart.AutoRedeem)
+                            {
                                 context.Result = new JsonResult(new
                                 {
                                     success = false,
-                                    //TODO - JS: switch to more meaningful message and use localizationservice resource
-                                    message = "You cannot mix redemption types in the shopping cart"
+                                    message = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Errors.MixedRedemptionTypeNotAllowedInShoppingCart")
                                 });
                                 return;
                             }
@@ -266,7 +262,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                             if (items.Count > 0)
                             {
                                 // If the nexport product is restricted to one and is already in the cart we just want to redirect to the cart
-                                context.Result = new JsonResult(new {success = false, redirect = "cart"});
+                                context.Result = new JsonResult(new { success = false, redirect = "cart" });
                             }
                             else if (quantity > 1)
                             {
