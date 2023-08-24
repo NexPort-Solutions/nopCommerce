@@ -1,0 +1,75 @@
+﻿@using Nop.Core.Domain.Stores
+@using Nop.Plugin.Misc.Nexport;
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Redemption;
+@using Nop.Plugin.Misc.Nexport.Controllers;
+@using Nop.Services.Stores;
+
+@inject IStoreService storeService
+
+@model RedemptionCreateModel
+
+<section class="content">
+    <section class="container-fluid">
+        <div class="form-horizontal">
+            <div class="cards-group">
+                <div class="card card-default card-search">
+                    <div class="card-body">
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <form id="target" asp-controller="Redemption" asp-action="Redeem" onchange="checkValidForm();">
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="OrderInvoiceItemId"></nop-label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            @Html.TextBoxFor(model => model.OrderInvoiceItemId)
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="NopCustomerId"></nop-label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <input id="search-students-friendly" type="text" autocomplete="on" class="form-control"/>
+                                            @Html.TextBoxFor(model => model.NopCustomerId, new { style = "display:none" })
+                                            <script>
+                                                $(document).ready(function () {
+                                                    $('#search-students-friendly').autocomplete({
+                                                        delay: 0,
+                                                        minLength: 0,
+                                                        source: '@Url.Action(nameof(RedemptionController.SearchStudents), ViewUtilities.GetControllerName<RedemptionController>())',
+                                                        select: function (event, ui) {
+                                                            console.log(ui);
+                                                            $('#search-students-friendly').val(ui.item.label);
+                                                            $('#@Html.IdFor(model => model.NopCustomerId)').val(ui.item.value);
+                                                            return false;
+                                                        }
+                                                    });
+                                                });
+                                            </script>
+                                        </div>
+                                    </div>
+                                    <button class="bg-green btn float-left" id="create-submit" type="submit" disabled onclick="this.disabled = true;">Redeem</button>
+                                    <script type="text/javascript">
+                                        const orderInvoiceItemInput = $('#@Html.IdFor(model => model.OrderInvoiceItemId)');
+                                        const nopCustomerInput = $('#@Html.IdFor(model => model.NopCustomerId)');
+                                        const submitButton = $('#create-submit')
+                                        
+                                        function checkValidForm() {
+                                            var isValid = (orderInvoiceItemInput.val() != "" && nopCustomerInput.val() != "");
+                                            submitButton.prop("disabled", !isValid);
+                                        }
+                                    </script>
+                                </form>
+                            </div>
+                            <p id="error-message" style="color: red;">
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</section>

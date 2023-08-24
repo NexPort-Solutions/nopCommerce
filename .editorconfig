@@ -125,7 +125,7 @@ dotnet_naming_symbols.private_fields.applicable_accessibilities     = private,pr
 dotnet_naming_symbols.private_fields.applicable_kinds               = field
 
 # Async methods should have "Async" suffix
-dotnet_naming_rule.async_methods_end_in_async.severity              = suggestion
+dotnet_naming_rule.async_methods_end_in_async.severity              = silent
 dotnet_naming_rule.async_methods_end_in_async.symbols               = any_async_methods
 dotnet_naming_rule.async_methods_end_in_async.style                 = end_in_async
 
@@ -169,9 +169,9 @@ csharp_style_var_when_type_is_apparent      = true:suggestion
 csharp_style_var_elsewhere                  = true:suggestion
 
 # Expression-bodied members
-csharp_style_expression_bodied_methods          = false:suggestion
-csharp_style_expression_bodied_constructors     = false:suggestion
-csharp_style_expression_bodied_operators        = false:suggestion
+csharp_style_expression_bodied_methods          = when_on_single_line:suggestion
+csharp_style_expression_bodied_constructors     = when_on_single_line:suggestion
+csharp_style_expression_bodied_operators        = when_on_single_line:suggestion
 csharp_style_expression_bodied_properties       = true:suggestion
 csharp_style_expression_bodied_indexers         = true:suggestion
 csharp_style_expression_bodied_accessors        = true:suggestion

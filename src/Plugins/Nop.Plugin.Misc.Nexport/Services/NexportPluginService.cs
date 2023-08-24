@@ -349,6 +349,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
                 });
             }
+            if (!messageTemplates.Any(x =>
+                x.Name.Equals(NexportDefaults.NEXPORT_REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE)))
+            {
+                await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
+                {
+                    Name = NexportDefaults.NEXPORT_REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE,
+                    Subject = "Redemption assigned",
+                    Body = $"<p>{Environment.NewLine}An item has been redeemed to your account.<br />{Environment.NewLine}Please click <a href=\"%NexportRedemption.AcceptRedemptionUrl%\">here</a> to accept it.",
+                    IsActive = true,
+                    EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
+                });
+            }
         }
 
         public async Task DeleteMessageTemplatesAsync()
@@ -622,10 +634,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName", "Name");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName.Hint", "Filter registration fields list by name.");
+
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Go", "Go to created order");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.RedeemBy", "Redeem-By Date");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited", "Unlimited redemption");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Organization", "Organization");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Purchasing.Agent", "Purchasing Agent");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Purchasing.Group", "Group Membership");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.ApplyGroupMembershipWhenRedeemed", "Apply Group Membership When Redeemed");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Purchasing.Group", "Purchasing Group");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Create", "Create Wholesale Order");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Admin.Redemption.OrderInvoiceItemId", "Invoice Item");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Admin.Redemption.NopCustomerId", "Student");
         }
 
         public async Task DeleteResourcesAsync()
@@ -879,10 +899,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Organization");
+
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Go");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.RedeemBy");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited");
-            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Organization");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Purchasing.Agent");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Purchasing.Group");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.ApplyGroupMembershipWhenRedeemed");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Purchasing.Group");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Create");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Admin.Redemption.OrderInvoiceItemId");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Admin.Redemption.NopCustomerId");
         }
 
         public async Task InstallPermissionProviderAsync()

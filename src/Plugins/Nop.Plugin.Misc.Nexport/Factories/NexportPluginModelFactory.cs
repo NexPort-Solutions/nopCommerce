@@ -22,6 +22,7 @@ using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
+using Nop.Services.Customers;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
@@ -58,7 +59,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly CustomerSettings _customerSettings;
         private readonly CaptchaSettings _captchaSettings;
         private readonly ILogger _logger;
-        private readonly IPaymentPluginManager _paymentPluginManager;
         private readonly NexportService _nexportService;
         private readonly IAddressService _addressService;
         private readonly IPriceFormatter _priceFormatter;
@@ -83,7 +83,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             CaptchaSettings captchaSettings,
             ILogger logger,
             NexportService nexportService,
-            IPaymentPluginManager paymentPluginManager,
             IAddressService addressService,
             IPriceFormatter priceFormatter)
         {
@@ -102,7 +101,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _captchaSettings = captchaSettings;
             _logger = logger;
             _nexportService = nexportService;
-            _paymentPluginManager = paymentPluginManager;
             _addressService = addressService;
             _priceFormatter = priceFormatter;
         }
@@ -1528,31 +1526,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 });
             });
             return model;
-        }
-        
-        public virtual async Task<WholesaleCreateModel> PrepareWholesaleOrderModelAsync()
-        {
-            var root = _nexportSettings.RootOrganizationId.Value;
-            var stores = await _storeService.GetAllStoresAsync();
-            var storesList = stores.Select(store => new SelectListItem(store.Name, store.Id.ToString())).ToList();
-            var organizations = await _nexportService.FindAllOrganizationsAsync(root);
-            var organizationsList = organizations.Select(organizationToListItem).ToList();
-            var products = (await stores.SelectAwait(storeToProducts).ToListAsync()).SelectMany(collectionSelector).ToList();
-            var paymentMethods = await _paymentPluginManager.LoadActivePluginsAsync();
-            var paymentMethodsList = paymentMethods.Select(paymentMethodToListItem).ToList();
-            var wholesaleCreateModel = new WholesaleCreateModel
-            {
-                AvailableOrganizations = organizationsList,
-                AvailableStores = storesList,
-                AvailableProducts = products,
-                AvailablePaymentMethods = paymentMethodsList
-            };
-            return wholesaleCreateModel;
-            SelectListItem organizationToListItem(OrganizationResponseItem organization) => new(organization.ShortName + $" ({organization.Name})", organization.OrgId.ToString());
-            IEnumerable<SelectListItem> collectionSelector(IList<NexportProductMapping> productMappings) => productMappings.Select(productToListItem);
-            SelectListItem productToListItem(NexportProductMapping mapping) => new(mapping.DisplayName, mapping.NopProductId.ToString());
-            async ValueTask<IList<NexportProductMapping>> storeToProducts(Store store) => await _nexportService.GetProductMappingsByStoreId(store.Id);
-            SelectListItem paymentMethodToListItem(IPaymentMethod paymentMethod) => new(paymentMethod.PaymentMethodType.ToString(), paymentMethod.ToPluginModel<PaymentMethodModel>().SystemName);
         }
     }
 }

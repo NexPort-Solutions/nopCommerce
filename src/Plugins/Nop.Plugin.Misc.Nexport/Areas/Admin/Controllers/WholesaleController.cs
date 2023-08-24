@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
@@ -8,20 +9,18 @@ using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
-using Nop.Services.Orders;
+using Nop.Services.Customers;
 using Nop.Services.Payments;
-using Nop.Services.Plugins;
 using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Controllers;
-using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Payments;
+using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 
 namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
 
 public class WholesaleController : BaseAdminController
 {
-    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
     private readonly IPermissionService _permissionService;
     private readonly IStoreService _storeService;
     private readonly INexportWholesaleService _nexportWholesaleService;
@@ -29,11 +28,20 @@ public class WholesaleController : BaseAdminController
     private readonly NexportService _nexportService;
     private readonly IPaymentPluginManager _paymentPluginManager;
     private readonly IProductService _productService;
-    private readonly IPluginService _pluginService;
+    private readonly NexportSettings _nexportSettings;
+    private ICustomerService _customerService;
 
-    public WholesaleController(INexportPluginModelFactory nexportPluginModelFactory, IPermissionService permissionService, IOrderService orderService, IStoreService storeService, INexportWholesaleService nexportWholesaleService, IWorkContext workContext, NexportService nexportService, IPaymentPluginManager paymentPluginManager, IProductService productService, IPluginService pluginService)
+    public WholesaleController(
+        IPermissionService permissionService,
+        IStoreService storeService,
+        INexportWholesaleService nexportWholesaleService,
+        IWorkContext workContext,
+        NexportService nexportService,
+        IPaymentPluginManager paymentPluginManager,
+        IProductService productService,
+        ICustomerService customerService,
+        NexportSettings nexportSettings)
     {
-        _nexportPluginModelFactory = nexportPluginModelFactory;
         _permissionService = permissionService;
         _storeService = storeService;
         _nexportWholesaleService = nexportWholesaleService;
@@ -41,7 +49,8 @@ public class WholesaleController : BaseAdminController
         _nexportService = nexportService;
         _paymentPluginManager = paymentPluginManager;
         _productService = productService;
-        _pluginService = pluginService;
+        _customerService = customerService;
+        _nexportSettings = nexportSettings;
     }
 
     public virtual async Task<IActionResult> Create()
@@ -55,8 +64,7 @@ public class WholesaleController : BaseAdminController
         {
             return AccessDeniedView();
         }
-        var model = await _nexportPluginModelFactory.PrepareWholesaleOrderModelAsync();
-        return View(model);
+        return View();
     }
 
     [HttpPost]
@@ -66,16 +74,34 @@ public class WholesaleController : BaseAdminController
         return validation switch
         {
             WholesaleOrderValidationResult.AccessDeniedResult => AccessDeniedView(),
-            WholesaleOrderValidationResult.BadResult bad => await placeWholesaleOrder(bad),
+            WholesaleOrderValidationResult.BadResult bad => BadRequest(bad.Error),
             WholesaleOrderValidationResult.GoodResult result => await HandleGoodWholesaleOrderAsync(result),
             _ => throw new NotImplementedException()
         };
-        async Task<ViewResult> placeWholesaleOrder(WholesaleOrderValidationResult.BadResult bad)
-        {
-            var newModel = await _nexportPluginModelFactory.PrepareWholesaleOrderModelAsync();
-            newModel.Error = bad.Error;
-            return View("Create", newModel);
-        }
+    }
+
+    [HttpGet]
+    public virtual async Task<IActionResult> SearchPurchasingAgents(string term)
+    {
+        var purchasingAgents = (await _customerService.GetAllCustomersAsync())
+            .WhereAwait(customerToNexportUser)
+            .Select(customerToJQueryObject);
+        return Json(purchasingAgents);
+
+        async ValueTask<bool> customerToNexportUser(Customer customer) => await _nexportService.FindUserMappingByCustomerId(customer.Id) is not null;
+        static JQueryObject customerToJQueryObject(Customer customer) => new($"{customer.FirstName} {customer.LastName}".Trim(), customer.Id.ToString());
+    }
+
+    [HttpGet]
+    public virtual async Task<IActionResult> SearchOrganizations()
+    {
+        var root = _nexportSettings.RootOrganizationId.Value;
+        var organizations = (await _nexportService.FindAllOrganizationsAsync(root))
+            .Select(organizationToJQueryObject);
+        return Json(organizations);
+
+        static JQueryObject organizationToJQueryObject(OrganizationResponseItem organization)
+            => new(organization.ShortName + $" ({organization.Name})", organization.OrgId.ToString());
     }
 
     private async Task<IActionResult> HandleGoodWholesaleOrderAsync(WholesaleOrderValidationResult.GoodResult result)
@@ -101,7 +127,7 @@ public class WholesaleController : BaseAdminController
             CustomerId = result.Customer.Id,
             PaymentMethodSystemName = result.PaymentMethod
         };
-        var placedOrderResult = await _nexportWholesaleService.PlaceWholesaleOrderAsync(processingPaymentRequest, shoppingCartItems);
+        var placedOrderResult = await _nexportWholesaleService.PlaceWholesaleOrderAsync(processingPaymentRequest, shoppingCartItems, result.Customer, result.Group, result.RedeemByUtc);
         if (!placedOrderResult.Success)
         {
             throw new InvalidOperationException("Failed to place order");
@@ -111,11 +137,9 @@ public class WholesaleController : BaseAdminController
 
     private async Task<WholesaleOrderValidationResult> ValidateWholesaleOrderAsync(WholesaleCreateModel model)
     {
-        var customer = await _workContext.GetCurrentCustomerAsync();
-        var currentCustomerIsNotActive = customer is not { Active: true };
+        var customer = await _customerService.GetCustomerByIdAsync(model.AgentId);
         var currentCustomerIsNotInNexport = await _nexportService.FindUserMappingByCustomerId(customer.Id) is null;
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders)
-            || currentCustomerIsNotActive
             || currentCustomerIsNotInNexport)
         {
             ModelState.AddModelError("", "Current customer does not have permission for this resource.");
@@ -129,9 +153,9 @@ public class WholesaleController : BaseAdminController
         {
             ModelState.AddModelError(nameof(model.PaymentMethod), $"{nameof(model.PaymentMethod)} {model.PaymentMethod} is not valid for {nameof(model.StoreId)} {store.Name}.");
         }
-        else if (await _nexportService.GetOrganizationDetailsAsync(model.OrganizationId) is null)
+        else if (await _nexportService.GetOrganizationDetailsAsync(model.GroupId) is null)
         {
-            ModelState.AddModelError(nameof(model.OrganizationId), "Invalid organization.");
+            ModelState.AddModelError(nameof(model.GroupId), "Invalid group.");
         }
         else if (!model.IsRedemptionPeriodUnlimited && (model.RedeemByUtc is null || model.RedeemByUtc.Value <= DateTime.UtcNow))
         {
@@ -145,12 +169,29 @@ public class WholesaleController : BaseAdminController
         {
             ModelState.AddModelError(nameof(model.Quantity), $"{nameof(model.Quantity)} {model.Quantity} is invalid.");
         }
+        else if (await _nexportService.GetOrganizationDetailsAsync(model.GroupId) is not { } group)
+        {
+            ModelState.AddModelError(nameof(model.GroupId), $"{nameof(model.GroupId)} {model.GroupId} is invalid.");
+        }
         else if (ModelState.IsValid)
         {
-            return WholesaleOrderValidationResult.Good(customer, store, paymentMethod, model.Quantity, product);
+            return WholesaleOrderValidationResult.Good(store, product, model.RedeemByUtc, customer, group, model.Quantity, paymentMethod);
         }
         return WholesaleOrderValidationResult.Bad("Order parameters have invalid value: " + ModelState.ErrorCount + " errors.");
     }
+
+    private abstract record WholesaleOrderValidationResult
+    {
+        public static GoodResult Good(Store store, Product product, DateTime? redeemByUtc, Customer customer, OrganizationResponseItem group, int quantity, string paymentMethod)
+            => new(store, product, redeemByUtc, customer, group, quantity, paymentMethod);
+        public static readonly AccessDeniedResult AccessDenied = new();
+        public static BadResult Bad(string? error) => new(error);
+
+        public record GoodResult(Store Store, Product Product, DateTime? RedeemByUtc, Customer Customer, OrganizationResponseItem Group, int Quantity, string PaymentMethod) : WholesaleOrderValidationResult;
+        public record AccessDeniedResult : WholesaleOrderValidationResult;
+
+        public record BadResult(string? Error) : WholesaleOrderValidationResult;
+    };
 
     private async Task<string?> GetPaymentMethodNameForStoreAndCustomerAsync(string paymentMethodSystemName, Store store, Customer customer)
     {
@@ -160,18 +201,4 @@ public class WholesaleController : BaseAdminController
             .FirstOrDefault(systemName => systemName == paymentMethodSystemName);
         return paymentPluginName;
     }
-
-    private abstract record WholesaleOrderValidationResult
-    {
-        public static GoodResult Good(Customer customer, Store store, string paymentMethod, int quantity, Product product)
-            => new(customer, store, paymentMethod, quantity, product);
-        public static readonly AccessDeniedResult AccessDenied = new();
-        public static BadResult Bad(string? error) => new(error);
-
-        public record GoodResult(Customer Customer, Store Store, string PaymentMethod, int Quantity, Product Product) : WholesaleOrderValidationResult;
-        public record AccessDeniedResult : WholesaleOrderValidationResult;
-
-        public record BadResult(string? Error) : WholesaleOrderValidationResult;
-    };
-
 }

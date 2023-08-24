@@ -197,6 +197,8 @@ namespace Nop.Plugin.Misc.Nexport
         public const string NEXPORT_ORDER_MANUAL_APPROVAL_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE =
             "Nexport.OrderManualApproval.StoreOwnerNotification";
 
+        public const string NEXPORT_REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE = "Nexport.Redemption.StudentNotification";
+
         public static string NexportRegistrationFieldsZone = "nexport_registration_fields";
 
         public static string NexportCustomRegistrationFieldZone = "admin_nexport_custom_registration_field";

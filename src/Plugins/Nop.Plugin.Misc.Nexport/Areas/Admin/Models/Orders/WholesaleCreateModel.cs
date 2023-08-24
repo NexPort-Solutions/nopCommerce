@@ -9,29 +9,28 @@ public class WholesaleCreateModel
     [NopResourceDisplayName("Admin.CurrentCarts.Store")]
     public int StoreId { get; init; }
 
-    [NopResourceDisplayName("Plugins.Misc.Nexport.Organization")]
-    public Guid OrganizationId { get; init; }
+    [NopResourceDisplayName("Admin.CurrentCarts.Product")]
+    public int ProductId { get; init; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.RedeemBy")]
     [UIHint("DateNullable")]
-    public DateTime? RedeemByUtc { get; init; } = DateTime.Today;
+    public DateTime? RedeemByUtc { get; init; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited")]
     public bool IsRedemptionPeriodUnlimited { get; init; }
 
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.Purchasing.Agent")]
+    public int AgentId { get; init; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.Purchasing.Group")]
+    public Guid GroupId { get; init; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.ApplyGroupMembershipWhenRedeemed")]
+    public bool ApplyGroupMembershipWhenRedeemed { get; init; }
+
     [NopResourceDisplayName("Admin.CurrentCarts.Quantity")]
     public int Quantity { get; init; }
 
-    [NopResourceDisplayName("Admin.CurrentCarts.Product")]
-    public int ProductId { get; init; }
-
     [NopResourceDisplayName("Admin.Orders.Fields.PaymentMethod")]
     public string PaymentMethod { get; init; }
-
-    public List<SelectListItem> AvailableOrganizations { get; init; } = new();
-    public List<SelectListItem> AvailableStores { get; init; } = new();
-    public List<SelectListItem> AvailableProducts { get; init; } = new();
-    public List<SelectListItem> AvailablePaymentMethods { get; init; } = new();
-
-    public string? Error { get; set; }
 }
