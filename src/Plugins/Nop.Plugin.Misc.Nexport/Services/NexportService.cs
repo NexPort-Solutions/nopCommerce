@@ -16,9 +16,7 @@ using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
-using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
-using Nop.Core.Events;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -37,7 +35,6 @@ using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
 using Nop.Services.Plugins;
-using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Web.Framework;
 
@@ -53,12 +50,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly NexportSettings _nexportSettings;
 
         private readonly IAddressService _addressService;
-        private readonly IAclService _aclService;
         private readonly IStaticCacheManager _cacheManager;
-        private readonly IEventPublisher _eventPublisher;
         private readonly ILocalizationService _localizationService;
         private readonly IProductService _productService;
-        private readonly IRepository<AclRecord> _aclRepository;
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
         private readonly IRepository<NexportProductGroupMembershipMapping> _nexportProductGroupMembershipMappingRepository;
@@ -81,11 +75,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<NexportRegistrationFieldStoreMapping> _nexportRegistrationFieldStoreMappingRepository;
         private readonly IRepository<NexportRegistrationFieldAnswer> _nexportRegistrationFieldAnswerRepository;
         private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
-        private readonly IRepository<StoreMapping> _storeMappingRepository;
-        private readonly IStaticCacheManager _staticCacheManager;
-        private readonly IStoreMappingService _storeMappingService;
+        private readonly IRepository<GenericAttribute> _genericAttributeRepository;
+        private readonly IRepository<Order> _orderRepository;
+        private readonly IRepository<OrderItem> _orderItemRepository;
         private readonly ICustomerService _customerService;
-        private readonly ICustomerActivityService _customerActivityService;
         private readonly IOrderService _orderService;
         private readonly ICategoryService _categoryService;
         private readonly ISettingService _settingService;
@@ -119,11 +112,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             EmailAccountSettings emailAccountSettings,
             NexportSettings nexportSettings,
             IAddressService addressService,
-            IAclService aclService,
             IStaticCacheManager cacheManager,
-            IEventPublisher eventPublisher,
             IProductService productService,
-            IRepository<AclRecord> aclRepository,
             IRepository<Product> productRepository,
             IRepository<NexportProductMapping> nexportProductMappingRepository,
             IRepository<NexportProductGroupMembershipMapping> nexportProductGroupMembershipMappingRepository,
@@ -146,11 +136,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<NexportRegistrationFieldStoreMapping> nexportRegistrationFieldStoreMappingRepository,
             IRepository<NexportRegistrationFieldAnswer> nexportRegistrationFieldAnswerRepository,
             IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
-            IRepository<StoreMapping> storeMappingRepository,
-            IStaticCacheManager staticCacheManager,
-            IStoreMappingService storeMappingService,
+            IRepository<GenericAttribute> genericAttributeRepository,
+            IRepository<Order> orderRepository,
+            IRepository<OrderItem> orderItemRepository,
             ICustomerService customerService,
-            ICustomerActivityService customerActivityService,
             IOrderService orderService,
             ICategoryService categoryService,
             ISettingService settingService,
@@ -179,12 +168,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _emailAccountSettings = emailAccountSettings;
             _nexportSettings = nexportSettings;
             _addressService = addressService;
-            _aclService = aclService;
             _cacheManager = cacheManager;
-            _eventPublisher = eventPublisher;
             _localizationService = localizationService;
             _productService = productService;
-            _aclRepository = aclRepository;
             _productRepository = productRepository;
             _nexportProductMappingRepository = nexportProductMappingRepository;
             _nexportProductGroupMembershipMappingRepository = nexportProductGroupMembershipMappingRepository;
@@ -207,11 +193,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportRegistrationFieldStoreMappingRepository = nexportRegistrationFieldStoreMappingRepository;
             _nexportRegistrationFieldAnswerRepository = nexportRegistrationFieldAnswerRepository;
             _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
-            _storeMappingRepository = storeMappingRepository;
-            _staticCacheManager = staticCacheManager;
-            _storeMappingService = storeMappingService;
+            _genericAttributeRepository = genericAttributeRepository;
+            _orderRepository = orderRepository;
+            _orderItemRepository = orderItemRepository;
             _customerService = customerService;
-            _customerActivityService = customerActivityService;
             _orderService = orderService;
             _categoryService = categoryService;
             _settingService = settingService;
@@ -1419,11 +1404,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return addInvoiceItemResult?.InvoiceItemId;
         }
 
-        public async Task CommitNexportOrderInvoiceTransactionAsync(Guid invoiceId)
+        public async Task<CommitInvoiceResponse?> CommitNexportOrderInvoiceTransactionAsync(Guid invoiceId)
         {
+            CommitInvoiceResponse commitInvoiceResult;
             try
             {
-                _nexportApiService.CommitNexportInvoiceTransaction(_nexportSettings.Url,
+                commitInvoiceResult = _nexportApiService.CommitNexportInvoiceTransaction(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, invoiceId);
             }
             catch (Exception ex)
@@ -1443,6 +1429,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 throw;
             }
+            return commitInvoiceResult;
         }
 
         public async Task AddPaymentToNexportOrderInvoiceAsync(Guid invoiceId, decimal totalCost, Guid payeeId, int nopOrderId,
@@ -1490,7 +1477,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             try
             {
                 var redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId, redeemingUserId, redemptionAction);
+                    _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode);
 
                 if (redeemInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
                     throw new ApiException((int)redeemInvoiceResult.ApiErrorEntity.ErrorCode,
@@ -2142,17 +2129,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 throw new ArgumentNullException(nameof(customer));
 
             var store = await _storeContext.GetCurrentStoreAsync();
-            var storeModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(
-                store, "NexportStoreSaleModel", store.Id);
-
-            if (storeModel != NexportStoreSaleModel.Retail)
-                return true;
 
             var existingEnrollmentStatus = await VerifyNexportEnrollmentStatusAsync(product, customer, store.Id);
             var mapping = await GetProductMappingByNopProductId(product.Id, store.Id) ?? await GetProductMappingByNopProductId(product.Id);
 
             if (mapping != null)
             {
+                //TODO - JS:
+                //if (mapping.SaleModel != NexportSaleModel.Retail)
+                //  return true;
                 if (existingEnrollmentStatus == null)
                 {
                     if (mapping.IsExtensionProduct)
@@ -2710,10 +2695,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public virtual async Task<PagedList<Store>> GetAllStoresAsync(string storeName, string storeUrl, int pageIndex = 0, int pageSize = int.MaxValue)
+        public virtual async Task<PagedList<Store>> GetAllStoresAsync(string storeName, string storeUrl, int pageIndex = 0, int pageSize = int.MaxValue, bool excludeDeleted = true)
         {
             var stores = await _storeRepository.GetAllAsync(async query =>
             {
+                if (excludeDeleted)
+                    query = query.Where(s => !s.Deleted);
                 if (!string.IsNullOrEmpty(storeName))
                     query = query.Where(x => x.Name.Contains(storeName));
                 if (!string.IsNullOrEmpty(storeUrl))

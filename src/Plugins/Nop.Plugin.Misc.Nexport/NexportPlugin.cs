@@ -119,6 +119,16 @@ namespace Nop.Plugin.Misc.Nexport
                 IconClass = "far fa-dot-circle"
             });
 
+            node.ChildNodes.Add(new SiteMapNode()
+            {
+                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions),
+                Title = "Nexport Groups",
+                SystemName = "Nexport Groups",
+                ControllerName = "NexportWholesale",
+                ActionName = "AdminNexportGroups",
+                IconClass = "far fa-dot-circle"
+            });
+
             rootNode.ChildNodes.Add(node);
         }
 

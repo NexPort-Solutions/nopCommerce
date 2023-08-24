@@ -7,7 +7,9 @@ using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Catalog;
 using Nop.Services.Customers;
 using Nop.Services.Payments;
@@ -16,10 +18,11 @@ using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Controllers;
 using Nop.Web.Areas.Admin.Models.Payments;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
+using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
 
-public class WholesaleController : BaseAdminController
+public class NexportWholesaleController : BaseAdminController
 {
     private readonly IPermissionService _permissionService;
     private readonly IStoreService _storeService;
@@ -53,6 +56,7 @@ public class WholesaleController : BaseAdminController
         _nexportSettings = nexportSettings;
     }
 
+    [Route("Admin/Wholesale/Create")]
     public virtual async Task<IActionResult> Create()
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders))
@@ -193,6 +197,125 @@ public class WholesaleController : BaseAdminController
         public record BadResult(string? Error) : WholesaleOrderValidationResult;
     };
 
+    [HttpsRequirement]
+    public virtual async Task<IActionResult> AdminNexportGroups()
+    {
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
+            return AccessDeniedView();
+
+        var searchModel = new NexportGroupListSearchModel();
+        searchModel.AdminView = true;
+        ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportGroups.cshtml";
+        ViewData["ModelForPartialView"] = searchModel;
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/NexportGroups/List.cshtml");
+    }
+
+    [HttpsRequirement]
+    public async Task<IActionResult> AdminNexportGroupProducts(Guid groupId)
+    {
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
+            return AccessDeniedView();
+
+        var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
+        searchModel.AdminView = true;
+        ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportGroupProducts.cshtml";
+        ViewData["ModelForPartialView"] = searchModel;
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/NexportGroups/List.cshtml");
+    }
+
+    [HttpsRequirement]
+    public async Task<IActionResult> AdminNexportGroupProductRedemptions(Guid groupId, int productId)
+    {
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
+            return AccessDeniedView();
+
+        var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId);
+
+        searchModel.AdminView = true;
+        ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportGroupProductRedemptions.cshtml";
+        ViewData["ModelForPartialView"] = searchModel;
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/NexportGroups/List.cshtml");
+    }
+
+    [HttpsRequirement]
+    public async Task<IActionResult> RedeemProduct(Guid groupId, int productId)
+    {
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
+            return AccessDeniedView();
+
+        var model = await _nexportPluginModelFactory.PrepareRedeemProductOrModifyProductRedemptionModel(groupId, productId);
+        model.AdminView = true;
+        ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/RedeemProductOrModifyProductRedemption.cshtml";
+        ViewData["ModelForPartialView"] = model;
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/NexportGroups/List.cshtml");
+    }
+
+    [HttpsRequirement]
+    public async Task<IActionResult> ModifyRedemption(Guid groupId, int productId, Guid invoiceItemId)
+    {
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
+            return AccessDeniedView();
+
+        var model = await _nexportPluginModelFactory.PrepareRedeemProductOrModifyProductRedemptionModel(groupId, productId, invoiceItemId);
+        model.AdminView = true;
+        ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/RedeemProductOrModifyProductRedemption.cshtml";
+        ViewData["ModelForPartialView"] = model;
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/NexportGroups/List.cshtml");
+    }
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
+    {
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
+            return await AccessDeniedDataTablesJson();
+
+        var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel);
+
+        return Json(model);
+    }
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid groupId)
+    {
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
+            return await AccessDeniedDataTablesJson();
+
+        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId);
+
+        return Json(model);
+    }
+
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
+    {
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
+            return await AccessDeniedDataTablesJson();
+
+        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductCustomerListModelAsync(searchModel, groupId, productId);
+
+        return Json(model);
+    }
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
+    {
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
+            return await AccessDeniedDataTablesJson();
+
+        var count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCount(groupId, productId);
+        return Json(
+            new { result = count }
+        );
+    }
     private async Task<string?> GetPaymentMethodNameForStoreAndCustomerAsync(string paymentMethodSystemName, Store store, Customer customer)
     {
         var activePlugins = await _paymentPluginManager.LoadActivePluginsAsync(customer, store.Id);

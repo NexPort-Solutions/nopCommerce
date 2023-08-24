@@ -1,0 +1,77 @@
+﻿@{
+    var path = ViewData["PathForPartialView"] as string;
+    var model = ViewData["ModelForPartialView"];
+}
+
+<link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/jquery.dataTables.min.css" />
+<link rel="stylesheet" href=@("~/lib_npm/@fortawesome/fontawesome-free/css/all.min.css") />
+<style>
+    button {
+        padding: 6px 6px;
+    }
+
+    .content-wrapper {
+        background-color: white;
+    }
+
+    ul {
+        list-style-type: none;
+        display: flex;
+        padding-left: 0px;
+    }
+
+    a {
+        color: inherit;
+    }
+
+    .breadcrumb li * {
+        display: inline-block;
+        margin: 0 5px;
+        font-size: 14px;
+        line-height: 32px;
+    }
+
+    .breadcrumb a:hover, .breadcrumb a:focus {
+        color: #4ab2f1;
+    }
+
+    .dataTables_wrapper thead {
+        background-color: white;
+    }
+    .breadcrumb {
+        padding: 5px 10px;
+        display: block;
+        background-color: #f6f6f6;
+    }
+
+    .breadcrumb strong {
+        font-weight: normal;
+    }
+
+    .page-title {
+        margin: 0 0 25px;
+        border-bottom: 1px solid #ddd;
+        padding: 6px 10px;
+    }
+
+    h1 {
+        text-align: center;
+        color: #444;
+    }
+
+    div.dataTables_wrapper div.dataTables_length select {
+        width:60px
+    }
+    .page {
+        color: #777;
+    }
+</style>
+<div class="container">
+    <div class="page account-page">
+        @await Html.PartialAsync(path, model)
+    </div>
+</div>
+
+<script src="~/lib_npm/jquery/jquery.min.js"></script>
+<script src="~/lib_npm/jquery-ui-dist/jquery-ui.min.js"></script>
+<script src="~/lib_npm/datatables.net/js/jquery.dataTables.min.js"></script>

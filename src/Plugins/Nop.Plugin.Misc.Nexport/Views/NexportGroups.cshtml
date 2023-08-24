@@ -1,0 +1,63 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupListSearchModel
+
+@{
+    string GetUrl(DataUrl dataUrl)
+    {
+        return !string.IsNullOrEmpty(dataUrl?.ActionName) && !string.IsNullOrEmpty(dataUrl.ControllerName)
+            ? Url.Action(dataUrl.ActionName, dataUrl.ControllerName, dataUrl.RouteValues)
+            : !string.IsNullOrEmpty(dataUrl.Url)
+                ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
+                : string.Empty;
+    }
+
+    var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
+    var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
+    var groupsHeader = Model.AdminView ? "Admin" +" - "+ @T("Plugins.Misc.Nexport.Groups") : @T("Account.MyAccount") +" - "+ @T("Plugins.Misc.Nexport.Groups");
+}
+
+<div class="page-title">
+    <h1>@T("Account.MyAccount") - @T("Plugins.Misc.Nexport.Groups")</h1>
+</div>
+<div class="page-body">
+    <table id="groups_table" class="display stripe hover cell-border" style="width:100%">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Short Name</th>
+            <th>Products Purchased</th>
+            <th></th>
+        </tr>
+        </thead>
+    </table>
+</div>
+<script>    
+    let groupsTable = new DataTable('#groups_table', {
+        ajax:
+        {
+            url: "@Html.Raw(GetUrl(new DataUrl("GetNexportGroups", "NexportWholesale", null)))",
+            type: "POST",
+            dataType: "json",
+            dataSrc: "Data",
+            data: function(data) {
+                addAntiForgeryToken(data);
+                return data;
+            }
+        },
+        columns: [
+            { data: 'Name' },
+            { data: 'ShortName' },
+            { data: 'NumberOfProducts' },
+            {
+                "mData": "Id",
+                "mRender": function (data, type, row) {
+                    return '<center><button onClick="goToGroupProduct(\''+data+'\')" ><i class="far fa-eye"/><span style="margin-left:5px;">View</span></button></center>';
+                }
+            }
+        ],
+        order: [[1, 'asc']]
+    });
+    
+    function goToGroupProduct(e){
+        window.location.href = "@groupProductsRouteUrl?GroupId=" + e;
+    }
+</script>

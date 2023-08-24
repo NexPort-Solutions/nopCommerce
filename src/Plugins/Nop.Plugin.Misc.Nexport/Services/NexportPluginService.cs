@@ -639,6 +639,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.RedeemBy", "Redeem-By Date");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited", "Unlimited redemption");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Organization", "Organization");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Order.GroupId", "Purchasing For Group/Org:");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.Groups", "My nexport groups");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Groups", "Nexport Groups");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Products", "Products");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions", "Redemptions");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem", "Redeem Product");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Modify", "Modify Product Redemption");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Purchasing.Agent", "Purchasing Agent");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Purchasing.Group", "Group Membership");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.ApplyGroupMembershipWhenRedeemed", "Apply Group Membership When Redeemed");
@@ -904,6 +911,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Go");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.RedeemBy");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Organization");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Order.GroupId");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.Groups");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Groups");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Products");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Modify");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Purchasing.Agent");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Purchasing.Group");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.ApplyGroupMembershipWhenRedeemed");
