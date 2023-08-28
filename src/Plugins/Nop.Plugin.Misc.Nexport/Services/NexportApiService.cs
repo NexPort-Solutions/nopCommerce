@@ -428,7 +428,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
             };
 
-            var catalogRequest = new CatalogRequest(orgId, CatalogRequest.PublishingModelEnum.ForSaleInMarketPlace, CatalogRequest.CatalogAccessOptionEnum.Owned);
+            var catalogRequest = new CatalogRequest(orgId, Enums.PublishingModelEnum.ForSaleInMarketPlace, CatalogRequest.CatalogAccessOptionEnum.Owned);
             var response = nexportApi.LearningApiGetCatalogsWithHttpInfo(accessToken, catalogRequest, page);
 
             var result = new NexportCatalogResponse
@@ -790,7 +790,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     amountUsd: amount,
                     utcPaymentDate: dueDate)
                 {
-                    PaymentCollectorId = paymentCollectorId,
+                    PaymentCollectorId = paymentCollectorId ?? Guid.NewGuid(),
                     Note = note
                 });
 
@@ -1022,7 +1022,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             };
 
             var result = nexportApi.AdminApiSetCustomProfileFieldValues(accessToken,
-                new SetCustomProfileFieldValuesRequest(subscriberId, profileFields));
+                new SetCustomProfileFieldValuesRequest(subscriberId: subscriberId, customProfileFieldValues: profileFields));
 
             return result;
         }

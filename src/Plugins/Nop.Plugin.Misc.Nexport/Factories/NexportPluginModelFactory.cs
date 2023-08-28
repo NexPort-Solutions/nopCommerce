@@ -543,7 +543,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         SyllabusId = syllabiId,
                         Name = syllabi.SyllabusName,
                         Type = syllabi.SyllabusType,
-                        ProductId = syllabi.ProductId.Value,
+                        ProductId = syllabi.ProductId,
                         TotalMappings = await _nexportService.FindMappingCountPerSyllabi(syllabiId)
                     };
 
@@ -1562,7 +1562,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             return model;
         }
-    
+
         public async Task<NexportOrderListModel> PrepareOrderListModelAsync(OrderSearchModel searchModel)
         {
             if (searchModel == null)
