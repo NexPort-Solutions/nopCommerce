@@ -2987,10 +2987,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 if (mapping != null)
                 {
-                    var store = await _storeService.GetStoreByIdAsync(order.StoreId);
-                    var storeModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(store, "NexportStoreSaleModel", store.Id);
-                    await _genericAttributeService.SaveAttributeAsync(item, $"StoreModel-{order.Id}-{item.Id}", JsonConvert.SerializeObject(storeModel), store.Id);
-
                     await _genericAttributeService.SaveAttributeAsync(item,
                         $"ProductMapping-{order.Id}-{item.Id}",
                         JsonConvert.SerializeObject(mapping), order.StoreId);
@@ -3067,8 +3063,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         {
             var store = eventMessage.Entity;
 
-            await _genericAttributeService.SaveAttributeAsync(store, NexportDefaults.NEXPORT_STORE_SALE_MODEL_SETTING_KEY,
-                NexportStoreSaleModel.Retail, store.Id);
             await _genericAttributeService.SaveAttributeAsync(store, NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY,
                 true, store.Id);
             await _genericAttributeService.SaveAttributeAsync(store, NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY,

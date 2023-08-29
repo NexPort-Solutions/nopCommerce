@@ -171,8 +171,6 @@ namespace Nop.Plugin.Misc.Nexport
 
         public const string NEXPORT_SUBSCRIPTION_ORGANIZATION_ID_SETTING_KEY = "NexportSubscriptionOrganizationId";
 
-        public const string NEXPORT_STORE_SALE_MODEL_SETTING_KEY = "NexportStoreSaleModel";
-
         public const string HIDE_SECTION_CEUS_IN_PRODUCT_PAGE_SETTING_KEY = "HideSectionCEUsInProductPage";
 
         public const string HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY = "HideAddToCartForIneligibleProducts";

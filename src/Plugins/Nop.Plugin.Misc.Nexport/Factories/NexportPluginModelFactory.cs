@@ -1587,11 +1587,10 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 }
             }
 
-            //TODO - JS: api call to check if customer is purchasing agent
-            // we may not need this call if we just check if user gets back groups from api or not to determine if purchasing agent
-            //check if customer is purchasing agent. if so then display dropdown of groups that can be purchased for
-            //var purchasingAgent = true;
-            //purchasingAgent && 
+            //TODO - JS: api call to check if customer is purchasing agent. idk if this is needed
+            var isPurchasingAgent = true;// HasGroupPermission(userId,groupId,permission)//checking rootId here?
+            if(!isPurchasingAgent)
+                orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
 
             if (orderSummaryCartFooterModel.ShowPurchasingGroupArea)
             {
@@ -1603,19 +1602,18 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
                     if (selectedGroup != null && selectedGroup.Id != Guid.Empty)
                     {
-                        //orderSummaryCartFooterModel.GroupGuid = selectedGroup.Id;
                         orderSummaryCartFooterModel.Group = selectedGroup;
                     }
                 }
 
-                //TODO - JS: use api call that narrows groups down to this customer instead of all groups
-                //prepare groups
-                var organizations = await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync();
+                //TODO - JS: use api call that narrows groups down to this customer instead of all orgs
+                //var groups = SearchGroupsForPermission(userId,orgId,permission,page,perpage)
+                var groups = await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync();
 
-                orderSummaryCartFooterModel.AvailableGroups = organizations.Select(x =>
+                orderSummaryCartFooterModel.AvailableGroups = groups.Select(x =>
                     new SelectListItem(x.Name, $"{x.OrgId}")
                 ).ToList();
-                orderSummaryCartFooterModel.AvailableGroups2 = await organizations.Select(x =>
+                orderSummaryCartFooterModel.AvailableGroups2 = await groups.Select(x =>
                     new NexportGroupModel
                     {
                         Id = x.OrgId,

@@ -21,7 +21,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 {
     public class NexportOrderProcessingTask : IScheduleTask
     {
-        private readonly EmailAccountSettings _emailAccountSettings;
         private readonly LocalizationSettings _localizationSettings;
         private readonly NexportSettings _nexportSettings;
 
@@ -54,7 +53,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
         }
 
         public NexportOrderProcessingTask(
-            EmailAccountSettings emailAccountSettings,
             LocalizationSettings localizationSettings,
             IWidgetPluginManager widgetPluginManager,
             ILogger logger,
@@ -72,7 +70,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             NexportService nexportService,
             NexportSettings nexportSettings)
         {
-            _emailAccountSettings = emailAccountSettings;
             _localizationSettings = localizationSettings;
 
             _widgetPluginManager = widgetPluginManager;
@@ -160,18 +157,32 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         await _logger.InformationAsync($"While processing order {order.Id} - orgid set to root organization id value");
                                     }
 
-                                    //get group for order
-                                    var group = await _genericAttributeService.GetAttributeAsync<string>(order, $"GroupForOrder", store.Id);
-
-                                    //TODO - JS: If there is a group id then treat as wholesale order, otherwise do retail
-
                                     // Check if there is an existing invoice. If not, begin a new invoice transaction.
-                                    var orderInvoiceId =
-                                        await _nexportService.FindExistingInvoiceForOrder(order.Id) ??
-                                        await _nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId, userMapping.NexportUserId);
+                                    var orderInvoiceId = await _nexportService.FindExistingInvoiceForOrder(order.Id);
+
+                                    if (orderInvoiceId == null)
+                                    {
+                                        //get group for order
+                                        var group = await _genericAttributeService.GetAttributeAsync<string>(order, $"GroupForOrder", store.Id);
+                                        
+                                        if (group != null)
+                                        {
+                                            //TODO - JS: If there is a group id then treat as wholesale order, otherwise do retail
+                                            //orderInvoiceId =  await _nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId,purchasingGroupId, userMapping.NexportUserId); 
+
+                                            orderInvoiceId =  await _nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId, userMapping.NexportUserId); 
+                                        }
+                                        else
+                                        {
+                                            orderInvoiceId =  await _nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId, userMapping.NexportUserId); 
+                                        }
+                                    }
+
+
+                                    
 
                                     // Get the invoice details from Nexport (if existing)
-                                    var invoiceDetails = await _nexportService.GetNexportInvoiceAsync(orderInvoiceId);
+                                    var invoiceDetails = await _nexportService.GetNexportInvoiceAsync(orderInvoiceId.Value);
 
                                     // Continue to process only if the invoice is opening
                                     if (invoiceDetails == null ||
@@ -217,7 +228,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                         {
                                                             var addItemResult = await AddItemToNexportInvoiceAsync(
                                                                 mapping, userMapping,
-                                                                orderInvoiceId, productCost, subscriptionOrgId,
+                                                                orderInvoiceId.Value, productCost, subscriptionOrgId,
                                                                 groupMembershipIds);
 
                                                             var invoiceItemId = addItemResult.InvoiceItemId;
@@ -231,7 +242,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                                         OrderId = queueItem.OrderId,
                                                                         OrderItemId = orderItem.Id,
                                                                         InvoiceItemId = invoiceItemId.Value,
-                                                                        InvoiceId = orderInvoiceId,
+                                                                        InvoiceId = orderInvoiceId.Value,
                                                                         UtcDateProcessed = DateTime.UtcNow,
                                                                         RequireManualApproval =
                                                                             addItemResult.RequireManualApproval
@@ -294,11 +305,11 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         }
 
                                         // Add payment
-                                        await _nexportService.AddPaymentToNexportOrderInvoiceAsync(orderInvoiceId,
+                                        await _nexportService.AddPaymentToNexportOrderInvoiceAsync(orderInvoiceId.Value,
                                             invoiceTotalCost, userMapping.NexportUserId, queueItemId, DateTime.UtcNow);
 
                                         // Commit the invoice
-                                        var commitResult = await _nexportService.CommitNexportOrderInvoiceTransactionAsync(orderInvoiceId);
+                                        var commitResult = await _nexportService.CommitNexportOrderInvoiceTransactionAsync(orderInvoiceId.Value);
 
                                         if (commitResult != null)
                                         {

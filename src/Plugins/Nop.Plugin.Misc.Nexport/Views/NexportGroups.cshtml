@@ -9,14 +9,15 @@
                 ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
                 : string.Empty;
     }
-
+    var groupsText = Model.AdminView ? @T("Admin") + " - " + @T("Plugins.Misc.Nexport.Groups") :
+    @T("Account.MyAccount") + " - " + @T("Plugins.Misc.Nexport.Groups");
     var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
-    var groupsHeader = Model.AdminView ? "Admin" +" - "+ @T("Plugins.Misc.Nexport.Groups") : @T("Account.MyAccount") +" - "+ @T("Plugins.Misc.Nexport.Groups");
+    var groupsHeader = Model.AdminView ? @T("Admin") +" - "+ @T("Plugins.Misc.Nexport.Groups") : @T("Account.MyAccount") +" - "+ @T("Plugins.Misc.Nexport.Groups");
 }
 
 <div class="page-title">
-    <h1>@T("Account.MyAccount") - @T("Plugins.Misc.Nexport.Groups")</h1>
+    <h1>@groupsText</h1>
 </div>
 <div class="page-body">
     <table id="groups_table" class="display stripe hover cell-border" style="width:100%">
