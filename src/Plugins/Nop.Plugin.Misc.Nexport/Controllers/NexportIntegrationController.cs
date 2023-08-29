@@ -3399,7 +3399,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             try
             {
-                result.RedirectUrl = _nexportService.SignInNexportAsync(orderInvoiceItem);
+                result.RedirectUrl = await _nexportService.SignInNexportAsync(orderInvoiceItem);
             }
             catch (Exception ex)
             {
@@ -3426,7 +3426,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             try
             {
-                result.RedirectUrl = _nexportService.SignInNexportClassroomAsync(enrollmentId);
+                result.RedirectUrl = await _nexportService.SignInNexportClassroomAsync(enrollmentId);
             }
             catch (Exception ex)
             {
@@ -3453,7 +3453,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             try
             {
-                result.RedirectUrl = _nexportService.SignInNexportAsync(orgId, userId);
+                result.RedirectUrl = await _nexportService.SignInNexportAsync(orgId, userId);
             }
             catch (Exception ex)
             {
