@@ -33,7 +33,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
                 return Content("");
 
             var model =
-                _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldsModelAsync(await _storeContext.GetCurrentStoreAsync());
+                await _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldsModelAsync(await _storeContext.GetCurrentStoreAsync());
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportRegistrationFields.cshtml", model);
         }
