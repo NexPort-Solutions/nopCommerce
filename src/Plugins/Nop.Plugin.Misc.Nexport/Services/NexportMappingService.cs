@@ -1846,7 +1846,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             //it doesnt get filtered out we insert it at the end
             var insertEmptyDefault = await _nexportProductMappingRepository.Table.FirstOrDefaultAsync(x => x.NopProductId == productId && x.StoreId == null) == null;
 
-            var left = _storeRepository.Table
+            var left = _storeRepository.Table.Where(s=>!s.Deleted)
                 .GroupJoin(productMappings,
                     s => s.Id,
                     pm => pm.StoreId,
