@@ -1,11 +1,12 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Models.Order
 @using System.Net
+@using Nop.Plugin.Misc.Nexport.Models
 
 @model Nop.Plugin.Misc.Nexport.Models.Order.NexportOrderApprovalModel
 
 <div class="card-group">
     <div class="card card-body">
-        @await Html.PartialAsync("Table", new DataTablesModel
+        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
    {
        Name = "nexport-order-invoice-items-grid",
        UrlRead = new DataUrl("GetNexportOrderInvoiceItems", "NexportIntegration",

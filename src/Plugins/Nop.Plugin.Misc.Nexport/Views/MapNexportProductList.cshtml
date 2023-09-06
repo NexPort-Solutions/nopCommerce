@@ -3,7 +3,7 @@
 
 @model NexportCatalogSearchModel
 
-@await Html.PartialAsync("Table", new DataTablesModel
+@await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
 {
     Name = "nexport-catalog-grid",
     UrlRead = new DataUrl("CatalogList", "NexportIntegration",
@@ -47,7 +47,7 @@
             Render = new RenderDate()
         }
     },
-    ChildTable = new DataTablesModel
+    ChildTable = new NexportDataTablesModel
     {
         Name = "nexport-syllabus-grid",
         UrlRead = new DataUrl("SyllabusList", "NexportIntegration",
