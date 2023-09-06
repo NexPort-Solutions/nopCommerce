@@ -35,7 +35,7 @@
                 <p>
                     Supplemental question list
                 </p>
-                @await Html.PartialAsync("Table", new DataTablesModel
+                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
                 {
                    Name = "nexport-supplemental-questions-grid",
                    UrlRead = new DataUrl("ListSupplementalInfoQuestion", "NexportIntegration", null),

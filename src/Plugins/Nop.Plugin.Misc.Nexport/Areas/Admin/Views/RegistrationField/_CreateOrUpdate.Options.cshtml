@@ -27,7 +27,7 @@
 
         <div class="card card-default">
             <div class="card-body">
-                @await Html.PartialAsync("Table", new NexportDataTablesModel
+                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
                 {
                     Name = "registrationfield-options-grid",
                     UrlRead = new DataUrl("ListRegistrationFieldOptions", "NexportIntegration",
