@@ -2,6 +2,7 @@
 
 @using Nop.Services.Common
 @using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders
+@using Nop.Plugin.Misc.Nexport.Models
 
 @{
     //page title
@@ -288,7 +289,7 @@
                                 <nop-doc-reference asp-string-resource="@T("Admin.Documentation.Reference.Orders", NopLinksDefaults.Docs.Orders + NopLinksDefaults.Utm.OnAdmin)" />
 
                                 @{
-                                    var gridModel = new DataTablesModel
+                                    var gridModel = new NexportDataTablesModel
                                     {
                                         Name = "orders-grid",
                                         UrlRead = new DataUrl("OrderList", "NexportOrder", null),
@@ -392,7 +393,7 @@
                                     var orderSummaryColumnNumber = 8;
                                 }
 
-                                @await Html.PartialAsync("Table", gridModel)
+                                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", gridModel)
 
                                 <script>
                                 function renderColumnOrderStatus(data, type, row, meta) {
