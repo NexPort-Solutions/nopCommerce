@@ -46,7 +46,7 @@
         <p style="display: flex; align-items: center; margin: 0">
             <em>@T("Admin.Customers.Nexport.RegistrationField.Fields.Description")</em>
         </p>
-        @await Html.PartialAsync("Table", new NexportDataTablesModel
+        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
         {
             Name = "nexport-registrationfields-grid",
             UrlRead = new DataUrl("ListRegistrationField", "NexportIntegration", null),
