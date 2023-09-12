@@ -20,5 +20,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
         public NexportProductTypeEnum NexportProductType { get; set; }
 
         public int? StoreId { get; set; }
+
+        public bool? AssignWhenRedeemed { get; set; }
     }
 }

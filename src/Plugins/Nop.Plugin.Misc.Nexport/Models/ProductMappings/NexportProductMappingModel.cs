@@ -128,5 +128,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
         public IList<SelectListItem> AvailableSupplementalInfoQuestions { get; set; } = new List<SelectListItem>();
 
         public bool Editable { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.AssignWhenRedeemed")]
+        public bool? AssignWhenRedeemed {get; set; }
     }
 }

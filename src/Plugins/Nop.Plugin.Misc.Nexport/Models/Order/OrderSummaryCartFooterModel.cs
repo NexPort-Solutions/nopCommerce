@@ -16,7 +16,6 @@ namespace Nop.Plugin.Misc.Nexport.Models.Order
 
         public string PurchasingGroupSelectBoxStyle { get; set; } = "";
 
-        public IList<SelectListItem> AvailableGroups { get; set; } = new List<SelectListItem>();
-        public IList<NexportGroupModel> AvailableGroups2 { get; set; } = new List<NexportGroupModel>();
+        public IList<NexportGroupModel> AvailableGroups { get; set; } = new List<NexportGroupModel>();
     }
 }

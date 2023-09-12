@@ -42,7 +42,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IList<NexportProductMapping>> GetProductMappingsByStoreId(int storeId);
 
-        Task<NexportProductMapping> GetProductMappingByNopProductId(int nopProductId, int? storeId = null);
+        Task<NexportProductMapping?> GetProductMappingByNopProductId(int nopProductId, int? storeId = null);
 
         Task<IList<NexportProductMapping>> GetProductMappings(int? nopProductId = null, int? storeId = null);
 

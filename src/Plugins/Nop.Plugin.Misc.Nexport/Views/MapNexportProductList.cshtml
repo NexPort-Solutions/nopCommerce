@@ -1,10 +1,9 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Models.Catalog
 @using Nop.Plugin.Misc.Nexport.Models.Syllabus
 
-@model NexportCatalogSearchModel
-
 @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
 {
+
     Name = "nexport-catalog-grid",
     UrlRead = new DataUrl("CatalogList", "NexportIntegration",
         new RouteValueDictionary
@@ -45,6 +44,12 @@
             Title = "Last Modified Date",
             Width = "150",
             Render = new RenderDate()
+        },
+        new(nameof(NexportCatalogResponseItemModel.AssignWhenRedeemed))
+        {
+            Title = "Assign When Redeemed",
+            Width = "150",
+            Render = new RenderCustom("renderAssignWhenRedeemed")
         }
     },
     ChildTable = new NexportDataTablesModel
@@ -101,20 +106,27 @@
 })
 
 <script>
-    $(document).ready(function() {
-        $("#map-nexport-product-form").on("change", $(":radio"), function() {
-            setMappingInfoRequirement();
-        });
-    });
-
+    var selectedNexportProduct;
     function setMappingInfoRequirement() {
-        var selectedNexportProduct = $("[data-control=nexport-product-selection]:checked");
         if (selectedNexportProduct) {
-            $("#nexport-product-container").find("[name=NexportCatalogId]").val(selectedNexportProduct.data("catalog-id"));
-            $("#nexport-product-container").find("[name=NexportSyllabusId]").val(selectedNexportProduct.data("syllabus-id"));
-            $("#nexport-product-container").find("[name=NexportProductId]").val(selectedNexportProduct.data("product-id"));
-            $("#nexport-product-container").find("[name=NexportProductType]").val(selectedNexportProduct.data("product-type"));
+            if (selectedNexportProduct.attr('id') != $("[data-control=nexport-product-selection]:checked").attr('id'))
+            {                
+                $("input.assign-when-redeem").each(function (i) {
+                    $(this).prop('checked', false)
+                });
+            }
         }
+        selectedNexportProduct = $("[data-control=nexport-product-selection]:checked");
+        if(selectedNexportProduct){
+            updateNexportProductContainerValues();
+        }
+    }
+    function updateNexportProductContainerValues(){
+        $("#nexport-product-container").find("[name=NexportCatalogId]").val(selectedNexportProduct.data("catalog-id"));
+        $("#nexport-product-container").find("[name=NexportSyllabusId]").val(selectedNexportProduct.data("syllabus-id"));
+        $("#nexport-product-container").find("[name=NexportProductId]").val(selectedNexportProduct.data("product-id"));
+        $("#nexport-product-container").find("[name=NexportProductType]").val(selectedNexportProduct.data("product-type"));
+        $("#nexport-product-container").find("[name=AssignWhenRedeemed]").val(selectedNexportProduct.data("assign-when-redeemed"));
     }
 
     function renderSyllabusType(data, type, row, meta) {
@@ -126,24 +138,53 @@
     }
 
     function renderCatalogSelection(data, type, row, meta) {
-        var renderControl = "<input type=\"radio\" data-control=\"nexport-product-selection\" name=\"nexport-product-selection\" value=\"" + row.CatalogId +
-            "\" data-catalog-id=\""+ row.CatalogId + "\" data-product-id=\"" + row.CatalogId + "\" data-product-type=\"0\"";
-
+        var renderControl = "<input id =\"catalog-" + row.CatalogId + "\" type=\"radio\" data-control=\"nexport-product-selection\" name=\"nexport-product-selection\" value=\"" + row.CatalogId +
+            "\" data-catalog-id=\"" + row.CatalogId + "\" data-product-id=\"" + row.CatalogId + "\" data-product-type=\"0\"";
+        renderControl += " onclick=\"setMappingInfoRequirement()\"";
         renderControl += ">";
 
         return renderControl;
     }
-
+    
     function renderSyllabusSelection(data, type, row, meta) {
         var nexportProductType = +row.Type + 1;
 
-        var renderControl = "<input type=\"radio\" data-control=\"nexport-product-selection\" name=\"nexport-product-selection\" value=\"" + row.SyllabusId +
-            "\" data-catalog-id=\""+ row.CatalogId + "\" data-syllabus-id=\"" + row.SyllabusId +
+        var renderControl = "<input id =\"syllabus-" + row.SyllabusId + "\" type=\"radio\" data-control=\"nexport-product-selection\" name=\"nexport-product-selection\" value=\"" + row.SyllabusId +
+            "\" data-catalog-id=\"" + row.CatalogId + "\" data-syllabus-id=\"" + row.SyllabusId +
             "\" data-product-id=\"" + row.ProductId + "\" data-product-type=\"" + nexportProductType + "\"";
-
+        renderControl += " onclick=\"setMappingInfoRequirement()\"";
         renderControl += ">";
 
         return renderControl;
+    }
+    
+    function renderAssignWhenRedeemed(data, type, row, meta) {
+        var renderControl = "<input class=\"assign-when-redeem\" type=\"checkbox\" >";
+
+        return renderControl;
+    }
+    function renderAssignWhenRedeemed(data, type, row, meta) {
+        var renderControl = "<input class=\"assign-when-redeem\" type=\"checkbox\" onclick=\"assignWhenRedeemedClicked('" + row.CatalogId + "',this)\">";
+
+        return renderControl;
+    }
+    function assignWhenRedeemedClicked(CatalogId, checkbox) {
+        var radio = $("#catalog-" + CatalogId);
+        if (checkbox.checked){
+            $("input.assign-when-redeem").each(function (i) {
+                $(this).prop('checked', false)
+            });
+            checkbox.checked = true;
+            radio.data("assign-when-redeemed", "true");
+            radio.prop('checked',true);
+            selectedNexportProduct = radio;
+
+        }
+        else
+        {
+            radio.data("assign-when-redeemed", "false");
+        }
+        updateNexportProductContainerValues();
     }
 
     //# sourceURL=MapNexportProductList.js

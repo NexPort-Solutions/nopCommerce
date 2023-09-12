@@ -261,7 +261,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 : await _nexportProductMappingRepository.Table.Where(np => np.StoreId == storeId).ToListAsync();
         }
 
-        public async Task<NexportProductMapping> GetProductMappingByNopProductId(int nopProductId, int? storeId = null)
+        public async Task<NexportProductMapping?> GetProductMappingByNopProductId(int nopProductId, int? storeId = null)
         {
             return nopProductId < 1
                 ? null
@@ -619,6 +619,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     };
                 }
 
+                productMapping.AssignWhenRedeemed = false;
+
                 switch (model.NexportProductType)
                 {
                     case NexportProductTypeEnum.Catalog:
@@ -630,6 +632,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         productMapping.PricingModel = catalogDetails?.PricingModel;
                         productMapping.PublishingModel = catalogDetails?.PublishingModel;
                         productMapping.CreditHours = catalogCreditHours?.CreditHours;
+                        if (model.AssignWhenRedeemed.HasValue && model.AssignWhenRedeemed.Value)
+                            productMapping.AssignWhenRedeemed = model.AssignWhenRedeemed.Value;
 
                         break;
 
