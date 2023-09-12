@@ -3005,7 +3005,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var orderStore = await _storeContext.GetCurrentStoreAsync();
             var groupForCustomer = await _genericAttributeService.GetAttributeAsync<string>(customer, "GroupForCustomer", orderStore.Id);
 
-            // reset generic attribute group for customer for future purchases
+            // delete generic attribute group for customer for future purchases
             await _genericAttributeService.SaveAttributeAsync<string>(customer, $"GroupForCustomer",
                 null, orderStore.Id);
 

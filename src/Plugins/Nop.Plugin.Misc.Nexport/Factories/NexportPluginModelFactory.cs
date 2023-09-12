@@ -1589,7 +1589,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             //TODO - JS: api call to check if customer is purchasing agent. idk if this is needed
             var isPurchasingAgent = true;// HasGroupPermission(userId,groupId,permission)//checking rootId here?
-            if(!isPurchasingAgent)
+            if (!isPurchasingAgent)
                 orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
 
             if (orderSummaryCartFooterModel.ShowPurchasingGroupArea)
@@ -1610,10 +1610,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 //var groups = SearchGroupsForPermission(userId,orgId,permission,page,perpage)
                 var groups = await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync();
 
-                orderSummaryCartFooterModel.AvailableGroups = groups.Select(x =>
-                    new SelectListItem(x.Name, $"{x.OrgId}")
-                ).ToList();
-                orderSummaryCartFooterModel.AvailableGroups2 = await groups.Select(x =>
+                orderSummaryCartFooterModel.AvailableGroups = await groups.Select(x =>
                     new NexportGroupModel
                     {
                         Id = x.OrgId,
@@ -1868,7 +1865,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             {
                 invoiceItem = await _nexportService.GetFirstAvailableInvoiceItemForGroupIdAndProductId(groupId, productId);
             }
-            if(invoiceItem!=null)
+            if (invoiceItem != null)
                 model.InvoiceItemId = invoiceItem.InvoiceItemId;
 
             return model;

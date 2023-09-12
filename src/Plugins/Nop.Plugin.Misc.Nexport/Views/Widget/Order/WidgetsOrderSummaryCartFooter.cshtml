@@ -3,7 +3,6 @@
 
 @{
     var discounts = ViewData["DiscountList"] as List<Discount>;
-    var hideGroupSelect = ViewData["HideGroupSelect"] as bool?;
 
 }
 
@@ -29,7 +28,7 @@
     </div>
     <script>
         $(document).ready(function () {
-            var source = @Html.Raw(Json.Serialize(Model.AvailableGroups2.Select(group => new { label = group.Name, value = group })));
+            var source = @Html.Raw(Json.Serialize(Model.AvailableGroups.Select(group => new { label = group.Name, value = group })));
             $('#search-customer-groups').autocomplete({
                 delay: 0,
                 minLength: 0,
