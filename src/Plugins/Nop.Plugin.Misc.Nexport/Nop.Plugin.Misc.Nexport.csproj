@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" Version="2023.2.0" />
-    <PackageReference Include="NexportApi" Version="1.0.29" />
+    <PackageReference Include="NexportApi" Version="1.0.30" />
   </ItemGroup>
 
   <ItemGroup>
