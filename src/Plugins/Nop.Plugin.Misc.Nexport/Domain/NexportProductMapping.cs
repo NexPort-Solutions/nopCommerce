@@ -68,5 +68,7 @@ namespace Nop.Plugin.Misc.Nexport.Domain
         public int? ExtensionPurchaseLimit { get; set; }
 
         public int? StoreId { get; set; }
+
+        public bool? AssignWhenRedeemed {get; set; }
     }
 }

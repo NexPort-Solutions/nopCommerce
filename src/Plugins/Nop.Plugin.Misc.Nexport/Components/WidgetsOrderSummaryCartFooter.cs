@@ -53,7 +53,11 @@ namespace Nop.Plugin.Misc.Nexport.Components
                 "Cart")
             {
                 ViewData["DiscountList"] = appliedDiscounts;
-                model.PurchasingGroupSelectBoxStyle = "display:none";
+                model.TogglePurchasingGroupText = true;
+            }
+            else
+            {
+                model.TogglePurchasingGroupText = false;
             }
 
 

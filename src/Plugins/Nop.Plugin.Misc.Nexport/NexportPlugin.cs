@@ -244,7 +244,8 @@ namespace Nop.Plugin.Misc.Nexport
                 PublicWidgetZones.OrderSummaryCartFooter,
                 PublicWidgetZones.ProductDetailsOverviewTop,
                 NexportDefaults.NexportRegistrationFieldsZone,
-                AdminWidgetZones.OrderListButtons
+                AdminWidgetZones.OrderListButtons,
+                PublicWidgetZones.OrderDetailsPageAfterproducts
             });
         }
 
@@ -280,6 +281,8 @@ namespace Nop.Plugin.Misc.Nexport
                 return typeof(WidgetsNexportRegistrationFields);
             else if (widgetZone == AdminWidgetZones.OrderListButtons)
                 return typeof(WidgetsNexportOrderListButtons);
+            else if (widgetZone == PublicWidgetZones.OrderDetailsPageAfterproducts)
+                return typeof(WidgetsNexportOrderDetailsPageAfterproducts);
             else return null;
         }
     }

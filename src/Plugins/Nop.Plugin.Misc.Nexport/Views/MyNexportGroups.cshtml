@@ -4,25 +4,15 @@
     var path = ViewData["PathForPartialView"] as string;
     var model = ViewData["ModelForPartialView"];
 
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/jquery.dataTables.min.css");
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/uikit.min.css");
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "https://kit.fontawesome.com/e4adf0b7ea.js", "", true);
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net/js/jquery.dataTables.min.js");
     
 }
-
-<link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/jquery.dataTables.min.css" />
-<link rel="stylesheet" href=@("~/lib_npm/@fortawesome/fontawesome-free/css/all.min.css") />
-<style>
-    button {
-        padding: 6px 6px;
-    }
-    .breadcrumb ul {
-        text-align: left;
-    }
-</style>
-<div class="page account-page">
+<div class="page account-page nex-plugin">
 
         @await Html.PartialAsync(path, model)
  
 </div>
-
-<script src="~/lib_npm/jquery/jquery.min.js"></script>
-<script src="~/lib_npm/jquery-ui-dist/jquery-ui.min.js"></script>
-<script src="~/lib_npm/datatables.net/js/jquery.dataTables.min.js"></script>

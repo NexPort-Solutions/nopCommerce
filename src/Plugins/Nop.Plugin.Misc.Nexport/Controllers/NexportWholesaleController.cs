@@ -57,7 +57,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var customer = await _workContext.GetCurrentCustomerAsync();
             var store = await _storeContext.GetCurrentStoreAsync();
 
-            //save group id for customer in generic attribute so it can be saved for the order later
+            //save group for customer in generic attribute so it can be saved for the order later
             await _genericAttributeService.SaveAttributeAsync(customer, $"GroupForCustomer",
                 groupSelected, store.Id);
 

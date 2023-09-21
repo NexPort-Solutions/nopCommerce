@@ -123,94 +123,86 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         if (orderItem != null)
                                         {
                                             var store = await _storeService.GetStoreByIdAsync(order.StoreId);
-                                            var storeModelInfo = await _genericAttributeService.GetAttributeAsync<string>(orderItem,
-                                                $"StoreModel-{order.Id}-{orderItem.Id}", order.StoreId);
-                                            var storeModel = storeModelInfo != null ?
-                                                JsonConvert.DeserializeObject<NexportStoreSaleModel>(storeModelInfo) :
-                                                await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(store, "NexportStoreSaleModel", store.Id);
 
-                                            // Only doing redemption logic if the store is under Retail mode
-                                            if (storeModel == NexportStoreSaleModel.Retail)
+                                            var mappingInfo = await _genericAttributeService.GetAttributeAsync<string>(orderItem,
+                                            $"ProductMapping-{order.Id}-{orderItem.Id}", order.StoreId);
+
+                                            var productMapping = mappingInfo != null ?
+                                                JsonConvert.DeserializeObject<NexportProductMapping>(mappingInfo) :
+                                                await _nexportService.GetProductMappingById(queueItem.ProductMappingId);
+
+                                            var nexportUserMapping =
+                                                await _nexportService.FindUserMappingByNexportUserId(queueItem.RedeemingUserId);
+
+                                            if (productMapping != null)
                                             {
-                                                var mappingInfo = await _genericAttributeService.GetAttributeAsync<string>(orderItem,
-                                                $"ProductMapping-{order.Id}-{orderItem.Id}", order.StoreId);
-
-                                                var productMapping = mappingInfo != null ?
-                                                    JsonConvert.DeserializeObject<NexportProductMapping>(mappingInfo) :
-                                                    await _nexportService.GetProductMappingById(queueItem.ProductMappingId);
-
-                                                var nexportUserMapping =
-                                                    await _nexportService.FindUserMappingByNexportUserId(queueItem.RedeemingUserId);
-                                                
-                                                if (productMapping != null)
+                                                var userMapping = await _nexportService.FindUserMappingByNexportUserId(queueItem.RedeemingUserId);
+                                                if (userMapping != null)
                                                 {
-                                                    var userMapping = await _nexportService.FindUserMappingByNexportUserId(queueItem.RedeemingUserId);
-                                                    if (userMapping != null)
+                                                    // Get the invoice details from Nexport (if existed)
+                                                    var invoiceDetails = await _nexportService.GetNexportInvoiceAsync(invoiceItem.InvoiceId);
+
+                                                    // Continue to process only if the invoice is opening
+                                                    if (invoiceDetails?.State == GetInvoiceResponse.StateEnum.Committed)
                                                     {
-                                                        // Get the invoice details from Nexport (if existed)
-                                                        var invoiceDetails = await _nexportService.GetNexportInvoiceAsync(invoiceItem.InvoiceId);
-
-                                                        // Continue to process only if the invoice is opening
-                                                        if (invoiceDetails?.State == GetInvoiceResponse.StateEnum.Committed)
+                                                        // Redeem the invoice based on the enrollment condition
+                                                        await RedeemNexportInvoiceAsync(productMapping, userMapping,
+                                                            invoiceItem, queueItem.RedeemingUserId,
+                                                            queueItem.ManualApprovalAction);
+                                                        var user = await _nexportService.GetNexportUserAsync(
+                                                            queueItem.RedeemingUserId);
+                                                        var userText = $"ID:{queueItem.RedeemingUserId}";
+                                                        if (user != null)
                                                         {
-                                                            // Redeem the invoice based on the enrollment condition
-                                                            await RedeemNexportInvoiceAsync(productMapping, userMapping,
-                                                                invoiceItem, queueItem.RedeemingUserId,
-                                                                queueItem.ManualApprovalAction);
-                                                            var user = await _nexportService.GetNexportUserAsync(
-                                                                queueItem.RedeemingUserId);
-                                                            var userText = $"ID:{queueItem.RedeemingUserId}";
-                                                            if (user != null)
-                                                            {
-                                                                userText +=
-                                                                    $" First name: {user.FirstName}, Last name: {user.LastName}";
-                                                            }
-                                                            await _nexportService.AddOrderNoteAsync(order,
-                                                                $"Nexport invoice item {invoiceItem.InvoiceItemId},Store:{store.Name}, Product:{productMapping.NexportProductName} has been redeemed for user {userText}");
+                                                            userText +=
+                                                                $" First name: {user.FirstName}, Last name: {user.LastName}";
+                                                        }
+                                                        await _nexportService.AddOrderNoteAsync(order,
+                                                            $"Nexport invoice item {invoiceItem.InvoiceItemId},Store:{store.Name}, Product:{productMapping.NexportProductName} has been redeemed for user {userText}");
 
-                                                            // Find the list of supplemental question Ids that match the current product mapping
-                                                            var questionIds = (await _nexportService
-                                                                .GetNexportSupplementalInfoQuestionMappingsByProductMappingId(productMapping.Id))
-                                                                .Select(x => x.QuestionId)
-                                                                .ToList();
+                                                        // Find the list of supplemental question Ids that match the current product mapping
+                                                        var questionIds = (await _nexportService
+                                                            .GetNexportSupplementalInfoQuestionMappingsByProductMappingId(productMapping.Id))
+                                                            .Select(x => x.QuestionId)
+                                                            .ToList();
 
-                                                            // Get the supplemental question Ids that the current customer does not have answers yet
-                                                            var questionWithoutAnswerIds = await _nexportService
-                                                                .GetUnansweredQuestions(nexportUserMapping.NopUserId, store.Id, questionIds);
+                                                        // Get the supplemental question Ids that the current customer does not have answers yet
+                                                        var questionWithoutAnswerIds = await _nexportService
+                                                            .GetUnansweredQuestions(nexportUserMapping.NopUserId, store.Id, questionIds);
 
-                                                            // Generate new requirement entities for each missing supplemental question
-                                                            foreach (var questionId in questionWithoutAnswerIds)
-                                                                await _nexportService.InsertNexportRequiredSupplementalInfo(
-                                                                    new NexportRequiredSupplementalInfo
-                                                                    {
-                                                                        CustomerId = nexportUserMapping.NopUserId,
-                                                                        StoreId = store.Id,
-                                                                        QuestionId = questionId,
-                                                                        UtcDateCreated = DateTime.UtcNow
-                                                                    });
-
-                                                            // Schedule a registration field synchronization for the customer
-                                                            await _nexportService.InsertNexportRegistrationFieldSynchronizationQueueItem(
-                                                                new NexportRegistrationFieldSynchronizationQueueItem
+                                                        // Generate new requirement entities for each missing supplemental question
+                                                        foreach (var questionId in questionWithoutAnswerIds)
+                                                            await _nexportService.InsertNexportRequiredSupplementalInfo(
+                                                                new NexportRequiredSupplementalInfo
                                                                 {
                                                                     CustomerId = nexportUserMapping.NopUserId,
+                                                                    StoreId = store.Id,
+                                                                    QuestionId = questionId,
                                                                     UtcDateCreated = DateTime.UtcNow
                                                                 });
 
-                                                            // Finish the order process and set the status to Complete
-                                                            await _orderProcessingService.CheckOrderStatusAsync(order);
+                                                        // Schedule a registration field synchronization for the customer
+                                                        await _nexportService.InsertNexportRegistrationFieldSynchronizationQueueItem(
+                                                            new NexportRegistrationFieldSynchronizationQueueItem
+                                                            {
+                                                                CustomerId = nexportUserMapping.NopUserId,
+                                                                UtcDateCreated = DateTime.UtcNow
+                                                            });
 
-                                                            // Remove the queue item
-                                                            await _nexportService.DeleteNexportOrderInvoiceRedemptionQueueItem(queueItem);
+                                                        // Finish the order process and set the status to Complete
+                                                        await _orderProcessingService.CheckOrderStatusAsync(order);
 
-                                                            await _logger.InformationAsync(
-                                                                $"Order invoice redemption queue item {queueItemId} for order {order.Id} has been processed and removed!");
+                                                        // Remove the queue item
+                                                        await _nexportService.DeleteNexportOrderInvoiceRedemptionQueueItem(queueItem);
 
-                                                            await CleanUpStoredMappingInfoAsync(orderItem.Id);
-                                                        }
+                                                        await _logger.InformationAsync(
+                                                            $"Order invoice redemption queue item {queueItemId} for order {order.Id} has been processed and removed!");
+
+                                                        await CleanUpStoredMappingInfoAsync(orderItem.Id);
                                                     }
                                                 }
                                             }
+
                                         }
                                     }
                                     catch (Exception ex)
@@ -324,11 +316,11 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         extensionAction == 1
                                             ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
                                             : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment);
-                            else
-                                // Delete current enrollment and create new enrollment when the enrollment has been started
-                                // and the product does not allow extension.
-                                await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
-                                    RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
+                                else
+                                    // Delete current enrollment and create new enrollment when the enrollment has been started
+                                    // and the product does not allow extension.
+                                    await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
+                                        RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
 
                             break;
                         }

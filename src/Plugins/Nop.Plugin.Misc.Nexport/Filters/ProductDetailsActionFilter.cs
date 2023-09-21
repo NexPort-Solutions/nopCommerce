@@ -58,43 +58,38 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                     if (context.Result is ViewResult { Model: ProductDetailsModel productDetailsModel })
                     {
                         var store = await _storeContext.GetCurrentStoreAsync();
-                        var storeModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(
-                            store, "NexportStoreSaleModel", store.Id);
 
-                        if (storeModel == NexportStoreSaleModel.Retail)
+                        var items = await _shoppingCartService.GetShoppingCartAsync(customer,
+                            ShoppingCartType.ShoppingCart,
+                            store.Id, productDetailsModel.Id);
+
+                        if (items.Count > 0)
                         {
-                            var items = await _shoppingCartService.GetShoppingCartAsync(customer,
-                                ShoppingCartType.ShoppingCart,
-                                store.Id, productDetailsModel.Id);
-
-                            if (items.Count > 0)
+                            if (await _genericAttributeService.GetAttributeAsync<bool>(store,
+                                NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
                             {
+                                productDetailsModel.AddToCart.DisableBuyButton = true;
+                            }
+                        }
+                        else
+                        {
+
+                            var product = await _productService.GetProductByIdAsync(productDetailsModel.Id);
+
+                            try
+                            {
+                                var canPurchaseProduct =
+                                    await _nexportService.CanPurchaseNexportProductAsync(product, customer);
+
                                 if (await _genericAttributeService.GetAttributeAsync<bool>(store,
                                     NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
                                 {
-                                    productDetailsModel.AddToCart.DisableBuyButton = true;
+                                    productDetailsModel.AddToCart.DisableBuyButton = !canPurchaseProduct;
                                 }
                             }
-                            else
+                            catch (Exception)
                             {
-
-                                var product = await _productService.GetProductByIdAsync(productDetailsModel.Id);
-
-                                try
-                                {
-                                    var canPurchaseProduct =
-                                        await _nexportService.CanPurchaseNexportProductAsync(product, customer);
-
-                                    if (await _genericAttributeService.GetAttributeAsync<bool>(store,
-                                        NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
-                                    {
-                                        productDetailsModel.AddToCart.DisableBuyButton = !canPurchaseProduct;
-                                    }
-                                }
-                                catch (Exception)
-                                {
-                                    // ignored
-                                }
+                                // ignored
                             }
                         }
                     }

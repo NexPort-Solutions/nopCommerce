@@ -16,33 +16,30 @@
     var groupProductText = T("Plugins.Misc.Nexport.Group.Products")+" - "+ Model.CurrentGroup.Name;
 }
 <div class="page-title">
-    <div class="breadcrumb">
-        <ul itemscope itemtype="http://schema.org/BreadcrumbList">
-            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")" itemprop="item">
-                    <span itemprop="name">@T("Plugins.Misc.Nexport.Groups")</span>
+    <nav aria-label="Breadcrumb">
+        <ul class="uk-breadcrumb">
+            <li >
+                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")">
+                    <span>@T("Plugins.Misc.Nexport.Groups")</span>
                 </a>
-                <span>/</span>
-                <meta itemprop="position" content="1" />
             </li>
-            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                <strong class="current-item" itemprop="name">@groupProductText </strong>
-                <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@(groupProductsRouteUrl+"?groupId="+Model.CurrentGroup.Id)">
+            <li >
+                @groupProductText
+                <span id="@(groupProductsRouteUrl+"?groupId="+Model.CurrentGroup.Id)">
                 </span>
-                <meta itemprop="position" content="2" />
             </li>
         </ul>
-    </div>
+    </nav>
     <h1>@groupProductText</h1>
 </div>
 <div class="page-body">
-    <table id="products_table" class="display stripe hover cell-border" style="width:100%">
+    <table id="products_table" class="uk-table uk-table-divider uk-table-striped" style="width:100%">
         <thead>
             <tr>
                 <th>Name</th>
                 <th>Available</th>
                 <th>Awaiting</th>
-                <th>Redeemed</th>
+                <th>Assigned</th>
                 <th></th>
             </tr>
         </thead>
@@ -69,7 +66,7 @@
                 {
                 "mData": "Id",
                 "mRender": function (data, type, row) {
-                    return '<center><button onClick="goToGroupProductRedemptions(' + row.Id + ',\'' + row.GroupId + '\')" ><i class="far fa-eye"/><span style="margin-left:5px;">View</span></button></center>';
+                    return '<center><button class="uk-button uk-button-default uk-button-small" onClick="goToGroupProductRedemptions(' + row.Id + ',\'' + row.GroupId + '\')" ><i class="far fa-eye"/><span style="margin-left:5px;">View</span></button></center>';
                 }
             }
             ],

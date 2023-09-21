@@ -14,9 +14,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.Order
 
         public bool ShowPurchasingGroupArea { get; set; } = true;
 
-        public string PurchasingGroupSelectBoxStyle { get; set; } = "";
+        public bool TogglePurchasingGroupText { get; set; } = true;
 
-        public IList<SelectListItem> AvailableGroups { get; set; } = new List<SelectListItem>();
-        public IList<NexportGroupModel> AvailableGroups2 { get; set; } = new List<NexportGroupModel>();
+        public IList<NexportGroupModel> AvailableGroups { get; set; } = new List<NexportGroupModel>();
     }
 }
