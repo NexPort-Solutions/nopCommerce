@@ -20,7 +20,7 @@
     <h1>@groupsText</h1>
 </div>
 <div class="page-body">
-    <table id="groups_table" class="display stripe hover cell-border" style="width:100%">
+    <table id="groups_table" class="uk-table uk-table-divider uk-table-striped" style="width:100%">
         <thead>
         <tr>
             <th>Name</th>
@@ -51,7 +51,7 @@
             {
                 "mData": "Id",
                 "mRender": function (data, type, row) {
-                    return '<center><button onClick="goToGroupProduct(\''+data+'\')" ><i class="far fa-eye"/><span style="margin-left:5px;">View</span></button></center>';
+                    return '<center><button class="uk-button uk-button-default uk-button-small" onClick="goToGroupProduct(\''+data+'\')" ><i class="far fa-eye"/><span style="margin-left:5px;">View</span></button></center>';
                 }
             }
         ],

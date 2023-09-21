@@ -15,40 +15,35 @@
     var groupProductRedemptionText = T("Plugins.Misc.Nexport.Group.Product.Redemptions") + " - " + Model.CurrentProduct.Name;
 }
 <div class="page-title">
-    <div class="breadcrumb">
-        <ul itemscope itemtype="http://schema.org/BreadcrumbList">
-            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")" itemprop="item">
-                    <span itemprop="name">@T("Plugins.Misc.Nexport.Groups")</span>
+    <nav aria-label="Breadcrumb">
+        <ul class="uk-breadcrumb">
+            <li >
+                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")" >
+                    <span>@T("Plugins.Misc.Nexport.Groups")</span>
                 </a>
-                <span>/</span>
-                <meta itemprop="position" content="1" />
             </li>
-            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                <a href="@(groupProductsRouteUrl+"?groupId="+Model.CurrentGroup.Id)" title="@T("Plugins.Misc.Nexport.Group.Products")" itemprop="item">
-                    <span itemprop="name">@Model.CurrentGroup.Name</span>
+            <li >
+                <a href="@(groupProductsRouteUrl+"?groupId="+Model.CurrentGroup.Id)" title="@T("Plugins.Misc.Nexport.Group.Products")">
+                    <span>@Model.CurrentGroup.Name</span>
                 </a>
-                <span>/</span>
-                <meta itemprop="position" content="2" />
             </li>
-            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                <strong class="current-item" itemprop="name">@groupProductRedemptionText</strong>
-                <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@(groupProductRedemptionsRouteUrl+"?groupId="+Model.CurrentGroup.Id+"&productId="+Model.CurrentProduct.Id)">
+            <li >
+                @groupProductRedemptionText
+                <span id="@(groupProductRedemptionsRouteUrl+"?groupId="+Model.CurrentGroup.Id+"&productId="+Model.CurrentProduct.Id)">
                 </span>
-                <meta itemprop="position" content="3" />
             </li>
         </ul>
-    </div>
+    </nav>
     <h1>@groupProductRedemptionText</h1>
 </div>
-<div class="page-body">
+<div class="page-body nex-plugin">
     <div style="text-align: right;padding-bottom: 1rem;">
         <input type="submit" id="btnRefreshGroupRedemptions" style="display: none">
         Assignments Available: 
         <span style="margin-left: 7px; margin-right: 12px;" id="redemptionsAvailable"></span>
-        <button id="redeemBtn">Assign</button>
+        <button class="uk-button uk-button-default uk-button-small" id="redeemBtn">Assign</button>
     </div>
-    <table id="redemptions_table" class="display stripe hover cell-border" style="width: 100%">
+    <table id="redemptions_table" class="uk-table uk-table-divider uk-table-striped" style="width: 100%">
         <thead>
         <tr>
             <th>Name</th>
@@ -80,7 +75,7 @@
                     "mData": "InvoiceItemId",
                     "mRender": function (data, type, row) {
                         if(row.InvoiceItemId!=null){
-                            return "<center><button onclick=\"modifyRedemption('"+row.InvoiceItemId+"')\" >Modify</button></center>";
+                            return "<center><button class=\"uk-button uk-button-default uk-button-small\" onclick=\"modifyRedemption('"+row.InvoiceItemId+"')\" >Modify</button></center>";
                         }
                         return '';
                     }

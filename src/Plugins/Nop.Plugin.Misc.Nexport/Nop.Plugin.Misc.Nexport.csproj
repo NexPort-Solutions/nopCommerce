@@ -125,6 +125,7 @@
     <None Remove="Views\Widget\Customer\NexportRegistrationFields.cshtml" />
     <None Remove="Views\Widget\Customer\NexportSettingNavigation.cshtml" />
     <None Remove="Views\Widget\Order\NexportOrderDetailsProductLine.cshtml" />
+    <None Remove="Views\Widget\Order\WidgetsNexportOrderDetailsPageAfterproducts.cshtml" />
     <None Remove="Views\Widget\Order\WidgetsOrderDetailsPageOverview.cshtml" />
     <None Remove="Views\Widget\Order\WidgetsOrderSummaryCartFooter.cshtml" />
     <None Remove="Views\Widget\Product\WidgetsProductDetailsOverviewTop.cshtml" />
@@ -406,6 +407,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Widget\Order\NexportOrderDetailsProductLine.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Widget\Order\WidgetsNexportOrderDetailsPageAfterproducts.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Widget\Order\WidgetsOrderSummaryCartFooter.cshtml">

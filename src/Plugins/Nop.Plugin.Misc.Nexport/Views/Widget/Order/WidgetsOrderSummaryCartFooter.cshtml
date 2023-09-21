@@ -1,33 +1,42 @@
 ﻿@using Nop.Core.Domain.Discounts
+@using System.Web
 @model Nop.Plugin.Misc.Nexport.Models.Order.OrderSummaryCartFooterModel
 
 @{
     var discounts = ViewData["DiscountList"] as List<Discount>;
-
 }
 
 @if (Model.ShowPurchasingGroupArea)
 {
-    <div style="@(Model.PurchasingGroupSelectBoxStyle)">
-        <div style="margin: 0 0 5px;">
-            <strong style="font-size: 18px; font-weight: normal;">
-                Group
-            </strong>
+    @if (!Model.TogglePurchasingGroupText)
+    {
+        <div class="cart-collaterals">
+            <div class="deals">
+                <div class="coupon-box">
+                    <div class="title">
+                        <strong>
+                            Group
+                        </strong>
+                    </div>
+                    <div >
+                        Select the group you would like to purchase for
+                    </div>
+                    <div>
+                        <input id="search-customer-groups" type="text" autocomplete="on" class="form-control"/>
+                        @Html.TextBoxFor(model => model.GroupGuid, new {style = "display:none"})
+                    </div>
+                </div>
+            </div>
         </div>
-        <div style="margin: 0 0 10px;">
-            Select the group you would like to purchase for
+    }
+    else
+    {
+        <div id="selectedgroupdiv" style="display: flex; flex-direction: column; font-weight: bold; color:#444">
         </div>
-        <div>
-            <input id="search-customer-groups" type="text" autocomplete="on" class="form-control" />
-            @Html.TextBoxFor(model => model.GroupGuid, new { style = "display:none" })
-        </div>
-    </div>
-    <div style="min-height: 60px;overflow: hidden;">
-        <div id="selectedgroupdiv" style="float: right; margin: 30px 0; padding: 0 10px;color: #444;">
-        </div>
-    </div>
+    }
     <script>
         $(document).ready(function () {
+            $("#selectedgroupdiv").html("@(Model.TogglePurchasingGroupText ? "Purchasing for group: "+HttpUtility.JavaScriptStringEncode(Model.Group?.Name):"")");
             var source = @Html.Raw(Json.Serialize(Model.AvailableGroups.Select(group => new { label = group.Name, value = group })));
             $('#search-customer-groups').autocomplete({
                 delay: 0,
@@ -37,7 +46,6 @@
                     var selectedGroup = source.find(x=>x.value.Id==="@(Model.Group?.Id)");
                     if(selectedGroup){
                         $('#search-customer-groups').data('ui-autocomplete')._trigger('select', 'autocompleteselect', { item: { label:selectedGroup.label,value: selectedGroup.value } });
-                        $("#selectedgroupdiv").html("Purchasing for group:" + $('#search-customer-groups').val());
                     }
                     return false;
                 },
@@ -62,9 +70,6 @@
                             url: "@Url.Action("SetPurchaseGroupForCustomer", "NexportWholesale")",
                             data: postData,
                             success: function (data, textStatus, jqXHR) {
-                                if (data.Result) {
-                                    $("#selectedgroupdiv").html("Purchasing for group:" + $('#search-customer-groups').val());
-                                }
                             },
                             error: function (jqXHR, textStatus, errorThrown) {
 
