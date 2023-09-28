@@ -1620,13 +1620,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
 
 
-                //var groups = await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync();
-                var groups = await _nexportService.FindAllDirectoriesAsync(Guid.Parse("ca9e1a16-021b-44a3-9497-ba7080d58422"));
+                var groups = await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync();
+                //var groups = await _nexportService.FindAllDirectoriesAsync(Guid.Parse("ca9e1a16-021b-44a3-9497-ba7080d58422"));
 
                 orderSummaryCartFooterModel.AvailableGroups = await groups.Select(x =>
                     new NexportGroupModel
                     {
-                        Id = x.Id,
+                        Id = x.OrgId,
                         Name = x.Name,
                         ShortName = x.ShortName
                     }).ToListAsync();
