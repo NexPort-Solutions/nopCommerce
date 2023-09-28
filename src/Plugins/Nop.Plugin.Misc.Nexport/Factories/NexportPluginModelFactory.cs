@@ -1582,13 +1582,19 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     if (npmInCart.AutoRedeem)
                     {
                         orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
+                        break;
                     }
 
                 }
             }
 
-            //TODO - JS: api call to check if customer is purchasing agent. idk if this is needed
-            var isPurchasingAgent = true;// HasGroupPermission(userId,groupId,permission)//checking rootId here?
+            //TODO @JS - create and use HasGroupPermission service method to check if customer is purchasing agent.
+            // var isPurchasingAgent = _nexportService.HasGroupPermission(customer)
+            //_nexportSettings.RootOrganizationId.Value - hasgrouoppermission should check root org if no org parameter
+            //var customerMapping = await _nexportService.FindUserMappingByCustomerId(customer.CustomerId); - hasgrouppermission should use this to get the nexportUserId
+            //            NexportDefaults.NEXPORT_ADD_GROUP_PERMISSION - use the add permission to check if user has rights on groups
+
+            var isPurchasingAgent = true;
             if (!isPurchasingAgent)
                 orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
 
@@ -1606,14 +1612,21 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     }
                 }
 
-                //TODO - JS: use api call that narrows groups down to this customer instead of all orgs
-                //var groups = SearchGroupsForPermission(userId,orgId,permission,page,perpage)
-                var groups = await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync();
+                //TODO @JS - create and use SearchGroupsForPermission service method to get the groups instead 
+                //var groups = SearchGroupsForPermission(customer)
+                //_nexportSettings.RootOrganizationId.Value - hasgrouoppermission should check root org if no org parameter
+                //var customerMapping = await _nexportService.FindUserMappingByCustomerId(customer.CustomerId); - hasgrouppermission should use this to get the nexportUserId
+                //            NexportDefaults.NEXPORT_ADD_GROUP_PERMISSION - use the add permission to check if user has rights on groups
+
+
+
+                //var groups = await _nexportService.FindAllOrganizationsUnderRootOrganizationAsync();
+                var groups = await _nexportService.FindAllDirectoriesAsync(Guid.Parse("ca9e1a16-021b-44a3-9497-ba7080d58422"));
 
                 orderSummaryCartFooterModel.AvailableGroups = await groups.Select(x =>
                     new NexportGroupModel
                     {
-                        Id = x.OrgId,
+                        Id = x.Id,
                         Name = x.Name,
                         ShortName = x.ShortName
                     }).ToListAsync();
@@ -1631,47 +1644,71 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
+
+            //TODO @JS - create and use HasGroupPermission service method to check if customer is purchasing agent.
+            // var isPurchasingAgent = _nexportService.HasGroupPermission(customer)
+            //_nexportSettings.RootOrganizationId.Value - hasgrouoppermission should check root org if no org parameter
+            //var customerMapping = await _nexportService.FindUserMappingByCustomerId(customer.CustomerId); - hasgrouppermission should use this to get the nexportUserId
+            //            NexportDefaults.NEXPORT_ADD_GROUP_PERMISSION - use the add permission to check if user has rights on groups
+
+            var isPurchasingAgent = true;
+
             var groups = new List<NexportGroupModel>();
-            var genericAttributeGroups = await _nexportService.GetAllGroupForOrdersAsync();
 
             var model = new NexportGroupListModel();
-            try
+
+            if (isPurchasingAgent)
             {
-                foreach (var genAttGroup in genericAttributeGroups)
+
+                //TODO @JS - create and use SearchGroupsForPermission service method to get the groups instead
+                //var groups = SearchGroupsForPermission(customer)
+                //_nexportSettings.RootOrganizationId.Value - hasgrouppermission should check root org if no org parameter
+                //var customerMapping = await _nexportService.FindUserMappingByCustomerId(customer.CustomerId); - hasgrouppermission should use this to get the nexportUserId
+                //            NexportDefaults.NEXPORT_ADD_GROUP_PERMISSION - use the add permission to check if user has rights on groups
+
+                //TODO @JS - this currently duplicates orders if the name of the group is changed in nexport
+                // need to change how this works when we have the services setup for the new api
+                var genericAttributeGroups = await _nexportService.GetAllGroupForOrdersAsync();
+
+                try
                 {
-                    if (genAttGroup != null)
+                    foreach (var genAttGroup in genericAttributeGroups)
                     {
-                        var deserialized = JsonConvert.DeserializeObject<NexportGroupModel>(genAttGroup.Value);
-                        if (deserialized != null)
-                            groups.Add(deserialized);
+                        if (genAttGroup != null)
+                        {
+                            var deserialized = JsonConvert.DeserializeObject<NexportGroupModel>(genAttGroup.Value);
+                            if (deserialized != null)
+                                groups.Add(deserialized);
+                        }
                     }
-                }
 
-                foreach (var group in groups)
-                {
-                    group.NumberOfProducts = await _nexportService.GetInvoiceItemCountForGroupByGuid(group.Id);
-                }
+                    foreach (var group in groups)
+                    {
+                        group.NumberOfProducts = await _nexportService.GetInvoiceItemCountForGroupByGuid(group.Id);
+                    }
 
-                groups.RemoveAll(g => g.NumberOfProducts < 1);
+                    groups.RemoveAll(g => g.NumberOfProducts < 1);
 
 
-                var pagedGroups = groups.ToPagedList(searchModel);
+                    var pagedGroups = groups.ToPagedList(searchModel);
 
-                model = await new NexportGroupListModel().PrepareToGridAsync(searchModel, pagedGroups, () =>
-                  {
-                      return pagedGroups.SelectAwait(async group =>
+                    model = await model.PrepareToGridAsync(searchModel, pagedGroups, () =>
                       {
-                          return group;
+                          return pagedGroups.SelectAwait(async group =>
+                          {
+                              return group;
+                          });
                       });
-                  });
 
-                return model;
+                    return model;
+                }
+                catch (Exception ex)
+                {
+                    await _logger.WarningAsync(
+                        $"Unable to prepare nexport group list model", ex);
+                }
             }
-            catch (Exception ex)
-            {
-                await _logger.WarningAsync(
-                    $"Unable to prepare nexport group list model", ex);
-            }
+
             return model;
         }
 
@@ -1684,23 +1721,43 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             if (groupId == Guid.Empty)
                 throw new ArgumentException(nameof(groupId));
 
-            var products = await _nexportService.GetGroupProductModelForGroupId(groupId);
+            //TODO @JS - create and use HasGroupPermission service method to check if customer is purchasing agent.
+            // var isPurchasingAgent = _nexportService.HasGroupPermission(customer)
+            //_nexportSettings.RootOrganizationId.Value - hasgrouoppermission should check root org if no org parameter
+            //var customerMapping = await _nexportService.FindUserMappingByCustomerId(customer.CustomerId); - hasgrouppermission should use this to get the nexportUserId
+            //            NexportDefaults.NEXPORT_ADD_GROUP_PERMISSION - use the add permission to check if user has rights on groups
 
-            var pagedProducts = products.ToPagedList(searchModel);
+            var isPurchasingAgent = true;
 
-            var model = await new NexportGroupProductListModel().PrepareToGridAsync(searchModel, pagedProducts, () =>
+            var model = new NexportGroupProductListModel();
+
+            if (isPurchasingAgent)
             {
-                return pagedProducts.SelectAwait(async products =>
+                try
                 {
-                    return products;
-                });
-            });
+                    var products = await _nexportService.GetGroupProductModelForGroupId(groupId);
 
+                    var pagedProducts = products.ToPagedList(searchModel);
+
+                    model = await model.PrepareToGridAsync(searchModel, pagedProducts,
+                        () =>
+                        {
+                            return pagedProducts.SelectAwait(async products =>
+                            {
+                                return products;
+                            });
+                        });
+                }
+                catch (Exception ex)
+                {
+                    await _logger.WarningAsync("Unable to prepare group products list");
+                }
+            }
 
             return model;
         }
 
-        public virtual async Task<NexportGroupProductRedemptionListModel> PrepareNexportGroupProductCustomerListModelAsync(
+        public virtual async Task<NexportGroupProductRedemptionListModel> PrepareNexportGroupProductRedemptionListModelAsync(
             NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
         {
             if (searchModel == null)
@@ -1714,54 +1771,66 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var redemptions = new List<NexportGroupProductRedemptionModel>();
 
-            try
+            //TODO @JS - create and use HasGroupPermission service method to check if customer is purchasing agent.
+            // var isPurchasingAgent = _nexportService.HasGroupPermission(customer)
+            //_nexportSettings.RootOrganizationId.Value - hasgrouoppermission should check root org if no org parameter
+            //var customerMapping = await _nexportService.FindUserMappingByCustomerId(customer.CustomerId); - hasgrouppermission should use this to get the nexportUserId
+            //            NexportDefaults.NEXPORT_ADD_GROUP_PERMISSION - use the add permission to check if user has rights on groups
+
+            var isPurchasingAgent = true;
+
+            var model = new NexportGroupProductRedemptionListModel();
+
+            if (isPurchasingAgent)
             {
-                var invoiceItems = await _nexportService.GetInvoiceItemsForGroupIdAndProductIdAndRedeemingUserIdHasValue(groupId, productId);
-
-                foreach (var invoiceItem in invoiceItems)
+                try
                 {
-                    var redemptionItem = new NexportGroupProductRedemptionModel();
-                    redemptionItem.InvoiceItemId = invoiceItem.InvoiceItemId;
+                    var invoiceItems = await _nexportService.GetInvoiceItemsForGroupIdAndProductIdAndRedeemingUserIdHasValue(groupId, productId);
 
-                    if (invoiceItem.RedeemingUserId != null && invoiceItem.UtcDateRedemption == null)
+                    foreach (var invoiceItem in invoiceItems)
                     {
-                        redemptionItem.Status = "Awaiting";
-                        var redeemer = await _nexportService.FindCustomerByGuid(invoiceItem.RedeemingUserId);
+                        var redemptionItem = new NexportGroupProductRedemptionModel();
+                        redemptionItem.InvoiceItemId = invoiceItem.InvoiceItemId;
 
-                        redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
-                        redemptionItem.Email = redeemer.Email;
+                        if (invoiceItem.RedeemingUserId != null && invoiceItem.UtcDateRedemption == null)
+                        {
+                            redemptionItem.Status = "Awaiting";
+                            var redeemer = await _nexportService.FindCustomerByGuid(invoiceItem.RedeemingUserId);
+
+                            redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
+                            redemptionItem.Email = redeemer.Email;
 
 
+                        }
+                        else
+                        {
+                            redemptionItem.Status = "Redeemed";
+                            var redeemer = await _nexportService.FindCustomerByGuid(invoiceItem.RedeemingUserId);
+
+                            redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
+                            redemptionItem.Email = redeemer.Email;
+
+                        }
+
+                        redemptions.Add(redemptionItem);
                     }
-                    else
-                    {
-                        redemptionItem.Status = "Redeemed";
-                        var redeemer = await _nexportService.FindCustomerByGuid(invoiceItem.RedeemingUserId);
-
-                        redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
-                        redemptionItem.Email = redeemer.Email;
-
-                    }
-
-                    redemptions.Add(redemptionItem);
                 }
-            }
-            catch (Exception ex)
-            {
-                await _logger.WarningAsync("Unable to prepare redemptions list");
-            }
-
-
-            var pagedRedemptions = redemptions.ToPagedList(searchModel);
-
-            var model = await new NexportGroupProductRedemptionListModel().PrepareToGridAsync(searchModel, pagedRedemptions, () =>
-            {
-                return pagedRedemptions.SelectAwait(async redemps =>
+                catch (Exception ex)
                 {
-                    return redemps;
-                });
-            });
+                    await _logger.WarningAsync("Unable to prepare redemptions list");
+                }
 
+
+                var pagedRedemptions = redemptions.ToPagedList(searchModel);
+
+                model = await model.PrepareToGridAsync(searchModel, pagedRedemptions, () =>
+                {
+                    return pagedRedemptions.SelectAwait(async redemps =>
+                    {
+                        return redemps;
+                    });
+                });
+            }
             return model;
         }
 

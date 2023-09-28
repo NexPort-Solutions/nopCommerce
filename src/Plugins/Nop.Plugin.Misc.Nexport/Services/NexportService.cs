@@ -2135,9 +2135,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             if (mapping != null)
             {
-                //TODO - JS:
-                //if (mapping.SaleModel != NexportSaleModel.Retail)
-                //  return true;
                 if (existingEnrollmentStatus == null)
                 {
                     if (mapping.IsExtensionProduct)

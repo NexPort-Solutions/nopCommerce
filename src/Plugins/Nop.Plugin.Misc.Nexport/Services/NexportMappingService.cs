@@ -439,7 +439,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 try
                 {
-                    //TODO @JS this should change when we have the reset redemption api call
                     var currentInvoiceItems = await FindNexportOrderInvoiceItems(item.OrderId, item.OrderItemId);
                     NexportOrderInvoiceItem? invoiceToUpdate = null;
                     if (currentInvoiceItems != null)

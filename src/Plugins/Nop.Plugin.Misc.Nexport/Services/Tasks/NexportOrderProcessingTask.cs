@@ -167,7 +167,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         
                                         if (group != null)
                                         {
-                                            //TODO - JS: If there is a group id then treat as wholesale order, otherwise do retail
+                                            //TODO @JS -  modify the beginnexportorderinvoicetransactionasync method to utilize group id and use it here instead of what we are using currently
                                             //orderInvoiceId =  await _nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId,purchasingGroupId, userMapping.NexportUserId); 
 
                                             orderInvoiceId =  await _nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId, userMapping.NexportUserId); 
@@ -604,6 +604,14 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                             break;
                         }
                 }
+            }
+            else if(productMapping.Type == NexportProductTypeEnum.Catalog && productMapping.AssignWhenRedeemed.HasValue && productMapping.AssignWhenRedeemed.Value)
+            {
+                invoiceItemId = await _nexportService.AddItemToNexportOrderInvoiceAsync(
+                    orderInvoiceId,
+                    productMapping.NexportCatalogId, Enums.ProductTypeEnum.OpenEnded, productCost,
+                    subscriptionOrgId, groupMembershipIds,
+                    productMapping.UtcAccessExpirationDate, productMapping.AccessTimeLimit)!;
             }
 
             return (invoiceItemId, completionPercentage, requireManualApproval, extensionAction);

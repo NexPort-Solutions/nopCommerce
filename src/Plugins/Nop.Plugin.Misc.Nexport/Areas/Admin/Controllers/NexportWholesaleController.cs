@@ -283,7 +283,7 @@ public class NexportWholesaleController : BaseAdminController
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
             return await AccessDeniedDataTablesJson();
 
-        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductCustomerListModelAsync(searchModel, groupId, productId);
+        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListModelAsync(searchModel, groupId, productId);
 
         return Json(model);
     }

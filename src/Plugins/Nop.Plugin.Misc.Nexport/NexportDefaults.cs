@@ -218,5 +218,7 @@ namespace Nop.Plugin.Misc.Nexport
             "Nexport.DeleteSupplementalInfoQuestion";
 
         public const string NEXPORT_PURCHASE_PRODUCT_FOR_CUSTOMER = "Nexport.PurchaseForCustomer";
+
+        public const string NEXPORT_ADD_GROUP_PERMISSION = "AddGroup";
     }
 }
