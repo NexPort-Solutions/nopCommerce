@@ -12,7 +12,7 @@
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
 
-    var groupProductRedemptionText = T("Plugins.Misc.Nexport.Group.Product.Redemptions") + " - " + Model.CurrentProduct.Name;
+    var groupProductRedemptionText = Model.CurrentProduct.Name + " - " + T("Plugins.Misc.Nexport.Group.Product.Redemptions");
 }
 <div class="page-title">
     <nav aria-label="Breadcrumb">
@@ -36,7 +36,7 @@
     </nav>
     <h1>@groupProductRedemptionText</h1>
 </div>
-<div class="page-body nex-plugin">
+<div class="page-body">
     <div style="text-align: right;padding-bottom: 1rem;">
         <input type="submit" id="btnRefreshGroupRedemptions" style="display: none">
         Assignments Available: 

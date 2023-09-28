@@ -70,7 +70,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             //(line 818 editmapping in nexportintegrationcontroller) which was keeping the save from happening
             //happens because we have the nullable property set in the nop.plugin.misc.nexport.csproj
             //and there are null strings in the model.
-            //TODO - JS: possibly we should change string to string? in the nexportproductmappingmodel
+            //TODO @JS - possibly we should change string to string? in the nexportproductmappingmodel
             services.AddControllers(options =>
                 options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true);
         }
