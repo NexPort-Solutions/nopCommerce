@@ -2980,6 +2980,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
 
+            var isWholesale = true;
+
             foreach (var item in orderItems)
             {
                 var mapping = await _nexportService.GetProductMappingByNopProductId(item.ProductId, order.StoreId)
@@ -2987,6 +2989,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 if (mapping != null)
                 {
+                    if (mapping.AutoRedeem && isWholesale)
+                        isWholesale = false;
+
                     await _genericAttributeService.SaveAttributeAsync(item,
                         $"ProductMapping-{order.Id}-{item.Id}",
                         JsonConvert.SerializeObject(mapping), order.StoreId);
@@ -3003,14 +3008,17 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var customer = await _workContext.GetCurrentCustomerAsync();
             var orderStore = await _storeContext.GetCurrentStoreAsync();
+
+            await _genericAttributeService.SaveAttributeAsync<bool>(order, "IsWholesaleOrder", isWholesale, orderStore.Id);
+
             var groupForCustomer = await _genericAttributeService.GetAttributeAsync<string>(customer, "GroupForCustomer", orderStore.Id);
 
             // delete generic attribute group for customer for future purchases
-            await _genericAttributeService.SaveAttributeAsync<string>(customer, $"GroupForCustomer",
+            await _genericAttributeService.SaveAttributeAsync<string>(customer, "GroupForCustomer",
                 null, orderStore.Id);
 
             // set attribute group for order
-            await _genericAttributeService.SaveAttributeAsync<string>(order, $"GroupForOrder",
+            await _genericAttributeService.SaveAttributeAsync<string>(order, "GroupForOrder",
                 groupForCustomer, orderStore.Id);
         }
 

@@ -1571,7 +1571,11 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             foreach (var shoppingCartItem in cart)
             {
                 if (shoppingCartItem == null)
-                    continue;
+                {
+                    orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
+                    break;
+                }
+
 
                 var npmInCart =
                     await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId,
@@ -1579,12 +1583,17 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
                 if (npmInCart != null)
                 {
-                    if (npmInCart.AutoRedeem)
+                    if (!npmInCart.AutoRedeem)
                     {
                         orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
                         break;
                     }
 
+                }
+                else
+                {
+                    orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
+                    break;
                 }
             }
 

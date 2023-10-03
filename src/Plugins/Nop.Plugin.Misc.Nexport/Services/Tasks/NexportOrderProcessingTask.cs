@@ -3,6 +3,7 @@ using NexportApi.Model;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
+using Nop.Core.Domain.Stores;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -15,6 +16,7 @@ using Nop.Services.Directory;
 using Nop.Services.Orders;
 using Nop.Services.ScheduleTasks;
 using Nop.Services.Stores;
+using StackExchange.Profiling.Internal;
 using ILogger = Nop.Services.Logging.ILogger;
 
 namespace Nop.Plugin.Misc.Nexport.Services.Tasks
@@ -118,275 +120,31 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 foreach (var queueItemId in queueItemIds)
                 {
                     var completeOrder = false;
-                    var requireManualApproval = false;
+
+                    await _logger.InformationAsync($"Begin processing order processing queue item {queueItemId}");
+
+                    var queueItem = await _nexportOrderProcessingQueueRepository.GetByIdAsync(queueItemId);
+
+                    if (queueItem == null)
+                        continue;
+
+                    var order = await _orderService.GetOrderByIdAsync(queueItem.OrderId);
 
                     try
                     {
-                        await _logger.InformationAsync($"Begin processing order processing queue item {queueItemId}");
-
-                        var queueItem = await _nexportOrderProcessingQueueRepository.GetByIdAsync(queueItemId);
-
-                        if (queueItem == null)
-                            continue;
-
-                        var order = await _orderService.GetOrderByIdAsync(queueItem.OrderId);
-
-                        // Only process order that has Processing status
                         if (order is { Deleted: false, OrderStatus: OrderStatus.Processing })
                         {
-                            await _logger.InformationAsync($"Begin processing order {order.Id}");
+                            var store = await _storeService.GetStoreByIdAsync(order.StoreId);
 
-                            var userMapping = await _nexportService.FindUserMappingByCustomerId(order.CustomerId);
-
-                            if (userMapping != null)
+                            var group = await _genericAttributeService.GetAttributeAsync<string>(order, "GroupForOrder", store.Id);
+                            var isWholesale = await _genericAttributeService.GetAttributeAsync<bool>(order, "isWholesale", store.Id);
+                            if (isWholesale)
                             {
-                                await SynchronizeCustomerContactInformationAsync(userMapping);
-
-                                var store = await _storeService.GetStoreByIdAsync(order.StoreId);
-
-                                //order notes
-                                await _nexportService.AddOrderNoteAsync(order, $"Nexport invoice has started processing for order Number:{order.Id}, Store: {store.Name}");
-
-                                if (store != null)
-                                {
-                                    var orgId = await _genericAttributeService.GetAttributeAsync<Guid>(store, "NexportSubscriptionOrganizationId", store.Id);
-
-                                    if (orgId == Guid.Empty)
-                                    {
-                                        orgId = _nexportSettings.RootOrganizationId.Value;
-                                        await _logger.InformationAsync($"While processing order {order.Id} - orgid set to root organization id value");
-                                    }
-
-                                    // Check if there is an existing invoice. If not, begin a new invoice transaction.
-                                    var orderInvoiceId = await _nexportService.FindExistingInvoiceForOrder(order.Id);
-
-                                    if (orderInvoiceId == null)
-                                    {
-                                        //get group for order
-                                        var group = await _genericAttributeService.GetAttributeAsync<string>(order, $"GroupForOrder", store.Id);
-                                        
-                                        if (group != null)
-                                        {
-                                            //TODO @JS -  modify the beginnexportorderinvoicetransactionasync method to utilize group id and use it here instead of what we are using currently
-                                            //orderInvoiceId =  await _nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId,purchasingGroupId, userMapping.NexportUserId); 
-
-                                            orderInvoiceId =  await _nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId, userMapping.NexportUserId); 
-                                        }
-                                        else
-                                        {
-                                            orderInvoiceId =  await _nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId, userMapping.NexportUserId); 
-                                        }
-                                    }
-
-
-                                    
-
-                                    // Get the invoice details from Nexport (if existing)
-                                    var invoiceDetails = await _nexportService.GetNexportInvoiceAsync(orderInvoiceId.Value);
-
-                                    // Continue to process only if the invoice is opening
-                                    if (invoiceDetails == null ||
-                                        (invoiceDetails.State != GetInvoiceResponse.StateEnum.Committed &&
-                                         invoiceDetails.State != GetInvoiceResponse.StateEnum.Failed))
-                                    {
-                                        decimal invoiceTotalCost = 0;
-
-                                        var autoRedeemingInvoiceItems = new List<AutoRedeemingInvoiceItem>();
-
-                                        var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
-                                        foreach (var orderItem in orderItems)
-                                        {
-                                            var mappingInfo = await _genericAttributeService.GetAttributeAsync<string>(orderItem,
-                                                $"ProductMapping-{order.Id}-{orderItem.Id}", order.StoreId);
-
-                                            // Retrieve the stored mapping info if existed; otherwise, get the current mapping info
-                                            var mapping = mappingInfo != null ?
-                                                JsonConvert.DeserializeObject<NexportProductMapping>(mappingInfo) :
-                                                await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId, order.StoreId) ??
-                                                await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
-
-                                            if (mapping != null)
-                                            {
-                                                var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
-                                                if (product != null)
-                                                {
-                                                    var productCost = product.ProductCost;
-                                                    var subscriptionOrgId = mapping.NexportSubscriptionOrgId ?? orgId;
-
-                                                    // Generate the listing of group membership identifiers
-                                                    var groupMembershipIds = await GenerateGroupMembershipIds(order, orderItem, mapping);
-
-                                                    // Find existing invoice item for the order item
-                                                    var existingInvoiceItemId =
-                                                        await _nexportService.FindExistingInvoiceItemForOrderItem(order.Id, orderItem.Id);
-                                                    // If the invoice item does not exist, then add the order item into the invoice
-                                                    if (existingInvoiceItemId == null ||
-                                                        !invoiceDetails.InvoiceItems.Any(i =>
-                                                            i.Id == existingInvoiceItemId))
-                                                    {
-                                                        for (int q = 0; q < orderItem.Quantity; q++)
-                                                        {
-                                                            var addItemResult = await AddItemToNexportInvoiceAsync(
-                                                                mapping, userMapping,
-                                                                orderInvoiceId.Value, productCost, subscriptionOrgId,
-                                                                groupMembershipIds);
-
-                                                            var invoiceItemId = addItemResult.InvoiceItemId;
-
-                                                            if (invoiceItemId.HasValue)
-                                                            {
-                                                                int? extensionAction;
-                                                                var nexportOrderInvoiceItem =
-                                                                    new NexportOrderInvoiceItem
-                                                                    {
-                                                                        OrderId = queueItem.OrderId,
-                                                                        OrderItemId = orderItem.Id,
-                                                                        InvoiceItemId = invoiceItemId.Value,
-                                                                        InvoiceId = orderInvoiceId.Value,
-                                                                        UtcDateProcessed = DateTime.UtcNow,
-                                                                        RequireManualApproval =
-                                                                            addItemResult.RequireManualApproval
-                                                                    };
-
-                                                                // This allows the task to automatically process redemption as restarting the enrollment
-                                                                // in which the customer currently does not meet the enrollment completion threshold
-                                                                // no matter what the approval method is.
-                                                                extensionAction = addItemResult.ExtensionAction;
-
-                                                                await _nexportService
-                                                                    .InsertOrUpdateNexportOrderInvoiceItem(
-                                                                        nexportOrderInvoiceItem);
-
-                                                                if (mapping.AutoRedeem)
-                                                                {
-                                                                    // Add the invoice item for auto redeeming after committing the invoice
-                                                                    // if AutoRedeem is set on the mapping and the renewal approval method is not defined
-                                                                    // or the approval method is set to be Auto
-                                                                    if (!nexportOrderInvoiceItem.RequireManualApproval
-                                                                            .HasValue ||
-                                                                        !nexportOrderInvoiceItem.RequireManualApproval
-                                                                            .Value)
-                                                                    {
-                                                                        autoRedeemingInvoiceItems.Add(
-                                                                            new AutoRedeemingInvoiceItem
-                                                                            {
-                                                                                Id = nexportOrderInvoiceItem.Id,
-                                                                                ProductMappingId = mapping.Id,
-                                                                                OrderItemId = orderItem.Id,
-                                                                                ExtensionAction = extensionAction
-                                                                            });
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        // Set this to true in order to prevent completing the order
-                                                                        requireManualApproval = true;
-                                                                    }
-                                                                }
-                                                                else
-                                                                {
-                                                                    // Order invoice item that does not do automatically redemption
-                                                                    // still require manual approval if set
-                                                                    if (nexportOrderInvoiceItem.RequireManualApproval
-                                                                            .HasValue &&
-                                                                        nexportOrderInvoiceItem.RequireManualApproval
-                                                                            .Value)
-                                                                    {
-                                                                        // Set this to true in order to prevent completing the order
-                                                                        requireManualApproval = true;
-                                                                    }
-                                                                }
-
-                                                                invoiceTotalCost += productCost;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        // Add payment
-                                        await _nexportService.AddPaymentToNexportOrderInvoiceAsync(orderInvoiceId.Value,
-                                            invoiceTotalCost, userMapping.NexportUserId, queueItemId, DateTime.UtcNow);
-
-                                        // Commit the invoice
-                                        var commitResult = await _nexportService.CommitNexportOrderInvoiceTransactionAsync(orderInvoiceId.Value);
-
-                                        if (commitResult != null)
-                                        {
-                                            foreach (var code in commitResult.InvoiceItemRedemptionCodes)
-                                            {
-                                                var invoiceItem =
-                                                   await _nexportService.FindNexportOrderInvoiceItemByGuid(Guid.Parse(code.Key));
-                                                if (invoiceItem != null)
-                                                {
-                                                    invoiceItem.InvoiceRedemptionCode =
-                                                        commitResult.InvoiceRedemptionCode;
-                                                    invoiceItem.InvoiceItemRedemptionCode = code.Value;
-                                                }
-
-                                                await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-                                            }
-                                        }
-
-                                        if (autoRedeemingInvoiceItems.Count > 0)
-                                        {
-                                            try
-                                            {
-                                                // Schedule the redemption task for invoice items that do not need approval from administrators
-                                                foreach (var redeemingInvoiceItem in autoRedeemingInvoiceItems)
-                                                {
-                                                    await _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
-                                                        new NexportOrderInvoiceRedemptionQueueItem
-                                                        {
-                                                            OrderInvoiceItemId = redeemingInvoiceItem.Id,
-                                                            RedeemingUserId = userMapping.NexportUserId,
-                                                            ProductMappingId = redeemingInvoiceItem.ProductMappingId,
-                                                            OrderItemId = redeemingInvoiceItem.OrderItemId,
-                                                            UtcDateCreated = DateTime.UtcNow,
-                                                            ManualApprovalAction = redeemingInvoiceItem.ExtensionAction
-                                                        });
-                                                }
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                await LogAndAddOrderNoteForErrorAsync(order,
-                                                    $"Cannot schedule redemption processing for order items within order {order.Id}", ex);
-                                            }
-                                        }
-
-                                        // Only complete the order if it does not require approval from administrators
-                                        if (!requireManualApproval)
-                                        {
-                                            completeOrder = true;
-                                            await _nexportService.AddOrderNoteAsync(order, $"Nexport invoice has been successfully processed Order number:{order.Id}, Store:{store.Name}");
-                                        }
-                                        else
-                                        {
-                                            // Send email notification to store owners to take approval action for this order
-                                            await _nexportService.SendNewNexportOrderApprovalStoreOwnerNotificationAsync(order,
-                                                _localizationSettings.DefaultAdminLanguageId);
-                                        }
-
-                                        await _logger.InformationAsync($"Order {queueItem.OrderId} has been successfully processed!");
-                                    }
-                                    else if (invoiceDetails.State == GetInvoiceResponse.StateEnum.Committed)
-                                    {
-                                        // Complete the order when the invoice has been committed
-                                        completeOrder = true;
-                                        await _logger.InformationAsync($"Order number {queueItem.OrderId} invoice details state is committed. Complete the order");
-                                    }
-                                }
-                                else
-                                {
-                                    await LogAndAddOrderNoteForErrorAsync(order,
-                                        $"Store {order.StoreId} could not be found for this order during the processing of Nexport invoice");
-                                }
+                                completeOrder = await ProcessNexportWholesaleOrderAsync(queueItem, order, store, group);
                             }
                             else
                             {
-                                await LogAndAddOrderNoteForErrorAsync(order,
-                                    $"User mapping for the customer {order.CustomerId} could not be found during the processing of Nexport invoice");
+                                completeOrder = await ProcessNexportRetailOrderAsync(queueItem, order, store);
                             }
                         }
                         else
@@ -400,7 +158,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                         // Delete queue item
                         await _nexportService.DeleteNexportOrderProcessingQueueItem(queueItem);
 
-                        await _logger.InformationAsync($"Order processing queue item {queueItemId} has been processed and removed!");
+                        await _logger.InformationAsync($"Order processing queue item {queueItem.Id} has been processed and removed!");
 
                         if (completeOrder)
                         {
@@ -410,7 +168,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                     }
                     catch (Exception ex)
                     {
-                        await _logger.ErrorAsync($"Cannot process NexportRedemptionProcessingQueue item with Id {queueItemId}", ex);
+                        await _logger.ErrorAsync($"Cannot process NexportRedemptionProcessingQueue item with Id {queueItem.Id}", ex);
                     }
                 }
             }
@@ -418,6 +176,459 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             {
                 await _logger.ErrorAsync("Cannot process the NexportRedemptionProcessingQueue", ex);
             }
+        }
+
+        public async Task<bool> ProcessNexportRetailOrderAsync(NexportOrderProcessingQueueItem queueItem, Order order, Store store)
+        {
+            var completeOrder = false;
+            var requireManualApproval = false;
+
+            await _logger.InformationAsync($"Begin processing order {order.Id}");
+
+            var userMapping = await _nexportService.FindUserMappingByCustomerId(order.CustomerId);
+
+            if (userMapping != null)
+            {
+                await SynchronizeCustomerContactInformationAsync(userMapping);
+
+                //order notes
+                await _nexportService.AddOrderNoteAsync(order, $"Nexport invoice has started processing for order Number:{order.Id}, Store: {store.Name}");
+
+                if (store != null)
+                {
+                    var orgId = await _genericAttributeService.GetAttributeAsync<Guid>(store, "NexportSubscriptionOrganizationId", store.Id);
+
+                    if (orgId == Guid.Empty)
+                    {
+                        orgId = _nexportSettings.RootOrganizationId.Value;
+                        await _logger.InformationAsync($"While processing order {order.Id} - orgid set to root organization id value");
+                    }
+
+                    // Check if there is an existing invoice. If not, begin a new invoice transaction.
+                    var orderInvoiceId =
+                        await _nexportService.FindExistingInvoiceForOrder(order.Id) ??
+                        await _nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId, userMapping.NexportUserId);
+
+                    // Get the invoice details from Nexport (if existing)
+                    var invoiceDetails = await _nexportService.GetNexportInvoiceAsync(orderInvoiceId);
+
+                    // Continue to process only if the invoice is opening
+                    if (invoiceDetails == null ||
+                        (invoiceDetails.State != GetInvoiceResponse.StateEnum.Committed &&
+                         invoiceDetails.State != GetInvoiceResponse.StateEnum.Failed))
+                    {
+                        decimal invoiceTotalCost = 0;
+
+                        var autoRedeemingInvoiceItems = new List<AutoRedeemingInvoiceItem>();
+
+                        var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
+                        foreach (var orderItem in orderItems)
+                        {
+                            var mappingInfo = await _genericAttributeService.GetAttributeAsync<string>(orderItem,
+                                $"ProductMapping-{order.Id}-{orderItem.Id}", order.StoreId);
+
+                            // Retrieve the stored mapping info if existed; otherwise, get the current mapping info
+                            var mapping = mappingInfo != null ?
+                                JsonConvert.DeserializeObject<NexportProductMapping>(mappingInfo) :
+                                await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId, order.StoreId) ??
+                                await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
+
+                            if (mapping != null)
+                            {
+                                var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
+                                if (product != null)
+                                {
+                                    var productCost = product.ProductCost;
+                                    var subscriptionOrgId = mapping.NexportSubscriptionOrgId ?? orgId;
+
+                                    // Generate the listing of group membership identifiers
+                                    var groupMembershipIds =
+                                        await GenerateGroupMembershipIds(order, orderItem, mapping);
+
+                                    // Find existing invoice item for the order item
+                                    var existingInvoiceItemId =
+                                        await _nexportService.FindExistingInvoiceItemForOrderItem(order.Id,
+                                            orderItem.Id);
+
+                                    // If the invoice item does not exist, then add the order item into the invoice
+                                    if (existingInvoiceItemId == null ||
+                                        !invoiceDetails.InvoiceItems.Any(i => i.Id == existingInvoiceItemId))
+                                    {
+                                        for (int q = 0; q < orderItem.Quantity; q++)
+                                        {
+                                            var addItemResult = await AddItemToNexportInvoiceAsync(mapping, userMapping,
+                                                orderInvoiceId, productCost, subscriptionOrgId,
+                                                groupMembershipIds);
+
+                                            var invoiceItemId = addItemResult.InvoiceItemId;
+
+                                            if (invoiceItemId.HasValue)
+                                            {
+                                                int? extensionAction;
+                                                var nexportOrderInvoiceItem = new NexportOrderInvoiceItem
+                                                {
+                                                    OrderId = queueItem.OrderId,
+                                                    OrderItemId = orderItem.Id,
+                                                    InvoiceItemId = invoiceItemId.Value,
+                                                    InvoiceId = orderInvoiceId,
+                                                    UtcDateProcessed = DateTime.UtcNow,
+                                                    RequireManualApproval = addItemResult.RequireManualApproval
+                                                };
+
+                                                // This allows the task to automatically process redemption as restarting the enrollment
+                                                // in which the customer currently does not meet the enrollment completion threshold
+                                                // no matter what the approval method is.
+                                                extensionAction = addItemResult.ExtensionAction;
+
+                                                await _nexportService.InsertOrUpdateNexportOrderInvoiceItem(
+                                                    nexportOrderInvoiceItem);
+
+                                                if (mapping.AutoRedeem)
+                                                {
+                                                    // Add the invoice item for auto redeeming after committing the invoice
+                                                    // if AutoRedeem is set on the mapping and the renewal approval method is not defined
+                                                    // or the approval method is set to be Auto
+                                                    if (!nexportOrderInvoiceItem.RequireManualApproval.HasValue ||
+                                                        !nexportOrderInvoiceItem.RequireManualApproval.Value)
+                                                    {
+                                                        autoRedeemingInvoiceItems.Add(new AutoRedeemingInvoiceItem
+                                                        {
+                                                            Id = nexportOrderInvoiceItem.Id,
+                                                            ProductMappingId = mapping.Id,
+                                                            OrderItemId = orderItem.Id,
+                                                            ExtensionAction = extensionAction
+                                                        });
+                                                    }
+                                                    else
+                                                    {
+                                                        // Set this to true in order to prevent completing the order
+                                                        requireManualApproval = true;
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    // Order invoice item that does not do automatically redemption
+                                                    // still require manual approval if set
+                                                    if (nexportOrderInvoiceItem.RequireManualApproval.HasValue &&
+                                                        nexportOrderInvoiceItem.RequireManualApproval.Value)
+                                                    {
+                                                        // Set this to true in order to prevent completing the order
+                                                        requireManualApproval = true;
+                                                    }
+                                                }
+
+                                                invoiceTotalCost += productCost;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Add payment
+                        await _nexportService.AddPaymentToNexportOrderInvoiceAsync(orderInvoiceId,
+                            invoiceTotalCost, userMapping.NexportUserId, queueItem.Id, DateTime.UtcNow);
+
+                        // Commit the invoice
+                        var commitResult = await _nexportService.CommitNexportOrderInvoiceTransactionAsync(orderInvoiceId);
+
+                        if (commitResult != null)
+                        {
+                            try
+                            {
+                                foreach (var code in commitResult.InvoiceItemRedemptionCodes)
+                                {
+                                    var invoiceItem =
+                                        await _nexportService.FindNexportOrderInvoiceItemByGuid(
+                                            Guid.Parse(code.Key));
+                                    if (invoiceItem != null)
+                                    {
+                                        invoiceItem.InvoiceRedemptionCode =
+                                            commitResult.InvoiceRedemptionCode;
+                                        invoiceItem.InvoiceItemRedemptionCode = code.Value;
+                                        await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
+                                    }
+                                    else
+                                    {
+                                        await LogAndAddOrderNoteForErrorAsync(order,
+                                            $"Invoice item not found after commit for code:{code.Key}");
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                await LogAndAddOrderNoteForErrorAsync(order,
+                                    $"Failed while updating order invoice items after commit", ex);
+                            }
+                        }
+
+                        if (autoRedeemingInvoiceItems.Count > 0)
+                        {
+                            try
+                            {
+                                // Schedule the redemption task for invoice items that do not need approval from administrators
+                                foreach (var redeemingInvoiceItem in autoRedeemingInvoiceItems)
+                                {
+                                    await _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
+                                        new NexportOrderInvoiceRedemptionQueueItem
+                                        {
+                                            OrderInvoiceItemId = redeemingInvoiceItem.Id,
+                                            RedeemingUserId = userMapping.NexportUserId,
+                                            ProductMappingId = redeemingInvoiceItem.ProductMappingId,
+                                            OrderItemId = redeemingInvoiceItem.OrderItemId,
+                                            UtcDateCreated = DateTime.UtcNow,
+                                            ManualApprovalAction = redeemingInvoiceItem.ExtensionAction
+                                        });
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                await LogAndAddOrderNoteForErrorAsync(order,
+                                    $"Cannot schedule redemption processing for order items within order {order.Id}", ex);
+                            }
+                        }
+
+                        // Only complete the order if it does not require approval from administrators
+                        if (!requireManualApproval)
+                        {
+                            completeOrder = true;
+                            await _nexportService.AddOrderNoteAsync(order, $"Nexport invoice has been successfully processed Order number:{order.Id}, Store:{store.Name}");
+                        }
+                        else
+                        {
+                            // Send email notification to store owners to take approval action for this order
+                            await _nexportService.SendNewNexportOrderApprovalStoreOwnerNotificationAsync(order,
+                                _localizationSettings.DefaultAdminLanguageId);
+                        }
+
+                        await _logger.InformationAsync($"Order {queueItem.OrderId} has been successfully processed!");
+                    }
+                    else if (invoiceDetails.State == GetInvoiceResponse.StateEnum.Committed)
+                    {
+                        // Complete the order when the invoice has been committed
+                        completeOrder = true;
+                        await _logger.InformationAsync($"Order number {queueItem.OrderId} invoice details state is committed. Complete the order");
+                    }
+                }
+                else
+                {
+                    await LogAndAddOrderNoteForErrorAsync(order,
+                        $"Store {order.StoreId} could not be found for this order during the processing of Nexport invoice");
+                }
+            }
+            else
+            {
+                await LogAndAddOrderNoteForErrorAsync(order,
+                    $"User mapping for the customer {order.CustomerId} could not be found during the processing of Nexport invoice");
+            }
+            return completeOrder;
+        }
+
+        public async Task<bool> ProcessNexportWholesaleOrderAsync(NexportOrderProcessingQueueItem queueItem, Order order,
+            Store store, string? group)
+        {
+            var completeOrder = false;
+            var requireManualApproval = false;
+
+            await _logger.InformationAsync($"Begin processing order {order.Id}");
+
+            var userMapping = await _nexportService.FindUserMappingByCustomerId(order.CustomerId);
+
+            if (userMapping != null)
+            {
+                await SynchronizeCustomerContactInformationAsync(userMapping);
+
+                //order notes
+                await _nexportService.AddOrderNoteAsync(order,
+                    $"Nexport invoice has started processing for order Number:{order.Id}, Store: {store.Name}");
+
+                if (store != null)
+                {
+                    var orgId = await _genericAttributeService.GetAttributeAsync<Guid>(store,
+                        "NexportSubscriptionOrganizationId", store.Id);
+
+                    if (orgId == Guid.Empty)
+                    {
+                        orgId = _nexportSettings.RootOrganizationId.Value;
+                        await _logger.InformationAsync(
+                            $"While processing order {order.Id} - orgid set to root organization id value");
+                    }
+
+                    // Check if there is an existing invoice. If not, begin a new invoice transaction.
+                    var orderInvoiceId = await _nexportService.FindExistingInvoiceForOrder(order.Id);
+
+                    if (orderInvoiceId == null)
+                        orderInvoiceId =
+                            await _nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId,
+                                userMapping.NexportUserId);
+
+
+
+                    // Get the invoice details from Nexport (if existing)
+                    var invoiceDetails = await _nexportService.GetNexportInvoiceAsync(orderInvoiceId.Value);
+
+                    // Continue to process only if the invoice is opening
+                    if (invoiceDetails == null ||
+                        (invoiceDetails.State != GetInvoiceResponse.StateEnum.Committed &&
+                         invoiceDetails.State != GetInvoiceResponse.StateEnum.Failed))
+                    {
+                        decimal invoiceTotalCost = 0;
+
+                        var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
+                        foreach (var orderItem in orderItems)
+                        {
+                            var mappingInfo = await _genericAttributeService.GetAttributeAsync<string>(orderItem,
+                                $"ProductMapping-{order.Id}-{orderItem.Id}", order.StoreId);
+
+                            // Retrieve the stored mapping info if existed; otherwise, get the current mapping info
+                            var mapping = mappingInfo != null
+                                ? JsonConvert.DeserializeObject<NexportProductMapping>(mappingInfo)
+                                : await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId,
+                                      order.StoreId) ??
+                                  await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
+
+                            if (mapping != null)
+                            {
+                                var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
+                                if (product != null)
+                                {
+                                    var productCost = product.ProductCost;
+                                    var subscriptionOrgId = mapping.NexportSubscriptionOrgId ?? orgId;
+
+                                    // Generate the listing of group membership identifiers
+                                    var groupMembershipIds =
+                                        await GenerateGroupMembershipIds(order, orderItem, mapping);
+
+                                    // Find existing invoice item for the order item
+                                    var existingInvoiceItemId =
+                                        await _nexportService.FindExistingInvoiceItemForOrderItem(order.Id,
+                                            orderItem.Id);
+                                    // If the invoice item does not exist, then add the order item into the invoice
+                                    if (existingInvoiceItemId == null ||
+                                        !invoiceDetails.InvoiceItems.Any(i =>
+                                            i.Id == existingInvoiceItemId))
+                                    {
+                                        for (int q = 0; q < orderItem.Quantity; q++)
+                                        {
+                                            var addItemResult = await AddItemToNexportInvoiceAsync(
+                                                mapping, userMapping,
+                                                orderInvoiceId.Value, productCost, subscriptionOrgId,
+                                                groupMembershipIds);
+
+                                            var invoiceItemId = addItemResult.InvoiceItemId;
+
+                                            if (invoiceItemId.HasValue)
+                                            {
+                                                int? extensionAction;
+
+                                                var nexportOrderInvoiceItem =
+                                                    new NexportOrderInvoiceItem
+                                                    {
+                                                        OrderId = queueItem.OrderId,
+                                                        OrderItemId = orderItem.Id,
+                                                        InvoiceItemId = invoiceItemId.Value,
+                                                        InvoiceId = orderInvoiceId.Value,
+                                                        UtcDateProcessed = DateTime.UtcNow,
+                                                        RequireManualApproval =
+                                                            addItemResult.RequireManualApproval
+                                                    };
+
+                                                // This allows the task to automatically process redemption as restarting the enrollment
+                                                // in which the customer currently does not meet the enrollment completion threshold
+                                                // no matter what the approval method is.
+                                                extensionAction = addItemResult.ExtensionAction;
+
+                                                await _nexportService
+                                                    .InsertOrUpdateNexportOrderInvoiceItem(
+                                                        nexportOrderInvoiceItem);
+
+
+                                                // Order invoice item that does not do automatically redemption
+                                                // still require manual approval if set
+                                                if (nexportOrderInvoiceItem.RequireManualApproval
+                                                        .HasValue &&
+                                                    nexportOrderInvoiceItem.RequireManualApproval
+                                                        .Value)
+                                                {
+                                                    // Set this to true in order to prevent completing the order
+                                                    requireManualApproval = true;
+                                                }
+
+                                                invoiceTotalCost += productCost;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Add payment
+                        await _nexportService.AddPaymentToNexportOrderInvoiceAsync(orderInvoiceId.Value,
+                            invoiceTotalCost, userMapping.NexportUserId, queueItem.Id, DateTime.UtcNow);
+
+                        // Commit the invoice
+                        var commitResult =
+                            await _nexportService.CommitNexportOrderInvoiceTransactionAsync(orderInvoiceId.Value);
+
+                        if (commitResult != null)
+                        {
+                            foreach (var code in commitResult.InvoiceItemRedemptionCodes)
+                            {
+                                var invoiceItem =
+                                    await _nexportService.FindNexportOrderInvoiceItemByGuid(Guid.Parse(code.Key));
+                                if (invoiceItem != null)
+                                {
+                                    invoiceItem.InvoiceRedemptionCode =
+                                        commitResult.InvoiceRedemptionCode;
+                                    invoiceItem.InvoiceItemRedemptionCode = code.Value;
+
+                                    await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
+                                }
+                                else
+                                {
+                                    await LogAndAddOrderNoteForErrorAsync(order,
+                                        $"Invoice item not found after commit for code:{code.Key}");
+                                }
+                            }
+                        }
+
+                        // Only complete the order if it does not require approval from administrators
+                        if (!requireManualApproval)
+                        {
+                            completeOrder = true;
+                            await _nexportService.AddOrderNoteAsync(order,
+                                $"Nexport invoice has been successfully processed Order number:{order.Id}, Store:{store.Name}");
+                        }
+                        else
+                        {
+                            // Send email notification to store owners to take approval action for this order
+                            await _nexportService.SendNewNexportOrderApprovalStoreOwnerNotificationAsync(order,
+                                _localizationSettings.DefaultAdminLanguageId);
+                        }
+
+                        await _logger.InformationAsync($"Order {queueItem.OrderId} has been successfully processed!");
+                    }
+                    else if (invoiceDetails.State == GetInvoiceResponse.StateEnum.Committed)
+                    {
+                        // Complete the order when the invoice has been committed
+                        completeOrder = true;
+                        await _logger.InformationAsync(
+                            $"Order number {queueItem.OrderId} invoice details state is committed. Complete the order");
+                    }
+                }
+                else
+                {
+                    await LogAndAddOrderNoteForErrorAsync(order,
+                        $"Store {order.StoreId} could not be found for this order during the processing of Nexport invoice");
+                }
+            }
+            else
+            {
+                await LogAndAddOrderNoteForErrorAsync(order,
+                    $"User mapping for the customer {order.CustomerId} could not be found during the processing of Nexport invoice");
+            }
+
+            return completeOrder;
         }
 
         private async Task SynchronizeCustomerContactInformationAsync(NexportUserMapping userMapping)
@@ -605,7 +816,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                         }
                 }
             }
-            else if(productMapping.Type == NexportProductTypeEnum.Catalog && productMapping.AssignWhenRedeemed.HasValue && productMapping.AssignWhenRedeemed.Value)
+            else if (productMapping.Type == NexportProductTypeEnum.Catalog && productMapping.AssignWhenRedeemed.HasValue && productMapping.AssignWhenRedeemed.Value)
             {
                 invoiceItemId = await _nexportService.AddItemToNexportOrderInvoiceAsync(
                     orderInvoiceId,
