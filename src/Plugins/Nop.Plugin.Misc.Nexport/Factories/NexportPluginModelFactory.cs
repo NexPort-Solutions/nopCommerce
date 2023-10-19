@@ -1576,14 +1576,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     break;
                 }
 
-
-                var npmInCart =
-                    await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId,
-                        store.Id);
+                // gets default product mapping if there is no product mapping for store specified
+                var npmInCart = (await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId, store.Id)) ?? (await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId,null));
 
                 if (npmInCart != null)
                 {
-                    if (!npmInCart.AutoRedeem)
+                    if (npmInCart.AutoRedeem)
                     {
                         orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
                         break;
