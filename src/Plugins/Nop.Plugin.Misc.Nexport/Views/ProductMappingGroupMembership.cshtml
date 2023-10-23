@@ -2,7 +2,7 @@
 
 @model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductGroupMembershipMappingListSearchModel
 
-@await Html.PartialAsync("Table", new DataTablesModel
+@await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
 {
     Name = "product-mapping-group-memberships-grid",
     UrlRead = new DataUrl("GetProductGroupMembershipMappings", "NexportIntegration", new RouteValueDictionary {

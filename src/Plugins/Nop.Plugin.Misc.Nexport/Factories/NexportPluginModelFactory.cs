@@ -440,7 +440,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         SyllabusId = syllabiId,
                         Name = syllabi.SyllabusName,
                         Type = syllabi.SyllabusType,
-                        ProductId = syllabi.ProductId.Value,
+                        ProductId = syllabi.ProductId,
                         TotalMappings = await _nexportService.FindMappingCountPerSyllabi(syllabiId)
                     };
 
