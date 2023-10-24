@@ -1,9 +1,11 @@
-﻿@model Nop.Web.Areas.Admin.Models.Catalog.ProductModel
+﻿@using Nop.Plugin.Misc.Nexport.Extensions;
+@using Nop.Plugin.Misc.Nexport.Controllers;
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+
+@model Nop.Web.Areas.Admin.Models.Catalog.ProductModel
 
 @{
-    //page title
     ViewBag.PageTitle = T("Admin.Catalog.Products.EditProductDetails").Text;
-    //active menu item (system name)
     NopHtml.SetActiveMenuItemSystemName("Products");
 }
 
@@ -58,39 +60,39 @@
                 <h4 class="modal-title" id="copyproduct-window-title">@T("Admin.Catalog.Products.Copy")</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
-            <form asp-controller="NexportIntegration" asp-action="CopyProduct" method="post">
+            <form asp-controller="Product" asp-action="CopyProduct" method="post">
                 <div class="form-horizontal">
                     <div class="modal-body">
-                        <input asp-for="CopyProductModel.Id" type="hidden" />
+                        <input asp-for="@Html.Raw(Model.CopyProductModel.Id)" type="hidden" />
                         <div class="form-group row">
                             <div class="col-md-4">
-                                <nop-label asp-for="CopyProductModel.Name" />
+                                <nop-label asp-for="Model.CopyProductModel.Name" />
                             </div>
                             <div class="col-md-8">
-                                <nop-editor asp-for="CopyProductModel.Name" />
+                                <nop-editor asp-for="Model.CopyProductModel.Name" />
                             </div>
                         </div>
                         <div class="form-group row">
                             <div class="col-md-4">
-                                <nop-label asp-for="CopyProductModel.Published" />
+                                <nop-label asp-for="Model.CopyProductModel.Published" />
                             </div>
                             <div class="col-md-8">
-                                <nop-editor asp-for="CopyProductModel.Published" />
+                                <nop-editor asp-for="Model.CopyProductModel.Published" />
                             </div>
                         </div>
                         <div class="form-group row">
                             <div class="col-md-4">
-                                <nop-label asp-for="CopyProductModel.CopyMultimedia" />
+                                <nop-label asp-for="Model.CopyProductModel.CopyMultimedia" />
                             </div>
                             <div class="col-md-8">
-                                <nop-editor asp-for="CopyProductModel.CopyMultimedia" />
+                                <nop-editor asp-for="Model.CopyProductModel.CopyMultimedia" />
                             </div>
                         </div>
                         <div class="form-group row">
                             <div class="col-md-4">
                                 <div class="label-wrapper">
-                                    <label class="col-form-label" for="CopyProduct_CopyProductMappings">Copy Nexport product mappings</label>
-                                    <div title="Check to copy the Nexport product mappings" data-toggle="tooltip" class="ico-help">
+                                    <label class="col-form-label" for="CopyProduct_CopyProductMappings">Copy NexPort product mappings</label>
+                                    <div title="Check to copy the NexPort product mappings" data-toggle="tooltip" class="ico-help">
                                         <i class="far fa-question-circle"></i>
                                     </div>
                                 </div>

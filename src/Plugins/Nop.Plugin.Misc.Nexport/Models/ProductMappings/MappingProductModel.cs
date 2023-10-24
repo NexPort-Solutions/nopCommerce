@@ -1,9 +1,8 @@
 ﻿using Nop.Web.Areas.Admin.Models.Catalog;
 
-namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
+namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+
+public record MappingProductModel : ProductModel
 {
-    public record MappingProductModel : ProductModel
-    {
-        public bool HasNexportMapping { get; set; }
-    }
+    public bool HasMapping { get; set; }
 }

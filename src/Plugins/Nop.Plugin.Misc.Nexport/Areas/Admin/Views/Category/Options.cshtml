@@ -1,0 +1,55 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.Category.CategoryModel
+
+@if (Model.Id > 0)
+{
+    <script>
+        $(document).ready(function() {
+            $("#@Html.IdFor(model => model.LimitSingleProductPurchase)").click(toggleLimitProductPurchaseSettings);
+            toggleLimitProductPurchaseSettings();
+        });
+
+        function toggleLimitProductPurchaseSettings() {
+            if ($("#@Html.IdFor(model => model.LimitSingleProductPurchase)").is(":checked")) {
+                $("#limitSingleProductPurchaseSettingContainer").show();
+            } else {
+                $("#limitSingleProductPurchaseSettingContainer").hide();
+            }
+        }
+    </script>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="Model.LimitSingleProductPurchase" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="Model.LimitSingleProductPurchase)" asp-required="false" />
+        </div>
+    </div>
+    <nop-nested-setting asp-for="Model.LimitSingleProductPurchase)">
+        <div class="form-group row" id="limitSingleProductPurchaseSettingContainer">
+            <div class="col-md-3">
+                <nop-label asp-for="Model.AutoSwapProductPurchase" />
+            </div>
+            <div class="col-md-9">
+                <nop-editor asp-for="Model.AutoSwapProductPurchase" />
+            </div>
+        </div>
+    </nop-nested-setting>
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="Model.AllowProductPurchaseInCategoryDuringEnrollment" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="Model.AllowProductPurchaseInCategoryDuringEnrollment)" asp-required="false" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col-md-3">
+        </div>
+        <div class="col-md-9">
+            <button id="saveCategoryOptions" name="savenexportcategoryoptions" class="btn btn-primary">
+                @T("Admin.Common.Save")
+            </button>
+        </div>
+    </div>
+}

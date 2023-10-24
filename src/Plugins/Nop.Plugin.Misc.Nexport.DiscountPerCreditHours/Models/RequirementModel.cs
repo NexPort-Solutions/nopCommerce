@@ -1,14 +1,13 @@
 ﻿using Nop.Web.Framework.Mvc.ModelBinding;
 
-namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Models
+namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Models;
+
+public record RequirementModel
 {
-    public record RequirementModel
-    {
-        public int DiscountId { get; set; }
+    public int DiscountId { get; set; }
 
-        public int RequirementId { get; set; }
+    public int RequirementId { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours")]
-        public decimal CreditHours { get; set; }
-    }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.DiscountPerCreditHours.Fields.CreditHours")]
+    public decimal CreditHours { get; set; }
 }

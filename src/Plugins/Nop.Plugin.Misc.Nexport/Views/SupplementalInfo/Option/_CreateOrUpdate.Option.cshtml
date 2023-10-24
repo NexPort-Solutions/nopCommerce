@@ -1,5 +1,7 @@
-﻿@using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
-@model NexportSupplementalInfoOptionModel
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+@model SupplementalInfoOptionModel
 
 <div asp-validation-summary="All"></div>
 <input asp-for="Id" type="hidden" />
@@ -46,7 +48,7 @@
                     <div class="card-body">
                         <div class="">
                             @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Option/GroupAssociation.cshtml",
-                                new NexportSupplementalInfoOptionGroupAssociationListSearchModel { OptionId = Model.Id })
+                                new SupplementalInfoOptionGroupAssociationListSearchModel { OptionId = Model.Id })
                         </div>
                         <div class="card card-default" style="margin-top: 0.5em;">
                             <div class="card-header">
@@ -55,7 +57,7 @@
                             <div class="card-body">
                                 <div class="form-group row">
                                     <div class="col-sm-5 col-md-3">
-                                        <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupId" />
+                                        <nop-label asp-for="AddGroupMembershipMappingModel.GroupId" />
                                     </div>
                                     <div class="col-sm-7 col-md-9">
                                         <input class="form-control text-box single-line" id="AddGroupMembership_GroupId" type="text">
@@ -63,7 +65,7 @@
                                 </div>
                                 <div class="form-group row">
                                     <div class="col-sm-5 col-md-3">
-                                        <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupName" />
+                                        <nop-label asp-for="AddGroupMembershipMappingModel.GroupName" />
                                     </div>
                                     <div class="col-sm-7 col-md-9">
                                         <input type="hidden" id="AddGroupMembership_GroupName" />
@@ -72,7 +74,7 @@
                                 </div>
                                 <div class="form-group row">
                                     <div class="col-sm-5 col-md-3">
-                                        <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupShortName" />
+                                        <nop-label asp-for="AddGroupMembershipMappingModel.GroupShortName" />
                                     </div>
                                     <div class="col-sm-7 col-md-9">
                                         <input type="hidden" id="AddGroupMembership_GroupShortName" />
@@ -103,7 +105,7 @@
                                     process([]);
                                 }
 
-                                var url = "@Url.Action("SearchNexportDirectory", "NexportIntegration")";
+                                var url = "@Url.Action(nameof(IntegrationController.SearchDirectory), ViewUtilities.GetControllerName<IntegrationController>())";
                                 searching = setTimeout(function() {
                                     return $.getJSON(
                                         url,
@@ -184,9 +186,9 @@
                             $("#addGroupMembership").attr('disabled', true);
 
                             var postData = {
-                                nexportGroupId: groupId,
-                                nexportGroupName: groupName,
-                                nexportGroupShortName: groupShortName,
+                                groupId: groupId,
+                                groupName: groupName,
+                                groupShortName: groupShortName,
                                 optionId: '@Model.Id'
                             };
                             addAntiForgeryToken(postData);
@@ -194,7 +196,7 @@
                             $.ajax({
                                 cache: false,
                                 type: "POST",
-                                url: "@(Url.Action("AddSupplementalInfoOptionGroupAssociation", "NexportIntegration"))",
+                                url: "@(Url.Action(nameof(IntegrationController.AddSupplementalInfoOptionGroupAssociation), ViewUtilities.GetControllerName<IntegrationController>()))",
                                 data: postData,
                                 success: function (data, textStatus, jqXHR) {
                                     if (!data.Result) {
@@ -206,8 +208,6 @@
                                     console.error(errorThrown);
                                 },
                                 complete: function (jqXHR, textStatus) {
-                                    //$("#addGroupMembership").attr("disabled", false);
-
                                     groupIdInputElement.val("");
                                     $("#AddGroupMembership_GroupName_Display").empty();
                                     $("#AddGroupMembership_GroupName").val("");

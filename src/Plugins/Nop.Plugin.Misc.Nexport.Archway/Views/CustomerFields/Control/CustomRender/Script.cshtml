@@ -1,0 +1,151 @@
+﻿@model Nop.Plugin.Misc.Nexport.Archway.Models.StudentEmployeeRegistrationFieldModel
+
+<script>
+    function resetHiddenInputFields() {
+        $("#storeEmployeeIdContainer").hide();
+        $("#@Html.IdFor(model => model.EmployeeId)").val("");
+        $("#@Html.IdFor(model => model.StoreType)").val("");
+        $("#@Html.IdFor(model => model.StoreNumber)").val("");
+    }
+
+    function setup(renderAdminView) {
+        $("#storeEmployeeIdContainer").hide();
+
+        $("#@Html.IdFor(model => model.StoreLocationState)").change(function(e) {
+            resetHiddenInputFields();
+            $("select[id=\"@Html.IdFor(model => model.StoreLocationAddress)\"]").html("");
+            $("select[id=\"@Html.IdFor(model => model.EmployeePosition)\"]").html("");
+            storeLocationStateSelectHandler($(e.target));
+        });
+        $("#@Html.IdFor(model => model.StoreLocationCity)").change(function(e) {
+            resetHiddenInputFields();
+            $("select[id=\"@Html.IdFor(model => model.EmployeePosition)\"]").html("");
+            storeLocationCitySelectHandler($(e.target));
+        });
+        $("#@Html.IdFor(model => model.StoreLocationAddress)").change(function(e) {
+            resetHiddenInputFields();
+            storeLocationAddressSelectHandler($(e.target));
+        });
+        if (!$(document).has("#@Html.IdFor(model => model.EmployeePosition)")) return;
+        $("#@Html.IdFor(model => model.EmployeePosition)").change(function(e) {
+            $("#@Html.IdFor(model => model.EmployeeId)").rules("remove");
+            $("#storeEmployeeIdContainer").hide();
+            $("#@Html.IdFor(model => model.EmployeeId)").val("");
+            if ($("#@Html.IdFor(model => model.StoreType)").val() !== "MCD") return;
+            $("#@Html.IdFor(model => model.EmployeeId)").val("");
+            $("#@Html.IdFor(model => model.EmployeeId)").rules("add", {
+                    required: true,
+                    min: 1,
+                    messages: {
+                        required: renderAdminView ? "Employee Id field is required!" : "This is a required field.",
+                        min: "Id must be greater than 0"
+                    }
+                });
+            $("#storeEmployeeIdContainer").show();
+        });
+    }
+
+    function storeSelectionHandler(url, element, selectionElementId, ajaxData, renderFunction, errorMessage) {
+        var selectionElement = $(element.data(selectionElementId));
+        var loading = $(element.data("loading"));
+        loading.show();
+        $.ajax({
+            cache: false,
+            type: "GET",
+            url: url,
+            data: ajaxData,
+            success: function(data, textStatus, jqXHR) {
+                selectionElement.html("");
+                if (data.length > 0) {
+                    renderFunction(selectionElement, data);
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                if (errorMessage != null) {
+                    alert(errorMessage);
+                } else {
+                    alert("Failed to retrieve data!");
+                }
+            },
+            complete: function(jqXHR, textStatus) {
+                loading.hide();
+            }
+        });
+    }
+
+    function storeLocationStateSelectHandler(handler) {
+        var selectedItem = handler.val();
+        var ajaxData = {
+            "state": selectedItem,
+            "addSelectCityItem": "true"
+        }
+        storeSelectionHandler(
+            "@Url.RouteUrl("GetStoreCitiesByState")",
+            handler,
+            "storelocation-city",
+            ajaxData,
+            function(selectionElement, data) {
+                selectionElement.append($("<option></option>").val("").html("Select"));
+                $.each(data,
+                    function(id, option) {
+                        selectionElement.append($("<option></option>").val(option.name).html(option.name));
+                    });
+            }, "Failed to retrieve states!");
+    }
+
+    function storeLocationCitySelectHandler(handler) {
+        var selectedItem = handler.val();
+        var ajaxData = {
+            "city": selectedItem,
+            "state": $("#@Html.IdFor(model => model.StoreLocationState)").val(),
+            "addSelectAddressItem": "true"
+        }
+        storeSelectionHandler(
+            "@Url.RouteUrl("GetStoreAddressesByCity")",
+            handler,
+            "storelocation-address",
+            ajaxData,
+            function(selectionElement, data) {
+                selectionElement.append($("<option></option>").val("").html("Select"));
+                $.each(data,
+                    function(id, option) {
+                        selectionElement.append(
+                            $("<option></option>")
+                            .attr("data-store-type", option.storeType)
+                            .attr("data-store-number", option.storeNumber)
+                            .val(option.name).html(option.name));
+                    });
+            }, "Failed to retrieve addresses!");
+    }
+
+    function storeLocationAddressSelectHandler(handler) {
+        var selectedItem = handler.find("option:selected");
+        if (selectedItem == null) return;
+        var storeType = selectedItem.data("store-type");
+        if (storeType != null) {
+            $("#@Html.IdFor(model => model.StoreType)").val(storeType);
+        }
+        var storeNumber = selectedItem.data("store-number");
+        if(storeNumber != null) {
+            $("#@Html.IdFor(model => model.StoreNumber)").val(storeNumber);
+        }
+        var storeNumber = selectedItem.data("store-number");
+        var ajaxData = {
+            "storeNumber": storeNumber,
+            "addSelectPositionItem": "true"
+        }
+        storeSelectionHandler(
+            "@Url.RouteUrl("GetEmployeePositionsByStore")",
+            handler,
+            "storelocation-employeeposition",
+            ajaxData,
+            function (selectionElement, data) {
+                selectionElement.append($("<option></option>").val("").html("Select"));
+                $.each(data, function (id, option) {
+                    selectionElement.append($("<option></option>").val(option.name).html(option.name));
+                });
+            }, "Failed to retrieve employee positions!");
+        return;
+    }
+    //# sourceURL="customfield_render.js"
+</script>

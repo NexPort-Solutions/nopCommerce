@@ -1,17 +1,20 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
+﻿@using Nop.Plugin.Misc.Nexport.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.RegistrationFieldModel
 
 @{
     ViewBag.PageTitle = T("Admin.Customers.Nexport.RegistrationField.Fields.AddNew").Text;
     NopHtml.SetActiveMenuItemSystemName("Customer and user settings");
 }
 
-<form asp-controller="NexportIntegration" asp-action="CreateRegistrationField" method="post" id="registrationfield-form">
+<form asp-controller="RegistrationField" asp-action="Create" method="post" id="registrationfield-form">
     <div class="content-header clearfix">
         <h1 class="float-left">
             @T("Admin.Customers.Nexport.RegistrationField.Fields.AddNew")
             <small>
                 <i class="fas fa-arrow-circle-left"></i>
-                <a asp-action="ListRegistrationField" asp-controller="NexportIntegration">
+                <a asp-action="List)" asp-controller="RegistrationField">
                     @T("Admin.Customers.Nexport.RegistrationField.Fields.BackToList")
                 </a>
             </small>

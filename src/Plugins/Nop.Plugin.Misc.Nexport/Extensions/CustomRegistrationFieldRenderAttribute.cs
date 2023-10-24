@@ -1,9 +1,6 @@
-﻿using System;
+﻿namespace Nop.Plugin.Misc.Nexport.Extensions;
 
-namespace Nop.Plugin.Misc.Nexport.Extensions
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public sealed class CustomRegistrationFieldRenderAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public class CustomRegistrationFieldRenderAttribute : Attribute
-    {
-    }
 }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Controllers;
+﻿using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
@@ -12,96 +9,117 @@ using Nop.Web.Controllers;
 using Nop.Web.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Services;
-using Nop.Services.Customers;
+using ICustomerService = Nop.Plugin.Misc.Nexport.Services.ICustomerService;
 
-namespace Nop.Plugin.Misc.Nexport.Filters
+namespace Nop.Plugin.Misc.Nexport.Filters;
+
+public sealed class ProductDetailsActionFilter : ActionFilterAttribute
 {
-    public class ProductDetailsActionFilter : ActionFilterAttribute
+    private readonly ICustomerService _customer;
+    private readonly IProductService _product;
+    private readonly IShoppingCartService _shoppingCart;
+    private readonly IGenericAttributeService _genericAttribute;
+    private readonly IStoreContext _storeContext;
+    private readonly IWorkContext _workContext;
+    private readonly INexportService _nexportService;
+    private readonly ICustomerPurchasingService _purchasing;
+
+    public ProductDetailsActionFilter(
+        ICustomerService customerService,
+        IProductService productService,
+        IShoppingCartService shoppingCartService,
+        IGenericAttributeService genericAttributeService,
+        IStoreContext storeContext,
+        IWorkContext workContext,
+        INexportService nexportService,
+        ICustomerPurchasingService purchasing)
     {
-        private readonly ICustomerService _customerService;
-        private readonly IProductService _productService;
-        private readonly IShoppingCartService _shoppingCartService;
-        private readonly IGenericAttributeService _genericAttributeService;
-        private readonly IStoreContext _storeContext;
-        private readonly IWorkContext _workContext;
-        private readonly NexportService _nexportService;
+        _customer = customerService;
+        _product = productService;
+        _shoppingCart = shoppingCartService;
+        _genericAttribute = genericAttributeService;
+        _storeContext = storeContext;
+        _workContext = workContext;
+        _nexportService = nexportService;
+        _purchasing = purchasing;
+    }
 
-        public ProductDetailsActionFilter(
-            ICustomerService customerService,
-            IProductService productService,
-            IShoppingCartService shoppingCartService,
-            IGenericAttributeService genericAttributeService,
-            IStoreContext storeContext,
-            IWorkContext workContext,
-            NexportService nexportService)
+    //public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    //{
+    //    if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
+    //    {
+    //        return;
+    //    }
+    //    if (actionDescriptor.ControllerTypeInfo != typeof(ProductController)
+    //        || actionDescriptor.ActionName is not nameof(ProductController.ProductDetails)
+    //        || await _workContext.GetCurrentCustomerAsync() is not { } customer
+    //        || !await _customer.IsRegisteredAsync(customer)
+    //        || context.Result is not ViewResult { Model: ProductDetailsModel productDetailsModel }
+    //        || await _storeContext.GetCurrentStoreAsync() is not { } store
+    //        || await _genericAttribute.GetAttributeAsync<StoreSaleModel>(store, Defaults.STORE_SALE_MODEL_SETTING_KEY, store.Id) is not StoreSaleModel.Retail)
+    //    {
+    //        return;
+    //    }
+    //    if ((await _shoppingCart.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id, productDetailsModel.Id)) is not []
+    //        && await _genericAttribute.GetAttributeAsync<bool>(store, Defaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
+    //    {
+    //        productDetailsModel.AddToCart.DisableBuyButton = true;
+    //        await base.OnActionExecutionAsync(context, next);
+    //        return;
+    //    }
+    //    var product = await _product.GetProductByIdAsync(productDetailsModel.Id);
+    //    var canPurchaseProduct = await _purchasing.CanPurchaseProductAsync(product, customer);
+    //    if (await _genericAttribute.GetAttributeAsync<bool>(store, Defaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
+    //    {
+    //        productDetailsModel.AddToCart.DisableBuyButton = !canPurchaseProduct;
+    //    }
+    //}
+
+    public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    {
+        if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
         {
-            _customerService = customerService;
-            _productService = productService;
-            _shoppingCartService = shoppingCartService;
-            _genericAttributeService = genericAttributeService;
-            _storeContext = storeContext;
-            _workContext = workContext;
-            _nexportService = nexportService;
+            return;
         }
-
-        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        if (actionDescriptor.ControllerTypeInfo != typeof(ProductController)
+            || actionDescriptor.ActionName != nameof(ProductController.ProductDetails)
+            || !(await _workContext.GetCurrentCustomerAsync() is { } customer)
+            || !await _customer.IsRegisteredAsync(customer)
+            || context.Result is not ViewResult { Model: ProductDetailsModel productDetailsModel })
         {
-            if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
-                return;
-
-            if (actionDescriptor.ControllerTypeInfo == typeof(ProductController) &&
-                actionDescriptor.ActionName == nameof(ProductController.ProductDetails))
-            {
-                var customer = await _workContext.GetCurrentCustomerAsync();
-                if (customer != null && await _customerService.IsRegisteredAsync(customer))
-                {
-                    if (context.Result is ViewResult { Model: ProductDetailsModel productDetailsModel })
-                    {
-                        var store = await _storeContext.GetCurrentStoreAsync();
-                        var storeModel = await _genericAttributeService.GetAttributeAsync<NexportStoreSaleModel>(
-                            store, "NexportStoreSaleModel", store.Id);
-
-                        if (storeModel == NexportStoreSaleModel.Retail)
-                        {
-                            var items = await _shoppingCartService.GetShoppingCartAsync(customer,
-                                ShoppingCartType.ShoppingCart,
-                                store.Id, productDetailsModel.Id);
-
-                            if (items.Count > 0)
-                            {
-                                if (await _genericAttributeService.GetAttributeAsync<bool>(store,
-                                    NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
-                                {
-                                    productDetailsModel.AddToCart.DisableBuyButton = true;
-                                }
-                            }
-                            else
-                            {
-
-                                var product = await _productService.GetProductByIdAsync(productDetailsModel.Id);
-
-                                try
-                                {
-                                    var canPurchaseProduct =
-                                        await _nexportService.CanPurchaseNexportProductAsync(product, customer);
-
-                                    if (await _genericAttributeService.GetAttributeAsync<bool>(store,
-                                        NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
-                                    {
-                                        productDetailsModel.AddToCart.DisableBuyButton = !canPurchaseProduct;
-                                    }
-                                }
-                                catch (Exception)
-                                {
-                                    // ignored
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
             await base.OnActionExecutionAsync(context, next);
+            return;
+        }
+        var store = await _storeContext.GetCurrentStoreAsync();
+        var storeModel = await _genericAttribute.GetAttributeAsync<StoreSaleModel>(store, "NexportStoreSaleModel", store.Id);
+        if (storeModel is not StoreSaleModel.Retail)
+        {
+            await base.OnActionExecutionAsync(context, next);
+            return;
+        }
+        if (await _shoppingCart.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id, productDetailsModel.Id) is { Count: > 0 })
+        {
+            if (await _genericAttribute.GetAttributeAsync<bool>(store, Defaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
+            {
+                productDetailsModel.AddToCart.DisableBuyButton = true;
+            }
+            await base.OnActionExecutionAsync(context, next);
+            return;
+        }
+        var product = await _product.GetProductByIdAsync(productDetailsModel.Id);
+        try
+        {
+            var canPurchaseProduct = await _purchasing.CanPurchaseProductAsync(product, customer);
+            if (await _genericAttribute.GetAttributeAsync<bool>(store, Defaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
+            {
+                productDetailsModel.AddToCart.DisableBuyButton = !canPurchaseProduct;
+            }
+            await base.OnActionExecutionAsync(context, next);
+        }
+        catch (Exception)
+        {
+            throw;
+            // ignored
         }
     }
 }

@@ -1,0 +1,13 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.Category.CategoryModel
+
+@{
+    var customer = await workContext.GetCurrentCustomerAsync();
+    const string hideOptionsBlockAttributeName = "CategoryPage.HideOptionsBlock";
+    var hideOptionsBlock = await genericAttributeService.GetAttributeAsync(customer, hideOptionsBlockAttributeName, defaultValue: true);
+}
+
+<nop-card asp-name="nexport-category-options" asp-icon="fas fa-sliders-h"
+           asp-hide-block-attribute-name="@hideOptionsBlockAttributeName" asp-hide="@hideOptionsBlock"
+           asp-title="@T("Plugins.Misc.Nexport.Category.Options")" asp-advanced="true">
+    @await Html.PartialAsync("../../Category/Options.cshtml", Model)
+</nop-card>

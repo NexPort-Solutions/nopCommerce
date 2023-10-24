@@ -1,23 +1,19 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc.Razor;
+﻿using Microsoft.AspNetCore.Mvc.Razor;
 
-namespace Nop.Plugin.Misc.Nexport.Infrastructure
+namespace Nop.Plugin.Misc.Nexport.Infrastructure;
+
+public class ViewLocationExpander : IViewLocationExpander
 {
-    public class ViewLocationExpander : IViewLocationExpander
+    public void PopulateValues(ViewLocationExpanderContext context)
     {
-        public void PopulateValues(ViewLocationExpanderContext context)
-        {
-        }
+    }
 
-        public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
-        {
-            viewLocations = new[] {
-                "/Plugins/Misc.Nexport/Views/{1}/{0}.cshtml",
-                "/Plugins/Misc.Nexport/Areas/Admin/Views/{1}/{0}.cshtml"
-            }.Concat(viewLocations);
-
-            return viewLocations;
+    public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
+    {
+        return new[] {
+            "/Plugins/Misc.Nexport/Views/{1}/{0}.cshtml",
+            "/Plugins/Misc.Nexport/Areas/Admin/Views/{1}/{0}.cshtml",
         }
+            .Concat(viewLocations);
     }
 }

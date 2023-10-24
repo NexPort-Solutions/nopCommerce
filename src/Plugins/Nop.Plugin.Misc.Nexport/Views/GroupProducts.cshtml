@@ -1,0 +1,81 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.GroupProductListSearchModel
+
+@{
+    string GetUrl(DataUrl dataUrl)
+    {
+        return !string.IsNullOrEmpty(dataUrl?.ActionName) && !string.IsNullOrEmpty(dataUrl.ControllerName)
+            ? Url.Action(dataUrl.ActionName, dataUrl.ControllerName, dataUrl.RouteValues)
+            : !string.IsNullOrEmpty(dataUrl.Url)
+                ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
+                : string.Empty;
+    }
+    var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
+    var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
+    var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
+
+    var groupProductText = T("Plugins.Misc.Nexport.Group.Products")+" - "+ Model.CurrentGroup.Name;
+}
+<div class="page-title">
+    <div class="breadcrumb">
+        <ul itemscope itemtype="http://schema.org/BreadcrumbList">
+            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")" itemprop="item">
+                    <span itemprop="name">@T("Plugins.Misc.Nexport.Groups")</span>
+                </a>
+                <span>/</span>
+                <meta itemprop="position" content="1" />
+            </li>
+            <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                <strong class="current-item" itemprop="name">@groupProductText </strong>
+                <span itemprop="item" itemscope itemtype="http://schema.org/Thing" id="@(groupProductsRouteUrl+"?groupId="+Model.CurrentGroup.Id)">
+                </span>
+                <meta itemprop="position" content="2" />
+            </li>
+        </ul>
+    </div>
+    <h1>@groupProductText</h1>
+</div>
+<div class="page-body">
+    <table id="products_table" class="display stripe hover cell-border" style="width:100%">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Available</th>
+                <th>Awaiting</th>
+                <th>Redeemed</th>
+                <th></th>
+            </tr>
+        </thead>
+    </table>
+</div>
+<script>
+    let productsTable = new DataTable('#products_table', {
+        ajax:
+            {
+                url: "@Html.Raw(GetUrl(new DataUrl("GetGroupProducts", "Wholesale", null)))?groupId=@(Model.CurrentGroup.Id)",
+                type: "POST",
+                dataType: "json",
+                dataSrc: "Data",
+                data: function(data) {
+                    addAntiForgeryToken(data);
+                    return data;
+                }
+            },
+            columns:[
+                { data: "Name" },
+                { data: "Available" },
+                { data: "Awaiting" },
+                { data: "Redeemed" },
+                {
+                "mData": "Id",
+                "mRender": function (data, type, row) {
+                    return '<center><button onClick="goToGroupProductRedemptions(' + row.Id + ',\'' + row.GroupId + '\')" ><i class="far fa-eye"/><span style="margin-left:5px;">View</span></button></center>';
+                }
+            }
+            ],
+        order: [[1, 'asc']]
+    });
+    function goToGroupProductRedemptions(productId,groupId){
+        window.location.href = "@groupProductRedemptionsRouteUrl?GroupId="+groupId+"&ProductId="+productId;
+    }
+</script>

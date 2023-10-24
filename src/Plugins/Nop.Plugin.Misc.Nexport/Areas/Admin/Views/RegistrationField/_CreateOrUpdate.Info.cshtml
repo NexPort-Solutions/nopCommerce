@@ -1,8 +1,12 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Domain.RegistrationField
 @using Nop.Plugin.Misc.Nexport.Extensions
 @using Nop.Plugin.Misc.Nexport.Models.RegistrationField
+@using Nop.Services
+@using System.Globalization
+@using static Nop.Plugin.Misc.Nexport.Domain.RegistrationField.RegistrationField
 
-@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.RegistrationFieldModel
 
 <script>
     $(document).ready(function() {
@@ -16,9 +20,9 @@
     function toggleControlType() {
         var selectedAttributeControlTypeId = +$("#@Html.IdFor(model => model.Type)").val();
 
-        if (selectedAttributeControlTypeId === @(((int) NexportRegistrationFieldType.SelectCheckbox).ToString()) ||
-            selectedAttributeControlTypeId === @(((int) NexportRegistrationFieldType.SelectDropDown).ToString())) {
-            if (selectedAttributeControlTypeId === @(((int) NexportRegistrationFieldType.SelectCheckbox).ToString())) {
+        if (selectedAttributeControlTypeId === @(((int) RegistrationFieldType.SelectCheckbox).ToString(CultureInfo.InvariantCulture)) ||
+            selectedAttributeControlTypeId === @(((int) RegistrationFieldType.SelectDropDown).ToString(CultureInfo.InvariantCulture))) {
+            if (selectedAttributeControlTypeId === @(((int) RegistrationFieldType.SelectCheckbox).ToString(CultureInfo.InvariantCulture))) {
                 $("#allowMultipleSelectionSettingContainer").show();
             } else {
                 $("#allowMultipleSelectionSettingContainer").hide();
@@ -34,8 +38,8 @@
             $("#registrationfield-options").hide();
         }
 
-        if (selectedAttributeControlTypeId === @(((int) NexportRegistrationFieldType.CustomType).ToString())) {
-            $("#@Html.IdFor(model => model.NexportCustomProfileFieldKey)").val("");
+        if (selectedAttributeControlTypeId === @(((int) RegistrationFieldType.CustomType).ToString(CultureInfo.InvariantCulture))) {
+            $("#@Html.IdFor(model => model.CustomProfileFieldKey)").val("");
             $("#nexportCustomProfileFieldKeySettingContainer").hide();
 
             $("#registrationfield-custom").show();
@@ -58,7 +62,7 @@
 </script>
 
 <div class="card-body">
-    @(await Html.LocalizedEditorAsync<NexportRegistrationFieldModel, NexportRegistrationFieldLocalizedModel>("registrationfield-localized",
+    @(await Html.LocalizedEditorAsync<RegistrationFieldModel, RegistrationFieldLocalizedModel>("registrationfield-localized",
     @<div>
         <div class="form-group row">
             <div class="col-md-3">
@@ -75,111 +79,111 @@
     @<div>
             <div class="form-group row">
             <div class="col-md-3">
-                <nop-label asp-for="Name" />
+                <nop-label asp-for="Model.Name" />
             </div>
             <div class="col-md-9">
-                <nop-editor asp-for="Name" asp-required="true" />
-                <span asp-validation-for="Name"></span>
+                <nop-editor asp-for="Model.Name)" asp-required="true" />
+                <span asp-validation-for="Model.Name)"></span>
             </div>
         </div>
     </div>
 ))
     <div class="form-group row">
         <div class="col-md-3">
-            <nop-label asp-for="IsRequired" />
+            <nop-label asp-for="Model.IsRequired" />
         </div>
         <div class="col-md-9">
-            <nop-editor asp-for="IsRequired" />
-            <span asp-validation-for="IsRequired"></span>
+            <nop-editor asp-for="Model.IsRequired" />
+            <span asp-validation-for="Model.IsRequired)"></span>
         </div>
     </div>
     <div class="form-group row">
         <div class="col-md-3">
-            <nop-label asp-for="IsActive" />
+            <nop-label asp-for="Model.IsActive" />
         </div>
         <div class="col-md-9">
-            <nop-editor asp-for="IsActive" />
-            <span asp-validation-for="IsActive"></span>
+            <nop-editor asp-for="Model.IsActive" />
+            <span asp-validation-for="Model.IsActive)"></span>
         </div>
     </div>
     <div class="form-group row">
         <div class="col-md-3">
-            <nop-label asp-for="Type" />
+            <nop-label asp-for="Model.Type" />
         </div>
         <div class="col-md-9">
             @{
-                var fieldTypes = Model.Type.ToNexportSelectList(valuesToExclude: new[]
+                var fieldTypes = Model.Type.ToSelectList(valuesToExclude: new[]
                 {
-                    (int)NexportRegistrationFieldType.None
+                    (int)RegistrationFieldType.None
                 });
             }
-            <nop-select asp-for="Type" asp-items="@fieldTypes" />
-            <span asp-validation-for="Type"></span>
+            <nop-select asp-for="Model.Type)" asp-items="@fieldTypes" />
+            <span asp-validation-for="Model.Type)"></span>
         </div>
     </div>
     <div class="form-group row" id="nexportCustomProfileFieldKeySettingContainer">
         <div class="col-md-3">
-            <nop-label asp-for="NexportCustomProfileFieldKey" />
+            <nop-label asp-for="Model.CustomProfileFieldKey" />
         </div>
         <div class="col-md-9">
-            <nop-editor asp-for="NexportCustomProfileFieldKey" />
-            <span asp-validation-for="NexportCustomProfileFieldKey"></span>
+            <nop-editor asp-for="Model.CustomProfileFieldKey" />
+            <span asp-validation-for="Model.CustomProfileFieldKey)"></span>
         </div>
     </div>
     <div class="form-group row">
         <div class="col-md-3">
-            <nop-label asp-for="FieldCategoryId" />
+            <nop-label asp-for="Model.FieldCategoryId" />
         </div>
         <div class="col-md-9">
-            <nop-select asp-for="FieldCategoryId" asp-items="@Model.AvailableFieldCategory" />
-            <span asp-validation-for="FieldCategoryId"></span>
+            <nop-select asp-for="Model.FieldCategoryId)" asp-items="@Model.AvailableFieldCategory" />
+            <span asp-validation-for="Model.FieldCategoryId)"></span>
         </div>
     </div>
     <div class="form-group row">
         <div class="col-md-3">
-            <nop-label asp-for="Validation" />
+            <nop-label asp-for="Model.Validation" />
         </div>
         <div class="col-md-9">
-            <nop-editor asp-for="Validation" />
-            <span asp-validation-for="Validation"></span>
+            <nop-editor asp-for="Model.Validation" />
+            <span asp-validation-for="Model.Validation)"></span>
         </div>
     </div>
-    <nop-nested-setting asp-for="Validation">
+    <nop-nested-setting asp-for="Model.Validation)">
         <div class="form-group row" id="validationRegexSettingContainer">
             <div class="col-md-3">
-                <nop-label asp-for="ValidationRegex" />
+                <nop-label asp-for="Model.ValidationRegex" />
             </div>
             <div class="col-md-9">
-                <nop-editor asp-for="ValidationRegex" />
-                <span asp-validation-for="ValidationRegex"></span>
+                <nop-editor asp-for="Model.ValidationRegex" />
+                <span asp-validation-for="Model.ValidationRegex)"></span>
             </div>
         </div>
         <div class="form-group row" id="validationMessageSettingContainer">
             <div class="col-md-3">
-                <nop-label asp-for="ValidationMessage" />
+                <nop-label asp-for="Model.ValidationMessage" />
             </div>
             <div class="col-md-9">
-                <nop-editor asp-for="ValidationMessage" />
-                <span asp-validation-for="ValidationMessage"></span>
+                <nop-editor asp-for="Model.ValidationMessage" />
+                <span asp-validation-for="Model.ValidationMessage)"></span>
             </div>
         </div>
     </nop-nested-setting>
     <div class="form-group row">
         <div class="col-md-3">
-            <nop-label asp-for="StoreMappingIds" />
+            <nop-label asp-for="Model.StoreMappingIds" />
         </div>
         <div class="col-md-9">
-            <nop-select asp-for="StoreMappingIds" asp-items="@Model.AvailableStores" asp-multiple="true" />
-            <span asp-validation-for="StoreMappingIds"></span>
+            <nop-select asp-for="Model.StoreMappingIds)" asp-items="@Model.AvailableStores" asp-multiple="true" />
+            <span asp-validation-for="Model.StoreMappingIds)"></span>
         </div>
     </div>
     <div class="form-group row">
         <div class="col-md-3">
-            <nop-label asp-for="DisplayOrder" />
+            <nop-label asp-for="Model.DisplayOrder" />
         </div>
         <div class="col-md-9">
-            <nop-editor asp-for="DisplayOrder" />
-            <span asp-validation-for="DisplayOrder"></span>
+            <nop-editor asp-for="Model.DisplayOrder" />
+            <span asp-validation-for="Model.DisplayOrder)"></span>
         </div>
     </div>
 </div>

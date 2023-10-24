@@ -1,59 +1,62 @@
-﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Domain;
+@using Nop.Plugin.Misc.Nexport.Extensions;
 @using Nop.Plugin.Misc.Nexport.Models.ProductMappings
 @using Nop.Services.Helpers
 @using Nop.Web.Areas.Admin.Models.Customers
 @inject IDateTimeHelper DateTimeHelper
 
-@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingListSearchModel
+@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.ProductMappingListSearchModel
 
 @{
     var productMappingTableColumns = new List<ColumnProperty>
     {
-        new(nameof(NexportProductMappingModel.Id))
+        new(nameof(ProductMappingModel.Id))
         {
             Render = new RenderChildCaret(),
             Width = "5",
             Searchable = false,
             ClassName =  NopColumnClassDefaults.ChildControl
         },
-        new(nameof(NexportProductMappingModel.Id))
+        new(nameof(ProductMappingModel.Id))
         {
             Width = "50",
             IsMasterCheckBox = true,
             Render = new RenderCustom("deleteMappingCheckBox")
         },
-        new(nameof(NexportProductMappingModel.StoreName))
+        new(nameof(ProductMappingModel.StoreName))
         {
             Title = "Store",
             Width = "150",
             Render = new RenderCustom("renderStoreName")
         },
-        new(nameof(NexportProductMappingModel.NexportProductName))
+        new(nameof(ProductMappingModel.ProductName))
         {
             Title = "Product Info",
             Width = "550",
-            Render = new RenderCustom("renderNexportProductInfo")
+            Render = new RenderCustom("renderProductInfo")
         },
-        new(nameof(NexportProductMappingModel.Id))
+        new(nameof(ProductMappingModel.Id))
         {
             Title = "Subscription Information",
             Width = "250",
             Render = new RenderCustom("renderSubscriptionInformation")
         },
-        new(nameof(NexportProductMappingModel.UtcLastModifiedDate))
+        new(nameof(ProductMappingModel.UtcLastModifiedDate))
         {
             Title = "Last Modified Date",
             Width = "150",
             Render = new RenderCustom("renderLocalDateForTableEntry")
         },
-        new(nameof(NexportProductMappingModel.Id))
+        new(nameof(ProductMappingModel.Id))
         {
             Width = "100",
             Render = new RenderCustom("renderViewMappingDetails"),
             ClassName = NopColumnClassDefaults.Button,
             AutoWidth = false
         },
-        new(nameof(NexportProductMappingModel.Id))
+        new(nameof(ProductMappingModel.Id))
         {
             Width = "100",
             Render = new RenderCustom("renderModifyProductMapping"),
@@ -63,62 +66,62 @@
     };
     var groupMembershipChildTableColumns = new List<ColumnProperty>
     {
-        new(nameof(NexportProductGroupMembershipMappingModel.NexportGroupId))
+        new(nameof(ProductGroupMembershipMappingModel.GroupId))
         {
             Title = "Group Id",
             Width = "400",
-            Render = new RenderCustom("renderNexportGroupId")
+            Render = new RenderCustom("renderGroupId")
         },
-        new(nameof(NexportProductGroupMembershipMappingModel.NexportGroupName))
+        new(nameof(ProductGroupMembershipMappingModel.GroupName))
         {
             Title = "Group Name",
             Width = "400",
-            Render = new RenderCustom("renderNexportGroupName")
+            Render = new RenderCustom("renderGroupName")
         },
-        new(nameof(NexportProductGroupMembershipMappingModel.NexportGroupShortName))
+        new(nameof(ProductGroupMembershipMappingModel.GroupShortName))
         {
             Title = "Group Short Name",
             Width = "400",
-            Render = new RenderCustom("renderNexportGroupShortName")
+            Render = new RenderCustom("renderGroupShortName")
         }
     };
-    var childGroupTable = new NexportDataTablesModel
+    var childGroupTable = new Nop.Plugin.Misc.Nexport.Models.DataTablesModel
     {
         Name = "product-mapping-group-memberships-grid",
-        UrlRead = new DataUrl("GetProductGroupMembershipMappings", "NexportIntegration", null),
+        UrlRead = new DataUrl(nameof(ProductMappingController.GetProductGroupMembershipMappings), ViewUtilities.GetControllerName<ProductMappingController>(), null),
         IsChildTable = true,
         Length = Model.PageSize,
         LengthMenu = Model.AvailablePageSizes,
         ColumnCollection = groupMembershipChildTableColumns,
         Filters = new List<FilterParameter>
         {
-            new FilterParameter(nameof(NexportProductGroupMembershipMappingModel.NexportProductMappingId), "Id", true)
+            new FilterParameter(nameof(ProductGroupMembershipMappingModel.ProductMappingId), "Id", true)
         }
     };
-    var productMappingTable = new NexportDataTablesModel
+    var productMappingTable = new Nop.Plugin.Misc.Nexport.Models.DataTablesModel
     {
         Name = "product-mappings-grid",
-        PrimaryKeyColumn = nameof(NexportProductMappingModel.Id),
-        UrlRead = new DataUrl("GetProductMappings", "NexportIntegration",
+        PrimaryKeyColumn = nameof(ProductMappingModel.Id),
+        UrlRead = new DataUrl(nameof(ProductMappingController.GetProductMappings), ViewUtilities.GetControllerName<ProductMappingController>(),
             new RouteValueDictionary {
                 { "nopProductId", Model.NopProductId }
             }),
         Filters = new List<FilterParameter>
         {
-            new FilterParameter(nameof(Model.SearchNexportProductName)),
+            new FilterParameter(nameof(Model.SearchProductName)),
             new FilterParameter(nameof(Model.SearchStoreName)),
-            new FilterParameter(nameof(Model.NexportProductType))
+            new FilterParameter(nameof(Model.ProductType))
         },
         SearchButtonId = "search-mappings",
-        UrlDelete = new DataUrl("DeleteMapping", "NexportIntegration", null),
-        UrlUpdate = new DataUrl("EditMapping", "NexportIntegration", null),
+        UrlDelete = new DataUrl(nameof(ProductMappingController.DeleteMapping), ViewUtilities.GetControllerName<ProductMappingController>(), null),
+        UrlUpdate = new DataUrl(nameof(ProductMappingController.EditMapping), ViewUtilities.GetControllerName<ProductMappingController>(), null),
         Length = Model.PageSize,
         LengthMenu = Model.AvailablePageSizes,
         ColumnCollection = productMappingTableColumns,
         ChildTable = childGroupTable
     };
-    const string hideSearchNexportMappingsBlockAttributeName = "ProductPage.HideSearchNexportMappingsBlock";
-    var hideSearchNexportMappingsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchNexportMappingsBlockAttributeName);
+    const string hideSearchMappingsBlockAttributeName = "ProductPage.HideSearchMappingsBlock";
+    var hideSearchMappingsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchMappingsBlockAttributeName);
 }
 <div class="row">
     <div class="col-md-12" style="text-align: right; margin-bottom: 1rem;">
@@ -136,12 +139,12 @@
     <div class="col-md-12">
         <div class="card card-default card-search">
             <div class="card-body">
-                <div class="row search-row @(!hideSearchNexportMappingsBlock ? "opened" : "")" data-hideAttribute="@hideSearchNexportMappingsBlockAttributeName">
+                <div class="row search-row @(!hideSearchMappingsBlock ? "opened" : "")" data-hideAttribute="@hideSearchMappingsBlockAttributeName">
                     <div class="search-text">@T("Admin.Common.Search")</div>
                     <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
-                    <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchNexportMappingsBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                    <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchMappingsBlock ? "up" : "down")" aria-hidden="true"></i></div>
                 </div>
-                <div class="search-body @(hideSearchNexportMappingsBlock ? "closed" : "")">
+                <div class="search-body @(hideSearchMappingsBlock ? "closed" : "")">
                     <div class="row">
                         <div class="col-md-5">
                             <div class="form-group row">
@@ -154,20 +157,20 @@
                             </div>
                             <div class="form-group row">
                                 <div class="col-md-4">
-                                    <nop-label asp-for="NexportProductType" />
+                                    <nop-label asp-for="ProductType" />
                                 </div>
                                 <div class="col-md-8">
-                                    <nop-select asp-for="NexportProductType" asp-items="Model.AvailableNexportProductTypes" />
+                                    <nop-select asp-for="ProductType" asp-items="Model.AvailableProductTypes" />
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-7">
                             <div class="form-group row">
                                 <div class="col-md-4">
-                                    <nop-label asp-for="SearchNexportProductName" />
+                                    <nop-label asp-for="SearchProductName" />
                                 </div>
                                 <div class="col-md-8">
-                                    <nop-editor asp-for="SearchNexportProductName" />
+                                    <nop-editor asp-for="SearchProductName" />
                                 </div>
                             </div>
                         </div>
@@ -209,23 +212,23 @@
             : '<input name="checkbox_delete_product_mappings" value="' + row.Id + '" type="checkbox" class="checkboxGroups" />';
     }
 
-    function renderNexportProductInfo(data, type, row, meta) {
+    function renderProductInfo(data, type, row, meta) {
         if (data !== null) {
             var displayText = "<b>Name: </b>" + data + "<br>";
-            if (row.NexportCatalogId !== "00000000-0000-0000-0000-000000000000") {
+            if (row.CatalogId !== "00000000-0000-0000-0000-000000000000") {
                 displayText += "<br><b>Type: </b>";
-                if (row.Type === +"@((int)NexportProductTypeEnum.Catalog)") {
+                if (row.Type === +"@((int)ProductType.Catalog)") {
                     displayText += "Catalog";
-                } else if (row.Type === +"@((int)NexportProductTypeEnum.Section)") {
+                } else if (row.Type === +"@((int)ProductType.Section)") {
                     displayText += "Section";
-                } else if (row.Type === +"@((int)NexportProductTypeEnum.TrainingPlan)") {
+                } else if (row.Type === +"@((int)ProductType.TrainingPlan)") {
                     displayText += "Training Plain";
                 }
-                displayText += "<br>" + "<b>Nexport Catalog: </b>" + row.NexportCatalogName + " (" + row.NexportCatalogId + ")";
-                if (row.NexportSyllabusId || row.NexportSyllabus !== "00000000-0000-0000-0000-000000000000") {
-                    displayText += "<br>" + "<b>Nexport Syllabus: </b>" + row.UniqueName + " (" + row.NexportSyllabusId + ")";
+                displayText += "<br>" + "<b>Nexport Catalog: </b>" + row.CatalogName + " (" + row.CatalogId + ")";
+                if (row.SyllabusId || row.Syllabus !== "00000000-0000-0000-0000-000000000000") {
+                    displayText += "<br>" + "<b>Nexport Syllabus: </b>" + row.UniqueName + " (" + row.SyllabusId + ")";
                 }
-                displayText += "<br>" + "<b>NexPort Product Id: </b>" + row.NexportCatalogSyllabusLinkId;
+                displayText += "<br>" + "<b>NexPort Product Id: </b>" + row.CatalogSyllabusLinkId;
                 if (row.UtcLastSynchronizationDate) {
                     displayText += "<br>" + "<b>Last Synchronized Date: </b>" + renderLocalDateForTableEntry(row.UtcLastSynchronizationDate, null, null, null);
                 }
@@ -239,11 +242,11 @@
         if (data > 0) {
             var displayText = "";
 
-            var subOrgName = row.NexportSubscriptionOrgName;
+            var subOrgName = row.SubscriptionOrgName;
             var subOrgDisplayText = subOrgName;
 
             if (subOrgName) {
-                subOrgDisplayText += " - " + row.NexportSubscriptionOrgShortName;
+                subOrgDisplayText += " - " + row.SubscriptionOrgShortName;
                 displayText += "<b>Subscription Organization: </b>" + subOrgDisplayText;
             }
 
@@ -253,8 +256,8 @@
                 if (groupMemberships.length > 0) {
                     groupMembershipNames += "<br>" + "<b>Group Memberships: </b>";
                     for (var i = 0; i < groupMemberships.length; i++) {
-                        groupMembershipNames += groupMemberships[i].NexportGroupName + " (" +
-                            groupMemberships[i].NexportGroupShortName + ")";
+                        groupMembershipNames += groupMemberships[i].GroupName + " (" +
+                            groupMemberships[i].GroupShortName + ")";
                         if (i < groupMemberships.length - 1) {
                             groupMembershipNames += ", ";
                         }
@@ -273,7 +276,7 @@
     function renderViewMappingDetails(data, type, row, meta) {
         var url;
 
-        var renderCreateMapping = row.NexportCatalogId === "00000000-0000-0000-0000-000000000000";
+        var renderCreateMapping = row.CatalogId === "00000000-0000-0000-0000-000000000000";
         var buttonName;
 
         if (renderCreateMapping) {
@@ -283,7 +286,7 @@
         }
 
         if (renderCreateMapping) {
-            url = "@Url.Action("MapNexportProductPopup", "NexportIntegration")";
+            url = "@Url.Action(nameof(ProductMappingController.MapProductPopup), ViewUtilities.GetControllerName<ProductMappingController>())";
             url += "?nopProductId=@Model.NopProductId";
             var storeId = row.StoreId;
             if (storeId) {
@@ -291,7 +294,7 @@
             }
             url += "&containerId=product-mapping-container";
         } else {
-            url = "@Url.Action("ProductMappingDetailsPopup", "NexportIntegration")" + "?mappingId=" + row.Id + "&containerId=";
+            url = "@Url.Action(nameof(ProductMappingController.ProductMappingDetailsPopup), ViewUtilities.GetControllerName<ProductMappingController>())" + "?mappingId=" + row.Id + "&containerId=";
 
             var renderInProductPage = @Json.Serialize(Model.NopProductId.HasValue);
 
@@ -320,7 +323,7 @@
     }
 
     function renderModifyProductMapping(data, type, row, meta) {
-        var url = "@Url.Action("MapNexportProductPopup", "NexportIntegration")";
+        var url = "@Url.Action(nameof(ProductMappingController.MapProductPopup), ViewUtilities.GetControllerName<ProductMappingController>())";
         url += "?nopProductId=@Model.NopProductId";
         var storeId = row.StoreId;
         if (storeId) {
@@ -362,15 +365,15 @@
     }
     
 
-    function renderNexportGroupId(data, type, row, meta) {
+    function renderGroupId(data, type, row, meta) {
         return data;
     }
 
-    function renderNexportGroupName(data, type, row, meta) {
+    function renderGroupName(data, type, row, meta) {
         return data;
     }
 
-    function renderNexportGroupShortName(data, type, row, meta) {
+    function renderGroupShortName(data, type, row, meta) {
         return data;
     }
 
@@ -404,7 +407,7 @@
             $.ajax({
                 cache: false,
                 type: "POST",
-                url: "@Url.Action("DeleteMappings", "NexportIntegration")",
+                url: "@Url.Action(nameof(ProductMappingController.DeleteMappings), ViewUtilities.GetControllerName<ProductMappingController>())",
                 data: postData,
                 error: function (jqXHR, textStatus, errorThrown) {
                     $("#deleteSelectedMappingsFailed-info").text(errorThrown);
@@ -451,7 +454,7 @@
         addAntiForgeryToken(checkDefaultMappingData);
 
         $.ajax({
-            url: "@Url.Action("HasDefaultMapping","NexportIntegration")",
+            url: "@Url.Action(nameof(ProductMappingController.HasDefaultMapping), ViewUtilities.GetControllerName<ProductMappingController>())",
             type: "POST",
             dataType: "json",
             data: checkDefaultMappingData,
@@ -474,7 +477,7 @@
     }
 
     function duplicateProductMapping() {
-        var url = "@Url.Action("DuplicateProductMapping", "NexportIntegration")";
+        var url = "@Url.Action(nameof(ProductMappingController.DuplicateProductMapping), ViewUtilities.GetControllerName<ProductMappingController>())";
         url += "?productId=@Model.NopProductId";
         url += "&containerId=product-mapping-container&btnId=btnRefreshMappings";
 

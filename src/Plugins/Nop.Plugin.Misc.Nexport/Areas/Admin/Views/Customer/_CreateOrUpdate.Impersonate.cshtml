@@ -1,5 +1,6 @@
 @using Nop.Services.Stores
 @using Nop.Core.Domain.Stores
+@using System.Globalization;
 @model CustomerModel
 @inject IStoreService StoreService
 
@@ -14,7 +15,7 @@
     </button>
     @{
         var stores = await StoreService.GetAllStoresAsync();
-        var storeItems = stores.Select(store => new SelectListItem(store.Name, store.Id.ToString()));
+        var storeItems = stores.Select(store => new SelectListItem(store.Name, store.Id.ToString(CultureInfo.InvariantCulture)));
     }
     <nop-select asp-for-name="storeId" asp-items="@storeItems" asp-multiple="false" title="Select store" asp-required="false" />
 </div>

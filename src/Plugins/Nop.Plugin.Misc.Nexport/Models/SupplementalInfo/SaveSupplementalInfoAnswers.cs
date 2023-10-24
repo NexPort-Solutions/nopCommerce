@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 
-namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+[Serializable]
+public class SaveSupplementalInfoAnswers
 {
-    [Serializable]
-    public class SaveSupplementalInfoAnswers
-    {
-        public IList<SupplementInfoAnswerRequest> Answers { get; set; }
-    }
+    public required IList<SupplementInfoAnswerRequest> Answers { get; init; } = new List<SupplementInfoAnswerRequest>();
+}
 
-    [Serializable]
-    public class SupplementInfoAnswerRequest {
-        public int QuestionId { get; set; }
-
-        public IList<int> Options { get; set; }
-    }
+[Serializable]
+public class SupplementInfoAnswerRequest
+{
+    public int QuestionId { get; set; }
+    public required IList<int> Options { get; init; } = new List<int>();
 }

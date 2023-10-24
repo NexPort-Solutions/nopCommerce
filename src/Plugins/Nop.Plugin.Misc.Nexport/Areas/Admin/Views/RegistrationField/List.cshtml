@@ -1,12 +1,14 @@
-﻿@using Nop.Plugin.Misc.Nexport.Models
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers
+@using Nop.Plugin.Misc.Nexport.Models
 @using Nop.Plugin.Misc.Nexport.Models.RegistrationField
 @using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Extensions
+@using static Nop.Plugin.Misc.Nexport.Domain.RegistrationField.RegistrationField
 
-@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldSearchModel
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.SearchModel
 
 @{
-    const string hideSearchRegistrationFieldsBlockAttributeName = "ProductPage.HideSearchNexportMappingsBlock";
+    const string hideSearchRegistrationFieldsBlockAttributeName = "ProductPage.HideSearchMappingsBlock";
     var hideSearchRegistrationFieldsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchRegistrationFieldsBlockAttributeName);
 }
 
@@ -27,10 +29,10 @@
                         <div class="col-md-5">
                             <div class="form-group row">
                                 <div class="col-md-4">
-                                    <nop-label asp-for="SelectedStoreIds" />
+                                    <nop-label asp-for="Model.SelectedStoreIds" />
                                 </div>
                                 <div class="col-md-8">
-                                    <nop-select asp-for="SelectedStoreIds" asp-items="Model.AvailableStores" asp-multiple="true" />
+                                    <nop-select asp-for="Model.SelectedStoreIds)" asp-items="@Model.AvailableStores" asp-multiple="true" />
                                 </div>
                             </div>
                         </div>
@@ -46,10 +48,10 @@
         <p style="display: flex; align-items: center; margin: 0">
             <em>@T("Admin.Customers.Nexport.RegistrationField.Fields.Description")</em>
         </p>
-        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
+        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new Nop.Plugin.Misc.Nexport.Models.DataTablesModel
         {
             Name = "nexport-registrationfields-grid",
-            UrlRead = new DataUrl("ListRegistrationField", "NexportIntegration", null),
+            UrlRead = new DataUrl(nameof(RegistrationFieldController.List), ViewUtilities.GetControllerName<RegistrationFieldController>(), null),
             Filters = new List<FilterParameter>
             {
                 new FilterParameter(nameof(Model.SelectedStoreIds))
@@ -59,92 +61,92 @@
             LengthMenu = Model.AvailablePageSizes,
             ColumnCollection = new List<ColumnProperty>
             {
-                new(nameof(NexportRegistrationFieldModel.Name))
+                new(nameof(RegistrationFieldModel.Name))
                 {
                     Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Name").Text,
                     Width = "100"
                 },
-                new(nameof(NexportRegistrationFieldModel.Type))
+                new(nameof(RegistrationFieldModel.Type))
                 {
                     Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Type").Text,
                     Width = "100",
                     Render = new RenderCustom("renderRegistrationFieldType")
                 },
-                new(nameof(NexportRegistrationFieldModel.IsActive))
+                new(nameof(RegistrationFieldModel.IsActive))
                 {
                     Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Active").Text,
                     Width = "200",
                     ClassName = NopColumnClassDefaults.CenterAll,
                     Render = new RenderBoolean()
                 },
-                new(nameof(NexportRegistrationFieldModel.IsRequired))
+                new(nameof(RegistrationFieldModel.IsRequired))
                 {
                     Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Required").Text,
                     Width = "200",
                     ClassName = NopColumnClassDefaults.CenterAll,
                     Render = new RenderBoolean()
                 },
-                new(nameof(NexportRegistrationFieldModel.NexportCustomProfileFieldKey))
+                new(nameof(RegistrationFieldModel.CustomProfileFieldKey))
                 {
                     Title = T("Plugins.Misc.Nexport.RegistrationField.Field.CustomProfileFieldKey").Text,
                     Width = "100",
                     ClassName = NopColumnClassDefaults.CenterAll
                 },
-                new(nameof(NexportRegistrationFieldModel.DisplayOrder))
+                new(nameof(RegistrationFieldModel.DisplayOrder))
                 {
                     Title = T("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder").Text,
                     Width = "100",
                     ClassName = NopColumnClassDefaults.CenterAll
                 },
-                new(nameof(NexportRegistrationFieldModel.FieldCategoryName))
+                new(nameof(RegistrationFieldModel.FieldCategoryName))
                 {
                     Title = T("Plugins.Misc.Nexport.RegistrationField.Field.Category").Text,
                     Width = "100",
                     ClassName = NopColumnClassDefaults.CenterAll
                 },
-                new(nameof(NexportRegistrationFieldModel.StoreMappings))
+                new(nameof(RegistrationFieldModel.StoreMappings))
                 {
                     Title = T("Plugins.Misc.Nexport.RegistrationField.Field.StoreMappings").Text,
                     Width = "100",
                     ClassName = NopColumnClassDefaults.CenterAll
                 },
-                new(nameof(NexportRegistrationFieldModel.CustomFieldRenderDescription))
+                new(nameof(RegistrationFieldModel.CustomFieldRenderDescription))
                 {
                     Title = T("Plugins.Misc.Nexport.RegistrationField.Field.CustomRender").Text,
                     Width = "100",
                     ClassName = NopColumnClassDefaults.CenterAll
                 },
-                new(nameof(NexportRegistrationFieldModel.Id))
+                new(nameof(RegistrationFieldModel.Id))
                 {
                     Title = T("Admin.Common.Edit").Text,
                     Width = "100",
                     ClassName = NopColumnClassDefaults.Button,
-                    Render = new RenderButtonEdit(new DataUrl("~/Admin/NexportIntegration/EditRegistrationField/"))
+                    Render = new RenderButtonEdit(new DataUrl("~/Admin/RegistrationField/Edit/"))
                 }
             }
         })
 
         <script>
             function renderRegistrationFieldType(data, type, row, meta) {
-                if (data === +"@((int) NexportRegistrationFieldType.Text)") {
-                    return "@NexportRegistrationFieldType.Text.GetDisplayName()";
-                } else if (data === +"@((int) NexportRegistrationFieldType.DateTime)") {
-                    return "@NexportRegistrationFieldType.DateTime.GetDisplayName()";
-                } else if (data === +"@((int) NexportRegistrationFieldType.Boolean)") {
-                    return "@NexportRegistrationFieldType.Boolean.GetDisplayName()";
-                } else if (data === +"@((int) NexportRegistrationFieldType.Numeric)") {
-                    return "@NexportRegistrationFieldType.Numeric.GetDisplayName()";
-                } else if (data === +"@((int) NexportRegistrationFieldType.Email)") {
-                    return "@NexportRegistrationFieldType.Email.GetDisplayName()";
-                } else if (data === +"@((int) NexportRegistrationFieldType.SelectDropDown)") {
-                    return "@NexportRegistrationFieldType.SelectDropDown.GetDisplayName()";
-                } else if (data === +"@((int) NexportRegistrationFieldType.DateOnly)") {
-                    return "@NexportRegistrationFieldType.DateOnly.GetDisplayName()";
-                } else if (data === +"@((int) NexportRegistrationFieldType.SelectCheckbox)") {
-                    return "@NexportRegistrationFieldType.SelectCheckbox.GetDisplayName()";
-                } else if (data === +"@((int) NexportRegistrationFieldType.CustomType)") {
-                    return "@NexportRegistrationFieldType.CustomType.GetDisplayName()";
-                } else if (data === +"@((int) NexportRegistrationFieldType.None)") {
+                if (data === +"@((int) RegistrationFieldType.Text)") {
+                    return "@RegistrationFieldType.Text.GetDisplayName()";
+                } else if (data === +"@((int) RegistrationFieldType.DateTime)") {
+                    return "@RegistrationFieldType.DateTime.GetDisplayName()";
+                } else if (data === +"@((int) RegistrationFieldType.Boolean)") {
+                    return "@RegistrationFieldType.Boolean.GetDisplayName()";
+                } else if (data === +"@((int) RegistrationFieldType.Numeric)") {
+                    return "@RegistrationFieldType.Numeric.GetDisplayName()";
+                } else if (data === +"@((int) RegistrationFieldType.Email)") {
+                    return "@RegistrationFieldType.Email.GetDisplayName()";
+                } else if (data === +"@((int) RegistrationFieldType.SelectDropDown)") {
+                    return "@RegistrationFieldType.SelectDropDown.GetDisplayName()";
+                } else if (data === +"@((int) RegistrationFieldType.DateOnly)") {
+                    return "@RegistrationFieldType.DateOnly.GetDisplayName()";
+                } else if (data === +"@((int) RegistrationFieldType.SelectCheckbox)") {
+                    return "@RegistrationFieldType.SelectCheckbox.GetDisplayName()";
+                } else if (data === +"@((int) RegistrationFieldType.CustomType)") {
+                    return "@RegistrationFieldType.CustomType.GetDisplayName()";
+                } else if (data === +"@((int) RegistrationFieldType.None)") {
                     return "None";
                 } else {
                     return "";
@@ -160,7 +162,7 @@
     </script>
     </div>
     <div class="card-footer">
-        <a class="btn btn-primary" href="@Url.Action("CreateRegistrationField", "NexportIntegration")">
+        <a class="btn btn-primary" href="@Url.Action("CreateRegistrationField", ViewUtilities.GetControllerName<Integration">
             <i class="fa fa-plus-square"></i>
             @T("Admin.Common.AddNew")
         </a>

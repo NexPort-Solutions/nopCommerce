@@ -1,15 +1,14 @@
-﻿@using Nop.Plugin.Misc.Nexport.Models.ProductMappings
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Models.ProductMappings
 @using Nop.Plugin.Misc.Nexport.Extensions
 @using Nop.Plugin.Misc.Nexport.Domain.Enums
 
 @inject IJsonHelper Json
 
-@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingModel
+@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.ProductMappingModel
 
 @{
     Layout = "~/Areas/Admin/Views/Shared/_AdminPopupLayout.cshtml";
-
-    //page title
     ViewBag.PageTitle = "Product mapping details";
 }
 
@@ -23,9 +22,8 @@
 @if (Model is { Id: > 0 })
 {
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
-
     NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/nexport-admin.css", "", true);
-    <form asp-controller="NexportIntegration" asp-action="EditMapping"
+    <form asp-controller="ProductMapping" asp-action="EditMapping)"
           asp-route-containerId="@Context.Request.Query["containerId"]"
           asp-route-btnId="@Context.Request.Query["btnId"]">
         <div class="content-header clearfix">
@@ -51,29 +49,29 @@
                             @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappingDetails.cshtml", Model)
                             <div class="form-group row">
                                 <div class="col-sm-5 col-md-4">
-                                    <nop-label asp-for="NexportSubscriptionOrgId" />
+                                    <nop-label asp-for="SubscriptionOrgId" />
                                 </div>
                                 <div class="col-sm-7 col-md-8">
-                                    <nop-editor asp-for="NexportSubscriptionOrgId" asp-render-form-control-class="true" />
-                                    <span asp-validation-for="NexportSubscriptionOrgId"></span>
+                                    <nop-editor asp-for="SubscriptionOrgId" asp-render-form-control-class="true" />
+                                    <span asp-validation-for="SubscriptionOrgId"></span>
                                 </div>
                             </div>
                             <div class="form-group row">
                                 <div class="col-sm-5 col-md-4">
-                                    <nop-label asp-for="NexportSubscriptionOrgName" />
+                                    <nop-label asp-for="SubscriptionOrgName" />
                                 </div>
                                 <div class="col-sm-7 col-md-8">
-                                    <input type="hidden" name="NexportSubscriptionOrgName" value="@Model.NexportSubscriptionOrgName" />
-                                    <div class="form-text-row" id="NexportSubscriptionOrgName">@Model.NexportSubscriptionOrgName</div>
+                                    <input type="hidden" name="SubscriptionOrgName" value="@Model.SubscriptionOrgName" />
+                                    <div class="form-text-row" id="SubscriptionOrgName">@Model.SubscriptionOrgName</div>
                                 </div>
                             </div>
                             <div class="form-group row">
                                 <div class="col-sm-5 col-md-4">
-                                    <nop-label asp-for="NexportSubscriptionOrgShortName" />
+                                    <nop-label asp-for="SubscriptionOrgShortName" />
                                 </div>
                                 <div class="col-sm-7 col-md-8">
-                                    <input type="hidden" name="NexportSubscriptionOrgShortName" value="@Model.NexportSubscriptionOrgShortName" />
-                                    <div class="form-text-row" id="NexportSubscriptionOrgShortName">@Model.NexportSubscriptionOrgShortName</div>
+                                    <input type="hidden" name="SubscriptionOrgShortName" value="@Model.SubscriptionOrgShortName" />
+                                    <div class="form-text-row" id="SubscriptionOrgShortName">@Model.SubscriptionOrgShortName</div>
                                 </div>
                             </div>
                             <div class="form-group row">
@@ -193,9 +191,9 @@
                                     </div>
                                     <div class="col-md-8 col-sm-7">
                                         @{
-                                            var renewalApprovalMethods = Model.RenewalApprovalMethod.HasValue
-                                                ? Model.RenewalApprovalMethod.Value.ToNexportSelectList()
-                                                : Html.GetEnumSelectList<NexportEnrollmentRenewalApprovalMethodEnum>();
+                                            var renewalApprovalMethods = Model.RenewalApprovalMethod is not null
+                                                ? Model.RenewalApprovalMethod.Value.ToSelectList()
+                                                : Html.GetEnumSelectList<EnrollmentRenewalApprovalMethod>();
                                         }
                                         <nop-select asp-for="RenewalApprovalMethod" asp-items="@renewalApprovalMethods" />
                                         <span asp-validation-for="RenewalApprovalMethod"></span>
@@ -214,7 +212,7 @@
                         </div>
                     </div>
 
-                    @if (Model.NexportSubscriptionOrgId != null)
+                    @if (Model.SubscriptionOrgId != null)
                     {
                         <div class="card card-default card-popup">
                             <div class="card-header">
@@ -223,7 +221,7 @@
                             <div class="card-body">
                                 <div>
                                     @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/ProductMappingGroupMembership.cshtml",
-                                        new NexportProductGroupMembershipMappingListSearchModel { NexportProductMappingId = Model.Id })
+                                        new ProductGroupMembershipMappingListSearchModel { ProductMappingId = Model.Id })
                                 </div>
 
                                 <div class="card card-default" style="margin-top: 0.5em;">
@@ -233,7 +231,7 @@
                                     <div class="card-body">
                                         <div class="form-group row">
                                             <div class="col-sm-5 col-md-4">
-                                                <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupId" />
+                                                <nop-label asp-for="AddGroupMembershipMappingModel.GroupId" />
                                             </div>
                                             <div class="col-sm-7 col-md-8">
                                                 <input class="form-control text-box single-line" id="AddGroupMembership_GroupId" type="text">
@@ -241,7 +239,7 @@
                                         </div>
                                         <div class="form-group row">
                                             <div class="col-sm-5 col-md-4">
-                                                <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupName" />
+                                                <nop-label asp-for="AddGroupMembershipMappingModel.GroupName" />
                                             </div>
                                             <div class="col-sm-7 col-md-8">
                                                         <input type="hidden" id="AddGroupMembership_GroupName" />
@@ -250,7 +248,7 @@
                                         </div>
                                         <div class="form-group row">
                                             <div class="col-sm-5 col-md-4">
-                                                <nop-label asp-for="AddGroupMembershipMappingModel.NexportGroupShortName" />
+                                                <nop-label asp-for="AddGroupMembershipMappingModel.GroupShortName" />
                                             </div>
                                             <div class="col-sm-7 col-md-8">
                                                         <input type="hidden" id="AddGroupMembership_GroupShortName" />
@@ -287,7 +285,7 @@
                                                 filter: "contains"
                                             });
 
-                                            @if (Model.AvailableSupplementalInfoQuestions.Count == 0)
+                                            @if (Model.AvailableSupplementalInfoQuestions.Count is 0)
                                             {
                                                 <text>
                                                     supplementalInfoQuestionIds.setOptions({
@@ -317,13 +315,11 @@
                         process(query_cache[query]);
                         return;
                     }
-
                     if (typeof searching != "undefined") {
                         clearTimeout(searching);
                         process([]);
                     }
-
-                    var url = "@Url.Action("SearchNexportDirectory", "NexportIntegration")";
+                    var url = "@Url.Action(nameof(IntegrationController.SearchDirectory), ViewUtilities.GetControllerName<IntegrationController>())";
                     searching = setTimeout(function() {
                         return $.getJSON(
                             url,
@@ -450,16 +446,16 @@
                 $("#renewalWindowOption").show();
             }
 
-            initTypeAhead($("#NexportSubscriptionOrgId"), $("#NexportSubscriptionOrgId").parent(),
+            initTypeAhead($("#SubscriptionOrgId"), $("#SubscriptionOrgId").parent(),
                 function(item, query) {
                     return organizationTypeAheadMatcher(item, query, 0);
                 },
                 function(selectedItem) {
-                    $("#NexportSubscriptionOrgId").val(selectedItem.id);
-                    $("#NexportSubscriptionOrgName").html(selectedItem.name);
-                    $("input[name=NexportSubscriptionOrgName]").val(selectedItem.name);
-                    $("#NexportSubscriptionOrgShortName").html(selectedItem.short_name);
-                    $("input[name=NexportSubscriptionOrgShortName]").val(selectedItem.short_name);
+                    $("#SubscriptionOrgId").val(selectedItem.id);
+                    $("#SubscriptionOrgName").html(selectedItem.name);
+                    $("input[name=SubscriptionOrgName]").val(selectedItem.name);
+                    $("#SubscriptionOrgShortName").html(selectedItem.short_name);
+                    $("input[name=SubscriptionOrgShortName]").val(selectedItem.short_name);
                 });
 
             initTypeAhead(groupIdInputElement, groupIdInputElement.parent(),
@@ -488,17 +484,17 @@
                 $("#addGroupMembership").attr('disabled', true);
 
                 var postData = {
-                    nexportGroupId: groupId,
-                    nexportGroupName: groupName,
-                    nexportGroupShortName: groupShortName,
-                    nexportProductMappingId: '@Model.Id'
+                    groupId: groupId,
+                    groupName: groupName,
+                    groupShortName: groupShortName,
+                    productMappingId: '@Model.Id'
                 };
                 addAntiForgeryToken(postData);
 
                 $.ajax({
                     cache: false,
                     type: "POST",
-                    url: "@(Url.Action("AddGroupMembershipMapping", "NexportIntegration"))",
+                    url: "@(Url.Action(nameof(ProductMappingController.AddGroupMembershipMapping), ViewUtilities.GetControllerName<ProductMappingController>()))",
                     data: postData,
                     success: function (data, textStatus, jqXHR) {
                         if (!data.Result) {

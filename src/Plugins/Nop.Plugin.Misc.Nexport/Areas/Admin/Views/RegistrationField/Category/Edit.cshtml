@@ -1,17 +1,20 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldCategoryModel
+﻿@using Nop.Plugin.Misc.Nexport.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.CategoryModel
 
 @{
     ViewBag.PageTitle = T("Admin.Customers.Nexport.RegistrationField.Categories.EditCategoryDetails").Text;
     NopHtml.SetActiveMenuItemSystemName("Customer and user settings");
 }
 
-<form asp-controller="NexportIntegration" asp-action="EditRegistrationFieldCategory" method="post" id="registrationfield-category-form">
+<form asp-controller="RegistrationField" asp-action="EditCategory" method="post" id="registrationfield-category-form">
     <div class="content-header clearfix">
         <h1 class="float-left">
             @T("Admin.Customers.Nexport.RegistrationField.Categories.EditCategoryDetails") - @Model.Title
             <small>
                 <i class="fas fa-arrow-circle-left"></i>
-                <a asp-action="ListRegistrationFieldCategory" asp-controller="NexportIntegration">
+                <a asp-action="ListCategory" asp-controller="RegistrationField">
                     @T("Admin.Customers.Nexport.RegistrationField.Categories.BackToList")
                 </a>
             </small>
@@ -34,4 +37,4 @@
     @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/RegistrationField/Category/_CreateOrUpdate.cshtml", Model)
 </form>
 <nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="registrationfield-category-delete"
-                         asp-controller="NexportIntegration" asp-action="DeleteRegistrationFieldCategory" />
+                         asp-controller="RegistrationField" asp-action="DeleteCategory" />

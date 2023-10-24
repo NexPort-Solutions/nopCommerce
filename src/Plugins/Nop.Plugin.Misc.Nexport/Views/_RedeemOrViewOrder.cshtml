@@ -1,4 +1,6 @@
-﻿@model Nop.Plugin.Misc.Nexport.Domain.NexportOrderInvoiceItem
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@model Nop.Plugin.Misc.Nexport.Domain.OrderInvoiceItem
 
 @{
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_common.js");
@@ -39,7 +41,6 @@
                         $("input[name=redemptionUser]").show();
                     }
                 });
-
                 $("#redemption-submit").on("click",
                     function (e) {
                         // Call redemption action
@@ -60,7 +61,7 @@
                             data: postData,
                             success: function (result) {
                                 $.ajax({
-                                    url: "@Url.Action("ViewNexportOrderRedemption", "NexportIntegration")",
+                                    url: "@Url.Action(nameof(IntegrationController.ViewOrderRedemption), ViewUtilities.GetControllerName<IntegrationController>())",
                                     type: "GET",
                                     data: result,
                                     success: function (viewResult) {

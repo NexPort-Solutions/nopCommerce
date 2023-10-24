@@ -1,0 +1,115 @@
+﻿@using Nop.Core.Domain.Discounts
+@using Nop.Core.Domain.Orders;
+@using Nop.Plugin.Misc.Nexport.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@using Nop.Plugin.Misc.Nexport.Services;
+@using Nop.Services.Common;
+@using Nop.Services.Orders;
+@using static Nop.Plugin.Misc.Nexport.Components.Widgets.Order.SummaryCartFooter;
+
+@inject IShoppingCartService ShoppingCartService
+@inject IProductMappingService ProductMapping
+@inject IStoreContext StoreContext
+@inject IWorkContext WorkContext
+@inject IOrderTotalCalculationService OrderTotalCalculation;
+
+@model Nop.Plugin.Misc.Nexport.Models.Order.SummaryCartFooterModel
+
+@{
+    var store = await StoreContext.GetCurrentStoreAsync();
+    var customer = await WorkContext.GetCurrentCustomerAsync();
+    var cart = await ShoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
+    var (_, appliedDiscounts, _, _, _) = await OrderTotalCalculation.GetShoppingCartSubTotalAsync(cart, false);
+    var showPurchasingGroupArea = await cart.AllAwaitAsync(async shoppingCartItem => await ProductMapping.GetByNopProductId(shoppingCartItem.ProductId, store.Id) is not { AutoRedeem: true });
+}
+
+@if (showPurchasingGroupArea)
+{
+    <div>
+        <div style="margin: 0 0 5px;">
+            <strong style="font-size: 18px; font-weight: normal;">
+                Group
+            </strong>
+        </div>
+        <div style="margin: 0 0 10px;">
+            Select the group you would like to purchase for
+        </div>
+        <div>
+            <input id="search-customer-groups" type="text" autocomplete="on" class="form-control" />
+            @Html.TextBoxFor(model => model.GroupGuid, new { style = "display:none" })
+        </div>
+    </div>
+    <div style="min-height: 60px;overflow: hidden;">
+        <div id="selectedgroupdiv" style="float: right; margin: 30px 0; padding: 0 10px;color: #444;">
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            var source = @Url.Action(nameof(GroupController.AvailableGroups), ViewUtilities.GetControllerName<Controller>()))));
+            $('#search-customer-groups').autocomplete({
+                delay: 0,
+                minLength: 0,
+                source: source,
+                create: function (event, ui) {
+                    var selectedGroup = source.find(x => x.value.Id === "@(Model.Group?.Id)");
+                    if (selectedGroup) {
+                        $('#search-customer-groups').data('ui-autocomplete')._trigger('select', 'autocompleteselect', { item: { label: selectedGroup.label, value: selectedGroup.value } });
+                        $("#selectedgroupdiv").html("Purchasing for group:" + $('#search-customer-groups').val());
+                    }
+                    return false;
+                },
+                select: function (event, ui) {
+                    if (ui.item) {
+                        $('#search-customer-groups').val(ui.item.label);
+                        $('#@Html.IdFor(model => model.Group)').val(ui.item.value);
+                        return false;
+                    }
+                },
+                change: function (event, ui) {
+                    if (ui.item) {
+                        var postData = {
+                            groupSelected: JSON.stringify(ui.item.value)
+                        };
+
+                        addAntiForgeryToken(postData);
+
+                        $.ajax({
+                            cache: false,
+                            type: "POST",
+                            url: "@Url.Action(nameof(WholesaleController.SetPurchaseGroupForCustomer), ViewUtilities.GetControllerName<WholesaleController>())",
+                            data: postData,
+                            success: function (data, textStatus, jqXHR) {
+                                if (data.Result) {
+                                    $("#selectedgroupdiv").html("Purchasing for group:" + $('#search-customer-groups').val());
+                                }
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+
+                            }
+                        });
+
+                    }
+                    else {
+                        $("#selectedgroupdiv").html("");
+                    }
+                    return false;
+                }
+            });
+        });
+    </script>
+}
+@if (appliedDiscounts is not [])
+{
+    <div style="float: left;">
+        <strong>Note: You are currently receiving these discount(s) for this order:</strong>
+        <div>
+            <ul style="list-style-type: disc; float: left; margin-left: 25px; font-style: italic;">
+                @foreach (var discount in appliedDiscounts)
+                {
+                    <li>@discount.Name</li>
+                }
+            </ul>
+        </div>
+    </div>
+    <br />
+}

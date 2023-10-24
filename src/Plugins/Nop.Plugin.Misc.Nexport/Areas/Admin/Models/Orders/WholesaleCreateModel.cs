@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
@@ -32,5 +31,5 @@ public class WholesaleCreateModel
     public int Quantity { get; init; }
 
     [NopResourceDisplayName("Admin.Orders.Fields.PaymentMethod")]
-    public string PaymentMethod { get; init; }
+    public string? PaymentMethod { get; init; }
 }

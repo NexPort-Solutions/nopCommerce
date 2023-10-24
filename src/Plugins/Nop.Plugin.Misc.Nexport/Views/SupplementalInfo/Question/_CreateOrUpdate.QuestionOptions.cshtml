@@ -1,6 +1,8 @@
-﻿@using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 
-@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoQuestionModel
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.SupplementalInfoQuestionModel
 
 <script src="~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js"></script>
 
@@ -10,48 +12,49 @@
         <p>
             Question options
         </p>
-        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
+        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new Nop.Plugin.Misc.Nexport.Models.DataTablesModel
         {
             Name = "supplemental-info-question-options-grid",
             UrlRead = new DataUrl(
-                "SupplementalInfoOptionList",
-                "NexportIntegration",
+                nameof(SupplementalInfoController.SupplementalInfoOptionList),
+                ViewUtilities.GetControllerName<SupplementalInfoController>(),
                 new RouteValueDictionary
                 {
-                    [nameof(Model.NexportSupplementalInfoOptionSearchModel.QuestionId)] = Model.NexportSupplementalInfoOptionSearchModel.QuestionId
+                    [nameof(Model.SupplementalInfoOptionSearchModel.QuestionId)] = Model.SupplementalInfoOptionSearchModel.QuestionId
                 }),
             UrlDelete = new DataUrl(
-                "DeleteSupplementalInfoOption",
-                "NexportIntegration", null),
-            Length = Model.NexportSupplementalInfoOptionSearchModel.PageSize,
-            LengthMenu = Model.NexportSupplementalInfoOptionSearchModel.AvailablePageSizes,
+                nameof(SupplementalInfoController.DeleteSupplementalInfoOption),
+                ViewUtilities.GetControllerName<SupplementalInfoController>(),
+                null),
+            Length = Model.SupplementalInfoOptionSearchModel.PageSize,
+            LengthMenu = Model.SupplementalInfoOptionSearchModel.AvailablePageSizes,
             ColumnCollection = new List<ColumnProperty>
             {
-                new(nameof(NexportSupplementalInfoOptionModel.OptionText))
+                new(nameof(SupplementalInfoOptionModel.OptionText))
                 {
                     Title = "Option",
                     Width = "200"
                 },
-                new(nameof(NexportSupplementalInfoOptionModel.UtcDateCreated))
+                new(nameof(SupplementalInfoOptionModel.UtcDateCreated))
                 {
                     Title = "Date Created",
                     Width = "200",
                     Render = new RenderCustom("renderLocalDateForTableEntry")
                 },
-                new(nameof(NexportSupplementalInfoOptionModel.UtcDateModified))
+                new(nameof(SupplementalInfoOptionModel.UtcDateModified))
                 {
                     Title = "Date Modified",
                     Width = "200",
                     Render = new RenderCustom("renderLocalDateForTableEntry")
                 },
-                new(nameof(NexportSupplementalInfoOptionModel.Id))
+                new(nameof(SupplementalInfoOptionModel.Id))
                 {
                     Title = "Edit",
                     Width = "100",
                     ClassName = NopColumnClassDefaults.Button,
                     Render = new RenderCustom("renderEditSupplementalInfoOption")
                 },
-                new(nameof(NexportSupplementalInfoOptionModel.Id))
+                new(nameof(SupplementalInfoOptionModel.Id))
                 {
                     Width = "100",
                     ClassName = NopColumnClassDefaults.Button,
@@ -62,7 +65,7 @@
 
     <script>
         function renderEditSupplementalInfoOption(data, type, row, meta) {
-            var url = "@Url.Action("SupplementalInfoOptionEditPopup", "NexportIntegration")";
+                var url = "@Url.Action(nameof(SupplementalInfoController.SupplementalInfoOptionEditPopup), ViewUtilities.GetControllerName<SupplementalInfoController>())";
             url += "?optionId=" + data;
             url += "&formId=edit-supplemental-info-question-form&btnId=btnRefresh";
 
@@ -73,8 +76,8 @@
     </div>
     <div class="card-footer">
         <button type="submit" id="btnAddNewQuestionOption"
-                onclick="javascript:OpenWindow('@(Url.Action("SupplementalInfoOptionCreatePopup",
-                                                    "NexportIntegration",
+                onclick="javascript:OpenWindow('@(Url.Action(nameof(SupplementalInfoController.SupplementalInfoOptionCreatePopup),
+                                                    ViewUtilities.GetControllerName<SupplementalInfoController>(),
                                                     new {
                                                         questionId = Model.Id,
                                                         btnId = "btnRefresh",

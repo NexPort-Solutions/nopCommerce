@@ -1,0 +1,70 @@
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@using Nop.Services.Helpers
+
+@inject IUserAgentHelper userAgentHelper
+
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer.AddCustomerAnswersModel
+
+@{
+    Layout = "_AdminPopupLayout";
+    ViewBag.PageTitle = "Add customer registration field answers";
+}
+
+@if (ViewBag.RefreshPage == true)
+{
+    <script>
+        try {
+            window.opener.$("#@(Context.Request.Query["containerId"]) #@(Context.Request.Query["btnId"])").click();
+        }
+        catch (e) { }
+    </script>
+}
+
+@if (ViewBag.ClosePage == true)
+{
+    <script>
+        window.close();
+    </script>
+}
+
+@if (Model is not null)
+{
+    <form id="add-customer-registration-fields-form" method="post"
+          asp-action="AddCustomerAnswers"
+          asp-controller="RegistrationField"
+          asp-route-customerId="@Context.Request.Query["customerId"]"
+          asp-route-storeId="@Context.Request.Query["storeId"]"
+          asp-route-containerId="@Context.Request.Query["containerId"]"
+          asp-route-btnId="@Context.Request.Query["btnId"]">
+        <div class="content-header clearfix">
+            <div class="float-right">
+                <button type="submit" name="save" class="btn btn-primary" disabled="@(Model.RegistrationFields.Count is 0)">
+                    <i class="far fa-save"></i>
+                    @T("Admin.Common.Save")
+                </button>
+            </div>
+        </div>
+        <div class="content">
+            <div class="form-horizontal">
+                @if (Model.RegistrationFields.Count > 0)
+                {
+                    <div class="card-group">
+                        <div class="card card-default card-popup">
+                            <div class="card-body">
+                                @await Html.PartialAsync("../Customer/_Create.RegistrationFieldAnswer.cshtml", Model)
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="callout callout-info">
+                        <span>No registration fields available for this customer!</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </form>
+}

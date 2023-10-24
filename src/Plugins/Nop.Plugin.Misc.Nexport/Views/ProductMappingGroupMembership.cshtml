@@ -1,34 +1,37 @@
-﻿@using Nop.Plugin.Misc.Nexport.Models.ProductMappings
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@using Nop.Plugin.Misc.Nexport.Models.ProductMappings
+@using DataTablesModel = Nop.Plugin.Misc.Nexport.Models.DataTablesModel;
 
-@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductGroupMembershipMappingListSearchModel
+@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.ProductGroupMembershipMappingListSearchModel
 
-@await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
+@await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new DataTablesModel
 {
     Name = "product-mapping-group-memberships-grid",
-    UrlRead = new DataUrl("GetProductGroupMembershipMappings", "NexportIntegration", new RouteValueDictionary {
-        { "nexportProductMappingId", Model.NexportProductMappingId }
+    UrlRead = new DataUrl(nameof(IntegrationController.GetProductGroupMembershipMappings), ViewUtilities.GetControllerName<IntegrationController>(), new RouteValueDictionary {
+        { "nexportProductMappingId", Model.ProductMappingId }
     }),
-    UrlDelete = new DataUrl("DeleteGroupMembershipMapping", "NexportIntegration", null),
+    UrlDelete = new DataUrl(nameof(IntegrationController.DeleteGroupMembershipMapping), ViewUtilities.GetControllerName<IntegrationController>(), null),
     Length = Model.PageSize,
     LengthMenu = Model.AvailablePageSizes,
     Filters = new List<FilterParameter>
     {
-        new(nameof(Model.NexportProductMappingId))
+        new(nameof(Model.ProductMappingId))
     },
     ColumnCollection = new List<ColumnProperty>
     {
-        new(nameof(NexportProductGroupMembershipMappingModel.NexportGroupId))
+        new(nameof(ProductGroupMembershipMappingModel.GroupId))
         {
             Title = "Group Id",
             Width = "250",
         },
-        new(nameof(NexportProductGroupMembershipMappingModel.Id))
+        new(nameof(ProductGroupMembershipMappingModel.Id))
         {
             Title = "Group",
             Width = "200",
-            Render = new RenderCustom("renderNexportGroupName")
+            Render = new RenderCustom("renderGroupName")
         },
-        new(nameof(NexportProductGroupMembershipMappingModel.Id))
+        new(nameof(ProductGroupMembershipMappingModel.Id))
         {
             Width = "50",
             Render = new RenderButtonRemove(T("Admin.Common.Delete").Text),
@@ -41,13 +44,13 @@
 <input type="submit" id="btnRefreshGroupMembershipMappings" style="display: none">
 
 <script>
-    function renderNexportGroupName(data, type, row, meta) {
+    function renderGroupName(data, type, row, meta) {
         var textRenderer = $.fn.dataTable.render.text().display;
-        var groupName = row.NexportGroupName;
+        var groupName = row.GroupName;
         var displayText = groupName;
 
         if (groupName !== null) {
-            displayText += " - " + row.NexportGroupShortName;
+            displayText += " - " + row.GroupShortName;
         }
 
         return textRenderer(displayText);

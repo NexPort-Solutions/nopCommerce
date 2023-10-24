@@ -1,25 +1,28 @@
-﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Extensions;
 @using Nop.Plugin.Misc.Nexport.Services
 @using Nop.Services.Helpers
+@using static Nop.Plugin.Misc.Nexport.Domain.RegistrationField.RegistrationField;
 
-@inject NexportService nexportService
+@inject IRegistrationFieldService registrationField
 @inject IUserAgentHelper userAgentHelper
 
-@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.RegistrationFieldModel
 
 @if (Model.IsActive)
 {
-    var controlId = $"NexportCustomProfile-{Model.Id}";
+    var controlId = $"CustomProfile-{Model.Id}";
 
-    if (Model.Type != NexportRegistrationFieldType.CustomType)
+    if (Model.Type is not RegistrationFieldType.CustomType)
     {
         <text>
             <div class="inputs custom-attributes">
                 <label for="@(controlId)">@Model.Name:</label>
                 @switch (Model.Type)
                 {
-                    case NexportRegistrationFieldType.Text:
-                        <input name="@(controlId)" type="text" class="textbox" id="@(controlId)" />
+                    case RegistrationFieldType.Text:
+                        <input name="@(controlId)" type="text" class="textbox" id="@controlId" />
                         <script asp-location="Footer">
                             $(document).ready(function () {
                                 $("#@(controlId)").rules("add", {
@@ -38,13 +41,13 @@
                         </script>
 
                         break;
-                    case NexportRegistrationFieldType.Numeric:
-                        <input name="@(controlId)" type="number" class="textbox" id="@(controlId)" />
+                    case RegistrationFieldType.Numeric:
+                        <input name="@(controlId)" type="number" class="textbox" id="@controlId" />
 
                         break;
-                    case NexportRegistrationFieldType.SelectCheckbox:
+                    case RegistrationFieldType.SelectCheckbox:
                         {
-                            var options = await nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                            var options = await registrationField.GetOptions(Model.Id);
                             if (options.Count > 0)
                             {
                                 var renderOptions = Model.DisplayOptionByAscendingOrder
@@ -77,9 +80,9 @@
 
                             break;
                         }
-                    case NexportRegistrationFieldType.SelectDropDown:
+                    case RegistrationFieldType.SelectDropDown:
                         {
-                            var options = await nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                        var options = await registrationField.GetOptions(Model.Id);
                             if (options.Count > 0)
                             {
                                 var renderOptions = Model.DisplayOptionByAscendingOrder
@@ -104,8 +107,8 @@
 
                             break;
                         }
-                    case NexportRegistrationFieldType.Email:
-                        <input name="@(controlId)" type="email" class="textbox" id="@(controlId)" />
+                    case RegistrationFieldType.Email:
+                        <input name="@(controlId)" type="email" class="textbox" id="@controlId" />
                         <script asp-location="Footer">
                             $(document).ready(function () {
                                 $("#@(controlId)").rules("add", {
@@ -115,7 +118,7 @@
                         </script>
 
                         break;
-                    case NexportRegistrationFieldType.Boolean:
+                    case RegistrationFieldType.Boolean:
                         <div class="option-list nexport-yes-no-field">
                             <span>
                                 <input id="@(controlId)_Yes" type="radio" name="@(controlId)" value="True" />
@@ -128,7 +131,7 @@
                         </div>
 
                         break;
-                    case NexportRegistrationFieldType.DateOnly:
+                    case RegistrationFieldType.DateOnly:
                         {
                             const string datePickerFormat = "MM/DD/YYYY";
                             var isMobileDevice = userAgentHelper.IsMobileDevice();
@@ -160,13 +163,11 @@
                             </script>
                         }
                         break;
-                    case NexportRegistrationFieldType.DateTime:
+                    case RegistrationFieldType.DateTime:
                         {
                             const string dateTimePickerFormat = "MM/DD/YYYY HH:mm";
                             var isMobileDevice = userAgentHelper.IsMobileDevice();
-
-                            <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker"
-                                   @if (isMobileDevice) { <text> readonly</text> } />
+                            <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker" @if (isMobileDevice) { <text> readonly</text> } />
                             @if (Model.IsRequired)
                             {
                                 <nop-required />
@@ -195,13 +196,13 @@
                             </script>
                         }
                         break;
-                    case NexportRegistrationFieldType.None:
+                    case RegistrationFieldType.None:
                         break;
                 }
                 @if (Model.IsRequired)
                 {
-                    if (Model.Type != NexportRegistrationFieldType.DateOnly &&
-                        Model.Type != NexportRegistrationFieldType.DateTime)
+                    if (Model.Type != RegistrationFieldType.DateOnly &&
+                        Model.Type != RegistrationFieldType.DateTime)
                     {
                         <nop-required />
                         <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
@@ -211,12 +212,12 @@
                             $("[name=@(controlId)]").rules("add",
                                 {
                                     required: true,
-                                    @if (Model.Type == NexportRegistrationFieldType.SelectDropDown)
+                                    @if (Model.Type is RegistrationFieldType.SelectDropDown)
                                     {
                                         <text>min: 1,</text>
                                     }
                                     messages: {
-                                        @if (Model.Type == NexportRegistrationFieldType.SelectDropDown)
+                                        @if (Model.Type is RegistrationFieldType.SelectDropDown)
                                         {
                                             <text>min: "This is a required field",</text>
                                         }
@@ -229,49 +230,49 @@
             </div>
             </text>
         }
-        else
+    else
+    {
+        if (!string.IsNullOrWhiteSpace(Model.CustomFieldRender))
         {
-            if (!string.IsNullOrWhiteSpace(Model.CustomFieldRender))
-            {
-                <div id="customRenderPlaceholder"></div>
+            <div id="customRenderPlaceholder"></div>
 
-                <script asp-location="Footer">
-                    $(document).ready(function() {
-                        loadCustomFieldRender();
+            <script asp-location="Footer">
+                $(document).ready(function() {
+                    loadCustomFieldRender();
+                });
+
+                function loadCustomFieldRender() {
+                    var customFieldSystemName = "@Model.CustomFieldRender";
+                    $.ajax({
+                        cache: false,
+                            url: "@Url.Action(nameof(RegistrationFieldController.GetCustomRenderUrl), ViewUtilities.GetControllerName<RegistrationFieldController>())",
+                        data: {
+                            "systemName": customFieldSystemName,
+                            "fieldId": @Model.Id
+                        },
+                        success: function(data, textStatus, jqXHR) {
+                            displayCustomRender(data.url, "#customRenderPlaceholder");
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            $("#customRenderPlaceholder").html("Failed to load custom field render");
+                        }
                     });
+                };
 
-                    function loadCustomFieldRender() {
-                        var customFieldSystemName = "@Model.CustomFieldRender";
-                        $.ajax({
-                            cache: false,
-                            url: "@Url.Action("GetRegistrationFieldCustomRenderUrl", "NexportIntegration")",
-                            data: {
-                                "systemName": customFieldSystemName,
-                                "fieldId": @Model.Id
-                            },
-                            success: function(data, textStatus, jqXHR) {
-                                displayCustomRender(data.url, "#customRenderPlaceholder");
-                            },
-                            error: function(jqXHR, textStatus, errorThrown) {
-                                $("#customRenderPlaceholder").html("Failed to load custom field render");
-                            }
-                        });
-                    };
-
-                    function displayCustomRender(url, placeholderName) {
-                        $.ajax({
-                            cache: false,
-                            url: url,
-                            dataType: "html",
-                            success: function(data, textStatus, jqXHR) {
-                                $(placeholderName).html(data);
-                            },
-                            error: function(jqXHR, textStatus, errorThrown) {
-                                $(placeholderName).html("Failed to custom field render content.");
-                            }
-                        });
-                    }
-                </script>
-            }
+                function displayCustomRender(url, placeholderName) {
+                    $.ajax({
+                        cache: false,
+                        url: url,
+                        dataType: "html",
+                        success: function(data, textStatus, jqXHR) {
+                            $(placeholderName).html(data);
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            $(placeholderName).html("Failed to custom field render content.");
+                        }
+                    });
+                }
+            </script>
         }
     }
+}

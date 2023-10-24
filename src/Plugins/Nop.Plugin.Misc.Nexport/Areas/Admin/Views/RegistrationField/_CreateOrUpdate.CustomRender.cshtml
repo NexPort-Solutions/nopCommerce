@@ -1,10 +1,11 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.RegistrationFieldModel
 
 @if (Model.Id > 0)
 {
     <link rel="stylesheet" href="~/lib_npm/fine-uploader/fine-uploader/fine-uploader.min.css" />
     <script asp-exclude-from-bundle="true" src="~/lib_npm/fine-uploader/jquery.fine-uploader/jquery.fine-uploader.min.js" asp-location="Footer"></script>
-
     <script>
         $(document).ready(function() {
             $("#@Html.IdFor(model => model.AvailableCustomFieldRenders)").change(loadNewCustomFieldRender);
@@ -17,7 +18,7 @@
             if (customFieldSystemName) {
                 $.ajax({
                     cache: false,
-                    url: "@Url.Action("GetRegistrationFieldCustomRenderOptionUrl", "NexportIntegration")",
+                    url: "@Url.Action(nameof(RegistrationFieldController.GetCustomRenderOptionUrl), ViewUtilities.GetControllerName<RegistrationFieldController>())",
                     data: {
                         "systemName": customFieldSystemName,
                         "fieldId": @Model.Id
@@ -51,11 +52,11 @@
     <div class="card-body">
         <div class="form-group row">
             <div class="col-md-3">
-                <nop-label asp-for="CustomFieldRender" />
+                <nop-label asp-for="Model.CustomFieldRender" />
             </div>
             <div class="col-md-9">
-                <nop-select asp-for="CustomFieldRender" asp-items="@Model.AvailableCustomFieldRenders" />
-                <span asp-validation-for="CustomFieldRender"></span>
+                <nop-select asp-for="Model.CustomFieldRender)" asp-items="@Model.AvailableCustomFieldRenders" />
+                <span asp-validation-for="Model.CustomFieldRender)"></span>
             </div>
         </div>
 

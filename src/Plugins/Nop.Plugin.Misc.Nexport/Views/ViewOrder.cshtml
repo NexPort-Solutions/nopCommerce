@@ -1,22 +1,22 @@
-﻿@using Nop.Plugin.Misc.Nexport.Services
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@using Nop.Plugin.Misc.Nexport.Services
 
 @inject IWorkContext workContext
-@inject NexportService nexportService
+@inject IUserMappingService userMapping
 
-@model Nop.Plugin.Misc.Nexport.Domain.NexportOrderInvoiceItem
+@model Nop.Plugin.Misc.Nexport.Domain.OrderInvoiceItem
 
 @{
-    var currentUserId = (await nexportService.FindUserMappingByCustomerId((await workContext.GetCurrentCustomerAsync()).Id)).NexportUserId;
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
 }
 
 <div id="redemption-details" style="">
-    @if (Model.RedeemingUserId == currentUserId)
+    @if (await userMapping.FindByCustomerId(currentCustomer.Id) is { UserId: var currentUserId } 
+        && Model.RedeemingUserId == currentUserId)
     {
-        if (Model.RedeemingUserId != null)
-        {
-            <a href="javascript:void(0);" onclick="navigateToNexportClassroom(this); return false;"
+            <a href="javascript:void(0);" onclick="navigateToClassroom(this); return false;"
                data-order-invoice-id="@Model.Id" id="go-to-nexport-link">Click here to go to Nexport</a>
-        }
     }
     else
     {
@@ -24,12 +24,11 @@
     }
 </div>
 <script>
-    function navigateToNexportClassroom(element) {
+    function navigateToClassroom(element) {
         var orderInvoiceItemId = $(element).data("order-invoice-id");
         if (orderInvoiceItemId) {
-            var url = "@Url.Action("GoToNexport", "NexportIntegration")";
+            var url = "@Url.Action(nameof(IntegrationController.GoToNexport), ViewUtilities.GetControllerName<IntegrationController>())";
             url += "?orderInvoiceItemId=" + orderInvoiceItemId;
-
             navigateToNexport(url);
         }
     }

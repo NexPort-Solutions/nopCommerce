@@ -1,10 +1,10 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Services
 @using Nop.Plugin.Misc.Nexport.Factories
 
-@inject NexportService nexportService
-@inject INexportPluginModelFactory nexportPluginModelFactory
+@inject INexportService nexportService
+@inject IPluginModelFactory pluginModelFactory
 
-@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer.NexportCustomerRegistrationFieldsModel
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer.CustomerRegistrationFieldsModel
 
 @{
     NopHtml.AppendScriptParts(ResourceLocation.Auto, "~/lib/datatables/moment-with-locales-2.22.2.min.js");

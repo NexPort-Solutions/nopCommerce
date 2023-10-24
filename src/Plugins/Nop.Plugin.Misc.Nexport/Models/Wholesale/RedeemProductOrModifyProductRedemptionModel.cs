@@ -1,19 +1,13 @@
-﻿
-using Nop.Core.Domain.Catalog;
+﻿using Nop.Core.Domain.Catalog;
 using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.Wholesale
+namespace Nop.Plugin.Misc.Nexport.Models.Wholesale;
+
+public record RedeemProductOrModifyProductRedemptionModel : BaseNopEntityModel
 {
-    public record RedeemProductOrModifyProductRedemptionModel : BaseNopEntityModel
-    {
-        public bool AdminView { get; set; } = false;
-
-        public NexportGroupModel CurrentGroup { get; set; }
-
-        public Product CurrentProduct { get; set; }
-
-        public Guid InvoiceItemId { get; set; }
-
-        public bool HasBeenAssigned { get; set; } = false;
-    }
+    public bool AdminView { get; init; }
+    public GroupModel? CurrentGroup { get; init; }
+    public Product? CurrentProduct { get; init; }
+    public Guid? InvoiceItemId { get; init; }
+    public bool HasBeenAssigned { get; init; }
 }

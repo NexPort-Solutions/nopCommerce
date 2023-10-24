@@ -2,55 +2,23 @@
 using Microsoft.AspNetCore.Routing;
 using Nop.Core;
 using Nop.Core.Infrastructure;
+using Nop.Plugin.Misc.Nexport.Archway;
 using Nop.Services.Configuration;
 using Nop.Web.Framework.Mvc.Routing;
 
-namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
+namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure;
+
+public class RouteProvider : IRouteProvider
 {
-    public class RouteProvider : IRouteProvider
+    public async void RegisterRoutes(IEndpointRouteBuilder endpointRouteBuilder)
     {
-        public void RegisterRoutes(IEndpointRouteBuilder endpointRouteBuilder)
+        var settingService = EngineContext.Current.Resolve<ISettingService>();
+        var storeContext = EngineContext.Current.Resolve<IStoreContext>();
+        if (await settingService.GetSettingAsync(PluginDefaults.CUSTOM_ENROLLMENT_ROUTE_SETTING_KEY, storeContext.GetCurrentStore().Id, true) is { Value: var customEnrollmentRoute })
         {
-            var settingService = EngineContext.Current.Resolve<ISettingService>();
-            var storeContext = EngineContext.Current.Resolve<IStoreContext>();
-
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Archway.Configure",
-                "Admin/ArchwayEmployeeRegistrationField/Configure",
-                new { controller = "ArchwayEmployeeRegistrationField", action = "Configure" });
-
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Archway.CustomRender",
-                "Admin/ArchwayEmployeeRegistrationField/CustomRender",
-                new { controller = "ArchwayEmployeeRegistrationField", action = "CustomRender" });
-
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Archway.UploadStoreData",
-                "Admin/ArchwayEmployeeRegistrationField/AsyncUploadStoreData",
-                new { controller = "ArchwayEmployeeRegistrationField", action = "AsyncUploadStoreData" });
-
-            endpointRouteBuilder.MapControllerRoute("GetArchwayStoreCitiesByState", "ArchwayEmployeeRegistrationField/getarchwaystorecitiesbystate/",
-                new { controller = "ArchwayEmployeeRegistrationField", action = "GetArchwayStoreCitiesByState" });
-
-            endpointRouteBuilder.MapControllerRoute("GetArchwayStoreAddressesByCity", "ArchwayEmployeeRegistrationField/getarchwaystoreaddressesbycity/",
-                new { controller = "ArchwayEmployeeRegistrationField", action = "GetArchwayStoreAddressesByCity" });
-
-            endpointRouteBuilder.MapControllerRoute("GetArchwayEmployeePositionsByStore", "ArchwayEmployeeRegistrationField/getarchwayemployeepositionsbystore/",
-                new { controller = "ArchwayEmployeeRegistrationField", action = "GetArchwayStoreEmployeePositionsByStore" });
-
-            if (settingService != null && storeContext != null)
-            {
-                var customEnrollmentRouteSetting = (settingService.GetSettingAsync(PluginDefaults.CustomEnrollmentRouteSettingKey,
-                    storeContext.GetCurrentStore().Id, true)).Result;
-                if (customEnrollmentRouteSetting != null)
-                {
-                    var customEnrollmentRoute = !string.IsNullOrWhiteSpace(customEnrollmentRouteSetting.Value)
-                        ? customEnrollmentRouteSetting.Value
-                        : "enroll";
-
-                    endpointRouteBuilder.MapControllerRoute("ArchwayCustomEnrollmentRoute", customEnrollmentRoute,
-                        new {controller = "ShoppingCart", action = "Cart"});
-                }
-            }
+            endpointRouteBuilder.MapControllerRoute("CustomEnrollmentRoute", customEnrollmentRoute ?? "enroll", new { controller = "ShoppingCart", action = "Cart" });
         }
-
-        public int Priority => int.MaxValue - 99;
     }
+
+    public int Priority => int.MaxValue - 99;
 }

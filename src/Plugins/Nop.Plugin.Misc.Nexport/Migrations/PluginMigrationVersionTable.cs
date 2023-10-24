@@ -1,0 +1,16 @@
+﻿using FluentMigrator.Runner.VersionTableInfo;
+
+namespace Nop.Plugin.Misc.Nexport.Migrations;
+
+[VersionTableMetaData]
+public class PluginMigrationVersionTable : IVersionTableMetaData
+{
+    public object? ApplicationContext { get; set; }
+    public virtual string SchemaName => string.Empty;
+    public virtual string TableName => "PluginMigrationVersionInfo";
+    public virtual string ColumnName => "Version";
+    public virtual string UniqueIndexName => "UC_Version";
+    public virtual string AppliedOnColumnName => "AppliedOn";
+    public virtual string DescriptionColumnName => "Description";
+    public virtual bool OwnsSchema => true;
+}

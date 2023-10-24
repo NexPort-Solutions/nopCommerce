@@ -1,0 +1,91 @@
+﻿@using Nop.Plugin.Misc.Nexport.Archway.Factories;
+@using Nop.Plugin.Misc.Nexport.Services
+
+@inject IStudentEmployeeRegistrationFieldModelFactory StudentEmployeeRegistrationFieldModelFactory
+
+@model Nop.Plugin.Misc.Nexport.Archway.Models.StudentEmployeeRegistrationFieldModel
+
+<div class="form-group row">
+    <div class="col-xs-12 col-sm-3">
+        <nop-label asp-for="StoreLocationState" />
+    </div>
+    <div class="col-xs-12 col-sm-9">
+        <div class="input-group input-group-required">
+            <nop-select asp-for="StoreLocationState" asp-items="@await StudentEmployeeRegistrationFieldModelFactory.GetAvailableStates()"
+                        data-storelocation-city="#@Html.IdFor(model => model.StoreLocationCity)"
+                        data-required-message="Restaurant state field is required." />
+            <div class="input-group-btn">
+                <nop-required />
+            </div>
+        </div>
+        <span asp-validation-for="StoreLocationState"></span>
+    </div>
+</div>
+<div class="form-group row">
+    <div class="col-xs-12 col-sm-3">
+        <nop-label asp-for="StoreLocationCity" />
+    </div>
+    <div class="col-xs-12 col-sm-9">
+        <div class="input-group input-group-required">
+            <nop-select asp-for="StoreLocationCity" asp-items="Model.AvailableCities"
+                        data-storelocation-address="#@Html.IdFor(model => model.StoreLocationAddress)"
+                        data-required-message="Restaurant city field is required." />
+            <div class="input-group-btn">
+                <nop-required />
+            </div>
+        </div>
+        <span asp-validation-for="StoreLocationCity"></span>
+    </div>
+</div>
+<div class="form-group row">
+    <div class="col-xs-12 col-sm-3">
+        <nop-label asp-for="StoreLocationAddress" />
+    </div>
+    <div class="col-xs-12 col-sm-9">
+        <div class="input-group input-group-required">
+            <nop-select asp-for="StoreLocationAddress" asp-items="Model.AvailableAddresses"
+                        data-storelocation-employeeposition="#@Html.IdFor(model => model.EmployeePosition)"
+                        data-required-message="Restaurant address field is required." />
+            <div class="input-group-btn">
+                <nop-required />
+            </div>
+        </div>
+        <span asp-validation-for="StoreLocationAddress"></span>
+    </div>
+</div>
+<div class="form-group row">
+    <div class="col-xs-12 col-sm-3">
+        <nop-label asp-for="EmployeePosition" />
+    </div>
+    <div class="col-xs-12 col-sm-9">
+        <div class="input-group input-group-required">
+            <nop-select asp-for="EmployeePosition" asp-items="Model.AvailableEmployeePositions" data-required-message="Employee position field is required." />
+            <div class="input-group-btn">
+                <nop-required />
+            </div>
+        </div>
+        <span asp-validation-for="EmployeePosition"></span>
+    </div>
+</div>
+<div class="form-group row" id="storeEmployeeIdContainer">
+    <div class="col-xs-12 col-sm-3">
+        <nop-label asp-for="EmployeeId" />
+    </div>
+    <div class="col-xs-12 col-sm-9">
+        <div class="input-group input-group-required">
+            <nop-editor asp-for="EmployeeId" />
+            <div class="input-group-btn">
+                <nop-required />
+            </div>
+        </div>
+        <span asp-validation-for="EmployeeId"></span>
+    </div>
+</div>
+<input type="hidden" asp-for="StoreType" />
+<input type="hidden" asp-for="StoreNumber" />
+
+@Html.Partial("Script", Model)
+
+<script>
+    $(document).ready(function() { setup(true) });
+</script>

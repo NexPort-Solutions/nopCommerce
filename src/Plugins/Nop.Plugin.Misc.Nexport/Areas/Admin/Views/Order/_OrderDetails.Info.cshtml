@@ -8,9 +8,10 @@
 @using Nop.Services.Orders
 @using Nop.Services.Stores
 @using NexportApi.Model
+@using System.Globalization;
 @inject IOrderService orderService
-@inject IStoreService StoreService
-@inject NexportService nexportService
+@inject Nop.Plugin.Misc.Nexport.Services.IStoreService StoreService
+@inject IOrganizationService organizationService
 
 @if (!Model.IsLoggedInAsVendor)
 {
@@ -151,7 +152,7 @@
             }
             else
             {
-                //vendors should see whether or order is cancelled
+                // vendors should see whether or order is cancelled
                 if (Model.OrderStatusId == (int)OrderStatus.Cancelled)
                 {
                     <div class="form-group row">
@@ -202,8 +203,8 @@
                         </div>
                     </div>
                 </div>
-                @if (((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.IncludingTax) && !string.IsNullOrEmpty(Model.OrderSubTotalDiscountInclTax)) ||
-               ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.ExcludingTax) && !string.IsNullOrEmpty(Model.OrderSubTotalDiscountExclTax)))
+                @if (((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType is TaxDisplayType.IncludingTax) && !string.IsNullOrEmpty(Model.OrderSubTotalDiscountInclTax)) ||
+               ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType is TaxDisplayType.ExcludingTax) && !string.IsNullOrEmpty(Model.OrderSubTotalDiscountExclTax)))
                 {
                     <div class="form-group row">
                         <div class="col-md-3">
@@ -216,7 +217,7 @@
                         </div>
                         <div class="col-md-9">
                             <div class="row">
-                                @if ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.IncludingTax) && !string.IsNullOrEmpty(Model.OrderSubTotalDiscountInclTax))
+                                @if ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType is TaxDisplayType.IncludingTax) && !string.IsNullOrEmpty(Model.OrderSubTotalDiscountInclTax))
                                 {
                                     <div class="col-md-6">
                                         <div class="form-text-row">
@@ -224,7 +225,7 @@
                                         </div>
                                     </div>
                                 }
-                                @if ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.ExcludingTax) && !string.IsNullOrEmpty(Model.OrderSubTotalDiscountExclTax))
+                                @if ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType is TaxDisplayType.ExcludingTax) && !string.IsNullOrEmpty(Model.OrderSubTotalDiscountExclTax))
                                 {
                                     <div class="col-md-6">
                                         <div class="form-text-row">
@@ -777,10 +778,10 @@
                         <div class="col-md-9">
                             <div class="form-text-row">
                                 @{
-                                    var organizationDetailsAsync = await nexportService.GetOrganizationDetailsAsync(group.Value)
+                                    var organizationDetails = await organizationService.GetOrganizationDetails(group.Value)
                                         ?? new OrganizationResponseItem(default, "Invalid Group", "invalid", new(ApiErrorEntity.ErrorCodeEnum.ItemNotFound));
                                 }
-                                @Html.Raw(organizationDetailsAsync.Name) (@Html.Raw(organizationDetailsAsync.ShortName))
+                                @Html.Raw(organizationDetails.Name) (@Html.Raw(organizationDetails.ShortName))
                             </div>
                         </div>
                     </div>

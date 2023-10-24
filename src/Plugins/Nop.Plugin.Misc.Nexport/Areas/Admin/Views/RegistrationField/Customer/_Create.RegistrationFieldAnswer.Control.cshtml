@@ -1,22 +1,26 @@
-﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Extensions;
 @using Nop.Plugin.Misc.Nexport.Services
 @using Nop.Services.Helpers
+@using static Nop.Plugin.Misc.Nexport.Domain.RegistrationField.RegistrationField;
 
-@inject NexportService nexportService
+@inject INexportService nexportService
+@inject IUserMappingService userMapping
+@inject IRegistrationFieldService registrationField
 
-@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.RegistrationFieldModel
 
 @if (Model.IsActive)
 {
-    var controlId = $"NexportCustomProfile-{Model.Id}";
-
-    if (Model.Type != NexportRegistrationFieldType.CustomType)
+    var controlId = $"CustomProfile-{Model.Id}";
+    if (Model.Type is not RegistrationFieldType.CustomType)
     {
         <text>
             <div class="form-group row">
                 <div class="col-xs-12 col-sm-3">
                     <div class="label-wrapper">
-                        <label class="col-form-label" for="@(controlId)">@Model.Name</label>
+                        <label class="col-form-label" for="@controlId">@Model.Name</label>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-9">
@@ -25,9 +29,9 @@
                         <div class="input-group input-group-required">
                             @switch (Model.Type)
                             {
-                                case NexportRegistrationFieldType.Text:
+                                case RegistrationFieldType.Text:
                                 {
-                                    <input name="@(controlId)" type="text" class="form-control text-box single-line" id="@(controlId)" />
+                                    <input name="@(controlId)" type="text" class="form-control text-box single-line" id="@controlId" />
                                     <script>
                                         $(document).ready(function() {
                                             $("#@(controlId)").rules("add",
@@ -44,17 +48,15 @@
 
                                     break;
                                 }
-
-                                case NexportRegistrationFieldType.Numeric:
+                                case RegistrationFieldType.Numeric:
                                 {
-                                    <input name="@(controlId)" type="number" class="form-control" id="@(controlId)" />
+                                    <input name="@controlId" type="number" class="form-control" id="@controlId" />
 
                                     break;
                                 }
-
-                                case NexportRegistrationFieldType.SelectCheckbox:
+                                case RegistrationFieldType.SelectCheckbox:
                                 {
-                                    var options = await nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                                    var options = await registrationField.GetOptions(Model.Id);
                                     if (options.Count > 0)
                                     {
                                         var renderOptions = Model.DisplayOptionByAscendingOrder
@@ -67,7 +69,7 @@
                                             {
                                                 <div class="checkbox">
                                                     <label for="@(controlId)_@(option.Id)">
-                                                        <input id="@(controlId)_@(option.Id)" type="checkbox" name="@(controlId)" value="@option.Id" style="margin-top: 3px;" />
+                                                        <input id="@(controlId)_@(option.Id)" type="checkbox" name="@controlId" value="@option.Id" style="margin-top: 3px;" />
                                                         @option.OptionValue
                                                     </label>
                                                 </div>
@@ -89,10 +91,9 @@
 
                                     break;
                                 }
-
-                                case NexportRegistrationFieldType.SelectDropDown:
+                                case RegistrationFieldType.SelectDropDown:
                                 {
-                                    var options = await nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                                    var options = await registrationField.GetOptions(Model.Id);
                                     if (options.Count > 0)
                                     {
                                         var renderOptions = Model.DisplayOptionByAscendingOrder
@@ -110,8 +111,7 @@
 
                                     break;
                                 }
-
-                                case NexportRegistrationFieldType.Email:
+                                case RegistrationFieldType.Email:
                                 {
                                     <input name="@(controlId)" type="email" class="form-control textbox single-line" id="@(controlId)"/>
                                     <script>
@@ -125,8 +125,7 @@
 
                                     break;
                                 }
-
-                                case NexportRegistrationFieldType.Boolean:
+                                case RegistrationFieldType.Boolean:
                                 {
                                     <div class="checkbox">
                                         <span>
@@ -145,8 +144,7 @@
 
                                     break;
                                 }
-
-                                case NexportRegistrationFieldType.DateOnly:
+                                case RegistrationFieldType.DateOnly:
                                 {
                                     const string datePickerFormat = "MM/DD/YYYY";
 
@@ -170,8 +168,7 @@
 
                                     break;
                                 }
-
-                                case NexportRegistrationFieldType.DateTime:
+                                case RegistrationFieldType.DateTime:
                                 {
                                     const string dateTimePickerFormat = "MM/DD/YYYY hh:mm A";
 
@@ -195,8 +192,7 @@
 
                                     break;
                                 }
-
-                                case NexportRegistrationFieldType.None:
+                                case RegistrationFieldType.None:
                                     break;
                             }
                             <div class="input-group-btn">
@@ -209,7 +205,7 @@
                     {
                         switch (Model.Type)
                         {
-                            case NexportRegistrationFieldType.Text:
+                            case RegistrationFieldType.Text:
                                 <input name="@(controlId)" type="text" class="form-control text-box single-line" id="@(controlId)"/>
                                 <script>
                                     $(document).ready(function() {
@@ -226,13 +222,13 @@
                                 </script>
 
                                 break;
-                            case NexportRegistrationFieldType.Numeric:
+                            case RegistrationFieldType.Numeric:
                                 <input name="@(controlId)" type="number" class="form-control text-box single-line" id="@(controlId)"/>
 
                                 break;
-                            case NexportRegistrationFieldType.SelectCheckbox:
+                            case RegistrationFieldType.SelectCheckbox:
                             {
-                                var options = await nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                                var options = await registrationField.GetOptions(Model.Id);
                                 if (options.Count > 0)
                                 {
                                     var renderOptions = Model.DisplayOptionByAscendingOrder
@@ -267,9 +263,9 @@
 
                                 break;
                             }
-                            case NexportRegistrationFieldType.SelectDropDown:
+                            case RegistrationFieldType.SelectDropDown:
                             {
-                                var options = await nexportService.GetNexportRegistrationFieldOptions(Model.Id);
+                                var options = await registrationField.GetOptions(Model.Id);
                                 if (options.Count > 0)
                                 {
                                     var renderOptions = Model.DisplayOptionByAscendingOrder
@@ -287,7 +283,7 @@
 
                                 break;
                             }
-                            case NexportRegistrationFieldType.Email:
+                            case RegistrationFieldType.Email:
                                 <input name="@(controlId)" type="email" class="form-control textbox single-line" id="@(controlId)"/>
                                 <script>
                                     $(document).ready(function() {
@@ -299,7 +295,7 @@
                                 </script>
 
                                 break;
-                            case NexportRegistrationFieldType.Boolean:
+                            case RegistrationFieldType.Boolean:
                                 <div class="checkbox">
                                     <span>
                                         <label for="@(controlId)_Yes">
@@ -316,7 +312,7 @@
                                 </div>
 
                                 break;
-                            case NexportRegistrationFieldType.DateOnly:
+                            case RegistrationFieldType.DateOnly:
                             {
                                 const string datePickerFormat = "MM/DD/YYYY";
 
@@ -340,8 +336,7 @@
 
                                 break;
                             }
-
-                            case NexportRegistrationFieldType.DateTime:
+                            case RegistrationFieldType.DateTime:
                             {
                                 const string dateTimePickerFormat = "MM/DD/YYYY hh:mm A";
 
@@ -365,8 +360,7 @@
 
                                 break;
                             }
-
-                            case NexportRegistrationFieldType.None:
+                            case RegistrationFieldType.None:
                                 break;
                         }
                     }
@@ -389,7 +383,7 @@
                         var customFieldSystemName = "@Model.CustomFieldRender";
                         $.ajax({
                             cache: false,
-                            url: "@Url.Action("GetAdminRegistrationFieldCustomRenderUrl", "NexportIntegration")",
+                            url: "@Url.Action(nameof(RegistrationFieldController.GetAdminCustomRenderUrl), ViewUtilities.GetControllerName<RegistrationFieldController>())",
                             data: {
                                 "systemName": customFieldSystemName,
                                 "fieldId": @Model.Id

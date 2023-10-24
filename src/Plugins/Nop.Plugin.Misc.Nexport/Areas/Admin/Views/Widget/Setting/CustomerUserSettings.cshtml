@@ -1,0 +1,19 @@
+﻿@using Nop.Services.Common
+
+@inject IGenericAttributeService genericAttributeService
+@inject IWorkContext workContext
+
+@model Nop.Plugin.Misc.Nexport.Models.Customer.CustomerAdditionalSettingsModel
+
+@{
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
+    const string hideRegistrationFieldsBlockAttributeName = "CustomerUserSettingsPage.RegistrationFieldsBlock";
+    var hideRegistrationFieldsBlock = await genericAttributeService.GetAttributeAsync(currentCustomer, hideRegistrationFieldsBlockAttributeName, defaultValue: true);
+}
+
+<nop-card asp-name="customersettings-registrationfield" asp-icon="fas fa-id-card"
+          asp-hide-block-attribute-name="@hideRegistrationFieldsBlockAttributeName"
+          asp-hide="@hideRegistrationFieldsBlock" asp-advanced="true"
+          asp-title="@T("Admin.Configuration.Settings.CustomerUser.Nexport.RegistrationFields")">
+    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/Setting/_CustomerUser.RegistrationFields.cshtml", Model)
+</nop-card>

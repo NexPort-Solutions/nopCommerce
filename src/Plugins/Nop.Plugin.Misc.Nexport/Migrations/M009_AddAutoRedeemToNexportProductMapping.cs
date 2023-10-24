@@ -1,23 +1,22 @@
 ﻿using FluentMigrator;
 using Nop.Data.Migrations;
 
-namespace Nop.Plugin.Misc.Nexport.Migrations
+namespace Nop.Plugin.Misc.Nexport.Migrations;
+
+[Tags(Defaults.PLUGIN_MIGRATION_TAG)]
+[Migration(9, "Add AutoRedeem to NexportProductMapping table")]
+[SkipMigration]
+public class M009_AddAutoRedeemToNexportProductMapping : Migration
 {
-    [Tags(NexportDefaults.PluginMigrationTag)]
-    [Migration(9, "Add AutoRedeem to NexportProductMapping table")]
-    [SkipMigration]
-    public class M009_AddAutoRedeemToNexportProductMapping : Migration
+    private const string TABLE_NAME = "NexportProductMapping";
+
+    public override void Up()
     {
-        private const string TABLE_NAME = "NexportProductMapping";
+        Alter.Table(TABLE_NAME).AddColumn("AutoRedeem").AsBoolean().WithDefaultValue(false);
+    }
 
-        public override void Up()
-        {
-            Alter.Table(TABLE_NAME).AddColumn("AutoRedeem").AsBoolean().WithDefaultValue(false);
-        }
-
-        public override void Down()
-        {
-            Delete.Column("AutoRedeem").FromTable(TABLE_NAME);
-        }
+    public override void Down()
+    {
+        Delete.Column("AutoRedeem").FromTable(TABLE_NAME);
     }
 }

@@ -1,13 +1,14 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoQuestionModel
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.SupplementalInfoQuestionModel
 
 @{
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
-
     ViewBag.PageTitle = "Add new supplemental info question";
-    NopHtml.SetActiveMenuItemSystemName(NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME);
+    NopHtml.SetActiveMenuItemSystemName(SystemNames.SUPPLEMENTAL_INFO);
 }
 
-<form asp-controller="NexportIntegration" asp-action="AddSupplementalInfoQuestion" method="post" id="add-supplemental-info-question-form">
+<form asp-controller="SupplementalInfo" asp-action="AddSupplementalInfoQuestion" method="post" id="add-supplemental-info-question-form">
     <div class="content-header clearfix">
         <h1 class="float-left">
             Add new supplemental info question

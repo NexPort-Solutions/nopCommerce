@@ -1,24 +1,23 @@
 ﻿using FluentMigrator;
 using Nop.Data.Migrations;
 
-namespace Nop.Plugin.Misc.Nexport.Migrations
+namespace Nop.Plugin.Misc.Nexport.Migrations;
+
+[Tags(Defaults.PLUGIN_MIGRATION_TAG)]
+[Migration(5, "Add CreditHours to NexportProductMapping table")]
+[SkipMigration]
+public class M005_AddCreditHoursToNexportProductMapping : Migration
 {
-    [Tags(NexportDefaults.PluginMigrationTag)]
-    [Migration(5, "Add CreditHours to NexportProductMapping table")]
-    [SkipMigration]
-    public class M005_AddCreditHoursToNexportProductMapping : Migration
+    private const string TABLE_NAME = "NexportProductMapping";
+
+    public override void Up()
     {
-        private const string TABLE_NAME = "NexportProductMapping";
+        Alter.Table(TABLE_NAME)
+            .AddColumn("CreditHours").AsDecimal().Nullable();
+    }
 
-        public override void Up()
-        {
-            Alter.Table(TABLE_NAME)
-                .AddColumn("CreditHours").AsDecimal().Nullable();
-        }
-
-        public override void Down()
-        {
-            Delete.Column("CreditHours").FromTable(TABLE_NAME);
-        }
+    public override void Down()
+    {
+        Delete.Column("CreditHours").FromTable(TABLE_NAME);
     }
 }

@@ -1,15 +1,15 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoOptionModel
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.SupplementalInfoOptionModel
 
 @{
     Layout = "~/Areas/Admin/Views/Shared/_AdminPopupLayout.cshtml";
-
-    //page title
     ViewBag.PageTitle = "Add a new option";
 }
 
 <script src="~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js"></script>
 
-<form asp-controller="NexportIntegration" asp-action="SupplementalInfoOptionCreatePopup"
+<form asp-controller="SupplementalInfo" asp-action="SupplementalInfoOptionCreatePopup"
       asp-route-questionId="@Context.Request.Query["questionId"]"
       asp-route-btnId="@Context.Request.Query["btnId"]"
       asp-route-formId="@Context.Request.Query["formId"]">

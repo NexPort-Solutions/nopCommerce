@@ -1,65 +1,53 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace Nop.Plugin.Misc.Nexport.Infrastructure.ModelState
+namespace Nop.Plugin.Misc.Nexport.Infrastructure.ModelState;
+
+public abstract class ModelStateTransfer : ActionFilterAttribute
 {
-    public abstract class ModelStateTransfer : ActionFilterAttribute
-    {
-        protected const string Key = nameof(ModelStateTransfer);
-    }
+    protected const string KEY = nameof(ModelStateTransfer);
+}
 
-    /// <summary>
-    /// Model state exporting action filter
-    /// </summary>
-    public class ExportModelStateAttribute : ModelStateTransfer
+/// <summary>
+/// Model state exporting action filter
+/// </summary>
+public sealed class ExportModelStateAttribute : ModelStateTransfer
+{
+    public override void OnActionExecuted(ActionExecutedContext context)
     {
-        public override void OnActionExecuted(ActionExecutedContext filterContext)
+        // Export only when ModelState is not valid and for redirecting
+        if (!context.ModelState.IsValid
+            && context.Result is RedirectResult or RedirectToRouteResult or RedirectToActionResult
+            && context.Controller is Controller controller
+            && context.ModelState is { } modelState)
         {
-            // Export only when ModelState is not valid
-            if (!filterContext.ModelState.IsValid)
-            {
-                // Export only for redirecting
-                if (filterContext.Result is RedirectResult ||
-                    filterContext.Result is RedirectToRouteResult ||
-                    filterContext.Result is RedirectToActionResult)
-                {
-                    if (filterContext.Controller is Controller controller && filterContext.ModelState != null)
-                    {
-                        var modelState = ModelStateHelpers.SerializeModelState(filterContext.ModelState);
-                        controller.TempData[Key] = modelState;
-                    }
-                }
-            }
-
-            base.OnActionExecuted(filterContext);
+            controller.TempData[KEY] = ModelStateHelpers.SerializeModelState(modelState);
         }
+        base.OnActionExecuted(context);
     }
+}
 
-    /// <summary>
-    /// Model state importing action filter
-    /// </summary>
-    public class ImportModelStateAttribute : ModelStateTransfer
+/// <summary>
+/// Model state importing action filter
+/// </summary>
+public sealed class ImportModelStateAttribute : ModelStateTransfer
+{
+    public override void OnActionExecuted(ActionExecutedContext context)
     {
-        public override void OnActionExecuted(ActionExecutedContext filterContext)
+        if (context.Controller is not Controller controller)
         {
-            var controller = filterContext.Controller as Controller;
-
-            if (controller?.TempData[Key] is string serializedModelState)
-            {
-                // Import only for viewing
-                if (filterContext.Result is ViewResult)
-                {
-                    var modelState = ModelStateHelpers.DeserializeModelState(serializedModelState);
-                    filterContext.ModelState.Merge(modelState);
-                }
-                else
-                {
-                    // Otherwise remove it
-                    controller.TempData.Remove(Key);
-                }
-            }
-
-            base.OnActionExecuted(filterContext);
+            base.OnActionExecuted(context);
+            return;
         }
+        if (context.Result is not ViewResult)
+        {
+            // Remove it if not viewing
+            controller.TempData.Remove(KEY);
+        }
+        else if (controller.TempData[KEY] is string serializedModelState)
+        {
+            var modelState = ModelStateHelpers.DeserializeModelState(serializedModelState);
+            context.ModelState.Merge(modelState);
+        }
+        base.OnActionExecuted(context);
     }
 }

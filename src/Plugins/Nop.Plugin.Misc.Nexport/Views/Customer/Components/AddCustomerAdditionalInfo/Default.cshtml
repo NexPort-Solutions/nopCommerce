@@ -1,0 +1,59 @@
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@using Nop.Plugin.Misc.Nexport.Services;
+@using Nop.Services.Common
+
+@inject IGenericAttributeService genericAttributeService
+@inject IWorkContext workContext
+@inject IStoreService store
+
+@model Nop.Plugin.Misc.Nexport.Models.Customer.AddCustomerAdditionalInfoModel
+
+@{
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
+    const string hideAddCustomerRegistrationFieldsBlockAttributeName = "CustomerPage.AddCustomerRegistrationFieldsBlock";
+    var hideAddCustomerRegistrationFieldsBlock = await genericAttributeService.GetAttributeAsync<bool>(currentCustomer, hideAddCustomerRegistrationFieldsBlockAttributeName);
+    var availableStores = (await store.GetAllStoresAsync()).Select(store => new SelectListItem(store.Name, store.Id.ToString(CultureInfo.InvariantCulture))).ToList();
+}
+
+<nop-card asp-name="nexport-customer-registration-fields" asp-icon="fa fa-id-card-o"
+            asp-title="Nexport Registration Fields"
+            asp-hide-block-attribute-name="@hideAddCustomerRegistrationFieldsBlockAttributeName"
+            asp-hide="@hideAddCustomerRegistrationFieldsBlock" asp-advanced="false">
+    <div class="card-body">
+        <nop-select asp-for="StoreId" asp-items="@availableStores" asp-multiple="false" title="Select store" asp-required="false" />
+        <div id="nexport-registration-field-answers-container" style="margin-top: 5px"></div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $("#@Html.IdFor(model => model.StoreId)").on("change",
+                function(e) {
+                    e.preventDefault();
+                    loadRegistrationFieldsForStore($(e.target).val());
+                });
+
+            $("#@Html.IdFor(model => model.StoreId)").rules("remove", "required");
+        });
+
+        function loadRegistrationFieldsForStore(storeId) {
+            var postData = {
+                storeId: storeId
+            };
+            addAntiForgeryToken(postData);
+
+            $.ajax({
+                url: "@Url.Action(nameof(RegistrationFieldController.LoadAnswersByStore), ViewUtilities.GetControllerName<RegistrationFieldController>())",
+                data: postData,
+                success: function(result, textStatus, jqXHR) {
+                    if (result !== undefined) {
+                        $("#nexport-registration-field-answers-container").html(result);
+                    }
+                },
+                error:function(jqXHR, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+        //# sourceURL=add_customer_additional_info.js
+    </script>
+</nop-card>

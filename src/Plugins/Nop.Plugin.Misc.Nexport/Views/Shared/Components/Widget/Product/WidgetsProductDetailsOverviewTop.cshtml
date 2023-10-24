@@ -1,0 +1,29 @@
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+
+@inject IStoreContext storeContext
+
+@model Nop.Plugin.Misc.Nexport.Domain.ProductMapping
+
+@if (Model is { Id: > 0 })
+{
+    if (Model.CreditHours.HasValue)
+    {
+        <div style="margin: 0 0 25px;">
+            Credit Hours: <span>@decimal.Round(Model.CreditHours.Value, 2)</span>
+        </div>
+    }
+
+    if (Model.Type is ProductTypeEnum.Section)
+    {
+        var currentStore = await storeContext.GetCurrentStoreAsync();
+        var hideSectionCEUs = await genericAttributeService.GetAttributeAsync<bool>(currentStore,
+            Defaults.HIDE_SECTION_CEUS_IN_PRODUCT_PAGE_SETTING_KEY, currentStore.Id);
+
+        if (!hideSectionCEUs)
+        {
+            <div style="margin: 0 0 25px;">
+                Section CEUs: <span>@Model.SectionCeus</span>
+            </div>
+        }
+    }
+}

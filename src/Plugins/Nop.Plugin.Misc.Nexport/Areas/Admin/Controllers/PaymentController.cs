@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Services.Payments;
 using Nop.Web.Areas.Admin.Controllers;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
@@ -20,6 +20,6 @@ public class PaymentController : BaseAdminController
             .Select(paymentMethodToJQueryObject);
         return Json(paymentMethods);
 
-        static JQueryObject paymentMethodToJQueryObject(PaymentMethodModel paymentMethod) => new(paymentMethod.FriendlyName, paymentMethod.SystemName);
+        static JQueryObject<string> paymentMethodToJQueryObject(PaymentMethodModel paymentMethod) => new(paymentMethod.FriendlyName, paymentMethod.SystemName);
     }
 }

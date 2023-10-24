@@ -1,286 +1,198 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Routing;
-using FluentMigrator.Runner;
+﻿using FluentMigrator.Runner;
 using FluentMigrator.Runner.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core;
 using Nop.Core.Domain.Cms;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
-using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Cms;
 using Nop.Services.Plugins;
-using Nop.Services.Discounts;
 using Nop.Web.Framework.Menu;
 using Nop.Web.Framework.Infrastructure;
-using Nop.Plugin.Misc.Nexport.Infrastructure;
-using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
-using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
-using Nop.Plugin.Misc.Nexport.Components;
+using Nop.Plugin.Misc.Nexport.Extensions;
+using AdminController = Nop.Web.Areas.Admin.Controllers;
+using Name = Nop.Plugin.Misc.Nexport.SystemNames;
+using Title = Nop.Plugin.Misc.Nexport.SiteNodeTitles;
+using Nop.Plugin.Misc.Nexport.Components.Widgets;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+using Nop.Plugin.Misc.Nexport.Components.Widgets.Customer;
+using Nop.Plugin.Misc.Nexport.Components.Widgets.Product;
+using Nop.Plugin.Misc.Nexport.Components.Widgets.Store;
+using Nop.Plugin.Misc.Nexport.Components.Widgets.Order;
+using Nop.Plugin.Misc.Nexport.Components.Widgets.Category;
 
-namespace Nop.Plugin.Misc.Nexport
+namespace Nop.Plugin.Misc.Nexport;
+
+public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
 {
-    public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
+    private readonly Settings _settings;
+    private readonly Services.PluginService _plugin;
+    private readonly IPermissionService _permission;
+    private readonly ISettingService _setting;
+    private readonly WidgetSettings _widgetSettings;
+    private readonly IWebHelper _webHelper;
+    private readonly ILogger _logger;
+
+    private readonly Dictionary<string, Type> _widgetMapping = new()
     {
-        private readonly NexportSettings _nexportSettings;
-        private readonly NexportPluginService _nexportPluginService;
+        { AdminWidgetZones.StoreDetailsBottom, typeof(StoreDetails) },
+        { AdminWidgetZones.ProductDetailsBlock, typeof(ProductMappingsInProductPage) },
+        { AdminWidgetZones.ProductDetailsButtons, typeof(ProductDetailsButtons) },
+        { AdminWidgetZones.CustomerDetailsButtons, typeof(CustomerDetailsButtons) },
+        { AdminWidgetZones.CustomerDetailsBlock, typeof(CustomerDetailsBlock) },
+        { AdminWidgetZones.CustomerUserDetailsBlock, typeof(CustomerUserDetailsBlock) },
+        { AdminWidgetZones.CategoryDetailsBlock, typeof(CategoryDetails) },
+        { AdminWidgetZones.OrderDetailsBlock, typeof(OrderDetails) },
+        { PublicWidgetZones.OrderDetailsProductLine, typeof(OrderDetailsProductLine) },
+        { PublicWidgetZones.AccountNavigationAfter, typeof(SettingNavigation) },
+        { PublicWidgetZones.HeaderLinksBefore, typeof(HeaderLinksBefore) },
+        { PublicWidgetZones.OrderSummaryCartFooter, typeof(SummaryCartFooter) },
+        { PublicWidgetZones.ProductDetailsOverviewTop, typeof(ProductDetailsOverviewTop) },
+        { Defaults.RegistrationFieldsZone, typeof(RegistrationFields) },
+        { AdminWidgetZones.OrderListButtons, typeof(Wholesale) },
+    };
 
-        private readonly IUrlHelperFactory _urlHelperFactory;
-        private readonly IActionContextAccessor _actionContextAccessor;
-        private readonly IDiscountService _discountService;
-        private readonly ILocalizationService _localizationService;
-        private readonly IPermissionService _permissionService;
-        private readonly ISettingService _settingService;
-        private readonly IScheduleTaskService _scheduleTaskService;
-        private readonly WidgetSettings _widgetSettings;
-        private readonly IWebHelper _webHelper;
-        private readonly ILogger _logger;
+    private const string SITE_MAP_NODE_ICON_CLASS = "far fa-dot-circle";
+    private const string SYSTEM_NODE_ICON_CLASS = "fas fa-plug";
 
-        public NexportPlugin(
-            NexportSettings nexportSettings,
-            NexportPluginService nexportPluginService,
-            IUrlHelperFactory urlHelperFactory,
-            IActionContextAccessor actionContextAccessor,
-            IDiscountService discountService,
-            WidgetSettings widgetSetting,
-            ILocalizationService localizationService,
-            IPermissionService permissionService,
-            ISettingService settingService,
-            IScheduleTaskService scheduleTaskService,
-            IWebHelper webHelper, ILogger logger)
-        {
-            _nexportSettings = nexportSettings;
-            _nexportPluginService = nexportPluginService;
-
-            _urlHelperFactory = urlHelperFactory;
-            _actionContextAccessor = actionContextAccessor;
-
-            _discountService = discountService;
-            _widgetSettings = widgetSetting;
-            _localizationService = localizationService;
-            _permissionService = permissionService;
-            _settingService = settingService;
-            _scheduleTaskService = scheduleTaskService;
-            _webHelper = webHelper;
-            _logger = logger;
-        }
-
-        public async Task ManageSiteMapAsync(SiteMapNode rootNode)
-        {
-            var pluginNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Nexport");
-            if (pluginNode != null)
-                return;
-
-            if (_nexportSettings == null || string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-                return;
-
-            var node = new SiteMapNode()
-            {
-                SystemName = "Nexport",
-                Visible = true,
-                Title = "Nexport Integration",
-                IconClass = "fas fa-plug",
-            };
-
-            node.ChildNodes.Add(new SiteMapNode()
-            {
-                Visible = await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins),
-                Title = "Configuration",
-                SystemName = "Nexport Integration - Configuration",
-                ControllerName = "NexportIntegration",
-                ActionName = "Configure",
-                IconClass = "far fa-dot-circle"
-            });
-
-            node.ChildNodes.Add(new SiteMapNode()
-            {
-                Visible = await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores),
-                Title = "Store Configuration",
-                SystemName = "Nexport Integration - Store Configuration",
-                ControllerName = "Store",
-                ActionName = "List",
-                IconClass = "far fa-dot-circle"
-            });
-
-            node.ChildNodes.Add(new SiteMapNode()
-            {
-                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo),
-                Title = "Supplemental Info",
-                SystemName = NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME,
-                ControllerName = "NexportIntegration",
-                ActionName = "ListSupplementalInfoQuestion",
-                IconClass = "far fa-dot-circle"
-            });
-
-            node.ChildNodes.Add(new SiteMapNode()
-            {
-                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions),
-                Title = "Nexport Groups",
-                SystemName = "Nexport Groups",
-                ControllerName = "NexportWholesale",
-                ActionName = "AdminNexportGroups",
-                IconClass = "far fa-dot-circle"
-            });
-
-            rootNode.ChildNodes.Add(node);
-        }
-
-        public override string GetConfigurationPageUrl()
-        {
-            return $"{_webHelper.GetStoreLocation()}Admin/NexportIntegration/Configure";
-        }
-
-        public override async Task InstallAsync()
-        {
-            try
-            {
-                var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
-                using var serviceScope = migrationServiceProvider.CreateScope();
-                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-                try
-                {
-                    runner.MigrateUp();
-                }
-                catch (MissingMigrationsException)
-                {
-                    // ignored
-                }
-            }
-            catch (Exception)
-            {
-                // Ignore
-            }
-
-            var settings = new NexportSettings();
-            await _settingService.SaveSettingAsync(settings);
-
-            if (!_widgetSettings.ActiveWidgetSystemNames.Contains(NexportDefaults.SystemName))
-            {
-                _widgetSettings.ActiveWidgetSystemNames.Add(NexportDefaults.SystemName);
-                await _settingService.SaveSettingAsync(_widgetSettings);
-            }
-
-            await _nexportPluginService.AddMessageTemplatesAsync();
-
-            await _nexportPluginService.InstallScheduledTaskAsync();
-
-            await _nexportPluginService.AddActivityLogTypesAsync();
-
-            await _nexportPluginService.AddOrUpdateResourcesAsync();
-
-            await _nexportPluginService.InstallPermissionProviderAsync();
-
-            await base.InstallAsync();
-        }
-
-        public override async Task UninstallAsync()
-        {
-            if (_widgetSettings.ActiveWidgetSystemNames.Contains(NexportDefaults.SystemName))
-            {
-                _widgetSettings.ActiveWidgetSystemNames.Remove(NexportDefaults.SystemName);
-                await _settingService.SaveSettingAsync(_widgetSettings);
-            }
-
-            await _settingService.DeleteSettingAsync<NexportSettings>();
-
-            await _nexportPluginService.DeleteMessageTemplatesAsync();
-
-            await _nexportPluginService.UninstallScheduledTaskAsync();
-
-            await _nexportPluginService.DeleteActivityLogTypesAsync();
-
-            await _nexportPluginService.DeleteResourcesAsync();
-
-            await _nexportPluginService.UninstallPermissionProviderAsync();
-
-            try
-            {
-                var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
-                using var serviceScope = migrationServiceProvider.CreateScope();
-                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-                try
-                {
-                    runner.MigrateDown(0);
-
-                    ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
-                }
-                catch (MissingMigrationsException)
-                {
-                    // ignored
-                }
-            }
-            catch (Exception)
-            {
-                // Ignore
-            }
-
-            await base.UninstallAsync();
-        }
-
-        public bool HideInWidgetList => true;
-
-        public Task<IList<string>> GetWidgetZonesAsync()
-        {
-            return Task.FromResult<IList<string>>(new List<string>
-            {
-                AdminWidgetZones.StoreDetailsBottom,
-                AdminWidgetZones.ProductDetailsButtons,
-                AdminWidgetZones.ProductDetailsBlock,
-                AdminWidgetZones.CustomerDetailsButtons,
-                AdminWidgetZones.CustomerDetailsBlock,
-                AdminWidgetZones.CustomerUserDetailsBlock,
-                AdminWidgetZones.CategoryDetailsBlock,
-                AdminWidgetZones.OrderDetailsBlock,
-                PublicWidgetZones.OrderDetailsProductLine,
-                PublicWidgetZones.AccountNavigationAfter,
-                PublicWidgetZones.HeaderLinksBefore,
-                PublicWidgetZones.OrderSummaryCartFooter,
-                PublicWidgetZones.ProductDetailsOverviewTop,
-                NexportDefaults.NexportRegistrationFieldsZone,
-                AdminWidgetZones.OrderListButtons
-            });
-        }
-
-        public Type? GetWidgetViewComponent(string widgetZone)
-        {
-            if (widgetZone == AdminWidgetZones.StoreDetailsBottom)
-                return typeof(WidgetsNexportStoreDetails);
-            else if (widgetZone == AdminWidgetZones.ProductDetailsBlock)
-                return typeof(WidgetsNexportProductMappingsInProductPage);
-            else if (widgetZone == AdminWidgetZones.ProductDetailsButtons)
-                return typeof(WidgetsNexportProductDetailsButtons);
-            else if (widgetZone == AdminWidgetZones.CustomerDetailsButtons)
-                return typeof(WidgetsNexportCustomerDetailsButtons);
-            else if (widgetZone == AdminWidgetZones.CustomerDetailsBlock)
-                return typeof(WidgetsNexportCustomerDetailsBlock);
-            else if (widgetZone == AdminWidgetZones.CustomerUserDetailsBlock)
-                return typeof(WidgetsNexportCustomerUserDetailsBlock);
-            else if (widgetZone == AdminWidgetZones.CategoryDetailsBlock)
-                return typeof(WidgetsNexportCategoryDetailsBlock);
-            else if (widgetZone == AdminWidgetZones.OrderDetailsBlock)
-                return typeof(WidgetsNexportOrderDetailsBlock);
-            else if (widgetZone == PublicWidgetZones.OrderDetailsProductLine)
-                return typeof(WidgetsNexportOrderDetailsProductLine);
-            else if (widgetZone == PublicWidgetZones.AccountNavigationAfter)
-                return typeof(WidgetsAccountNavigationAfter);
-            else if (widgetZone == PublicWidgetZones.HeaderLinksBefore)
-                return typeof(WidgetsHeaderLinksBefore);
-            else if (widgetZone == PublicWidgetZones.OrderSummaryCartFooter)
-                return typeof(WidgetsOrderSummaryCartFooter);
-            else if (widgetZone == PublicWidgetZones.ProductDetailsOverviewTop)
-                return typeof(WidgetsProductDetailsOverviewTop);
-            else if (widgetZone == NexportDefaults.NexportRegistrationFieldsZone)
-                return typeof(WidgetsNexportRegistrationFields);
-            else if (widgetZone == AdminWidgetZones.OrderListButtons)
-                return typeof(WidgetsNexportOrderListButtons);
-            else return null;
-        }
+    public NexportPlugin(
+        Settings settings,
+        Services.PluginService pluginService,
+        WidgetSettings widgetSetting,
+        IPermissionService permissionService,
+        ISettingService settingService,
+        IWebHelper webHelper,
+        ILogger logger)
+    {
+        _settings = settings;
+        _plugin = pluginService;
+        _widgetSettings = widgetSetting;
+        _permission = permissionService;
+        _setting = settingService;
+        _webHelper = webHelper;
+        _logger = logger;
     }
+
+    public async Task ManageSiteMapAsync(SiteMapNode rootNode)
+    {
+        var pluginNode = rootNode.ChildNodes.FirstOrDefault(siteMapNode => siteMapNode.SystemName == Name.NEXPORT);
+        if (pluginNode is not null)
+        {
+            return;
+        }
+        if (_settings is null || string.IsNullOrWhiteSpace(_settings.AuthenticationToken))
+        {
+            return;
+        }
+        var systemNode = new SiteMapNode
+        {
+            SystemName = Name.NEXPORT,
+            Visible = true,
+            Title = Title.NEXPORT,
+            IconClass = SYSTEM_NODE_ICON_CLASS,
+        };
+        systemNode.ChildNodes.Add(new SiteMapNode
+            {
+                Visible = await _permission.AuthorizeAsync(StandardPermissionProvider.ManagePlugins),
+                Title = Title.CONFIGURATION,
+                SystemName = Name.INTEGRATION_CONFIGURATION,
+                ControllerName = ViewUtilities.GetControllerName<IntegrationController>(),
+                ActionName = nameof(IntegrationController.Configure),
+                IconClass = SITE_MAP_NODE_ICON_CLASS,
+            });
+        systemNode.ChildNodes.Add(new SiteMapNode
+            {
+                Visible = await _permission.AuthorizeAsync(StandardPermissionProvider.ManageStores),
+                Title = Title.STORE_CONFIGURATION,
+                SystemName = Name.STORE_CONFIGURATION,
+                ControllerName = ViewUtilities.GetControllerName<AdminController.StoreController>(),
+                ActionName = nameof(AdminController.StoreController.List),
+                IconClass = SITE_MAP_NODE_ICON_CLASS,
+            });
+        systemNode.ChildNodes.Add(new SiteMapNode
+            {
+                Visible = await _permission.AuthorizeAsync(PermissionProvider.ManageSupplementalInfo),
+                Title = Title.SUPPLEMENTAL_INFO,
+                SystemName = Name.SUPPLEMENTAL_INFO,
+                ControllerName = ViewUtilities.GetControllerName<SupplementalInfoController>(),
+                ActionName = nameof(SupplementalInfoController.ListSupplementalInfoQuestion),
+                IconClass = SITE_MAP_NODE_ICON_CLASS,
+            });
+        systemNode.ChildNodes.Add(new SiteMapNode
+            {
+                Visible = await _permission.AuthorizeAsync(PermissionProvider.ManageWholesaleRedemptions),
+                Title = Title.GROUPS,
+                SystemName = Name.GROUPS,
+                ControllerName = ViewUtilities.GetControllerName<WholesaleController>(),
+                ActionName = nameof(WholesaleController.AdminGroups),
+                IconClass = SITE_MAP_NODE_ICON_CLASS,
+            });
+        rootNode.ChildNodes.Add(systemNode);
+    }
+
+    public override string GetConfigurationPageUrl() => $"{_webHelper.GetStoreLocation()}Admin/RegistrationField/Configure";
+
+    public override async Task InstallAsync()
+    {
+        var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
+        using var serviceScope = migrationServiceProvider.CreateScope();
+        var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+        try
+        {
+            runner.MigrateUp();
+        }
+        catch (MissingMigrationsException) { }
+        var settings = new Settings();
+        await _setting.SaveSettingAsync(settings);
+        if (!_widgetSettings.ActiveWidgetSystemNames.Contains(Name.SYSTEM_NAME))
+        {
+            _widgetSettings.ActiveWidgetSystemNames.Add(Name.SYSTEM_NAME);
+            await _setting.SaveSettingAsync(_widgetSettings);
+        }
+        await _plugin.AddMessageTemplatesAsync();
+        await _plugin.InstallScheduledTaskAsync();
+        await _plugin.AddActivityLogTypesAsync();
+        await _plugin.AddOrUpdateResourcesAsync();
+        await _plugin.InstallPermissionProviderAsync();
+        await base.InstallAsync();
+    }
+
+    public override async Task UninstallAsync()
+    {
+        if (_widgetSettings.ActiveWidgetSystemNames.Contains(Name.SYSTEM_NAME))
+        {
+            _widgetSettings.ActiveWidgetSystemNames.Remove(Name.SYSTEM_NAME);
+            await _setting.SaveSettingAsync(_widgetSettings);
+        }
+        await _setting.DeleteSettingAsync<Settings>();
+        await _plugin.DeleteMessageTemplatesAsync();
+        await _plugin.UninstallScheduledTaskAsync();
+        await _plugin.DeleteActivityLogTypesAsync();
+        await _plugin.DeleteResourcesAsync();
+        await _plugin.UninstallPermissionProviderAsync();
+        try
+        {
+            var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
+            using var serviceScope = migrationServiceProvider.CreateScope();
+            var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+            try
+            {
+                runner.MigrateDown(0);
+                ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
+            }
+            catch (MissingMigrationsException) { }
+        }
+#pragma warning disable
+        catch (Exception) { }
+#pragma warning restore
+        await base.UninstallAsync();
+    }
+
+    public bool HideInWidgetList => true;
+
+    public Task<IList<string>> GetWidgetZonesAsync() => Task.FromResult<IList<string>>(_widgetMapping.Keys.ToList());
+    public Type? GetWidgetViewComponent(string widgetZone) => _widgetMapping.TryGetValue(widgetZone, out var result) ? result : null;
 }

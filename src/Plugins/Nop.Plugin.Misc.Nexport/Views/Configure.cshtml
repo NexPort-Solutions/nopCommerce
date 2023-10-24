@@ -1,17 +1,19 @@
-﻿@using Nop.Services.Helpers
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@using Nop.Services.Helpers
 
 @inject IDateTimeHelper dateTimeHelper
 @inject IJsonHelper Json
+@inject Settings Settings
 
 @model Nop.Plugin.Misc.Nexport.Models.ConfigurationModel
 
 @{
     Layout = "_ConfigurePlugin";
-
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
 }
 
-<form asp-controller="NexportIntegration" asp-action="Configure" method="post">
+<form asp-controller="Integration" asp-action="Configure" method="post">
     <div class="card card-default">
         <div class="card-header">
             Plugin Api Credential
@@ -19,13 +21,13 @@
         <div class="card-body">
             <div class="form-group row">
                 <div class="col-md-3">
-                    <nop-label asp-for="Url" />
+                    <nop-label asp-for="@Model.Url" />
                 </div>
                 <div class="col-md-9">
-                    @if (!string.IsNullOrEmpty(Model.Url))
+                    @if (!string.IsNullOrEmpty(Settings.Url))
                     {
                         <div class="input-group">
-                            <nop-editor asp-for="Url" />
+                            <nop-editor asp-for="@Model.Url" />
                             <div class="input-group-append">
                                 <button id="setServerUrl" name="setserverurl" class="btn btn-info">
                                     Set url
@@ -35,47 +37,47 @@
                     }
                     else
                     {
-                        <nop-editor asp-for="Url" />
+                        <nop-editor asp-for="@Model.Url" />
                     }
-                    <span asp-validation-for="Url"></span>
+                    <span asp-validation-for="@Model.Url"></span>
                 </div>
             </div>
             <div class="form-group row">
                 <div class="col-md-3">
-                    <nop-label asp-for="Username" />
+                    <nop-label asp-for="@Model.Username" />
                 </div>
                 <div class="col-md-9">
-                    <nop-editor asp-for="Username" />
-                    <span asp-validation-for="Username"></span>
+                    <nop-editor asp-for="@Model.Username" />
+                    <span asp-validation-for="@Model.Username"></span>
                 </div>
             </div>
             <div class="form-group row">
                 <div class="col-md-3">
-                    <nop-label asp-for="Password" />
+                    <nop-label asp-for="@Model.Password" />
                 </div>
                 <div class="col-md-9">
-                    <nop-editor asp-for="Password" />
-                    <span asp-validation-for="Password"></span>
-                </div>
-            </div>
-
-            <div class="form-group row">
-                <div class="col-md-3">
-                    <nop-label asp-for="CustomTokenExpirationDate" />
-                </div>
-                <div class="col-md-9">
-                    <nop-editor asp-for="CustomTokenExpirationDate" asp-disabled="@Model.TokenNeverExpired" />
-                    <span asp-validation-for="CustomTokenExpirationDate"></span>
+                    <nop-editor asp-for="@Model.Password" />
+                    <span asp-validation-for="@Model.Password"></span>
                 </div>
             </div>
 
             <div class="form-group row">
                 <div class="col-md-3">
-                    <nop-label asp-for="AutoRenewToken" />
+                    <nop-label asp-for="@Model.CustomTokenExpirationDate" />
                 </div>
                 <div class="col-md-9">
-                    <input asp-for="AutoRenewToken" disabled="@Model.TokenNeverExpired" />
-                    <span asp-validation-for="AutoRenewToken"></span>
+                    <nop-editor asp-for="@Model.CustomTokenExpirationDate" asp-disabled="@Model.TokenNeverExpired" />
+                    <span asp-validation-for="@Model.CustomTokenExpirationDate"></span>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="@Model.AutoRenewToken" />
+                </div>
+                <div class="col-md-9">
+                    <input asp-for="@Model.AutoRenewToken" disabled="@Model.TokenNeverExpired" />
+                    <span asp-validation-for="@Model.AutoRenewToken"></span>
                 </div>
             </div>
 
@@ -84,57 +86,56 @@
                     <nop-label asp-for="TokenNeverExpired" />
                 </div>
                 <div class="col-md-9">
-                    <input asp-for="TokenNeverExpired" disabled="@Model.AutoRenewToken" />
-                    <span asp-validation-for="TokenNeverExpired"></span>
+                    <input asp-for="@Model.TokenNeverExpired" disabled="@Model.AutoRenewToken" />
+                    <span asp-validation-for="@Model.TokenNeverExpired"></span>
                 </div>
             </div>
 
             <div class="form-group row">
                 <div class="col-md-9 offset-md-3">
-                    <input type="submit" name="save" class="btn btn-primary" value="@T("Admin.Common.Save")" />
+                    <input type="submit" name="save" class="btn btn-primary" value="@(T("Admin.Common.Save"))" />
                 </div>
             </div>
         </div>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.NexportAuthenticationToken))
+    @if (!string.IsNullOrEmpty(Settings.AuthenticationToken))
     {
         <div class="card card-default">
             <div class="card-header">
-                Plugin Api Token
+                Plugin API Token
             </div>
             <div class="card-body">
 
                 <div class="form-group row">
                     <div class="col-md-3">
-                        <nop-label asp-for="NexportAuthenticationToken" />
+                        <nop-label asp-for="@Model.AuthenticationToken" />
                     </div>
                     <div class="col-md-9">
-                        <div class="form-text-row">@Model.NexportAuthenticationToken</div>
+                        <div class="form-text-row">@Settings.AuthenticationToken</div>
                     </div>
                 </div>
 
-                @if (Model.UtcExpirationDate.HasValue)
+                @if (Settings.UtcExpirationDate is { } expiration)
                 {
                     <div class="form-group row">
                         <div class="col-md-3">
-                            <nop-label asp-for="UtcExpirationDate" />
+                            <nop-label asp-for="@Model.UtcExpirationDate" />
                         </div>
                         <div class="col-md-9">
-                            <div class="form-text-row">@((await dateTimeHelper.ConvertToUserTimeAsync(Model.UtcExpirationDate.Value)).ToString("f"))</div>
+                            <div class="form-text-row">@((await dateTimeHelper.ConvertToUserTimeAsync(expiration)).ToString("f"))</div>
                         </div>
                     </div>
-                }
-
-                @if (Model.UtcExpirationDate.HasValue && Model.UtcExpirationDate.Value < DateTime.UtcNow)
-                {
-                    <div class="form-group row">
-                        <div class="col-md-9 offset-md-3">
-                            <p class="text-yellow">
-                                <i class="icon fa fa-warning"></i>
-                                Api authentication token has expired. Please regenerate new token by submit the credential again
+                    @if (expiration < DateTime.UtcNow)
+                    {
+                        <div class="form-group row">
+                            <div class="col-md-9 offset-md-3">
+                                <p class="text-yellow">
+                                    <i class="icon fa fa-warning"></i>
+                                    API authentication token has expired. Please regenerate a new token by submitting the credential again.
+                            </div>
                         </div>
-                    </div>
+                    }
                 }
             </div>
         </div>
@@ -146,18 +147,18 @@
             <div class="card-body">
                 <div class="form-group row">
                     <div class="col-md-3">
-                        <nop-label asp-for="RootOrganizationId" />
+                        <nop-label asp-for="@Model.RootOrganizationId" />
                     </div>
                     <div class="col-md-9">
                         <div class="input-group">
-                            <nop-editor asp-for="RootOrganizationId" asp-render-form-control-class="true" />
+                            <nop-editor asp-for="@Model.RootOrganizationId" asp-render-form-control-class="true" />
                             <div class="input-group-append">
                                 <button id="set-root-org-btn" name="setrootorganizationid" class="btn btn-info">
                                     Set root organization
                                 </button>
                             </div>
                         </div>
-                        <span asp-validation-for="RootOrganizationId"></span>
+                        <span asp-validation-for="@Model.RootOrganizationId"></span>
                     </div>
                 </div>
             </div>
@@ -170,18 +171,18 @@
             <div class="card-body">
                 <div class="form-group row">
                     <div class="col-md-3">
-                        <nop-label asp-for="MerchantAccountId" />
+                        <nop-label asp-for="@Model.MerchantAccountId" />
                     </div>
                     <div class="col-md-9">
                         <div class="input-group">
-                            <nop-editor asp-for="MerchantAccountId" asp-render-form-control-class="true" />
+                            <nop-editor asp-for="@Model.MerchantAccountId" asp-render-form-control-class="true" />
                             <div class="input-group-append">
                                 <button id="set-merchant-account-btn" name="setmerchantaccountid" class="btn btn-info">
                                     Set merchant account
                                 </button>
                             </div>
                         </div>
-                        <span asp-validation-for="MerchantAccountId"></span>
+                        <span asp-validation-for="@Model.MerchantAccountId"></span>
                     </div>
                 </div>
             </div>

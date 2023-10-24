@@ -1,10 +1,12 @@
-﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Domain.SupplementalInfo
+@using Nop.Plugin.Misc.Nexport.Extensions
 
-@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportCustomerSupplementalInfoAnswerEditModel
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.CustomerSupplementalInfoAnswersEditModel
 
 @{
     Layout = "~/Areas/Admin/Views/Shared/_AdminPopupLayout.cshtml";
-
     ViewBag.PageTitle = "Edit customer supplemental info question answers";
 }
 
@@ -28,8 +30,8 @@
 @if (Model is { Question: { }, Options: { Count: > 0 } })
 {
     <form id="edit-customer-question-form" method="post"
-          asp-action="EditCustomerSupplementalInfoAnsweredQuestion"
-          asp-controller="NexportIntegration"
+          asp-action="EditCustomerAnswers"
+          asp-controller="SupplementalInfo"
           asp-route-customerId="@Context.Request.Query["customerId"]"
           asp-route-storeId="@Context.Request.Query["storeId"]"
           asp-route-containerId="@Context.Request.Query["containerId"]"
@@ -65,7 +67,7 @@
                                         @{
                                             var questionInputName = "OptionIds";
                                         }
-                                        @if (Model.Question.Type == NexportSupplementalInfoQuestionType.SingleOption)
+                                        @if (Model.Question.Type is Question.QuestionType.SingleOption)
                                         {
                                             <div class="center-block col-xs-4" style="float: none !important;">
                                                 <select name="@questionInputName" class="form-control">
@@ -79,7 +81,7 @@
                                                 </select>
                                             </div>
                                         }
-                                        else if (Model.Question.Type == NexportSupplementalInfoQuestionType.MultipleOptions)
+                                        else if (Model.Question.Type is Question.QuestionType.MultipleOptions)
                                         {
                                             @foreach (var option in Model.Options)
                                             {

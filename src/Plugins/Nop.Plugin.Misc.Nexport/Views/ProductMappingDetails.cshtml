@@ -1,10 +1,11 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Domain;
 @using Nop.Plugin.Misc.Nexport.Extensions
 @using Nop.Services.Helpers
 
 @inject IDateTimeHelper dateTimeHelper
 
-@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingModel
+@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.ProductMappingModel
 
 @if (Model is { Id: > 0 })
 {
@@ -13,11 +14,11 @@
 
     <div class="form-group row">
         <div class="col-sm-5 col-md-4">
-            <nop-label asp-for="NexportProductName" />
+            <nop-label asp-for="ProductName" />
         </div>
         <div class="col-sm-7 col-md-8">
-            <input type="hidden" name="NexportProductName" value="@Model.NexportProductName" />
-            <div class="form-text-row">@Model.NexportProductName</div>
+            <input type="hidden" name="ProductName" value="@Model.ProductName" />
+            <div class="form-text-row">@Model.ProductName</div>
         </div>
     </div>
     <div class="form-group row">
@@ -31,34 +32,34 @@
     </div>
     <div class="form-group row">
         <div class="col-sm-5 col-md-4">
-            <nop-label asp-for="NexportCatalogId" />
+            <nop-label asp-for="CatalogId" />
         </div>
         <div class="col-sm-7 col-md-8">
-            <input type="hidden" name="NexportCatalogId" value="@Model.NexportCatalogId" />
-            <div class="form-text-row">@Model.NexportCatalogId</div>
+            <input type="hidden" name="CatalogId" value="@Model.CatalogId" />
+            <div class="form-text-row">@Model.CatalogId</div>
         </div>
     </div>
-    @if (Model.NexportCatalogSyllabusLinkId.HasValue)
+    @if (Model.CatalogSyllabusLinkId.HasValue)
     {
         <div class="form-group row">
             <div class="col-sm-5 col-md-4">
-                <nop-label asp-for="NexportCatalogSyllabusLinkId" />
+                <nop-label asp-for="CatalogSyllabusLinkId" />
             </div>
             <div class="col-sm-7 col-md-8">
-                <input type="hidden" name="NexportCatalogSyllabusLinkId" value="@Model.NexportCatalogSyllabusLinkId" />
-                <div class="form-text-row">@Model.NexportCatalogSyllabusLinkId</div>
+                <input type="hidden" name="CatalogSyllabusLinkId" value="@Model.CatalogSyllabusLinkId" />
+                <div class="form-text-row">@Model.CatalogSyllabusLinkId</div>
             </div>
         </div>
     }
-    @if (Model.NexportSyllabusId.HasValue)
+    @if (Model.SyllabusId.HasValue)
     {
         <div class="form-group row">
             <div class="col-sm-5 col-md-4">
-                <nop-label asp-for="NexportSyllabusId" />
+                <nop-label asp-for="SyllabusId" />
             </div>
             <div class="col-sm-7 col-md-8">
-                <input type="hidden" name="NexportSyllabusId" value="@Model.NexportSyllabusId" />
-                <div class="form-text-row">@Model.NexportSyllabusId</div>
+                <input type="hidden" name="SyllabusId" value="@Model.SyllabusId" />
+                <div class="form-text-row">@Model.SyllabusId</div>
             </div>
         </div>
     }
@@ -71,40 +72,40 @@
             <div class="form-text-row">@Model.Type.GetDisplayName()</div>
         </div>
     </div>
-    @if (Model.PricingModel.HasValue)
+    @if (Model.PricingModel is { } pricingModel)
     {
         <div class="form-group row">
             <div class="col-sm-5 col-md-4">
                 <nop-label asp-for="PricingModel" />
             </div>
             <div class="col-sm-7 col-md-8">
-                <div class="form-text-row">@Model.PricingModel.GetDisplayName()</div>
+                <div class="form-text-row">@pricingModel.GetDisplayName()</div>
             </div>
         </div>
     }
-    @if (Model.PublishingModel.HasValue)
+    @if (Model.PublishingModel is { } publishingModel)
     {
         <div class="form-group row">
             <div class="col-sm-5 col-md-4">
                 <nop-label asp-for="PublishingModel" />
             </div>
             <div class="col-sm-7 col-md-8">
-                <div class="form-text-row">@Model.PublishingModel.GetDisplayName()</div>
+                <div class="form-text-row">@publishingModel.GetDisplayName()</div>
             </div>
         </div>
     }
-    @if (Model.CreditHours.HasValue)
+    @if (Model.CreditHours is { } creditHours)
     {
         <div class="form-group row">
             <div class="col-sm-5 col-md-4">
                 <nop-label asp-for="CreditHours" />
             </div>
             <div class="col-sm-7 col-md-8">
-                <div class="form-text-row">@decimal.Round(Model.CreditHours.Value, 2)</div>
+                <div class="form-text-row">@decimal.Round(creditHours, 2)</div>
             </div>
         </div>
     }
-    @if (Model.Type == NexportProductTypeEnum.Section)
+    @if (Model.Type is ProductType.Section)
     {
         <div class="form-group row">
             <div class="col-sm-5 col-md-4">
@@ -123,7 +124,7 @@
             </div>
         </div>
     }
-    @if (Model.Type != NexportProductTypeEnum.Catalog)
+    @if (Model.Type is not ProductType.Catalog)
     {
         <div class="form-group row">
             <div class="col-sm-5 col-md-4">
@@ -136,30 +137,28 @@
     }
     @if (!Model.Editable)
     {
-        if (!string.IsNullOrWhiteSpace(Model.AccessTimeLimit))
+        if (Model.AccessTimeLimit is { } timeLimit and not "")
         {
             <div class="form-group row">
                 <div class="col-sm-5 col-md-4">
                     <nop-label asp-for="AccessTimeLimit" />
                 </div>
                 <div class="col-sm-7 col-md-8">
-                    <div class="form-text-row">@Model.AccessTimeLimit</div>
+                    <div class="form-text-row">@timeLimit</div>
                 </div>
             </div>
         }
-
-        if (Model.UtcAccessExpirationDate.HasValue)
+        if (Model.UtcAccessExpirationDate is { } accessExpirationDate)
         {
             <div class="form-group row">
                 <div class="col-sm-5 col-md-4">
                     <nop-label asp-for="UtcAccessExpirationDate" />
                 </div>
                 <div class="col-sm-7 col-md-8">
-                    <div class="form-text-row">@Model.UtcAccessExpirationDate</div>
+                    <div class="form-text-row">@((await dateTimeHelper.ConvertToUserTimeAsync(accessExpirationDate)).ToString("f"))</div>
                 </div>
             </div>
         }
-
         <div class="form-group row">
             <div class="col-sm-5 col-md-4">
                 <nop-label asp-for="AutoRedeem" />
@@ -178,25 +177,25 @@
             </div>
         </div>
     }
-    @if (Model.UtcAvailableDate.HasValue)
+    @if (Model.UtcAvailableDate is { } availableDate)
     {
         <div class="form-group row">
             <div class="col-sm-5 col-md-4">
                 <nop-label asp-for="UtcAvailableDate" />
             </div>
             <div class="col-sm-7 col-md-8">
-                        <div class="form-text-row">@(await dateTimeHelper.ConvertToUserTimeAsync(Model.UtcAvailableDate.Value)).ToString("f")</div>
+                <div class="form-text-row">@((await dateTimeHelper.ConvertToUserTimeAsync(availableDate)).ToString("f"))</div>
             </div>
         </div>
     }
-    @if (Model.UtcEndDate.HasValue)
+    @if (Model.UtcEndDate is { } endDate)
     {
         <div class="form-group row">
             <div class="col-sm-5 col-md-4">
                 <nop-label asp-for="UtcEndDate" />
             </div>
             <div class="col-sm-7 col-md-8">
-                        <div class="form-text-row">@(await dateTimeHelper.ConvertToUserTimeAsync(Model.UtcEndDate.Value)).ToString("f")</div>
+                <div class="form-text-row">@((await dateTimeHelper.ConvertToUserTimeAsync(endDate)).ToString("f"))</div>
             </div>
         </div>
     }
@@ -206,9 +205,9 @@
         </div>
         <div class="col-sm-7 col-md-8">
             <div class="form-text-row">
-                @if (Model.UtcLastModifiedDate != null)
+                @if (Model.UtcLastModifiedDate is { } lastModifiedDate)
                 {
-                    @((await dateTimeHelper.ConvertToUserTimeAsync(Model.UtcLastModifiedDate.Value, DateTimeKind.Utc)).ToString("f"))
+                    @((await dateTimeHelper.ConvertToUserTimeAsync(lastModifiedDate, DateTimeKind.Utc)).ToString("f"))
                 }
             </div>
         </div>
@@ -219,25 +218,18 @@
         </div>
         <div class="col-sm-7 col-md-8">
             <div class="form-text-row">
-                @if (Model.IsSynchronized)
-                {
-                    <text>Yes</text>
-                }
-                else
-                {
-                    <text>No</text>
-                }
+                <text>@(Model.IsSynchronized ? "Yes" : "No")</text>
             </div>
         </div>
     </div>
-    @if (Model.IsSynchronized && Model.UtcLastSynchronizationDate.HasValue)
+    @if (Model.IsSynchronized && Model.UtcLastSynchronizationDate is { } lastSynchronizationDate)
     {
         <div class="form-group row">
             <div class="col-sm-5 col-md-4">
                 <nop-label asp-for="UtcLastSynchronizationDate" />
             </div>
             <div class="col-sm-7 col-md-8">
-                <div class="form-text-row">@(await dateTimeHelper.ConvertToUserTimeAsync(Model.UtcLastSynchronizationDate.Value)).ToString("f")</div>
+                <div class="form-text-row">@((await dateTimeHelper.ConvertToUserTimeAsync(lastSynchronizationDate)).ToString("f"))</div>
             </div>
         </div>
     }

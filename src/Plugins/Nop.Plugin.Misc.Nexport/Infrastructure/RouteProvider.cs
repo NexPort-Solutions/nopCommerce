@@ -1,93 +1,123 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Nop.Web.Framework.Mvc.Routing;
+using Controller = Nop.Plugin.Misc.Nexport.Controllers;
+using static Nop.Plugin.Misc.Nexport.Extensions.ViewUtilities;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
 
-namespace Nop.Plugin.Misc.Nexport.Infrastructure
+namespace Nop.Plugin.Misc.Nexport.Infrastructure;
+
+public class RouteProvider : IRouteProvider
 {
-    public class RouteProvider : IRouteProvider
+    public int Priority => int.MaxValue - 100;
+
+    public void RegisterRoutes(IEndpointRouteBuilder endpointRouteBuilder)
     {
-        public int Priority => int.MaxValue - 100;
+        const string admin = "Admin";
 
-        public void RegisterRoutes(IEndpointRouteBuilder endpointRouteBuilder)
-        {
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Configure",
-                "Admin/NexportIntegration/Configure",
-                new { controller = "NexportIntegration", action = "Configure" });
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Configure.SetRootOrganization",
-                "Admin/NexportIntegration/SetRootOrganization",
-                new { controller = "NexportIntegration", action = "SetRootOrganization" });
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.Configure",
+            "Admin/Integration/Configure",
+            new { controller = GetControllerName<IntegrationController>(), action = nameof(IntegrationController.Configure) });
 
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.MapProductPopup",
-                "Admin/NexportIntegration/MapProductPopup",
-                new { controller = "NexportIntegration", action = "MapProductPopup" });
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.Configure.SetRootOrganization",
+            "Admin/Integration/SetRootOrganization",
+            new { controller = GetControllerName<IntegrationController>(), action = nameof(IntegrationController.SetRootOrganization) });
 
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.MyTraining",
-                "customer/nexporttraining",
-                new { controller = "NexportIntegration", action = "ViewNexportTraining" });
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers",
-                "customer/nexportsuplementalinfoanswers",
-                new { controller = "NexportIntegration", action = "ViewSupplementalInfoAnswers" });
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.SupplementalInfoAnswers.CustomerEdit",
-                "customer/nexportsuplementalinfoanswers/edit/{questionId:min(0)}",
-                new { controller = "NexportIntegration", action = "EditSupplementalInfoAnswers" });
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.RedeemOrder",
-                "customer/redeem",
-                new { controller = "NexportIntegration", action = "RedeemNexportOrderInvoiceItem" });
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.GoToNexport",
-                "customer/transfertonexport",
-                new { controller = "NexportIntegration", action = "GoToNexport" });
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.MapProductPopup",
+            "Admin/ProductMapping/MapProductPopup",
+            new { controller = GetControllerName<ProductMappingController>(), action = nameof(ProductMappingController.MapProductPopup) });
 
-            endpointRouteBuilder.MapControllerRoute("NexportLogin",
-                "login/",
-                new { controller = "NexportCustomer", action = "Login", });
-            endpointRouteBuilder.MapControllerRoute("NexportLoginCheckoutAsGuest",
-                "login/checkoutasguest",
-                new { controller = "NexportCustomer", action = "Login", checkoutAsGuest = true });
-            endpointRouteBuilder.MapControllerRoute("NexportRegistration",
-                "register/",
-                new { controller = "NexportCustomer", action = "Register" });
-            endpointRouteBuilder.MapControllerRoute("StoreList",
-                "admin/store/list",
-                new { area = "Admin", controller = "NexportStore", action = "List" });
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.MyTraining",
+            "Customer/Training",
+            new { controller = GetControllerName<IntegrationController>(), action = nameof(IntegrationController.ViewTraining) });
 
+        endpointRouteBuilder.MapControllerRoute(
+            nameof(SupplementalInfoController.ViewSupplementalInfoAnswers),
+            "Customer/SuplementalInfoAnswers",
+            new { controller = GetControllerName<SupplementalInfoController>(), action = nameof(SupplementalInfoController.ViewSupplementalInfoAnswers) });
 
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.SupplementalInfoAnswers.CustomerEdit",
+            "Customer/suplementalinfoanswers/Edit/{questionId:min(0)}",
+            new { controller = GetControllerName<SupplementalInfoController>(), action = nameof(SupplementalInfoController.EditSupplementalInfoAnswers) });
 
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Groups",
-                "Admin/NexportIntegration/NexportGroups",
-                new { area = "Admin", controller = "NexportWholesale", action = "AdminNexportGroups" });
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.RedeemOrder",
+            "Customer/Redeem",
+            new { controller = GetControllerName<IntegrationController>(), action = nameof(IntegrationController.RedeemOrderInvoiceItem) });
 
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Group.Products",
-                "Admin/NexportIntegration/NexportGroups/Products",
-                new {  area = "Admin", controller = "NexportWholesale", action = "AdminNexportGroupProducts" });
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.GoToNexport",
+            "Customer/TransferToNexport",
+            new { controller = GetControllerName<IntegrationController>(), action = nameof(IntegrationController.GoToNexport) });
 
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions",
-                "Admin/NexportIntegration/NexportGroups/Products/Redemptions",
-                new { area = "Admin", controller = "NexportWholesale", action = "AdminNexportGroupProductRedemptions" });
+        endpointRouteBuilder.MapControllerRoute(
+            nameof(Controller.CustomerController.Login),
+            "Login",
+            new { controller = GetControllerName<Controller.CustomerController>(), action = nameof(Controller.CustomerController.Login) });
 
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions.RedeemOrModify",
-                "Admin/NexportIntegration/NexportGroups/Products/Redemptions/RedeemOrModify",
-                new {area = "Admin", controller = "NexportWholesale", action = "RedeemOrModify" });
+        endpointRouteBuilder.MapControllerRoute(
+            "LoginCheckoutAsGuest",
+            "Login/Checkoutasguest",
+            new { controller = GetControllerName<Controller.CustomerController>(), action = nameof(Controller.CustomerController.Login), checkoutAsGuest = true });
 
+        endpointRouteBuilder.MapControllerRoute(
+            "Registration",
+            "Register",
+            new { controller = GetControllerName<Controller.CustomerController>(), action = nameof(Controller.CustomerController.Register) });
 
+        endpointRouteBuilder.MapControllerRoute(
+            "StoreList",
+            "Admin/Store/List",
+            new { area = admin, controller = GetControllerName<StoreController>(), action = nameof(StoreController.List) });
 
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Groups",
-                "customer/nexportgroups",
-                new { controller = "NexportWholesale", action = "CustomerNexportGroups" });
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.Admin.Groups",
+            "Admin/Wholesale/Groups",
+            new { area = admin, controller = GetControllerName<WholesaleController>(), action = nameof(WholesaleController.AdminGroups) });
 
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Group.Products",
-                "customer/nexportgroups/products",
-                new { controller = "NexportWholesale", action = "CustomerNexportGroupProducts" });
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.Admin.Group.Products",
+            "Admin/Wholesale/Groups/Products",
+            new { area = admin, controller = GetControllerName<WholesaleController>(), action = nameof(WholesaleController.GroupProductsAsync) });
 
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions",
-                "customer/nexportgroups/products/redemptions",
-                new { controller = "NexportWholesale", action = "CustomerNexportGroupProductRedemptions" });
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.Admin.Group.Product.Redemptions",
+            "Admin/Wholesale/Groups/Products/Redemptions",
+            new { area = admin, controller = GetControllerName<WholesaleController>(), action = nameof(WholesaleController.GroupProductRedemptions) });
 
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions.RedeemOrModify",
-                "customer/nexportgroups/products/redemptions/redeemormodify",
-                new { controller = "NexportWholesale", action = "RedeemOrModify" });
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.Admin.Group.Product.Redemptions.RedeemOrModify",
+            "Admin/Wholesale/Groups/Products/Redemptions/RedeemOrModify",
+            new { area = admin, controller = GetControllerName<WholesaleController>(), action = nameof(WholesaleController.RedeemProduct) });
 
-            
-        }
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.Customer.Groups",
+            "Customer/Groups",
+            new { controller = GetControllerName<Controller.WholesaleController>(), action = nameof(Controller.WholesaleController.CustomerGroups) });
+
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.Customer.Group.Products",
+            "Customer/Groups/Products",
+            new { controller = GetControllerName<Controller.WholesaleController>(), action = nameof(Controller.WholesaleController.CustomerGroupProducts) });
+
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.Customer.Group.Product.Redemptions",
+            "Customer/Groups/Products/Redemptions",
+            new { controller = GetControllerName<Controller.WholesaleController>(), action = nameof(Controller.WholesaleController.GroupProductRedemptions) });
+
+        endpointRouteBuilder.MapControllerRoute(
+            "NexportPlugin.Misc.Nexport.Customer.Group.Product.Redemptions.RedeemOrModify",
+            "Customer/Groups/Products/Redemptions/RedeemOrModify",
+            new { controller = GetControllerName<Controller.WholesaleController>(), action = nameof(Controller.WholesaleController.RedeemProduct) });
+
+        endpointRouteBuilder.MapControllerRoute(
+            "Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers.OrderController.List",
+            "Admin/Order/List",
+            new { controller = GetControllerName<OrderController>(), action = nameof(OrderController.List) });
     }
 }
- 

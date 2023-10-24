@@ -31,8 +31,8 @@
 <table class="table table-bordered table-hover table-striped dataTable" width="100%" id="@Model.Name">
     @if (Model.FooterColumns > 0)
     {
-        //You need to add the footer before you create the table
-        //as DataTables doesn't provide a method for creating a footer at the moment
+        // You need to add the footer before you create the table
+        // as DataTables doesn't provide a method for creating a footer at the moment
         <tfoot>
             <tr>
                 @for (int i = 0; i < Model.FooterColumns; i++)
@@ -128,11 +128,11 @@
                         dataType: "json",
                         data: postData,
                         success: function (data, textStatus, jqXHR) {
-                            //display error if returned
+                            // display error if returned
                             if (data) {
                                 display_nop_error(data);
                             }
-                            //refresh grid
+                            // refresh grid
                             $('#@Model.Name').DataTable().draw(false);
                         },
                         error: function (jqXHR, textStatus, errorThrown) {
@@ -171,8 +171,8 @@
                 <text>
                 var obj = {
                     'Data': '@column.Data',
-                    'Editable': @column.Editable.ToString().ToLowerInvariant(),
-                    'Type': '@column.EditType.ToString().ToLowerInvariant()'
+                    'Editable': @column.Editable.ToString(CultureInfo.InvariantCulture).ToLowerInvariant(),
+                    'Type': '@column.EditType.ToString(CultureInfo.InvariantCulture).ToLowerInvariant()'
                 }
                 columnData_@(tableName).push(obj);
                 </text>
@@ -294,11 +294,11 @@
                     dataType: "json",
                     data: postData,
                     success: function (data, textStatus, jqXHR) {
-                        //display error if returned
+                        // display error if returned
                         if (data) {
                             display_nop_error(data);
                         }
-                        //refresh grid
+                        // refresh grid
                          $('#@Model.Name').DataTable().draw(false);
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
@@ -351,11 +351,11 @@
         if (curModel.ChildTable != null)
         {
             var footerHtml = "";
-            var nexportDataTableModel = (NexportDataTablesModel)curModel.ChildTable;
+            var dataTableModel = (Nop.Plugin.Misc.Nexport.Models.DataTablesModel)curModel.ChildTable;
             if (curModel.ChildTable.FooterColumns > 0)
             {
-                //You need to add the footer before you create the table
-                //as DataTables doesn't provide a method for creating a footer at the moment
+                // You need to add the footer before you create the table
+                // as DataTables doesn't provide a method for creating a footer at the moment
                 for (int i = 0; i < curModel.ChildTable.FooterColumns; i++)
                 {
                     footerHtml = string.Concat(footerHtml, "<td></td>");
@@ -413,7 +413,6 @@
                             tr.addClass('shown');
                             tdi.first().removeClass('fa-caret-right');
                             tdi.first().addClass(' fa-caret-down');
-                            ///
                             $('.mastercheckbox', $(classid).parents('.dataTables_scroll').first()).first().click(function () {
                                 $(classid + ' .checkboxGroups').prop('checked', $(this).is(':checked')).change();
                             });
@@ -432,7 +431,6 @@
                                 }
                                 updateMasterCheckbox($(classid).parents('.dataTables_scroll').first());
                             });
-                            ///
                         }
                         $('#@curModel.Name').DataTable().columns.adjust();
                     });

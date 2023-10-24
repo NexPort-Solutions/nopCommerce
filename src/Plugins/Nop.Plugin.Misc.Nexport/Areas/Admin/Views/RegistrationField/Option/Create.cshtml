@@ -1,12 +1,14 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldOptionModel
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.OptionModel
 
 @{
     Layout = "_AdminPopupLayout";
-
     ViewBag.PageTitle = T("Admin.Customers.Nexport.RegistrationField.Options.AddNew").Text;
 }
 
-<form asp-controller="NexportIntegration" asp-action="CreateRegistrationFieldOption"
+<form asp-controller="RegistrationField" asp-action="CreateOption"
       asp-route-fieldId="@Context.Request.Query["fieldId"]"
       asp-route-btnId="@Context.Request.Query["btnId"]"
       asp-route-formId="@Context.Request.Query["formId"]">

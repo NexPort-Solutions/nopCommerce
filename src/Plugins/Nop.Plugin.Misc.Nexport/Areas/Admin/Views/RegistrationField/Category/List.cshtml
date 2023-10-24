@@ -1,7 +1,11 @@
-﻿@using Nop.Plugin.Misc.Nexport.Models
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers
+@using Nop.Plugin.Misc.Nexport.Controllers
+@using Nop.Plugin.Misc.Nexport.Extensions
+@using Nop.Plugin.Misc.Nexport.Models
 @using Nop.Plugin.Misc.Nexport.Models.RegistrationField
+@using CategoryModel = Nop.Plugin.Misc.Nexport.Models.RegistrationField.CategoryModel
 
-@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldCategorySearchModel
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.CategorySearchModel
 
 <div class="card card-default">
 <div class="card-header">
@@ -11,42 +15,42 @@
     <p>
         <em>@T("Admin.Customers.Nexport.RegistrationField.Categories.Description")</em>
     </p>
-        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
+    @await Html.PartialAsync("Table", new Nop.Plugin.Misc.Nexport.Models.DataTablesModel
     {
         Name = "nexport-registrationfield-categories-grid",
-        UrlRead = new DataUrl("ListRegistrationFieldCategory", "NexportIntegration", null),
+        UrlRead = new DataUrl(nameof(RegistrationFieldController.ListCategory), ViewUtilities.GetControllerName<RegistrationFieldController>(), null),
         Length = Model.PageSize,
         LengthMenu = Model.AvailablePageSizes,
         ColumnCollection = new List<ColumnProperty>
         {
-            new(nameof(NexportRegistrationFieldCategoryModel.Title))
+            new(nameof(CategoryModel.Title))
             {
                 Title = T("Plugins.Misc.Nexport.RegistrationField.Category.Title").Text,
                 Width = "200"
             },
-            new(nameof(NexportRegistrationFieldCategoryModel.Description))
+            new(nameof(CategoryModel.Description))
             {
                 Title = T("Plugins.Misc.Nexport.RegistrationField.Category.Description").Text,
                 Width = "200"
             },
-            new(nameof(NexportRegistrationFieldCategoryModel.DisplayOrder))
+            new(nameof(CategoryModel.DisplayOrder))
             {
                 Title = T("Plugins.Misc.Nexport.RegistrationField.Category.DisplayOrder").Text,
                 Width = "100",
                 ClassName =  NopColumnClassDefaults.CenterAll
             },
-            new(nameof(NexportRegistrationFieldCategoryModel.Id))
+            new(nameof(CategoryModel.Id))
             {
                 Title = T("Admin.Common.Edit").Text,
                 Width = "100",
                 ClassName =  NopColumnClassDefaults.Button,
-                Render = new RenderButtonEdit(new DataUrl("~/Admin/NexportIntegration/EditRegistrationFieldCategory/"))
+        Render = new RenderButtonEdit(new DataUrl("~/Admin/RegistrationField/EditCategory/"))
             }
         }
     })
 </div>
 <div class="card-footer">
-    <a class="btn btn-primary" href="@Url.Action("CreateRegistrationFieldCategory", "NexportIntegration")">
+        <a class="btn btn-primary" href="@Url.Action(nameof(RegistrationFieldController.CreateCategory), ViewUtilities.GetControllerName<RegistrationFieldController>())>
         <i class="fa fa-plus-square"></i>
             @T("Admin.Common.AddNew")
     </a>

@@ -1,19 +1,20 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoQuestionModel
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.SupplementalInfoQuestionModel
 
 @{
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
-
     ViewBag.PageTitle = "Edit";
-    NopHtml.SetActiveMenuItemSystemName(NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME);
+    NopHtml.SetActiveMenuItemSystemName(SystemNames.SUPPLEMENTAL_INFO);
 }
 
-<form asp-controller="NexportIntegration" asp-action="EditSupplementalInfoQuestion" method="post" id="edit-supplemental-info-question-form">
+<form asp-controller="SupplementalInfo" asp-action="EditSupplementalInfoQuestion" method="post" id="edit-supplemental-info-question-form">
     <div class="content-header clearfix">
         <h1 class="float-left">
             Edit supplemental info question - @Model.QuestionText
             <small>
                 <i class="fas fa-arrow-circle-left"></i>
-                <a asp-action="ListSupplementalInfoQuestion" asp-controller="NexportIntegration">back to list</a>
+                <a asp-action="ListSupplementalInfoQuestion" asp-controller="SupplementalInfo">back to list</a>
             </small>
         </h1>
         <div class="float-right">

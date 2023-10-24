@@ -1,59 +1,61 @@
-﻿@using Nop.Plugin.Misc.Nexport.Models
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Extensions;
+@using Nop.Plugin.Misc.Nexport.Models
 @using Nop.Plugin.Misc.Nexport.Domain.RegistrationField
 
-@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
+@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.RegistrationFieldModel
 
 @if (Model.Id > 0)
 {
     <div class="card-body">
         <div class="form-group row" id="allowMultipleSelectionSettingContainer">
             <div class="col-md-3">
-                <nop-label asp-for="AllowMultipleSelection" />
+                <nop-label asp-for="Model.AllowMultipleSelection" />
             </div>
             <div class="col-md-9">
-                <nop-editor asp-for="AllowMultipleSelection" />
-                <span asp-validation-for="AllowMultipleSelection"></span>
+                <nop-editor asp-for="Model.AllowMultipleSelection" />
+                <span asp-validation-for="Model.AllowMultipleSelection)"></span>
             </div>
         </div>
         <div class="form-group row" id="displayOptionByAscendingOrderSettingContainer">
             <div class="col-md-3">
-                <nop-label asp-for="DisplayOptionByAscendingOrder" />
+                <nop-label asp-for="Model.DisplayOptionByAscendingOrder" />
             </div>
             <div class="col-md-9">
-                <nop-editor asp-for="DisplayOptionByAscendingOrder" />
-                <span asp-validation-for="DisplayOptionByAscendingOrder"></span>
+                <nop-editor asp-for="Model.DisplayOptionByAscendingOrder" />
+                <span asp-validation-for="Model.DisplayOptionByAscendingOrder)"></span>
             </div>
         </div>
 
         <div class="card card-default">
             <div class="card-body">
-                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
+                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new Nop.Plugin.Misc.Nexport.Models.DataTablesModel
                 {
                     Name = "registrationfield-options-grid",
-                    UrlRead = new DataUrl("ListRegistrationFieldOptions", "NexportIntegration",
+                    UrlRead = new DataUrl(nameof(RegistrationFieldController.ListOptions), ViewUtilities.GetControllerName<RegistrationFieldController>(),
                         new RouteValueDictionary
                         {
                             [nameof(Model.RegistrationFieldOptionSearchModel.RegistrationFieldId)] = Model.RegistrationFieldOptionSearchModel.RegistrationFieldId
                         }),
-                    UrlDelete = new DataUrl("DeleteRegistrationFieldOption", "NexportIntegration", null),
-                    UrlUpdate = new DataUrl("EditRegistrationFieldOption","NexportIntegration", null),
+                    UrlDelete = new DataUrl(nameof(RegistrationFieldController.DeleteOption), ViewUtilities.GetControllerName<RegistrationFieldController>(), null),
+                    UrlUpdate = new DataUrl(nameof(RegistrationFieldController.EditOption), ViewUtilities.GetControllerName<RegistrationFieldController>(), null),
                     Length = Model.RegistrationFieldOptionSearchModel.PageSize,
                     LengthMenu = Model.RegistrationFieldOptionSearchModel.AvailablePageSizes,
                     ColumnCollection = new List<ColumnProperty>
                     {
-                        new(nameof(NexportRegistrationFieldOption.OptionValue))
+                        new(nameof(Option.OptionValue))
                         {
                             Title = T("Plugins.Misc.Nexport.RegistrationField.Option.Value").Text,
                             Editable = true,
                             EditType = EditType.String
                         },
-                        new(nameof(NexportRegistrationFieldOption.DisplayOrder))
+                        new(nameof(Option.DisplayOrder))
                         {
                             Title = T("Plugins.Misc.Nexport.RegistrationField.Option.DisplayOrder").Text,
                             Editable = true,
                             EditType = EditType.Number
                         },
-                        new(nameof(NexportRegistrationFieldOption.Id))
+                        new(nameof(Option.Id))
                         {
                             Title = T("Admin.Common.Edit").Text,
                             Width = "100",
@@ -72,13 +74,13 @@
             </div>
         </div>
         <script>
-            function renderEditNexportRegistrationFieldOption(data, type, row, meta) {
-                return '<button onclick=\"javascript:OpenWindow(\'@Url.Content("~/Admin/NexportIntegration/EditRegistrationFieldOption/")' + data + '?btnId=btnRefresh&formId=registrationfield-form\', 800, 400, true); return false;\" class="btn btn-default"><i class="fa fa-pencil"></i>@T("Admin.Common.Edit")</button>';
+            function renderEditRegistrationFieldOption(data, type, row, meta) {
+                return '<button onclick=\"javascript:OpenWindow(\'@Url.Content("~/Admin/RegistrationField/EditOption/")' + data + '?btnId=btnRefresh&formId=registrationfield-form\', 800, 400, true); return false;\" class="btn btn-default"><i class="fa fa-pencil"></i>@T("Admin.Common.Edit")</button>';
             }
         </script>
     </div>
     <div class="card-footer">
-        <button type="submit" id="btnAddNewValue" onclick="javascript:OpenWindow('@(Url.Action("CreateRegistrationFieldOption", "NexportIntegration",
+        <button type="submit" id="btnAddNewValue" onclick="javascript:OpenWindow('@(Url.Action(nameof(RegistrationFieldController.CreateOption), ViewUtilities.GetControllerName<RegistrationFieldController>(),
                                                                                       new { fieldId = Model.Id, btnId = "btnRefresh", formId = "registrationfield-form" }))', 800, 400, true); return false;" class="btn btn-primary">
             @T("Admin.Customers.Nexport.RegistrationField.Options.AddNew")
         </button>

@@ -2,17 +2,16 @@
 using Microsoft.AspNetCore.Routing;
 using Nop.Web.Framework.Mvc.Routing;
 
-namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Infrastructure
-{
-    public class RouteProvider : IRouteProvider
-    {
-        public void RegisterRoutes(IEndpointRouteBuilder endpointRouteBuilder)
-        {
-            endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.DiscountPerCreditHours.Configure",
-                "Admin/NexportDiscountPerCreditHours/Configure",
-                new { controller = "NexportDiscountPerCreditHours", action = "Configure" });
-        }
+namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Infrastructure;
 
-        public int Priority => int.MaxValue - 99;
+public class RouteProvider : IRouteProvider
+{
+    public void RegisterRoutes(IEndpointRouteBuilder endpointRouteBuilder)
+    {
+        endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.DiscountPerCreditHours.Configure",
+            "Admin/NexportDiscountPerCreditHours/Configure",
+            new { controller = "NexportDiscountPerCreditHours", action = "Configure" });
     }
+
+    public int Priority => int.MaxValue - 99;
 }

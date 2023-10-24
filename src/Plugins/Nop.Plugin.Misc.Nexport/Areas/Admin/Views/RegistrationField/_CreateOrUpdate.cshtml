@@ -1,14 +1,14 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.NexportRegistrationFieldModel
+﻿@model Nop.Plugin.Misc.Nexport.Models.RegistrationField.RegistrationFieldModel
 
 @{
     var currentCustomer = await workContext.GetCurrentCustomerAsync();
-    const string hideRegistrationFieldInfoBlockAttributeName = "NexportRegistrationField.HideInfoBlock";
+    const string hideRegistrationFieldInfoBlockAttributeName = "RegistrationField.HideInfoBlock";
     var hideInfoBlock = await genericAttributeService.GetAttributeAsync(currentCustomer, hideRegistrationFieldInfoBlockAttributeName, defaultValue: true);
 
-    const string hideRegistrationFieldOptionsBlockAttributeName = "NexportRegistrationField.HideOptionsBlock";
+    const string hideRegistrationFieldOptionsBlockAttributeName = "RegistrationField.HideOptionsBlock";
     var hideOptionsBlock = await genericAttributeService.GetAttributeAsync(currentCustomer, hideRegistrationFieldOptionsBlockAttributeName, defaultValue: true);
 
-    const string hideRegistrationFieldCustomBlockAttributeName = "NexportRegistrationField.HideCustomBlock";
+    const string hideRegistrationFieldCustomBlockAttributeName = "RegistrationField.HideCustomBlock";
     var hideCustomBlock = await genericAttributeService.GetAttributeAsync(currentCustomer, hideRegistrationFieldCustomBlockAttributeName, defaultValue: true);
 }
 
@@ -17,7 +17,7 @@
 <div asp-validation-summary="All"></div>
 @if (Model.Id > 0)
 {
-    <input asp-for="Id" type="hidden" />
+    <input asp-for="Model.Id)" type="hidden" />
 }
 
 <div class="content">

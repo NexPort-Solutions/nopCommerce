@@ -1,11 +1,11 @@
 {
-  "Group": "Misc",
-  "FriendlyName": "Nexport",
-  "SystemName": "Misc.Nexport",
-  "Version": "1.0",
-  "SupportedVersions": [ "4.60" ],
-  "Author": "Nexport Solutions",
-  "DisplayOrder": 1001,
-  "FileName": "Nop.Plugin.Misc.Nexport.dll",
-  "Description": "This plugin allows integration between Nexport Campus and NopCommerce site"
+    "Group": "Misc",
+    "FriendlyName": "NexPort",
+    "SystemName": "Misc.Nexport",
+    "Version": "1.0",
+    "SupportedVersions": [ "4.60" ],
+    "Author": "NexPort Solutions",
+    "DisplayOrder": 1001,
+    "FileName": "Nop.Plugin.Misc.Nexport.dll",
+    "Description": "This plugin allows integration between NexPort Campus and NopCommerce site"
 }

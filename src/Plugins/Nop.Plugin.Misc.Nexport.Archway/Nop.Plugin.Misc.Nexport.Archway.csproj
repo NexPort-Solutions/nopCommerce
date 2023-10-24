@@ -14,15 +14,21 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Areas\Admin\Views\Customer\CustomRegistrationFieldDetails.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewImports.cshtml" />
+    <None Remove="Views\CustomerFields\Control\CustomRender\AdminRegistrationNotRequired.cshtml" />
+    <None Remove="Views\CustomerFields\Control\CustomRender\AdminRegistrationRequired.cshtml" />
+    <None Remove="Views\CustomerFields\Control\CustomRender\NonAdminRegistrationNotRequired.cshtml" />
+    <None Remove="Views\CustomerFields\Control\CustomRender\NonAdminRegistrationRequired.cshtml" />
+    <None Remove="Views\CustomerFields\Control\CustomRender\Script.cshtml" />
     <None Remove="logo.jpg" />
     <None Remove="plugin.json" />
     <None Remove="Views\RegistrationField\EditCustomerRegistrationFieldAnswers.cshtml" />
-    <None Remove="Views\RegistrationField\_CustomerFields.Control.CustomRender.cshtml" />
     <None Remove="Views\_ViewImports.cshtml" />
   </ItemGroup>
 
@@ -36,10 +42,28 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Views\CustomerFields\Control\CustomRender\Script.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Areas\Admin\Views\Customer\CustomRegistrationFieldDetails.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\_ViewImports.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\CustomerFields\Control\CustomRender\AdminRegistrationNotRequired.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\CustomerFields\Control\CustomRender\AdminRegistrationRequired.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\CustomerFields\Control\CustomRender\NonAdminRegistrationRequired.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\CustomerFields\Control\CustomRender\NonAdminRegistrationNotRequired.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="logo.jpg">
@@ -51,9 +75,6 @@
     <Content Include="Views\RegistrationField\EditCustomerRegistrationFieldAnswers.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\RegistrationField\_CustomerFields.Control.CustomRender.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Views\_ViewImports.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -61,6 +82,13 @@
 
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="27.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Nop.Plugin.Misc.Nexport.Infrastructure.Result">
+      <Static>True</Static>
+    </Using>
+    <Using Include="Nop.Plugin.Misc.Nexport.Infrastructure" />
   </ItemGroup>
 
   <!-- This target execute after "Build" target -->

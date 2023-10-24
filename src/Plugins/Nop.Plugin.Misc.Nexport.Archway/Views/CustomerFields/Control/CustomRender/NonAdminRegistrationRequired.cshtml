@@ -1,0 +1,55 @@
+﻿@inherits Nop.Web.Framework.Mvc.Razor.NopRazorPage<Nop.Plugin.Misc.Nexport.Archway.Models.StudentEmployeeRegistrationFieldModel>
+
+@using Nop.Plugin.Misc.Nexport.Archway.Factories;
+@using Nop.Plugin.Misc.Nexport.Services
+
+@inject IStudentEmployeeRegistrationFieldModelFactory StudentEmployeeRegistrationFieldModelFactory
+
+@model Nop.Plugin.Misc.Nexport.Archway.Models.StudentEmployeeRegistrationFieldModel
+
+<div class="inputs custom-attributes">
+    <label asp-for="StoreLocationState" asp-postfix=":"></label>
+    <select asp-for="StoreLocationState" asp-items="@await StudentEmployeeRegistrationFieldModelFactory.GetAvailableStates()"
+            data-storelocation-city="#@Html.IdFor(model => model.StoreLocationCity)"
+            data-loading="#cities-loading-progress"></select>
+        <nop-required />
+    <span asp-validation-for="@Model.StoreLocationState"></span>
+</div>
+<div class="inputs custom-attributes">
+    <label asp-for="StoreLocationCity" asp-postfix=":"></label>
+    <select asp-for="StoreLocationCity" asp-items="Model.AvailableCities"
+            data-storelocation-address="#@Html.IdFor(model => model.StoreLocationAddress)"
+            data-loading="#addresses-loading-progress"></select>
+    <span id="cities-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+        <nop-required />
+    <span asp-validation-for="StoreLocationCity"></span>
+</div>
+<div class="inputs custom-attributes">
+    <label asp-for="StoreLocationAddress" asp-postfix=":"></label>
+    <select asp-for="StoreLocationAddress" asp-items="Model.AvailableAddresses"
+            data-storelocation-employeeposition="#@Html.IdFor(model => model.EmployeePosition)"
+            data-loading="#employee-positions-loading-progress"></select>
+    <span id="addresses-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+        <nop-required />
+    <span asp-validation-for="StoreLocationAddress"></span>
+</div>
+<div class="inputs custom-attributes">
+    <label asp-for="EmployeePosition" asp-postfix=":"></label>
+    <select asp-for="EmployeePosition" asp-items="Model.AvailableEmployeePositions"></select>
+    <span id="employee-positions-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+        <nop-required />
+    <span asp-validation-for="EmployeePosition"></span>
+</div>
+<div class="inputs custom-attributes" id="storeEmployeeIdContainer">
+    <label asp-for="EmployeeId" asp-postfix=":"></label>
+    <nop-editor asp-for="EmployeeId" />
+    <span asp-validation-for="EmployeeId"></span>
+</div>
+<input type="hidden" asp-for="StoreType" />
+<input type="hidden" asp-for="StoreNumber" />
+
+@Html.Partial("Script", Model)
+
+<script>
+    $(document).ready(function() { setup(false) });
+</script>

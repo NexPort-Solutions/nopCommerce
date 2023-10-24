@@ -1,10 +1,12 @@
-﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Extensions;
 @using Nop.Plugin.Misc.Nexport.Services
 
 @inject IWebHelper webHelper
-@inject NexportService nexportService
+@inject ISupplementalInfoService supplementalInfo
 
-@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoAnswerQuestionModel
+@model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.SupplementalInfoAnswerQuestionModel
 
 @{
     Layout = "_ColumnsOne";
@@ -41,10 +43,10 @@
 
                                 foreach (var questionId in Model.QuestionWithoutAnswerIds)
                                 {
-                                    var question = await nexportService.GetNexportSupplementalInfoQuestionById(questionId);
+                                    var question = await supplementalInfo.GetSupplementalInfoQuestionById(questionId);
                                     if (question is { IsActive: true })
                                     {
-                                        var options = await nexportService.GetNexportSupplementalInfoOptionsByQuestionId(question.Id);
+                                        var options = await supplementalInfo.GetSupplementalInfoOptionsByQuestionId(question.Id);
                                         if (options.Count > 0)
                                         {
                                             <div style="padding-bottom: 15px;">
@@ -57,7 +59,7 @@
                                                         var questionInputName = $"answers[{requestIndex}].options";
                                                     }
 
-                                                    @if (question.Type == NexportSupplementalInfoQuestionType.SingleOption)
+                                                    @if (question.Type is Nop.Plugin.Misc.Nexport.Domain.SupplementalInfo.Question.QuestionType.SingleOption)
                                                     {
                                                         <select name="@questionInputName">
                                                             @foreach (var option in options)
@@ -68,7 +70,7 @@
                                                             }
                                                         </select>
                                                     }
-                                                    else if (question.Type == NexportSupplementalInfoQuestionType.MultipleOptions)
+                                                    else if (question.Type is Nop.Plugin.Misc.Nexport.Domain.SupplementalInfo.Question.QuestionType.MultipleOptions)
                                                     {
                                                         @foreach (var option in options)
                                                         {
@@ -102,14 +104,12 @@
 
             function saveAnswers() {
                 var form = $("#required-question-submission-form");
-
                 var postData = form.serializeArray();
                 addAntiForgeryToken(postData);
-
                 $.ajax({
                     cache: false,
                     type: "POST",
-                    url: "@Url.Action("SaveSupplementalInfoAnswer", "NexportIntegration")",
+                    url: "@Url.Action(nameof(SupplementalInfoController.SaveSupplementalInfoAnswer), ViewUtilities.GetControllerName<SupplementalInfoController>())",
                     data: postData,
                     success: function (data, textStatus, jqXHR) {
                         console.log(data);

@@ -1,26 +1,23 @@
 ﻿using FluentMigrator;
 using Nop.Data.Migrations;
-using Nop.Plugin.Misc.Nexport.Domain;
-using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 
-namespace Nop.Plugin.Misc.Nexport.Migrations
+namespace Nop.Plugin.Misc.Nexport.Migrations;
+
+[Tags(Defaults.PLUGIN_MIGRATION_TAG)]
+[Migration(24, "Add DisplayOrder to NexportRegistrationFieldOption table")]
+[SkipMigration]
+public class M024_AddDisplayOrderToNexportRegistrationFieldOption : Migration
 {
-    [Tags(NexportDefaults.PluginMigrationTag)]
-    [Migration(24, "Add DisplayOrder to NexportRegistrationFieldOption table")]
-    [SkipMigration]
-    public class M024_AddDisplayOrderToNexportRegistrationFieldOption : Migration
+    public override void Up()
     {
-        public override void Up()
-        {
-            Alter
-                .Table(nameof(NexportRegistrationFieldOption))
-                .AddColumn("DisplayOrder")
-                .AsInt32().NotNullable().SetExistingRowsTo(0);
-        }
+        Alter
+            .Table("NexportRegistrationFieldOption")
+            .AddColumn("DisplayOrder")
+            .AsInt32().NotNullable().SetExistingRowsTo(0);
+    }
 
-        public override void Down()
-        {
-            Delete.Column("DisplayOrder").FromTable(nameof(NexportRegistrationFieldOption));
-        }
+    public override void Down()
+    {
+        Delete.Column("DisplayOrder").FromTable("NexportRegistrationFieldOption");
     }
 }
