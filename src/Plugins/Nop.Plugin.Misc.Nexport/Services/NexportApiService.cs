@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.JavaScript;
+using Azure.Core;
+using DocumentFormat.OpenXml.Spreadsheet;
 using JetBrains.Annotations;
 using NexportApi.Api;
 using NexportApi.Client;
@@ -819,7 +822,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         }
 
         public InvoiceRedemptionResponse RedeemNexportInvoice([NotNull] string url, [NotNull] string accessToken,
-            Guid redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction,string? invoiceItemRedemptionCode)
+            Guid redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction, string? invoiceItemRedemptionCode)
         {
             if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
@@ -836,7 +839,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             };
 
             var result = nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
-                    new RedeemInvoiceItemRequest(invoiceItemRedemptionCode:invoiceItemRedemptionCode, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction));
+                    new RedeemInvoiceItemRequest(invoiceItemRedemptionCode: invoiceItemRedemptionCode, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction));
 
             return result;
         }
@@ -1023,6 +1026,73 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result = nexportApi.AdminApiSetCustomProfileFieldValues(accessToken,
                 new SetCustomProfileFieldValuesRequest(subscriberId: subscriberId, customProfileFieldValues: profileFields));
+
+            return result;
+        }
+
+        public HasGroupPermissionResponse HasGroupPermission([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid groupId, string permission)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new NullReferenceException("Api url cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            _apiConfiguration.BasePath = url;
+
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
+            var result = nexportApi.AdminApiHasGroupPermission(accessToken,
+                new HasGroupPermissionRequest(userId: userId, groupId: groupId, permission: permission));
+
+            return result;
+        }
+
+        public SearchGroupsForPermissionResponse SearchGroupsForPermission([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid groupId, string permission)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new NullReferenceException("Api url cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            _apiConfiguration.BasePath = url;
+
+            var nexportApi = new AdminApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
+            var result = nexportApi.AdminApiSearchGroupsForPermission(accessToken,
+                new SearchGroupsForPermissionRequest(userId: userId, orgId: groupId, permission: permission));
+
+            return result;
+        }
+
+        public ResetInvoiceRedemptionResponse ResetInvoiceRedemption([NotNull] string url, [NotNull] string accessToken, Guid invoiceItemId)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new NullReferenceException("Api url cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            _apiConfiguration.BasePath = url;
+
+            var nexportApi = new PointOfSaleApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
+            var result =
+                nexportApi.PointOfSaleApiResetInvoiceRedemption(accessToken,
+                    new ResetInvoiceRedemptionRequest(invoiceItemId, $"reset redemption for invoice item with id:{invoiceItemId} on {DateTime.UtcNow}", "Marketplace"));
 
             return result;
         }

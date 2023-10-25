@@ -2722,5 +2722,50 @@ namespace Nop.Plugin.Misc.Nexport.Services
             //paging
             return new PagedList<Store>(stores, pageIndex, pageSize);
         }
+
+        public async Task<NexportOrderInvoiceItem> ResetInvoiceRedemptionAsync(NexportOrderInvoiceItem invoiceItem)
+        {
+            if (invoiceItem == null)
+                throw new ArgumentNullException(nameof(invoiceItem));
+
+            //if (redeemingUserId == Guid.Empty)
+            //    throw new ArgumentException("Redeeming User Id cannot be empty identifier", nameof(redeemingUserId));
+
+            try
+            {
+                var resetInvoiceResult = _nexportApiService.ResetInvoiceRedemption(_nexportSettings.Url,
+                    _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId);
+
+                if (resetInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
+                    throw new ApiException((int)resetInvoiceResult.ApiErrorEntity.ErrorCode,
+                        resetInvoiceResult.ApiErrorEntity.ErrorMessage);
+
+                var newRedemption = resetInvoiceResult.NewRedemption;
+
+                invoiceItem.RedeemingUserId = newRedemption.RedemptionUserId;
+                invoiceItem.InvoiceItemRedemptionCode = newRedemption.RedemptionCode;
+                invoiceItem.UtcDateRedemption = newRedemption.UtcRedemptionDate;
+                invoiceItem.RedemptionEnrollmentId = newRedemption.RedemptionEnrollmentId;
+
+                return invoiceItem;
+            }
+            catch (Exception ex)
+            {
+                var errMsg =
+                    $"Error occurred during ResetInvoiceItem api call with the parameter: invoice_item_id - {invoiceItem.InvoiceItemId}";
+                await _logger.ErrorAsync($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<ResetInvoiceRedemptionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+        }
     }
 }

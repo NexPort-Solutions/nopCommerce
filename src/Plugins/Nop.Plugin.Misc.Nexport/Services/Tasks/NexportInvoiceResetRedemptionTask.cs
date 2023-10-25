@@ -129,16 +129,9 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                                                 var oldUserId = invoiceItem.RedeemingUserId;
 
-                                                invoiceItem.RedeemingUserId = null;
-                                                var redemptionCode =
-                                                    (await _genericAttributeService
-                                                        .GetAttributesForEntityAsync(
-                                                            1, "testapi")).FirstOrDefault(x =>
-                                                        x.Key == "redemptioncode");
-                                                invoiceItem.InvoiceItemRedemptionCode =
-                                                    redemptionCode.Value;
-                                                invoiceItem.UtcDateRedemption = null;
-                                                invoiceItem.RedemptionEnrollmentId = null;
+                                                invoiceItem =
+                                                    await _nexportService.ResetInvoiceRedemptionAsync(invoiceItem);
+
 
                                                 // if something fails and redemption code comes back null
                                                 // then try to get the invoice redemption from api one more time
