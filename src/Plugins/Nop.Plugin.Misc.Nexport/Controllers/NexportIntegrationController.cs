@@ -17,6 +17,7 @@ using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
@@ -31,6 +32,7 @@ using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Catalog;
@@ -2978,48 +2980,96 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         {
             var order = eventMessage.Order;
 
-            var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
-
-            var isWholesale = true;
-
-            foreach (var item in orderItems)
+            if (order != null)
             {
-                var mapping = await _nexportService.GetProductMappingByNopProductId(item.ProductId, order.StoreId)
-                              ?? await _nexportService.GetProductMappingByNopProductId(item.ProductId);
+                var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
 
-                if (mapping != null)
+                if (orderItems != null)
                 {
-                    if (mapping.AutoRedeem && isWholesale)
-                        isWholesale = false;
+                    var isWholesale = true;
 
-                    await _genericAttributeService.SaveAttributeAsync(item,
-                        $"ProductMapping-{order.Id}-{item.Id}",
-                        JsonConvert.SerializeObject(mapping), order.StoreId);
+                    //current customer and store to get generic attribute for group
+                    var customer = await _workContext.GetCurrentCustomerAsync();
+                    var orderStore = await _storeContext.GetCurrentStoreAsync();
 
-                    var groupMembershipMappings = await _nexportService.GetProductGroupMembershipMappings(mapping.Id);
-                    foreach (var groupMembershipMapping in groupMembershipMappings)
+                    var groupInfo =
+                        await _genericAttributeService.GetAttributeAsync<string>(customer, $"GroupForCustomer", orderStore.Id);
+
+                    NexportGroupModel? group = null;
+
+                    if (groupInfo != null)
                     {
-                        await _genericAttributeService.SaveAttributeAsync(item,
-                            $"ProductGroupMembershipMapping-{order.Id}-{item.Id}-{mapping.Id}",
-                            JsonConvert.SerializeObject(groupMembershipMapping), order.StoreId);
+                        group = JsonConvert.DeserializeObject<NexportGroupModel>(groupInfo);
+
+                        if (group != null)
+                        {
+                            await _nexportService.InsertOrUpdateWholesalePurchaseGroupAsync(new WholesalePurchasingGroup
+                            {
+                                NexportGroupId = group.Id,
+                                NexportGroupName = group.Name,
+                                NexportGroupShortName = group.ShortName
+                            });
+                        }
+
                     }
+
+                    // delete generic attribute group for customer for future purchases
+                    await _genericAttributeService.SaveAttributeAsync<string>(customer, $"GroupForCustomer", null, orderStore.Id);
+
+                    foreach (var item in orderItems)
+                    {
+                        var mapping = await _nexportService.GetProductMappingByNopProductId(item.ProductId, order.StoreId)
+                                      ?? await _nexportService.GetProductMappingByNopProductId(item.ProductId);
+
+                        if (mapping != null)
+                        {
+                            if (mapping.AutoRedeem && isWholesale)
+                                isWholesale = false;
+
+                            await _genericAttributeService.SaveAttributeAsync(item,
+                                $"ProductMapping-{order.Id}-{item.Id}",
+                                JsonConvert.SerializeObject(mapping), order.StoreId);
+
+                            var groupMembershipMappings = await _nexportService.GetProductGroupMembershipMappings(mapping.Id);
+                            foreach (var groupMembershipMapping in groupMembershipMappings)
+                            {
+                                await _genericAttributeService.SaveAttributeAsync(item,
+                                    $"ProductGroupMembershipMapping-{order.Id}-{item.Id}-{mapping.Id}",
+                                    JsonConvert.SerializeObject(groupMembershipMapping), order.StoreId);
+                            }
+                        }
+                    }
+                    if (isWholesale)
+                    {
+                        try
+                        {
+                            foreach (var item in orderItems)
+                            {
+                                var product = await _orderService.GetProductByOrderItemIdAsync(item.Id);
+                                if(product !=null)
+                                {
+                                    await _nexportService.InsertWholesaleOrderInfoAsync(new WholesaleOrderInfo
+                                    {
+                                        NexportGroupId = group?.Id,
+                                        OrderId = order.Id,
+                                        OrderItemId = item.Id,
+                                        ProductId = product.Id,
+                                        Available = item.Quantity,
+                                        Awaiting = 0,
+                                        Redeemed = 0
+                                    });
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            await _logger.ErrorAsync($"Failed to insert wholesale order info for order: {order.Id}",ex);
+                        }
+                    }
+
+                    await _genericAttributeService.SaveAttributeAsync<bool>(order, "IsWholesaleOrder", isWholesale, orderStore.Id);
                 }
             }
-
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            var orderStore = await _storeContext.GetCurrentStoreAsync();
-
-            await _genericAttributeService.SaveAttributeAsync<bool>(order, "IsWholesaleOrder", isWholesale, orderStore.Id);
-
-            var groupForCustomer = await _genericAttributeService.GetAttributeAsync<string>(customer, "GroupForCustomer", orderStore.Id);
-
-            // delete generic attribute group for customer for future purchases
-            await _genericAttributeService.SaveAttributeAsync<string>(customer, "GroupForCustomer",
-                null, orderStore.Id);
-
-            // set attribute group for order
-            await _genericAttributeService.SaveAttributeAsync<string>(order, "GroupForOrder",
-                groupForCustomer, orderStore.Id);
         }
 
         public async Task HandleEventAsync(EntityDeletedEvent<Product> eventMessage)

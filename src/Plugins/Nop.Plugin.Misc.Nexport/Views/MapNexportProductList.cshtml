@@ -1,5 +1,6 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Models.Catalog
 @using Nop.Plugin.Misc.Nexport.Models.Syllabus
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
 
 @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
 {
@@ -125,8 +126,16 @@
         $("#nexport-product-container").find("[name=NexportCatalogId]").val(selectedNexportProduct.data("catalog-id"));
         $("#nexport-product-container").find("[name=NexportSyllabusId]").val(selectedNexportProduct.data("syllabus-id"));
         $("#nexport-product-container").find("[name=NexportProductId]").val(selectedNexportProduct.data("product-id"));
-        $("#nexport-product-container").find("[name=NexportProductType]").val(selectedNexportProduct.data("product-type"));
-        $("#nexport-product-container").find("[name=AssignWhenRedeemed]").val(selectedNexportProduct.data("assign-when-redeemed"));
+        
+        if (selectedNexportProduct.data("assign-when-redeemed"))
+        {
+            $("#nexport-product-container").find("[name=NexportProductType]").val("@(NexportProductTypeEnum.OpenEnded)");
+            $("#nexport-product-container").find("[name=AssignWhenRedeemed]").val(selectedNexportProduct.data("assign-when-redeemed"));
+        }
+        else
+        {
+            $("#nexport-product-container").find("[name=NexportProductType]").val(selectedNexportProduct.data("product-type"));
+        }
     }
 
     function renderSyllabusType(data, type, row, meta) {

@@ -10,6 +10,7 @@ using Nop.Core.Domain.Stores;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
@@ -17,6 +18,7 @@ using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure
 {
@@ -40,7 +42,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             {
                 var destinationTypeDetails = (TypeDetails)DestinationTypeDetailsProperty.GetValue(typeMap);
 
-                if (destinationTypeDetails == null) return;
+                if (destinationTypeDetails == null)
+                    return;
                 foreach (var accessor in destinationTypeDetails.WriteAccessors.Where(m =>
                              typeMapConfiguration.GetDestinationMemberConfiguration(m) == null))
                 {
@@ -162,6 +165,16 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 .ForMember(model => model.NexportSyllabusId, opts => opts.Ignore())
                 .ForMember(model => model.ExistingEnrollmentId, opts => opts.Ignore())
                 .ForMember(model => model.UtcExistingEnrollmentExpirationDate, opts => opts.Ignore());
+
+            CreateMap<WholesalePurchasingGroup, NexportGroupModel>()
+                .ForMember(model => model.Id, opts => opts.MapFrom(entity => entity.NexportGroupId))
+                .ForMember(model => model.Name, opts => opts.MapFrom(entity => entity.NexportGroupName))
+                .ForMember(model => model.ShortName, opts => opts.MapFrom(entity => entity.NexportGroupShortName))
+                .ForMember(model => model.NumberOfProducts, opts => opts.Ignore())
+                .ForMember(model => model.ParentId, opts => opts.Ignore())
+                .ForMember(model => model.Type, opts => opts.Ignore());
+
+
         }
 
         public int Order => 0;

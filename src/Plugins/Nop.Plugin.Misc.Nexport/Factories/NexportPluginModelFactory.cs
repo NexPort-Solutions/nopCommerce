@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Azure;
 using Newtonsoft.Json;
 using NexportApi.Model;
 using Nop.Core;
@@ -11,6 +12,7 @@ using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
@@ -1660,8 +1662,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var isPurchasingAgent = true;
 
-            var groups = new List<NexportGroupModel>();
-
             var model = new NexportGroupListModel();
 
             if (isPurchasingAgent)
@@ -1673,39 +1673,39 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 //var customerMapping = await _nexportService.FindUserMappingByCustomerId(customer.CustomerId); - hasgrouppermission should use this to get the nexportUserId
                 //            NexportDefaults.NEXPORT_ADD_GROUP_PERMISSION - use the add permission to check if user has rights on groups
 
-                //TODO @JS - this currently duplicates orders if the name of the group is changed in nexport
-                // need to change how this works when we have the services setup for the new api
-                var genericAttributeGroups = await _nexportService.GetAllGroupForOrdersAsync();
+                ////TODO @JS - this currently duplicates orders if the name of the group is changed in nexport
+                //// need to change how this works when we have the services setup for the new api
+                //var genericAttributeGroups = await _nexportService.GetAllGroupForOrdersAsync();
+                var wholesalePurchasingGroups = await _nexportService.GetAllWholesalePurchasingGroupsAsync();
 
                 try
                 {
-                    foreach (var genAttGroup in genericAttributeGroups)
+                    var groupModels = new List<NexportGroupModel>();
+                    if (wholesalePurchasingGroups != null)
                     {
-                        if (genAttGroup != null)
+                        foreach (var group in wholesalePurchasingGroups)
                         {
-                            var deserialized = JsonConvert.DeserializeObject<NexportGroupModel>(genAttGroup.Value);
-                            if (deserialized != null)
-                                groups.Add(deserialized);
+                            var groupModel = group.ToModel<NexportGroupModel>();
+                            if (groupModel != null)
+                            {
+                                groupModel.NumberOfProducts = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(groupModel.Id);
+
+                                if (groupModel.NumberOfProducts > 0)
+                                {
+                                    groupModels.Add(groupModel);
+                                }
+                            }
                         }
                     }
-
-                    foreach (var group in groups)
-                    {
-                        group.NumberOfProducts = await _nexportService.GetInvoiceItemCountForGroupByGuid(group.Id);
-                    }
-
-                    groups.RemoveAll(g => g.NumberOfProducts < 1);
-
-
-                    var pagedGroups = groups.ToPagedList(searchModel);
+                    var pagedGroups = groupModels.ToPagedList(searchModel);
 
                     model = await model.PrepareToGridAsync(searchModel, pagedGroups, () =>
-                      {
-                          return pagedGroups.SelectAwait(async group =>
-                          {
-                              return group;
-                          });
-                      });
+                    {
+                        return pagedGroups.SelectAwait(async group =>
+                        {
+                            return group;
+                        });
+                    });
 
                     return model;
                 }
@@ -1715,7 +1715,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         $"Unable to prepare nexport group list model", ex);
                 }
             }
-
             return model;
         }
 
@@ -1726,7 +1725,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 throw new ArgumentNullException(nameof(searchModel));
 
             if (groupId == Guid.Empty)
-                throw new ArgumentException(nameof(groupId));
+                throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
 
             //TODO @JS - create and use HasGroupPermission service method to check if customer is purchasing agent.
             // var isPurchasingAgent = _nexportService.HasGroupPermission(customer)
@@ -1742,9 +1741,36 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             {
                 try
                 {
-                    var products = await _nexportService.GetGroupProductModelForGroupId(groupId);
+                    var wholesaleOrderInfos = await _nexportService.GetWholesaleOrderInfosForGroupAsync(groupId);
 
-                    var pagedProducts = products.ToPagedList(searchModel);
+                    IList<NexportGroupProductModel> groupProductModels = new List<NexportGroupProductModel>();
+
+                    if (wholesaleOrderInfos != null)
+                    {
+                        foreach (var orderInfo in wholesaleOrderInfos)
+                        {
+                            var product = await _productService.GetProductByIdAsync(orderInfo.ProductId);
+
+                            if (product != null)
+                            {
+                                var groupProductModel = new NexportGroupProductModel
+                                {
+                                    Id = product.Id,
+                                    Available = orderInfo.Available,
+                                    Awaiting = orderInfo.Awaiting,
+                                    Redeemed = orderInfo.Redeemed,
+                                    GroupId = groupId
+                                };
+
+                                groupProductModel.Name = product.Name;
+
+                                groupProductModels.Add(groupProductModel);
+                            }
+
+                        }
+                    }
+
+                    var pagedProducts = groupProductModels.ToPagedList(searchModel);
 
                     model = await model.PrepareToGridAsync(searchModel, pagedProducts,
                         () =>
@@ -1774,7 +1800,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 throw new ArgumentOutOfRangeException(nameof(productId));
 
             if (groupId == Guid.Empty)
-                throw new ArgumentException(nameof(groupId));
+                throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
 
             var redemptions = new List<NexportGroupProductRedemptionModel>();
 
@@ -1788,56 +1814,61 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var model = new NexportGroupProductRedemptionListModel();
 
-            if (isPurchasingAgent)
+            if (!isPurchasingAgent)
+                return model;
+
+            try
             {
-                try
-                {
-                    var invoiceItems = await _nexportService.GetInvoiceItemsForGroupIdAndProductIdAndRedeemingUserIdHasValue(groupId, productId);
-
-                    foreach (var invoiceItem in invoiceItems)
+                var orderInfos = await _nexportService.GetWholesaleOrderInfosForGroupAndProductAsync(groupId, productId);
+                if (orderInfos != null)
+                    foreach (var orderInfo in orderInfos.Where(orderInfo => orderInfo.Awaiting > 0 || orderInfo.Redeemed > 0))
                     {
-                        var redemptionItem = new NexportGroupProductRedemptionModel();
-                        redemptionItem.InvoiceItemId = invoiceItem.InvoiceItemId;
+                        var invoiceItems =
+                            await _nexportService.FindNexportOrderInvoiceItems(orderInfo.OrderId,
+                                orderInfo.OrderItemId);
 
-                        if (invoiceItem.RedeemingUserId != null && invoiceItem.UtcDateRedemption == null)
+                        if (invoiceItems == null)
+                            continue;
+
+                        foreach (var invoiceItem in invoiceItems.Where(invoiceItem=>invoiceItem.RedeemingUserId.HasValue))
                         {
-                            redemptionItem.Status = "Awaiting";
-                            var redeemer = await _nexportService.FindCustomerByGuid(invoiceItem.RedeemingUserId);
+                            var redemptionItem = new NexportGroupProductRedemptionModel
+                            {
+                                InvoiceItemId = invoiceItem.InvoiceItemId,
+                                Status = invoiceItem.RedemptionStatus.GetDisplayName()
+                            };
 
-                            redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
-                            redemptionItem.Email = redeemer.Email;
+
+                            if (invoiceItem.RedeemingUserId.HasValue)
+                            {
+                                var userMapping =
+                                    await _nexportService.FindUserMappingByNexportUserId(invoiceItem.RedeemingUserId.Value);
 
 
+                                if (userMapping != null)
+                                {
+                                    var redeemer = await _nexportService.FindCustomerByIdAsync(userMapping.NopUserId);
+                                    redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
+                                    redemptionItem.Email = redeemer.Email;
+                                }
+                            }
+
+                            redemptions.Add(redemptionItem);
                         }
-                        else
-                        {
-                            redemptionItem.Status = "Redeemed";
-                            var redeemer = await _nexportService.FindCustomerByGuid(invoiceItem.RedeemingUserId);
-
-                            redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
-                            redemptionItem.Email = redeemer.Email;
-
-                        }
-
-                        redemptions.Add(redemptionItem);
                     }
-                }
-                catch (Exception ex)
-                {
-                    await _logger.WarningAsync("Unable to prepare redemptions list");
-                }
-
-
-                var pagedRedemptions = redemptions.ToPagedList(searchModel);
-
-                model = await model.PrepareToGridAsync(searchModel, pagedRedemptions, () =>
-                {
-                    return pagedRedemptions.SelectAwait(async redemps =>
-                    {
-                        return redemps;
-                    });
-                });
             }
+            catch (Exception ex)
+            {
+                await _logger.WarningAsync("Unable to prepare redemptions list", ex);
+            }
+
+
+            var pagedRedemptions = redemptions.ToPagedList(searchModel);
+
+            model = await model.PrepareToGridAsync(searchModel, pagedRedemptions, () =>
+            {
+                return pagedRedemptions.SelectAwait(async redemps => redemps);
+            });
             return model;
         }
 
@@ -1845,24 +1876,18 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             Guid groupId)
         {
             if (groupId == Guid.Empty)
-                throw new ArgumentException(nameof(groupId));
+                throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
 
             var model = new NexportGroupProductListSearchModel();
 
-            var groupAttr = await _nexportService.GetGroupByGroupIdAsync(groupId);
-            if (groupAttr != null)
-            {
-                try
-                {
-                    var group = JsonConvert.DeserializeObject<NexportGroupModel>(groupAttr.Value);
-                    if (group != null)
-                        model.CurrentGroup = group;
-                }
-                catch (Exception ex)
-                {
-                    await _logger.WarningAsync($"Unable to get current group for product list", ex);
-                }
-            }
+            var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId);
+
+            if (group == null) return model;
+
+            var groupModel = group.ToModel<NexportGroupModel>();
+
+            if(groupModel != null)
+                model.CurrentGroup = groupModel;
 
             return model;
         }
@@ -1871,25 +1896,19 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             Guid groupId, int productId)
         {
             if (groupId == Guid.Empty)
-                throw new ArgumentException(nameof(groupId));
+                throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
             if (productId < 1)
                 throw new ArgumentOutOfRangeException(nameof(productId));
 
             var model = new NexportGroupProductRedemptionListSearchModel();
 
-            var groupAttr = await _nexportService.GetGroupByGroupIdAsync(groupId);
-            if (groupAttr != null)
+            var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId);
+
+            if (group != null)
             {
-                try
-                {
-                    var group = JsonConvert.DeserializeObject<NexportGroupModel>(groupAttr.Value);
-                    if (group != null)
-                        model.CurrentGroup = group;
-                }
-                catch (Exception ex)
-                {
-                    await _logger.WarningAsync($"Unable to get current group for product list", ex);
-                }
+                var groupModel = group.ToModel<NexportGroupModel>();
+                if(groupModel != null)
+                    model.CurrentGroup = groupModel;
             }
 
             var product = await _productService.GetProductByIdAsync(productId);
@@ -1901,28 +1920,22 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public async Task<RedeemProductOrModifyProductRedemptionModel> PrepareRedeemProductOrModifyProductRedemptionModel(Guid groupId, int productId, Guid? invoiceItemId = null)
+        public async Task<RedeemProductOrModifyProductRedemptionModel> PrepareRedeemProductModel(Guid groupId, int productId)
         {
             if (groupId == Guid.Empty)
-                throw new ArgumentException(nameof(groupId));
+                throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
             if (productId < 1)
                 throw new ArgumentOutOfRangeException(nameof(productId));
 
             var model = new RedeemProductOrModifyProductRedemptionModel();
 
-            var groupAttr = await _nexportService.GetGroupByGroupIdAsync(groupId);
-            if (groupAttr != null)
+            var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId);
+
+            if (group != null)
             {
-                try
-                {
-                    var group = JsonConvert.DeserializeObject<NexportGroupModel>(groupAttr.Value);
-                    if (group != null)
-                        model.CurrentGroup = group;
-                }
-                catch (Exception ex)
-                {
-                    await _logger.WarningAsync($"Unable to get current group for product list", ex);
-                }
+                var groupModel = group.ToModel<NexportGroupModel>();
+                if(groupModel != null)
+                    model.CurrentGroup = groupModel;
             }
 
             var product = await _productService.GetProductByIdAsync(productId);
@@ -1931,16 +1944,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 model.CurrentProduct = product;
             }
 
-            NexportOrderInvoiceItem? invoiceItem;
-            if (invoiceItemId != null)
-            {
-                invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuid(invoiceItemId);
-                model.HasBeenAssigned = true;
-            }
-            else
-            {
-                invoiceItem = await _nexportService.GetFirstAvailableInvoiceItemForGroupIdAndProductId(groupId, productId);
-            }
+            var invoiceItem = await _nexportService.GetFirstAvailableInvoiceItemForGroupIdAndProductIdAsync(groupId, productId);
+
             if (invoiceItem != null)
                 model.InvoiceItemId = invoiceItem.InvoiceItemId;
 
