@@ -8,6 +8,6 @@ namespace Nop.Plugin.Misc.Nexport.Models.Wholesale
         public int Available { get; set; }
         public int Awaiting { get; set; }
         public int Redeemed { get; set; }
-        public Guid GroupId { get; set; }
+        public Guid? GroupId { get; set; }
     }
 }

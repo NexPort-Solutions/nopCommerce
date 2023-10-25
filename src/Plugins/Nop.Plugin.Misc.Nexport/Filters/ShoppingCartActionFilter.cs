@@ -207,6 +207,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                         {
                             if (await _customerService.IsRegisteredAsync(customer))
                             {
+                                //TODO @JS - check if user is purchasing agent. if they are, skip the canpurchasenexportproduct check
                                 var canPurchaseProduct =
                                     await _nexportService.CanPurchaseNexportProductAsync(product, customer);
 

@@ -21,6 +21,7 @@ using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
@@ -78,6 +79,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<GenericAttribute> _genericAttributeRepository;
         private readonly IRepository<Order> _orderRepository;
         private readonly IRepository<OrderItem> _orderItemRepository;
+        private readonly IRepository<WholesalePurchasingGroup> _wholesalePurchasingGroupRepository;
+        private readonly IRepository<WholesaleOrderInfo> _wholesaleOrderInfoRepository;
         private readonly ICustomerService _customerService;
         private readonly IOrderService _orderService;
         private readonly ICategoryService _categoryService;
@@ -102,6 +105,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IStoreContext _storeContext;
         private readonly ILogger _logger;
         private readonly IRepository<Store> _storeRepository;
+        private readonly IRepository<NexportOrderInvoiceResetRedemptionQueueItem> _nexportOrderInvoiceResetRedemptionQueueRepository;
 
         #endregion
 
@@ -139,6 +143,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<GenericAttribute> genericAttributeRepository,
             IRepository<Order> orderRepository,
             IRepository<OrderItem> orderItemRepository,
+            IRepository<WholesalePurchasingGroup> wholesalePurchasingGroupRepository,
+            IRepository<WholesaleOrderInfo> wholesaleOrderInfoRepository,
             ICustomerService customerService,
             IOrderService orderService,
             ICategoryService categoryService,
@@ -162,7 +168,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IWorkContext workContext,
             IStoreContext storeContext,
             ILogger logger,
-            IRepository<Store> storeRepository)
+            IRepository<Store> storeRepository,
+            IRepository<NexportOrderInvoiceResetRedemptionQueueItem> nexportOrderInvoiceResetRedemptionQueueRepository)
         {
             _nexportApiService = nexportApiService;
             _emailAccountSettings = emailAccountSettings;
@@ -196,6 +203,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _genericAttributeRepository = genericAttributeRepository;
             _orderRepository = orderRepository;
             _orderItemRepository = orderItemRepository;
+            _wholesalePurchasingGroupRepository = wholesalePurchasingGroupRepository;
+            _wholesaleOrderInfoRepository = wholesaleOrderInfoRepository;
             _customerService = customerService;
             _orderService = orderService;
             _categoryService = categoryService;
@@ -220,6 +229,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _storeContext = storeContext;
             _logger = logger;
             _storeRepository = storeRepository;
+            _nexportOrderInvoiceResetRedemptionQueueRepository = nexportOrderInvoiceResetRedemptionQueueRepository;
         }
 
         #endregion
@@ -1464,7 +1474,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task RedeemNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId,
+        public async Task<bool> RedeemNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId,
             RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction =
                 RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
         {
@@ -1486,6 +1496,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 invoiceItem.RedeemingUserId = redeemingUserId;
                 invoiceItem.UtcDateRedemption = redeemInvoiceResult.UtcRedemptionDate;
                 invoiceItem.RequireManualApproval = null;
+                invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Assigned;
+
 
                 if (redeemInvoiceResult.RedemptionEnrollmentId != null)
                 {
@@ -1493,6 +1505,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 }
 
                 await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -1514,7 +1528,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         }
 
         [CanBeNull]
-        public async Task<InvoiceRedemptionResponse> GetNexportInvoiceRedemptionAsync(Guid invoiceItemId)
+        public async Task<InvoiceRedemptionResponse?> GetNexportInvoiceRedemptionAsync(Guid invoiceItemId)
         {
             if (invoiceItemId == Guid.Empty)
                 throw new ArgumentException("Invoice item Id cannot be an empty GUID");
@@ -1570,7 +1584,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (invoiceItem == null)
                 throw new ArgumentNullException(nameof(invoiceItem));
 
-            InvoiceRedemptionResponse redemption;
+            InvoiceRedemptionResponse? redemption;
 
             try
             {
@@ -1585,7 +1599,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (ex is ApiException exception)
                 {
-                    var errorResponse = JsonConvert.DeserializeObject<InvoiceRedemptionResponse>(exception.ErrorContent.ToString());
+                    var errorResponse = JsonConvert.DeserializeObject<InvoiceRedemptionResponse>(exception.ErrorContent.ToString() ?? "Error occured calling GetNexportInvoiceRedemptionAsync");
                     if (errorResponse != null)
                     {
                         throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);

@@ -1,4 +1,6 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupProductRedemptionListSearchModel
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Extensions
+@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupProductRedemptionListSearchModel
 @{
     string GetUrl(DataUrl dataUrl)
     {
@@ -75,7 +77,15 @@
                     "mData": "InvoiceItemId",
                     "mRender": function (data, type, row) {
                         if(row.InvoiceItemId!=null){
-                            return "<center><button class=\"uk-button uk-button-default uk-button-small\" onclick=\"modifyRedemption('"+row.InvoiceItemId+"')\" >Modify</button></center>";
+                            if(row.Status=="@(NexportOrderInvoiceItemRedemptionStatus.Assigned.GetDisplayName())")
+                            {
+                                return "<center><button class=\"uk-button uk-button-default uk-button-small\" onclick=\"unassignRedemption('" + row.InvoiceItemId + "')\" >Unassign</button></center>";
+                            }
+                            // else
+                            // {
+                            // return "<center><button id=\"cancel_" + row.InvoiceItemId + "\" class=\"uk-button uk-button-default uk-button-small\" onclick=\"cancelAwaitingRedemption('" + row.InvoiceItemId + "')\" >Cancel</button></center>"+
+                            //     "<nop-action-confirmation asp-button-id=\"unassign_" + row.InvoiceItemId + "\" />";;
+                            // }
                         }
                         return '';
                     }
@@ -83,9 +93,55 @@
             ],
         order: [[1, 'asc']]
     });
-    function modifyRedemption(invoiceItemId){
-        window.location.href = "@Html.Raw(GetUrl(new DataUrl("ModifyRedemption", "NexportWholesale", null)))?GroupId=" + "@Model.CurrentGroup.Id" + "&ProductId=" + "@Model.CurrentProduct.Id"+"&InvoiceItemId="+invoiceItemId;
+    function unassignRedemption(invoiceItemId) 
+    {
+        if (confirm('@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Unassign.Confirmation")')) {
+            var postData = {
+                invoiceItemId: invoiceItemId
+            };
+            addAntiForgeryToken(postData);
+
+            $.ajax({
+                cache: false,
+                type: "POST",
+                url: "@Url.Action("invoiceItemUnassign", "NexportWholesale")",
+                data: postData,
+                dataType: "json",
+                success: function (data, textStatus, jqXHR) {
+                   if(data.result=="@(NexportOrderInvoiceItemRedemptionStatus.Processing)")
+                   {
+                        //location.href = data.redirect;
+                        location.reload();
+                   }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert('Failed to unassign');
+                }
+            });
+        }
     }
+    // function cancelAwaitingRedemption(invoiceItemId) {
+    //     if (confirm('@T("Common.AreYouSure")')) {
+    //         var postData = {
+    //             invoiceItemId: invoiceItemId
+    //         };
+    //         addAntiForgeryToken(postData);
+
+    //         $.ajax({
+    //             cache: false,
+    //             type: "POST",
+    //             url: "@Url.Action("invoiceItemCancelAwaiting", "NexportWholesale")",
+    //             data: postData,
+    //             dataType: "json",
+    //             success: function (data, textStatus, jqXHR) {
+    //                 // location.href = data.redirect;
+    //             },
+    //             error: function (jqXHR, textStatus, errorThrown) {
+    //                 alert('Failed to unassign');
+    //             }
+    //         });
+    //     }
+    // }
     function updateAvailableRedemptions() {
         var redemptionData = { groupId:"@Model.CurrentGroup.Id",productId:"@Model.CurrentProduct.Id" };
         addAntiForgeryToken(redemptionData);

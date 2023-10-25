@@ -71,7 +71,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task DeleteNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem);
 
-        Task InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
+        Task<bool> InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
         Task DeleteNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
@@ -81,7 +81,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task DeleteNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
 
+        Task DeleteNexportOrderInvoiceResetRedemptionQueueItem(NexportOrderInvoiceResetRedemptionQueueItem queueItem);
+
         Task UpdateNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
+
+        Task UpdateNexportOrderInvoiceResetRedemptionQueueItem(NexportOrderInvoiceResetRedemptionQueueItem queueItem);
 
         //TODO @JS - this probably needs to go away in favor of the one that return list of invoiceitems
         Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItem(int orderId, int orderItemId);
@@ -331,17 +335,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchproductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue);
 
-        Task<NexportOrderInvoiceItem?> FindNexportOrderInvoiceItemByGuid(Guid? orderInvoiceItemId);
-
-        Task<Customer> FindCustomerByGuid(Guid? customerId);
-
-        Task<int> GetInvoiceItemCountForGroupByGuid(Guid groupId);
+        Task<NexportOrderInvoiceItem?> FindNexportOrderInvoiceItemByGuidAsync(Guid? orderInvoiceItemId);
 
         Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemByInvoiceItemGuid(Guid invoiceItemId);
-
-        Task<IList<NexportGroupProductModel>> GetGroupProductModelForGroupId(Guid groupId);
-
-        Task<IList<NexportOrderInvoiceItem>> GetInvoiceItemsForGroupIdAndProductIdAndRedeemingUserIdHasValue(Guid groupId, int productId);
 
     }
 }

@@ -122,6 +122,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     await _taskRunner.ExecuteAsync(invoiceRedemptionTask, true);
                 }
 
+                if (await _settingService.GetSettingAsync(NexportDefaults.NexportOrderInvoiceResetRedemptionTaskBatchSizeSettingKey) == null)
+                {
+                    await _settingService.SetSettingAsync(NexportDefaults.NexportOrderInvoiceResetRedemptionTaskBatchSizeSettingKey,
+                        NexportDefaults.NexportOrderInvoiceResetRedemptionTaskBatchSize);
+                }
+
+                if (await _scheduleTaskService.GetTaskByTypeAsync(NexportDefaults.NexportOrderInvoiceResetRedemptionTaskType) == null)
+                {
+                    var invoiceResetRedemptionTask = new ScheduleTask
+                    {
+                        Enabled = true,
+                        Seconds = NexportDefaults.NexportOrderInvoiceResetRedemptionTaskInterval,
+                        Name = NexportDefaults.NexportOrderInvoiceResetRedemptionTaskName,
+                        Type = NexportDefaults.NexportOrderInvoiceResetRedemptionTaskType
+                    };
+
+                    await _scheduleTaskService.InsertTaskAsync(invoiceResetRedemptionTask);
+
+                    await _taskRunner.ExecuteAsync(invoiceResetRedemptionTask, true);
+                }
+
                 if (await _settingService.GetSettingAsync(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSizeSettingKey) == null)
                 {
                     await _settingService.SetSettingAsync(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSizeSettingKey,
@@ -188,6 +209,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 if (task.Type.Equals(NexportDefaults.NexportOrderProcessingTaskType) ||
                     task.Type.Equals(NexportDefaults.NexportSynchronizationTaskType) ||
                     task.Type.Equals(NexportDefaults.NexportOrderInvoiceRedemptionTaskType) ||
+                    task.Type.Equals(NexportDefaults.NexportOrderInvoiceResetRedemptionTaskType) ||
                     task.Type.Equals(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskType) ||
                     task.Type.Equals(NexportDefaults.NexportGroupMembershipRemovalTaskType) ||
                     task.Type.Equals(NexportDefaults.NexportRegistrationFieldSynchronizationTaskType))
@@ -635,6 +657,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Modify", "Modify Assignment");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Errors.MixedRedemptionTypeNotAllowedInShoppingCart", "Cannot add this product to the other products in the cart due to restriction on the product mapping.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.AssignWhenRedeemed", "Assign When Redeemed");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Unassign.Confirmation", "Are you sure you want to unassign?");
         }
 
         public async Task DeleteResourcesAsync()
@@ -901,6 +924,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Modify");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Errors.MixedRedemptionTypeNotAllowedInShoppingCart");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.AssignWhenRedeemed");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Unassign.Confirmation");
         }
         
         public async Task InstallPermissionProviderAsync()

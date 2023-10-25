@@ -89,6 +89,32 @@ namespace Nop.Plugin.Misc.Nexport
         /// </summary>
         public static string NexportOrderInvoiceRedemptionTaskBatchSizeSettingKey => "nexportsettings.tasks.orderinvoiceredemption.batchsize";
 
+
+        /// <summary>
+        /// Name of the Nexport order invoice reset redemption schedule task
+        /// </summary>
+        public static string NexportOrderInvoiceResetRedemptionTaskName => "Reset Nexport invoice item redemption";
+
+        /// <summary>
+        /// Type of the Nexport order invoice reset redemption schedule task
+        /// </summary>
+        public static string NexportOrderInvoiceResetRedemptionTaskType => $"{typeof(NexportInvoiceResetRedemptionTask).Namespace}.{nameof(NexportInvoiceResetRedemptionTask)}";
+
+        /// <summary>
+        /// Nexport order invoice reset redemption task interval (in seconds)
+        /// </summary>
+        public static int NexportOrderInvoiceResetRedemptionTaskInterval => 5;
+
+        /// <summary>
+        /// Nexport order invoice reset redemption default batch size
+        /// </summary>
+        public static int NexportOrderInvoiceResetRedemptionTaskBatchSize => 100;
+
+        /// <summary>
+        /// Nexport order invoice reset redemption batch size setting key
+        /// </summary>
+        public static string NexportOrderInvoiceResetRedemptionTaskBatchSizeSettingKey => "nexportsettings.tasks.orderinvoiceresetredemption.batchsize";
+
         /// <summary>
         /// Name of the Nexport supplemental info answer processing schedule task
         /// </summary>
