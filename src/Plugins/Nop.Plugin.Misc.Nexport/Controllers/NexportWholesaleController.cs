@@ -124,7 +124,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 return Challenge();
 
             var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId, productId);
-            ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/RedeemProductOrModifyProductRedemption.cshtml";
+            ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/RedeemProduct.cshtml";
             ViewData["ModelForPartialView"] = model;
 
             return View("~/Plugins/Misc.Nexport/Views/MyNexportGroups.cshtml");
@@ -135,7 +135,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
         {
 
-            var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel);
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel, currentCustomer);
 
             return Json(model);
         }
@@ -145,8 +147,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid groupId)
         {
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
-            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId);
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId, currentCustomer );
 
             return Json(model);
         }
@@ -158,7 +161,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
         {
 
-            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListModelAsync(searchModel, groupId, productId);
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListModelAsync(searchModel, groupId, productId, currentCustomer);
 
             return Json(model);
         }

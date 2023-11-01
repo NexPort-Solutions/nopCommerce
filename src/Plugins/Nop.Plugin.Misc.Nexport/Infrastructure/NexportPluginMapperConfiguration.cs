@@ -5,6 +5,7 @@ using System.Reflection;
 using AutoMapper;
 using AutoMapper.Internal;
 using AutoMapper.Configuration;
+using NexportApi.Model;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Infrastructure.Mapper;
@@ -166,6 +167,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 .ForMember(model => model.ExistingEnrollmentId, opts => opts.Ignore())
                 .ForMember(model => model.UtcExistingEnrollmentExpirationDate, opts => opts.Ignore());
 
+            //TODO @js - determine if we still need this
             CreateMap<WholesalePurchasingGroup, NexportGroupModel>()
                 .ForMember(model => model.Id, opts => opts.MapFrom(entity => entity.NexportGroupId))
                 .ForMember(model => model.Name, opts => opts.MapFrom(entity => entity.NexportGroupName))
@@ -173,7 +175,6 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 .ForMember(model => model.NumberOfProducts, opts => opts.Ignore())
                 .ForMember(model => model.ParentId, opts => opts.Ignore())
                 .ForMember(model => model.Type, opts => opts.Ignore());
-
 
         }
 

@@ -1,4 +1,4 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProductOrModifyProductRedemptionModel
+﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProductModel
 @{
     string GetUrl(DataUrl dataUrl)
     {
@@ -11,7 +11,7 @@
     var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
-    var redeemOrModifyText = Model.HasBeenAssigned ? T("Plugins.Misc.Nexport.Group.Product.Redemptions.Modify") + " - " + Model.CurrentProduct.Name : T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem") + " - " + Model.CurrentProduct.Name;
+    var redeemOrModifyText = T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem") + " - " + Model.CurrentProduct.Name;
 }
 <div class="page-title">
     <nav aria-label="Breadcrumb">
@@ -41,7 +41,38 @@
     <h1>@redeemOrModifyText</h1>
 </div>
 <div class="page-body">
-     Code to redeem product or modify product redemption goes here...
+    <form asp-route="RedeemProductForCustomer" method="post" autocomplete="off">
+        @* asp-route-returnurl="@returnUrl" *@
+        <div asp-validation-summary="ModelOnly" class="message-error"></div>
+        <div class="fieldset">
+            <div class="form-fields">
+                <div class="inputs">
+                    User:<input />
+                    @*   <label asp-for="OldPassword" asp-postfix=":"></label>
+                    <input asp-for="OldPassword" />
+                    <nop-required />
+                    <span asp-validation-for="OldPassword"></span> *@
+                </div>
+                <div class="inputs">
+                    Email or redeem instantly
+                    @* <label asp-for="NewPassword" asp-postfix=":"></label>
+                    <input asp-for="NewPassword" />
+                    <nop-required />
+                    <span asp-validation-for="NewPassword"></span> *@
+                </div>
+                @* <div class="inputs">
+                    <label asp-for="ConfirmNewPassword" asp-postfix=":"></label>
+                    <input asp-for="ConfirmNewPassword" />
+                    <nop-required />
+                    <span asp-validation-for="ConfirmNewPassword"></span> 
+                </div> *@
+            </div>
+        </div>
+        <div class="buttons">
+            <button type="submit" class="button-1" >Submit</button>
+            @* <button type="submit" class="button-1 change-password-button">@T("Account.ChangePassword.Button")</button> *@
+        </div>
+    </form>
 </div>
 <script>
 </script>

@@ -238,7 +238,7 @@ public class NexportWholesaleController : BaseAdminController
 
         var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId, productId);
         model.AdminView = true;
-        ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/RedeemProductOrModifyProductRedemption.cshtml";
+        ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/RedeemProduct.cshtml";
         ViewData["ModelForPartialView"] = model;
 
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/NexportGroups/List.cshtml");
@@ -251,7 +251,9 @@ public class NexportWholesaleController : BaseAdminController
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
             return await AccessDeniedDataTablesJson();
 
-        var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel);
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+
+        var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel, currentCustomer);
 
         return Json(model);
     }
@@ -263,7 +265,9 @@ public class NexportWholesaleController : BaseAdminController
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
             return await AccessDeniedDataTablesJson();
 
-        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId);
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+
+        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId, currentCustomer);
 
         return Json(model);
     }
@@ -276,7 +280,9 @@ public class NexportWholesaleController : BaseAdminController
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
             return await AccessDeniedDataTablesJson();
 
-        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListModelAsync(searchModel, groupId, productId);
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+
+        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListModelAsync(searchModel, groupId, productId, currentCustomer);
 
         return Json(model);
     }
