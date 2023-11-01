@@ -2728,9 +2728,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (invoiceItem == null)
                 throw new ArgumentNullException(nameof(invoiceItem));
 
-            //if (redeemingUserId == Guid.Empty)
-            //    throw new ArgumentException("Redeeming User Id cannot be empty identifier", nameof(redeemingUserId));
-
             try
             {
                 var resetInvoiceResult = _nexportApiService.ResetInvoiceRedemption(_nexportSettings.Url,
@@ -2766,6 +2763,92 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 throw;
             }
+        }
+
+        public async Task<bool> HasGroupPermissionAsync(Guid userId, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION)
+        {
+            if (userId == Guid.Empty)
+                throw new ArgumentException("userId cannot be empty", nameof(userId));
+            if (groupId == Guid.Empty)
+                throw new ArgumentException("groupId cannot be empty", nameof(groupId));
+
+            try
+            {
+                var hasGroupPermissionResult = _nexportApiService.HasGroupPermission(_nexportSettings.Url, _nexportSettings.AuthenticationToken, userId,
+                groupId, permission);
+
+                if (hasGroupPermissionResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
+                    throw new ApiException((int)hasGroupPermissionResult.ApiErrorEntity.ErrorCode,
+                        hasGroupPermissionResult.ApiErrorEntity.ErrorMessage);
+
+                return hasGroupPermissionResult.IsPermitted;
+            }
+            catch (Exception ex)
+            {
+                var errMsg =
+                    $"Error occurred during HasGroupPermission api call with the parameter: user_id - {userId},group_id - {groupId}";
+                await _logger.ErrorAsync($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<HasGroupPermissionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+        }
+
+        public async Task<IList<DirectoryResponseItem>> SearchGroupsForPermissionAsync(Guid userId, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION)
+        {
+            var items = new List<DirectoryResponseItem>();
+
+            if (userId == Guid.Empty)
+                throw new ArgumentException("userId cannot be empty", nameof(userId));
+            if (groupId == Guid.Empty)
+                throw new ArgumentException("groupId cannot be empty", nameof(groupId));
+
+            try
+            {
+                var page = 1;
+                int remainderItemsCount;
+                do
+                {
+                    var result = _nexportApiService.SearchGroupsForPermission(
+                        _nexportSettings.Url, _nexportSettings.AuthenticationToken, userId,
+                        groupId, permission, page);
+                    if (result.SearchGroupsForPermissionList != null)
+                    {
+                        items.AddRange(result.SearchGroupsForPermissionList);
+                    }
+
+                    remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+                    page++;
+                } while (remainderItemsCount > -1);
+
+            }
+            catch (Exception ex)
+            {
+                var errMsg =
+                    $"Error occurred during HasGroupPermission api call with the parameter: user_id - {userId},group_id - {groupId}";
+                await _logger.ErrorAsync($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<DirectoryResponseItem>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+
+            return items;
         }
     }
 }

@@ -245,6 +245,8 @@ namespace Nop.Plugin.Misc.Nexport
 
         public const string NEXPORT_PURCHASE_PRODUCT_FOR_CUSTOMER = "Nexport.PurchaseForCustomer";
 
-        public const string NEXPORT_ADD_GROUP_PERMISSION = "AddGroup";
+        public const string NEXPORT_PURCHASING_AGENT_PERMISSION = "ActAsPurchasingAgent";
+
+        public const string REMOTE_SYS_NAME_FOR_API = "Marketplace";
     }
 }

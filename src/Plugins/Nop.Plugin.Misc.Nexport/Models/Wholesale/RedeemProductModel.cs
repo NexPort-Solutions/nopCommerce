@@ -4,7 +4,7 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Wholesale
 {
-    public record RedeemProductOrModifyProductRedemptionModel : BaseNopEntityModel
+    public record RedeemProductModel : BaseNopEntityModel
     {
         public bool AdminView { get; set; } = false;
 
@@ -13,7 +13,5 @@ namespace Nop.Plugin.Misc.Nexport.Models.Wholesale
         public Product CurrentProduct { get; set; }
 
         public Guid InvoiceItemId { get; set; }
-
-        public bool HasBeenAssigned { get; set; } = false;
     }
 }

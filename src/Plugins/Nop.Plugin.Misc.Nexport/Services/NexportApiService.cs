@@ -192,7 +192,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
             };
 
-            var response = nexportApi.AdminApiGetUsersWithHttpInfo(accessToken, searchTerm, page);
+            var response = nexportApi.AdminApiGetUsersWithHttpInfo(accessToken, searchTerm, page, perPage: 30);
 
             var result = new NexportUserListResponse
             {
@@ -305,7 +305,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
             };
 
-            var response = nexportApi.AdminApiSearchDirectoryWithHttpInfo(0, baseOrgId, accessToken, searchTerm, searchTerm, page);
+            var response = nexportApi.AdminApiSearchDirectoryWithHttpInfo(0, baseOrgId, accessToken, searchTerm, searchTerm, page, perPage: 30);
 
             var result = new NexportDirectoryResponse
             {
@@ -340,7 +340,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
             };
 
-            var response = nexportApi.AdminApiGetOrganizationsWithHttpInfo(accessToken, orgId, page: page);
+            var response = nexportApi.AdminApiGetOrganizationsWithHttpInfo(accessToken, orgId, page: page, perPage: 30);
 
             var result = new NexportOrganizationResponse
             {
@@ -396,7 +396,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
             };
 
-            var response = nexportApi.AdminApiGetSubscriptionsWithHttpInfo(accessToken, userId, page: page);
+            var response = nexportApi.AdminApiGetSubscriptionsWithHttpInfo(accessToken, userId, page: page, perPage: 30);
 
             var result = new NexportSubscriptionsResponse
             {
@@ -432,7 +432,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             };
 
             var catalogRequest = new CatalogRequest(orgId, Enums.PublishingModelEnum.ForSaleInMarketPlace, CatalogRequest.CatalogAccessOptionEnum.Owned);
-            var response = nexportApi.LearningApiGetCatalogsWithHttpInfo(accessToken, catalogRequest, page);
+            var response = nexportApi.LearningApiGetCatalogsWithHttpInfo(accessToken, catalogRequest, page, perPage: 30);
 
             var result = new NexportCatalogResponse
             {
@@ -530,7 +530,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
             };
 
-            var response = nexportApi.LearningApiGetCatalogSyllabiWithHttpInfo(catalogId, accessToken, page);
+            var response = nexportApi.LearningApiGetCatalogSyllabiWithHttpInfo(catalogId, accessToken, page, perPage: 30);
 
             var result = new NexportSyllabusResponse
             {
@@ -1030,7 +1030,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public HasGroupPermissionResponse HasGroupPermission([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid groupId, string permission)
+        public HasGroupPermissionResponse HasGroupPermission([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION)
         {
             if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
@@ -1046,14 +1046,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
             };
 
-            var result = nexportApi.AdminApiHasGroupPermission(accessToken,
+            var result = nexportApi.AdminApiHasGroupPermission(accessToken: accessToken,
                 new HasGroupPermissionRequest(userId: userId, groupId: groupId, permission: permission));
 
             return result;
         }
 
-        public SearchGroupsForPermissionResponse SearchGroupsForPermission([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid groupId, string permission)
+        public NexportSearchGroupsForPermissionResponse SearchGroupsForPermission([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION, int? page = null)
         {
+
             if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
 
@@ -1068,8 +1069,22 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
             };
 
-            var result = nexportApi.AdminApiSearchGroupsForPermission(accessToken,
-                new SearchGroupsForPermissionRequest(userId: userId, orgId: groupId, permission: permission));
+            var response = nexportApi.AdminApiSearchGroupsForPermissionWithHttpInfo(accessToken, new SearchGroupsForPermissionRequest(userId: userId, orgId: groupId, permission: permission, page: page, perPage: 30));
+
+
+            var result = new NexportSearchGroupsForPermissionResponse
+            {
+                SearchGroupsForPermissionList = response.Data.Groups
+            };
+
+            if (response.Headers.ContainsKey("X-Total-Count"))
+                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Per-Page"))
+                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+
+            if (response.Headers.ContainsKey("X-Page"))
+                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
             return result;
         }
@@ -1092,7 +1107,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result =
                 nexportApi.PointOfSaleApiResetInvoiceRedemption(accessToken,
-                    new ResetInvoiceRedemptionRequest(invoiceItemId, $"reset redemption for invoice item with id:{invoiceItemId} on {DateTime.UtcNow}", "Marketplace"));
+                    new ResetInvoiceRedemptionRequest(invoiceItemId, $"reset redemption for invoice item with id:{invoiceItemId} on {DateTime.UtcNow}", NexportDefaults.REMOTE_SYS_NAME_FOR_API));
 
             return result;
         }
