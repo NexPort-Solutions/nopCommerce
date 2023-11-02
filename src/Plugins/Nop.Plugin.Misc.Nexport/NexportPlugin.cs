@@ -118,18 +118,36 @@ namespace Nop.Plugin.Misc.Nexport
                 ActionName = "ListSupplementalInfoQuestion",
                 IconClass = "far fa-dot-circle"
             });
+            
+            var wholesaleNode = new SiteMapNode()
+            {
+                SystemName = "Nexport",
+                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions),
+                Title = "Nexport Wholesale",
+                IconClass = "fas fa-shopping-basket",
+            };
 
-            node.ChildNodes.Add(new SiteMapNode()
+            wholesaleNode.ChildNodes.Add(new SiteMapNode()
             {
                 Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions),
-                Title = "Nexport Groups",
-                SystemName = "Nexport Groups",
+                Title = "Wholesale Purchases",
+                SystemName = "Wholesale Purchases",
                 ControllerName = "NexportWholesale",
                 ActionName = "AdminNexportGroups",
                 IconClass = "far fa-dot-circle"
             });
+            wholesaleNode.ChildNodes.Add(new SiteMapNode()
+            {
+                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions),
+                Title = "New Wholesale Order",
+                SystemName = "New Wholesale Order",
+                ControllerName = "NexportWholesale",
+                ActionName = "Create",
+                IconClass = "far fa-dot-circle"
+            });
 
             rootNode.ChildNodes.Add(node);
+            rootNode.ChildNodes.Add(wholesaleNode);
         }
 
         public override string GetConfigurationPageUrl()
