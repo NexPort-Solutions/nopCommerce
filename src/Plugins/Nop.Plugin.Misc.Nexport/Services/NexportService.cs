@@ -1350,12 +1350,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public async Task<Guid> BeginNexportOrderInvoiceTransactionAsync(Guid orgId, Guid purchasingAgentId)
+        public async Task<Guid> BeginNexportOrderInvoiceTransactionAsync(Guid orgId, Guid purchasingAgentId, Guid? purchasingGroupId = null)
         {
             try
             {
                 var beginOrderResult = _nexportApiService.BeginNexportInvoiceTransaction(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, orgId, purchasingAgentId);
+                    _nexportSettings.AuthenticationToken, orgId, purchasingAgentId, purchasingGroupId);
 
                 return beginOrderResult.InvoiceId;
             }

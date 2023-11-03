@@ -12,6 +12,8 @@
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
     var redeemOrModifyText = T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem") + " - " + Model.CurrentProduct.Name;
+
+    var currentGroupId = @Model.CurrentGroup.Id?.ToString() ?? "null";
 }
 <div class="page-title">
     <nav aria-label="Breadcrumb">
@@ -22,18 +24,18 @@
                 </a>
             </li>
             <li >
-                <a href="@(groupProductsRouteUrl+"?groupId="+Model.CurrentGroup.Id)" title="@T("Plugins.Misc.Nexport.Group.Products")" >
+                <a href="@(groupProductsRouteUrl+"?groupId="+currentGroupId)" title="@T("Plugins.Misc.Nexport.Group.Products")" >
                     <span >@Model.CurrentGroup.Name</span>
                 </a>
             </li>
             <li>
-                <a href="@(groupProductRedemptionsRouteUrl+"?groupId="+Model.CurrentGroup.Id+"&productId="+Model.CurrentProduct.Id)" title="Redemptions" >
+                <a href="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)" title="Redemptions" >
                     <span >@Model.CurrentProduct.Name</span>
                 </a>
             </li>
             <li >
                 @redeemOrModifyText
-                <span id="@(groupProductRedemptionsRouteUrl+"?groupId="+Model.CurrentGroup.Id+"&productId="+Model.CurrentProduct.Id)">
+                <span id="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)">
                 </span>
             </li>
         </ul>

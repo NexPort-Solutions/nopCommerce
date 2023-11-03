@@ -8,7 +8,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.Wholesale
     {
         public bool AdminView { get; set; } = false;
 
-        public NexportGroupModel CurrentGroup { get; set; }
+        public NexportGroupModel CurrentGroup { get; set; } = new NexportGroupModel {Id = null, Name = "No Group"};
 
         public Product CurrentProduct { get; set; }
 

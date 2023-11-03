@@ -682,7 +682,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         }
 
         public BeginInvoiceTransactionResponse BeginNexportInvoiceTransaction([NotNull] string url, [NotNull] string accessToken,
-            Guid orgId, Guid purchasingAgentId)
+            Guid orgId, Guid purchasingAgentId, Guid? purchasingGroupId = null)
         {
             if (string.IsNullOrWhiteSpace(url))
                 throw new NullReferenceException("Api url cannot be empty");
@@ -699,7 +699,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             };
 
             var result = nexportApi.PointOfSaleApiBeginInvoiceTransaction(accessToken,
-                new CreateInvoiceMessageRequest(purchasingAgentId, orgId));
+                new CreateInvoiceMessageRequest(purchasingAgentId, orgId, purchasingGroupId));
 
             return result;
         }

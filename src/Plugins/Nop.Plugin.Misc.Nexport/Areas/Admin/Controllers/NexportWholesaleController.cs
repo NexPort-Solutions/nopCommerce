@@ -202,7 +202,7 @@ public class NexportWholesaleController : BaseAdminController
     }
 
     [HttpsRequirement]
-    public async Task<IActionResult> AdminNexportGroupProducts(Guid groupId)
+    public async Task<IActionResult> AdminNexportGroupProducts(Guid? groupId)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
             return AccessDeniedView();
@@ -216,7 +216,7 @@ public class NexportWholesaleController : BaseAdminController
     }
 
     [HttpsRequirement]
-    public async Task<IActionResult> AdminNexportGroupProductRedemptions(Guid groupId, int productId)
+    public async Task<IActionResult> AdminNexportGroupProductRedemptions(Guid? groupId, int productId)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
             return AccessDeniedView();
@@ -231,7 +231,7 @@ public class NexportWholesaleController : BaseAdminController
     }
 
     [HttpsRequirement]
-    public async Task<IActionResult> RedeemProduct(Guid groupId, int productId)
+    public async Task<IActionResult> RedeemProduct(Guid? groupId, int productId)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
             return AccessDeniedView();
@@ -260,7 +260,7 @@ public class NexportWholesaleController : BaseAdminController
 
     [HttpPost]
     [AutoValidateAntiforgeryToken]
-    public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid groupId)
+    public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid? groupId)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
             return await AccessDeniedDataTablesJson();
@@ -275,7 +275,7 @@ public class NexportWholesaleController : BaseAdminController
 
     [HttpPost]
     [AutoValidateAntiforgeryToken]
-    public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
+    public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
             return await AccessDeniedDataTablesJson();
@@ -289,7 +289,7 @@ public class NexportWholesaleController : BaseAdminController
 
     [HttpPost]
     [AutoValidateAntiforgeryToken]
-    public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
+    public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
             return await AccessDeniedDataTablesJson();

@@ -13,7 +13,9 @@
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
 
-    var groupProductText = Model.CurrentGroup.Name + " - " + T("Plugins.Misc.Nexport.Group.Products");
+    var groupProductText = (Model.CurrentGroup!=null? Model.CurrentGroup.Name : "No Group") + " - " + T("Plugins.Misc.Nexport.Group.Products");
+
+    var currentGroupId = @Model.CurrentGroup.Id?.ToString() ?? "null";
 }
 <div class="page-title">
     <nav aria-label="Breadcrumb">
@@ -25,7 +27,7 @@
             </li>
             <li >
                 @groupProductText
-                <span id="@(groupProductsRouteUrl+"?groupId="+Model.CurrentGroup.Id)">
+                <span id="@(groupProductsRouteUrl+"?groupId="+currentGroupId)">
                 </span>
             </li>
         </ul>

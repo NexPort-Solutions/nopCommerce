@@ -10,11 +10,15 @@
                 ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
                 : string.Empty;
     }
+
+    var currentGroupId = @Model.CurrentGroup.Id?.ToString() ?? "null";
+
     var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
 
     var groupProductRedemptionText = Model.CurrentProduct.Name + " - " + T("Plugins.Misc.Nexport.Group.Product.Redemptions");
+   
 }
 <div class="page-title">
     <nav aria-label="Breadcrumb">
@@ -25,13 +29,13 @@
                 </a>
             </li>
             <li >
-                <a href="@(groupProductsRouteUrl+"?groupId="+Model.CurrentGroup.Id)" title="@T("Plugins.Misc.Nexport.Group.Products")">
+                <a href="@(groupProductsRouteUrl+"?groupId="+currentGroupId)" title="@T("Plugins.Misc.Nexport.Group.Products")">
                     <span>@Model.CurrentGroup.Name</span>
                 </a>
             </li>
             <li >
                 @groupProductRedemptionText
-                <span id="@(groupProductRedemptionsRouteUrl+"?groupId="+Model.CurrentGroup.Id+"&productId="+Model.CurrentProduct.Id)">
+                <span id="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)">
                 </span>
             </li>
         </ul>
@@ -178,7 +182,7 @@
             return false;
         });
         $("#redeemBtn").click(function () {
-            window.location.href = "@Html.Raw(GetUrl(new DataUrl("RedeemProduct", "NexportWholesale", null)))?GroupId=" + "@Model.CurrentGroup.Id"+"&ProductId=" + "@Model.CurrentProduct.Id";
+            window.location.href = "@Html.Raw(GetUrl(new DataUrl("RedeemProduct", "NexportWholesale", null)))?GroupId=" + "@currentGroupId" +"&ProductId=" + "@Model.CurrentProduct.Id";
         });
     });
 </script>

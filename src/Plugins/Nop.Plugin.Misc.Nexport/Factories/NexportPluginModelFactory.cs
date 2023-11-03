@@ -1653,6 +1653,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 {
                     var groupModels = new List<NexportGroupModel>();
 
+                    //check for wholesale purchases that have no group
+                    var noGroupCount = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(null);
+                    if (noGroupCount > 0)
+                    {
+                        groupModels.Add(new NexportGroupModel{Id = null, Name="No Group", NumberOfProducts = noGroupCount});
+                    }
+
                     var groupsFromApi = await _nexportService.SearchGroupsForPermissionAsync(userMapping.NexportUserId,
                         _nexportSettings.RootOrganizationId.Value);
 
@@ -1694,13 +1701,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         }
 
         public virtual async Task<NexportGroupProductListModel> PrepareNexportGroupProductListModelAsync(
-           NexportGroupProductListSearchModel searchModel, Guid groupId, Customer currentCustomer)
+           NexportGroupProductListSearchModel searchModel, Guid? groupId, Customer currentCustomer)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            if (groupId == Guid.Empty)
-                throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
+            //if (groupId == Guid.Empty)
+            //    throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
 
             var model = new NexportGroupProductListModel();
 
@@ -1757,7 +1764,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         }
 
         public virtual async Task<NexportGroupProductRedemptionListModel> PrepareNexportGroupProductRedemptionListModelAsync(
-            NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId, Customer currentCustomer)
+            NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId, Customer currentCustomer)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
@@ -1838,14 +1845,17 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         }
 
         public async Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(
-            Guid groupId)
+            Guid? groupId = null)
         {
             if (groupId == Guid.Empty)
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
 
             var model = new NexportGroupProductListSearchModel();
 
-            var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId);
+            if(groupId==null)
+                return model;
+
+            var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId.Value);
 
             if (group == null)
                 return model;
@@ -1859,7 +1869,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         }
 
         public async Task<NexportGroupProductRedemptionListSearchModel> PrepareNexportGroupProductRedemptionListSearchModelAsync(
-            Guid groupId, int productId)
+            Guid? groupId, int productId)
         {
             if (groupId == Guid.Empty)
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
@@ -1868,7 +1878,16 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var model = new NexportGroupProductRedemptionListSearchModel();
 
-            var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId);
+            var product = await _productService.GetProductByIdAsync(productId);
+            if (product != null)
+            {
+                model.CurrentProduct = product;
+            }
+
+            if (groupId == null)
+                return model;
+
+            var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId.Value);
 
             if (group != null)
             {
@@ -1877,16 +1896,10 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     model.CurrentGroup = groupModel;
             }
 
-            var product = await _productService.GetProductByIdAsync(productId);
-            if (product != null)
-            {
-                model.CurrentProduct = product;
-            }
-
             return model;
         }
 
-        public async Task<RedeemProductModel> PrepareRedeemProductModel(Guid groupId, int productId)
+        public async Task<RedeemProductModel> PrepareRedeemProductModel(Guid? groupId, int productId)
         {
             if (groupId == Guid.Empty)
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
@@ -1894,15 +1907,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 throw new ArgumentOutOfRangeException(nameof(productId));
 
             var model = new RedeemProductModel();
-
-            var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId);
-
-            if (group != null)
-            {
-                var groupModel = group.ToModel<NexportGroupModel>();
-                if (groupModel != null)
-                    model.CurrentGroup = groupModel;
-            }
 
             var product = await _productService.GetProductByIdAsync(productId);
             if (product != null)
@@ -1914,6 +1918,18 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             if (invoiceItem != null)
                 model.InvoiceItemId = invoiceItem.InvoiceItemId;
+
+            if (groupId == null)
+                return model;
+
+            var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId.Value);
+
+            if (group != null)
+            {
+                var groupModel = group.ToModel<NexportGroupModel>();
+                if (groupModel != null)
+                    model.CurrentGroup = groupModel;
+            }
 
             return model;
         }

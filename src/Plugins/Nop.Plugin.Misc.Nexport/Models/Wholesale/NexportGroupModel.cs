@@ -4,7 +4,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.Wholesale
 {
     public record NexportGroupModel : BaseNopEntityModel
     {
-        public new Guid Id { get; set; }
+        public new Guid? Id { get; set; }
         public Guid ParentId { get; set; }
         public string? Name { get; set; }
         public string? ShortName { get; set; }
