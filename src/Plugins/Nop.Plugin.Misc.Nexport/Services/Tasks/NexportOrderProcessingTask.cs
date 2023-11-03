@@ -475,10 +475,10 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                         if(wholesalePurchasingGroup != null )
                         {
-                            // -- when we get new api stuff, pass group into begin order transaction
+                            // pass group into begin order transaction
                             orderInvoiceId =
                                 await _nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId,
-                                    userMapping.NexportUserId);
+                                    userMapping.NexportUserId, wholesalePurchasingGroup.NexportGroupId);
                         }
                         else
                         {

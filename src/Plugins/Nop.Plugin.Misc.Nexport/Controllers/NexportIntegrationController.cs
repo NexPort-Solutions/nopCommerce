@@ -3001,11 +3001,11 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     {
                         group = JsonConvert.DeserializeObject<NexportGroupModel>(groupInfo);
 
-                        if (group != null)
+                        if (group != null && group.Id!=null)
                         {
                             await _nexportService.InsertOrUpdateWholesalePurchaseGroupAsync(new WholesalePurchasingGroup
                             {
-                                NexportGroupId = group.Id,
+                                NexportGroupId = group.Id.Value,
                                 NexportGroupName = group.Name,
                                 NexportGroupShortName = group.ShortName
                             });

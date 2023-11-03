@@ -87,7 +87,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [HttpsRequirement]
-        public async Task<IActionResult> CustomerNexportGroupProducts(Guid groupId)
+        public async Task<IActionResult> CustomerNexportGroupProducts(Guid? groupId)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
@@ -102,7 +102,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [HttpsRequirement]
-        public async Task<IActionResult> CustomerNexportGroupProductRedemptions(Guid groupId, int productId)
+        public async Task<IActionResult> CustomerNexportGroupProductRedemptions(Guid? groupId, int productId)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
@@ -117,7 +117,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [HttpsRequirement]
-        public async Task<IActionResult> RedeemProduct(Guid groupId, int productId)
+        public async Task<IActionResult> RedeemProduct(Guid? groupId, int productId)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
@@ -145,7 +145,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [HttpPost]
         [AutoValidateAntiforgeryToken]
-        public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid groupId)
+        public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid? groupId)
         {
             var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
@@ -158,7 +158,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         [HttpPost]
         [AutoValidateAntiforgeryToken]
-        public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
+        public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId)
         {
 
             var currentCustomer = await _workContext.GetCurrentCustomerAsync();
@@ -171,7 +171,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(
-            NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
+            NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId)
         {
             var count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId);
             return Json(
