@@ -5,6 +5,7 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
+using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Plugin.Misc.Nexport.Services;
@@ -252,7 +253,6 @@ public class NexportWholesaleController : BaseAdminController
     }
 
     [HttpPost]
-    [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
@@ -264,7 +264,6 @@ public class NexportWholesaleController : BaseAdminController
     }
 
     [HttpPost]
-    [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid groupId)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
@@ -275,9 +274,7 @@ public class NexportWholesaleController : BaseAdminController
         return Json(model);
     }
 
-
     [HttpPost]
-    [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
@@ -289,7 +286,6 @@ public class NexportWholesaleController : BaseAdminController
     }
 
     [HttpPost]
-    [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(NexportGroupProductRedemptionListSearchModel searchModel, Guid groupId, int productId)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions))
@@ -299,5 +295,32 @@ public class NexportWholesaleController : BaseAdminController
         return Json(
             new { result = count }
         );
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAvailableFundingPools()
+    {
+        return Json(_nexportWholesaleService.GetAllFundingPools());
+    }
+
+    [HttpGet]
+    public IActionResult CreateFundingPool() => View();
+
+    [HttpPost]
+    public async Task<IActionResult> CreateFundingPool(string name)
+    {
+        try
+        {
+            var fundingPool = new FundingPool
+            {
+                Name = name,
+            };
+            await _nexportWholesaleService.InsertOrUpdateFundingPool(fundingPool);
+            return View(nameof(CreateFundingPool), $"Funding pool {name} was successfully created.");
+        }
+        catch(Exception e)
+        {
+            return View(nameof(CreateFundingPool), $"Error creating new funding pool: {e.Message}");
+        }
     }
 }

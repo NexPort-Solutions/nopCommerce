@@ -29,6 +29,8 @@ using Nop.Core.Domain.Vendors;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Discounts;
 using System.Globalization;
+using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Data;
 
 #nullable enable
 
@@ -36,6 +38,8 @@ namespace Nop.Plugin.Misc.Nexport.Services;
 
 public interface INexportWholesaleService
 {
+    Task<IList<FundingPool>> GetAllFundingPools();
+    Task InsertOrUpdateFundingPool(FundingPool fundingPool);
     Task<PlaceOrderResult> PlaceWholesaleOrderAsync(ProcessPaymentRequest processPaymentRequest, List<ShoppingCartItem> shoppingCartItems);
 }
 
@@ -83,6 +87,7 @@ public class NexportNexportWholesaleService : INexportWholesaleService
     private readonly OrderSettings _orderSettings;
     private readonly ShippingSettings _shippingSettings;
     private readonly TaxSettings _taxSettings;
+    private readonly IRepository<FundingPool> _fundingPools;
     #endregion
 
     #region Constructors
@@ -832,5 +837,20 @@ public class NexportNexportWholesaleService : INexportWholesaleService
             return true;
         var shoppingCartTotal = await _orderTotalCalculationService.GetShoppingCartTotalAsync(cart);
         return !shoppingCartTotal.shoppingCartTotal.HasValue || shoppingCartTotal.shoppingCartTotal.Value >= _orderSettings.MinOrderTotalAmount;
+    }
+    
+    public Task<IList<FundingPool>> GetAllFundingPools()
+        => _fundingPools.GetAllAsync(query => from fundingPool in query orderby fundingPool.Name select fundingPool, cacheKey => default);
+
+    public async Task InsertOrUpdateFundingPool(FundingPool fundingPool)
+    {
+        if (await _fundingPools.GetByIdAsync(fundingPool.Id) is { })
+        {
+            await _fundingPools.UpdateAsync(fundingPool);
+        }
+        else
+        {
+            await _fundingPools.InsertAsync(fundingPool);
+        }
     }
 }

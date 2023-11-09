@@ -1,0 +1,47 @@
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders
+
+@model CreateFundingPoolModel
+
+<div class="row">
+    <div class="col-md-12">
+        <section class="content">
+            <section class="container-fluid">
+                <div class="form-horizontal">
+                    <div class="cards-group">
+                        <div class="card card-default card-search">
+                            <div class="card-body">
+                                <div class="card-body">
+                                    <div class="form-group row">
+                                        <form id="target" asp-controller="NexportWholesale" asp-action="CreateFundingPool" onchange="checkValidForm();">
+                                            <div class="form-group row">
+                                                <div class="col-md-4">
+                                                    <nop-label asp-for="Name"></nop-label>
+                                                </div>
+                                                <div class="col-md-8">
+                                                    @Html.TextBoxFor(model => model.Name)
+                                                </div>
+                                            </div>
+                                            <button class="bg-green btn float-left" id="create-submit" type="submit" disabled onclick="this.disabled = true;">Create</button>
+                                            <script type="text/javascript">
+                                                const nameInput = $('#@Html.IdFor(model => model.Name)');;
+                                                const submitButton = $('#create-submit')
+
+                                                function checkValidForm() {
+                                                    var isValid = (nameInput.val() != null);
+                                                    submitButton.prop("disabled", !isValid);
+                                                }
+                                            </script>
+                                        </form>
+                                    </div>
+                                    <p id="message" style="@(Model.State is CreateFundingPoolModelState.Failure ? Html.Raw("color: red") : Html.Raw("color: green"));" disabled="@(Model.State is CreateFundingPoolModelState.Unsubmitted)">
+                                        @Model.Message
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </div>
+</div>
