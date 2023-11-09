@@ -51,6 +51,6 @@ namespace Nop.Web.Models.Catalog
             public PictureModel PictureModel { get; set; }
         }
 
-		#endregion
+        #endregion
     }
 }

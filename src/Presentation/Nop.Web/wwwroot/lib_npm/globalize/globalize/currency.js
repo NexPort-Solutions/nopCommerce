@@ -11,68 +11,68 @@
  */
 (function( root, factory ) {
 
-	// UMD returnExports
-	if ( typeof define === "function" && define.amd ) {
+    // UMD returnExports
+    if ( typeof define === "function" && define.amd ) {
 
-		// AMD
-		define([
-			"cldr",
-			"../globalize",
-			"./number",
-			"cldr/event",
-			"cldr/supplemental"
-		], factory );
-	} else if ( typeof exports === "object" ) {
+        // AMD
+        define([
+            "cldr",
+            "../globalize",
+            "./number",
+            "cldr/event",
+            "cldr/supplemental"
+        ], factory );
+    } else if ( typeof exports === "object" ) {
 
-		// Node, CommonJS
-		module.exports = factory( require( "cldrjs" ), require( "../globalize" ) );
-	} else {
+        // Node, CommonJS
+        module.exports = factory( require( "cldrjs" ), require( "../globalize" ) );
+    } else {
 
-		// Global
-		factory( root.Cldr, root.Globalize );
-	}
+        // Global
+        factory( root.Cldr, root.Globalize );
+    }
 }(this, function( Cldr, Globalize ) {
 
 var alwaysArray = Globalize._alwaysArray,
-	createError = Globalize._createError,
-	formatMessageToParts = Globalize._formatMessageToParts,
-	numberNumberingSystem = Globalize._numberNumberingSystem,
-	numberPattern = Globalize._numberPattern,
-	partsJoin = Globalize._partsJoin,
-	partsPush = Globalize._partsPush,
-	runtimeBind = Globalize._runtimeBind,
-	stringPad = Globalize._stringPad,
-	validateCldr = Globalize._validateCldr,
-	validateDefaultLocale = Globalize._validateDefaultLocale,
-	validateParameterPresence = Globalize._validateParameterPresence,
-	validateParameterType = Globalize._validateParameterType,
-	validateParameterTypeNumber = Globalize._validateParameterTypeNumber,
-	validateParameterTypePlainObject = Globalize._validateParameterTypePlainObject;
+    createError = Globalize._createError,
+    formatMessageToParts = Globalize._formatMessageToParts,
+    numberNumberingSystem = Globalize._numberNumberingSystem,
+    numberPattern = Globalize._numberPattern,
+    partsJoin = Globalize._partsJoin,
+    partsPush = Globalize._partsPush,
+    runtimeBind = Globalize._runtimeBind,
+    stringPad = Globalize._stringPad,
+    validateCldr = Globalize._validateCldr,
+    validateDefaultLocale = Globalize._validateDefaultLocale,
+    validateParameterPresence = Globalize._validateParameterPresence,
+    validateParameterType = Globalize._validateParameterType,
+    validateParameterTypeNumber = Globalize._validateParameterTypeNumber,
+    validateParameterTypePlainObject = Globalize._validateParameterTypePlainObject;
 
 
 var createErrorPluralModulePresence = function() {
-	return createError( "E_MISSING_PLURAL_MODULE", "Plural module not loaded." );
+    return createError( "E_MISSING_PLURAL_MODULE", "Plural module not loaded." );
 };
 
 
 
 
 var validateParameterTypeCurrency = function( value, name ) {
-	validateParameterType(
-		value,
-		name,
-		value === undefined || typeof value === "string" && ( /^[A-Za-z]{3}$/ ).test( value ),
-		"3-letter currency code string as defined by ISO 4217"
-	);
+    validateParameterType(
+        value,
+        name,
+        value === undefined || typeof value === "string" && ( /^[A-Za-z]{3}$/ ).test( value ),
+        "3-letter currency code string as defined by ISO 4217"
+    );
 };
 
 
 
 
 var currencyFormatterFn = function( currencyToPartsFormatter ) {
-	return function currencyFormatter( value ) {
-		return partsJoin( currencyToPartsFormatter( value ));
-	};
+    return function currencyFormatter( value ) {
+        return partsJoin( currencyToPartsFormatter( value ));
+    };
 };
 
 
@@ -84,44 +84,44 @@ var currencyFormatterFn = function( currencyToPartsFormatter ) {
  * Return pattern with fraction digits overriden by supplemental currency data.
  */
 var currencySupplementalOverride = function( currency, pattern, cldr ) {
-	var digits,
-		fraction = "",
-		fractionData = cldr.supplemental([ "currencyData/fractions", currency ]) ||
-			cldr.supplemental( "currencyData/fractions/DEFAULT" );
+    var digits,
+        fraction = "",
+        fractionData = cldr.supplemental([ "currencyData/fractions", currency ]) ||
+            cldr.supplemental( "currencyData/fractions/DEFAULT" );
 
-	digits = +fractionData._digits;
+    digits = +fractionData._digits;
 
-	if ( digits ) {
-		fraction = "." + stringPad( "0", digits ).slice( 0, -1 ) + fractionData._rounding;
-	}
+    if ( digits ) {
+        fraction = "." + stringPad( "0", digits ).slice( 0, -1 ) + fractionData._rounding;
+    }
 
-	return pattern.replace( /\.(#+|0*[0-9]|0+[0-9]?)/g, fraction );
+    return pattern.replace( /\.(#+|0*[0-9]|0+[0-9]?)/g, fraction );
 };
 
 
 
 
 var objectFilter = function( object, testRe ) {
-	var key,
-		copy = {};
+    var key,
+        copy = {};
 
-	for ( key in object ) {
-		if ( testRe.test( key ) ) {
-			copy[ key ] = object[ key ];
-		}
-	}
+    for ( key in object ) {
+        if ( testRe.test( key ) ) {
+            copy[ key ] = object[ key ];
+        }
+    }
 
-	return copy;
+    return copy;
 };
 
 
 
 
 var currencyUnitPatterns = function( cldr ) {
-	return objectFilter( cldr.main([
-		"numbers",
-		"currencyFormats-numberSystem-" + numberNumberingSystem( cldr )
-	]), /^unitPattern/ );
+    return objectFilter( cldr.main([
+        "numbers",
+        "currencyFormats-numberSystem-" + numberNumberingSystem( cldr )
+    ]), /^unitPattern/ );
 };
 
 
@@ -133,20 +133,20 @@ var currencyUnitPatterns = function( cldr ) {
  * Return number pattern with the appropriate currency code in as literal.
  */
 var currencyNameProperties = function( currency, cldr ) {
-	var pattern = numberPattern( "decimal", cldr );
+    var pattern = numberPattern( "decimal", cldr );
 
-	// The number of decimal places and the rounding for each currency is not locale-specific. Those
-	// values overridden by Supplemental Currency Data.
-	pattern = currencySupplementalOverride( currency, pattern, cldr );
+    // The number of decimal places and the rounding for each currency is not locale-specific. Those
+    // values overridden by Supplemental Currency Data.
+    pattern = currencySupplementalOverride( currency, pattern, cldr );
 
-	return {
-		displayNames: objectFilter( cldr.main([
-			"numbers/currencies",
-			currency
-		]), /^displayName/ ),
-		pattern: pattern,
-		unitPatterns: currencyUnitPatterns( cldr )
-	};
+    return {
+        displayNames: objectFilter( cldr.main([
+            "numbers/currencies",
+            currency
+        ]), /^displayName/ ),
+        pattern: pattern,
+        unitPatterns: currencyUnitPatterns( cldr )
+    };
 };
 
 
@@ -203,81 +203,81 @@ var regexpNotSAndZ = /[\0-\x1F!-#%-\*,-;\?-\]_a-\{\}\x7F-\x9F\xA1\xA7\xAA\xAB\xA
  * Return pattern replacing `¤` with the appropriate currency symbol literal.
  */
 var currencySymbolProperties = function( currency, cldr, options ) {
-	var currencySpacing, pattern, symbol, symbolEntries,
-		regexp = {
-			"[:digit:]": /\d/,
-			"[:^S:]": regexpNotS,
-			"[[:^S:]&[:^Z:]]": regexpNotSAndZ
-		};
+    var currencySpacing, pattern, symbol, symbolEntries,
+        regexp = {
+            "[:digit:]": /\d/,
+            "[:^S:]": regexpNotS,
+            "[[:^S:]&[:^Z:]]": regexpNotSAndZ
+        };
 
-	if ( options.style === "code" ) {
-		symbol = currency;
-	} else {
-		symbolEntries = [ "symbol" ];
+    if ( options.style === "code" ) {
+        symbol = currency;
+    } else {
+        symbolEntries = [ "symbol" ];
 
-		// If options.symbolForm === "narrow" was passed, prepend it.
-		if ( options.symbolForm === "narrow" ) {
-			symbolEntries.unshift( "symbol-alt-narrow" );
-		}
+        // If options.symbolForm === "narrow" was passed, prepend it.
+        if ( options.symbolForm === "narrow" ) {
+            symbolEntries.unshift( "symbol-alt-narrow" );
+        }
 
-		symbolEntries.some(function( symbolEntry ) {
-			return symbol = cldr.main([
-				"numbers/currencies",
-				currency,
-				symbolEntry
-			]);
-		});
-	}
+        symbolEntries.some(function( symbolEntry ) {
+            return symbol = cldr.main([
+                "numbers/currencies",
+                currency,
+                symbolEntry
+            ]);
+        });
+    }
 
-	currencySpacing = [ "beforeCurrency", "afterCurrency" ].map(function( position ) {
-		return cldr.main([
-			"numbers",
-			"currencyFormats-numberSystem-" + numberNumberingSystem( cldr ),
-			"currencySpacing",
-			position
-		]);
-	});
+    currencySpacing = [ "beforeCurrency", "afterCurrency" ].map(function( position ) {
+        return cldr.main([
+            "numbers",
+            "currencyFormats-numberSystem-" + numberNumberingSystem( cldr ),
+            "currencySpacing",
+            position
+        ]);
+    });
 
-	pattern = cldr.main([
-		"numbers",
-		"currencyFormats-numberSystem-" + numberNumberingSystem( cldr ),
-		options.style === "accounting" ? "accounting" : "standard"
-	]);
+    pattern = cldr.main([
+        "numbers",
+        "currencyFormats-numberSystem-" + numberNumberingSystem( cldr ),
+        options.style === "accounting" ? "accounting" : "standard"
+    ]);
 
-	pattern =
+    pattern =
 
-		// The number of decimal places and the rounding for each currency is not locale-specific.
-		// Those values are overridden by Supplemental Currency Data.
-		currencySupplementalOverride( currency, pattern, cldr )
+        // The number of decimal places and the rounding for each currency is not locale-specific.
+        // Those values are overridden by Supplemental Currency Data.
+        currencySupplementalOverride( currency, pattern, cldr )
 
-		// Replace "¤" (\u00A4) with the appropriate symbol literal.
-		.split( ";" ).map(function( pattern ) {
+        // Replace "¤" (\u00A4) with the appropriate symbol literal.
+        .split( ";" ).map(function( pattern ) {
 
-			return pattern.split( "\u00A4" ).map(function( part, i ) {
-				var currencyMatch = regexp[ currencySpacing[ i ].currencyMatch ],
-					surroundingMatch = regexp[ currencySpacing[ i ].surroundingMatch ],
-					insertBetween = "";
+            return pattern.split( "\u00A4" ).map(function( part, i ) {
+                var currencyMatch = regexp[ currencySpacing[ i ].currencyMatch ],
+                    surroundingMatch = regexp[ currencySpacing[ i ].surroundingMatch ],
+                    insertBetween = "";
 
-				// For currencyMatch and surroundingMatch definitions, read [1].
-				// When i === 0, beforeCurrency is being handled. Otherwise, afterCurrency.
-				// 1: http://www.unicode.org/reports/tr35/tr35-numbers.html#Currencies
-				currencyMatch = currencyMatch.test( symbol.charAt( i ? symbol.length - 1 : 0 ) );
-				surroundingMatch = surroundingMatch.test(
-					part.charAt( i ? 0 : part.length - 1 ).replace( /[#@,.]/g, "0" )
-				);
+                // For currencyMatch and surroundingMatch definitions, read [1].
+                // When i === 0, beforeCurrency is being handled. Otherwise, afterCurrency.
+                // 1: http://www.unicode.org/reports/tr35/tr35-numbers.html#Currencies
+                currencyMatch = currencyMatch.test( symbol.charAt( i ? symbol.length - 1 : 0 ) );
+                surroundingMatch = surroundingMatch.test(
+                    part.charAt( i ? 0 : part.length - 1 ).replace( /[#@,.]/g, "0" )
+                );
 
-				if ( currencyMatch && part && surroundingMatch ) {
-					insertBetween = currencySpacing[ i ].insertBetween;
-				}
+                if ( currencyMatch && part && surroundingMatch ) {
+                    insertBetween = currencySpacing[ i ].insertBetween;
+                }
 
-				return ( i ? insertBetween : "" ) + part + ( i ? "" : insertBetween );
-			}).join( "\u00A4" );
-		}).join( ";" );
+                return ( i ? insertBetween : "" ) + part + ( i ? "" : insertBetween );
+            }).join( "\u00A4" );
+        }).join( ";" );
 
-	return {
-		pattern: pattern,
-		symbol: symbol
-	};
+    return {
+        pattern: pattern,
+        symbol: symbol
+    };
 };
 
 
@@ -289,31 +289,31 @@ var currencySymbolProperties = function( currency, cldr, options ) {
  * Return the appropriate name form currency format.
  */
 var currencyNameFormat = function( formattedNumber, pluralForm, properties ) {
-	var displayName, unitPattern,
-		parts = [],
-		displayNames = properties.displayNames || {},
-		unitPatterns = properties.unitPatterns;
+    var displayName, unitPattern,
+        parts = [],
+        displayNames = properties.displayNames || {},
+        unitPatterns = properties.unitPatterns;
 
-	displayName = displayNames[ "displayName-count-" + pluralForm ] ||
-		displayNames[ "displayName-count-other" ] ||
-		displayNames.displayName ||
-		properties.currency;
-	unitPattern = unitPatterns[ "unitPattern-count-" + pluralForm ] ||
-		unitPatterns[ "unitPattern-count-other" ];
+    displayName = displayNames[ "displayName-count-" + pluralForm ] ||
+        displayNames[ "displayName-count-other" ] ||
+        displayNames.displayName ||
+        properties.currency;
+    unitPattern = unitPatterns[ "unitPattern-count-" + pluralForm ] ||
+        unitPatterns[ "unitPattern-count-other" ];
 
-	formatMessageToParts( unitPattern, [ formattedNumber, displayName ]).forEach(function( part ) {
-		if ( part.type === "variable" && part.name === "0" ) {
-			part.value.forEach(function( part ) {
-				partsPush( parts, part.type, part.value );
-			});
-		} else if ( part.type === "variable" && part.name === "1" ) {
-			partsPush( parts, "currency", part.value );
-		} else {
-			partsPush( parts, "literal", part.value );
-		}
-	});
+    formatMessageToParts( unitPattern, [ formattedNumber, displayName ]).forEach(function( part ) {
+        if ( part.type === "variable" && part.name === "0" ) {
+            part.value.forEach(function( part ) {
+                partsPush( parts, part.type, part.value );
+            });
+        } else if ( part.type === "variable" && part.name === "1" ) {
+            partsPush( parts, "currency", part.value );
+        } else {
+            partsPush( parts, "literal", part.value );
+        }
+    });
 
-	return parts;
+    return parts;
 };
 
 
@@ -325,42 +325,42 @@ var currencyNameFormat = function( formattedNumber, pluralForm, properties ) {
  * Return the appropriate symbol/account form format.
  */
 var currencySymbolFormat = function( parts, symbol ) {
-	parts.forEach(function( part ) {
-		if ( part.type === "currency" ) {
-			part.value = symbol;
-		}
-	});
-	return parts;
+    parts.forEach(function( part ) {
+        if ( part.type === "currency" ) {
+            part.value = symbol;
+        }
+    });
+    return parts;
 };
 
 
 
 
 var currencyToPartsFormatterFn = function( numberToPartsFormatter, pluralGenerator, properties ) {
-	var fn;
+    var fn;
 
-	// Return formatter when style is "name".
-	if ( pluralGenerator && properties ) {
-		fn = function currencyToPartsFormatter( value ) {
-			validateParameterPresence( value, "value" );
-			validateParameterTypeNumber( value, "value" );
-			return currencyNameFormat(
-				numberToPartsFormatter( value ),
-				pluralGenerator( value ),
-				properties
-			);
-		};
+    // Return formatter when style is "name".
+    if ( pluralGenerator && properties ) {
+        fn = function currencyToPartsFormatter( value ) {
+            validateParameterPresence( value, "value" );
+            validateParameterTypeNumber( value, "value" );
+            return currencyNameFormat(
+                numberToPartsFormatter( value ),
+                pluralGenerator( value ),
+                properties
+            );
+        };
 
-	// Return formatter when style is "symbol", "accounting", or "code".
-	} else {
-		fn = function currencyToPartsFormatter( value ) {
+    // Return formatter when style is "symbol", "accounting", or "code".
+    } else {
+        fn = function currencyToPartsFormatter( value ) {
 
-			// 1: Reusing pluralGenerator argument, but in this case it is actually `symbol`
-			return currencySymbolFormat( numberToPartsFormatter( value ), pluralGenerator /* 1 */ );
-		};
-	}
+            // 1: Reusing pluralGenerator argument, but in this case it is actually `symbol`
+            return currencySymbolFormat( numberToPartsFormatter( value ), pluralGenerator /* 1 */ );
+        };
+    }
 
-	return fn;
+    return fn;
 };
 
 
@@ -372,30 +372,30 @@ var currencyToPartsFormatterFn = function( numberToPartsFormatter, pluralGenerat
  * Return a copy of the object, filtered to omit the blacklisted key or array of keys.
  */
 var objectOmit = function( object, keys ) {
-	var key,
-		copy = {};
+    var key,
+        copy = {};
 
-	keys = alwaysArray( keys );
+    keys = alwaysArray( keys );
 
-	for ( key in object ) {
-		if ( keys.indexOf( key ) === -1 ) {
-			copy[ key ] = object[ key ];
-		}
-	}
+    for ( key in object ) {
+        if ( keys.indexOf( key ) === -1 ) {
+            copy[ key ] = object[ key ];
+        }
+    }
 
-	return copy;
+    return copy;
 };
 
 
 
 
 function validateRequiredCldr( path, value ) {
-	validateCldr( path, value, {
-		skip: [
-			/numbers\/currencies\/[^/]+\/symbol-alt-/,
-			/supplemental\/currencyData\/fractions\/[A-Za-z]{3}$/
-		]
-	});
+    validateCldr( path, value, {
+        skip: [
+            /numbers\/currencies\/[^/]+\/symbol-alt-/,
+            /supplemental\/currencyData\/fractions\/[A-Za-z]{3}$/
+        ]
+    });
 }
 
 /**
@@ -412,21 +412,21 @@ function validateRequiredCldr( path, value ) {
  */
 Globalize.currencyFormatter =
 Globalize.prototype.currencyFormatter = function( currency, options ) {
-	var args, currencyToPartsFormatter, returnFn;
+    var args, currencyToPartsFormatter, returnFn;
 
-	validateParameterPresence( currency, "currency" );
-	validateParameterTypeCurrency( currency, "currency" );
+    validateParameterPresence( currency, "currency" );
+    validateParameterTypeCurrency( currency, "currency" );
 
-	validateParameterTypePlainObject( options, "options" );
+    validateParameterTypePlainObject( options, "options" );
 
-	options = options || {};
-	args = [ currency, options ];
+    options = options || {};
+    args = [ currency, options ];
 
-	currencyToPartsFormatter = this.currencyToPartsFormatter( currency, options );
-	returnFn = currencyFormatterFn( currencyToPartsFormatter );
-	runtimeBind( args, this.cldr, returnFn, [ currencyToPartsFormatter ] );
+    currencyToPartsFormatter = this.currencyToPartsFormatter( currency, options );
+    returnFn = currencyFormatterFn( currencyToPartsFormatter );
+    runtimeBind( args, this.cldr, returnFn, [ currencyToPartsFormatter ] );
 
-	return returnFn;
+    return returnFn;
 };
 
 /**
@@ -450,69 +450,69 @@ Globalize.prototype.currencyFormatter = function( currency, options ) {
  */
 Globalize.currencyToPartsFormatter =
 Globalize.prototype.currencyToPartsFormatter = function( currency, options ) {
-	var args, cldr, numberToPartsFormatter, pluralGenerator, properties, returnFn, style;
+    var args, cldr, numberToPartsFormatter, pluralGenerator, properties, returnFn, style;
 
-	validateParameterPresence( currency, "currency" );
-	validateParameterTypeCurrency( currency, "currency" );
+    validateParameterPresence( currency, "currency" );
+    validateParameterTypeCurrency( currency, "currency" );
 
-	validateParameterTypePlainObject( options, "options" );
+    validateParameterTypePlainObject( options, "options" );
 
-	cldr = this.cldr;
-	options = options || {};
+    cldr = this.cldr;
+    options = options || {};
 
-	args = [ currency, options ];
-	style = options.style || "symbol";
+    args = [ currency, options ];
+    style = options.style || "symbol";
 
-	validateDefaultLocale( cldr );
+    validateDefaultLocale( cldr );
 
-	// Get properties given style ("symbol" default, "code" or "name").
-	cldr.on( "get", validateRequiredCldr );
-	try {
-		properties = ({
-			accounting: currencySymbolProperties,
-			code: currencySymbolProperties,
-			name: currencyNameProperties,
-			symbol: currencySymbolProperties
-		}[ style ] )( currency, cldr, options );
-	} finally {
-		cldr.off( "get", validateRequiredCldr );
-	}
+    // Get properties given style ("symbol" default, "code" or "name").
+    cldr.on( "get", validateRequiredCldr );
+    try {
+        properties = ({
+            accounting: currencySymbolProperties,
+            code: currencySymbolProperties,
+            name: currencyNameProperties,
+            symbol: currencySymbolProperties
+        }[ style ] )( currency, cldr, options );
+    } finally {
+        cldr.off( "get", validateRequiredCldr );
+    }
 
-	// options = options minus style, plus raw pattern.
-	options = objectOmit( options, "style" );
-	options.raw = properties.pattern;
+    // options = options minus style, plus raw pattern.
+    options = objectOmit( options, "style" );
+    options.raw = properties.pattern;
 
-	// Return formatter when style is "symbol", "accounting", or "code".
-	if ( style === "symbol" || style === "accounting" || style === "code" ) {
-		numberToPartsFormatter = this.numberToPartsFormatter( options );
+    // Return formatter when style is "symbol", "accounting", or "code".
+    if ( style === "symbol" || style === "accounting" || style === "code" ) {
+        numberToPartsFormatter = this.numberToPartsFormatter( options );
 
-		returnFn = currencyToPartsFormatterFn( numberToPartsFormatter, properties.symbol );
+        returnFn = currencyToPartsFormatterFn( numberToPartsFormatter, properties.symbol );
 
-		runtimeBind( args, cldr, returnFn, [ numberToPartsFormatter, properties.symbol ] );
+        runtimeBind( args, cldr, returnFn, [ numberToPartsFormatter, properties.symbol ] );
 
-	// Return formatter when style is "name".
-	} else {
-		numberToPartsFormatter = this.numberToPartsFormatter( options );
+    // Return formatter when style is "name".
+    } else {
+        numberToPartsFormatter = this.numberToPartsFormatter( options );
 
-		// Is plural module present? Yes, use its generator. Nope, use an error generator.
-		pluralGenerator = this.plural !== undefined ?
-			this.pluralGenerator() :
-			createErrorPluralModulePresence;
+        // Is plural module present? Yes, use its generator. Nope, use an error generator.
+        pluralGenerator = this.plural !== undefined ?
+            this.pluralGenerator() :
+            createErrorPluralModulePresence;
 
-		returnFn = currencyToPartsFormatterFn(
-			numberToPartsFormatter,
-			pluralGenerator,
-			properties
-		);
+        returnFn = currencyToPartsFormatterFn(
+            numberToPartsFormatter,
+            pluralGenerator,
+            properties
+        );
 
-		runtimeBind( args, cldr, returnFn, [
-			numberToPartsFormatter,
-			pluralGenerator,
-			properties
-		]);
-	}
+        runtimeBind( args, cldr, returnFn, [
+            numberToPartsFormatter,
+            pluralGenerator,
+            properties
+        ]);
+    }
 
-	return returnFn;
+    return returnFn;
 };
 
 /**
@@ -527,7 +527,7 @@ Globalize.prototype.currencyToPartsFormatter = function( currency, options ) {
 Globalize.currencyParser =
 Globalize.prototype.currencyParser = function( /* currency, options */ ) {
 
-	// TODO implement parser.
+    // TODO implement parser.
 
 };
 
@@ -544,9 +544,9 @@ Globalize.prototype.currencyParser = function( /* currency, options */ ) {
  */
 Globalize.formatCurrency =
 Globalize.prototype.formatCurrency = function( value, currency, options ) {
-	validateParameterPresence( value, "value" );
-	validateParameterTypeNumber( value, "value" );
-	return this.currencyFormatter( currency, options )( value );
+    validateParameterPresence( value, "value" );
+    validateParameterTypeNumber( value, "value" );
+    return this.currencyFormatter( currency, options )( value );
 };
 
 /**
@@ -562,9 +562,9 @@ Globalize.prototype.formatCurrency = function( value, currency, options ) {
  */
 Globalize.formatCurrencyToParts =
 Globalize.prototype.formatCurrencyToParts = function( value, currency, options ) {
-	validateParameterPresence( value, "value" );
-	validateParameterTypeNumber( value, "value" );
-	return this.currencyToPartsFormatter( currency, options )( value );
+    validateParameterPresence( value, "value" );
+    validateParameterTypeNumber( value, "value" );
+    return this.currencyToPartsFormatter( currency, options )( value );
 };
 
 /**

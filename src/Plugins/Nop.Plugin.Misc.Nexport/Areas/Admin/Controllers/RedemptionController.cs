@@ -10,6 +10,9 @@ using Nop.Services.Security;
 using Nop.Web.Areas.Admin.Controllers;
 using ICustomerService = Nop.Plugin.Misc.Nexport.Services.ICustomerService;
 using static Nop.Plugin.Misc.Nexport.Defaults;
+using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Core;
+using DocumentFormat.OpenXml.EMMA;
 
 namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
 
@@ -26,6 +29,7 @@ public class RedemptionController : BaseAdminController
     private readonly IMessageTemplateService _messageTemplate;
     private readonly ILocalizationService _localization;
     private readonly INotificationService _notification;
+    private readonly IStoreContext _storeContext;
 
     private const string EMAIL_TEMPLATE = REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE;
 
@@ -39,7 +43,8 @@ public class RedemptionController : BaseAdminController
         ILocalizationService localizationService,
         INotificationService notificationService,
         IInvoiceService invoiceService,
-        IUserMappingService userMapping)
+        IUserMappingService userMapping,
+        IStoreContext storeContext)
     {
         _permission = permissionService;
         _customer = customerService;
@@ -51,6 +56,7 @@ public class RedemptionController : BaseAdminController
         _notification = notificationService;
         _invoiceService = invoiceService;
         _userMapping = userMapping;
+        _storeContext = storeContext;
     }
 
     [HttpGet]
@@ -70,22 +76,24 @@ public class RedemptionController : BaseAdminController
         {
             return AccessDeniedView();
         }
-        var invoiceItem = await _invoiceService.FindOrderInvoiceItemById(model.OrderInvoiceItemId);
-        var userMapping = await _userMapping.FindByCustomerId(model.NopCustomerId);
-        if (invoiceItem is null)
+        if (await _invoiceService.FindOrderInvoiceItemById(model.OrderInvoiceItemId) is not { } invoiceItem)
         {
             return BadRequest("Invoid item not found.");
         }
-        if (userMapping is null)
+        if (await _userMapping.FindByCustomerId(model.NopCustomerId) is not { } userMapping)
         {
             return BadRequest("User mapping not found.");
         }
-        await _invoiceService.RedeemInvoiceItemAsync(invoiceItem, userMapping.UserId);
-        var template = (await _messageTemplate.GetMessageTemplatesByNameAsync(EMAIL_TEMPLATE)).FirstOrDefault()
-            ?? throw new InvalidOperationException($"Missing message template: {EMAIL_TEMPLATE}");
-        //! todo await _messageTokenProvider.AddOrderTokensAsync(commonTokens, order, languageId);
-        await SendEmail(model.NopCustomerId, template.Subject, template.Body);
-        return Ok();
+        if (await _storeContext.GetCurrentStoreAsync() is not { Id: var storeId })
+        {
+            return BadRequest("No store found.");
+        }
+        return await _messageTemplate.GetMessageTemplatesByNameAsync(EMAIL_TEMPLATE, storeId) switch
+        {
+            [var template] => await ProcessRedemption(invoiceItem, userMapping, template),
+            [] => BadRequest($"Missing message template on current store: {EMAIL_TEMPLATE}"),
+            _ => BadRequest($"Duplicate message templates on current store: {EMAIL_TEMPLATE}"),
+        };
     }
 
     [HttpGet]
@@ -125,5 +133,13 @@ public class RedemptionController : BaseAdminController
         await _queuedEmail.InsertQueuedEmailAsync(email);
         var message = await _localization.GetResourceAsync("Admin.Customers.Customers.SendEmail.Queued");
         _notification.SuccessNotification(message);
+    }
+
+    private async Task<IActionResult> ProcessRedemption(OrderInvoiceItem invoiceItem, UserMapping userMapping, MessageTemplate template)
+    {
+        //! todo await _messageTokenProvider.AddOrderTokensAsync(commonTokens, order, languageId);
+        await _invoiceService.RedeemInvoiceItemAsync(invoiceItem, userMapping.UserId);
+        await SendEmail(userMapping.Id, template.Subject, template.Body);
+        return Ok();
     }
 }

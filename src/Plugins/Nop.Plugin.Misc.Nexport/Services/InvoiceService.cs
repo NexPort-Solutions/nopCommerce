@@ -94,27 +94,8 @@ public class InvoiceService : IInvoiceService
 
     #endregion Constructors
 
-    public async Task<Guid?> AddItemToOrderInvoice
-        (Guid invoiceId, Guid productId, ProductType type, decimal cost, Guid subscription, IList<Guid>? memberships = null, DateTime? expiration = null, string? timeLimit = null, string? note = null)
-    {
-        if (!_settings.IsValid())
-        {
-            return null;
-        }
-        var response = await _nexport.AddInvoiceItem(
-            (_settings.Url,
-            _settings.AuthenticationToken),
-            invoiceId,
-            productId,
-            type,
-            subscription,
-            memberships ?? new List<Guid>(),
-            cost,
-            note,
-            expiration,
-            timeLimit);
-        return response?.InvoiceItemId;
-    }
+    public Task<Guid?> AddItemToOrderInvoice(Guid invoiceId, Guid productId, ProductType type, decimal cost, Guid subscription, IList<Guid>? memberships = null, DateTime? expiration = null, string? timeLimit = null, string? note = null)
+        => _helper.Do(async s => (await _nexport.AddInvoiceItem((s.Url, s.Token), invoiceId, productId, type, subscription, memberships ?? new List<Guid>(), cost, note, expiration, timeLimit))?.InvoiceItemId);
 
     public async Task<Guid?> FindExistingInvoiceForOrder(int orderId)
         => (await _orderInvoiceItems.Table.FirstOrDefaultAsync(invoiceItem => invoiceItem.OrderId == orderId))?.InvoiceId;

@@ -81,45 +81,33 @@ public sealed class ProductDetailsActionFilter : ActionFilterAttribute
         {
             return;
         }
-        if (actionDescriptor.ControllerTypeInfo != typeof(ProductController)
-            || actionDescriptor.ActionName != nameof(ProductController.ProductDetails)
-            || !(await _workContext.GetCurrentCustomerAsync() is { } customer)
-            || !await _customer.IsRegisteredAsync(customer)
-            || context.Result is not ViewResult { Model: ProductDetailsModel productDetailsModel })
+        if (actionDescriptor.ControllerTypeInfo == typeof(ProductController)
+            && actionDescriptor.ActionName == nameof(ProductController.ProductDetails)
+            && await _workContext.GetCurrentCustomerAsync() is { } customer
+            && await _customer.IsRegisteredAsync(customer)
+            && context.Result is ViewResult { Model: ProductDetailsModel productDetailsModel })
         {
-            await base.OnActionExecutionAsync(context, next);
-            return;
-        }
-        var store = await _storeContext.GetCurrentStoreAsync();
-        var storeModel = await _genericAttribute.GetAttributeAsync<StoreSaleModel>(store, "NexportStoreSaleModel", store.Id);
-        if (storeModel is not StoreSaleModel.Retail)
-        {
-            await base.OnActionExecutionAsync(context, next);
-            return;
-        }
-        if (await _shoppingCart.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id, productDetailsModel.Id) is { Count: > 0 })
-        {
+            var store = await _storeContext.GetCurrentStoreAsync();
+            if (await _genericAttribute.GetAttributeAsync<StoreSaleModel>(store, "NexportStoreSaleModel", store.Id) is not StoreSaleModel.Retail)
+            {
+                await base.OnActionExecutionAsync(context, next);
+                return;
+            }
+            if (await _shoppingCart.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id, productDetailsModel.Id) is { Count: > 0 })
+            {
+                if (await _genericAttribute.GetAttributeAsync<bool>(store, Defaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
+                {
+                    productDetailsModel.AddToCart.DisableBuyButton = true;
+                }
+                await base.OnActionExecutionAsync(context, next);
+                return;
+            }
             if (await _genericAttribute.GetAttributeAsync<bool>(store, Defaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
             {
-                productDetailsModel.AddToCart.DisableBuyButton = true;
+                var product = await _product.GetProductByIdAsync(productDetailsModel.Id);
+                productDetailsModel.AddToCart.DisableBuyButton = !await _purchasing.CanPurchaseProductAsync(product, customer);
             }
-            await base.OnActionExecutionAsync(context, next);
-            return;
         }
-        var product = await _product.GetProductByIdAsync(productDetailsModel.Id);
-        try
-        {
-            var canPurchaseProduct = await _purchasing.CanPurchaseProductAsync(product, customer);
-            if (await _genericAttribute.GetAttributeAsync<bool>(store, Defaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))
-            {
-                productDetailsModel.AddToCart.DisableBuyButton = !canPurchaseProduct;
-            }
-            await base.OnActionExecutionAsync(context, next);
-        }
-        catch (Exception)
-        {
-            throw;
-            // ignored
-        }
+        await base.OnActionExecutionAsync(context, next);
     }
 }

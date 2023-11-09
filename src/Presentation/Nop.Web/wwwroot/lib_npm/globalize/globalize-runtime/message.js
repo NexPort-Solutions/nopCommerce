@@ -15,62 +15,62 @@
  */
 (function( root, factory ) {
 
-	"use strict";
+    "use strict";
 
-	// UMD returnExports
-	if ( typeof define === "function" && define.amd ) {
+    // UMD returnExports
+    if ( typeof define === "function" && define.amd ) {
 
-		// AMD
-		define([
-			"../globalize-runtime"
-		], factory );
-	} else if ( typeof exports === "object" ) {
+        // AMD
+        define([
+            "../globalize-runtime"
+        ], factory );
+    } else if ( typeof exports === "object" ) {
 
-		// Node, CommonJS
-		module.exports = factory( require( "../globalize-runtime" ) );
-	} else {
+        // Node, CommonJS
+        module.exports = factory( require( "../globalize-runtime" ) );
+    } else {
 
-		// Extend global
-		factory( root.Globalize );
-	}
+        // Extend global
+        factory( root.Globalize );
+    }
 }(this, function( Globalize ) {
 
 
 
 var runtimeKey = Globalize._runtimeKey,
-	validateParameterType = Globalize._validateParameterType;
+    validateParameterType = Globalize._validateParameterType;
 
 
 /**
  * Function inspired by jQuery Core, but reduced to our use case.
  */
 var isPlainObject = function( obj ) {
-	return obj !== null && "" + obj === "[object Object]";
+    return obj !== null && "" + obj === "[object Object]";
 };
 
 
 
 
 var validateParameterTypeMessageVariables = function( value, name ) {
-	validateParameterType(
-		value,
-		name,
-		value === undefined || isPlainObject( value ) || Array.isArray( value ),
-		"Array or Plain Object"
-	);
+    validateParameterType(
+        value,
+        name,
+        value === undefined || isPlainObject( value ) || Array.isArray( value ),
+        "Array or Plain Object"
+    );
 };
 
 
 
 
 var messageFormatterFn = function( formatter ) {
-	return function messageFormatter( variables ) {
-		if ( typeof variables === "number" || typeof variables === "string" ) {
-			variables = [].slice.call( arguments, 0 );
-		}
-		validateParameterTypeMessageVariables( variables, "variables" );
-		return formatter( variables );
-	};
+    return function messageFormatter( variables ) {
+        if ( typeof variables === "number" || typeof variables === "string" ) {
+            variables = [].slice.call( arguments, 0 );
+        }
+        validateParameterTypeMessageVariables( variables, "variables" );
+        return formatter( variables );
+    };
 };
 
 
@@ -102,14 +102,14 @@ Globalize._validateParameterTypeMessageVariables = validateParameterTypeMessageV
 
 Globalize.messageFormatter =
 Globalize.prototype.messageFormatter = function( /* path */ ) {
-	return Globalize[
-		runtimeKey( "messageFormatter", this._locale, [].slice.call( arguments, 0 ) )
-	];
+    return Globalize[
+        runtimeKey( "messageFormatter", this._locale, [].slice.call( arguments, 0 ) )
+    ];
 };
 
 Globalize.formatMessage =
 Globalize.prototype.formatMessage = function( path /* , variables */ ) {
-	return this.messageFormatter( path ).apply( {}, [].slice.call( arguments, 1 ) );
+    return this.messageFormatter( path ).apply( {}, [].slice.call( arguments, 1 ) );
 };
 
 return Globalize;

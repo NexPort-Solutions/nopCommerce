@@ -15,23 +15,23 @@
  */
 (function( root, factory ) {
 
-	// UMD returnExports
-	if ( typeof define === "function" && define.amd ) {
+    // UMD returnExports
+    if ( typeof define === "function" && define.amd ) {
 
-		// AMD
-		define([
-			"cldr",
-			"cldr/event"
-		], factory );
-	} else if ( typeof exports === "object" ) {
+        // AMD
+        define([
+            "cldr",
+            "cldr/event"
+        ], factory );
+    } else if ( typeof exports === "object" ) {
 
-		// Node, CommonJS
-		module.exports = factory( require( "cldrjs" ) );
-	} else {
+        // Node, CommonJS
+        module.exports = factory( require( "cldrjs" ) );
+    } else {
 
-		// Global
-		root.Globalize = factory( root.Cldr );
-	}
+        // Global
+        root.Globalize = factory( root.Cldr );
+    }
 }( this, function( Cldr ) {
 
 
@@ -42,8 +42,8 @@
  * Ref: http://jsperf.com/my-stringify
  */
 var toString = function( variable ) {
-	return typeof variable === "string" ? variable : ( typeof variable === "number" ? "" +
-		variable : JSON.stringify( variable ) );
+    return typeof variable === "string" ? variable : ( typeof variable === "number" ? "" +
+        variable : JSON.stringify( variable ) );
 };
 
 
@@ -69,45 +69,45 @@ var toString = function( variable ) {
  */
 var formatMessage = function( message, data ) {
 
-	// Replace {attribute}'s
-	message = message.replace( /{[0-9a-zA-Z-_. ]+}/g, function( name ) {
-		name = name.replace( /^{([^}]*)}$/, "$1" );
-		return toString( data[ name ] );
-	});
+    // Replace {attribute}'s
+    message = message.replace( /{[0-9a-zA-Z-_. ]+}/g, function( name ) {
+        name = name.replace( /^{([^}]*)}$/, "$1" );
+        return toString( data[ name ] );
+    });
 
-	return message;
+    return message;
 };
 
 
 
 
 var objectExtend = function() {
-	var destination = arguments[ 0 ],
-		sources = [].slice.call( arguments, 1 );
+    var destination = arguments[ 0 ],
+        sources = [].slice.call( arguments, 1 );
 
-	sources.forEach(function( source ) {
-		var prop;
-		for ( prop in source ) {
-			destination[ prop ] = source[ prop ];
-		}
-	});
+    sources.forEach(function( source ) {
+        var prop;
+        for ( prop in source ) {
+            destination[ prop ] = source[ prop ];
+        }
+    });
 
-	return destination;
+    return destination;
 };
 
 
 
 
 var createError = function( code, message, attributes ) {
-	var error;
+    var error;
 
-	message = code + ( message ? ": " + formatMessage( message, attributes ) : "" );
-	error = new Error( message );
-	error.code = code;
+    message = code + ( message ? ": " + formatMessage( message, attributes ) : "" );
+    error = new Error( message );
+    error.code = code;
 
-	objectExtend( error, attributes );
+    objectExtend( error, attributes );
 
-	return error;
+    return error;
 };
 
 
@@ -118,13 +118,13 @@ var createError = function( code, message, attributes ) {
  */
 var partsPush = function( parts, type, value ) {
 
-		// Concat two consecutive parts of same type
-		if ( parts.length && parts[ parts.length - 1 ].type === type ) {
-			parts[ parts.length - 1 ].value += value;
-			return;
-		}
+        // Concat two consecutive parts of same type
+        if ( parts.length && parts[ parts.length - 1 ].type === type ) {
+            parts[ parts.length - 1 ].value += value;
+            return;
+        }
 
-		parts.push( { type: type, value: value } );
+        parts.push( { type: type, value: value } );
 };
 
 
@@ -151,22 +151,22 @@ var partsPush = function( parts, type, value ) {
  */
 var formatMessageToParts = function( message, data ) {
 
-	var lastOffset = 0,
-		parts = [];
+    var lastOffset = 0,
+        parts = [];
 
-	// Create parts.
-	message.replace( /{[0-9a-zA-Z-_. ]+}/g, function( nameIncludingBrackets, offset ) {
-		var name = nameIncludingBrackets.slice( 1, -1 );
-		partsPush( parts, "literal", message.slice( lastOffset, offset ));
-		partsPush( parts, "variable", data[ name ] );
-		parts[ parts.length - 1 ].name = name;
-		lastOffset += offset + nameIncludingBrackets.length;
-	});
+    // Create parts.
+    message.replace( /{[0-9a-zA-Z-_. ]+}/g, function( nameIncludingBrackets, offset ) {
+        var name = nameIncludingBrackets.slice( 1, -1 );
+        partsPush( parts, "literal", message.slice( lastOffset, offset ));
+        partsPush( parts, "variable", data[ name ] );
+        parts[ parts.length - 1 ].name = name;
+        lastOffset += offset + nameIncludingBrackets.length;
+    });
 
-	// Skip empty ones such as `{ type: 'literal', value: '' }`.
-	return parts.filter(function( part ) {
-		return part.value !== "";
-	});
+    // Skip empty ones such as `{ type: 'literal', value: '' }`.
+    return parts.filter(function( part ) {
+        return part.value !== "";
+    });
 };
 
 
@@ -176,21 +176,21 @@ var formatMessageToParts = function( message, data ) {
  * Returns joined parts values.
  */
 var partsJoin = function( parts ) {
-	return parts.map( function( part ) {
-		return part.value;
-	}).join( "" );
+    return parts.map( function( part ) {
+        return part.value;
+    }).join( "" );
 };
 
 
 
 
 var runtimeStringify = function( args ) {
-	return JSON.stringify( args, function( _key, value ) {
-		if ( value && value.runtimeKey ) {
-			return value.runtimeKey;
-		}
-		return value;
-	} );
+    return JSON.stringify( args, function( _key, value ) {
+        if ( value && value.runtimeKey ) {
+            return value.runtimeKey;
+        }
+        return value;
+    } );
 };
 
 
@@ -198,37 +198,37 @@ var runtimeStringify = function( args ) {
 
 // Based on http://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript-jquery
 var stringHash = function( str ) {
-	return [].reduce.call( str, function( hash, i ) {
-		var chr = i.charCodeAt( 0 );
-		hash = ( ( hash << 5 ) - hash ) + chr;
-		return hash | 0;
-	}, 0 );
+    return [].reduce.call( str, function( hash, i ) {
+        var chr = i.charCodeAt( 0 );
+        hash = ( ( hash << 5 ) - hash ) + chr;
+        return hash | 0;
+    }, 0 );
 };
 
 
 
 
 var runtimeKey = function( fnName, locale, args, argsStr ) {
-	var hash;
-	argsStr = argsStr || runtimeStringify( args );
-	hash = stringHash( fnName + locale + argsStr );
-	return hash > 0 ? "a" + hash : "b" + Math.abs( hash );
+    var hash;
+    argsStr = argsStr || runtimeStringify( args );
+    hash = stringHash( fnName + locale + argsStr );
+    return hash > 0 ? "a" + hash : "b" + Math.abs( hash );
 };
 
 
 
 
 var functionName = function( fn ) {
-	if ( fn.name !== undefined ) {
-		return fn.name;
-	}
+    if ( fn.name !== undefined ) {
+        return fn.name;
+    }
 
-	// fn.name is not supported by IE.
-	var matches = /^function\s+([\w\$]+)\s*\(/.exec( fn.toString() );
+    // fn.name is not supported by IE.
+    var matches = /^function\s+([\w\$]+)\s*\(/.exec( fn.toString() );
 
-	if ( matches && matches.length > 0 ) {
-		return matches[ 1 ];
-	}
+    if ( matches && matches.length > 0 ) {
+        return matches[ 1 ];
+    }
 };
 
 
@@ -236,73 +236,73 @@ var functionName = function( fn ) {
 
 var runtimeBind = function( args, cldr, fn, runtimeArgs ) {
 
-	var argsStr = runtimeStringify( args ),
-		fnName = functionName( fn ),
-		locale = cldr.locale;
+    var argsStr = runtimeStringify( args ),
+        fnName = functionName( fn ),
+        locale = cldr.locale;
 
-	// If name of the function is not available, this is most likely due to uglification,
-	// which most likely means we are in production, and runtimeBind here is not necessary.
-	if ( !fnName ) {
-		return fn;
-	}
+    // If name of the function is not available, this is most likely due to uglification,
+    // which most likely means we are in production, and runtimeBind here is not necessary.
+    if ( !fnName ) {
+        return fn;
+    }
 
-	fn.runtimeKey = runtimeKey( fnName, locale, null, argsStr );
+    fn.runtimeKey = runtimeKey( fnName, locale, null, argsStr );
 
-	fn.generatorString = function() {
-		return "Globalize(\"" + locale + "\")." + fnName + "(" + argsStr.slice( 1, -1 ) + ")";
-	};
+    fn.generatorString = function() {
+        return "Globalize(\"" + locale + "\")." + fnName + "(" + argsStr.slice( 1, -1 ) + ")";
+    };
 
-	fn.runtimeArgs = runtimeArgs;
+    fn.runtimeArgs = runtimeArgs;
 
-	return fn;
+    return fn;
 };
 
 
 
 
 var validate = function( code, message, check, attributes ) {
-	if ( !check ) {
-		throw createError( code, message, attributes );
-	}
+    if ( !check ) {
+        throw createError( code, message, attributes );
+    }
 };
 
 
 
 
 var alwaysArray = function( stringOrArray ) {
-	return Array.isArray( stringOrArray ) ? stringOrArray : stringOrArray ? [ stringOrArray ] : [];
+    return Array.isArray( stringOrArray ) ? stringOrArray : stringOrArray ? [ stringOrArray ] : [];
 };
 
 
 
 
 var validateCldr = function( path, value, options ) {
-	var skipBoolean;
-	options = options || {};
+    var skipBoolean;
+    options = options || {};
 
-	skipBoolean = alwaysArray( options.skip ).some(function( pathRe ) {
-		return pathRe.test( path );
-	});
+    skipBoolean = alwaysArray( options.skip ).some(function( pathRe ) {
+        return pathRe.test( path );
+    });
 
-	validate( "E_MISSING_CLDR", "Missing required CLDR content `{path}`.", value || skipBoolean, {
-		path: path
-	});
+    validate( "E_MISSING_CLDR", "Missing required CLDR content `{path}`.", value || skipBoolean, {
+        path: path
+    });
 };
 
 
 
 
 var validateDefaultLocale = function( value ) {
-	validate( "E_DEFAULT_LOCALE_NOT_DEFINED", "Default locale has not been defined.",
-		value !== undefined, {} );
+    validate( "E_DEFAULT_LOCALE_NOT_DEFINED", "Default locale has not been defined.",
+        value !== undefined, {} );
 };
 
 
 
 
 var validateParameterPresence = function( value, name ) {
-	validate( "E_MISSING_PARAMETER", "Missing required parameter `{name}`.",
-		value !== undefined, { name: name });
+    validate( "E_MISSING_PARAMETER", "Missing required parameter `{name}`.",
+        value !== undefined, { name: name });
 };
 
 
@@ -320,45 +320,45 @@ var validateParameterPresence = function( value, name ) {
  * @maximum [Number]. The greatest valid value, inclusive.
  */
 var validateParameterRange = function( value, name, minimum, maximum ) {
-	validate(
-		"E_PAR_OUT_OF_RANGE",
-		"Parameter `{name}` has value `{value}` out of range [{minimum}, {maximum}].",
-		value === undefined || value >= minimum && value <= maximum,
-		{
-			maximum: maximum,
-			minimum: minimum,
-			name: name,
-			value: value
-		}
-	);
+    validate(
+        "E_PAR_OUT_OF_RANGE",
+        "Parameter `{name}` has value `{value}` out of range [{minimum}, {maximum}].",
+        value === undefined || value >= minimum && value <= maximum,
+        {
+            maximum: maximum,
+            minimum: minimum,
+            name: name,
+            value: value
+        }
+    );
 };
 
 
 
 
 var validateParameterType = function( value, name, check, expected ) {
-	validate(
-		"E_INVALID_PAR_TYPE",
-		"Invalid `{name}` parameter ({value}). {expected} expected.",
-		check,
-		{
-			expected: expected,
-			name: name,
-			value: value
-		}
-	);
+    validate(
+        "E_INVALID_PAR_TYPE",
+        "Invalid `{name}` parameter ({value}). {expected} expected.",
+        check,
+        {
+            expected: expected,
+            name: name,
+            value: value
+        }
+    );
 };
 
 
 
 
 var validateParameterTypeLocale = function( value, name ) {
-	validateParameterType(
-		value,
-		name,
-		value === undefined || typeof value === "string" || value instanceof Cldr,
-		"String or Cldr instance"
-	);
+    validateParameterType(
+        value,
+        name,
+        value === undefined || typeof value === "string" || value instanceof Cldr,
+        "String or Cldr instance"
+    );
 };
 
 
@@ -368,26 +368,26 @@ var validateParameterTypeLocale = function( value, name ) {
  * Function inspired by jQuery Core, but reduced to our use case.
  */
 var isPlainObject = function( obj ) {
-	return obj !== null && "" + obj === "[object Object]";
+    return obj !== null && "" + obj === "[object Object]";
 };
 
 
 
 
 var validateParameterTypePlainObject = function( value, name ) {
-	validateParameterType(
-		value,
-		name,
-		value === undefined || isPlainObject( value ),
-		"Plain Object"
-	);
+    validateParameterType(
+        value,
+        name,
+        value === undefined || isPlainObject( value ),
+        "Plain Object"
+    );
 };
 
 
 
 
 var alwaysCldr = function( localeOrCldr ) {
-	return localeOrCldr instanceof Cldr ? localeOrCldr : new Cldr( localeOrCldr );
+    return localeOrCldr instanceof Cldr ? localeOrCldr : new Cldr( localeOrCldr );
 };
 
 
@@ -395,29 +395,29 @@ var alwaysCldr = function( localeOrCldr ) {
 
 // ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions?redirectlocale=en-US&redirectslug=JavaScript%2FGuide%2FRegular_Expressions
 var regexpEscape = function( string ) {
-	return string.replace( /([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1" );
+    return string.replace( /([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1" );
 };
 
 
 
 
 var stringPad = function( str, count, right ) {
-	var length;
-	if ( typeof str !== "string" ) {
-		str = String( str );
-	}
-	for ( length = str.length; length < count; length += 1 ) {
-		str = ( right ? ( str + "0" ) : ( "0" + str ) );
-	}
-	return str;
+    var length;
+    if ( typeof str !== "string" ) {
+        str = String( str );
+    }
+    for ( length = str.length; length < count; length += 1 ) {
+        str = ( right ? ( str + "0" ) : ( "0" + str ) );
+    }
+    return str;
 };
 
 
 
 
 function validateLikelySubtags( cldr ) {
-	cldr.once( "get", validateCldr );
-	cldr.get( "supplemental/likelySubtags" );
+    cldr.once( "get", validateCldr );
+    cldr.get( "supplemental/likelySubtags" );
 }
 
 /**
@@ -430,16 +430,16 @@ function validateLikelySubtags( cldr ) {
  * Create a Globalize instance.
  */
 function Globalize( locale ) {
-	if ( !( this instanceof Globalize ) ) {
-		return new Globalize( locale );
-	}
+    if ( !( this instanceof Globalize ) ) {
+        return new Globalize( locale );
+    }
 
-	validateParameterPresence( locale, "locale" );
-	validateParameterTypeLocale( locale, "locale" );
+    validateParameterPresence( locale, "locale" );
+    validateParameterTypeLocale( locale, "locale" );
 
-	this.cldr = alwaysCldr( locale );
+    this.cldr = alwaysCldr( locale );
 
-	validateLikelySubtags( this.cldr );
+    validateLikelySubtags( this.cldr );
 }
 
 /**
@@ -452,8 +452,8 @@ function Globalize( locale ) {
  */
 Globalize.load = function() {
 
-	// validations are delegated to Cldr.load().
-	Cldr.load.apply( Cldr, arguments );
+    // validations are delegated to Cldr.load().
+    Cldr.load.apply( Cldr, arguments );
 };
 
 /**
@@ -468,13 +468,13 @@ Globalize.load = function() {
  * Return the default Cldr instance.
  */
 Globalize.locale = function( locale ) {
-	validateParameterTypeLocale( locale, "locale" );
+    validateParameterTypeLocale( locale, "locale" );
 
-	if ( arguments.length ) {
-		this.cldr = alwaysCldr( locale );
-		validateLikelySubtags( this.cldr );
-	}
-	return this.cldr;
+    if ( arguments.length ) {
+        this.cldr = alwaysCldr( locale );
+        validateLikelySubtags( this.cldr );
+    }
+    return this.cldr;
 };
 
 /**

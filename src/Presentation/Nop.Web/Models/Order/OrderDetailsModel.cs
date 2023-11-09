@@ -145,6 +145,6 @@ namespace Nop.Web.Models.Order
             public DateTime? DeliveryDate { get; set; }
         }
 
-		#endregion
+        #endregion
     }
 }

@@ -15,33 +15,33 @@
  */
 (function( root, factory ) {
 
-	// UMD returnExports
-	if ( typeof define === "function" && define.amd ) {
+    // UMD returnExports
+    if ( typeof define === "function" && define.amd ) {
 
-		// AMD
-		define([
-			"cldr",
-			"../globalize",
-			"./number",
-			"./plural"
-		], factory );
-	} else if ( typeof exports === "object" ) {
+        // AMD
+        define([
+            "cldr",
+            "../globalize",
+            "./number",
+            "./plural"
+        ], factory );
+    } else if ( typeof exports === "object" ) {
 
-		// Node, CommonJS
-		module.exports = factory( require( "cldrjs" ), require( "../globalize" ) );
-	} else {
+        // Node, CommonJS
+        module.exports = factory( require( "cldrjs" ), require( "../globalize" ) );
+    } else {
 
-		// Extend global
-		factory( root.Cldr, root.Globalize );
-	}
+        // Extend global
+        factory( root.Cldr, root.Globalize );
+    }
 }(this, function( Cldr, Globalize ) {
 
 var formatMessage = Globalize._formatMessage,
-	runtimeBind = Globalize._runtimeBind,
-	validateParameterPresence = Globalize._validateParameterPresence,
-	validateParameterTypePlainObject = Globalize._validateParameterTypePlainObject,
-	validateParameterTypeNumber = Globalize._validateParameterTypeNumber,
-	validateParameterTypeString = Globalize._validateParameterTypeString;
+    runtimeBind = Globalize._runtimeBind,
+    validateParameterPresence = Globalize._validateParameterPresence,
+    validateParameterTypePlainObject = Globalize._validateParameterTypePlainObject,
+    validateParameterTypeNumber = Globalize._validateParameterTypeNumber,
+    validateParameterTypeString = Globalize._validateParameterTypeString;
 
 
 /**
@@ -66,40 +66,40 @@ var formatMessage = Globalize._formatMessage,
  * http://www.unicode.org/reports/tr35/tr35-35/tr35-general.html#durationUnit
  */
 var unitFormat = function( value, numberFormatter, pluralGenerator, unitProperties ) {
-	var compoundUnitPattern = unitProperties.compoundUnitPattern, dividend, dividendProperties,
-		formattedValue, divisor, divisorProperties, message, pluralValue, oneProperty;
+    var compoundUnitPattern = unitProperties.compoundUnitPattern, dividend, dividendProperties,
+        formattedValue, divisor, divisorProperties, message, pluralValue, oneProperty;
 
-	unitProperties = unitProperties.unitProperties;
-	formattedValue = numberFormatter( value );
-	pluralValue = pluralGenerator( value );
+    unitProperties = unitProperties.unitProperties;
+    formattedValue = numberFormatter( value );
+    pluralValue = pluralGenerator( value );
 
-	// computed compound unit, eg. "megabyte-per-second".
-	if ( unitProperties instanceof Array ) {
-		dividendProperties = unitProperties[ 0 ];
-		divisorProperties = unitProperties[ 1 ];
-		oneProperty = divisorProperties.hasOwnProperty( "one" ) ? "one" : "other";
+    // computed compound unit, eg. "megabyte-per-second".
+    if ( unitProperties instanceof Array ) {
+        dividendProperties = unitProperties[ 0 ];
+        divisorProperties = unitProperties[ 1 ];
+        oneProperty = divisorProperties.hasOwnProperty( "one" ) ? "one" : "other";
 
-		dividend = formatMessage( dividendProperties[ pluralValue ], [ formattedValue ] );
-		divisor = formatMessage( divisorProperties[ oneProperty ], [ "" ] ).trim();
+        dividend = formatMessage( dividendProperties[ pluralValue ], [ formattedValue ] );
+        divisor = formatMessage( divisorProperties[ oneProperty ], [ "" ] ).trim();
 
-		return formatMessage( compoundUnitPattern, [ dividend, divisor ] );
-	}
+        return formatMessage( compoundUnitPattern, [ dividend, divisor ] );
+    }
 
-	message = unitProperties[ pluralValue ];
+    message = unitProperties[ pluralValue ];
 
-	return formatMessage( message, [ formattedValue ] );
+    return formatMessage( message, [ formattedValue ] );
 };
 
 
 
 
 var unitFormatterFn = function( numberFormatter, pluralGenerator, unitProperties ) {
-	return function unitFormatter( value ) {
-		validateParameterPresence( value, "value" );
-		validateParameterTypeNumber( value, "value" );
+    return function unitFormatter( value ) {
+        validateParameterPresence( value, "value" );
+        validateParameterTypeNumber( value, "value" );
 
-		return unitFormat( value, numberFormatter, pluralGenerator, unitProperties );
-	};
+        return unitFormat( value, numberFormatter, pluralGenerator, unitProperties );
+    };
 
 };
 
@@ -118,16 +118,16 @@ var unitCategories = [ "acceleration", "angle", "area", "digital", "duration", "
 
 
 function stripPluralGarbage( data ) {
-	var aux, pluralCount;
+    var aux, pluralCount;
 
-	if ( data ) {
-		aux = {};
-		for ( pluralCount in data ) {
-			aux[ pluralCount.replace( /unitPattern-count-/, "" ) ] = data[ pluralCount ];
-		}
-	}
+    if ( data ) {
+        aux = {};
+        for ( pluralCount in data ) {
+            aux[ pluralCount.replace( /unitPattern-count-/, "" ) ] = data[ pluralCount ];
+        }
+    }
 
-	return aux;
+    return aux;
 }
 
 /**
@@ -170,41 +170,41 @@ function stripPluralGarbage( data ) {
  * Or undefined in case the unit (or a unit of the compound-unit) doesn't exist.
  */
 var get = function( unit, form, cldr ) {
-	var ret;
+    var ret;
 
-	// Ensure that we get the 'precomputed' form, if present.
-	unit = unit.replace( /\//, "-per-" );
+    // Ensure that we get the 'precomputed' form, if present.
+    unit = unit.replace( /\//, "-per-" );
 
-	// Get unit or <category>-unit (eg. "duration-second").
-	[ "" ].concat( unitCategories ).some(function( category ) {
-		return ret = cldr.main([
-			"units",
-			form,
-			category.length ? category + "-" + unit : unit
-		]);
-	});
+    // Get unit or <category>-unit (eg. "duration-second").
+    [ "" ].concat( unitCategories ).some(function( category ) {
+        return ret = cldr.main([
+            "units",
+            form,
+            category.length ? category + "-" + unit : unit
+        ]);
+    });
 
-	// Rename keys s/unitPattern-count-//g.
-	ret = stripPluralGarbage( ret );
+    // Rename keys s/unitPattern-count-//g.
+    ret = stripPluralGarbage( ret );
 
-	// Compound Unit, eg. "foot-per-second" or "foot/second".
-	if ( !ret && ( /-per-/ ).test( unit ) ) {
+    // Compound Unit, eg. "foot-per-second" or "foot/second".
+    if ( !ret && ( /-per-/ ).test( unit ) ) {
 
-		// "Some units already have 'precomputed' forms, such as kilometer-per-hour;
-		// where such units exist, they should be used in preference" UTS#35.
-		// Note that precomputed form has already been handled above (!ret).
+        // "Some units already have 'precomputed' forms, such as kilometer-per-hour;
+        // where such units exist, they should be used in preference" UTS#35.
+        // Note that precomputed form has already been handled above (!ret).
 
-		// Get both recursively.
-		unit = unit.split( "-per-" );
-		ret = unit.map(function( unit ) {
-			return get( unit, form, cldr );
-		});
-		if ( !ret[ 0 ] || !ret[ 1 ] ) {
-			return;
-		}
-	}
+        // Get both recursively.
+        unit = unit.split( "-per-" );
+        ret = unit.map(function( unit ) {
+            return get( unit, form, cldr );
+        });
+        if ( !ret[ 0 ] || !ret[ 1 ] ) {
+            return;
+        }
+    }
 
-	return ret;
+    return ret;
 };
 
 var unitGet = get;
@@ -224,15 +224,15 @@ var unitGet = get;
  * @cldr [Cldr instance].
  */
 var unitProperties = function( unit, form, cldr ) {
-	var compoundUnitPattern, unitProperties;
+    var compoundUnitPattern, unitProperties;
 
-	compoundUnitPattern = cldr.main( [ "units", form, "per/compoundUnitPattern" ] );
-	unitProperties = unitGet( unit, form, cldr );
+    compoundUnitPattern = cldr.main( [ "units", form, "per/compoundUnitPattern" ] );
+    unitProperties = unitGet( unit, form, cldr );
 
-	return {
-		compoundUnitPattern: compoundUnitPattern,
-		unitProperties: unitProperties
-	};
+    return {
+        compoundUnitPattern: compoundUnitPattern,
+        unitProperties: unitProperties
+    };
 };
 
 
@@ -252,10 +252,10 @@ var unitProperties = function( unit, form, cldr ) {
  */
 Globalize.formatUnit =
 Globalize.prototype.formatUnit = function( value, unit, options ) {
-	validateParameterPresence( value, "value" );
-	validateParameterTypeNumber( value, "value" );
+    validateParameterPresence( value, "value" );
+    validateParameterTypeNumber( value, "value" );
 
-	return this.unitFormatter( unit, options )( value );
+    return this.unitFormatter( unit, options )( value );
 };
 
 /**
@@ -271,26 +271,26 @@ Globalize.prototype.formatUnit = function( value, unit, options ) {
  */
 Globalize.unitFormatter =
 Globalize.prototype.unitFormatter = function( unit, options ) {
-	var args, form, numberFormatter, pluralGenerator, returnFn, properties;
+    var args, form, numberFormatter, pluralGenerator, returnFn, properties;
 
-	validateParameterPresence( unit, "unit" );
-	validateParameterTypeString( unit, "unit" );
+    validateParameterPresence( unit, "unit" );
+    validateParameterTypeString( unit, "unit" );
 
-	validateParameterTypePlainObject( options, "options" );
+    validateParameterTypePlainObject( options, "options" );
 
-	options = options || {};
+    options = options || {};
 
-	args = [ unit, options ];
-	form = options.form || "long";
-	properties = unitProperties( unit, form, this.cldr );
+    args = [ unit, options ];
+    form = options.form || "long";
+    properties = unitProperties( unit, form, this.cldr );
 
-	numberFormatter = options.numberFormatter || this.numberFormatter();
-	pluralGenerator = this.pluralGenerator();
-	returnFn = unitFormatterFn( numberFormatter, pluralGenerator, properties );
+    numberFormatter = options.numberFormatter || this.numberFormatter();
+    pluralGenerator = this.pluralGenerator();
+    returnFn = unitFormatterFn( numberFormatter, pluralGenerator, properties );
 
-	runtimeBind( args, this.cldr, returnFn, [ numberFormatter, pluralGenerator, properties ] );
+    runtimeBind( args, this.cldr, returnFn, [ numberFormatter, pluralGenerator, properties ] );
 
-	return returnFn;
+    return returnFn;
 };
 
 return Globalize;

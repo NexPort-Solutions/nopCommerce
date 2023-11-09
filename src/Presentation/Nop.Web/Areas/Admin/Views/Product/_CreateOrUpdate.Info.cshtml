@@ -256,13 +256,13 @@
             <nop-select asp-for="SelectedCategoryIds" asp-items="Model.AvailableCategories" asp-multiple="true" />
             <script>
                 $(document).ready(function() {
-					var categoryIdsInput = $('#@Html.IdFor(model => model.SelectedCategoryIds)').data("kendoMultiSelect");
-					categoryIdsInput.setOptions({
+                    var categoryIdsInput = $('#@Html.IdFor(model => model.SelectedCategoryIds)').data("kendoMultiSelect");
+                    categoryIdsInput.setOptions({
                     autoClose: false,
                     filter: "contains"
                     });
 
-				@if (Model.AvailableCategories.Count == 0)
+                @if (Model.AvailableCategories.Count == 0)
                 {
                     <text>
                         categoryIdsInput.setOptions({
@@ -291,7 +291,7 @@
                     filter: "contains"
                 });
 
-				@if (Model.AvailableManufacturers.Count == 0)
+                @if (Model.AvailableManufacturers.Count == 0)
                 {
                     <text>
                         manufacturersIdsInput.setOptions({
@@ -409,7 +409,7 @@
                 LengthMenu = Model.AssociatedProductSearchModel.AvailablePageSizes,
                 ColumnCollection = new List<ColumnProperty>
                     {
-					new ColumnProperty(nameof(AssociatedProductModel.ProductName))
+                    new ColumnProperty(nameof(AssociatedProductModel.ProductName))
                         {
                             Title = T("Admin.Catalog.Products.AssociatedProducts.Fields.Product").Text
                         },

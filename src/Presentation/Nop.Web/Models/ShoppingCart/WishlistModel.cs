@@ -33,7 +33,7 @@ namespace Nop.Web.Models.ShoppingCart
 
         public IList<string> Warnings { get; set; }
         
-		#region Nested Classes
+        #region Nested Classes
 
         public partial record ShoppingCartItemModel : BaseNopEntityModel
         {
@@ -78,6 +78,6 @@ namespace Nop.Web.Models.ShoppingCart
             public IList<string> Warnings { get; set; }
         }
 
-		#endregion
+        #endregion
     }
 }

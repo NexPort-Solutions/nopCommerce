@@ -225,6 +225,7 @@ namespace Nop.Services.ScheduleTasks
                 }
                 catch
                 {
+                    throw;
                     // ignore
                 }
                 finally

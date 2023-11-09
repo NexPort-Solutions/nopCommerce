@@ -10,14 +10,14 @@
             <script>
              $(document).ready(function() {
                  var discountsIdsInput = $('#@Html.IdFor(model => model.SelectedDiscountIds)').data("kendoMultiSelect");
-			        discountsIdsInput.setOptions({
-			            autoClose: false,
-			            filter: "contains"
-			        });
+                    discountsIdsInput.setOptions({
+                        autoClose: false,
+                        filter: "contains"
+                    });
 
-			        @if (Model.AvailableDiscounts.Count == 0)
-			        {
-			            <text>
+                    @if (Model.AvailableDiscounts.Count == 0)
+                    {
+                        <text>
                          discountsIdsInput.setOptions({
                              enable: false,
                              placeholder: '@T("Admin.Catalog.Manufacturers.Fields.Discounts.NoDiscounts")'
@@ -25,7 +25,7 @@
                          discountsIdsInput._placeholder();
                          discountsIdsInput._enable();
                      </text>
-			        }
+                    }
              });
             </script>
         </div>
@@ -42,14 +42,14 @@
                     <script>
                      $(document).ready(function() {
                          var rolesIdsInput = $('#@Html.IdFor(model => model.SelectedCustomerRoleIds)').data("kendoMultiSelect");
-			                rolesIdsInput.setOptions({
-			                    autoClose: false,
-			                    filter: "contains"
-			                });
+                            rolesIdsInput.setOptions({
+                                autoClose: false,
+                                filter: "contains"
+                            });
 
-			                @if (Model.AvailableCustomerRoles.Count == 0)
-			                {
-			                    <text>
+                            @if (Model.AvailableCustomerRoles.Count == 0)
+                            {
+                                <text>
                                  rolesIdsInput.setOptions({
                                      enable: false,
                                      placeholder: 'No customer roles available'
@@ -57,7 +57,7 @@
                                  rolesIdsInput._placeholder();
                                  rolesIdsInput._enable();
                              </text>
-			                }
+                            }
                      });
                     </script>
                 </div>
@@ -79,14 +79,14 @@
                     <script>
                      $(document).ready(function() {
                          var storesIdsInput = $('#@Html.IdFor(model => model.SelectedStoreIds)').data("kendoMultiSelect");
-			                storesIdsInput.setOptions({
-			                    autoClose: false,
-			                    filter: "contains"
-			                });
+                            storesIdsInput.setOptions({
+                                autoClose: false,
+                                filter: "contains"
+                            });
 
-			                @if (Model.AvailableStores.Count == 0)
-			                {
-			                    <text>
+                            @if (Model.AvailableStores.Count == 0)
+                            {
+                                <text>
                                  storesIdsInput.setOptions({
                                      enable: false,
                                      placeholder: 'No stores available'
@@ -94,7 +94,7 @@
                                  storesIdsInput._placeholder();
                                  storesIdsInput._enable();
                              </text>
-			                }
+                            }
                      });
                     </script>
                 </div>

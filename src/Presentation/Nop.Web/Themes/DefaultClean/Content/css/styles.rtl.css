@@ -1242,7 +1242,7 @@ label, label + * {
   line-height: 28px;
 }
 /*.newsletter-validation .please-wait {
-	display: none !important; 
+    display: none !important; 
 }*/
 
 .footer-lower {
@@ -6908,12 +6908,12 @@ label, label + * {
 
 
   /*.block {
-	float: left;
-	width: 46%;
-	margin: 0 2%;
+    float: left;
+    width: 46%;
+    margin: 0 2%;
 }
 .block:nth-child(2n+1) {
-	clear: both;
+    clear: both;
 }*/
 
 
@@ -7130,14 +7130,14 @@ label, label + * {
 
 
   /*.block {
-	width: 31.33333%;
-	margin: 0 1%;
+    width: 31.33333%;
+    margin: 0 1%;
 }
 .block:nth-child(2n+1) {
-	clear: none;
+    clear: none;
 }
 .block:nth-child(3n+1) {
-	clear: both;
+    clear: both;
 }*/
 
 

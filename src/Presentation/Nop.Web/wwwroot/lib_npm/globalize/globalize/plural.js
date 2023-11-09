@@ -15,33 +15,33 @@
  */
 (function( root, factory ) {
 
-	// UMD returnExports
-	if ( typeof define === "function" && define.amd ) {
+    // UMD returnExports
+    if ( typeof define === "function" && define.amd ) {
 
-		// AMD
-		define([
-			"cldr",
-			"../globalize",
-			"cldr/event",
-			"cldr/supplemental"
-		], factory );
-	} else if ( typeof exports === "object" ) {
+        // AMD
+        define([
+            "cldr",
+            "../globalize",
+            "cldr/event",
+            "cldr/supplemental"
+        ], factory );
+    } else if ( typeof exports === "object" ) {
 
-		// Node, CommonJS
-		module.exports = factory( require( "cldrjs" ), require( "../globalize" ) );
-	} else {
+        // Node, CommonJS
+        module.exports = factory( require( "cldrjs" ), require( "../globalize" ) );
+    } else {
 
-		// Global
-		factory( root.Cldr, root.Globalize );
-	}
+        // Global
+        factory( root.Cldr, root.Globalize );
+    }
 }(this, function( Cldr, Globalize ) {
 
 var runtimeBind = Globalize._runtimeBind,
-	validateCldr = Globalize._validateCldr,
-	validateDefaultLocale = Globalize._validateDefaultLocale,
-	validateParameterPresence = Globalize._validateParameterPresence,
-	validateParameterType = Globalize._validateParameterType,
-	validateParameterTypePlainObject = Globalize._validateParameterTypePlainObject;
+    validateCldr = Globalize._validateCldr,
+    validateDefaultLocale = Globalize._validateDefaultLocale,
+    validateParameterPresence = Globalize._validateParameterPresence,
+    validateParameterType = Globalize._validateParameterType,
+    validateParameterTypePlainObject = Globalize._validateParameterTypePlainObject;
 var MakePlural;
 /* eslint-disable */
 MakePlural = (function() {
@@ -266,36 +266,36 @@ return MakePlural;
 
 
 var validateParameterTypeNumber = function( value, name ) {
-	validateParameterType(
-		value,
-		name,
-		value === undefined || typeof value === "number",
-		"Number"
-	);
+    validateParameterType(
+        value,
+        name,
+        value === undefined || typeof value === "number",
+        "Number"
+    );
 };
 
 
 
 
 var validateParameterTypePluralType = function( value, name ) {
-	validateParameterType(
-		value,
-		name,
-		value === undefined || value === "cardinal" || value === "ordinal",
-		"String \"cardinal\" or \"ordinal\""
-	);
+    validateParameterType(
+        value,
+        name,
+        value === undefined || value === "cardinal" || value === "ordinal",
+        "String \"cardinal\" or \"ordinal\""
+    );
 };
 
 
 
 
 var pluralGeneratorFn = function( plural ) {
-	return function pluralGenerator( value ) {
-		validateParameterPresence( value, "value" );
-		validateParameterTypeNumber( value, "value" );
+    return function pluralGenerator( value ) {
+        validateParameterPresence( value, "value" );
+        validateParameterTypeNumber( value, "value" );
 
-		return plural( value );
-	};
+        return plural( value );
+    };
 };
 
 
@@ -311,9 +311,9 @@ var pluralGeneratorFn = function( plural ) {
  */
 Globalize.plural =
 Globalize.prototype.plural = function( value, options ) {
-	validateParameterPresence( value, "value" );
-	validateParameterTypeNumber( value, "value" );
-	return this.pluralGenerator( options )( value );
+    validateParameterPresence( value, "value" );
+    validateParameterTypeNumber( value, "value" );
+    return this.pluralGenerator( options )( value );
 };
 
 /**
@@ -330,42 +330,42 @@ Globalize.prototype.plural = function( value, options ) {
  */
 Globalize.pluralGenerator =
 Globalize.prototype.pluralGenerator = function( options ) {
-	var args, cldr, isOrdinal, plural, returnFn, type;
+    var args, cldr, isOrdinal, plural, returnFn, type;
 
-	validateParameterTypePlainObject( options, "options" );
+    validateParameterTypePlainObject( options, "options" );
 
-	options = options || {};
-	cldr = this.cldr;
+    options = options || {};
+    cldr = this.cldr;
 
-	args = [ options ];
-	type = options.type || "cardinal";
+    args = [ options ];
+    type = options.type || "cardinal";
 
-	validateParameterTypePluralType( options.type, "options.type" );
+    validateParameterTypePluralType( options.type, "options.type" );
 
-	validateDefaultLocale( cldr );
+    validateDefaultLocale( cldr );
 
-	isOrdinal = type === "ordinal";
+    isOrdinal = type === "ordinal";
 
-	cldr.on( "get", validateCldr );
-	try {
-		cldr.supplemental([ "plurals-type-" + type, "{language}" ]);
-	} finally {
-		cldr.off( "get", validateCldr );
-	}
+    cldr.on( "get", validateCldr );
+    try {
+        cldr.supplemental([ "plurals-type-" + type, "{language}" ]);
+    } finally {
+        cldr.off( "get", validateCldr );
+    }
 
-	MakePlural.rules = {};
-	MakePlural.rules[ type ] = cldr.supplemental( "plurals-type-" + type );
+    MakePlural.rules = {};
+    MakePlural.rules[ type ] = cldr.supplemental( "plurals-type-" + type );
 
-	plural = new MakePlural( cldr.attributes.language, {
-		"ordinals": isOrdinal,
-		"cardinals": !isOrdinal
-	});
+    plural = new MakePlural( cldr.attributes.language, {
+        "ordinals": isOrdinal,
+        "cardinals": !isOrdinal
+    });
 
-	returnFn = pluralGeneratorFn( plural );
+    returnFn = pluralGeneratorFn( plural );
 
-	runtimeBind( args, cldr, returnFn, [ plural ] );
+    runtimeBind( args, cldr, returnFn, [ plural ] );
 
-	return returnFn;
+    return returnFn;
 };
 
 return Globalize;

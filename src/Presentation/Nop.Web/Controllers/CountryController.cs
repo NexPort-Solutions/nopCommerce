@@ -6,7 +6,7 @@ using Nop.Web.Framework.Mvc.Filters;
 namespace Nop.Web.Controllers
 {
     public partial class CountryController : BasePublicController
-	{
+    {
         #region Fields
 
         private readonly ICountryModelFactory _countryModelFactory;
@@ -16,9 +16,9 @@ namespace Nop.Web.Controllers
         #region Ctor
 
         public CountryController(ICountryModelFactory countryModelFactory)
-		{
+        {
             _countryModelFactory = countryModelFactory;
-		}
+        }
         
         #endregion
         

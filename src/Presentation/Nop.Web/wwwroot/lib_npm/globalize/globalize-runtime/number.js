@@ -15,55 +15,55 @@
  */
 (function( root, factory ) {
 
-	"use strict";
+    "use strict";
 
-	// UMD returnExports
-	if ( typeof define === "function" && define.amd ) {
+    // UMD returnExports
+    if ( typeof define === "function" && define.amd ) {
 
-		// AMD
-		define([
-			"../globalize-runtime"
-		], factory );
-	} else if ( typeof exports === "object" ) {
+        // AMD
+        define([
+            "../globalize-runtime"
+        ], factory );
+    } else if ( typeof exports === "object" ) {
 
-		// Node, CommonJS
-		module.exports = factory( require( "../globalize-runtime" ) );
-	} else {
+        // Node, CommonJS
+        module.exports = factory( require( "../globalize-runtime" ) );
+    } else {
 
-		// Extend global
-		factory( root.Globalize );
-	}
+        // Extend global
+        factory( root.Globalize );
+    }
 }(this, function( Globalize ) {
 
 
 
 var createError = Globalize._createError,
-	partsJoin = Globalize._partsJoin,
-	partsPush = Globalize._partsPush,
-	regexpEscape = Globalize._regexpEscape,
-	runtimeKey = Globalize._runtimeKey,
-	stringPad = Globalize._stringPad,
-	validateParameterType = Globalize._validateParameterType,
-	validateParameterPresence = Globalize._validateParameterPresence,
-	validateParameterTypeString = Globalize._validateParameterTypeString;
+    partsJoin = Globalize._partsJoin,
+    partsPush = Globalize._partsPush,
+    regexpEscape = Globalize._regexpEscape,
+    runtimeKey = Globalize._runtimeKey,
+    stringPad = Globalize._stringPad,
+    validateParameterType = Globalize._validateParameterType,
+    validateParameterPresence = Globalize._validateParameterPresence,
+    validateParameterTypeString = Globalize._validateParameterTypeString;
 
 
 var createErrorUnsupportedFeature = function( feature ) {
-	return createError( "E_UNSUPPORTED", "Unsupported {feature}.", {
-		feature: feature
-	});
+    return createError( "E_UNSUPPORTED", "Unsupported {feature}.", {
+        feature: feature
+    });
 };
 
 
 
 
 var validateParameterTypeNumber = function( value, name ) {
-	validateParameterType(
-		value,
-		name,
-		value === undefined || typeof value === "number",
-		"Number"
-	);
+    validateParameterType(
+        value,
+        name,
+        value === undefined || typeof value === "number",
+        "Number"
+    );
 };
 
 
@@ -102,27 +102,27 @@ var numberCompactPatternRe = ( /^([^0]*)(0+)([^0]*)$/ );
  * Return the formatted number with group separator.
  */
 var numberFormatGroupingSeparator = function( number, primaryGroupingSize, secondaryGroupingSize ) {
-	var index,
-		currentGroupingSize = primaryGroupingSize,
-		ret = "",
-		sep = ",",
-		switchToSecondary = secondaryGroupingSize ? true : false;
+    var index,
+        currentGroupingSize = primaryGroupingSize,
+        ret = "",
+        sep = ",",
+        switchToSecondary = secondaryGroupingSize ? true : false;
 
-	number = String( number ).split( "." );
-	index = number[ 0 ].length;
+    number = String( number ).split( "." );
+    index = number[ 0 ].length;
 
-	while ( index > currentGroupingSize ) {
-		ret = number[ 0 ].slice( index - currentGroupingSize, index ) +
-			( ret.length ? sep : "" ) + ret;
-		index -= currentGroupingSize;
-		if ( switchToSecondary ) {
-			currentGroupingSize = secondaryGroupingSize;
-			switchToSecondary = false;
-		}
-	}
+    while ( index > currentGroupingSize ) {
+        ret = number[ 0 ].slice( index - currentGroupingSize, index ) +
+            ( ret.length ? sep : "" ) + ret;
+        index -= currentGroupingSize;
+        if ( switchToSecondary ) {
+            currentGroupingSize = secondaryGroupingSize;
+            switchToSecondary = false;
+        }
+    }
 
-	number[ 0 ] = number[ 0 ].slice( 0, index ) + ( ret.length ? sep : "" ) + ret;
-	return number.join( "." );
+    number[ 0 ] = number[ 0 ].slice( 0, index ) + ( ret.length ? sep : "" ) + ret;
+    return number.join( "." );
 };
 
 
@@ -147,56 +147,56 @@ var numberFormatGroupingSeparator = function( number, primaryGroupingSize, secon
  * Return the formatted integer and fraction digits.
  */
 var numberFormatIntegerFractionDigits = function( number, minimumIntegerDigits, minimumFractionDigits, maximumFractionDigits, round,
-	roundIncrement ) {
+    roundIncrement ) {
 
-	// Fraction
-	if ( maximumFractionDigits ) {
+    // Fraction
+    if ( maximumFractionDigits ) {
 
-		// Rounding
-		if ( roundIncrement ) {
-			number = round( number, roundIncrement );
+        // Rounding
+        if ( roundIncrement ) {
+            number = round( number, roundIncrement );
 
-		// Maximum fraction digits
-		} else {
-			number = round( number, { exponent: -maximumFractionDigits } );
-		}
+        // Maximum fraction digits
+        } else {
+            number = round( number, { exponent: -maximumFractionDigits } );
+        }
 
-	} else {
-		number = round( number );
-	}
+    } else {
+        number = round( number );
+    }
 
-	number = String( number );
+    number = String( number );
 
-	// Maximum integer digits (post string phase)
-	if ( maximumFractionDigits && /e-/.test( number ) ) {
+    // Maximum integer digits (post string phase)
+    if ( maximumFractionDigits && /e-/.test( number ) ) {
 
-		// Use toFixed( maximumFractionDigits ) to make sure small numbers like 1e-7 are
-		// displayed using plain digits instead of scientific notation.
-		// 1: Remove leading decimal zeros.
-		// 2: Remove leading decimal separator.
-		// Note: String() is still preferred so it doesn't mess up with a number precision
-		// unnecessarily, e.g., (123456789.123).toFixed(10) === "123456789.1229999959",
-		// String(123456789.123) === "123456789.123".
-		number = ( +number ).toFixed( maximumFractionDigits )
-			.replace( /0+$/, "" ) /* 1 */
-			.replace( /\.$/, "" ); /* 2 */
-	}
+        // Use toFixed( maximumFractionDigits ) to make sure small numbers like 1e-7 are
+        // displayed using plain digits instead of scientific notation.
+        // 1: Remove leading decimal zeros.
+        // 2: Remove leading decimal separator.
+        // Note: String() is still preferred so it doesn't mess up with a number precision
+        // unnecessarily, e.g., (123456789.123).toFixed(10) === "123456789.1229999959",
+        // String(123456789.123) === "123456789.123".
+        number = ( +number ).toFixed( maximumFractionDigits )
+            .replace( /0+$/, "" ) /* 1 */
+            .replace( /\.$/, "" ); /* 2 */
+    }
 
-	// Minimum fraction digits (post string phase)
-	if ( minimumFractionDigits ) {
-		number = number.split( "." );
-		number[ 1 ] = stringPad( number[ 1 ] || "", minimumFractionDigits, true );
-		number = number.join( "." );
-	}
+    // Minimum fraction digits (post string phase)
+    if ( minimumFractionDigits ) {
+        number = number.split( "." );
+        number[ 1 ] = stringPad( number[ 1 ] || "", minimumFractionDigits, true );
+        number = number.join( "." );
+    }
 
-	// Minimum integer digits
-	if ( minimumIntegerDigits ) {
-		number = number.split( "." );
-		number[ 0 ] = stringPad( number[ 0 ], minimumIntegerDigits );
-		number = number.join( "." );
-	}
+    // Minimum integer digits
+    if ( minimumIntegerDigits ) {
+        number = number.split( "." );
+        number[ 0 ] = stringPad( number[ 0 ], minimumIntegerDigits );
+        number = number.join( "." );
+    }
 
-	return number;
+    return number;
 };
 
 
@@ -214,16 +214,16 @@ var numberFormatIntegerFractionDigits = function( number, minimumIntegerDigits, 
  * Return number.toPrecision( precision ) using the given round function.
  */
 var numberToPrecision = function( number, precision, round ) {
-	var roundOrder;
+    var roundOrder;
 
-	if ( number === 0 ) {  // Fix #706
-		return number;
-	}
+    if ( number === 0 ) {  // Fix #706
+        return number;
+    }
 
-	roundOrder = Math.ceil( Math.log( Math.abs( number ) ) / Math.log( 10 ) );
-	roundOrder -= precision;
+    roundOrder = Math.ceil( Math.log( Math.abs( number ) ) / Math.log( 10 ) );
+    roundOrder -= precision;
 
-	return round( number, { exponent: roundOrder } );
+    return round( number, { exponent: roundOrder } );
 };
 
 
@@ -243,49 +243,49 @@ var numberToPrecision = function( number, precision, round ) {
  * Return the formatted significant digits number.
  */
 var numberFormatSignificantDigits = function( number, minimumSignificantDigits, maximumSignificantDigits, round ) {
-	var atMinimum, atMaximum;
+    var atMinimum, atMaximum;
 
-	// Sanity check.
-	if ( minimumSignificantDigits > maximumSignificantDigits ) {
-		maximumSignificantDigits = minimumSignificantDigits;
-	}
+    // Sanity check.
+    if ( minimumSignificantDigits > maximumSignificantDigits ) {
+        maximumSignificantDigits = minimumSignificantDigits;
+    }
 
-	atMinimum = numberToPrecision( number, minimumSignificantDigits, round );
-	atMaximum = numberToPrecision( number, maximumSignificantDigits, round );
+    atMinimum = numberToPrecision( number, minimumSignificantDigits, round );
+    atMaximum = numberToPrecision( number, maximumSignificantDigits, round );
 
-	// Use atMaximum only if it has more significant digits than atMinimum.
-	number = +atMinimum === +atMaximum ? atMinimum : atMaximum;
+    // Use atMaximum only if it has more significant digits than atMinimum.
+    number = +atMinimum === +atMaximum ? atMinimum : atMaximum;
 
-	// Expand integer numbers, eg. 123e5 to 12300.
-	number = ( +number ).toString( 10 );
+    // Expand integer numbers, eg. 123e5 to 12300.
+    number = ( +number ).toString( 10 );
 
-	if ( ( /e/ ).test( number ) ) {
-		throw createErrorUnsupportedFeature({
-			feature: "integers out of (1e21, 1e-7)"
-		});
-	}
+    if ( ( /e/ ).test( number ) ) {
+        throw createErrorUnsupportedFeature({
+            feature: "integers out of (1e21, 1e-7)"
+        });
+    }
 
-	// Add trailing zeros if necessary.
-	if ( minimumSignificantDigits - number.replace( /^0+|\./g, "" ).length > 0 ) {
-		number = number.split( "." );
-		number[ 1 ] = stringPad( number[ 1 ] || "", minimumSignificantDigits - number[ 0 ].replace( /^0+/, "" ).length, true );
-		number = number.join( "." );
-	}
+    // Add trailing zeros if necessary.
+    if ( minimumSignificantDigits - number.replace( /^0+|\./g, "" ).length > 0 ) {
+        number = number.split( "." );
+        number[ 1 ] = stringPad( number[ 1 ] || "", minimumSignificantDigits - number[ 0 ].replace( /^0+/, "" ).length, true );
+        number = number.join( "." );
+    }
 
-	return number;
+    return number;
 };
 
 
 
 
 var numberSymbolName = {
-	".": "decimal",
-	",": "group",
-	"%": "percentSign",
-	"+": "plusSign",
-	"-": "minusSign",
-	"E": "exponential",
-	"\u2030": "perMille"
+    ".": "decimal",
+    ",": "group",
+    "%": "percentSign",
+    "+": "plusSign",
+    "-": "minusSign",
+    "E": "exponential",
+    "\u2030": "perMille"
 };
 
 
@@ -301,13 +301,13 @@ var numberSymbolName = {
  *   string.
  */
 var removeLiteralQuotes = function( string ) {
-	if ( string[ 0 ] + string[ string.length - 1 ] !== "''" ) {
-		return string;
-	}
-	if ( string === "''" ) {
-		return "'";
-	}
-	return string.replace( /''/g, "'" ).slice( 1, -1 );
+    if ( string[ 0 ] + string[ string.length - 1 ] !== "''" ) {
+        return string;
+    }
+    if ( string === "''" ) {
+        return "'";
+    }
+    return string.replace( /''/g, "'" ).slice( 1, -1 );
 };
 
 
@@ -324,209 +324,209 @@ var removeLiteralQuotes = function( string ) {
  * ref: http://www.unicode.org/reports/tr35/tr35-numbers.html
  */
 var numberFormat = function( number, properties, pluralGenerator ) {
-	var aux, compactMap, infinitySymbol, maximumFractionDigits, maximumSignificantDigits,
-		minimumFractionDigits, minimumIntegerDigits, minimumSignificantDigits, nanSymbol,
-		nuDigitsMap, prefix, primaryGroupingSize, pattern, round, roundIncrement,
-		secondaryGroupingSize, stringToParts, suffix, symbolMap;
+    var aux, compactMap, infinitySymbol, maximumFractionDigits, maximumSignificantDigits,
+        minimumFractionDigits, minimumIntegerDigits, minimumSignificantDigits, nanSymbol,
+        nuDigitsMap, prefix, primaryGroupingSize, pattern, round, roundIncrement,
+        secondaryGroupingSize, stringToParts, suffix, symbolMap;
 
-	minimumIntegerDigits = properties[ 2 ];
-	minimumFractionDigits = properties[ 3 ];
-	maximumFractionDigits = properties[ 4 ];
-	minimumSignificantDigits = properties[ 5 ];
-	maximumSignificantDigits = properties[ 6 ];
-	roundIncrement = properties[ 7 ];
-	primaryGroupingSize = properties[ 8 ];
-	secondaryGroupingSize = properties[ 9 ];
-	round = properties[ 15 ];
-	infinitySymbol = properties[ 16 ];
-	nanSymbol = properties[ 17 ];
-	symbolMap = properties[ 18 ];
-	nuDigitsMap = properties[ 19 ];
-	compactMap = properties[ 20 ];
+    minimumIntegerDigits = properties[ 2 ];
+    minimumFractionDigits = properties[ 3 ];
+    maximumFractionDigits = properties[ 4 ];
+    minimumSignificantDigits = properties[ 5 ];
+    maximumSignificantDigits = properties[ 6 ];
+    roundIncrement = properties[ 7 ];
+    primaryGroupingSize = properties[ 8 ];
+    secondaryGroupingSize = properties[ 9 ];
+    round = properties[ 15 ];
+    infinitySymbol = properties[ 16 ];
+    nanSymbol = properties[ 17 ];
+    symbolMap = properties[ 18 ];
+    nuDigitsMap = properties[ 19 ];
+    compactMap = properties[ 20 ];
 
-	// NaN
-	if ( isNaN( number ) ) {
-		return [ { type: "nan", value: nanSymbol } ];
-	}
+    // NaN
+    if ( isNaN( number ) ) {
+        return [ { type: "nan", value: nanSymbol } ];
+    }
 
-	if ( number < 0 ) {
-		pattern = properties[ 12 ];
-		prefix = properties[ 13 ];
-		suffix = properties[ 14 ];
-	} else {
-		pattern = properties[ 11 ];
-		prefix = properties[ 0 ];
-		suffix = properties[ 10 ];
-	}
+    if ( number < 0 ) {
+        pattern = properties[ 12 ];
+        prefix = properties[ 13 ];
+        suffix = properties[ 14 ];
+    } else {
+        pattern = properties[ 11 ];
+        prefix = properties[ 0 ];
+        suffix = properties[ 10 ];
+    }
 
-	// For prefix, suffix, and number parts.
-	stringToParts = function( string ) {
-		var numberType = "integer",
-			parts = [];
+    // For prefix, suffix, and number parts.
+    stringToParts = function( string ) {
+        var numberType = "integer",
+            parts = [];
 
-		// TODO Move the tokenization of all parts that don't depend on number into
-		// format-properties.
-		string.replace( /('([^']|'')+'|'')|./g, function( character, literal ) {
+        // TODO Move the tokenization of all parts that don't depend on number into
+        // format-properties.
+        string.replace( /('([^']|'')+'|'')|./g, function( character, literal ) {
 
-			// Literals
-			if ( literal ) {
-				partsPush( parts, "literal", removeLiteralQuotes( literal ) );
-				return;
-			}
+            // Literals
+            if ( literal ) {
+                partsPush( parts, "literal", removeLiteralQuotes( literal ) );
+                return;
+            }
 
-			// Currency symbol
-			if ( character === "\u00A4" ) {
-				partsPush( parts, "currency", character );
-				return;
-			}
+            // Currency symbol
+            if ( character === "\u00A4" ) {
+                partsPush( parts, "currency", character );
+                return;
+            }
 
-			// Symbols
-			character = character.replace( /[.,\-+E%\u2030]/, function( symbol ) {
-				if ( symbol === "." ) {
-					numberType = "fraction";
-				}
-				partsPush( parts, numberSymbolName[ symbol ], symbolMap[ symbol ] );
+            // Symbols
+            character = character.replace( /[.,\-+E%\u2030]/, function( symbol ) {
+                if ( symbol === "." ) {
+                    numberType = "fraction";
+                }
+                partsPush( parts, numberSymbolName[ symbol ], symbolMap[ symbol ] );
 
-				// "Erase" handled character.
-				return "";
-			});
+                // "Erase" handled character.
+                return "";
+            });
 
-			// Number
-			character = character.replace( /[0-9]/, function( digit ) {
+            // Number
+            character = character.replace( /[0-9]/, function( digit ) {
 
-				// Numbering system
-				if ( nuDigitsMap ) {
-					digit = nuDigitsMap[ +digit ];
-				}
-				partsPush( parts, numberType, digit );
+                // Numbering system
+                if ( nuDigitsMap ) {
+                    digit = nuDigitsMap[ +digit ];
+                }
+                partsPush( parts, numberType, digit );
 
-				// "Erase" handled character.
-				return "";
-			});
+                // "Erase" handled character.
+                return "";
+            });
 
-			// Etc
-			character.replace( /./, function( etc ) {
-				partsPush( parts, "literal", etc );
-			});
-		});
-		return parts;
-	};
+            // Etc
+            character.replace( /./, function( etc ) {
+                partsPush( parts, "literal", etc );
+            });
+        });
+        return parts;
+    };
 
-	prefix = stringToParts( prefix );
-	suffix = stringToParts( suffix );
+    prefix = stringToParts( prefix );
+    suffix = stringToParts( suffix );
 
-	// Infinity
-	if ( !isFinite( number ) ) {
-		return prefix.concat(
-			{ type: "infinity", value: infinitySymbol },
-			suffix
-		);
-	}
+    // Infinity
+    if ( !isFinite( number ) ) {
+        return prefix.concat(
+            { type: "infinity", value: infinitySymbol },
+            suffix
+        );
+    }
 
-	// Percent
-	if ( pattern.indexOf( "%" ) !== -1 ) {
-		number *= 100;
+    // Percent
+    if ( pattern.indexOf( "%" ) !== -1 ) {
+        number *= 100;
 
-	// Per mille
-	} else if ( pattern.indexOf( "\u2030" ) !== -1 ) {
-		number *= 1000;
-	}
+    // Per mille
+    } else if ( pattern.indexOf( "\u2030" ) !== -1 ) {
+        number *= 1000;
+    }
 
-	var compactPattern, compactDigits, compactProperties, divisor, numberExponent, pluralForm;
+    var compactPattern, compactDigits, compactProperties, divisor, numberExponent, pluralForm;
 
-	// Compact mode: initial number digit processing
-	if ( compactMap ) {
-		numberExponent = Math.abs( Math.floor( number ) ).toString().length - 1;
-		numberExponent = Math.min( numberExponent, compactMap.maxExponent );
+    // Compact mode: initial number digit processing
+    if ( compactMap ) {
+        numberExponent = Math.abs( Math.floor( number ) ).toString().length - 1;
+        numberExponent = Math.min( numberExponent, compactMap.maxExponent );
 
-		// Use default plural form to perform initial decimal shift
-		if ( numberExponent >= 3 ) {
-			compactPattern = compactMap[ numberExponent ] && compactMap[ numberExponent ].other;
-		}
+        // Use default plural form to perform initial decimal shift
+        if ( numberExponent >= 3 ) {
+            compactPattern = compactMap[ numberExponent ] && compactMap[ numberExponent ].other;
+        }
 
-		if ( compactPattern === "0" ) {
-			compactPattern = null;
-		} else if ( compactPattern ) {
-			compactDigits = compactPattern.split( "0" ).length - 1;
-			divisor = numberExponent - ( compactDigits - 1 );
-			number = number / Math.pow( 10, divisor );
-		}
-	}
+        if ( compactPattern === "0" ) {
+            compactPattern = null;
+        } else if ( compactPattern ) {
+            compactDigits = compactPattern.split( "0" ).length - 1;
+            divisor = numberExponent - ( compactDigits - 1 );
+            number = number / Math.pow( 10, divisor );
+        }
+    }
 
-	// Significant digit format
-	if ( !isNaN( minimumSignificantDigits * maximumSignificantDigits ) ) {
-		number = numberFormatSignificantDigits( number, minimumSignificantDigits,
-			maximumSignificantDigits, round );
+    // Significant digit format
+    if ( !isNaN( minimumSignificantDigits * maximumSignificantDigits ) ) {
+        number = numberFormatSignificantDigits( number, minimumSignificantDigits,
+            maximumSignificantDigits, round );
 
-	// Integer and fractional format
-	} else {
-		number = numberFormatIntegerFractionDigits( number, minimumIntegerDigits,
-			minimumFractionDigits, maximumFractionDigits, round, roundIncrement );
-	}
+    // Integer and fractional format
+    } else {
+        number = numberFormatIntegerFractionDigits( number, minimumIntegerDigits,
+            minimumFractionDigits, maximumFractionDigits, round, roundIncrement );
+    }
 
-	// Compact mode: apply formatting
-	if ( compactMap && compactPattern ) {
+    // Compact mode: apply formatting
+    if ( compactMap && compactPattern ) {
 
-		// Get plural form after possible roundings
-		pluralForm = pluralGenerator ? pluralGenerator( +number ) : "other";
+        // Get plural form after possible roundings
+        pluralForm = pluralGenerator ? pluralGenerator( +number ) : "other";
 
-		compactPattern = compactMap[ numberExponent ][ pluralForm ] || compactPattern;
-		compactProperties = compactPattern.match( numberCompactPatternRe );
+        compactPattern = compactMap[ numberExponent ][ pluralForm ] || compactPattern;
+        compactProperties = compactPattern.match( numberCompactPatternRe );
 
-		// TODO Move the tokenization of all parts that don't depend on number into
-		// format-properties.
-		aux = function( string ) {
-			var parts = [];
-			string.replace( /(\s+)|([^\s0]+)/g, function( _garbage, space, compact ) {
+        // TODO Move the tokenization of all parts that don't depend on number into
+        // format-properties.
+        aux = function( string ) {
+            var parts = [];
+            string.replace( /(\s+)|([^\s0]+)/g, function( _garbage, space, compact ) {
 
-				// Literals
-				if ( space ) {
-					partsPush( parts, "literal", space );
-					return;
-				}
+                // Literals
+                if ( space ) {
+                    partsPush( parts, "literal", space );
+                    return;
+                }
 
-				// Compact value
-				if ( compact ) {
-					partsPush( parts, "compact", compact );
-					return;
-				}
-			});
-			return parts;
-		};
+                // Compact value
+                if ( compact ) {
+                    partsPush( parts, "compact", compact );
+                    return;
+                }
+            });
+            return parts;
+        };
 
-		// update prefix/suffix with compact prefix/suffix
-		prefix = prefix.concat( aux( compactProperties[ 1 ] ) );
-		suffix = aux( compactProperties[ 3 ] ).concat( suffix );
-	}
+        // update prefix/suffix with compact prefix/suffix
+        prefix = prefix.concat( aux( compactProperties[ 1 ] ) );
+        suffix = aux( compactProperties[ 3 ] ).concat( suffix );
+    }
 
-	// Remove the possible number minus sign
-	number = number.replace( /^-/, "" );
+    // Remove the possible number minus sign
+    number = number.replace( /^-/, "" );
 
-	// Grouping separators
-	if ( primaryGroupingSize ) {
-		number = numberFormatGroupingSeparator( number, primaryGroupingSize,
-			secondaryGroupingSize );
-	}
+    // Grouping separators
+    if ( primaryGroupingSize ) {
+        number = numberFormatGroupingSeparator( number, primaryGroupingSize,
+            secondaryGroupingSize );
+    }
 
-	// Scientific notation
-	// TODO implement here
+    // Scientific notation
+    // TODO implement here
 
-	// Padding/'([^']|'')+'|''|[.,\-+E%\u2030]/g
-	// TODO implement here
+    // Padding/'([^']|'')+'|''|[.,\-+E%\u2030]/g
+    // TODO implement here
 
-	return prefix.concat(
-		stringToParts( number ),
-		suffix
-	);
+    return prefix.concat(
+        stringToParts( number ),
+        suffix
+    );
 };
 
 
 
 
 var numberFormatterFn = function( numberToPartsFormatter ) {
-	return function numberFormatter( value ) {
-		return partsJoin( numberToPartsFormatter( value ));
-	};
+    return function numberFormatter( value ) {
+        return partsJoin( numberToPartsFormatter( value ));
+    };
 };
 
 
@@ -587,10 +587,10 @@ var regexpZsG = /[ \xA0\u1680\u2000-\u200A\u202F\u205F\u3000]/g;
  * - Map all characters in [:Dash:] to U+002D HYPHEN-MINUS;
  */
 var looseMatching = function( value ) {
-	return value
-		.replace( regexpCfG, "" )
-		.replace( regexpDashG, "-" )
-		.replace( regexpZsG, " " );
+    return value
+        .replace( regexpCfG, "" )
+        .replace( regexpDashG, "-" )
+        .replace( regexpZsG, " " );
 };
 
 
@@ -608,131 +608,131 @@ var looseMatching = function( value ) {
  * ref: http://www.unicode.org/reports/tr35/tr35-numbers.html
  */
 var numberParse = function( value, properties ) {
-	var grammar, invertedNuDigitsMap, invertedSymbolMap, negative, number, prefix, prefixNSuffix,
-		suffix, tokenizer, valid;
+    var grammar, invertedNuDigitsMap, invertedSymbolMap, negative, number, prefix, prefixNSuffix,
+        suffix, tokenizer, valid;
 
-	// Grammar:
-	// - Value <=           NaN | PositiveNumber | NegativeNumber
-	// - PositiveNumber <=  PositivePrefix NumberOrInf PositiveSufix
-	// - NegativeNumber <=  NegativePrefix NumberOrInf
-	// - NumberOrInf <=     Number | Inf
-	grammar = [
-		[ "nan" ],
-		[ "prefix", "infinity", "suffix" ],
-		[ "prefix", "number", "suffix" ],
-		[ "negativePrefix", "infinity", "negativeSuffix" ],
-		[ "negativePrefix", "number", "negativeSuffix" ]
-	];
+    // Grammar:
+    // - Value <=           NaN | PositiveNumber | NegativeNumber
+    // - PositiveNumber <=  PositivePrefix NumberOrInf PositiveSufix
+    // - NegativeNumber <=  NegativePrefix NumberOrInf
+    // - NumberOrInf <=     Number | Inf
+    grammar = [
+        [ "nan" ],
+        [ "prefix", "infinity", "suffix" ],
+        [ "prefix", "number", "suffix" ],
+        [ "negativePrefix", "infinity", "negativeSuffix" ],
+        [ "negativePrefix", "number", "negativeSuffix" ]
+    ];
 
-	invertedSymbolMap = properties[ 0 ];
-	invertedNuDigitsMap = properties[ 1 ] || {};
-	tokenizer = properties[ 2 ];
+    invertedSymbolMap = properties[ 0 ];
+    invertedNuDigitsMap = properties[ 1 ] || {};
+    tokenizer = properties[ 2 ];
 
-	value = looseMatching( value );
+    value = looseMatching( value );
 
-	function parse( type ) {
-		return function( lexeme ) {
+    function parse( type ) {
+        return function( lexeme ) {
 
-			// Reverse localized symbols and numbering system.
-			lexeme = lexeme.split( "" ).map(function( character ) {
-				return invertedSymbolMap[ character ] ||
-					invertedNuDigitsMap[ character ] ||
-					character;
-			}).join( "" );
+            // Reverse localized symbols and numbering system.
+            lexeme = lexeme.split( "" ).map(function( character ) {
+                return invertedSymbolMap[ character ] ||
+                    invertedNuDigitsMap[ character ] ||
+                    character;
+            }).join( "" );
 
-			switch ( type ) {
-				case "infinity":
-					number = Infinity;
-					break;
+            switch ( type ) {
+                case "infinity":
+                    number = Infinity;
+                    break;
 
-				case "nan":
-					number = NaN;
-					break;
+                case "nan":
+                    number = NaN;
+                    break;
 
-				case "number":
+                case "number":
 
-					// Remove grouping separators.
-					lexeme = lexeme.replace( /,/g, "" );
+                    // Remove grouping separators.
+                    lexeme = lexeme.replace( /,/g, "" );
 
-					number = +lexeme;
-					break;
+                    number = +lexeme;
+                    break;
 
-				case "prefix":
-				case "negativePrefix":
-					prefix = lexeme;
-					break;
+                case "prefix":
+                case "negativePrefix":
+                    prefix = lexeme;
+                    break;
 
-				case "suffix":
-					suffix = lexeme;
-					break;
+                case "suffix":
+                    suffix = lexeme;
+                    break;
 
-				case "negativeSuffix":
-					suffix = lexeme;
-					negative = true;
-					break;
+                case "negativeSuffix":
+                    suffix = lexeme;
+                    negative = true;
+                    break;
 
-				// This should never be reached.
-				default:
-					throw new Error( "Internal error" );
-			}
-			return "";
-		};
-	}
+                // This should never be reached.
+                default:
+                    throw new Error( "Internal error" );
+            }
+            return "";
+        };
+    }
 
-	function tokenizeNParse( _value, grammar ) {
-		return grammar.some(function( statement ) {
-			var value = _value;
+    function tokenizeNParse( _value, grammar ) {
+        return grammar.some(function( statement ) {
+            var value = _value;
 
-			// The whole grammar statement should be used (i.e., .every() return true) and value be
-			// entirely consumed (i.e., !value.length).
-			return statement.every(function( type ) {
-				if ( value.match( tokenizer[ type ] ) === null ) {
-					return false;
-				}
+            // The whole grammar statement should be used (i.e., .every() return true) and value be
+            // entirely consumed (i.e., !value.length).
+            return statement.every(function( type ) {
+                if ( value.match( tokenizer[ type ] ) === null ) {
+                    return false;
+                }
 
-				// Consume and parse it.
-				value = value.replace( tokenizer[ type ], parse( type ) );
-				return true;
-			}) && !value.length;
-		});
-	}
+                // Consume and parse it.
+                value = value.replace( tokenizer[ type ], parse( type ) );
+                return true;
+            }) && !value.length;
+        });
+    }
 
-	valid = tokenizeNParse( value, grammar );
+    valid = tokenizeNParse( value, grammar );
 
-	// NaN
-	if ( !valid || isNaN( number ) ) {
-		return NaN;
-	}
+    // NaN
+    if ( !valid || isNaN( number ) ) {
+        return NaN;
+    }
 
-	prefixNSuffix = "" + prefix + suffix;
+    prefixNSuffix = "" + prefix + suffix;
 
-	// Percent
-	if ( prefixNSuffix.indexOf( "%" ) !== -1 ) {
-		number /= 100;
+    // Percent
+    if ( prefixNSuffix.indexOf( "%" ) !== -1 ) {
+        number /= 100;
 
-	// Per mille
-	} else if ( prefixNSuffix.indexOf( "\u2030" ) !== -1 ) {
-		number /= 1000;
-	}
+    // Per mille
+    } else if ( prefixNSuffix.indexOf( "\u2030" ) !== -1 ) {
+        number /= 1000;
+    }
 
-	// Negative number
-	if ( negative ) {
-		number *= -1;
-	}
+    // Negative number
+    if ( negative ) {
+        number *= -1;
+    }
 
-	return number;
+    return number;
 };
 
 
 
 
 var numberParserFn = function( properties ) {
-	return function numberParser( value ) {
-		validateParameterPresence( value, "value" );
-		validateParameterTypeString( value, "value" );
+    return function numberParser( value ) {
+        validateParameterPresence( value, "value" );
+        validateParameterTypeString( value, "value" );
 
-		return numberParse( value, properties );
-	};
+        return numberParse( value, properties );
+    };
 
 };
 
@@ -740,22 +740,22 @@ var numberParserFn = function( properties ) {
 
 
 var numberToPartsFormatterFn = function( properties, pluralGenerator ) {
-	return function numberToPartsFormatter( value ) {
-		validateParameterPresence( value, "value" );
-		validateParameterTypeNumber( value, "value" );
+    return function numberToPartsFormatter( value ) {
+        validateParameterPresence( value, "value" );
+        validateParameterTypeNumber( value, "value" );
 
-		return numberFormat( value, properties, pluralGenerator );
-	};
+        return numberFormat( value, properties, pluralGenerator );
+    };
 };
 
 
 
 
 var numberTruncate = function( value ) {
-	if ( isNaN( value ) ) {
-		return NaN;
-	}
-	return Math[ value < 0 ? "ceil" : "floor" ]( value );
+    if ( isNaN( value ) ) {
+        return NaN;
+    }
+    return Math[ value < 0 ? "ceil" : "floor" ]( value );
 };
 
 
@@ -785,63 +785,63 @@ var numberTruncate = function( value ) {
  *   Ref: #376
  */
 var numberRound = function( method ) {
-	method = method || "round";
-	method = method === "truncate" ? numberTruncate : Math[ method ];
+    method = method || "round";
+    method = method === "truncate" ? numberTruncate : Math[ method ];
 
-	return function( value, incrementOrExp ) {
-		var exp, increment;
+    return function( value, incrementOrExp ) {
+        var exp, increment;
 
-		value = +value;
+        value = +value;
 
-		// If the value is not a number, return NaN.
-		if ( isNaN( value ) ) {
-			return NaN;
-		}
+        // If the value is not a number, return NaN.
+        if ( isNaN( value ) ) {
+            return NaN;
+        }
 
-		// Exponent given.
-		if ( typeof incrementOrExp === "object" && incrementOrExp.exponent ) {
-			exp = +incrementOrExp.exponent;
-			increment = 1;
+        // Exponent given.
+        if ( typeof incrementOrExp === "object" && incrementOrExp.exponent ) {
+            exp = +incrementOrExp.exponent;
+            increment = 1;
 
-			if ( exp === 0 ) {
-				return method( value );
-			}
+            if ( exp === 0 ) {
+                return method( value );
+            }
 
-			// If the exp is not an integer, return NaN.
-			if ( !( typeof exp === "number" && exp % 1 === 0 ) ) {
-				return NaN;
-			}
+            // If the exp is not an integer, return NaN.
+            if ( !( typeof exp === "number" && exp % 1 === 0 ) ) {
+                return NaN;
+            }
 
-		// Increment given.
-		} else {
-			increment = +incrementOrExp || 1;
+        // Increment given.
+        } else {
+            increment = +incrementOrExp || 1;
 
-			if ( increment === 1 ) {
-				return method( value );
-			}
+            if ( increment === 1 ) {
+                return method( value );
+            }
 
-			// If the increment is not a number, return NaN.
-			if ( isNaN( increment ) ) {
-				return NaN;
-			}
+            // If the increment is not a number, return NaN.
+            if ( isNaN( increment ) ) {
+                return NaN;
+            }
 
-			increment = increment.toExponential().split( "e" );
-			exp = +increment[ 1 ];
-			increment = +increment[ 0 ];
-		}
+            increment = increment.toExponential().split( "e" );
+            exp = +increment[ 1 ];
+            increment = +increment[ 0 ];
+        }
 
-		// Shift & Round
-		value = value.toString().split( "e" );
-		value[ 0 ] = +value[ 0 ] / increment;
-		value[ 1 ] = value[ 1 ] ? ( +value[ 1 ] - exp ) : -exp;
-		value = method( +( value[ 0 ] + "e" + value[ 1 ] ) );
+        // Shift & Round
+        value = value.toString().split( "e" );
+        value[ 0 ] = +value[ 0 ] / increment;
+        value[ 1 ] = value[ 1 ] ? ( +value[ 1 ] - exp ) : -exp;
+        value = method( +( value[ 0 ] + "e" + value[ 1 ] ) );
 
-		// Shift back
-		value = value.toString().split( "e" );
-		value[ 0 ] = +value[ 0 ] * increment;
-		value[ 1 ] = value[ 1 ] ? ( +value[ 1 ] + exp ) : exp;
-		return +( value[ 0 ] + "e" + value[ 1 ] );
-	};
+        // Shift back
+        value = value.toString().split( "e" );
+        value[ 0 ] = +value[ 0 ] * increment;
+        value[ 1 ] = value[ 1 ] ? ( +value[ 1 ] + exp ) : exp;
+        return +( value[ 0 ] + "e" + value[ 1 ] );
+    };
 };
 
 
@@ -865,50 +865,50 @@ Globalize._validateParameterTypeString = validateParameterTypeString;
 // only used (at the moment) for numberFormatter used by unitFormatter.
 // TODO: Move this function into a common place when this is used by different formatters.
 function cached( runtimeKey ) {
-	Globalize[ runtimeKey ].runtimeKey = runtimeKey;
-	return Globalize[ runtimeKey ];
+    Globalize[ runtimeKey ].runtimeKey = runtimeKey;
+    return Globalize[ runtimeKey ];
 }
 
 Globalize.numberFormatter =
 Globalize.prototype.numberFormatter = function( options ) {
-	options = options || {};
-	return cached( runtimeKey( "numberFormatter", this._locale, [ options ] ) );
+    options = options || {};
+    return cached( runtimeKey( "numberFormatter", this._locale, [ options ] ) );
 };
 
 Globalize.numberToPartsFormatter =
 Globalize.prototype.numberToPartsFormatter = function( options ) {
-	options = options || {};
-	return cached( runtimeKey( "numberToPartsFormatter", this._locale, [ options ] ) );
+    options = options || {};
+    return cached( runtimeKey( "numberToPartsFormatter", this._locale, [ options ] ) );
 };
 
 Globalize.numberParser =
 Globalize.prototype.numberParser = function( options ) {
-	options = options || {};
-	return Globalize[ runtimeKey( "numberParser", this._locale, [ options ] ) ];
+    options = options || {};
+    return Globalize[ runtimeKey( "numberParser", this._locale, [ options ] ) ];
 };
 
 Globalize.formatNumber =
 Globalize.prototype.formatNumber = function( value, options ) {
-	validateParameterPresence( value, "value" );
-	validateParameterTypeNumber( value, "value" );
+    validateParameterPresence( value, "value" );
+    validateParameterTypeNumber( value, "value" );
 
-	return this.numberFormatter( options )( value );
+    return this.numberFormatter( options )( value );
 };
 
 Globalize.formatNumberToParts =
 Globalize.prototype.formatNumberToParts = function( value, options ) {
-	validateParameterPresence( value, "value" );
-	validateParameterTypeNumber( value, "value" );
+    validateParameterPresence( value, "value" );
+    validateParameterTypeNumber( value, "value" );
 
-	return this.numberFormatter( options )( value );
+    return this.numberFormatter( options )( value );
 };
 
 Globalize.parseNumber =
 Globalize.prototype.parseNumber = function( value, options ) {
-	validateParameterPresence( value, "value" );
-	validateParameterTypeString( value, "value" );
+    validateParameterPresence( value, "value" );
+    validateParameterTypeString( value, "value" );
 
-	return this.numberParser( options )( value );
+    return this.numberParser( options )( value );
 };
 
 return Globalize;

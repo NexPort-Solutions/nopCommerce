@@ -58,9 +58,9 @@
         <div class="order-details-area">
             <div class="billing-info-wrap">
                 <div class="billing-info">
-	                <div class="title">
-	                    <strong>@T("Order.BillingAddress")</strong>
-	                </div>
+                    <div class="title">
+                        <strong>@T("Order.BillingAddress")</strong>
+                    </div>
                     <ul class="info-list">
                         <li class="name">
                             @Model.BillingAddress.FirstName @Model.BillingAddress.LastName
@@ -223,9 +223,9 @@
             {
                 <div class="shipping-info-wrap">
                     <div class="shipping-info">
-	                    <div class="title">
-	                        <strong>@(Model.PickupInStore ? T("Order.PickupAddress") : T("Order.ShippingAddress"))</strong>
-	                    </div>
+                        <div class="title">
+                            <strong>@(Model.PickupInStore ? T("Order.PickupAddress") : T("Order.ShippingAddress"))</strong>
+                        </div>
                         <ul class="info-list">
                             @if (!Model.PickupInStore)
                             {

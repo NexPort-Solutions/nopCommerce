@@ -14,86 +14,86 @@
  */
 (function( factory ) {
 
-	if ( typeof define === "function" && define.amd ) {
-		// AMD.
-		define( [ "../cldr" ], factory );
-	} else if ( typeof module === "object" && typeof module.exports === "object" ) {
-		// Node. CommonJS.
-		module.exports = factory( require( "../cldr" ) );
-	} else {
-		// Global
-		factory( Cldr );
-	}
+    if ( typeof define === "function" && define.amd ) {
+        // AMD.
+        define( [ "../cldr" ], factory );
+    } else if ( typeof module === "object" && typeof module.exports === "object" ) {
+        // Node. CommonJS.
+        module.exports = factory( require( "../cldr" ) );
+    } else {
+        // Global
+        factory( Cldr );
+    }
 
 }(function( Cldr ) {
 
-	// Build optimization hack to avoid duplicating functions across modules.
-	var alwaysArray = Cldr._alwaysArray;
+    // Build optimization hack to avoid duplicating functions across modules.
+    var alwaysArray = Cldr._alwaysArray;
 
 
 
-	var supplementalMain = function( cldr ) {
+    var supplementalMain = function( cldr ) {
 
-		var prepend, supplemental;
-		
-		prepend = function( prepend ) {
-			return function( path ) {
-				path = alwaysArray( path );
-				return cldr.get( [ prepend ].concat( path ) );
-			};
-		};
+        var prepend, supplemental;
+        
+        prepend = function( prepend ) {
+            return function( path ) {
+                path = alwaysArray( path );
+                return cldr.get( [ prepend ].concat( path ) );
+            };
+        };
 
-		supplemental = prepend( "supplemental" );
+        supplemental = prepend( "supplemental" );
 
-		// Week Data
-		// http://www.unicode.org/reports/tr35/tr35-dates.html#Week_Data
-		supplemental.weekData = prepend( "supplemental/weekData" );
+        // Week Data
+        // http://www.unicode.org/reports/tr35/tr35-dates.html#Week_Data
+        supplemental.weekData = prepend( "supplemental/weekData" );
 
-		supplemental.weekData.firstDay = function() {
-			return cldr.get( "supplemental/weekData/firstDay/{territory}" ) ||
-				cldr.get( "supplemental/weekData/firstDay/001" );
-		};
+        supplemental.weekData.firstDay = function() {
+            return cldr.get( "supplemental/weekData/firstDay/{territory}" ) ||
+                cldr.get( "supplemental/weekData/firstDay/001" );
+        };
 
-		supplemental.weekData.minDays = function() {
-			var minDays = cldr.get( "supplemental/weekData/minDays/{territory}" ) ||
-				cldr.get( "supplemental/weekData/minDays/001" );
-			return parseInt( minDays, 10 );
-		};
+        supplemental.weekData.minDays = function() {
+            var minDays = cldr.get( "supplemental/weekData/minDays/{territory}" ) ||
+                cldr.get( "supplemental/weekData/minDays/001" );
+            return parseInt( minDays, 10 );
+        };
 
-		// Time Data
-		// http://www.unicode.org/reports/tr35/tr35-dates.html#Time_Data
-		supplemental.timeData = prepend( "supplemental/timeData" );
+        // Time Data
+        // http://www.unicode.org/reports/tr35/tr35-dates.html#Time_Data
+        supplemental.timeData = prepend( "supplemental/timeData" );
 
-		supplemental.timeData.allowed = function() {
-			return cldr.get( "supplemental/timeData/{territory}/_allowed" ) ||
-				cldr.get( "supplemental/timeData/001/_allowed" );
-		};
+        supplemental.timeData.allowed = function() {
+            return cldr.get( "supplemental/timeData/{territory}/_allowed" ) ||
+                cldr.get( "supplemental/timeData/001/_allowed" );
+        };
 
-		supplemental.timeData.preferred = function() {
-			return cldr.get( "supplemental/timeData/{territory}/_preferred" ) ||
-				cldr.get( "supplemental/timeData/001/_preferred" );
-		};
+        supplemental.timeData.preferred = function() {
+            return cldr.get( "supplemental/timeData/{territory}/_preferred" ) ||
+                cldr.get( "supplemental/timeData/001/_preferred" );
+        };
 
-		return supplemental;
+        return supplemental;
 
-	};
-
-
+    };
 
 
-	var initSuper = Cldr.prototype.init;
 
-	/**
-	 * .init() automatically ran on construction.
-	 *
-	 * Overload .init().
-	 */
-	Cldr.prototype.init = function() {
-		initSuper.apply( this, arguments );
-		this.supplemental = supplementalMain( this );
-	};
 
-	return Cldr;
+    var initSuper = Cldr.prototype.init;
+
+    /**
+     * .init() automatically ran on construction.
+     *
+     * Overload .init().
+     */
+    Cldr.prototype.init = function() {
+        initSuper.apply( this, arguments );
+        this.supplemental = supplementalMain( this );
+    };
+
+    return Cldr;
 
 
 

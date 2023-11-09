@@ -15,36 +15,36 @@
  */
 (function( root, factory ) {
 
-	// UMD returnExports
-	if ( typeof define === "function" && define.amd ) {
+    // UMD returnExports
+    if ( typeof define === "function" && define.amd ) {
 
-		// AMD
-		define([
-			"cldr",
-			"../globalize",
-			"./number",
-			"./plural",
-			"cldr/event",
-			"cldr/supplemental"
-		], factory );
-	} else if ( typeof exports === "object" ) {
+        // AMD
+        define([
+            "cldr",
+            "../globalize",
+            "./number",
+            "./plural",
+            "cldr/event",
+            "cldr/supplemental"
+        ], factory );
+    } else if ( typeof exports === "object" ) {
 
-		// Node, CommonJS
-		module.exports = factory( require( "cldrjs" ), require( "../globalize" ) );
-	} else {
+        // Node, CommonJS
+        module.exports = factory( require( "cldrjs" ), require( "../globalize" ) );
+    } else {
 
-		// Extend global
-		factory( root.Cldr, root.Globalize );
-	}
+        // Extend global
+        factory( root.Cldr, root.Globalize );
+    }
 }(this, function( Cldr, Globalize ) {
 
 var formatMessage = Globalize._formatMessage,
-	runtimeBind = Globalize._runtimeBind,
-	validateCldr = Globalize._validateCldr,
-	validateDefaultLocale = Globalize._validateDefaultLocale,
-	validateParameterPresence = Globalize._validateParameterPresence,
-	validateParameterTypeString = Globalize._validateParameterTypeString,
-	validateParameterTypeNumber = Globalize._validateParameterTypeNumber;
+    runtimeBind = Globalize._runtimeBind,
+    validateCldr = Globalize._validateCldr,
+    validateDefaultLocale = Globalize._validateDefaultLocale,
+    validateParameterPresence = Globalize._validateParameterPresence,
+    validateParameterTypeString = Globalize._validateParameterTypeString,
+    validateParameterTypeNumber = Globalize._validateParameterTypeNumber;
 
 
 /**
@@ -62,32 +62,32 @@ var formatMessage = Globalize._formatMessage,
  */
 var relativeTimeFormat = function( value, numberFormatter, pluralGenerator, properties ) {
 
-	var relativeTime,
-		message = properties[ "relative-type-" + value ];
+    var relativeTime,
+        message = properties[ "relative-type-" + value ];
 
-	if ( message ) {
-		return message;
-	}
+    if ( message ) {
+        return message;
+    }
 
-	relativeTime = value <= 0 ? properties[ "relativeTime-type-past" ] :
-		properties[ "relativeTime-type-future" ];
+    relativeTime = value <= 0 ? properties[ "relativeTime-type-past" ] :
+        properties[ "relativeTime-type-future" ];
 
-	value = Math.abs( value );
+    value = Math.abs( value );
 
-	message = relativeTime[ "relativeTimePattern-count-" + pluralGenerator( value ) ];
-	return formatMessage( message, [ numberFormatter( value ) ] );
+    message = relativeTime[ "relativeTimePattern-count-" + pluralGenerator( value ) ];
+    return formatMessage( message, [ numberFormatter( value ) ] );
 };
 
 
 
 
 var relativeTimeFormatterFn = function( numberFormatter, pluralGenerator, properties ) {
-	return function relativeTimeFormatter( value ) {
-		validateParameterPresence( value, "value" );
-		validateParameterTypeNumber( value, "value" );
+    return function relativeTimeFormatter( value ) {
+        validateParameterPresence( value, "value" );
+        validateParameterTypeNumber( value, "value" );
 
-		return relativeTimeFormat( value, numberFormatter, pluralGenerator, properties );
-	};
+        return relativeTimeFormat( value, numberFormatter, pluralGenerator, properties );
+    };
 
 };
 
@@ -108,28 +108,28 @@ var relativeTimeFormatterFn = function( numberFormatter, pluralGenerator, proper
  */
 var relativeTimeProperties = function( unit, cldr, options ) {
 
-	var form = options.form,
-		raw, properties, key, match;
+    var form = options.form,
+        raw, properties, key, match;
 
-	if ( form ) {
-		unit = unit + "-" + form;
-	}
+    if ( form ) {
+        unit = unit + "-" + form;
+    }
 
-	raw = cldr.main( [ "dates", "fields", unit ] );
-	properties = {
-		"relativeTime-type-future": raw[ "relativeTime-type-future" ],
-		"relativeTime-type-past": raw[ "relativeTime-type-past" ]
-	};
-	for ( key in raw ) {
-		if ( raw.hasOwnProperty( key ) ) {
-			match = /relative-type-(-?[0-9]+)/.exec( key );
-			if ( match ) {
-				properties[ key ] = raw[ key ];
-			}
-		}
-	}
+    raw = cldr.main( [ "dates", "fields", unit ] );
+    properties = {
+        "relativeTime-type-future": raw[ "relativeTime-type-future" ],
+        "relativeTime-type-past": raw[ "relativeTime-type-past" ]
+    };
+    for ( key in raw ) {
+        if ( raw.hasOwnProperty( key ) ) {
+            match = /relative-type-(-?[0-9]+)/.exec( key );
+            if ( match ) {
+                properties[ key ] = raw[ key ];
+            }
+        }
+    }
 
-	return properties;
+    return properties;
 };
 
 
@@ -148,10 +148,10 @@ var relativeTimeProperties = function( unit, cldr, options ) {
  */
 Globalize.formatRelativeTime =
 Globalize.prototype.formatRelativeTime = function( value, unit, options ) {
-	validateParameterPresence( value, "value" );
-	validateParameterTypeNumber( value, "value" );
+    validateParameterPresence( value, "value" );
+    validateParameterTypeNumber( value, "value" );
 
-	return this.relativeTimeFormatter( unit, options )( value );
+    return this.relativeTimeFormatter( unit, options )( value );
 };
 
 /**
@@ -167,32 +167,32 @@ Globalize.prototype.formatRelativeTime = function( value, unit, options ) {
  */
 Globalize.relativeTimeFormatter =
 Globalize.prototype.relativeTimeFormatter = function( unit, options ) {
-	var args, cldr, numberFormatter, pluralGenerator, properties, returnFn;
+    var args, cldr, numberFormatter, pluralGenerator, properties, returnFn;
 
-	validateParameterPresence( unit, "unit" );
-	validateParameterTypeString( unit, "unit" );
+    validateParameterPresence( unit, "unit" );
+    validateParameterTypeString( unit, "unit" );
 
-	cldr = this.cldr;
-	options = options || {};
+    cldr = this.cldr;
+    options = options || {};
 
-	args = [ unit, options ];
+    args = [ unit, options ];
 
-	validateDefaultLocale( cldr );
+    validateDefaultLocale( cldr );
 
-	cldr.on( "get", validateCldr );
-	try {
-		properties = relativeTimeProperties( unit, cldr, options );
-	} finally {
-		cldr.off( "get", validateCldr );
-	}
-	numberFormatter = this.numberFormatter( options );
-	pluralGenerator = this.pluralGenerator();
+    cldr.on( "get", validateCldr );
+    try {
+        properties = relativeTimeProperties( unit, cldr, options );
+    } finally {
+        cldr.off( "get", validateCldr );
+    }
+    numberFormatter = this.numberFormatter( options );
+    pluralGenerator = this.pluralGenerator();
 
-	returnFn = relativeTimeFormatterFn( numberFormatter, pluralGenerator, properties );
+    returnFn = relativeTimeFormatterFn( numberFormatter, pluralGenerator, properties );
 
-	runtimeBind( args, cldr, returnFn, [ numberFormatter, pluralGenerator, properties ] );
+    runtimeBind( args, cldr, returnFn, [ numberFormatter, pluralGenerator, properties ] );
 
-	return returnFn;
+    return returnFn;
 };
 
 return Globalize;
