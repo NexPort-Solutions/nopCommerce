@@ -623,33 +623,34 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
                                 try
                                 {
-                                    if (nexportInvoiceDetails.RedemptionType == null ||
-                                    nexportInvoiceDetails.RedemptionType ==
-                                    InvoiceRedemptionResponse.RedemptionTypeEnum.Section)
+                                    if (nexportInvoiceDetails.SyllabusId.HasValue)
                                     {
-                                        var enrollmentDetails = await _nexportService.GetSectionEnrollmentDetailsAsync(
-                                            nexportInvoiceDetails.OrganizationId,
-                                            nexportInvoiceDetails.RedemptionUserId.Value, nexportInvoiceDetails.SyllabusId);
-                                        if (enrollmentDetails != null)
+                                        if (nexportInvoiceDetails.RedemptionType == null || nexportInvoiceDetails.RedemptionType == InvoiceRedemptionResponse.RedemptionTypeEnum.Section)
                                         {
-                                            enrollmentExisted = true;
-                                            enrollmentStartDate = enrollmentDetails.EnrollmentDate;
-                                            enrollmentExpirationDate = enrollmentDetails.ExpirationDate;
-                                            enrollmentStatus = enrollmentDetails.Phase;
+                                            var enrollmentDetails = await _nexportService.GetSectionEnrollmentDetailsAsync(
+                                                nexportInvoiceDetails.OrganizationId,
+                                                nexportInvoiceDetails.RedemptionUserId.Value, nexportInvoiceDetails.SyllabusId.Value);
+                                            if (enrollmentDetails != null)
+                                            {
+                                                enrollmentExisted = true;
+                                                enrollmentStartDate = enrollmentDetails.EnrollmentDate;
+                                                enrollmentExpirationDate = enrollmentDetails.ExpirationDate;
+                                                enrollmentStatus = enrollmentDetails.Phase;
+                                            }
                                         }
-                                    }
-                                    else if (nexportInvoiceDetails.RedemptionType ==
-                                             InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
-                                    {
-                                        var enrollmentDetails = await _nexportService.GetTrainingPlanEnrollmentDetailsAsync(
-                                            nexportInvoiceDetails.OrganizationId,
-                                            nexportInvoiceDetails.RedemptionUserId.Value, nexportInvoiceDetails.SyllabusId);
-                                        if (enrollmentDetails != null)
+                                        else if (nexportInvoiceDetails.RedemptionType ==
+                                                 InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
                                         {
-                                            enrollmentExisted = true;
-                                            enrollmentStartDate = enrollmentDetails.EnrollmentDate;
-                                            enrollmentExpirationDate = enrollmentDetails.ExpirationDate;
-                                            enrollmentStatus = enrollmentDetails.Phase;
+                                            var enrollmentDetails = await _nexportService.GetTrainingPlanEnrollmentDetailsAsync(
+                                                nexportInvoiceDetails.OrganizationId,
+                                                nexportInvoiceDetails.RedemptionUserId.Value, nexportInvoiceDetails.SyllabusId.Value);
+                                            if (enrollmentDetails != null)
+                                            {
+                                                enrollmentExisted = true;
+                                                enrollmentStartDate = enrollmentDetails.EnrollmentDate;
+                                                enrollmentExpirationDate = enrollmentDetails.ExpirationDate;
+                                                enrollmentStatus = enrollmentDetails.Phase;
+                                            }
                                         }
                                     }
                                 }
@@ -660,21 +661,24 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
                                 if (enrollmentExisted)
                                 {
-                                    var trainingItem = new NexportTrainingItemModel
+                                    if (nexportInvoiceDetails.SyllabusId.HasValue)
                                     {
-                                        Name = nexportInvoiceDetails.SyllabusTitle,
-                                        Type = nexportInvoiceDetails.RedemptionType ?? InvoiceRedemptionResponse.RedemptionTypeEnum.Section,
-                                        UtcStartDate = enrollmentStartDate,
-                                        UtcExpirationDate = enrollmentExpirationDate,
-                                        UtcRedemptionDate = nexportInvoiceDetails.UtcRedemptionDate,
-                                        EnrollmentId = nexportInvoiceDetails.RedemptionEnrollmentId,
-                                        SyllabusId = nexportInvoiceDetails.SyllabusId,
-                                        OrganizationId = nexportInvoiceDetails.OrganizationId,
-                                        Status = enrollmentStatus
-                                    };
+                                        var trainingItem = new NexportTrainingItemModel
+                                        {
+                                            Name = nexportInvoiceDetails.SyllabusTitle,
+                                            Type = nexportInvoiceDetails.RedemptionType ?? InvoiceRedemptionResponse.RedemptionTypeEnum.Section,
+                                            UtcStartDate = enrollmentStartDate,
+                                            UtcExpirationDate = enrollmentExpirationDate,
+                                            UtcRedemptionDate = nexportInvoiceDetails.UtcRedemptionDate,
+                                            EnrollmentId = nexportInvoiceDetails.RedemptionEnrollmentId,
+                                            SyllabusId = nexportInvoiceDetails.SyllabusId.Value,
+                                            OrganizationId = nexportInvoiceDetails.OrganizationId,
+                                            Status = enrollmentStatus
+                                        };
 
-                                    if (!trainingList.Any(x => x.SyllabusId == nexportInvoiceDetails.SyllabusId))
-                                        trainingList.Add(trainingItem);
+                                        if (!trainingList.Any(x => x.SyllabusId == nexportInvoiceDetails.SyllabusId))
+                                            trainingList.Add(trainingItem);
+                                    }
                                 }
                             }
                         }
