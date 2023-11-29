@@ -524,11 +524,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
                                 try
                                 {
-                                    if (nexportInvoiceDetails.RedemptionType == null ||
-                                    nexportInvoiceDetails.RedemptionType ==
-                                    InvoiceRedemptionResponse.RedemptionTypeEnum.Section)
+                                    if (nexportInvoiceDetails.SyllabusId.HasValue)
                                     {
-                                        if (nexportInvoiceDetails.SyllabusId.HasValue)
+                                        if (nexportInvoiceDetails.RedemptionType == null || nexportInvoiceDetails.RedemptionType == InvoiceRedemptionResponse.RedemptionTypeEnum.Section)
                                         {
                                             var enrollmentDetails = await _nexportService.GetSectionEnrollmentDetailsAsync(
                                                 nexportInvoiceDetails.OrganizationId,
@@ -541,11 +539,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                                 enrollmentStatus = enrollmentDetails.Phase;
                                             }
                                         }
-                                    }
-                                    else if (nexportInvoiceDetails.RedemptionType ==
-                                             InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
-                                    {
-                                        if (nexportInvoiceDetails.SyllabusId.HasValue)
+                                        else if (nexportInvoiceDetails.RedemptionType ==
+                                                 InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
                                         {
                                             var enrollmentDetails = await _nexportService.GetTrainingPlanEnrollmentDetailsAsync(
                                                 nexportInvoiceDetails.OrganizationId,
