@@ -25,7 +25,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 m.NopProductId == nexportProductMapping.NopProductId &&
                 m.StoreId == nexportProductMapping.StoreId))
                 return;
-
+            
             await _nexportProductMappingRepository.InsertAsync(nexportProductMapping);
         }
 
@@ -2165,6 +2165,32 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     }));
 
             return await query.FirstOrDefaultAsync();
+        }
+
+        public virtual async Task<IList<Customer>> SearchCustomersAsync(string searchNameAndEmail)
+        {
+            var query = _customerRepository.Table.Where(c => !c.Deleted && !c.IsSystemAccount && !string.IsNullOrWhiteSpace(c.Email));
+
+            query = query.Where(c => (c.FirstName +" "+ c.LastName).Contains(searchNameAndEmail) || c.Email.Contains(searchNameAndEmail));
+
+            var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync(NopCustomerDefaults.RegisteredRoleName);
+            if (registeredRole != null)
+            {
+                query = query.Join(_customerCustomerRoleMappingRepository.Table, x => x.Id, y => y.CustomerId,
+                        (x, y) => new { Customer = x, Mapping = y })
+                    .Where(z => z.Mapping.CustomerRoleId == registeredRole.Id)
+                    .Select(z => z.Customer)
+                    .Distinct();
+            }
+
+            query = query.OrderBy(c => c.Email);
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<IList<NexportProductMapping>> GetAllProductMappingsByCatalogIdAsync(Guid catalogId)
+        {
+            return await _nexportProductMappingRepository.Table.Where(x => x.NexportCatalogId == catalogId).ToListAsync();
         }
     }
 }

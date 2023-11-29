@@ -164,14 +164,19 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                     var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(order.Id, orderItem.Id);
                                                     if (wholesaleOrderInfo != null)
                                                     {
-                                                        if (wholesaleOrderInfo.Redeemed > 0)
-                                                        {
-                                                            wholesaleOrderInfo.Redeemed--;
-                                                            wholesaleOrderInfo.Available++;
+                                                        //if (wholesaleOrderInfo.Redeemed > 0)
+                                                        //{
+                                                        //    wholesaleOrderInfo.Redeemed--;
+                                                        //    wholesaleOrderInfo.Available++;
 
-                                                            await _nexportService.UpdateWholesaleOrderInfoAsync(
-                                                                wholesaleOrderInfo);
-                                                        }
+                                                        //    await _nexportService.UpdateWholesaleOrderInfoAsync(
+                                                        //        wholesaleOrderInfo);
+                                                        //}
+
+                                                        wholesaleOrderInfo.Available++;
+
+                                                        await _nexportService.UpdateWholesaleOrderInfoAsync(
+                                                            wholesaleOrderInfo);
                                                     }
 
                                                     await _nexportService.DeleteNexportOrderInvoiceResetRedemptionQueueItem(queueItem);

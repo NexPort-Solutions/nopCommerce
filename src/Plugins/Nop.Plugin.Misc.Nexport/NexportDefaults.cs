@@ -248,5 +248,15 @@ namespace Nop.Plugin.Misc.Nexport
         public const string NEXPORT_PURCHASING_AGENT_PERMISSION = "ActAsPurchasingAgent";
 
         public const string REMOTE_SYS_NAME_FOR_API = "Marketplace";
+
+        public const string CR_MANAGE_WHOLESALE_NAME = "Manage Nexport Wholesale Purchases";
+
+        public const string CR_MANAGE_WHOLESALE_SYS_NAME = "ManageNexportWholesalePurchases";
+
+        public const string REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE = "Nexport.Redemption.StudentNotification";
+
+
+        //public const string NEXPORT_MANUAL_REDEMPTION_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE =
+        //    "Nexport.ManualRedemption.CustomerNotification";
     }
 }

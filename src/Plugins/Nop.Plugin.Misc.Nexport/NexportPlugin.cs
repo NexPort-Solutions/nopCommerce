@@ -122,14 +122,14 @@ namespace Nop.Plugin.Misc.Nexport
             var wholesaleNode = new SiteMapNode()
             {
                 SystemName = "Nexport",
-                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions),
+                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases),
                 Title = "Nexport Wholesale",
                 IconClass = "fas fa-shopping-basket",
             };
 
             wholesaleNode.ChildNodes.Add(new SiteMapNode()
             {
-                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions),
+                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases),
                 Title = "Wholesale Purchases",
                 SystemName = "Wholesale Purchases",
                 ControllerName = "NexportWholesale",
@@ -138,7 +138,7 @@ namespace Nop.Plugin.Misc.Nexport
             });
             wholesaleNode.ChildNodes.Add(new SiteMapNode()
             {
-                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions),
+                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases),
                 Title = "New Wholesale Order",
                 SystemName = "New Wholesale Order",
                 ControllerName = "NexportWholesale",

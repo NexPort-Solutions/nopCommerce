@@ -139,7 +139,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                             var store = await _storeService.GetStoreByIdAsync(order.StoreId);
 
 
-                            var isWholesale = await _genericAttributeService.GetAttributeAsync<bool>(order, "isWholesale", store.Id);
+                            var isWholesale = await _genericAttributeService.GetAttributeAsync<bool>(order, "isWholesaleOrder", store.Id);
                             if (isWholesale)
                             {
                                 completeOrder = await ProcessNexportWholesaleOrderAsync(queueItem, order, store);

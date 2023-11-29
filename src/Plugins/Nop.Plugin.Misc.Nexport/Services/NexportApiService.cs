@@ -9,6 +9,7 @@ using NexportApi.Api;
 using NexportApi.Client;
 using NexportApi.Model;
 using Nop.Core.Infrastructure;
+using Nop.Plugin.Misc.Nexport.Migrations;
 using Nop.Plugin.Misc.Nexport.Models.Api;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
@@ -840,6 +841,33 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result = nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
                     new RedeemInvoiceItemRequest(invoiceItemRedemptionCode: invoiceItemRedemptionCode, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction));
+
+            return result;
+        }
+
+        public InvoiceRedemptionResponse RedeemOpenEndedNexportInvoice([NotNull] string url, [NotNull] string accessToken,
+            Guid redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction, string? invoiceItemRedemptionCode, Guid? productId, Enums.ProductTypeEnum productType)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new NullReferenceException("Api url cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new NullReferenceException("Access token cannot be empty");
+
+            if(!productId.HasValue)
+                throw new NullReferenceException("Product Id cannot be null");
+
+            _apiConfiguration.BasePath = url;
+
+            var nexportApi = new PointOfSaleApi(_apiConfiguration)
+            {
+                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+            };
+
+            var result = nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
+                new RedeemInvoiceItemRequest(invoiceItemRedemptionCode: invoiceItemRedemptionCode, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction,
+                    productId:productId.Value, productType:productType));
 
             return result;
         }
