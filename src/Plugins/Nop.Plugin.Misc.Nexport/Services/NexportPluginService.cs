@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.ScheduleTasks;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Configuration;
+using Nop.Services.Customers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
@@ -30,6 +32,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IMessageTemplateService _messageTemplateService;
         private readonly IRepository<ActivityLogType> _activityLogTypeRepository;
         private readonly ILogger _logger;
+        private readonly ICustomerService _customerService;
 
         public NexportPluginService(
             EmailAccountSettings emailAccountSettings,
@@ -41,7 +44,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             ICustomerActivityService customerActivityService,
             IMessageTemplateService messageTemplateService,
             IRepository<ActivityLogType> activityLogTypeRepository,
-            ILogger logger)
+            ILogger logger,
+            ICustomerService customerService)
         {
             _emailAccountSettings = emailAccountSettings;
             _scheduleTaskService = scheduleTaskService;
@@ -53,6 +57,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _messageTemplateService = messageTemplateService;
             _activityLogTypeRepository = activityLogTypeRepository;
             _logger = logger;
+            _customerService = customerService;
         }
 
         public async Task InstallScheduledTaskAsync()
@@ -371,6 +376,35 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
                 });
             }
+            //TODO @js - add real template for customer manual redemption here
+            //if (!messageTemplates.Any(x =>
+            //        x.Name.Equals(NexportDefaults.NEXPORT_MANUAL_REDEMPTION_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE)))
+            //{
+            //    await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
+            //    {
+            //        Name = NexportDefaults.NEXPORT_MANUAL_REDEMPTION_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE,
+            //        Subject = "New Redemption",
+            //        Body = $"This is a placeholder template for manual redemption. Just here to be able to test that emailing is working. I will add the real template later",
+            //        IsActive = true,
+            //        EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
+            //    });
+            //}
+
+            if (!messageTemplates.Any(x =>
+                    x.Name.Equals(NexportDefaults.REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE)))
+            {
+                await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
+                {
+                    Name = NexportDefaults.REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE,
+                    Subject = "Redemption assigned",
+                    Body = $"<p>{Environment.NewLine}"
+                           + $"An item has been redeemed to your account.<br />{Environment.NewLine}"
+                           + $"<br />{Environment.NewLine}"
+                           + $"Please click <a href=\"%Redemption.AcceptRedemptionUrl%\">here</a> to accept it.</p>{Environment.NewLine}",
+                    IsActive = true,
+                    EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
+                });
+            }
         }
 
         public async Task DeleteMessageTemplatesAsync()
@@ -654,6 +688,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Products", "Products");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions", "Assignments");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem", "Assign");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining", "Training:");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectCustomer", "Customer:");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType", "AssignmentType:");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option1", "By Email");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option2", "Instantly");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Modify", "Modify Assignment");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Errors.MixedRedemptionTypeNotAllowedInShoppingCart", "Cannot add this product to the other products in the cart due to restriction on the product mapping.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.AssignWhenRedeemed", "Assign When Redeemed");
@@ -925,6 +964,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Errors.MixedRedemptionTypeNotAllowedInShoppingCart");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.AssignWhenRedeemed");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Unassign.Confirmation");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectCustomer");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option1");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option2");
         }
         
         public async Task InstallPermissionProviderAsync()

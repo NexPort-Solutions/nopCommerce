@@ -1790,8 +1790,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
                 if (orderInfos != null)
                 {
-                    foreach (var orderInfo in orderInfos.Where(orderInfo =>
-                                 orderInfo.Awaiting > 0 || orderInfo.Redeemed > 0))
+                    foreach (var orderInfo in orderInfos)
                     {
                         var invoiceItems =
                             await _nexportService.FindNexportOrderInvoiceItems(orderInfo.OrderId,
@@ -1801,7 +1800,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                             continue;
 
                         foreach (var invoiceItem in invoiceItems.Where(invoiceItem =>
-                                     invoiceItem.RedeemingUserId.HasValue))
+                                     invoiceItem.RedemptionStatus!=NexportOrderInvoiceItemRedemptionStatus.Available))
                         {
                             var redemptionItem = new NexportGroupProductRedemptionModel
                             {
@@ -1916,12 +1915,62 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             if (product != null)
             {
                 model.CurrentProduct = product;
+
+                var invoiceItem = await _nexportService.GetFirstAvailableInvoiceItemForGroupIdAndProductIdAsync(groupId, productId);
+
+                if (invoiceItem != null)
+                {
+                    model.InvoiceItemId = invoiceItem.InvoiceItemId;
+
+                    var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+
+                    var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
+
+                    if (order != null && orderItem != null)
+                    {
+                        var mappingInfo = await _genericAttributeService.GetAttributeAsync<string>(orderItem,
+                            $"ProductMapping-{order.Id}-{orderItem.Id}", order.StoreId);
+
+                        // Retrieve the stored mapping info if existed; otherwise, get the current mapping info
+                        var mapping = mappingInfo != null
+                            ? JsonConvert.DeserializeObject<NexportProductMapping>(mappingInfo)
+                            : await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId, order.StoreId) ??
+                              await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
+                        if (mapping != null)
+                        {
+                            if (mapping.AssignWhenRedeemed.HasValue && mapping.AssignWhenRedeemed.Value)
+                            {
+                                model.ProductMappingIdForOpenEndedProduct = mapping.Id;
+                                var listOfMappings = await _nexportService.GetAllProductMappingsByCatalogIdAsync(mapping.NexportCatalogId);
+
+                                model.AvailableMappings = new List<SelectListItem>();
+
+                                foreach (var productMapping in listOfMappings)
+                                {
+                                    if (!productMapping.AutoRedeem && productMapping.NexportSyllabusId!=null)
+                                    {
+                                        var productMappingProduct = await _productService.GetProductByIdAsync(productMapping.NopProductId);
+                                        if (productMappingProduct != null)
+                                        {
+                                            model.AvailableMappings.Add(new SelectListItem(productMappingProduct.Name,
+                                                $"{productMapping.Id}"));
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                model.SelectedProductMappingId = mapping.Id;
+
+                                model.AvailableMappings = new List<SelectListItem>
+                                {
+                                    new SelectListItem(product.Name, $"{mapping.Id}")
+                                };
+                            }
+                        }
+                    }
+                }
             }
-
-            var invoiceItem = await _nexportService.GetFirstAvailableInvoiceItemForGroupIdAndProductIdAsync(groupId, productId);
-
-            if (invoiceItem != null)
-                model.InvoiceItemId = invoiceItem.InvoiceItemId;
 
             if (groupId == null)
                 return model;

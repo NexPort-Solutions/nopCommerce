@@ -15,6 +15,31 @@
 
     var currentGroupId = @Model.CurrentGroup.Id?.ToString() ?? "null";
 }
+<style>
+    .assignment-type {
+        display: inline-block;
+    }
+
+    .assignment-type span {
+        display: inline-block;
+        margin: 0 5px;
+    }
+
+    .assignment-type span > * {
+        display: inline !important;
+        margin: 0 5px;
+        line-height: 32px;
+    }
+
+    .assignment-type span {
+        margin: 0 10px 0 0;
+    }
+
+    .assignment-type span > * {
+        margin: 0 5px 0 0;
+    }
+
+</style>
 <div class="page-title">
     <nav aria-label="Breadcrumb">
         <ul class="uk-breadcrumb">
@@ -43,38 +68,54 @@
     <h1>@redeemOrModifyText</h1>
 </div>
 <div class="page-body">
-    <form asp-route="RedeemProductForCustomer" method="post" autocomplete="off">
-        @* asp-route-returnurl="@returnUrl" *@
+    <form asp-controller="NexportWholesale" asp-action="RedeemProductForCustomer">
         <div asp-validation-summary="ModelOnly" class="message-error"></div>
         <div class="fieldset">
             <div class="form-fields">
                 <div class="inputs">
-                    User:<input />
-                    @*   <label asp-for="OldPassword" asp-postfix=":"></label>
-                    <input asp-for="OldPassword" />
-                    <nop-required />
-                    <span asp-validation-for="OldPassword"></span> *@
+                    <label for="search-customer-name-email">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectCustomer")</label>
+                    <input type="text" id="search-customer-name-email" autocomplete="off" class="form-control" />
+                    <input asp-for="CustomerId" style="display: none;" />
+                    <input asp-for="InvoiceItemId" style="display: none;" />
+                    <input asp-for="ProductMappingIdForOpenEndedProduct" style="display:none"/>
+                    <input name="ReturnUrl" id="ReturnUrl" value="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)" style="display: none;" />
+                    
                 </div>
                 <div class="inputs">
-                    Email or redeem instantly
-                    @* <label asp-for="NewPassword" asp-postfix=":"></label>
-                    <input asp-for="NewPassword" />
-                    <nop-required />
-                    <span asp-validation-for="NewPassword"></span> *@
+                    <label for="TrainingProductMappingId">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining")</label>
+                    <nop-select asp-for="SelectedProductMappingId" asp-items="Model.AvailableMappings" asp-multiple="false" title="Select Training" asp-required="false"/>
                 </div>
-                @* <div class="inputs">
-                    <label asp-for="ConfirmNewPassword" asp-postfix=":"></label>
-                    <input asp-for="ConfirmNewPassword" />
-                    <nop-required />
-                    <span asp-validation-for="ConfirmNewPassword"></span> 
-                </div> *@
+                <div class="inputs">
+                    <label for="assignment-type">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType")</label>
+                    <div id="assignment-type" class="assignment-type">
+                        <span class="assignment-type-email">
+                            <input type="radio" asp-for="AssignmentType" value="Email" id="assignment-type-email" />
+                            <label class="forcheckbox" for="assignment-type-email">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option1")</label>
+                        </span>
+                        <span class="assignment-type-instant">
+                            <input type="radio" asp-for="AssignmentType" value="Instant" id="assignment-type-instant" />
+                            <label class="forcheckbox" for="assignment-type-instant">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option2")</label>
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="buttons">
             <button type="submit" class="button-1" >Submit</button>
-            @* <button type="submit" class="button-1 change-password-button">@T("Account.ChangePassword.Button")</button> *@
         </div>
     </form>
 </div>
 <script>
+    $(document).ready(function () {
+        $('#search-customer-name-email').autocomplete({
+            delay: 500,
+            minLength: 3,
+            source: '@Url.Action("SearchCustomers", "NexportWholesale")',
+            select: function (event, ui) {
+                $('#@Html.IdFor(model => model.CustomerId)').val(ui.item.customerId);
+                $('#search-customer-name-email').val(ui.item.label);
+                return false;
+            }
+        });
+    });
 </script>

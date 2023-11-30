@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using DocumentFormat.OpenXml.Spreadsheet;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -106,6 +107,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly ILogger _logger;
         private readonly IRepository<Store> _storeRepository;
         private readonly IRepository<NexportOrderInvoiceResetRedemptionQueueItem> _nexportOrderInvoiceResetRedemptionQueueRepository;
+        private readonly IRepository<Customer> _customerRepository;
+        private readonly IRepository<CustomerCustomerRoleMapping> _customerCustomerRoleMappingRepository;
 
         #endregion
 
@@ -169,7 +172,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IStoreContext storeContext,
             ILogger logger,
             IRepository<Store> storeRepository,
-            IRepository<NexportOrderInvoiceResetRedemptionQueueItem> nexportOrderInvoiceResetRedemptionQueueRepository)
+            IRepository<NexportOrderInvoiceResetRedemptionQueueItem> nexportOrderInvoiceResetRedemptionQueueRepository,
+            IRepository<Customer> customerRepository,
+            IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMapping)
         {
             _nexportApiService = nexportApiService;
             _emailAccountSettings = emailAccountSettings;
@@ -230,6 +235,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _logger = logger;
             _storeRepository = storeRepository;
             _nexportOrderInvoiceResetRedemptionQueueRepository = nexportOrderInvoiceResetRedemptionQueueRepository;
+            _customerRepository = customerRepository;
+            _customerCustomerRoleMappingRepository = customerCustomerRoleMapping;
         }
 
         #endregion
@@ -364,6 +371,35 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 var toEmail = emailAccount.Email;
                 var toName = emailAccount.DisplayName;
+
+                return await _workflowMessageService.SendNotificationAsync(messageTemplate, emailAccount,
+                    languageId, tokens, toEmail, toName);
+            }).ToListAsync();
+        }
+
+        public async Task<IList<int>> SendNewNexportManualRedemptionCustomerNotificationAsync(Customer customer, Order order, int languageId)
+        {
+            if (order == null)
+                throw new ArgumentNullException(nameof(order));
+
+            var store = await _storeService.GetStoreByIdAsync(order.StoreId);
+            languageId = await EnsureLanguageIsActiveAsync(languageId, store.Id);
+
+            var messageTemplates = await GetActiveMessageTemplatesAsync(
+                NexportDefaults.REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE, store.Id);
+            if (!messageTemplates.Any())
+                return new List<int>();
+
+            var commonTokens = new List<Token>();
+            await _messageTokenProvider.AddOrderTokensAsync(commonTokens, order, languageId);
+
+            return await messageTemplates.SelectAwait(async messageTemplate =>
+            {
+                var emailAccount = await GetEmailAccountOfMessageTemplateAsync(messageTemplate, languageId);
+                var toEmail = customer.Email;
+                var toName = $"{customer.FirstName} {customer.LastName}";
+                var tokens = new List<Token>(commonTokens);
+                await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
 
                 return await _workflowMessageService.SendNotificationAsync(messageTemplate, emailAccount,
                     languageId, tokens, toEmail, toName);
@@ -1474,7 +1510,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task<bool> RedeemNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId,
+        public async Task<bool> RedeemNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId,NexportProductMapping? mapping = null,
             RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction =
                 RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
         {
@@ -1487,7 +1523,68 @@ namespace Nop.Plugin.Misc.Nexport.Services
             try
             {
                 var redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode);
+                        _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode);
+
+                if (redeemInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
+                    throw new ApiException((int)redeemInvoiceResult.ApiErrorEntity.ErrorCode,
+                        redeemInvoiceResult.ApiErrorEntity.ErrorMessage);
+
+                invoiceItem.RedeemingUserId = redeemingUserId;
+                invoiceItem.UtcDateRedemption = redeemInvoiceResult.UtcRedemptionDate;
+                invoiceItem.RequireManualApproval = null;
+                invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Assigned;
+
+
+                if (redeemInvoiceResult.RedemptionEnrollmentId != null)
+                {
+                    invoiceItem.RedemptionEnrollmentId = redeemInvoiceResult.RedemptionEnrollmentId;
+                }
+
+                await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                var errMsg =
+                    $"Error occurred during RedeemInvoiceItem api call with the parameters: invoice_item_id - {invoiceItem.InvoiceItemId}, redeeming_user_id - {redeemingUserId}, redemption_action_type - {redemptionAction}";
+                await _logger.ErrorAsync($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<InvoiceRedemptionResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+        }
+
+        public async Task<bool> RedeemOpenEndedNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId,NexportProductMapping? mapping = null,
+            RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction =
+                RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
+        {
+            if (invoiceItem == null)
+                throw new ArgumentNullException(nameof(invoiceItem));
+
+            if (redeemingUserId == Guid.Empty)
+                throw new ArgumentException("Redeeming User Id cannot be empty identifier", nameof(redeemingUserId));
+
+            try
+            {
+                InvoiceRedemptionResponse redeemInvoiceResult;
+                if(mapping.Type==NexportProductTypeEnum.Catalog){ 
+                    redeemInvoiceResult = _nexportApiService.RedeemOpenEndedNexportInvoice(_nexportSettings.Url,
+                        _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode, mapping.NexportCatalogId,Enums.ProductTypeEnum.Catalog );
+                }
+                else
+                {
+                    redeemInvoiceResult = _nexportApiService.RedeemOpenEndedNexportInvoice(_nexportSettings.Url,
+                        _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode, mapping.NexportCatalogSyllabusLinkId, Enums.ProductTypeEnum.Syllabus );
+                }
 
                 if (redeemInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
                     throw new ApiException((int)redeemInvoiceResult.ApiErrorEntity.ErrorCode,
