@@ -377,7 +377,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }).ToListAsync();
         }
 
-        public async Task<IList<int>> SendNewNexportManualRedemptionCustomerNotificationAsync(Customer customer, Order order, int languageId)
+        public async Task<IList<int>> SendNewNexportManualRedemptionCustomerNotificationAsync(Customer customer, Order order,int invoiceItemId, int languageId)
         {
             if (order == null)
                 throw new ArgumentNullException(nameof(order));
@@ -399,6 +399,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 var toEmail = customer.Email;
                 var toName = $"{customer.FirstName} {customer.LastName}";
                 var tokens = new List<Token>(commonTokens);
+
+                //ensure that the store URL is specified
+                if (string.IsNullOrEmpty(store.Url))
+                    throw new Exception("URL cannot be null");
+
+                //generate the relative URL
+                var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+                var url = urlHelper.RouteUrl("RedeemByEmail", new {invoiceItemId=invoiceItemId});
+                var path = new Uri(new Uri(store.Url), url).AbsoluteUri;
+                tokens.Add(new Token("Redemption.AcceptRedemptionUrl",path, true));
+
                 await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
 
                 return await _workflowMessageService.SendNotificationAsync(messageTemplate, emailAccount,
@@ -1510,7 +1521,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task<bool> RedeemNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId,NexportProductMapping? mapping = null,
+        public async Task<bool> RedeemNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, NexportProductMapping? mapping = null,
             RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction =
                 RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
         {
@@ -1563,7 +1574,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task<bool> RedeemOpenEndedNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId,NexportProductMapping? mapping = null,
+        public async Task<bool> RedeemOpenEndedNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, NexportProductMapping? mapping = null,
             RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction =
                 RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
         {
@@ -1576,14 +1587,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
             try
             {
                 InvoiceRedemptionResponse redeemInvoiceResult;
-                if(mapping.Type==NexportProductTypeEnum.Catalog){ 
+                if (mapping.Type == NexportProductTypeEnum.Catalog)
+                {
                     redeemInvoiceResult = _nexportApiService.RedeemOpenEndedNexportInvoice(_nexportSettings.Url,
-                        _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode, mapping.NexportCatalogId,Enums.ProductTypeEnum.Catalog );
+                        _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode, mapping.NexportCatalogId, Enums.ProductTypeEnum.Catalog);
                 }
                 else
                 {
                     redeemInvoiceResult = _nexportApiService.RedeemOpenEndedNexportInvoice(_nexportSettings.Url,
-                        _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode, mapping.NexportCatalogSyllabusLinkId, Enums.ProductTypeEnum.Syllabus );
+                        _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode, mapping.NexportCatalogSyllabusLinkId, Enums.ProductTypeEnum.Syllabus);
                 }
 
                 if (redeemInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
@@ -1904,34 +1916,45 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
                 foreach (var orderItem in orderItems)
                 {
-                    var orderInvoiceItem = await FindNexportOrderInvoiceItem(order.Id, orderItem.Id);
-                    if (orderInvoiceItem?.UtcDateRedemption != null)
+                    // this method doesn't work for wholesale
+                    //var orderInvoiceItem = await FindNexportOrderInvoiceItem(order.Id, orderItem.Id);
+                    var orderInvoiceItems = await FindNexportOrderInvoiceItems(order.Id, orderItem.Id);
+                    if (orderInvoiceItems != null)
                     {
-                        var invoiceRedemption = await GetNexportInvoiceRedemptionAsync(orderInvoiceItem.InvoiceItemId)!;
-                        if (invoiceRedemption != null && invoiceRedemption?.ApiErrorEntity.ErrorCode == 0)
+                        foreach (var orderInvoiceItem in orderInvoiceItems)
                         {
-                            if (!organizationModelList.Exists(i => i.OrgId == invoiceRedemption.OrganizationId))
+                            if (orderInvoiceItem?.UtcDateRedemption != null)
                             {
-                                var availableOrganizations = await FindAllOrganizationsAsync(invoiceRedemption.OrganizationId);
-
-                                var org = availableOrganizations.FirstOrDefault(o =>
-                                        o.OrgId == invoiceRedemption.OrganizationId);
-
-                                if (org != null)
+                                var invoiceRedemption =
+                                    await GetNexportInvoiceRedemptionAsync(orderInvoiceItem.InvoiceItemId)!;
+                                if (invoiceRedemption != null && invoiceRedemption?.ApiErrorEntity.ErrorCode == 0)
                                 {
-                                    var model = new NexportOrganizationModel
+                                    if (!organizationModelList.Exists(i => i.OrgId == invoiceRedemption.OrganizationId))
                                     {
-                                        OrgId = org.OrgId,
-                                        OrgName = org.Name,
-                                        OrgShortName = org.ShortName
-                                    };
+                                        var availableOrganizations =
+                                            await FindAllOrganizationsAsync(invoiceRedemption.OrganizationId);
 
-                                    if (checkSubscription && userMapping != null)
-                                    {
-                                        model.Subscription = await FindSubscription(userMapping.NexportUserId, org.OrgId);
+                                        var org = availableOrganizations.FirstOrDefault(o =>
+                                            o.OrgId == invoiceRedemption.OrganizationId);
+
+                                        if (org != null)
+                                        {
+                                            var model = new NexportOrganizationModel
+                                            {
+                                                OrgId = org.OrgId,
+                                                OrgName = org.Name,
+                                                OrgShortName = org.ShortName
+                                            };
+
+                                            if (checkSubscription && userMapping != null)
+                                            {
+                                                model.Subscription =
+                                                    await FindSubscription(userMapping.NexportUserId, org.OrgId);
+                                            }
+
+                                            organizationModelList.Add(model);
+                                        }
                                     }
-
-                                    organizationModelList.Add(model);
                                 }
                             }
                         }

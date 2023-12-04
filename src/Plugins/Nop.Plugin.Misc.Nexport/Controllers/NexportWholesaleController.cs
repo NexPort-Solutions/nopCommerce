@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Diagnostics;
 using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Domain.Localization;
@@ -12,6 +13,7 @@ using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
+using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Logging;
@@ -36,6 +38,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         private readonly IOrderService _orderService;
         private readonly ILogger _logger;
         private readonly LocalizationSettings _localizationSettings;
+        private readonly IProductService _productService;
 
         #endregion
 
@@ -51,7 +54,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             ILogger logger,
         IPermissionService permissionService,
             LocalizationSettings localizationSettings,
-            IOrderService orderService)
+            IOrderService orderService,
+            IProductService productService)
         {
             _nexportPluginModelFactory = nexportPluginModelFactory;
             _genericAttributeService = genericAttributeService;
@@ -63,6 +67,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _permissionService = permissionService;
             _localizationSettings = localizationSettings;
             _orderService = orderService;
+            _productService = productService;
         }
 
         #endregion
@@ -176,7 +181,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 {
                     var orderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
                         invoiceItem.OrderItemId);
-                    if (orderInfo != null && orderInfo.Available>0)
+                    if (orderInfo != null && orderInfo.Available > 0)
                     {
 
                         var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
@@ -241,7 +246,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                                     if (customer != null)
                                     {
                                         await _nexportService.SendNewNexportManualRedemptionCustomerNotificationAsync(
-                                            customer, order,
+                                            customer, order, invoiceItem.Id,
                                             _localizationSettings.DefaultAdminLanguageId);
                                         invoiceItem.RedeemingUserId = userMapping.NexportUserId;
                                         invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
@@ -390,6 +395,28 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }).ToList();
 
             return Json(result);
+        }
+
+        [HttpsRequirement]
+        public virtual async Task<IActionResult> RedeemByEmail(int invoiceItemId)
+        {
+            var model = new RedeemByEmailModel();
+            var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemById(invoiceItemId);
+            if (invoiceItem != null)
+            {
+                var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
+                if (orderItem != null)
+                {
+                    var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
+
+                    model.InvoiceItemId = invoiceItemId;
+                    model.Redeemed = true;
+                    model.ProductName = product?.Name;
+                    model.RedeemedDate = invoiceItem.UtcDateProcessed;
+                }
+
+            }
+            return View("~/Plugins/Misc.Nexport/Views/RedeemByEmail.cshtml", model);
         }
 
         #endregion

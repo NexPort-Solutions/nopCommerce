@@ -100,6 +100,7 @@
     <None Remove="Views\ProductMappingGroupMembership.cshtml" />
     <None Remove="Views\ProductMappingTable.cshtml" />
     <None Remove="Views\Product\_AddToCart.cshtml" />
+    <None Remove="Views\RedeemByEmail.cshtml" />
     <None Remove="Views\RedeemProduct.cshtml" />
     <None Remove="Views\RegistrationField\_CustomerFields.Control.cshtml" />
     <None Remove="Views\RegistrationField\_CustomerFields.cshtml" />
@@ -302,6 +303,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\MapNexportProductList.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\RedeemByEmail.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\RedeemProduct.cshtml">

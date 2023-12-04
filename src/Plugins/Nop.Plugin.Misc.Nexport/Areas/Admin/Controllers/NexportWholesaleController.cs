@@ -449,7 +449,7 @@ public class NexportWholesaleController : BaseAdminController
                                     if (customer != null)
                                     {
                                         await _nexportService.SendNewNexportManualRedemptionCustomerNotificationAsync(
-                                    customer, order,
+                                    customer, order,invoiceItem.Id,
                                             _localizationSettings.DefaultAdminLanguageId);
                                         invoiceItem.RedeemingUserId = userMapping.NexportUserId;
                                         invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
@@ -470,6 +470,7 @@ public class NexportWholesaleController : BaseAdminController
 
             return Redirect(model.returnUrl);
         }
+
         [HttpPost]
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> InvoiceItemUnassign(Guid invoiceItemId)

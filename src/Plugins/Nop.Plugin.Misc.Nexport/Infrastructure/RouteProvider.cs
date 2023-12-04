@@ -86,7 +86,9 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 "customer/nexportgroups/products/redemptions/redeem",
                 new { controller = "NexportWholesale", action = "RedeemProduct" });
 
-            
+            endpointRouteBuilder.MapControllerRoute(name: "RedeemByEmail",
+                pattern: $"redeembyemail/{{invoiceItemId:min(0)}}",
+                defaults: new { controller = "NexportWholesale", action = "RedeemByEmail" });
         }
     }
 }
