@@ -1,0 +1,39 @@
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Wholesale
+@using Nop.Plugin.Misc.Nexport.Extensions
+
+@model WholesaleCreateModel
+
+@{
+    ViewBag.PageTitle = T("Admin.Customers.Nexport.Order.Wholesale.Create").Text;
+    NopHtml.SetActiveMenuItemSystemName("Orders");
+}
+
+<form id="target" asp-controller="@(ViewUtilities.GetControllerName<WholesaleController>())"
+      asp-action="@nameof(WholesaleController.PlaceWholesaleOrder)"
+      onchange="checkValidForm();"
+      method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Admin.Customers.Nexport.Order.Wholesale.Create")
+            <small>
+                <i class="fas fa-arrow-circle-left"></i>
+                <a asp-action="List" asp-controller="Order">
+                    @T("Admin.Customers.Nexport.Order.Wholesale.BackToList")
+                </a>
+            </small>
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.Save")
+            </button>
+            <button type="submit" name="save-continue" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.SaveContinue")
+            </button>
+        </div>
+    </div>
+    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/Wholesale/_CreateOrUpdate.cshtml", Model)
+</form>

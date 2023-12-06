@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Nop.Data.Mapping;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 
@@ -14,7 +15,8 @@ namespace Nop.Plugin.Misc.Nexport.Data
             { typeof(NexportOrderProcessingQueueItem), "NexportOrderProcessingQueue" },
             { typeof(NexportOrderInvoiceRedemptionQueueItem), "NexportOrderInvoiceRedemptionQueue" },
             { typeof(NexportRegistrationFieldSynchronizationQueueItem), "NexportRegistrationFieldSynchronizationQueue" },
-            { typeof(NexportGroupMembershipRemovalQueueItem), "NexportGroupMembershipRemovalQueue" }
+            { typeof(NexportGroupMembershipRemovalQueueItem), "NexportGroupMembershipRemovalQueue" },
+            { typeof(FundingPool), "NexportFundingPool" },
         };
 
         public Dictionary<(Type, string), string> ColumnName => new Dictionary<(Type, string), string>();

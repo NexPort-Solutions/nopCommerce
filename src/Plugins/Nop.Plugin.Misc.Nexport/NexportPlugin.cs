@@ -24,6 +24,9 @@ using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
 using Nop.Plugin.Misc.Nexport.Components;
+using DocumentFormat.OpenXml.Drawing;
+using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
 
 namespace Nop.Plugin.Misc.Nexport
 {
@@ -124,11 +127,20 @@ namespace Nop.Plugin.Misc.Nexport
                 Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesaleRedemptions),
                 Title = "Nexport Groups",
                 SystemName = "Nexport Groups",
-                ControllerName = "NexportWholesale",
-                ActionName = "AdminNexportGroups",
+                ControllerName = ViewUtilities.GetControllerName<WholesaleController>(),
+                ActionName = nameof(WholesaleController.AdminNexportGroups),
                 IconClass = "far fa-dot-circle"
             });
 
+            node.ChildNodes.Add(new SiteMapNode()
+            {
+                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools),
+                Title = "Nexport Funding Pools",
+                SystemName = "Nexport Funding Pools",
+                ControllerName = ViewUtilities.GetControllerName<FundingPoolController>(),
+                ActionName = nameof(FundingPoolController.List),
+                IconClass = "far fa-dot-circle"
+            });
             rootNode.ChildNodes.Add(node);
         }
 

@@ -4,9 +4,9 @@ using Nop.Data.Migrations;
 namespace Nop.Plugin.Misc.Nexport.Migrations;
 
 [Tags(NexportDefaults.PluginMigrationTag)]
-[Migration(28, "Add NexportFundingPool table")]
+[Migration(32, "Add NexportFundingPool table")]
 [SkipMigration]
-public class M0028_AddNexportFundingPool : Migration
+public class M0032_CreateNexportFundingPool : Migration
 {
     private const string TABLE_NAME = "NexportFundingPool";
 
@@ -14,7 +14,7 @@ public class M0028_AddNexportFundingPool : Migration
     {
         Create.Table(TABLE_NAME)
             .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Name").AsInt32();
+            .WithColumn("Name").AsString(255);
     }
 
     public override void Down()

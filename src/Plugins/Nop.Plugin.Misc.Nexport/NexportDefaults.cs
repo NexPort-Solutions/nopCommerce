@@ -220,5 +220,8 @@ namespace Nop.Plugin.Misc.Nexport
         public const string NEXPORT_PURCHASE_PRODUCT_FOR_CUSTOMER = "Nexport.PurchaseForCustomer";
 
         public const string NEXPORT_ADD_GROUP_PERMISSION = "AddGroup";
+        public const string GROUP_MEMBERSHIP = "GroupMembership";
+        public const string REDEEM_BY_UTC = "RedeemByUtc";
+        public const string FUNDING_POOL = "FundingPool";
     }
 }

@@ -622,7 +622,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName", "Name");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName.Hint", "Filter registration fields list by name.");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Go", "Go to created order");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Products.OrderWholesale", "Order wholesale");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.RedeemBy", "Redeem-By Date");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited", "Unlimited redemption");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Organization", "Organization");
@@ -635,6 +635,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Modify", "Modify Assignment");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Errors.MixedRedemptionTypeNotAllowedInShoppingCart", "Cannot add this product to the other products in the cart due to restriction on the product mapping.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.AssignWhenRedeemed", "Assign When Redeemed");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool", "Funding Pool");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Create", "Create new wholesale order");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.BackToList", "Back to list");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.FundingPools", "Funding pools");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool.Create", "Create new funding pool");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool.Edit", "Edit funding pool");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool.Fields.Name", "Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool.Fields.Code", "Code");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool.Fields.Description", "Description");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool.BackToList", "Back to list");
         }
 
         public async Task DeleteResourcesAsync()
@@ -888,7 +898,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName.Hint");
-            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Go");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Products.OrderWholesale");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.RedeemBy");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Organization");
@@ -901,6 +911,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Modify");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Errors.MixedRedemptionTypeNotAllowedInShoppingCart");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.AssignWhenRedeemed");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.Create");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Wholesale.BackToList");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool.Create");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool.Edit");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool.Fields.Name");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool.Fields.Code");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.FundingPool.Fields.Description");
         }
         
         public async Task InstallPermissionProviderAsync()

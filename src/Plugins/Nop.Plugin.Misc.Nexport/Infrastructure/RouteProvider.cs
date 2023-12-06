@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using DocumentFormat.OpenXml.Drawing;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
+using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure
@@ -50,43 +52,39 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 "admin/store/list",
                 new { area = "Admin", controller = "NexportStore", action = "List" });
 
-
-
+            var wholesaleAdmin = ViewUtilities.GetControllerName<Areas.Admin.Controllers.WholesaleController>();
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Groups",
                 "Admin/NexportIntegration/NexportGroups",
-                new { area = "Admin", controller = "NexportWholesale", action = "AdminNexportGroups" });
+                new { area = "Admin", controller = wholesaleAdmin, action = nameof(Areas.Admin.Controllers.WholesaleController.AdminNexportGroups) });
 
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Group.Products",
-                "Admin/NexportIntegration/NexportGroups/Products",
-                new {  area = "Admin", controller = "NexportWholesale", action = "AdminNexportGroupProducts" });
+                "Admin/NexportIntegration/Groups/Products",
+                new {  area = "Admin", controller = wholesaleAdmin, action = nameof(Areas.Admin.Controllers.WholesaleController.AdminNexportGroupProducts) });
 
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions",
-                "Admin/NexportIntegration/NexportGroups/Products/Redemptions",
-                new { area = "Admin", controller = "NexportWholesale", action = "AdminNexportGroupProductRedemptions" });
+                "Admin/NexportIntegration/Groups/Products/Redemptions",
+                new { area = "Admin", controller = wholesaleAdmin, action = nameof(Areas.Admin.Controllers.WholesaleController.AdminNexportGroupProductRedemptions) });
 
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions.RedeemOrModify",
-                "Admin/NexportIntegration/NexportGroups/Products/Redemptions/RedeemOrModify",
-                new {area = "Admin", controller = "NexportWholesale", action = "RedeemOrModify" });
+                "Admin/NexportIntegration/Groups/Products/Redemptions/RedeemOrModify",
+                new {area = "Admin", controller = wholesaleAdmin, action = nameof(Areas.Admin.Controllers.WholesaleController.RedeemProduct) });
 
-
-
+            var wholesaleCustomer = ViewUtilities.GetControllerName<Controllers.WholesaleController>();
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Groups",
                 "customer/nexportgroups",
-                new { controller = "NexportWholesale", action = "CustomerNexportGroups" });
+                new { controller = wholesaleCustomer, action = nameof(Controllers.WholesaleController.CustomerNexportGroups) });
 
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Group.Products",
-                "customer/nexportgroups/products",
-                new { controller = "NexportWholesale", action = "CustomerNexportGroupProducts" });
+                "customer/Groups/products",
+                new { controller = wholesaleCustomer, action = nameof(Controllers.WholesaleController.CustomerNexportGroupProducts) });
 
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions",
-                "customer/nexportgroups/products/redemptions",
-                new { controller = "NexportWholesale", action = "CustomerNexportGroupProductRedemptions" });
+                "customer/Groups/products/redemptions",
+                new { controller = wholesaleCustomer, action = nameof(Controllers.WholesaleController.CustomerNexportGroupProductRedemptions) });
 
             endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions.RedeemOrModify",
-                "customer/nexportgroups/products/redemptions/redeemormodify",
-                new { controller = "NexportWholesale", action = "RedeemOrModify" });
-
-            
+                "customer/Groups/products/redemptions/redeemormodify",
+                new { controller = wholesaleCustomer, action = nameof(Controllers.WholesaleController.RedeemProduct) });
         }
     }
 }

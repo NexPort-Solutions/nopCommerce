@@ -1,4 +1,6 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupProductListSearchModel
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers
+@using Nop.Plugin.Misc.Nexport.Extensions
+@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupProductListSearchModel
 
 @{
     string GetUrl(DataUrl dataUrl)
@@ -49,7 +51,7 @@
     let productsTable = new DataTable('#products_table', {
         ajax:
             {
-                url: "@Html.Raw(GetUrl(new DataUrl("GetNexportGroupProducts", "NexportWholesale", null)))?groupId=@(Model.CurrentGroup.Id)",
+            url: "@Html.Raw(GetUrl(new DataUrl(nameof(WholesaleController.GetNexportGroupProducts), ViewUtilities.GetControllerName<WholesaleController>(), null)))?groupId=@(Model.CurrentGroup.Id)",
                 type: "POST",
                 dataType: "json",
                 dataSrc: "Data",

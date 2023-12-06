@@ -1,0 +1,39 @@
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool
+@using Nop.Plugin.Misc.Nexport.Extensions
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders
+
+@model FundingPoolModel
+
+@{
+    ViewBag.PageTitle = T("Plugins.Misc.Nexport.FundingPool.Create").Text;
+    NopHtml.SetActiveMenuItemSystemName("Nexport Plugin");
+}
+
+<form id="target" asp-controller="@(ViewUtilities.GetControllerName<FundingPoolController>())"
+      asp-action="@nameof(FundingPoolController.Save)"
+      onchange="checkValidForm();"
+      method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Plugins.Misc.Nexport.FundingPool.Create")
+            <small>
+                <i class="fas fa-arrow-circle-left"></i>
+                <a asp-action="@nameof(FundingPoolController.List)" asp-controller="@(ViewUtilities.GetControllerName<FundingPoolController>())">
+                    @T("Plugins.Misc.Nexport.FundingPool.BackToList")
+                </a>
+            </small>
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.Save")
+            </button>
+            <button type="submit" name="save-continue" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.SaveContinue")
+            </button>
+        </div>
+    </div>
+    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/FundingPool/_CreateOrUpdate.cshtml", Model)
+</form>

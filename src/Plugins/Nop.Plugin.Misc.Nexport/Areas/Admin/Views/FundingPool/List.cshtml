@@ -1,0 +1,143 @@
+﻿@model FundingPoolSearchModel
+
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool
+@using Nop.Plugin.Misc.Nexport.Domain
+@using Nop.Plugin.Misc.Nexport.Extensions
+@using Nop.Plugin.Misc.Nexport.Services
+@using Nop.Services.Common
+@using Nop.Plugin.Misc.Nexport.Models
+
+@inject IFundingPoolService fundingPool
+
+@{
+    ViewBag.PageTitle = T("Plugins.Misc.Nexport.FundingPools").Text;
+    NopHtml.SetActiveMenuItemSystemName("Nexport");
+}
+
+@{
+    const string hideSearchBlockAttributeName = "FundingPoolPage.HideSearchBlock";
+    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
+    var gridModel = new NexportDataTablesModel
+    {
+        Name = "funding-pools-grid",
+        UrlRead = new DataUrl(nameof(FundingPoolController.List), ViewUtilities.GetControllerName<FundingPoolController>(), null),
+        SearchButtonId = "search-funding-pools",
+        Length = Model.PageSize,
+        LengthMenu = Model.AvailablePageSizes,
+        Filters = new List<FilterParameter>
+            {
+                new FilterParameter(nameof(Model.Name)),
+                new FilterParameter(nameof(Model.Code)),
+                new FilterParameter(nameof(Model.Description)),
+            },
+        ColumnCollection = new List<ColumnProperty>
+            {
+                new(nameof(FundingPoolModel.Id))
+                {
+                    IsMasterCheckBox = true,
+                    Render = new RenderCheckBox("checkbox_fundingpools"),
+                    ClassName =  NopColumnClassDefaults.CenterAll,
+                    Width = "50"
+                },
+                new(nameof(FundingPoolModel.Name))
+                {
+                    Title = T("Plugins.Misc.Nexport.FundingPool.Fields.Name").Text,
+                    Width = "80"
+                },
+                new(nameof(FundingPoolModel.Code))
+                {
+                    Title = T("Plugins.Misc.Nexport.FundingPool.Fields.Code").Text,
+                    Width = "100",
+                },
+                new(nameof(FundingPoolModel.Description))
+                {
+                    Title = T("Plugins.Misc.Nexport.FundingPool.Fields.Description").Text,
+                    Width = "200"
+                },
+                new(nameof(FundingPoolModel.Id))
+                {
+                    Title = T("Admin.Common.View").Text,
+                    Width = "50",
+                    ClassName = NopColumnClassDefaults.Button,
+                    Render = new RenderButtonView(new DataUrl(nameof(FundingPoolController.Edit)))
+                }
+            }
+    };
+}
+
+<form asp-controller="@(ViewUtilities.GetControllerName<FundingPoolController>())" asp-action="@nameof(FundingPoolController.List)" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Plugins.Misc.Nexport.FundingPools")
+        </h1>
+        <div class="float-right">
+            <div class="btn-group">
+                <a class="btn bg-green" href="@Url.Action(nameof(FundingPoolController.Create), ViewUtilities.GetControllerName<FundingPoolController>())">
+                    @T("Plugins.Misc.Nexport.FundingPool.Create")
+                </a>
+            </div>
+        </div>
+    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-horizontal">
+                <div class="cards-group">
+                    <div class="card card-default card-search">
+                        <div class="card-body">
+                            <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
+                                <div class="search-text">@T("Admin.Common.Search")</div>
+                                <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
+                                <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                            </div>
+                            <div class="search-body @(hideSearchBlock ? "closed" : "")">
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="Name" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="Name" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="Code" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="Code" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="Description" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="Description" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="text-center col-12">
+                                        <button type="button" id="search-orders" class="btn btn-primary btn-search">
+                                            <i class="fas fa-search"></i>
+                                            @T("Admin.Common.Search")
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-default">
+                        <div class="card-body">
+                            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", gridModel)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</form>

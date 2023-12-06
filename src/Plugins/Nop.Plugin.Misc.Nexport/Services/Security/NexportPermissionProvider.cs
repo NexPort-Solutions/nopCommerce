@@ -7,13 +7,15 @@ namespace Nop.Plugin.Misc.Nexport.Services.Security
     public class NexportPermissionProvider : IPermissionProvider
     {
         public static readonly PermissionRecord ManageNexportProductMapping =
-            new() { Name = "Manage Nexport product mapping", SystemName = "ManageNexportProductMapping", Category = "Nexport" };
+            new() { Name = "Manage Nexport product mapping", SystemName = nameof(ManageNexportProductMapping), Category = "Nexport" };
         public static readonly PermissionRecord ManageSupplementalInfo =
-            new() { Name = "Manage Nexport supplemental info", SystemName = "ManageSupplementalInfo", Category = "Nexport" };
+            new() { Name = "Manage Nexport supplemental info", SystemName = nameof(ManageSupplementalInfo), Category = "Nexport" };
         public static readonly PermissionRecord ManageNexportOrderInvoice =
-            new() { Name = "Manage Nexport order invoice", SystemName = "ManageNexportOrderInvoice", Category = "Nexport" };
+            new() { Name = "Manage Nexport order invoice", SystemName = nameof(ManageNexportOrderInvoice), Category = "Nexport" };
         public static readonly PermissionRecord ManageNexportWholesaleRedemptions =
-            new() { Name = "Manage Nexport wholesale redemptions", SystemName = "ManageNexportWholesaleRedemptions", Category = "Nexport" };
+            new() { Name = "Manage Nexport wholesale redemptions", SystemName = nameof(ManageNexportWholesaleRedemptions), Category = "Nexport" };
+        public static readonly PermissionRecord ManageNexportFundingPools =
+            new() { Name = "Manage Nexport funding pools", SystemName = nameof(ManageNexportFundingPools), Category = "Nexport" };
 
         public HashSet<(string systemRoleName, PermissionRecord[] permissions)> GetDefaultPermissions()
         {
@@ -24,7 +26,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Security
                     ManageNexportProductMapping,
                     ManageSupplementalInfo,
                     ManageNexportOrderInvoice,
-                    ManageNexportWholesaleRedemptions
+                    ManageNexportWholesaleRedemptions,
+                    ManageNexportFundingPools
                 })
             };
         }
@@ -36,7 +39,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Security
                 ManageNexportProductMapping,
                 ManageSupplementalInfo,
                 ManageNexportOrderInvoice,
-                ManageNexportWholesaleRedemptions
+                ManageNexportWholesaleRedemptions,
+                ManageNexportFundingPools
             };
         }
     }

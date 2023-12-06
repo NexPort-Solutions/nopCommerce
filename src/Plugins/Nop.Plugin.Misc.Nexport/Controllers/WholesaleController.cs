@@ -11,7 +11,7 @@ using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
-    public class NexportWholesaleController : BasePluginController
+    public class WholesaleController : BasePluginController
     {
         #region Fields
 
@@ -27,7 +27,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         #region Constructor
 
-        public NexportWholesaleController(
+        public WholesaleController(
             INexportPluginModelFactory nexportPluginModelFactory,
             IGenericAttributeService genericAttributeService,
             IWorkContext workContext,

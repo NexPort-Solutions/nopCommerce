@@ -1,4 +1,6 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupProductRedemptionListSearchModel
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers
+@using Nop.Plugin.Misc.Nexport.Extensions
+@model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupProductRedemptionListSearchModel
 @{
     string GetUrl(DataUrl dataUrl)
     {
@@ -58,7 +60,7 @@
     let groupsTable = new DataTable('#redemptions_table', {
         ajax:
             {
-                url: "@Html.Raw(GetUrl(new DataUrl("GetNexportGroupProductRedemptions", "NexportWholesale", null)))?groupId=@(Model.CurrentGroup.Id)&productId=@(Model.CurrentProduct.Id)",
+                url: "@Html.Raw(GetUrl(new DataUrl(nameof(WholesaleController.GetNexportGroupProductRedemptions), ViewUtilities.GetControllerName <WholesaleController>(), null)))?groupId=@(Model.CurrentGroup.Id)&productId=@(Model.CurrentProduct.Id)",
                 type: "POST",
                 dataType: "json",
                 dataSrc: "Data",
@@ -84,15 +86,14 @@
         order: [[1, 'asc']]
     });
     function modifyRedemption(invoiceItemId){
-        window.location.href = "@Html.Raw(GetUrl(new DataUrl("ModifyRedemption", "NexportWholesale", null)))?GroupId=" + "@Model.CurrentGroup.Id" + "&ProductId=" + "@Model.CurrentProduct.Id"+"&InvoiceItemId="+invoiceItemId;
+        window.location.href = "@Html.Raw(GetUrl(new DataUrl(nameof(WholesaleController.ModifyRedemption), ViewUtilities.GetControllerName<WholesaleController>(), null)))?GroupId=" + "@Model.CurrentGroup.Id" + "&ProductId=" + "@Model.CurrentProduct.Id" + "&InvoiceItemId=" + invoiceItemId;
     }
     function updateAvailableRedemptions() {
         var redemptionData = { groupId:"@Model.CurrentGroup.Id",productId:"@Model.CurrentProduct.Id" };
         addAntiForgeryToken(redemptionData);
 
         $.ajax({
-
-            url: "@Html.Raw(GetUrl(new DataUrl("GetAvailableNexportGroupProductRedemptionsCount", "NexportWholesale", null)))",
+            url: "@Html.Raw(GetUrl(new DataUrl(nameof(WholesaleController.GetAvailableNexportGroupProductRedemptionsCount), ViewUtilities.GetControllerName<WholesaleController>(), null)))",
             type: "POST",
             data:redemptionData,
             success: function (data) {
@@ -122,7 +123,7 @@
             return false;
         });
         $("#redeemBtn").click(function () {
-            window.location.href = "@Html.Raw(GetUrl(new DataUrl("RedeemProduct", "NexportWholesale", null)))?GroupId=" + "@Model.CurrentGroup.Id"+"&ProductId=" + "@Model.CurrentProduct.Id";
+            window.location.href = "@Html.Raw(GetUrl(new DataUrl(nameof(WholesaleController.RedeemProduct), ViewUtilities.GetControllerName<WholesaleController>(), null)))?GroupId=" + "@Model.CurrentGroup.Id" + "&ProductId=" + "@Model.CurrentProduct.Id";
         });
     });
 </script>

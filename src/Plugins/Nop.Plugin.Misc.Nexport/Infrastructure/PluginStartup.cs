@@ -64,7 +64,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             services.AddScoped<NexportPluginService>();
             services.AddScoped<INexportPluginModelFactory, NexportPluginModelFactory>();
             services.AddScoped<NexportIntegrationController>();
-            services.AddScoped<INexportWholesaleService, NexportNexportWholesaleService>();
+            services.AddScoped<IWholesaleService, WholesaleService>();
+            services.AddScoped<IFundingPoolService, FundingPoolService>();
 
             //added this line because the modelstate was invalid when trying to save product mapping
             //(line 818 editmapping in nexportintegrationcontroller) which was keeping the save from happening

@@ -65,7 +65,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly NexportService _nexportService;
         private readonly IAddressService _addressService;
         private readonly IPriceFormatter _priceFormatter;
-        private readonly INexportWholesaleService _wholesaleService;
+        private readonly IWholesaleService _wholesaleService;
 
         #endregion
 
@@ -90,7 +90,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             IPaymentPluginManager paymentPluginManager,
             IAddressService addressService,
             IPriceFormatter priceFormatter,
-            INexportWholesaleService wholesaleService)
+            IWholesaleService wholesaleService)
         {
             _nexportSettings = nexportSettings;
             _baseAdminModelFactory = baseAdminModelFactory;
@@ -1534,35 +1534,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 });
             });
             return model;
-        }
-
-        public virtual async Task<WholesaleCreateModel> PrepareWholesaleOrderModelAsync()
-        {
-            var root = _nexportSettings.RootOrganizationId.Value;
-            var stores = await _storeService.GetAllStoresAsync();
-            var storesList = stores.Select(store => new SelectListItem(store.Name, store.Id.ToString())).ToList();
-            var organizations = await _nexportService.FindAllOrganizationsAsync(root);
-            var organizationsList = organizations.Select(organizationToListItem).ToList();
-            var fundingPools = await _wholesaleService.GetAllFundingPools();
-            var fundingPoolsList = fundingPools.Select(fundingPoolToListItem).ToList();
-            var products = (await stores.SelectAwait(storeToProducts).ToListAsync()).SelectMany(collectionSelector).ToList();
-            var paymentMethods = await _paymentPluginManager.LoadActivePluginsAsync();
-            var paymentMethodsList = paymentMethods.Select(paymentMethodToListItem).ToList();
-            var wholesaleCreateModel = new WholesaleCreateModel
-            {
-                AvailableOrganizations = organizationsList,
-                AvailableFundingPools = fundingPoolsList,
-                AvailableStores = storesList,
-                AvailableProducts = products,
-                AvailablePaymentMethods = paymentMethodsList
-            };
-            return wholesaleCreateModel;
-            SelectListItem organizationToListItem(OrganizationResponseItem organization) => new(organization.ShortName + $" ({organization.Name})", organization.OrgId.ToString());
-            SelectListItem fundingPoolToListItem(FundingPool fundingPool) => new(fundingPool.Name, fundingPool.Id.ToString());
-            IEnumerable<SelectListItem> collectionSelector(IList<NexportProductMapping> productMappings) => productMappings.Select(productToListItem);
-            SelectListItem productToListItem(NexportProductMapping mapping) => new(mapping.DisplayName, mapping.NopProductId.ToString());
-            async ValueTask<IList<NexportProductMapping>> storeToProducts(Store store) => await _nexportService.GetProductMappingsByStoreId(store.Id);
-            SelectListItem paymentMethodToListItem(IPaymentMethod paymentMethod) => new(paymentMethod.PaymentMethodType.ToString(), paymentMethod.ToPluginModel<PaymentMethodModel>().SystemName);
         }
 
         public async Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer? customer, Store? store, IList<ShoppingCartItem?> cart)

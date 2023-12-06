@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
-namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
+namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Wholesale;
 
 public class WholesaleCreateModel
 {
@@ -26,7 +26,7 @@ public class WholesaleCreateModel
     public Guid GroupId { get; init; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.FundingPool")]
-    public Guid FundingPoolId { get; init; }
+    public int? FundingPoolId { get; init; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.ApplyGroupMembershipWhenRedeemed")]
     public bool ApplyGroupMembershipWhenRedeemed { get; init; }

@@ -35,7 +35,7 @@
     let groupsTable = new DataTable('#groups_table', {
         ajax:
         {
-            url: "@Html.Raw(GetUrl(new DataUrl("GetNexportGroups", "NexportWholesale", null)))",
+            url: "@Html.Raw(GetUrl(new DataUrl("GetNexportGroups", "Wholesale", null)))",
             type: "POST",
             dataType: "json",
             dataSrc: "Data",
