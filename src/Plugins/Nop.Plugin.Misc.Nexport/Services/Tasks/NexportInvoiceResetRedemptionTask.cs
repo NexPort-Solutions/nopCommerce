@@ -154,8 +154,14 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                 }
                                                 else
                                                 {
-                                                    invoiceItem.RedemptionStatus =
-                                                        NexportOrderInvoiceItemRedemptionStatus.Available;
+                                                    if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable)
+                                                    {
+                                                        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Available;
+                                                    }
+                                                    else if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting)
+                                                    {
+                                                        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
+                                                    }
 
                                                     //update invoice item with new redemption code so it can be reassigned later
                                                     await _nexportService.UpdateNexportOrderInvoiceItem(
@@ -164,15 +170,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                     var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(order.Id, orderItem.Id);
                                                     if (wholesaleOrderInfo != null)
                                                     {
-                                                        //if (wholesaleOrderInfo.Redeemed > 0)
-                                                        //{
-                                                        //    wholesaleOrderInfo.Redeemed--;
-                                                        //    wholesaleOrderInfo.Available++;
-
-                                                        //    await _nexportService.UpdateWholesaleOrderInfoAsync(
-                                                        //        wholesaleOrderInfo);
-                                                        //}
-
                                                         wholesaleOrderInfo.Available++;
 
                                                         await _nexportService.UpdateWholesaleOrderInfoAsync(

@@ -376,19 +376,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
                 });
             }
-            //TODO @js - add real template for customer manual redemption here
-            //if (!messageTemplates.Any(x =>
-            //        x.Name.Equals(NexportDefaults.NEXPORT_MANUAL_REDEMPTION_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE)))
-            //{
-            //    await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
-            //    {
-            //        Name = NexportDefaults.NEXPORT_MANUAL_REDEMPTION_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE,
-            //        Subject = "New Redemption",
-            //        Body = $"This is a placeholder template for manual redemption. Just here to be able to test that emailing is working. I will add the real template later",
-            //        IsActive = true,
-            //        EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
-            //    });
-            //}
 
             if (!messageTemplates.Any(x =>
                     x.Name.Equals(NexportDefaults.REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE)))
@@ -670,7 +657,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStoreName", "Store");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.ProductMapping.SearchStoreName.Hint", "Filter product mapping list by store.");
-            
+
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreName", "Name");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreName.Hint", "Filter stores list by name.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Stores.SearchStoreUrl", "URL");
@@ -697,6 +684,26 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Errors.MixedRedemptionTypeNotAllowedInShoppingCart", "Cannot add this product to the other products in the cart due to restriction on the product mapping.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.AssignWhenRedeemed", "Assign When Redeemed");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Unassign.Confirmation", "Are you sure you want to unassign?");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.Success", "Successfully redeemed");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.Available", "Available to be redeemed");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.Processing", "Processing");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAvailable", "Not available to be redeemed");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.Button.Redeem", "Redeem");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.Button.GoToTraining", "Go To Training");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.Button.RedeemingMessage",
+                "Product redemption is being processed. please refresh in a moment to access redeemed product.");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.ProductName","Product Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.InvoiceItemId","Invoice Item");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.RedeemedDate","Date Redeemed");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.Status","Status");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.ConfirmRedeem","Are you sure you would like to redeem this product?");
+
+
         }
 
         public async Task DeleteResourcesAsync()
@@ -969,8 +976,25 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option1");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option2");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.Success");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.Available");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.Processing");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAvailable");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.Button.Redeem");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.Button.GoToTraining");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.Button.RedeemingMessage");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.ProductName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.InvoiceItemId");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.RedeemedDate");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.Status");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.ConfirmRedeem");
         }
-        
+
         public async Task InstallPermissionProviderAsync()
         {
             var permissionProviders = new List<Type> { typeof(NexportPermissionProvider) };
