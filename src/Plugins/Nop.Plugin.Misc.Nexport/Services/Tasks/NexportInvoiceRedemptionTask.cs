@@ -145,7 +145,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
         {
             if (queueItem.RetryCount > MAX_RETRY_COUNT)
             {
-                await DeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem,
+                await RetailDeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem,
                     invoiceItem);
                 await CleanUpOrderItemAttributesAsync(queueItem.OrderItemId);
 
@@ -277,7 +277,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                     }
                     else
                     {
-                        await DeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem,
+                        await RetailDeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem,
                             invoiceItem);
                         await CleanUpOrderItemAttributesAsync(queueItem.OrderItemId);
 
@@ -292,21 +292,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
         {
             if (queueItem.RetryCount > MAX_RETRY_COUNT)
             {
-                //note: we don't clean up mapping info in wholesale because of the reset redemption task. instead we just delete the queue item and complete the order
-                invoiceItem.RedeemingUserId = null;
-                invoiceItem.RedemptionStatus =
-                    NexportOrderInvoiceItemRedemptionStatus.Available;
-                await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-                var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId, invoiceItem.OrderItemId);
-                if (wholesaleOrderInfo != null)
-                {
-                    wholesaleOrderInfo.Available++;
-
-                    await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
-                }
-
-                await DeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem,
+                await WholesaleDeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem,
                     invoiceItem);
 
                 // Complete the order
@@ -352,7 +338,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                 {
 
                                     var lastRedemptionStatus = invoiceItem.RedemptionStatus;
-                                    bool redeemed = false;
+                                    var redeemed = false;
 
                                     if (productMapping.Type == NexportProductTypeEnum.OpenEnded &&
                                         productMapping.AssignWhenRedeemed.HasValue &&
@@ -367,18 +353,22 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                             var selectedMappingForOpenEndedProduct =
                                                 JsonConvert.DeserializeObject<NexportProductMapping>(selectedMappingForOpenEndedProductStr);
 
-                                            // Redeem the invoice based on the enrollment condition
-                                           redeemed = await RedeemOpenEndedNexportInvoiceAsync(selectedMappingForOpenEndedProduct, userMapping,
-                                                invoiceItem, queueItem.RedeemingUserId,
-                                                queueItem.ManualApprovalAction);
+                                            if (selectedMappingForOpenEndedProduct != null)
+                                            {
+                                                // Redeem the invoice based on the enrollment condition
+                                                redeemed = await RedeemOpenEndedNexportInvoiceAsync(
+                                                    selectedMappingForOpenEndedProduct, userMapping,
+                                                    invoiceItem, queueItem.RedeemingUserId,
+                                                    queueItem.ManualApprovalAction);
+                                            }
                                         }
                                     }
                                     else
                                     {
                                         // Redeem the invoice based on the enrollment condition
-                                       redeemed =  await RedeemNexportInvoiceAsync(productMapping, userMapping,
-                                            invoiceItem, queueItem.RedeemingUserId,
-                                            queueItem.ManualApprovalAction);
+                                        redeemed = await RedeemNexportInvoiceAsync(productMapping, userMapping,
+                                             invoiceItem, queueItem.RedeemingUserId,
+                                             queueItem.ManualApprovalAction);
                                     }
 
                                     var user = await _nexportService.GetNexportUserAsync(
@@ -466,28 +456,12 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         }
                                         else
                                         {
-
-                                            invoiceItem.RedeemingUserId = null;
-                                            invoiceItem.RedemptionStatus =
-                                                NexportOrderInvoiceItemRedemptionStatus.Available;
-                                            await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-                                            var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId, invoiceItem.OrderItemId);
-                                            if (wholesaleOrderInfo != null)
-                                            {
-                                                wholesaleOrderInfo.Available++;
-
-                                                await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
-                                            }
-
-                                            //note: we don't clean up mapping info in wholesale because of the reset redemption task. instead we just delete the queue item and complete the order
-
-                                            await DeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem,
+                                            await WholesaleDeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem,
                                                 invoiceItem);
 
                                             // Complete the order
                                             await _orderProcessingService.CheckOrderStatusAsync(order);
-                                        }    
+                                        }
                                     }
                                 }
                             }
@@ -513,23 +487,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                     }
                     else
                     {
-
-                        invoiceItem.RedeemingUserId = null;
-                        invoiceItem.RedemptionStatus =
-                            NexportOrderInvoiceItemRedemptionStatus.Available;
-                        await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-                        var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId, invoiceItem.OrderItemId);
-                        if (wholesaleOrderInfo != null)
-                        {
-                            wholesaleOrderInfo.Available++;
-
-                            await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
-                        }
-
-                        //note: we don't clean up mapping info in wholesale because of the reset redemption task. instead we just delete the queue item and complete the order
-
-                        await DeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem,
+                        await WholesaleDeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem,
                             invoiceItem);
 
                         // Complete the order
@@ -573,7 +531,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                         when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Failing:
                         {
                             redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
-                                productMapping,RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
+                                productMapping, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
                             break;
                         }
 
@@ -581,7 +539,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                         when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Passing:
                         {
                             redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
-                                productMapping,RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
+                                productMapping, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
                             break;
                         }
 
@@ -592,7 +550,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                             if (currentEnrollmentExpirationDate.HasValue && currentEnrollmentExpirationDate >= DateTime.UtcNow)
                                 // Renew the enrollment since the current enrollment has not expired yet
                                 redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
-                                    productMapping,RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption);
+                                    productMapping, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption);
                             else
                                 if (status.Value.Phase == Enums.PhaseEnum.InProgress ||
                                     status.Value.Phase == Enums.PhaseEnum.NotStarted && productMapping.AllowExtension)
@@ -602,37 +560,37 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     {
                                         var completionThreshold = productMapping.RenewalCompletionThreshold;
                                         if (completionThreshold.HasValue)
-                                            redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,productMapping,
+                                            redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
                                                 completionThreshold > status.Value.CompletionPercentage
                                                     ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
                                                     : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment);
                                     }
                                     else
                                         // Only renew the enrollment for training plan and catalog
-                                        redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,productMapping,
+                                        redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
                                             RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption);
                                 else
                                     if (extensionAction != null)
-                                    redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,productMapping,
+                                    redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
                                     extensionAction == 1
                                         ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
                                         : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment);
                                 else
                                     // Delete current enrollment and create new enrollment when the enrollment has been started
                                     // and the product does not allow extension.
-                                    redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,productMapping,
+                                    redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
                                     RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
 
                             break;
                         }
                 }
             else
-                redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,productMapping);
+                redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping);
 
             return redeemed;
         }
 
-         /// <summary>
+        /// <summary>
         /// Redeem the Nexport invoice based on the enrollment condition (if existed)
         /// </summary>
         /// <param name="productMapping">The Nexport product mapping</param>
@@ -666,7 +624,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                         when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Failing:
                         {
                             redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
-                                productMapping,RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
+                                productMapping, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
                             break;
                         }
 
@@ -674,7 +632,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                         when status.Value.Phase == Enums.PhaseEnum.Finished && status.Value.Result == Enums.ResultEnum.Passing:
                         {
                             redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
-                                productMapping,RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
+                                productMapping, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
                             break;
                         }
 
@@ -685,7 +643,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                             if (currentEnrollmentExpirationDate.HasValue && currentEnrollmentExpirationDate >= DateTime.UtcNow)
                                 // Renew the enrollment since the current enrollment has not expired yet
                                 redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
-                                    productMapping,RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption);
+                                    productMapping, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption);
                             else
                                 if (status.Value.Phase == Enums.PhaseEnum.InProgress ||
                                     status.Value.Phase == Enums.PhaseEnum.NotStarted && productMapping.AllowExtension)
@@ -695,37 +653,70 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     {
                                         var completionThreshold = productMapping.RenewalCompletionThreshold;
                                         if (completionThreshold.HasValue)
-                                            redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId,productMapping,
+                                            redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
                                                 completionThreshold > status.Value.CompletionPercentage
                                                     ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
                                                     : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment);
                                     }
                                     else
                                         // Only renew the enrollment for training plan and catalog
-                                        redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId,productMapping,
+                                        redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
                                             RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption);
                                 else
                                     if (extensionAction != null)
-                                    redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId,productMapping,
+                                    redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
                                     extensionAction == 1
                                         ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
                                         : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment);
                                 else
                                     // Delete current enrollment and create new enrollment when the enrollment has been started
                                     // and the product does not allow extension.
-                                    redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId,productMapping,
+                                    redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
                                     RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment);
 
                             break;
                         }
                 }
             else
-                redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId,productMapping);
+                redeemed = await _nexportService.RedeemOpenEndedNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping);
 
             return redeemed;
         }
 
-        private async Task DeleteRedemptionQueueItemAndAddFinalOrderNote(Order order,
+        private async Task WholesaleDeleteRedemptionQueueItemAndAddFinalOrderNote(Order order,
+            NexportOrderInvoiceRedemptionQueueItem queueItem, NexportOrderInvoiceItem invoiceItem)
+        {
+            if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable)
+            {
+                invoiceItem.RedeemingUserId = null;
+                invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Available;
+            }
+            else if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting)
+            {
+                invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
+            }
+
+            await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
+
+            var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId, invoiceItem.OrderItemId);
+            if (wholesaleOrderInfo != null)
+            {
+                if(invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Available)
+                    wholesaleOrderInfo.Available++;
+                if(invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Awaiting)
+                    wholesaleOrderInfo.Awaiting++;
+
+                await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+            }
+
+            await _nexportService.AddOrderNoteAsync(order,
+                 $"Nexport invoice item {invoiceItem.InvoiceItemId} cannot be automatically redeemed for user {queueItem.RedeemingUserId}. " +
+                 "However, this invoice item can still be manually redeem by the user in the order history page.");
+
+            await _nexportService.DeleteNexportOrderInvoiceRedemptionQueueItem(queueItem);
+        }
+
+        private async Task RetailDeleteRedemptionQueueItemAndAddFinalOrderNote(Order order,
             NexportOrderInvoiceRedemptionQueueItem queueItem, NexportOrderInvoiceItem invoiceItem)
         {
             await _nexportService.AddOrderNoteAsync(order,

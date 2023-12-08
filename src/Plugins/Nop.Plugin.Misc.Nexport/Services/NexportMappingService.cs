@@ -1986,25 +1986,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             return await _customerService.GetCustomerByIdAsync(customerId);
         }
-
-
-        public async Task<IList<WholesalePurchasingGroup>?> GetAllWholesalePurchasingGroupsAsync()
-        {
-            var groups = await _wholesalePurchasingGroupRepository.Table.ToListAsync();
-            return groups;
-        }
-
-        public async Task<GenericAttribute?> GetGroupByGroupIdAsync(Guid groupId)
-        {
-            if (groupId == Guid.Empty)
-                throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
-
-            var attr = await _genericAttributeRepository.Table.FirstOrDefaultAsync(x => x.Key == "GroupForOrder" && x.Value.Contains("{\"Id\":\"" + groupId + "\""));
-
-            return attr;
-        }
-
-
+        
         public async Task<int> GetAvailableNexportGroupProductRedemptionsCountAsync(Guid? groupId, int productId)
         {
             if (groupId == Guid.Empty)

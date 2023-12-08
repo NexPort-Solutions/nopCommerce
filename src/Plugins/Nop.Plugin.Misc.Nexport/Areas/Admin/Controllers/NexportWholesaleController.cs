@@ -53,8 +53,8 @@ public class NexportWholesaleController : BaseAdminController
         IWorkContext workContext, NexportService nexportService,
         IPaymentPluginManager paymentPluginManager,
         IProductService productService,
-        ILogger logger,IOrderService orderService,
-        ICustomerService customerService, 
+        ILogger logger, IOrderService orderService,
+        ICustomerService customerService,
         IGenericAttributeService genericAttributeService,
         LocalizationSettings localizationSettings)
     {
@@ -316,41 +316,6 @@ public class NexportWholesaleController : BaseAdminController
         );
     }
 
-    //[HttpPost]
-    //[AutoValidateAntiforgeryToken]
-    //public async Task<IActionResult> InvoiceItemUnassign(Guid invoiceItemId)
-    //{
-
-    //    var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
-
-    //    if (invoiceItem != null)
-    //    {
-    //        try{
-
-    //            invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Processing;
-
-    //            await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-    //            await _nexportService.InsertNexportOrderInvoiceResetRedemptionQueueItem(
-    //                new NexportOrderInvoiceResetRedemptionQueueItem
-    //                {
-    //                    OrderInvoiceItemId = invoiceItem.Id, UtcDateCreated = DateTime.UtcNow, RetryCount = 0
-    //                });
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            await _logger.ErrorAsync($"Failed to insert invoice item {invoiceItem.InvoiceItemId} into the reset redemption queue",ex);
-    //        }
-    //    }
-
-    //    return Json(
-    //        new
-    //        {
-    //            result = invoiceItem!=null?invoiceItem.RedemptionStatus.GetDisplayName():"",
-    //        }
-    //    );
-    //}
-
     public virtual async Task<IActionResult> SearchCustomers(string term)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
@@ -362,161 +327,204 @@ public class NexportWholesaleController : BaseAdminController
 
         var customers = await _nexportService.SearchCustomersAsync(term);
 
-        var result = customers.Select(c=> new{
-            label=$"{c.FirstName} {c.LastName} ({c.Email})",
-            customerId=c.Id
+        var result = customers.Select(c => new
+        {
+            label = $"{c.FirstName} {c.LastName} ({c.Email})",
+            customerId = c.Id
         }).ToList();
 
         return Json(result);
     }
 
     [HttpPost]
-        public async Task<IActionResult> RedeemProductForCustomer(RedeemProductModel model)
-        {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
-                return AccessDeniedView();
+    public async Task<IActionResult> RedeemProductForCustomer(RedeemProductModel model)
+    {
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            return AccessDeniedView();
 
-            var userMapping = await _nexportService.FindUserMappingByCustomerId(model.CustomerId);
-            if (userMapping != null)
-            {
-                var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
-                if (invoiceItem != null)
-                {
-                    var orderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
-                        invoiceItem.OrderItemId);
-                    if (orderInfo != null && orderInfo.Available>0)
-                    {
+        var userMapping = await _nexportService.FindUserMappingByCustomerId(model.CustomerId);
 
-                        var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
-                        if (order != null)
-                        {
-                            var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
-                            if (orderItem != null)
-                            {
-                                if (model.AssignmentType == "Instant")
-                                {
-                                    if (model.SelectedProductMappingId != null)
-                                    {
-                                        invoiceItem.RedemptionStatus =
-                                            NexportOrderInvoiceItemRedemptionStatus.Processing;
-                                        invoiceItem.RedeemingUserId = userMapping.NexportUserId;
-                                        await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
+        var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
 
-
-                                        orderInfo.Available--;
-                                        await _nexportService.UpdateWholesaleOrderInfoAsync(orderInfo);
-
-
-                                        if (model.ProductMappingIdForOpenEndedProduct != null)
-                                        {
-                                            var productMapping =
-                                                await _nexportService.GetProductMappingById(model
-                                                    .SelectedProductMappingId.Value);
-                                            await _genericAttributeService.SaveAttributeAsync(orderItem,
-                                                $"SelectedMappingForOpenEndedProduct-{order.Id}-{orderItem.Id}",
-                                                JsonConvert.SerializeObject(productMapping), order.StoreId);
-
-
-                                            await _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
-                                                new NexportOrderInvoiceRedemptionQueueItem
-                                                {
-                                                    OrderInvoiceItemId = invoiceItem.Id,
-                                                    RedeemingUserId = userMapping.NexportUserId,
-                                                    ProductMappingId =
-                                                        model.ProductMappingIdForOpenEndedProduct.Value,
-                                                    OrderItemId = invoiceItem.OrderItemId,
-                                                    UtcDateCreated = DateTime.UtcNow
-                                                });
-                                        }
-                                        else
-                                        {
-                                            await _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
-                                                new NexportOrderInvoiceRedemptionQueueItem
-                                                {
-                                                    OrderInvoiceItemId = invoiceItem.Id,
-                                                    RedeemingUserId = userMapping.NexportUserId,
-                                                    ProductMappingId = model.SelectedProductMappingId.Value,
-                                                    OrderItemId = invoiceItem.OrderItemId,
-                                                    UtcDateCreated = DateTime.UtcNow
-                                                });
-                                        }
-                                    }
-                                }
-                                else
-                                {
-
-                                    var customer = await _customerService.GetCustomerByIdAsync(userMapping.NopUserId);
-                                    if (customer != null)
-                                    {
-                                        await _nexportService.SendNewNexportManualRedemptionCustomerNotificationAsync(
-                                    customer, order,
-                                            _localizationSettings.DefaultAdminLanguageId);
-                                        invoiceItem.RedeemingUserId = userMapping.NexportUserId;
-                                        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
-
-                                        await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-                                        orderInfo.Available--;
-                                        orderInfo.Awaiting++;
-                                        await _nexportService.UpdateWholesaleOrderInfoAsync(orderInfo);
-
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
+        if (model.SelectedProductMappingId == null)
             return Redirect(model.returnUrl);
-        }
-        [HttpPost]
-        [AutoValidateAntiforgeryToken]
-        public async Task<IActionResult> InvoiceItemUnassign(Guid invoiceItemId)
+
+        if (invoiceItem == null || userMapping == null)
+            return Redirect(model.returnUrl);
+
+        var orderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
+            invoiceItem.OrderItemId);
+
+        var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+
+        var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
+
+        if (orderInfo is not { Available: > 0 } || order == null || orderItem == null)
+            return Redirect(model.returnUrl);
+
+        if (model.AssignmentType == "Instant")
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
-                return AccessDeniedView();
 
-            var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
+            invoiceItem.RedemptionStatus =
+                NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
+            invoiceItem.RedeemingUserId = userMapping.NexportUserId;
+            await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
 
-            if (invoiceItem != null)
+
+            orderInfo.Available--;
+            await _nexportService.UpdateWholesaleOrderInfoAsync(orderInfo);
+
+
+            if (model.ProductMappingIdForOpenEndedProduct != null)
             {
-                try
-                {
-                    var wholesaleOrderInfo =
-                        await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
-                            invoiceItem.OrderItemId);
+                var productMapping =
+                    await _nexportService.GetProductMappingById(model
+                        .SelectedProductMappingId.Value);
+                await _genericAttributeService.SaveAttributeAsync(orderItem,
+                    $"SelectedMappingForOpenEndedProduct-{order.Id}-{orderItem.Id}",
+                    JsonConvert.SerializeObject(productMapping), order.StoreId);
 
-                    if (wholesaleOrderInfo != null && wholesaleOrderInfo.Redeemed > 0)
+
+                await _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
+                    new NexportOrderInvoiceRedemptionQueueItem
                     {
-                        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Processing;
+                        OrderInvoiceItemId = invoiceItem.Id,
+                        RedeemingUserId = userMapping.NexportUserId,
+                        ProductMappingId =
+                            model.ProductMappingIdForOpenEndedProduct.Value,
+                        OrderItemId = invoiceItem.OrderItemId,
+                        UtcDateCreated = DateTime.UtcNow
+                    });
+            }
+            else
+            {
+                await _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
+                    new NexportOrderInvoiceRedemptionQueueItem
+                    {
+                        OrderInvoiceItemId = invoiceItem.Id,
+                        RedeemingUserId = userMapping.NexportUserId,
+                        ProductMappingId = model.SelectedProductMappingId.Value,
+                        OrderItemId = invoiceItem.OrderItemId,
+                        UtcDateCreated = DateTime.UtcNow
+                    });
+            }
+        }
+        else
+        {
 
-                        await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
+            var customer = await _customerService.GetCustomerByIdAsync(userMapping.NopUserId);
+
+            if (customer == null)
+                return Redirect(model.returnUrl);
+
+            await _nexportService.SendNewNexportManualRedemptionCustomerNotificationAsync(
+                customer, order, invoiceItem.Id, userMapping.NexportUserId, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
+                _localizationSettings.DefaultAdminLanguageId);
+            invoiceItem.RedeemingUserId = userMapping.NexportUserId;
+            invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
+
+            await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
+
+            orderInfo.Available--;
+            orderInfo.Awaiting++;
+            await _nexportService.UpdateWholesaleOrderInfoAsync(orderInfo);
+        }
+
+        return Redirect(model.returnUrl);
+    }
 
 
-                        wholesaleOrderInfo.Redeemed--;
-                        await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> InvoiceItemUnassign(Guid invoiceItemId)
+    {
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            return AccessDeniedView();
 
-                        await _nexportService.InsertNexportOrderInvoiceResetRedemptionQueueItem(
-                            new NexportOrderInvoiceResetRedemptionQueueItem
-                            {
-                                OrderInvoiceItemId = invoiceItem.Id,
-                                UtcDateCreated = DateTime.UtcNow,
-                                RetryCount = 0
-                            });
-                    }
-                }
-                catch (Exception ex)
+        var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
+
+        if (invoiceItem != null)
+        {
+            try
+            {
+                var wholesaleOrderInfo =
+                    await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
+                        invoiceItem.OrderItemId);
+
+                if (wholesaleOrderInfo != null && wholesaleOrderInfo.Redeemed > 0)
                 {
-                    await _logger.ErrorAsync($"Failed to insert invoice item {invoiceItem.InvoiceItemId} into the reset redemption queue", ex);
+                    invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
+
+                    await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
+
+
+                    wholesaleOrderInfo.Redeemed--;
+                    await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+
+                    await _nexportService.InsertNexportOrderInvoiceResetRedemptionQueueItem(
+                    new NexportOrderInvoiceResetRedemptionQueueItem
+                    {
+                        OrderInvoiceItemId = invoiceItem.Id,
+                        UtcDateCreated = DateTime.UtcNow,
+                        RetryCount = 0
+                    });
                 }
             }
-
-            return Json(
-                new
-                {
-                    result = invoiceItem != null ? invoiceItem.RedemptionStatus.GetDisplayName() : "",
-                }
-            );
+            catch (Exception ex)
+            {
+                await _logger.ErrorAsync($"Failed to insert invoice item {invoiceItem.InvoiceItemId} into the reset redemption queue", ex);
+            }
         }
+
+        return Json(
+            new
+            {
+                result = invoiceItem != null ? invoiceItem.RedemptionStatus.GetDisplayName() : "",
+            }
+        );
+    }
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> InvoiceItemCancelAwaiting(Guid invoiceItemId)
+    {
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            return AccessDeniedView();
+
+        var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
+
+        if (invoiceItem != null)
+        {
+            try
+            {
+                var wholesaleOrderInfo =
+                    await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
+                        invoiceItem.OrderItemId);
+
+                if (wholesaleOrderInfo != null && wholesaleOrderInfo.Awaiting > 0)
+                {
+                    invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Available;
+                    invoiceItem.RedeemingUserId = null;
+                    await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
+
+
+                    wholesaleOrderInfo.Awaiting--;
+                    wholesaleOrderInfo.Available++;
+                    await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+
+                }
+            }
+            catch (Exception ex)
+            {
+                await _logger.ErrorAsync($"Failed to cancel awaiting status for invoice item {invoiceItem.InvoiceItemId}", ex);
+            }
+        }
+
+        return Json(
+            new
+            {
+                result = invoiceItem != null ? invoiceItem.RedemptionStatus.GetDisplayName() : "",
+            }
+        );
+    }
 }
