@@ -53,8 +53,8 @@
         <thead>
         <tr>
             <th>Name</th>
-            <th>Email</th>
             <th>Status</th>
+            <th>Date Assigned</th>
             <th></th>
         </tr>
         </thead>
@@ -75,8 +75,8 @@
             },
             columns: [
                 { data: "Name" },
-                { data: "Email" },
                 { data: "Status" },
+                { data: "DateRedeemed" },
                 {
                     "mData": "InvoiceItemId",
                     "mRender": function (data, type, row) {
