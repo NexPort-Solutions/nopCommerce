@@ -1805,7 +1805,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                             var redemptionItem = new NexportGroupProductRedemptionModel
                             {
                                 InvoiceItemId = invoiceItem.InvoiceItemId,
-                                Status = invoiceItem.RedemptionStatus.GetDisplayName()
+                                Status = invoiceItem.RedemptionStatus.GetDisplayName(),
+                                DateRedeemed = invoiceItem.UtcDateRedemption?.ToString("MM/dd/yyyy h:mm tt")
                             };
 
 
@@ -1822,7 +1823,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                         await _nexportService.FindCustomerByIdAsync(redeemerUserMapping
                                             .NopUserId);
                                     redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
-                                    redemptionItem.Email = redeemer.Email;
                                 }
                             }
 

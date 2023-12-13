@@ -63,21 +63,26 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 var customer = await _workContext.GetCurrentCustomerAsync();
 
                 if (!await _customerService.IsRegisteredAsync(customer))
+                {
                     context.Result = new ChallengeResult();
-
-                context.ActionArguments.TryGetValue("nexportUserId", out var nexportUserId);
-
-                if (nexportUserId == null){
-                    _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Failed to access page. nexportUserId could not be found."));
-                    context.Result = new RedirectToRouteResult("Homepage", null);
                 }
                 else
                 {
-                    var userMapping = await _nexportService.FindUserMappingByNexportUserId((Guid)nexportUserId);
-                    if (userMapping == null || userMapping.NopUserId != customer.Id)
+                    context.ActionArguments.TryGetValue("nexportUserId", out var nexportUserId);
+
+                    if (nexportUserId == null)
                     {
-                        _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAuthorized"));
+                        _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Failed to access page. nexportUserId could not be found."));
                         context.Result = new RedirectToRouteResult("Homepage", null);
+                    }
+                    else
+                    {
+                        var userMapping = await _nexportService.FindUserMappingByNexportUserId((Guid)nexportUserId);
+                        if (userMapping == null || userMapping.NopUserId != customer.Id)
+                        {
+                            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAuthorized"));
+                            context.Result = new RedirectToRouteResult("Homepage", null);
+                        }
                     }
                 }
             }
