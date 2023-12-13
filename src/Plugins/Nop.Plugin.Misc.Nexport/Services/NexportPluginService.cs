@@ -703,6 +703,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.ConfirmRedeem","Are you sure you would like to redeem this product?");
 
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAuthorized","Failed to access page. The user id did not match the current logged in user.");
+
 
         }
 
@@ -993,6 +995,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.Status");
 
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.ConfirmRedeem");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAuthorized");
         }
 
         public async Task InstallPermissionProviderAsync()
