@@ -1,13 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Diagnostics;
 using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Domain.Localization;
-using Nop.Core.Domain.Messages;
-using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
-using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Wholesale;
@@ -177,9 +173,11 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
 
-            if (model.SelectedProductMappingId == null) return Redirect(model.returnUrl);
+            if (model.SelectedProductMappingId == null)
+                return Redirect(model.returnUrl);
 
-            if (invoiceItem == null || userMapping == null) return Redirect(model.returnUrl);
+            if (invoiceItem == null || userMapping == null)
+                return Redirect(model.returnUrl);
 
             var orderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
                 invoiceItem.OrderItemId);
@@ -188,7 +186,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
 
-            if (orderInfo is not {Available: > 0} || order == null || orderItem == null) return Redirect(model.returnUrl);
+            if (orderInfo is not { Available: > 0 } || order == null || orderItem == null)
+                return Redirect(model.returnUrl);
 
             if (model.AssignmentType == "Instant")
             {
@@ -242,7 +241,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 var customer = await _customerService.GetCustomerByIdAsync(userMapping.NopUserId);
 
-                if (customer == null) return Redirect(model.returnUrl);
+                if (customer == null)
+                    return Redirect(model.returnUrl);
 
                 await _nexportService.SendNewNexportManualRedemptionCustomerNotificationAsync(
                     customer, order, invoiceItem.Id, userMapping.NexportUserId, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,

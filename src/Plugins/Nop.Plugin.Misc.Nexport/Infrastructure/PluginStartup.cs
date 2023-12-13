@@ -46,6 +46,7 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
                 options.Filters.Add<ProductDetailsActionFilter>();
                 options.Filters.Add<ShoppingCartActionFilter>();
                 options.Filters.Add<OrderDetailsActionFilter>();
+                options.Filters.Add <NexportWholesaleActionFilter>();
             });
 
             var apiConfiguration = new Configuration();
