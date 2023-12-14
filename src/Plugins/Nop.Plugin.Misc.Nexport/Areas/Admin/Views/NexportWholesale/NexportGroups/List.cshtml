@@ -1,11 +1,15 @@
 ﻿@{
     var path = ViewData["PathForPartialView"] as string;
     var model = ViewData["ModelForPartialView"];
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
+
     NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/jquery.dataTables.min.css");
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/buttons.DataTables.min.css");
     NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/uikit.min.css");
+
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
     NopHtml.AddScriptParts(ResourceLocation.Footer, "https://kit.fontawesome.com/e4adf0b7ea.js", "", true);
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net/js/jquery.dataTables.min.js");
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net-buttons/js/dataTables.buttons.min.js");
 }
 
 <style>
@@ -40,6 +44,9 @@
         border-bottom: 1px solid #ddd;
         padding: 6px 10px;
     }
+    div.dataTables_length {
+         margin: 0 30px 0 0 !important;
+     }
 </style>
 <div class="container">
     <div class="page account-page nex-plugin">

@@ -72,6 +72,15 @@
                 }
             }
             ],
+            dom: 'lBfrtip',
+            buttons: [
+                {
+                    className: "fas fa-sync",
+                    action: function (e, dt, node, config) {
+                        dt.ajax.reload();
+                    }
+                }
+            ],
         order: [[1, 'asc']]
     });
     function goToGroupProductRedemptions(productId,groupId){
