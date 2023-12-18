@@ -705,7 +705,31 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAuthorized","Failed to access page. The user id did not match the current logged in user.");
 
+            
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.NoGroup", "No Group");
 
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Name", "Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.ShortName", "Short Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.NumberOfProducts", "Products Purchased");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Button.View", "View");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Name","Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Available","Available");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Awaiting","Awaiting");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Assigned","Assigned");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Button.View", "View");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Name",
+                "Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Status",
+                "Status");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssigned", "Date Assigned");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign", "Assign");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign", "Unassign");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting", "Cancel");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.CancelAwaiting.Confirm","Are you sure you want to make cancel this assignment that is awaiting redemption and make it available again?");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Unassign.Failed", "Failed to unassign");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.CancelAwaiting.Failed", "Failed to unassign");
         }
 
         public async Task DeleteResourcesAsync()
@@ -997,6 +1021,28 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmailModel.ConfirmRedeem");
 
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAuthorized");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.NoGroup");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Name");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.ShortName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.NumberOfProducts");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Button.View");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Name");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Available");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Awaiting");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Assigned");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Button.View");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Name");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Status");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssigned");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.CancelAwaiting.Confirm");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Unassign.Failed");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.CancelAwaiting.Failed");
         }
 
         public async Task InstallPermissionProviderAsync()

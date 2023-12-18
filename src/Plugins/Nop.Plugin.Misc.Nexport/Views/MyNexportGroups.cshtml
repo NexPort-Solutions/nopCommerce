@@ -8,10 +8,10 @@
     NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/jquery.dataTables.min.css");
     NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/uikit.min.css");
     NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/buttons.DataTables.min.css");
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "https://kit.fontawesome.com/e4adf0b7ea.js", "", true);
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net/js/jquery.dataTables.min.js");
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net-buttons/js/dataTables.buttons.min.js");
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net-buttons/js/buttons.html5.min.js");
+    //NopHtml.AddScriptParts(ResourceLocation.Footer, "https://kit.fontawesome.com/772876aa0a.js", "", true); new fontawesome link
 
 }
 <style>
@@ -21,6 +21,7 @@
 </style>
 <div class="page account-page nex-plugin">
 
-        @await Html.PartialAsync(path, model)
+    @await Html.PartialAsync(path, model)
  
 </div>
+<!script async src="https://kit.fontawesome.com/e4adf0b7ea.js" crossorigin="anonymous" asp-location="Footer"></!script>

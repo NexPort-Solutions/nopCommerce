@@ -7,7 +7,7 @@
     NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/uikit.min.css");
 
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "https://kit.fontawesome.com/e4adf0b7ea.js", "", true);
+    //NopHtml.AddScriptParts(ResourceLocation.Footer, "https://kit.fontawesome.com/e4adf0b7ea.js", "", true);
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net/js/jquery.dataTables.min.js");
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net-buttons/js/dataTables.buttons.min.js");
 }
@@ -47,9 +47,13 @@
     div.dataTables_length {
          margin: 0 30px 0 0 !important;
      }
+    div.dt-buttons>.fas.fa-sync {
+        padding: 0.375rem 0.75rem;
+    }
 </style>
 <div class="container">
     <div class="page account-page nex-plugin">
         @await Html.PartialAsync(path, model)
     </div>
 </div>
+<!script async src="https://kit.fontawesome.com/e4adf0b7ea.js" crossorigin="anonymous" asp-location="Footer"></!script>
