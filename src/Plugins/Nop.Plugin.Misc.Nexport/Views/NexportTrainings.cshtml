@@ -10,7 +10,6 @@
 
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
     NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/uikit.min.css");
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "https://kit.fontawesome.com/e4adf0b7ea.js", "", true);
 
     NopHtml.AddTitleParts("Nexport Trainings");
     NopHtml.AppendPageCssClassParts("html-account-page");
@@ -78,7 +77,9 @@
                                         var enrollmentDisabled = training.UtcExpirationDate != null && DateTime.UtcNow > training.UtcExpirationDate.Value;
                                         <div class="uk-card uk-card-default uk-margin-small-bottom">
                                             <div class="uk-card-header uk-flex" style="font-size: 1rem; padding: 20px; align-items: center;">
-                                                <span><i class="@iconClass"></i></span>
+                                                <span>
+                                                    <i class="@iconClass"></i>
+                                                </span>
                                                 <button class="uk-button uk-button-link" data-enrollment-id="@training.EnrollmentId"
                                                         onclick="navigateToNexportClassroom(this);return false;" style="font-size: 1em; text-transform: initial; margin-left: 8px;"
                                                         disabled="@(enrollmentDisabled)">
@@ -117,6 +118,7 @@
         }
     </div>
 </div>
+<!script async src="https://kit.fontawesome.com/e4adf0b7ea.js" crossorigin="anonymous" asp-location="Footer"></!script>
 <script asp-location="Footer">
     function navigateToNexportOrganization(element) {
         var orgId = $(element).data("org-id");

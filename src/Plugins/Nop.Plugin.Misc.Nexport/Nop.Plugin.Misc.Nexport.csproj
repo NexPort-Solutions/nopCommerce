@@ -66,6 +66,7 @@
     <None Remove="Areas\Admin\Views\Widget\Order\Wholesale.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewImports.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewStart.cshtml" />
+    <None Remove="Content\buttons.dataTables.min.css" />
     <None Remove="Content\jquery-ui-timepicker-addon.min.css" />
     <None Remove="Content\jquery.dataTables.min.css" />
     <None Remove="Content\nexport-admin.css" />
@@ -236,6 +237,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\_ViewStart.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\buttons.dataTables.min.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\jquery-ui-timepicker-addon.min.css">

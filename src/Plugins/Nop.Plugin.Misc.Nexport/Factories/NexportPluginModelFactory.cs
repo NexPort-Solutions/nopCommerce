@@ -1661,7 +1661,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     var noGroupCount = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(null);
                     if (noGroupCount > 0)
                     {
-                        groupModels.Add(new NexportGroupModel { Id = null, Name = "No Group", NumberOfProducts = noGroupCount });
+                        groupModels.Add(new NexportGroupModel { Id = null, Name = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Group.NoGroup"), NumberOfProducts = noGroupCount });
                     }
 
                     var groupsFromApi = await _nexportService.SearchGroupsForPermissionAsync(userMapping.NexportUserId,
