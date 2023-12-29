@@ -14,7 +14,7 @@
     You need to set this parameter to true if your plugin has a nuget package
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>1.0.0.10</AssemblyVersion>
+    <AssemblyVersion>1.0.0.11</AssemblyVersion>
     <FileVersion>1.0.0.10</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -93,6 +93,7 @@
     <None Remove="Views\MapNexportProductList.cshtml" />
     <None Remove="Views\NexportGroupProductRedemptions.cshtml" />
     <None Remove="Views\NexportGroupProducts.cshtml" />
+    <None Remove="Views\NexportGroups.cshtml" />
     <None Remove="Views\NexportStore\List.cshtml" />
     <None Remove="Views\NexportTrainings.cshtml" />
     <None Remove="Views\Order\CustomerOrders.cshtml" />
@@ -108,6 +109,10 @@
     <None Remove="Views\Shared\Components\TagHelpers\NexportDurationPicker\Default.cshtml" />
     <None Remove="Views\Shared\GuidNullable.cshtml" />
     <None Remove="Views\Shared\Table.cshtml" />
+    <None Remove="Views\Shared\_ColumnsOne_groups.cshtml" />
+    <None Remove="Views\Shared\_Root.Head_Groups.cshtml" />
+    <None Remove="Views\Shared\_Root_Groups.cshtml" />
+    <None Remove="Views\Shared\_Table.Definition.cshtml" />
     <None Remove="Views\SupplementalInfo\AddQuestion.cshtml" />
     <None Remove="Views\SupplementalInfo\EditCustomerSupplementalInfoAnsweredQuestion.cshtml" />
     <None Remove="Views\SupplementalInfo\EditQuestion.cshtml" />
@@ -309,6 +314,12 @@
     <Content Include="Views\MapNexportProductList.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\NexportGroupProducts.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportGroups.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\RedeemByEmail.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -318,13 +329,7 @@
     <Content Include="Views\NexportGroupProductRedemptions.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\NexportGroupProducts.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Views\MyNexportGroups.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\NexportGroups.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\NexportStore\List.cshtml">
@@ -358,6 +363,26 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Shared\Table.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\_ColumnsOne_Groups.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\_Root_Groups.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\_Root.Head_Groups.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\_Table.Definition.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\SupplementalInfo\AnswerQuestions.cshtml">

@@ -20,6 +20,7 @@ using Nop.Services.Customers;
 using Nop.Services.Logging;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
+using Nop.Services.Plugins;
 using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Controllers;
@@ -247,12 +248,12 @@ public class NexportWholesaleController : BaseAdminController
     }
 
     [HttpsRequirement]
-    public async Task<IActionResult> RedeemProduct(Guid? groupId, int productId)
+    public async Task<IActionResult> RedeemProduct(Guid? groupId, Guid? invoiceItemId, int? productId)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
             return AccessDeniedView();
 
-        var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId, productId);
+        var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId, invoiceItemId, productId);
         model.AdminView = true;
         ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/RedeemProduct.cshtml";
         ViewData["ModelForPartialView"] = model;

@@ -42,6 +42,7 @@ using Nop.Web.Areas.Admin.Models.Payments;
 using Nop.Web.Areas.Admin.Models.Stores;
 using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Models.Extensions;
+using StackExchange.Profiling.Internal;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -1682,6 +1683,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
                     }
 
+                    if (!searchModel.SearchName.IsNullOrWhiteSpace())
+                        groupModels = groupModels.Where(x => x.Name != null && x.Name.Contains(searchModel.SearchName)).ToList();
+
+                    if (!searchModel.SearchShortName.IsNullOrWhiteSpace())
+                        groupModels = groupModels.Where(x => x.ShortName != null && x.ShortName.Contains(searchModel.SearchShortName)).ToList();
+
                     var pagedGroups = groupModels.ToPagedList(searchModel);
 
                     model = await model.PrepareToGridAsync(searchModel, pagedGroups, () =>
@@ -1719,7 +1726,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             {
                 IList<NexportGroupProductModel> groupProductModels = new List<NexportGroupProductModel>();
 
-                var wholesaleOrderInfos = await _nexportService.GetWholesaleOrderInfosForGroupAsync(groupId);
+                var wholesaleOrderInfos =
+                    await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName);
 
                 if (wholesaleOrderInfos != null)
                 {
@@ -1785,51 +1793,45 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             {
                 var redemptions = new List<NexportGroupProductRedemptionModel>();
 
-                var orderInfos =
-                    await _nexportService.GetWholesaleOrderInfosForGroupAndProductAsync(groupId, productId);
 
-                if (orderInfos != null)
+                var dateAssignedFromValue = !searchModel.DateAssignedFrom.HasValue ? null
+                    : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.DateAssignedFrom.Value, await _dateTimeHelper.GetCurrentTimeZoneAsync());
+                var dateAssignedToValue = !searchModel.DateAssignedTo.HasValue ? null
+                    : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.DateAssignedTo.Value, await _dateTimeHelper.GetCurrentTimeZoneAsync()).AddDays(1);
+
+                var invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
+                    searchModel.SearchName, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue);
+
+                if (invoiceItems != null)
                 {
-                    foreach (var orderInfo in orderInfos)
+                    foreach (var invoiceItem in invoiceItems)
                     {
-                        var invoiceItems =
-                            await _nexportService.FindNexportOrderInvoiceItems(orderInfo.OrderId,
-                                orderInfo.OrderItemId);
-
-                        if (invoiceItems == null)
-                            continue;
-
-                        foreach (var invoiceItem in invoiceItems.Where(invoiceItem =>
-                                     invoiceItem.RedemptionStatus!=NexportOrderInvoiceItemRedemptionStatus.Available))
+                        var redemptionItem = new NexportGroupProductRedemptionModel
                         {
-                            var redemptionItem = new NexportGroupProductRedemptionModel
+                            InvoiceItemId = invoiceItem.InvoiceItemId,
+                            Status = invoiceItem.RedemptionStatus.GetDisplayName(),
+                            DateRedeemed = invoiceItem.UtcDateRedemption?.ToString("MM/dd/yyyy h:mm tt")
+                        };
+
+
+                        if (invoiceItem.RedeemingUserId.HasValue)
+                        {
+                            var redeemerUserMapping =
+                                await _nexportService.FindUserMappingByNexportUserId(invoiceItem
+                                    .RedeemingUserId.Value);
+
+
+                            if (redeemerUserMapping != null)
                             {
-                                InvoiceItemId = invoiceItem.InvoiceItemId,
-                                Status = invoiceItem.RedemptionStatus.GetDisplayName(),
-                                DateRedeemed = invoiceItem.UtcDateRedemption?.ToString("MM/dd/yyyy h:mm tt")
-                            };
-
-
-                            if (invoiceItem.RedeemingUserId.HasValue)
-                            {
-                                var redeemerUserMapping =
-                                    await _nexportService.FindUserMappingByNexportUserId(invoiceItem
-                                        .RedeemingUserId.Value);
-
-
-                                if (redeemerUserMapping != null)
-                                {
-                                    var redeemer =
-                                        await _nexportService.FindCustomerByIdAsync(redeemerUserMapping
-                                            .NopUserId);
-                                    redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
-                                }
+                                var redeemer =
+                                    await _nexportService.FindCustomerByIdAsync(redeemerUserMapping
+                                        .NopUserId);
+                                redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
                             }
-
-                            redemptions.Add(redemptionItem);
                         }
-                    }
 
+                        redemptions.Add(redemptionItem);
+                    }
                 }
 
                 var pagedRedemptions = redemptions.ToPagedList(searchModel);
@@ -1887,6 +1889,24 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 model.CurrentProduct = product;
             }
 
+            //prepare available statuses
+            model.AvailableStatuses.Add(new SelectListItem { Value = null, Text = "All" });
+
+            //for each status enum create a selectlistitem and add it for the status filter
+            foreach (var e in Enum.GetValues(typeof(NexportOrderInvoiceItemRedemptionStatus)))
+            {
+                if (e.GetDisplayName() ==
+                    NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable.GetDisplayName() ||
+                    e.GetDisplayName() == NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting.GetDisplayName())
+                    continue;
+
+                model.AvailableStatuses.Add(new SelectListItem
+                {
+                    Value = e.ToString(),
+                    Text = e.GetDisplayName()
+                });
+            }
+
             if (groupId == null)
                 return model;
 
@@ -1898,25 +1918,29 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 if (groupModel != null)
                     model.CurrentGroup = groupModel;
             }
-
+            
             return model;
         }
 
-        public async Task<RedeemProductModel> PrepareRedeemProductModel(Guid? groupId, int productId)
+        public async Task<RedeemProductModel> PrepareRedeemProductModel(Guid? groupId, Guid? invoiceItemId, int? productId)
         {
             if (groupId == Guid.Empty)
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
+            if (invoiceItemId == Guid.Empty)
+                throw new ArgumentException("Invoice item Id cannot be empty Guid", nameof(invoiceItemId));
+            if (productId == null)
+                throw new ArgumentException("Product id cannot be null", nameof(productId));
             if (productId < 1)
-                throw new ArgumentOutOfRangeException(nameof(productId));
+                throw new ArgumentException("Invalid product id", nameof(productId));
 
             var model = new RedeemProductModel();
 
-            var product = await _productService.GetProductByIdAsync(productId);
+            var product = await _productService.GetProductByIdAsync(productId.Value);
             if (product != null)
             {
                 model.CurrentProduct = product;
 
-                var invoiceItem = await _nexportService.GetFirstAvailableInvoiceItemForGroupIdAndProductIdAsync(groupId, productId);
+                var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
 
                 if (invoiceItem != null)
                 {
@@ -1947,7 +1971,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
                                 foreach (var productMapping in listOfMappings)
                                 {
-                                    if (!productMapping.AutoRedeem && productMapping.NexportSyllabusId!=null)
+                                    if (!productMapping.AutoRedeem && productMapping.NexportSyllabusId != null)
                                     {
                                         var productMappingProduct = await _productService.GetProductByIdAsync(productMapping.NopProductId);
                                         if (productMappingProduct != null)

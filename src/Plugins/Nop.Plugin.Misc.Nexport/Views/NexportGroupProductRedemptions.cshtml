@@ -1,15 +1,11 @@
-﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+﻿@using Nop.Plugin.Misc.Nexport.Models.Wholesale
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Extensions
 @model Nop.Plugin.Misc.Nexport.Models.Wholesale.NexportGroupProductRedemptionListSearchModel
+
 @{
-    string GetUrl(DataUrl dataUrl)
-    {
-        return !string.IsNullOrEmpty(dataUrl?.ActionName) && !string.IsNullOrEmpty(dataUrl.ControllerName)
-            ? Url.Action(dataUrl.ActionName, dataUrl.ControllerName, dataUrl.RouteValues)
-            : !string.IsNullOrEmpty(dataUrl.Url)
-                ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
-                : string.Empty;
-    }
+    const string hideSearchBlockAttributeName = "NexportGroupsPage.HideSearchBlock";
+    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
 
     var currentGroupId = @Model.CurrentGroup.Id?.ToString() ?? "null";
 
@@ -18,22 +14,22 @@
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
 
     var groupProductRedemptionText = Model.CurrentProduct.Name + " - " + T("Plugins.Misc.Nexport.Group.Product.Redemptions");
-   
 }
-<div class="page-title">
+
+<div class="content-header clearfix nex-plugin">
     <nav aria-label="Breadcrumb">
         <ul class="uk-breadcrumb">
-            <li >
-                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")" >
+            <li>
+                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")">
                     <span>@T("Plugins.Misc.Nexport.Groups")</span>
                 </a>
             </li>
-            <li >
+            <li>
                 <a href="@(groupProductsRouteUrl+"?groupId="+currentGroupId)" title="@T("Plugins.Misc.Nexport.Group.Products")">
                     <span>@Model.CurrentGroup.Name</span>
                 </a>
             </li>
-            <li >
+            <li>
                 @groupProductRedemptionText
                 <span id="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)">
                 </span>
@@ -42,71 +38,144 @@
     </nav>
     <h1>@groupProductRedemptionText</h1>
 </div>
-<div class="page-body">
-    <div style="text-align: right;padding-bottom: 1rem;">
-        <input type="submit" id="btnRefreshGroupRedemptions" style="display: none">
-        Assignments Available: 
-        <span style="margin-left: 7px; margin-right: 12px;" id="redemptionsAvailable"></span>
-        <button class="uk-button uk-button-default uk-button-small" id="redeemBtn">@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign")</button>
-    </div>
-    <table id="redemptions_table" class="uk-table uk-table-divider uk-table-striped" style="width: 100%">
-        <thead>
-        <tr>
-                <th>@T("Plugins.Misc.Nexport.Group.Product.Redemption.Name")</th>
-                <th>@T("Plugins.Misc.Nexport.Group.Product.Redemption.Status")</th>
-                <th>@T("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssigned")</th>
-            <th></th>
-        </tr>
-        </thead>
-    </table>
-</div>
-<script>
-    let groupsTable = new DataTable('#redemptions_table', {
-        ajax:
-            {
-                url: "@Html.Raw(GetUrl(new DataUrl("GetNexportGroupProductRedemptions", "NexportWholesale", null)))?groupId=@(Model.CurrentGroup.Id)&productId=@(Model.CurrentProduct.Id)",
-                type: "POST",
-                dataType: "json",
-                dataSrc: "Data",
-                data: function(data) {
-                    addAntiForgeryToken(data);
-                    return data;
-                }
-            },
-            columns: [
-                { data: "Name" },
-                { data: "Status" },
-                { data: "DateRedeemed" },
-                {
-                    "mData": "InvoiceItemId",
-                    "mRender": function (data, type, row) {
-                        if(row.InvoiceItemId!=null){
-                            if(row.Status=="@(NexportOrderInvoiceItemRedemptionStatus.Assigned.GetDisplayName())")
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="form-horizontal">
+            <div class="cards-group">
+
+                <div class="card card-default card-search">
+                    <div class="card-body">
+                        <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
+                            <div class="search-text">@T("Admin.Common.Search")</div>
+                            <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
+                            <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                        </div>
+
+                        <div class="search-body @(hideSearchBlock ? "closed" : "")">
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="SearchName" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-editor asp-for="SearchName" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="SearchStatusId" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-select asp-for="SearchStatusId" asp-items="Model.AvailableStatuses" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="DateAssignedFrom" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-editor asp-for="DateAssignedFrom" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="DateAssignedTo" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-editor asp-for="DateAssignedTo" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="text-center col-12">
+                                    <button type="button" id="search-group-product-redemptions" class="btn btn-primary btn-search"><i class="fas fa-search"></i>@T("Admin.Common.Search")</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-default">
+                    <div class="card-body">
+
+                        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new DataTablesModel
+                        {
+                            Name = "group-product-redemptions-grid",
+                            UrlRead = new DataUrl("GetNexportGroupProductRedemptions", "NexportWholesale",
+                                new RouteValueDictionary {
+                                    { "GroupId", Model.CurrentGroup.Id }
+                                    ,{ "ProductId", Model.CurrentProduct.Id }
+                                }),
+                            SearchButtonId = "search-group-product-redemptions",
+                            Length = Model.PageSize,
+                            LengthMenu = Model.AvailablePageSizes,
+                            Filters = new List<FilterParameter>
                             {
-                            return "<center><button class=\"uk-button uk-button-default uk-button-small\" onclick=\"unassignRedemption('" + row.InvoiceItemId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")</button></center>";
+                                new FilterParameter(nameof(Model.SearchName)),
+                                new FilterParameter(nameof(Model.SearchStatusId)),
+                                new FilterParameter(nameof(Model.DateAssignedFrom)),
+                                new FilterParameter(nameof(Model.DateAssignedTo))
+                            },
+                            ColumnCollection = new List<ColumnProperty>
+                            {
+                                new ColumnProperty(nameof(NexportGroupProductRedemptionModel.Name))
+                                {
+                                Title = @T("Plugins.Misc.Nexport.Group.Product.Redemption.Name").Text
+                                },
+                                new ColumnProperty(nameof(NexportGroupProductRedemptionModel.Status))
+                                {
+                                Title = @T("Plugins.Misc.Nexport.Group.Product.Redemption.Status").Text
+                                },
+                                new ColumnProperty(nameof(NexportGroupProductRedemptionModel.DateRedeemed))
+                                {
+                                    Title = @T("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssigned").Text,
+                                    Render = new RenderCustom("renderLocalDateForTableEntry")
+                                },
+                                new(nameof(NexportGroupModel.Id))
+                                {
+                                    Width = "100",
+                                    Render = new RenderCustom("renderModifyGroupProductRedemptions"),
+                                    ClassName = NopColumnClassDefaults.Button,
+                                    AutoWidth = false
+                                }
                             }
-                        else if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Awaiting.GetDisplayName())") {
-                            return "<center><button class=\"uk-button uk-button-default uk-button-small\" onclick=\"cancelAwaitingRedemption('" + row.InvoiceItemId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting")</button></center>";
-                            }
-                        }
-                        return '';
-                    }
-                }
-            ],
-            dom: 'lBfrtip',
-            buttons: [
-                {
-                    className: "fas fa-sync",
-                    action: function (e, dt, node, config) {
-                        dt.ajax.reload();
-                    updateAvailableRedemptions();
-                    }
-                }
-            ],
-            order: [[1, 'asc']]
-    });
-    function unassignRedemption(invoiceItemId) 
-    {
+                        })
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    function renderModifyGroupProductRedemptions(data, type, row, meta) {
+        
+        if (row.InvoiceItemId != null) {
+            if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Assigned.GetDisplayName())") 
+            {
+                return "<center><button class=\"btn btn-default\" onclick=\"unassignRedemption('" + row.InvoiceItemId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")</button></center>";
+            }
+            else if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Available.GetDisplayName())") 
+            {
+                return "<center><button class=\"btn btn-default\" onclick=\"assignRedemption('" + row.InvoiceItemId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign")</button></center>";
+            }
+            else if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Awaiting.GetDisplayName())") 
+            {
+                return "<center><button class=\"btn btn-default\" onclick=\"cancelAwaitingRedemption('" + row.InvoiceItemId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting")</button></center>";
+            }
+        }
+        return '';
+
+    }
+    
+    function assignRedemption(invoiceItemId) {
+        window.location.href = "@Url.Action("RedeemProduct", "NexportWholesale")"+"?GroupId="+"@currentGroupId"+"&InvoiceItemId="+invoiceItemId+"&ProductId="+"@Model.CurrentProduct.Id";
+    }
+    function unassignRedemption(invoiceItemId) {
         if (confirm('@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Unassign.Confirmation")')) {
             var postData = {
                 invoiceItemId: invoiceItemId
@@ -121,8 +190,8 @@
                 dataType: "json",
                 success: function (data, textStatus, jqXHR) {
                     if (data.result == "@(NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable.GetDisplayName())") {
-                       location.reload();
-                   }
+                        location.reload();
+                    }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     alert('@T("Plugins.Misc.Nexport.Group.Product.Redemption.Unassign.Failed")');
@@ -155,29 +224,26 @@
         }
     }
     function updateAvailableRedemptions() {
-        var redemptionData = { groupId:"@Model.CurrentGroup.Id",productId:"@Model.CurrentProduct.Id" };
+        var redemptionData = { groupId: "@Model.CurrentGroup.Id", productId: "@Model.CurrentProduct.Id" };
         addAntiForgeryToken(redemptionData);
 
         $.ajax({
 
-            url: "@Html.Raw(GetUrl(new DataUrl("GetAvailableNexportGroupProductRedemptionsCount", "NexportWholesale", null)))",
+            url: "@Url.Action("GetAvailableNexportGroupProductRedemptionsCount", "NexportWholesale")",
             type: "POST",
-            data:redemptionData,
+            data: redemptionData,
             success: function (data) {
-                if(data.result!=null){
+                if (data.result != null) {
                     $("#redemptionsAvailable").html(data.result);
-                    if(data.result<1){
-                        $("#redeemBtn").prop("disabled", true);
-                    }
-                    else{
-                        $("#redeemBtn").prop("disabled", false);
-                    }
                 }
             },
             error: function (error) {
                 console.log(`Error ${error}`);
             }
         });
+    }
+    function renderLocalDateForTableEntry(data, type, row, meta) {
+        return data ? moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss") : null;
     }
     $(document).ready(function () {
         updateAvailableRedemptions();
@@ -189,8 +255,6 @@
             // Return false to not reload a page
             return false;
         });
-        $("#redeemBtn").click(function () {
-            window.location.href = "@Html.Raw(GetUrl(new DataUrl("RedeemProduct", "NexportWholesale", null)))?GroupId=" + "@currentGroupId" +"&ProductId=" + "@Model.CurrentProduct.Id";
-        });
     });
+    
 </script>

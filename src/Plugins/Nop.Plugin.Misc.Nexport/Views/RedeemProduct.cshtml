@@ -1,64 +1,34 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProductModel
 @{
-    string GetUrl(DataUrl dataUrl)
-    {
-        return !string.IsNullOrEmpty(dataUrl?.ActionName) && !string.IsNullOrEmpty(dataUrl.ControllerName)
-            ? Url.Action(dataUrl.ActionName, dataUrl.ControllerName, dataUrl.RouteValues)
-            : !string.IsNullOrEmpty(dataUrl.Url)
-                ? $"{(dataUrl.Url.StartsWith("~/", StringComparison.Ordinal) ? Url.Content(dataUrl.Url) : dataUrl.Url).TrimEnd('/')}" + (!dataUrl.TrimEnd ? "/" : "")
-                : string.Empty;
-    }
     var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
     var redeemOrModifyText = T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem") + " - " + Model.CurrentProduct.Name;
 
     var currentGroupId = @Model.CurrentGroup.Id?.ToString() ?? "null";
+
+
 }
-<style>
-    .assignment-type {
-        display: inline-block;
-    }
 
-    .assignment-type span {
-        display: inline-block;
-        margin: 0 5px;
-    }
-
-    .assignment-type span > * {
-        display: inline !important;
-        margin: 0 5px;
-        line-height: 32px;
-    }
-
-    .assignment-type span {
-        margin: 0 10px 0 0;
-    }
-
-    .assignment-type span > * {
-        margin: 0 5px 0 0;
-    }
-
-</style>
-<div class="page-title">
+<div class="content-header clearfix nex-plugin">
     <nav aria-label="Breadcrumb">
         <ul class="uk-breadcrumb">
-            <li >
-                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")" >
-                    <span >@T("Plugins.Misc.Nexport.Groups")</span>
-                </a>
-            </li>
-            <li >
-                <a href="@(groupProductsRouteUrl+"?groupId="+currentGroupId)" title="@T("Plugins.Misc.Nexport.Group.Products")" >
-                    <span >@Model.CurrentGroup.Name</span>
+            <li>
+                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")">
+                    <span>@T("Plugins.Misc.Nexport.Groups")</span>
                 </a>
             </li>
             <li>
-                <a href="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)" title="Redemptions" >
-                    <span >@Model.CurrentProduct.Name</span>
+                <a href="@(groupProductsRouteUrl+"?groupId="+currentGroupId)" title="@T("Plugins.Misc.Nexport.Group.Products")">
+                    <span>@Model.CurrentGroup.Name</span>
                 </a>
             </li>
-            <li >
+            <li>
+                <a href="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)" title="Redemptions">
+                    <span>@Model.CurrentProduct.Name</span>
+                </a>
+            </li>
+            <li>
                 @redeemOrModifyText
                 <span id="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)">
                 </span>
@@ -67,44 +37,95 @@
     </nav>
     <h1>@redeemOrModifyText</h1>
 </div>
-<div class="page-body">
-    <form asp-controller="NexportWholesale" asp-action="RedeemProductForCustomer">
-        <div asp-validation-summary="ModelOnly" class="message-error"></div>
-        <div class="fieldset">
-            <div class="form-fields">
-                <div class="inputs">
-                    <label for="search-customer-name-email">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectCustomer")</label>
-                    <input type="text" id="search-customer-name-email" autocomplete="off" class="form-control" />
-                    <input asp-for="CustomerId" style="display: none;" />
-                    <input asp-for="InvoiceItemId" style="display: none;" />
-                    <input asp-for="ProductMappingIdForOpenEndedProduct" style="display:none"/>
-                    <input name="ReturnUrl" id="ReturnUrl" value="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)" style="display: none;" />
-                    
-                </div>
-                <div class="inputs">
-                    <label for="TrainingProductMappingId">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining")</label>
-                    <nop-select asp-for="SelectedProductMappingId" asp-items="Model.AvailableMappings" asp-multiple="false" title="Select Training" asp-required="false"/>
-                </div>
-                <div class="inputs">
-                    <label for="assignment-type">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType")</label>
-                    <div id="assignment-type" class="assignment-type">
-                        <span class="assignment-type-email">
-                            <input type="radio" asp-for="AssignmentType" value="Email" id="assignment-type-email" />
-                            <label class="forcheckbox" for="assignment-type-email">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option1")</label>
-                        </span>
-                        <span class="assignment-type-instant">
-                            <input type="radio" asp-for="AssignmentType" value="Instant" id="assignment-type-instant" />
-                            <label class="forcheckbox" for="assignment-type-instant">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option2")</label>
-                        </span>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="form-horizontal">
+            <div class="cards-group">
+                <div class="card card-default">
+                    <div class="card-body">
+                        <form asp-controller="NexportWholesale" asp-action="RedeemProductForCustomer">
+                            <div class="form-group row">
+                                <div class="col-sm-3">
+                                    <div class="label-wrapper">
+                                        <label for="search-customer-name-email" class="col-form-label">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectCustomer")</label>
+                                        <div title="" data-toggle="tooltip" class="ico-help" data-original-title="@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectCustomer")">
+                                            <i class="fas fa-question-circle"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-9">
+                                    <input type="text" id="search-customer-name-email" autocomplete="off" class="form-control" />
+
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-sm-3">
+                                    <div class="label-wrapper">
+                                        <label for="TrainingProductMappingId" class="col-form-label">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining")</label>
+                                        <div title="" data-toggle="tooltip" class="ico-help" data-original-title="@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining")">
+                                            <i class="fas fa-question-circle"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-9">
+                                    <nop-select asp-for="SelectedProductMappingId" asp-items="Model.AvailableMappings" asp-multiple="false" title="Select Training" asp-required="false" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-sm-3">
+                                    <div class="label-wrapper">
+                                        <label for="assignment-type" class="col-form-label">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType")</label>
+                                        <div title="" data-toggle="tooltip" class="ico-help" data-original-title="@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType")">
+                                            <i class="fas fa-question-circle"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-9">
+                                    <div class="raw">
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" asp-for="AssignmentType" value="Email" id="assignment-type-email"/>
+                                            <label class="form-check-label" for="assignment-type-email">
+                                                @T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option1")
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" asp-for="AssignmentType" value="Instant" id="assignment-type-instant"/>
+                                            <label class="form-check-label" for="assignment-type-instant">
+                                                @T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option2")
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    @* <div id="assignment-type" class="assignment-type">
+                                        <span class="assignment-type-email">
+                                            <input type="radio" asp-for="AssignmentType" value="Email" id="assignment-type-email"/>
+                                            <label class="forcheckbox" for="assignment-type-email">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option1")</label>
+                                        </span>
+                                        <span class="assignment-type-instant">
+                                            <input type="radio" asp-for="AssignmentType" value="Instant" id="assignment-type-instant"/>
+                                            <label class="forcheckbox" for="assignment-type-instant">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option2")</label>
+                                        </span>
+                                    </div> *@
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-9 offset-md-3">
+                                    <input asp-for="CustomerId" style="display: none;" />
+                                    <input asp-for="InvoiceItemId" style="display: none;" />
+                                    <input asp-for="ProductMappingIdForOpenEndedProduct" style="display:none" />
+                                    <input name="ReturnUrl" id="ReturnUrl" value="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)" style="display: none;" />
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="buttons">
-            <button type="submit" class="button-1" >Submit</button>
-        </div>
-    </form>
-</div>
+    </div>
+</section>
+
 <script>
     $(document).ready(function () {
         $('#search-customer-name-email').autocomplete({
