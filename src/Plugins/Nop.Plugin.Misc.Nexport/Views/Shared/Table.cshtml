@@ -55,7 +55,7 @@
 <script asp-location="Footer">
     $(document).ready(function () {
         $('#@Model.Name').DataTable({
-            @await Html.PartialAsync("_Table.Definition", Model)
+            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/_Table.Definition.cshtml", Model)
         });
 
         @if (!string.IsNullOrEmpty(Model.SearchButtonId))
@@ -388,7 +388,7 @@
                             row.child(getchild_@(tableName)(row.data())).show();
                             var classid = '#child' + row.data().@(curModel.PrimaryKeyColumn) + '_@(tableName)';
                             $(classid).DataTable({
-                                @await Html.PartialAsync("_Table.Definition", curModel.ChildTable),
+                                @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/_Table.Definition.cshtml", curModel.ChildTable),
                                 rowGroup: {
                                     enable: @Json.Serialize(nexportDataTableModel.RowGrouping),
                                     dataSrc: "@(nexportDataTableModel.RowGroupingColumn)",

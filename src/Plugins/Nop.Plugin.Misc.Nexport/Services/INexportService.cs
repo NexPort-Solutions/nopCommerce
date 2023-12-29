@@ -9,6 +9,7 @@ using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Web.Areas.Admin.Models.Catalog;
@@ -337,7 +338,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<NexportOrderInvoiceItem?> FindNexportOrderInvoiceItemByGuidAsync(Guid? orderInvoiceItemId);
 
-        Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemByInvoiceItemGuid(Guid invoiceItemId);
+        Task<IList<WholesaleOrderInfo>?> SearchGroupProductsAsync(Guid? groupId, string productName);
+
+        Task<IList<NexportOrderInvoiceItem>?> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
+            string customerName, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc,DateTime? toUtc);
 
     }
 }

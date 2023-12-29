@@ -147,7 +147,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [HttpsRequirement]
-        public async Task<IActionResult> RedeemProduct(Guid? groupId, int productId)
+        public async Task<IActionResult> RedeemProduct(Guid? groupId, Guid? invoiceItemId, int? productId)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
@@ -156,7 +156,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
                 return Challenge();
 
-            var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId, productId);
+            var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId,invoiceItemId, productId);
             ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/RedeemProduct.cshtml";
             ViewData["ModelForPartialView"] = model;
 
