@@ -345,8 +345,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         productMapping.AssignWhenRedeemed.Value)
                                     {
                                         var selectedMappingForOpenEndedProductStr = await _genericAttributeService.GetAttributeAsync<string>(
-                                            orderItem,
-                                            $"SelectedMappingForOpenEndedProduct-{order.Id}-{orderItem.Id}", order.StoreId);
+                                            invoiceItem,
+                                            $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}", order.StoreId);
 
                                         if (selectedMappingForOpenEndedProductStr != null)
                                         {
@@ -707,6 +707,17 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                     wholesaleOrderInfo.Awaiting++;
 
                 await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+            }
+
+            var selectedMappingForOpenEndedProductStr = await _genericAttributeService.GetAttributeAsync<string>(
+                invoiceItem,
+                $"SelectedMappingForOpenEndedProduct-{invoiceItem}", order.StoreId);
+
+            if (selectedMappingForOpenEndedProductStr != null)
+            {
+                await _genericAttributeService.SaveAttributeAsync<string>(invoiceItem,
+                    $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
+                    null, order.StoreId);
             }
 
             await _nexportService.AddOrderNoteAsync(order,

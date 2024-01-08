@@ -156,7 +156,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
                 return Challenge();
 
-            var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId,invoiceItemId, productId);
+            var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId, invoiceItemId, productId);
             ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/RedeemProduct.cshtml";
             ViewData["ModelForPartialView"] = model;
 
@@ -184,10 +184,20 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
 
-            var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
-
-            if (orderInfo is not { Available: > 0 } || order == null || orderItem == null)
+            if (orderInfo is not { Available: > 0 } || order == null)
                 return Redirect(model.returnUrl);
+
+            //set generic attribute for open ended product 
+            if (model.ProductMappingIdForOpenEndedProduct != null)
+            {
+                var productMapping =
+                    await _nexportService.GetProductMappingById(model
+                        .SelectedProductMappingId.Value);
+
+                await _genericAttributeService.SaveAttributeAsync(invoiceItem,
+                    $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
+                    JsonConvert.SerializeObject(productMapping), order.StoreId);
+            }
 
             if (model.AssignmentType == "Instant")
             {
@@ -204,13 +214,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 if (model.ProductMappingIdForOpenEndedProduct != null)
                 {
-                    var productMapping =
-                        await _nexportService.GetProductMappingById(model
-                            .SelectedProductMappingId.Value);
-                    await _genericAttributeService.SaveAttributeAsync(orderItem,
-                        $"SelectedMappingForOpenEndedProduct-{order.Id}-{orderItem.Id}",
-                        JsonConvert.SerializeObject(productMapping), order.StoreId);
-
 
                     await _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
                         new NexportOrderInvoiceRedemptionQueueItem
@@ -394,24 +397,45 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemById(invoiceItemId);
             if (invoiceItem != null)
             {
-                var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
-                if (orderItem != null)
+                if (productMappingId > 0)
                 {
-                    if (productMappingId > 0)
+                    var productMapping = await _nexportService.GetProductMappingById(productMappingId);
+
+                    var product = await _productService.GetProductByIdAsync(productMapping.NopProductId);
+
+                    model.InvoiceItemId = invoiceItemId;
+                    model.Redeemed = invoiceItem.RedemptionStatus ==
+                                     NexportOrderInvoiceItemRedemptionStatus.Assigned;
+                    model.ProductName = product?.Name;
+                    model.RedeemedDate = invoiceItem.UtcDateProcessed;
+                    model.NexportUserId = nexportUserId;
+                    model.ProductMappingId = productMappingId;
+                    model.Status = invoiceItem.RedemptionStatus;
+                    model.EnrollmentId = invoiceItem.RedemptionEnrollmentId;
+                    var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+                    if (order != null)
                     {
-                        var productMapping = await _nexportService.GetProductMappingById(productMappingId);
+                        var selectedMappingForOpenEndedProductStr =
+                            await _genericAttributeService.GetAttributeAsync<string>(
+                                invoiceItem,
+                                $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
+                                order.StoreId);
 
-                        var product = await _productService.GetProductByIdAsync(productMapping.NopProductId);
+                        if (selectedMappingForOpenEndedProductStr != null)
+                        {
+                            var selectedMappingForOpenEndedProduct =
+                                JsonConvert.DeserializeObject<NexportProductMapping>(
+                                    selectedMappingForOpenEndedProductStr);
 
-                        model.InvoiceItemId = invoiceItemId;
-                        model.Redeemed = invoiceItem.RedemptionStatus ==
-                                         NexportOrderInvoiceItemRedemptionStatus.Assigned;
-                        model.ProductName = product?.Name;
-                        model.RedeemedDate = invoiceItem.UtcDateProcessed;
-                        model.NexportUserId = nexportUserId;
-                        model.ProductMappingId = productMappingId;
-                        model.Status = invoiceItem.RedemptionStatus;
-                        model.EnrollmentId = invoiceItem.RedemptionEnrollmentId;
+                            if (selectedMappingForOpenEndedProduct != null)
+                            {
+                                product = await _productService.GetProductByIdAsync(selectedMappingForOpenEndedProduct.NopProductId);
+                                if (product != null)
+                                {
+                                    model.ProductName = product.Name;
+                                }
+                            }
+                        }
                     }
                 }
 
