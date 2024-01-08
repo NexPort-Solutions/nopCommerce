@@ -1810,9 +1810,56 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         {
                             InvoiceItemId = invoiceItem.InvoiceItemId,
                             Status = invoiceItem.RedemptionStatus.GetDisplayName(),
-                            DateRedeemed = invoiceItem.UtcDateRedemption?.ToString("MM/dd/yyyy h:mm tt")
+                            DateRedeemed = invoiceItem.UtcDateRedemption.HasValue ? (await _dateTimeHelper.ConvertToUserTimeAsync(invoiceItem.UtcDateRedemption.Value, DateTimeKind.Utc)).ToString("MM/dd/yyyy h:mm tt") : null
                         };
 
+                        if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Assigned ||
+                            invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Awaiting)
+                        {
+                            var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+
+                            if (order != null)
+                            {
+                                var selectedMappingForOpenEndedProductStr =
+                                        await _genericAttributeService.GetAttributeAsync<string>(
+                                            invoiceItem,
+                                            $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
+                                            order.StoreId);
+
+                                if (selectedMappingForOpenEndedProductStr != null)
+                                {
+                                    var selectedMappingForOpenEndedProduct =
+                                        JsonConvert.DeserializeObject<NexportProductMapping>(
+                                            selectedMappingForOpenEndedProductStr);
+
+                                    if (selectedMappingForOpenEndedProduct != null)
+                                    {
+                                        var product = await _productService.GetProductByIdAsync(selectedMappingForOpenEndedProduct.NopProductId);
+                                        if (product != null)
+                                        {
+                                            redemptionItem.ProductName = product.Name;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    var product = await _productService.GetProductByIdAsync(productId);
+                                    if (product != null)
+                                    {
+                                        redemptionItem.ProductName = product.Name;
+                                    }
+                                }
+
+                            }
+                        }
+                        else
+                        {
+                            var product = await _productService.GetProductByIdAsync(productId);
+                            if (product != null)
+                            {
+                                redemptionItem.ProductName = product.Name;
+                            }
+                        }
 
                         if (invoiceItem.RedeemingUserId.HasValue)
                         {
@@ -1918,7 +1965,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 if (groupModel != null)
                     model.CurrentGroup = groupModel;
             }
-            
+
             return model;
         }
 

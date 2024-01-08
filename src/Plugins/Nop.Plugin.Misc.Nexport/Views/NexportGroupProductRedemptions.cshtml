@@ -127,6 +127,10 @@
                                 {
                                 Title = @T("Plugins.Misc.Nexport.Group.Product.Redemption.Name").Text
                                 },
+                                new ColumnProperty(nameof(NexportGroupProductRedemptionModel.ProductName))
+                                {
+                                    Title = @T("Plugins.Misc.Nexport.Group.Product.Redemption.ProductName").Text
+                                },
                                 new ColumnProperty(nameof(NexportGroupProductRedemptionModel.Status))
                                 {
                                 Title = @T("Plugins.Misc.Nexport.Group.Product.Redemption.Status").Text
@@ -134,7 +138,7 @@
                                 new ColumnProperty(nameof(NexportGroupProductRedemptionModel.DateRedeemed))
                                 {
                                     Title = @T("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssigned").Text,
-                                    Render = new RenderCustom("renderLocalDateForTableEntry")
+                                    Render = new RenderDate()
                                 },
                                 new(nameof(NexportGroupModel.Id))
                                 {
@@ -241,9 +245,6 @@
                 console.log(`Error ${error}`);
             }
         });
-    }
-    function renderLocalDateForTableEntry(data, type, row, meta) {
-        return data ? moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss") : null;
     }
     $(document).ready(function () {
         updateAvailableRedemptions();

@@ -358,9 +358,7 @@ public class NexportWholesaleController : BaseAdminController
 
         var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
 
-        var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
-
-        if (orderInfo is not { Available: > 0 } || order == null || orderItem == null)
+        if (orderInfo is not { Available: > 0 } || order == null)
             return Redirect(model.returnUrl);
 
         if (model.AssignmentType == "Instant")
@@ -381,8 +379,8 @@ public class NexportWholesaleController : BaseAdminController
                 var productMapping =
                     await _nexportService.GetProductMappingById(model
                         .SelectedProductMappingId.Value);
-                await _genericAttributeService.SaveAttributeAsync(orderItem,
-                    $"SelectedMappingForOpenEndedProduct-{order.Id}-{orderItem.Id}",
+                await _genericAttributeService.SaveAttributeAsync(invoiceItem,
+                    $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
                     JsonConvert.SerializeObject(productMapping), order.StoreId);
 
 
