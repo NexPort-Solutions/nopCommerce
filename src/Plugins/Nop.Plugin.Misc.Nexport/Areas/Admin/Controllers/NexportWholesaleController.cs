@@ -317,7 +317,7 @@ public class NexportWholesaleController : BaseAdminController
         );
     }
 
-    public virtual async Task<IActionResult> SearchCustomers(string term)
+    public virtual async Task<IActionResult> SearchNexportUsers(string term)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
             return AccessDeniedView();
@@ -326,12 +326,13 @@ public class NexportWholesaleController : BaseAdminController
         if (string.IsNullOrWhiteSpace(term) || term.Length < searchTermMinimumLength)
             return Content(string.Empty);
 
-        var customers = await _nexportService.SearchCustomersAsync(term);
+        //var customers = await _nexportService.SearchCustomersAsync(term);
+        var nexportUsers = await _nexportService.GetNexportUsersAsync(term);
 
-        var result = customers.Select(c => new
+        var result = nexportUsers.Select(c => new
         {
             label = $"{c.FirstName} {c.LastName} ({c.Email})",
-            customerId = c.Id
+            nexportUserId = c.UserId
         }).ToList();
 
         return Json(result);
@@ -341,16 +342,14 @@ public class NexportWholesaleController : BaseAdminController
     public async Task<IActionResult> RedeemProductForCustomer(RedeemProductModel model)
     {
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
-            return AccessDeniedView();
-
-        var userMapping = await _nexportService.FindUserMappingByCustomerId(model.CustomerId);
+            return AccessDeniedView(); 
 
         var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
 
         if (model.SelectedProductMappingId == null)
             return Redirect(model.returnUrl);
 
-        if (invoiceItem == null || userMapping == null)
+        if (invoiceItem == null)
             return Redirect(model.returnUrl);
 
         var orderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
@@ -366,7 +365,7 @@ public class NexportWholesaleController : BaseAdminController
 
             invoiceItem.RedemptionStatus =
                 NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
-            invoiceItem.RedeemingUserId = userMapping.NexportUserId;
+            invoiceItem.RedeemingUserId = model.UserId;
             await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
 
 
@@ -388,7 +387,7 @@ public class NexportWholesaleController : BaseAdminController
                     new NexportOrderInvoiceRedemptionQueueItem
                     {
                         OrderInvoiceItemId = invoiceItem.Id,
-                        RedeemingUserId = userMapping.NexportUserId,
+                        RedeemingUserId = model.UserId,
                         ProductMappingId =
                             model.ProductMappingIdForOpenEndedProduct.Value,
                         OrderItemId = invoiceItem.OrderItemId,
@@ -401,7 +400,7 @@ public class NexportWholesaleController : BaseAdminController
                     new NexportOrderInvoiceRedemptionQueueItem
                     {
                         OrderInvoiceItemId = invoiceItem.Id,
-                        RedeemingUserId = userMapping.NexportUserId,
+                        RedeemingUserId = model.UserId,
                         ProductMappingId = model.SelectedProductMappingId.Value,
                         OrderItemId = invoiceItem.OrderItemId,
                         UtcDateCreated = DateTime.UtcNow
@@ -410,16 +409,9 @@ public class NexportWholesaleController : BaseAdminController
         }
         else
         {
-
-            var customer = await _customerService.GetCustomerByIdAsync(userMapping.NopUserId);
-
-            if (customer == null)
-                return Redirect(model.returnUrl);
-
-            await _nexportService.SendNewNexportManualRedemptionCustomerNotificationAsync(
-                customer, order, invoiceItem.Id, userMapping.NexportUserId, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
+            await _nexportService.SendNewNexportManualRedemptionCustomerNotificationAsync(order, invoiceItem.Id, model.UserId, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
                 _localizationSettings.DefaultAdminLanguageId);
-            invoiceItem.RedeemingUserId = userMapping.NexportUserId;
+            invoiceItem.RedeemingUserId = model.UserId;
             invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
 
             await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
