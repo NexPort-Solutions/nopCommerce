@@ -377,7 +377,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }).ToListAsync();
         }
 
-        public async Task<IList<int>> SendNewNexportManualRedemptionCustomerNotificationAsync(Customer customer, Order order, int invoiceItemId, Guid nexportUserId, int productMappingId, int languageId)
+        public async Task<IList<int>> SendNewNexportManualRedemptionCustomerNotificationAsync(Order order, int invoiceItemId, Guid nexportUserId, int productMappingId, int languageId)
         {
             if (order == null)
                 throw new ArgumentNullException(nameof(order));
@@ -393,11 +393,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var commonTokens = new List<Token>();
             await _messageTokenProvider.AddOrderTokensAsync(commonTokens, order, languageId);
 
+            var nexportUser = await GetNexportUserAsync(nexportUserId);
+
             return await messageTemplates.SelectAwait(async messageTemplate =>
             {
                 var emailAccount = await GetEmailAccountOfMessageTemplateAsync(messageTemplate, languageId);
-                var toEmail = customer.Email;
-                var toName = $"{customer.FirstName} {customer.LastName}";
+                var toEmail = nexportUser.Email;
+                var toName = $"{nexportUser.FirstName} {nexportUser.LastName}";
                 var tokens = new List<Token>(commonTokens);
 
                 //ensure that the store URL is specified
@@ -2969,6 +2971,39 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
 
             return items;
+        }
+
+        public async Task<List<GetUserResponse>> GetNexportUsersAsync(string searchTerm, int? page = null)
+        {
+            try
+            {
+                if (_nexportSettings.RootOrganizationId.HasValue)
+                {
+                    var response = _nexportApiService.GetNexportUsers(_nexportSettings.Url,
+                        _nexportSettings.AuthenticationToken,
+                        searchTerm, page);
+
+                    return await response.UserList.ToListAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                var errMsg = $"Error occurred during GetNexportUsers api call with the given search term {searchTerm}";
+                await _logger.ErrorAsync($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<GetUserResponse>(exception.ErrorContent.ToString());
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+
+            return null;
         }
     }
 }

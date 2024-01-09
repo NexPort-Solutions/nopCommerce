@@ -16,7 +16,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.Wholesale
 
         public Guid InvoiceItemId { get; set; }
 
-        public int CustomerId { get; set; }
+        public Guid UserId { get; set; }
 
         public string returnUrl { get; set; }
 

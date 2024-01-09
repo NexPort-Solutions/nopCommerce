@@ -169,14 +169,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
                 return Challenge();
 
-            var userMapping = await _nexportService.FindUserMappingByCustomerId(model.CustomerId);
-
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
 
             if (model.SelectedProductMappingId == null)
                 return Redirect(model.returnUrl);
 
-            if (invoiceItem == null || userMapping == null)
+            if (invoiceItem == null)
                 return Redirect(model.returnUrl);
 
             var orderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
@@ -204,7 +202,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 invoiceItem.RedemptionStatus =
                     NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
-                invoiceItem.RedeemingUserId = userMapping.NexportUserId;
+                invoiceItem.RedeemingUserId = model.UserId;
                 await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
 
 
@@ -219,7 +217,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                         new NexportOrderInvoiceRedemptionQueueItem
                         {
                             OrderInvoiceItemId = invoiceItem.Id,
-                            RedeemingUserId = userMapping.NexportUserId,
+                            RedeemingUserId = model.UserId,
                             ProductMappingId =
                                 model.ProductMappingIdForOpenEndedProduct.Value,
                             OrderItemId = invoiceItem.OrderItemId,
@@ -232,7 +230,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                         new NexportOrderInvoiceRedemptionQueueItem
                         {
                             OrderInvoiceItemId = invoiceItem.Id,
-                            RedeemingUserId = userMapping.NexportUserId,
+                            RedeemingUserId = model.UserId,
                             ProductMappingId = model.SelectedProductMappingId.Value,
                             OrderItemId = invoiceItem.OrderItemId,
                             UtcDateCreated = DateTime.UtcNow
@@ -242,15 +240,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             else
             {
 
-                var customer = await _customerService.GetCustomerByIdAsync(userMapping.NopUserId);
-
-                if (customer == null)
-                    return Redirect(model.returnUrl);
-
-                await _nexportService.SendNewNexportManualRedemptionCustomerNotificationAsync(
-                    customer, order, invoiceItem.Id, userMapping.NexportUserId, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
+                await _nexportService.SendNewNexportManualRedemptionCustomerNotificationAsync(order, invoiceItem.Id, model.UserId, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
                     _localizationSettings.DefaultAdminLanguageId);
-                invoiceItem.RedeemingUserId = userMapping.NexportUserId;
+                invoiceItem.RedeemingUserId = model.UserId;
                 invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
 
                 await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
@@ -370,7 +362,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             );
         }
 
-        public virtual async Task<IActionResult> SearchCustomers(string term)
+        public virtual async Task<IActionResult> SearchNexportUsers(string term)
         {
             if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
                 return Challenge();
@@ -379,12 +371,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (string.IsNullOrWhiteSpace(term) || term.Length < searchTermMinimumLength)
                 return Content(string.Empty);
 
-            var customers = await _nexportService.SearchCustomersAsync(term);
+            var nexportUsers = await _nexportService.GetNexportUsersAsync(term);
 
-            var result = customers.Select(c => new
+            var result = nexportUsers.Select(c => new
             {
                 label = $"{c.FirstName} {c.LastName} ({c.Email})",
-                customerId = c.Id
+                customerId = c.UserId
             }).ToList();
 
             return Json(result);
