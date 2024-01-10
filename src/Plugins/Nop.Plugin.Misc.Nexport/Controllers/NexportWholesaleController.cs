@@ -75,7 +75,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public async Task<IActionResult> SetPurchaseGroupForCustomer(string groupSelected)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
             var customer = await _workContext.GetCurrentCustomerAsync();
@@ -98,7 +98,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
             var searchModel = new NexportGroupListSearchModel();
@@ -117,7 +117,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
             var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
@@ -135,7 +135,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
             var nexportGroupProductRedemptionListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId);
@@ -153,7 +153,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
             var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId, invoiceItemId, productId);
@@ -166,7 +166,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public async Task<IActionResult> RedeemProductForCustomer(RedeemProductModel model)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
@@ -259,7 +259,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return await AccessDeniedDataTablesJson();
 
             var currentCustomer = await _workContext.GetCurrentCustomerAsync();
@@ -274,7 +274,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid? groupId)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return await AccessDeniedDataTablesJson();
 
             var currentCustomer = await _workContext.GetCurrentCustomerAsync();
@@ -288,7 +288,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return await AccessDeniedDataTablesJson();
 
             var currentCustomer = await _workContext.GetCurrentCustomerAsync();
@@ -303,7 +303,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(
             NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
             var count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId);
@@ -316,7 +316,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> InvoiceItemUnassign(Guid invoiceItemId)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
@@ -364,7 +364,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         public virtual async Task<IActionResult> SearchNexportUsers(string term)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
             const int searchTermMinimumLength = 3;
@@ -483,7 +483,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> InvoiceItemCancelAwaiting(Guid invoiceItemId)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);

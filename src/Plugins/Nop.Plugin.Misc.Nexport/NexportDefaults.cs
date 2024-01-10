@@ -249,9 +249,9 @@ namespace Nop.Plugin.Misc.Nexport
 
         public const string REMOTE_SYS_NAME_FOR_API = "Marketplace";
 
-        public const string CR_MANAGE_WHOLESALE_NAME = "Manage Nexport Wholesale Purchases";
+        public const string CR_MANAGE_WHOLESALE_NAME = "Manage Nexport Wholesale";
 
-        public const string CR_MANAGE_WHOLESALE_SYS_NAME = "ManageNexportWholesalePurchases";
+        public const string CR_MANAGE_WHOLESALE_SYS_NAME = "ManageNexportWholesale";
 
         public const string REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE = "Nexport.Redemption.StudentNotification";
     }
