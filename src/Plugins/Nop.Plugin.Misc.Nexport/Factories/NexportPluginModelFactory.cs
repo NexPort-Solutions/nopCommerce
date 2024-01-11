@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Extensions.Azure;
 using Newtonsoft.Json;
 using NexportApi.Model;
 using Nop.Core;
@@ -12,7 +11,6 @@ using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
-using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
@@ -2053,6 +2051,73 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 var groupModel = group.ToModel<NexportGroupModel>();
                 if (groupModel != null)
                     model.CurrentGroup = groupModel;
+            }
+
+            return model;
+        }
+
+        public async Task<RedeemByEmailModel> PrepareRedeemByEmailModel(Guid? nexportUserId, int? invoiceItemId,
+            int? productMappingId)
+        {
+            if (nexportUserId == null)
+                throw new ArgumentNullException(nameof(nexportUserId));
+            if (nexportUserId == Guid.Empty)
+                throw new ArgumentException("Nexport user id cannot be empty Guid", nameof(nexportUserId));
+            if (invoiceItemId == null)
+                throw new ArgumentNullException(nameof(invoiceItemId));
+            if (invoiceItemId < 1)
+                throw new ArgumentException("Invalid invoice item id", nameof(invoiceItemId));
+            if (productMappingId == null)
+                throw new ArgumentNullException(nameof(productMappingId));
+            if (productMappingId < 1)
+                throw new ArgumentException("Invalid product mapping id", nameof(productMappingId));
+
+            var model = new RedeemByEmailModel();
+            var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemById(invoiceItemId.Value);
+            if (invoiceItem != null)
+            {
+                if (productMappingId > 0)
+                {
+                    var productMapping = await _nexportService.GetProductMappingById(productMappingId.Value);
+
+                    var product = await _productService.GetProductByIdAsync(productMapping.NopProductId);
+
+                    model.InvoiceItemId = invoiceItemId.Value;
+                    model.Redeemed = invoiceItem.RedemptionStatus ==
+                                     NexportOrderInvoiceItemRedemptionStatus.Assigned;
+                    model.ProductName = product?.Name;
+                    model.RedeemedDate = invoiceItem.UtcDateProcessed;
+                    model.NexportUserId = nexportUserId.Value;
+                    model.ProductMappingId = productMappingId.Value;
+                    model.Status = invoiceItem.RedemptionStatus;
+                    model.EnrollmentId = invoiceItem.RedemptionEnrollmentId;
+                    var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+                    if (order != null)
+                    {
+                        var selectedMappingForOpenEndedProductStr =
+                            await _genericAttributeService.GetAttributeAsync<string>(
+                                invoiceItem,
+                                $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
+                                order.StoreId);
+
+                        if (selectedMappingForOpenEndedProductStr != null)
+                        {
+                            var selectedMappingForOpenEndedProduct =
+                                JsonConvert.DeserializeObject<NexportProductMapping>(
+                                    selectedMappingForOpenEndedProductStr);
+
+                            if (selectedMappingForOpenEndedProduct != null)
+                            {
+                                product = await _productService.GetProductByIdAsync(selectedMappingForOpenEndedProduct.NopProductId);
+                                if (product != null)
+                                {
+                                    model.ProductName = product.Name;
+                                }
+                            }
+                        }
+                    }
+                }
+
             }
 
             return model;

@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using NexportApi.Model;
+﻿using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
-using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -12,7 +8,6 @@ using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.Wholesale;
-using Nop.Web.Areas.Admin.Models.Catalog;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -90,7 +85,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         //TODO @JS - this probably needs to go away in favor of the one that return list of invoiceitems
         Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItem(int orderId, int orderItemId);
-        
+
         Task<IList<NexportOrderInvoiceItem>?> FindNexportOrderInvoiceItems(int orderId, int orderItemId);
 
         Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemById(int orderInvoiceItemId);
@@ -341,7 +336,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Task<IList<WholesaleOrderInfo>?> SearchGroupProductsAsync(Guid? groupId, string productName);
 
         Task<IList<NexportOrderInvoiceItem>?> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
-            string customerName, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc,DateTime? toUtc);
+            string customerName, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc);
+
+        Task<string> RedeemProductForCustomer(RedeemProductModel model);
+
+        Task UnassignInvoiceItem(NexportOrderInvoiceItem invoiceItem);
+
+        Task RedeemAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem, Guid nexportUserId, int productMappingId);
+
+        Task CancelAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem);
 
     }
 }

@@ -1,19 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Nop.Core;
-using Nop.Core.Domain.Localization;
-using Nop.Plugin.Misc.Nexport.Domain;
-using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
-using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
-using Nop.Services.Logging;
-using Nop.Services.Orders;
 using Nop.Services.Security;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
@@ -31,10 +24,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         private readonly ICustomerService _customerService;
         private readonly NexportService _nexportService;
         private readonly IPermissionService _permissionService;
-        private readonly IOrderService _orderService;
-        private readonly ILogger _logger;
-        private readonly LocalizationSettings _localizationSettings;
-        private readonly IProductService _productService;
 
         #endregion
 
@@ -47,11 +36,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             IStoreContext storeContext,
             ICustomerService customerService,
             NexportService nexportService,
-            ILogger logger,
-        IPermissionService permissionService,
-            LocalizationSettings localizationSettings,
-            IOrderService orderService,
-            IProductService productService)
+            IPermissionService permissionService)
         {
             _nexportPluginModelFactory = nexportPluginModelFactory;
             _genericAttributeService = genericAttributeService;
@@ -59,11 +44,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _storeContext = storeContext;
             _customerService = customerService;
             _nexportService = nexportService;
-            _logger = logger;
             _permissionService = permissionService;
-            _localizationSettings = localizationSettings;
-            _orderService = orderService;
-            _productService = productService;
         }
 
         #endregion
@@ -169,90 +150,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
-            var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
-
-            if (model.SelectedProductMappingId == null)
-                return Redirect(model.returnUrl);
-
-            if (invoiceItem == null)
-                return Redirect(model.returnUrl);
-
-            var orderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
-                invoiceItem.OrderItemId);
-
-            var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
-
-            if (orderInfo is not { Available: > 0 } || order == null)
-                return Redirect(model.returnUrl);
-
-            //set generic attribute for open ended product 
-            if (model.ProductMappingIdForOpenEndedProduct != null)
-            {
-                var productMapping =
-                    await _nexportService.GetProductMappingById(model
-                        .SelectedProductMappingId.Value);
-
-                await _genericAttributeService.SaveAttributeAsync(invoiceItem,
-                    $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
-                    JsonConvert.SerializeObject(productMapping), order.StoreId);
-            }
-
-            if (model.AssignmentType == "Instant")
-            {
-
-                invoiceItem.RedemptionStatus =
-                    NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
-                invoiceItem.RedeemingUserId = model.UserId;
-                await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-
-                orderInfo.Available--;
-                await _nexportService.UpdateWholesaleOrderInfoAsync(orderInfo);
-
-
-                if (model.ProductMappingIdForOpenEndedProduct != null)
-                {
-
-                    await _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
-                        new NexportOrderInvoiceRedemptionQueueItem
-                        {
-                            OrderInvoiceItemId = invoiceItem.Id,
-                            RedeemingUserId = model.UserId,
-                            ProductMappingId =
-                                model.ProductMappingIdForOpenEndedProduct.Value,
-                            OrderItemId = invoiceItem.OrderItemId,
-                            UtcDateCreated = DateTime.UtcNow
-                        });
-                }
-                else
-                {
-                    await _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
-                        new NexportOrderInvoiceRedemptionQueueItem
-                        {
-                            OrderInvoiceItemId = invoiceItem.Id,
-                            RedeemingUserId = model.UserId,
-                            ProductMappingId = model.SelectedProductMappingId.Value,
-                            OrderItemId = invoiceItem.OrderItemId,
-                            UtcDateCreated = DateTime.UtcNow
-                        });
-                }
-            }
-            else
-            {
-
-                await _nexportService.SendNewNexportManualRedemptionCustomerNotificationAsync(order, invoiceItem.Id, model.UserId, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
-                    _localizationSettings.DefaultAdminLanguageId);
-                invoiceItem.RedeemingUserId = model.UserId;
-                invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
-
-                await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-                orderInfo.Available--;
-                orderInfo.Awaiting++;
-                await _nexportService.UpdateWholesaleOrderInfoAsync(orderInfo);
-            }
-
-            return Redirect(model.returnUrl);
+            return Redirect(await _nexportService.RedeemProductForCustomer(model));
         }
 
         [HttpPost]
@@ -322,37 +220,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
 
             if (invoiceItem != null)
-            {
-                try
-                {
-                    var wholesaleOrderInfo =
-                        await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
-                            invoiceItem.OrderItemId);
-
-                    if (wholesaleOrderInfo != null && wholesaleOrderInfo.Redeemed > 0)
-                    {
-                        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
-
-                        await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-
-                        wholesaleOrderInfo.Redeemed--;
-                        await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
-
-                        await _nexportService.InsertNexportOrderInvoiceResetRedemptionQueueItem(
-                            new NexportOrderInvoiceResetRedemptionQueueItem
-                            {
-                                OrderInvoiceItemId = invoiceItem.Id,
-                                UtcDateCreated = DateTime.UtcNow,
-                                RetryCount = 0
-                            });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await _logger.ErrorAsync($"Failed to insert invoice item {invoiceItem.InvoiceItemId} into the reset redemption queue", ex);
-                }
-            }
+                await _nexportService.UnassignInvoiceItem(invoiceItem);
 
             return Json(
                 new
@@ -385,53 +253,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpsRequirement]
         public virtual async Task<IActionResult> RedeemByEmail(int invoiceItemId, Guid nexportUserId, int productMappingId)
         {
-            var model = new RedeemByEmailModel();
-            var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemById(invoiceItemId);
-            if (invoiceItem != null)
-            {
-                if (productMappingId > 0)
-                {
-                    var productMapping = await _nexportService.GetProductMappingById(productMappingId);
-
-                    var product = await _productService.GetProductByIdAsync(productMapping.NopProductId);
-
-                    model.InvoiceItemId = invoiceItemId;
-                    model.Redeemed = invoiceItem.RedemptionStatus ==
-                                     NexportOrderInvoiceItemRedemptionStatus.Assigned;
-                    model.ProductName = product?.Name;
-                    model.RedeemedDate = invoiceItem.UtcDateProcessed;
-                    model.NexportUserId = nexportUserId;
-                    model.ProductMappingId = productMappingId;
-                    model.Status = invoiceItem.RedemptionStatus;
-                    model.EnrollmentId = invoiceItem.RedemptionEnrollmentId;
-                    var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
-                    if (order != null)
-                    {
-                        var selectedMappingForOpenEndedProductStr =
-                            await _genericAttributeService.GetAttributeAsync<string>(
-                                invoiceItem,
-                                $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
-                                order.StoreId);
-
-                        if (selectedMappingForOpenEndedProductStr != null)
-                        {
-                            var selectedMappingForOpenEndedProduct =
-                                JsonConvert.DeserializeObject<NexportProductMapping>(
-                                    selectedMappingForOpenEndedProductStr);
-
-                            if (selectedMappingForOpenEndedProduct != null)
-                            {
-                                product = await _productService.GetProductByIdAsync(selectedMappingForOpenEndedProduct.NopProductId);
-                                if (product != null)
-                                {
-                                    model.ProductName = product.Name;
-                                }
-                            }
-                        }
-                    }
-                }
-
-            }
+            var model = _nexportPluginModelFactory.PrepareRedeemByEmailModel(nexportUserId, invoiceItemId,
+                productMappingId);
             return View("~/Plugins/Misc.Nexport/Views/RedeemByEmail.cshtml", model);
         }
 
@@ -440,38 +263,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         {
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemById(invoiceItemId);
             if (invoiceItem != null)
-            {
-                var orderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
-                    invoiceItem.OrderItemId);
-                if (orderInfo != null && orderInfo.Awaiting > 0)
-                {
-
-                    var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
-                    if (order != null)
-                    {
-                        var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
-                        if (orderItem != null)
-                        {
-                            invoiceItem.RedemptionStatus =
-                                NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting;
-                            await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-                            orderInfo.Awaiting--;
-                            await _nexportService.UpdateWholesaleOrderInfoAsync(orderInfo);
-
-                            await _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
-                                new NexportOrderInvoiceRedemptionQueueItem
-                                {
-                                    OrderInvoiceItemId = invoiceItem.Id,
-                                    RedeemingUserId = nexportUserId,
-                                    ProductMappingId = productMappingId,
-                                    OrderItemId = invoiceItem.OrderItemId,
-                                    UtcDateCreated = DateTime.UtcNow
-                                });
-                        }
-                    }
-                }
-            }
+                await _nexportService.RedeemAwaitingInvoiceItem(invoiceItem, nexportUserId, productMappingId);
 
             return Json(new
             {
@@ -489,31 +281,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
 
             if (invoiceItem != null)
-            {
-                try
-                {
-                    var wholesaleOrderInfo =
-                        await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
-                            invoiceItem.OrderItemId);
-
-                    if (wholesaleOrderInfo != null && wholesaleOrderInfo.Awaiting > 0)
-                    {
-                        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Available;
-                        invoiceItem.RedeemingUserId = null;
-                        await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-
-                        wholesaleOrderInfo.Awaiting--;
-                        wholesaleOrderInfo.Available++;
-                        await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
-
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await _logger.ErrorAsync($"Failed to cancel awaiting status for invoice item {invoiceItem.InvoiceItemId}", ex);
-                }
-            }
+                await _nexportService.CancelAwaitingInvoiceItem(invoiceItem);
 
             return Json(
                 new
