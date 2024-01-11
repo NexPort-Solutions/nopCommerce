@@ -1,8 +1,10 @@
-﻿using NexportApi.Model;
+﻿using Newtonsoft.Json;
+using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -27,7 +29,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 m.NopProductId == nexportProductMapping.NopProductId &&
                 m.StoreId == nexportProductMapping.StoreId))
                 return;
-            
+
             await _nexportProductMappingRepository.InsertAsync(nexportProductMapping);
         }
 
@@ -107,7 +109,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     //query = query.Distinct().OrderBy(pc => pc.DisplayOrder).ThenBy(pc => pc.Id);
                     //query = query.Distinct();
                 }
-                
+
                 return await query.ToPagedListAsync(pageIndex, pageSize);
             });
         }
@@ -1981,7 +1983,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             return await _customerService.GetCustomerByIdAsync(customerId);
         }
-        
+
         public async Task<int> GetAvailableNexportGroupProductRedemptionsCountAsync(Guid? groupId, int productId)
         {
             if (groupId == Guid.Empty)
@@ -2073,7 +2075,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         {
             var query = _customerRepository.Table.Where(c => !c.Deleted && !c.IsSystemAccount && !string.IsNullOrWhiteSpace(c.Email));
 
-            query = query.Where(c => (c.FirstName +" "+ c.LastName).Contains(searchNameAndEmail) || c.Email.Contains(searchNameAndEmail));
+            query = query.Where(c => (c.FirstName + " " + c.LastName).Contains(searchNameAndEmail) || c.Email.Contains(searchNameAndEmail));
 
             var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync(NopCustomerDefaults.RegisteredRoleName);
             if (registeredRole != null)
@@ -2107,7 +2109,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var productIdList = await productQuery.Select(x => x.Id).ToListAsync();
 
             var wholesaleOrderInfoQuery =
-                _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId==groupId && productIdList.Contains(x.ProductId))
+                _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId && productIdList.Contains(x.ProductId))
                     .GroupBy(x => x.ProductId)
                     .Select(x =>
                         new WholesaleOrderInfo
@@ -2125,12 +2127,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await wholesaleOrderInfoQuery.ToListAsync();
         }
 
-        public async Task<IList<NexportOrderInvoiceItem>?> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId, string customerName, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc,DateTime? toUtc)
+        public async Task<IList<NexportOrderInvoiceItem>?> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId, string customerName, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc)
         {
             if (groupId == Guid.Empty)
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
 
-            if (productId<0)
+            if (productId < 0)
                 throw new ArgumentOutOfRangeException(nameof(productId));
 
             var customerQuery = _customerRepository.Table;
@@ -2158,20 +2160,202 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     x.RedeemingUserId != null && nexportUserIdList.Contains(x.RedeemingUserId.Value));
             }
 
-            var orderInfoQuery = _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId && x.ProductId==productId);
+            var orderInfoQuery = _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId && x.ProductId == productId);
 
             var orderInfoQueryIdList = await orderInfoQuery
-                .Select(x => new {orderId = x.OrderId, orderItemId = x.OrderItemId}).ToListAsync();
-            
-            
-            invoiceItemQuery = invoiceItemQuery.Where(x=>orderInfoQueryIdList.Contains(new{orderId=x.OrderId, orderItemId=x.OrderItemId}));
+                .Select(x => new { orderId = x.OrderId, orderItemId = x.OrderItemId }).ToListAsync();
 
-            
+
+            invoiceItemQuery = invoiceItemQuery.Where(x => orderInfoQueryIdList.Contains(new { orderId = x.OrderId, orderItemId = x.OrderItemId }));
+
+
 
             if (redemptionStatus != null)
                 invoiceItemQuery = invoiceItemQuery.Where(x => x.RedemptionStatusId == (int)redemptionStatus);
-            
+
             return await invoiceItemQuery.ToListAsync();
+        }
+
+        public async Task<string> RedeemProductForCustomer(RedeemProductModel model)
+        {
+            var invoiceItem = await FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
+
+            if (model.SelectedProductMappingId == null)
+                return model.returnUrl;
+
+            if (invoiceItem == null)
+                return model.returnUrl;
+
+            var orderInfo = await GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
+                invoiceItem.OrderItemId);
+
+            var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+
+            if (orderInfo is not { Available: > 0 } || order == null)
+                return model.returnUrl;
+
+            //set generic attribute for open ended product 
+            if (model.ProductMappingIdForOpenEndedProduct != null)
+            {
+                var productMapping =
+                    await GetProductMappingById(model
+                        .SelectedProductMappingId.Value);
+
+                await _genericAttributeService.SaveAttributeAsync(invoiceItem,
+                    $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
+                    JsonConvert.SerializeObject(productMapping), order.StoreId);
+            }
+
+            if (model.AssignmentType == "Instant")
+            {
+
+                invoiceItem.RedemptionStatus =
+                    NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
+                invoiceItem.RedeemingUserId = model.UserId;
+                await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+
+                orderInfo.Available--;
+                await UpdateWholesaleOrderInfoAsync(orderInfo);
+
+
+                if (model.ProductMappingIdForOpenEndedProduct != null)
+                {
+
+                    await InsertNexportOrderInvoiceRedemptionQueueItem(
+                        new NexportOrderInvoiceRedemptionQueueItem
+                        {
+                            OrderInvoiceItemId = invoiceItem.Id,
+                            RedeemingUserId = model.UserId,
+                            ProductMappingId =
+                                model.ProductMappingIdForOpenEndedProduct.Value,
+                            OrderItemId = invoiceItem.OrderItemId,
+                            UtcDateCreated = DateTime.UtcNow
+                        });
+                }
+                else
+                {
+                    await InsertNexportOrderInvoiceRedemptionQueueItem(
+                        new NexportOrderInvoiceRedemptionQueueItem
+                        {
+                            OrderInvoiceItemId = invoiceItem.Id,
+                            RedeemingUserId = model.UserId,
+                            ProductMappingId = model.SelectedProductMappingId.Value,
+                            OrderItemId = invoiceItem.OrderItemId,
+                            UtcDateCreated = DateTime.UtcNow
+                        });
+                }
+            }
+            else
+            {
+
+                await SendNewNexportManualRedemptionCustomerNotificationAsync(order, invoiceItem.Id, model.UserId, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
+                    _localizationSettings.DefaultAdminLanguageId);
+                invoiceItem.RedeemingUserId = model.UserId;
+                invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
+
+                await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+                orderInfo.Available--;
+                orderInfo.Awaiting++;
+                await UpdateWholesaleOrderInfoAsync(orderInfo);
+            }
+
+            return model.returnUrl;
+        }
+
+        public async Task UnassignInvoiceItem(NexportOrderInvoiceItem invoiceItem)
+        {
+            try
+            {
+                var wholesaleOrderInfo =
+                    await GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
+                        invoiceItem.OrderItemId);
+
+                if (wholesaleOrderInfo != null && wholesaleOrderInfo.Redeemed > 0)
+                {
+                    invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
+
+                    await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+
+                    wholesaleOrderInfo.Redeemed--;
+                    await UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+
+                    await InsertNexportOrderInvoiceResetRedemptionQueueItem(
+                        new NexportOrderInvoiceResetRedemptionQueueItem
+                        {
+                            OrderInvoiceItemId = invoiceItem.Id,
+                            UtcDateCreated = DateTime.UtcNow,
+                            RetryCount = 0
+                        });
+                }
+            }
+            catch (Exception ex)
+            {
+                await _logger.ErrorAsync($"Failed to insert invoice item {invoiceItem.InvoiceItemId} into the reset redemption queue", ex);
+            }
+        }
+
+        public async Task RedeemAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem, Guid nexportUserId, int productMappingId)
+        {
+            var orderInfo = await GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
+                invoiceItem.OrderItemId);
+            if (orderInfo != null && orderInfo.Awaiting > 0)
+            {
+
+                var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+                if (order != null)
+                {
+                    var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
+                    if (orderItem != null)
+                    {
+                        invoiceItem.RedemptionStatus =
+                            NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting;
+                        await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+                        orderInfo.Awaiting--;
+                        await UpdateWholesaleOrderInfoAsync(orderInfo);
+
+                        await InsertNexportOrderInvoiceRedemptionQueueItem(
+                            new NexportOrderInvoiceRedemptionQueueItem
+                            {
+                                OrderInvoiceItemId = invoiceItem.Id,
+                                RedeemingUserId = nexportUserId,
+                                ProductMappingId = productMappingId,
+                                OrderItemId = invoiceItem.OrderItemId,
+                                UtcDateCreated = DateTime.UtcNow
+                            });
+                    }
+                }
+            }
+        }
+
+        public async Task CancelAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem)
+        {
+            try
+            {
+                var wholesaleOrderInfo =
+                    await GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
+                        invoiceItem.OrderItemId);
+
+                if (wholesaleOrderInfo != null && wholesaleOrderInfo.Awaiting > 0)
+                {
+                    invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Available;
+                    invoiceItem.RedeemingUserId = null;
+                    await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+
+                    wholesaleOrderInfo.Awaiting--;
+                    wholesaleOrderInfo.Available++;
+                    await UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+
+                }
+            }
+            catch (Exception ex)
+            {
+                await _logger.ErrorAsync($"Failed to cancel awaiting status for invoice item {invoiceItem.InvoiceItemId}", ex);
+            }
         }
     }
 }

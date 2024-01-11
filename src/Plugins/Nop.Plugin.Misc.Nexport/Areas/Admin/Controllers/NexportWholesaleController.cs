@@ -1,26 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
-using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
-using Nop.Plugin.Misc.Nexport.Domain;
-using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Catalog;
-using Nop.Services.Common;
-using Nop.Services.Customers;
-using Nop.Services.Logging;
-using Nop.Services.Orders;
 using Nop.Services.Payments;
-using Nop.Services.Plugins;
 using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Controllers;
@@ -40,11 +31,6 @@ public class NexportWholesaleController : BaseAdminController
     private readonly NexportService _nexportService;
     private readonly IPaymentPluginManager _paymentPluginManager;
     private readonly IProductService _productService;
-    private readonly ILogger _logger;
-    private readonly IOrderService _orderService;
-    private readonly ICustomerService _customerService;
-    private readonly IGenericAttributeService _genericAttributeService;
-    private readonly LocalizationSettings _localizationSettings;
 
     public NexportWholesaleController(
         INexportPluginModelFactory nexportPluginModelFactory,
@@ -53,11 +39,7 @@ public class NexportWholesaleController : BaseAdminController
         INexportWholesaleService nexportWholesaleService,
         IWorkContext workContext, NexportService nexportService,
         IPaymentPluginManager paymentPluginManager,
-        IProductService productService,
-        ILogger logger, IOrderService orderService,
-        ICustomerService customerService,
-        IGenericAttributeService genericAttributeService,
-        LocalizationSettings localizationSettings)
+        IProductService productService)
     {
         _nexportPluginModelFactory = nexportPluginModelFactory;
         _permissionService = permissionService;
@@ -67,11 +49,6 @@ public class NexportWholesaleController : BaseAdminController
         _nexportService = nexportService;
         _paymentPluginManager = paymentPluginManager;
         _productService = productService;
-        _logger = logger;
-        _orderService = orderService;
-        _customerService = customerService;
-        _genericAttributeService = genericAttributeService;
-        _localizationSettings = localizationSettings;
     }
 
     [Route("Admin/Wholesale/Create")]
@@ -208,7 +185,7 @@ public class NexportWholesaleController : BaseAdminController
     [HttpsRequirement]
     public virtual async Task<IActionResult> AdminNexportGroups()
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
             return AccessDeniedView();
 
         var searchModel = new NexportGroupListSearchModel();
@@ -221,7 +198,7 @@ public class NexportWholesaleController : BaseAdminController
     [HttpsRequirement]
     public async Task<IActionResult> AdminNexportGroupProducts(Guid? groupId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
             return AccessDeniedView();
 
         var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
@@ -235,7 +212,7 @@ public class NexportWholesaleController : BaseAdminController
     [HttpsRequirement]
     public async Task<IActionResult> AdminNexportGroupProductRedemptions(Guid? groupId, int productId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
             return AccessDeniedView();
 
         var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId);
@@ -250,7 +227,7 @@ public class NexportWholesaleController : BaseAdminController
     [HttpsRequirement]
     public async Task<IActionResult> RedeemProduct(Guid? groupId, Guid? invoiceItemId, int? productId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
             return AccessDeniedView();
 
         var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId, invoiceItemId, productId);
@@ -265,7 +242,7 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
             return await AccessDeniedDataTablesJson();
 
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
@@ -279,7 +256,7 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid? groupId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
             return await AccessDeniedDataTablesJson();
 
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
@@ -294,7 +271,7 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
             return await AccessDeniedDataTablesJson();
 
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
@@ -308,7 +285,7 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
             return await AccessDeniedDataTablesJson();
 
         var count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId);
@@ -319,14 +296,13 @@ public class NexportWholesaleController : BaseAdminController
 
     public virtual async Task<IActionResult> SearchNexportUsers(string term)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
             return AccessDeniedView();
 
         const int searchTermMinimumLength = 3;
         if (string.IsNullOrWhiteSpace(term) || term.Length < searchTermMinimumLength)
             return Content(string.Empty);
 
-        //var customers = await _nexportService.SearchCustomersAsync(term);
         var nexportUsers = await _nexportService.GetNexportUsersAsync(term);
 
         var result = nexportUsers.Select(c => new
@@ -341,87 +317,10 @@ public class NexportWholesaleController : BaseAdminController
     [HttpPost]
     public async Task<IActionResult> RedeemProductForCustomer(RedeemProductModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
-            return AccessDeniedView(); 
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+            return AccessDeniedView();
 
-        var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
-
-        if (model.SelectedProductMappingId == null)
-            return Redirect(model.returnUrl);
-
-        if (invoiceItem == null)
-            return Redirect(model.returnUrl);
-
-        var orderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
-            invoiceItem.OrderItemId);
-
-        var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
-
-        if (orderInfo is not { Available: > 0 } || order == null)
-            return Redirect(model.returnUrl);
-
-        if (model.AssignmentType == "Instant")
-        {
-
-            invoiceItem.RedemptionStatus =
-                NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
-            invoiceItem.RedeemingUserId = model.UserId;
-            await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-
-            orderInfo.Available--;
-            await _nexportService.UpdateWholesaleOrderInfoAsync(orderInfo);
-
-
-            if (model.ProductMappingIdForOpenEndedProduct != null)
-            {
-                var productMapping =
-                    await _nexportService.GetProductMappingById(model
-                        .SelectedProductMappingId.Value);
-                await _genericAttributeService.SaveAttributeAsync(invoiceItem,
-                    $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
-                    JsonConvert.SerializeObject(productMapping), order.StoreId);
-
-
-                await _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
-                    new NexportOrderInvoiceRedemptionQueueItem
-                    {
-                        OrderInvoiceItemId = invoiceItem.Id,
-                        RedeemingUserId = model.UserId,
-                        ProductMappingId =
-                            model.ProductMappingIdForOpenEndedProduct.Value,
-                        OrderItemId = invoiceItem.OrderItemId,
-                        UtcDateCreated = DateTime.UtcNow
-                    });
-            }
-            else
-            {
-                await _nexportService.InsertNexportOrderInvoiceRedemptionQueueItem(
-                    new NexportOrderInvoiceRedemptionQueueItem
-                    {
-                        OrderInvoiceItemId = invoiceItem.Id,
-                        RedeemingUserId = model.UserId,
-                        ProductMappingId = model.SelectedProductMappingId.Value,
-                        OrderItemId = invoiceItem.OrderItemId,
-                        UtcDateCreated = DateTime.UtcNow
-                    });
-            }
-        }
-        else
-        {
-            await _nexportService.SendNewNexportManualRedemptionCustomerNotificationAsync(order, invoiceItem.Id, model.UserId, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
-                _localizationSettings.DefaultAdminLanguageId);
-            invoiceItem.RedeemingUserId = model.UserId;
-            invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
-
-            await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-            orderInfo.Available--;
-            orderInfo.Awaiting++;
-            await _nexportService.UpdateWholesaleOrderInfoAsync(orderInfo);
-        }
-
-        return Redirect(model.returnUrl);
+        return Redirect(await _nexportService.RedeemProductForCustomer(model));
     }
 
 
@@ -429,43 +328,13 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> InvoiceItemUnassign(Guid invoiceItemId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
             return AccessDeniedView();
 
         var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
 
         if (invoiceItem != null)
-        {
-            try
-            {
-                var wholesaleOrderInfo =
-                    await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
-                        invoiceItem.OrderItemId);
-
-                if (wholesaleOrderInfo != null && wholesaleOrderInfo.Redeemed > 0)
-                {
-                    invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
-
-                    await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-
-                    wholesaleOrderInfo.Redeemed--;
-                    await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
-
-                    await _nexportService.InsertNexportOrderInvoiceResetRedemptionQueueItem(
-                    new NexportOrderInvoiceResetRedemptionQueueItem
-                    {
-                        OrderInvoiceItemId = invoiceItem.Id,
-                        UtcDateCreated = DateTime.UtcNow,
-                        RetryCount = 0
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                await _logger.ErrorAsync($"Failed to insert invoice item {invoiceItem.InvoiceItemId} into the reset redemption queue", ex);
-            }
-        }
+            await _nexportService.UnassignInvoiceItem(invoiceItem);
 
         return Json(
             new
@@ -479,37 +348,13 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> InvoiceItemCancelAwaiting(Guid invoiceItemId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesalePurchases))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
             return AccessDeniedView();
 
         var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
 
         if (invoiceItem != null)
-        {
-            try
-            {
-                var wholesaleOrderInfo =
-                    await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
-                        invoiceItem.OrderItemId);
-
-                if (wholesaleOrderInfo != null && wholesaleOrderInfo.Awaiting > 0)
-                {
-                    invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Available;
-                    invoiceItem.RedeemingUserId = null;
-                    await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
-
-                    wholesaleOrderInfo.Awaiting--;
-                    wholesaleOrderInfo.Available++;
-                    await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
-
-                }
-            }
-            catch (Exception ex)
-            {
-                await _logger.ErrorAsync($"Failed to cancel awaiting status for invoice item {invoiceItem.InvoiceItemId}", ex);
-            }
-        }
+            await _nexportService.CancelAwaitingInvoiceItem(invoiceItem);
 
         return Json(
             new

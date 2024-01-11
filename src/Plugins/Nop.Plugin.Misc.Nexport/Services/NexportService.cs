@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using DocumentFormat.OpenXml.Spreadsheet;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +14,7 @@ using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
@@ -77,9 +77,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<NexportRegistrationFieldStoreMapping> _nexportRegistrationFieldStoreMappingRepository;
         private readonly IRepository<NexportRegistrationFieldAnswer> _nexportRegistrationFieldAnswerRepository;
         private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
-        private readonly IRepository<GenericAttribute> _genericAttributeRepository;
-        private readonly IRepository<Order> _orderRepository;
-        private readonly IRepository<OrderItem> _orderItemRepository;
         private readonly IRepository<WholesalePurchasingGroup> _wholesalePurchasingGroupRepository;
         private readonly IRepository<WholesaleOrderInfo> _wholesaleOrderInfoRepository;
         private readonly ICustomerService _customerService;
@@ -109,6 +106,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<NexportOrderInvoiceResetRedemptionQueueItem> _nexportOrderInvoiceResetRedemptionQueueRepository;
         private readonly IRepository<Customer> _customerRepository;
         private readonly IRepository<CustomerCustomerRoleMapping> _customerCustomerRoleMappingRepository;
+        private readonly LocalizationSettings _localizationSettings;
 
         #endregion
 
@@ -143,9 +141,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<NexportRegistrationFieldStoreMapping> nexportRegistrationFieldStoreMappingRepository,
             IRepository<NexportRegistrationFieldAnswer> nexportRegistrationFieldAnswerRepository,
             IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
-            IRepository<GenericAttribute> genericAttributeRepository,
-            IRepository<Order> orderRepository,
-            IRepository<OrderItem> orderItemRepository,
             IRepository<WholesalePurchasingGroup> wholesalePurchasingGroupRepository,
             IRepository<WholesaleOrderInfo> wholesaleOrderInfoRepository,
             ICustomerService customerService,
@@ -174,7 +169,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<Store> storeRepository,
             IRepository<NexportOrderInvoiceResetRedemptionQueueItem> nexportOrderInvoiceResetRedemptionQueueRepository,
             IRepository<Customer> customerRepository,
-            IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMapping)
+            IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMapping,
+            LocalizationSettings localizationSettings)
         {
             _nexportApiService = nexportApiService;
             _emailAccountSettings = emailAccountSettings;
@@ -205,9 +201,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportRegistrationFieldStoreMappingRepository = nexportRegistrationFieldStoreMappingRepository;
             _nexportRegistrationFieldAnswerRepository = nexportRegistrationFieldAnswerRepository;
             _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
-            _genericAttributeRepository = genericAttributeRepository;
-            _orderRepository = orderRepository;
-            _orderItemRepository = orderItemRepository;
             _wholesalePurchasingGroupRepository = wholesalePurchasingGroupRepository;
             _wholesaleOrderInfoRepository = wholesaleOrderInfoRepository;
             _customerService = customerService;
@@ -237,6 +230,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportOrderInvoiceResetRedemptionQueueRepository = nexportOrderInvoiceResetRedemptionQueueRepository;
             _customerRepository = customerRepository;
             _customerCustomerRoleMappingRepository = customerCustomerRoleMapping;
+            _localizationSettings = localizationSettings;
         }
 
         #endregion
@@ -408,9 +402,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 //generate the relative URL
                 var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-                var url = urlHelper.RouteUrl("RedeemByEmail", new {invoiceItemId=invoiceItemId, nexportUserId=nexportUserId,productMappingId=productMappingId});
+                var url = urlHelper.RouteUrl("RedeemByEmail", new { invoiceItemId = invoiceItemId, nexportUserId = nexportUserId, productMappingId = productMappingId });
                 var path = new Uri(new Uri(store.Url), url).AbsoluteUri;
-                tokens.Add(new Token("Redemption.AcceptRedemptionUrl",path, true));
+                tokens.Add(new Token("Redemption.AcceptRedemptionUrl", path, true));
 
                 await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
 
