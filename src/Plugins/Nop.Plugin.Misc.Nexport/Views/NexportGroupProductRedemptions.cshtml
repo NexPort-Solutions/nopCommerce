@@ -65,6 +65,14 @@
                                     </div>
                                     <div class="form-group row">
                                         <div class="col-md-4">
+                                            <nop-label asp-for="SearchEmail" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-editor asp-for="SearchEmail" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
                                             <nop-label asp-for="SearchStatusId" />
                                         </div>
                                         <div class="col-md-8">
@@ -102,7 +110,11 @@
 
                 <div class="card card-default">
                     <div class="card-body">
-
+                        <div style="font-weight: 600; margin-bottom: 5px; text-align: right">
+                            Assignments Available:
+                            <span style="margin-left: 7px; margin-right: 12px;" id="redemptionsAvailable">
+                            </span>
+                        </div>
                         @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new DataTablesModel
                         {
                             Name = "group-product-redemptions-grid",
@@ -117,6 +129,7 @@
                             Filters = new List<FilterParameter>
                             {
                                 new FilterParameter(nameof(Model.SearchName)),
+                                new FilterParameter(nameof(Model.SearchEmail)),
                                 new FilterParameter(nameof(Model.SearchStatusId)),
                                 new FilterParameter(nameof(Model.DateAssignedFrom)),
                                 new FilterParameter(nameof(Model.DateAssignedTo))
@@ -126,6 +139,10 @@
                                 new ColumnProperty(nameof(NexportGroupProductRedemptionModel.Name))
                                 {
                                 Title = @T("Plugins.Misc.Nexport.Group.Product.Redemption.Name").Text
+                                },
+                                new ColumnProperty(nameof(NexportGroupProductRedemptionModel.Email))
+                                {
+                                    Title = @T("Plugins.Misc.Nexport.Group.Product.Redemption.Email").Text
                                 },
                                 new ColumnProperty(nameof(NexportGroupProductRedemptionModel.ProductName))
                                 {
@@ -248,13 +265,8 @@
     }
     $(document).ready(function () {
         updateAvailableRedemptions();
-        $("#btnRefreshGroupRedemptions").click(function () {
-
+        $(".data-tables-refresh :button").click(function () {
             updateAvailableRedemptions();
-            updateTable('#redemptions_table');
-
-            // Return false to not reload a page
-            return false;
         });
     });
     
