@@ -244,7 +244,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var result = nexportUsers.Select(c => new
             {
                 label = $"{c.FirstName} {c.LastName} ({c.Email})",
-                customerId = c.UserId
+                nexportUserId = c.UserId
             }).ToList();
 
             return Json(result);

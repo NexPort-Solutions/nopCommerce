@@ -18,6 +18,9 @@ namespace Nop.Plugin.Misc.Nexport.Models.Wholesale
         [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchName")]
         public string SearchName { get; set; }
 
+        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchEmail")]
+        public string SearchEmail { get; set; }
+
         [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchStatus")]
         public NexportOrderInvoiceItemRedemptionStatus? SearchStatusId { get; set; }
 

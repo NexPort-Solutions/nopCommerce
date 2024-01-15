@@ -1798,7 +1798,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.DateAssignedTo.Value, await _dateTimeHelper.GetCurrentTimeZoneAsync()).AddDays(1);
 
                 var invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
-                    searchModel.SearchName, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue);
+                    searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue);
 
                 if (invoiceItems != null)
                 {
@@ -1872,6 +1872,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                     await _nexportService.FindCustomerByIdAsync(redeemerUserMapping
                                         .NopUserId);
                                 redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
+                                redemptionItem.Email = redeemer.Email;
                             }
                         }
 
