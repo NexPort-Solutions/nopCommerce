@@ -1,4 +1,9 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProductModel
+﻿@inject IWebHelper webHelper
+@inject IThemeContext themeContext
+
+@using Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProduct
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProduct.RedeemProductModel
 @{
     var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
@@ -7,8 +12,19 @@
 
     var currentGroupId = @Model.CurrentGroup.Id?.ToString() ?? "null";
 
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/redeem-product.css", "", true);
 
+    var storeLocation = webHelper.GetStoreLocation();
+
+    var themeName = await themeContext.GetWorkingThemeNameAsync();
+    var backIconLink = $"{storeLocation}Themes/{themeName}/Content/images/back-button.png";
 }
+
+<style>
+    .assign .back-link a {
+        background: url('@backIconLink') left center no-repeat;
+    }
+</style>
 
 <div class="content-header clearfix nex-plugin">
     <nav aria-label="Breadcrumb">
@@ -44,70 +60,120 @@
             <div class="cards-group">
                 <div class="card card-default">
                     <div class="card-body">
-                        <form asp-controller="NexportWholesale" asp-action="RedeemProductForCustomer">
-                            <div class="form-group row">
-                                <div class="col-sm-3">
-                                    <div class="label-wrapper">
-                                        <label for="search-customer-name-email" class="col-form-label">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectCustomer")</label>
-                                        <div title="" data-toggle="tooltip" class="ico-help" data-original-title="@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectCustomer")">
-                                            <i class="fas fa-question-circle"></i>
+                        <ol class="assign" id="assign-steps">
+                            <li id="assign-email" class="tab-section allow">
+                                <div class="step-title">
+                                    <span class="number">1</span>
+                                    <h2 class="title">Enter customer email</h2>
+                                </div>
+                                <div id="assign-step-email" class="step a-item" style="display: none;">
+                                    <form id="as-email-form" action="" method="post">
+                                        <div id="assignment-email-load">
+                                            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/_EmailStep.cshtml", new EmailStepModel
+                                            {
+                                            })
+                                            @*email content will be loaded here*@
                                         </div>
+                                    </form>
+                                    <script asp-location="Footer">
+                                        CustomerEmail.init('#as-email-form', "@Url.Action("AsnSaveEmail", "NexportWholesale")");
+                                    </script>
+                                    <div class="buttons" id="email-buttons-container">
+                                        <button type="button" name="save" class="button-1" onclick="CustomerEmail.save()">Search Existing</button>
+                                        <button type="button" name="save" class="button-1" onclick="CustomerEmail.continue()">@T("Common.Continue")</button>
+                                        <span class="please-wait" id="email-please-wait" style="display: none;">@T("Common.LoadingNextStep")</span>
                                     </div>
                                 </div>
-                                <div class="col-sm-9">
-                                    <input type="text" id="search-customer-name-email" autocomplete="off" class="form-control" />
-
+                            </li>
+                            <li id="assign-customer" class="tab-section">
+                                <div class="step-title">
+                                    <span class="number">2</span>
+                                    <h2 class="title">Select existing customer or send via email?</h2>
                                 </div>
-                            </div>
-                            <div class="form-group row">
-                                <div class="col-sm-3">
-                                    <div class="label-wrapper">
-                                        <label for="TrainingProductMappingId" class="col-form-label">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining")</label>
-                                        <div title="" data-toggle="tooltip" class="ico-help" data-original-title="@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining")">
-                                            <i class="fas fa-question-circle"></i>
+                                <div id="assign-step-customer" class="step a-item" style="display: none;">
+                                    <form id="as-customer-form" action="" method="post">
+                                        <div id="assignment-customer-load">
+                                            @*customer content will be loaded here*@
                                         </div>
+                                    </form>
+                                    <script asp-location="Footer">
+                                        Customer.init('#as-customer-form', "@Url.Action("AsnSaveCustomer", "NexportWholesale")");
+                                    </script>
+                                    <div class="buttons" id="customer-buttons-container">
+                                        <p class="back-link">
+                                            <a href="#" onclick="Assign.back(); return false; "><small>&laquo; </small>@T("Common.Back")</a>
+                                        </p>
+                                        <button type="button" name="save" class="button-1" onclick="Customer.save()">@T("Common.Continue")</button>
                                     </div>
                                 </div>
-                                <div class="col-sm-9">
-                                    <nop-select asp-for="SelectedProductMappingId" asp-items="Model.AvailableMappings" asp-multiple="false" title="Select Training" asp-required="false" />
+                            </li>
+                            <li id="assign-email-info" class="tab-section">
+                                <div class="step-title">
+                                    <span class="number">3</span>
+                                    <h2 class="title">Customer email info</h2>
                                 </div>
-                            </div>
-                            <div class="form-group row">
-                                <div class="col-sm-3">
-                                    <div class="label-wrapper">
-                                        <label for="assignment-type" class="col-form-label">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType")</label>
-                                        <div title="" data-toggle="tooltip" class="ico-help" data-original-title="@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType")">
-                                            <i class="fas fa-question-circle"></i>
+                                <div id="assign-step-email-info" class="step a-item" style="display: none;">
+                                    <form id="as-email-info-form" action="" method="post">
+                                        <div id="assignment-email-info-load">
+                                            @*email info content will be loaded here*@
                                         </div>
+                                    </form>
+                                    <script asp-location="Footer">
+                                        EmailInfo.init('#as-email-info-form', "@Url.Action("AsnSaveEmailInfo", "NexportWholesale")");
+                                    </script>
+                                    <div class="buttons" id="email-info-buttons-container">
+                                        <p class="back-link">
+                                            <a href="#" onclick="Assign.back(); return false; "><small>&laquo; </small>@T("Common.Back")</a>
+                                        </p>
+                                        <button type="button" name="save" class="button-1" onclick="EmailInfo.save()">@T("Common.Continue")</button>
                                     </div>
                                 </div>
-                                <div class="col-sm-9">
-                                    <div class="raw">
-                                        <div class="form-check">
-                                            <input type="radio" class="form-check-input" asp-for="AssignmentType" value="Email" id="assignment-type-email"/>
-                                            <label class="form-check-label" for="assignment-type-email">
-                                                @T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option1")
-                                            </label>
+                            </li>
+                            <li id="assign-training" class="tab-section">
+                                <div class="step-title">
+                                    <span class="number">4</span>
+                                    <h2 class="title">Select product</h2>
+                                </div>
+                                <div id="assign-step-training" class="step a-item" style="display: none;">
+                                    <form id="as-training-form" action="" method="post">
+                                        <div id="assignment-training-load">
+                                            @*training content will be loaded here*@
                                         </div>
-                                        <div class="form-check">
-                                            <input type="radio" class="form-check-input" asp-for="AssignmentType" value="Instant" id="assignment-type-instant"/>
-                                            <label class="form-check-label" for="assignment-type-instant">
-                                                @T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option2")
-                                            </label>
-                                        </div>
+                                    </form>
+                                    <script asp-location="Footer">
+                                        Training.init('#as-training-form', "@Url.Action("AsnSaveTraining", "NexportWholesale")");
+                                    </script>
+                                    <div class="buttons" id="training-buttons-container">
+                                        <p class="back-link">
+                                            <a href="#" onclick="Assign.back(); return false; "><small>&laquo; </small>@T("Common.Back")</a>
+                                        </p>
+                                        <button type="button" name="save" class="button-1" onclick="Training.save()">@T("Common.Continue")</button>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="form-group row">
-                                <div class="col-md-9 offset-md-3">
-                                    <input asp-for="UserId" style="display: none;" />
-                                    <input asp-for="InvoiceItemId" style="display: none;" />
-                                    <input asp-for="ProductMappingIdForOpenEndedProduct" style="display:none" />
-                                    <input name="ReturnUrl" id="ReturnUrl" value="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)" style="display: none;" />
-                                    <button type="submit" class="btn btn-primary">Submit</button>
+                            </li>
+                            <li id="assign-confirm" class="tab-section">
+                                <div class="step-title">
+                                    <span class="number">5</span>
+                                    <h2 class="title">Confirm</h2>
                                 </div>
-                            </div>
-                        </form>
+                                <div id="assign-step-confirm" class="step a-item" style="display: none;">
+                                    <form id="as-confirm-form" action="" method="post">
+                                        <div id="assignment-confirm-load">
+                                            @*confirm content will be loaded here*@
+                                        </div>
+                                    </form>
+                                    <script asp-location="Footer">
+                                        Confirm.init('#as-confirm-form', "@Url.Action("AsnSaveConfirm", "NexportWholesale")", "@groupProductRedemptionsRouteUrl" + "?groupId=" + "@currentGroupId" + "&productId=" + "@Model.CurrentProduct.Id");
+                                    </script>
+                                    <div class="buttons" id="confirm-buttons-container">
+                                        <p class="back-link">
+                                            <a href="#" onclick="Assign.back(); return false; "><small>&laquo; </small>@T("Common.Back")</a>
+                                        </p>
+                                        <button type="button" name="save" class="button-1" onclick="Confirm.save()">@T("Common.Confirm")</button>
+                                    </div>
+                                </div>
+                            </li>
+                        </ol>
                     </div>
                 </div>
             </div>
@@ -115,17 +181,10 @@
     </div>
 </section>
 
-<script>
-    $(document).ready(function () {
-        $('#search-customer-name-email').autocomplete({
-            delay: 500,
-            minLength: 3,
-            source: '@Url.Action("SearchNexportUsers", "NexportWholesale")',
-            select: function (event, ui) {
-                $('#@Html.IdFor(model => model.UserId)').val(ui.item.nexportUserId);
-                $('#search-customer-name-email').val(ui.item.label);
-                return false;
-            }
-        });
-    });
+<script src="~/Plugins/Misc.Nexport/Scripts/redeem-product.js" asp-location="Footer"></script>
+<script asp-location="Footer">
+    Accordion.init('assign-steps', '.step-title', true);
+    Accordion.openSection('#assign-email');
+    Assign.init('@(storeLocation)');
 </script>
+

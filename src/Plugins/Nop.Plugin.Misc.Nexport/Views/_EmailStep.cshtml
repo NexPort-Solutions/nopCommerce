@@ -1,0 +1,11 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProduct.EmailStepModel
+
+<div class="inputs">
+    <div asp-validation-summary="ModelOnly" class="message-error"></div>
+
+    <label asp-for="Email" asp-postfix=":"></label>
+    <input asp-for="Email"/>
+    <nop-required/>
+    <span asp-validation-for="Email"></span>
+    <input type="checkbox" style="display:none" asp-for="EmailStepSendViaEmail"/>
+</div>

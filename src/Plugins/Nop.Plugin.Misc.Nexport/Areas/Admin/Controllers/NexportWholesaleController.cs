@@ -8,6 +8,7 @@ using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Wholesale;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Catalog;
@@ -320,7 +321,9 @@ public class NexportWholesaleController : BaseAdminController
         if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
             return AccessDeniedView();
 
-        return Redirect(await _nexportService.RedeemProductForCustomer(model));
+        return AccessDeniedView();
+
+        //return Redirect(await _nexportService.RedeemProductForCustomer(model));
     }
 
 

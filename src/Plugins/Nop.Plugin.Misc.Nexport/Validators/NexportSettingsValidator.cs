@@ -5,9 +5,9 @@ using Nop.Plugin.Misc.Nexport.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Validators
 {
-    public class NexportSettingsValidator : BaseNopValidator<ConfigurationModel>
+    public class EmailStepValidator : BaseNopValidator<ConfigurationModel>
     {
-        public NexportSettingsValidator()
+        public EmailStepValidator()
         {
             RuleFor(x => x.Url).NotEmpty().WithMessage("Server url cannot be empty!");
             RuleFor(x => x.RootOrganizationId).NotEqual(Guid.Empty)

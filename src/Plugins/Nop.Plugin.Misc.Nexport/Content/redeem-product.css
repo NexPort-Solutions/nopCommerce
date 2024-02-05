@@ -1,0 +1,108 @@
+.assign .step-title {
+  margin: 0 0 1px;
+  overflow: hidden;
+  background-color: #f6f6f6;
+}
+
+.assign .allow .step-title {
+  background-color: #4ab2f1;
+  cursor: pointer;
+}
+
+.assign .step-title .number,
+.assign .step-title .title {
+  float: left;
+  min-height: 40px;
+  padding: 10px 15px;
+  line-height: 20px;
+  font-size: 16px;
+  font-weight: normal;
+}
+
+.assign .allow .step-title .number,
+.assign .allow .step-title .title {
+  color: #fff;
+  cursor: pointer;
+}
+
+.assign .step-title .number {
+  width: 42px;
+  border-right: 1px solid #fff;
+  text-align: center;
+}
+
+.assign .allow .step-title .number {
+  background-color: #248ece;
+}
+
+.assign .step {
+  margin: 10px 0;
+  padding: 30px 15px;
+  text-align: center;
+}
+
+.assign .section {
+  margin: 0 0 30px;
+}
+
+.assign .section > label {
+  display: block;
+  margin: 0 0 10px;
+}
+
+.assign input[type="text"],
+.assign select {
+  max-width: 100%;
+}
+
+.assign .buttons {
+  margin-bottom: 0;
+}
+
+.assign .back-link {
+  margin: 0 0 10px;
+}
+
+.assign .back-link small {
+  display: none;
+}
+
+.assign .back-link a {
+  display: inline-block;
+  margin: 0 0 0 -15px;
+  padding: 0 0 0 18px;
+  color: #444;
+}
+
+.assign .back-link a:hover,
+.assign .back-link a:focus {
+  color: #4ab2f1;
+}
+
+.assign .buttons .please-wait {
+  display: block;
+  margin: 10px 0 0;
+  background: none;
+}
+
+.assign .section.ship-to-same-address {
+  margin: 0 0 30px;
+  padding: 0;
+}
+
+.assign .section.pickup-in-store {
+  margin: 0 0 30px;
+  padding: 0;
+}
+
+.assign .payment-info .info tr {
+  text-align: left;
+}
+
+.assign .section.order-summary {
+  margin: 0;
+}
+
+.assign .title {
+  margin: 0;
+}

@@ -1,0 +1,15 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProduct.TrainingStepModel
+
+<div class="form-group row section">
+     <div class="col-sm-3">
+        <div class="label-wrapper">
+            <label for="SelectedProductMappingId" class="col-form-label">@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining")</label>
+            <div title="" data-toggle="tooltip" class="ico-help" data-original-title="@T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining")">
+                <i class="fas fa-question-circle"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-9">
+        <nop-select asp-for="SelectedProductMappingId" asp-items="Model.AvailableMappings" asp-multiple="false" title="Select Training" asp-required="false"/>
+    </div>
+</div>

@@ -15,6 +15,7 @@ using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Models.Wholesale;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProduct;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Web.Areas.Admin.Models.Stores;
@@ -166,6 +167,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         Task<RedeemProductModel> PrepareRedeemProductModel(Guid? groupId, Guid? invoiceItemId, int? productId);
 
-        Task<RedeemByEmailModel> PrepareRedeemByEmailModel(Guid? nexportUserId, int? invoiceItemId, int? productMappingId);
+        Task<RedeemByEmailModel> PrepareRedeemByEmailModel(int? invoiceItemId, int? productMappingId);
+
+        Task<TrainingStepModel> PrepareTrainingStepModel(int? productId, Guid? invoiceItemId);
     }
 }

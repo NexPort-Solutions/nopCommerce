@@ -13,7 +13,7 @@ using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
-using Nop.Plugin.Misc.Nexport.Models.Wholesale;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProduct;
 using StackExchange.Profiling.Internal;
 
 namespace Nop.Plugin.Misc.Nexport.Services
@@ -2184,15 +2184,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await invoiceItemQuery.ToListAsync();
         }
 
-        public async Task<string> RedeemProductForCustomer(RedeemProductModel model)
+        public async Task<bool> RedeemProductForCustomer(RedeemProductModel model)
         {
             var invoiceItem = await FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
 
             if (model.SelectedProductMappingId == null)
-                return model.returnUrl;
+                throw new Exception("Selected product mapping id cannot be null.");
 
             if (invoiceItem == null)
-                return model.returnUrl;
+                throw new Exception("Invoice item id cannot be null.");
+
 
             var orderInfo = await GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
                 invoiceItem.OrderItemId);
@@ -2200,7 +2201,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
 
             if (orderInfo is not { Available: > 0 } || order == null)
-                return model.returnUrl;
+                throw new Exception("Order cannot be null");
 
             //set generic attribute for open ended product 
             if (model.ProductMappingIdForOpenEndedProduct != null)
@@ -2216,6 +2217,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             if (model.AssignmentType == "Instant")
             {
+                if (model.UserId == null)
+                    throw new Exception("User id of redeeming user cannot be null.");
 
                 invoiceItem.RedemptionStatus =
                     NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
@@ -2234,7 +2237,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         new NexportOrderInvoiceRedemptionQueueItem
                         {
                             OrderInvoiceItemId = invoiceItem.Id,
-                            RedeemingUserId = model.UserId,
+                            RedeemingUserId = model.UserId.Value,
                             ProductMappingId =
                                 model.ProductMappingIdForOpenEndedProduct.Value,
                             OrderItemId = invoiceItem.OrderItemId,
@@ -2247,7 +2250,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         new NexportOrderInvoiceRedemptionQueueItem
                         {
                             OrderInvoiceItemId = invoiceItem.Id,
-                            RedeemingUserId = model.UserId,
+                            RedeemingUserId = model.UserId.Value,
                             ProductMappingId = model.SelectedProductMappingId.Value,
                             OrderItemId = invoiceItem.OrderItemId,
                             UtcDateCreated = DateTime.UtcNow
@@ -2256,9 +2259,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
             else
             {
+                if (model.Email == null)
+                    throw new Exception("Sending email, email address cannot be null.");
 
-                await SendNewNexportManualRedemptionCustomerNotificationAsync(order, invoiceItem.Id, model.UserId, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
-                    _localizationSettings.DefaultAdminLanguageId);
+                await SendNewNexportManualRedemptionCustomerNotificationAsync(order, invoiceItem.Id, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
+                    _localizationSettings.DefaultAdminLanguageId, model.Email, model.FirstName, model.LastName );
                 invoiceItem.RedeemingUserId = model.UserId;
                 invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
 
@@ -2269,7 +2274,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 await UpdateWholesaleOrderInfoAsync(orderInfo);
             }
 
-            return model.returnUrl;
+            return true;
         }
 
         public async Task UnassignInvoiceItem(NexportOrderInvoiceItem invoiceItem)

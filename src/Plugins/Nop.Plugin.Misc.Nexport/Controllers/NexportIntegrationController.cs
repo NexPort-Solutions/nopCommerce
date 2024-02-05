@@ -3014,7 +3014,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     }
 
                     // delete generic attribute group for customer for future purchases
-                    await _genericAttributeService.SaveAttributeAsync<string>(customer, $"GroupForCustomer", null, orderStore.Id);
+                    await _genericAttributeService.SaveAttributeAsync<string?>(customer, $"GroupForCustomer", null, orderStore.Id);
 
                     foreach (var item in orderItems)
                     {

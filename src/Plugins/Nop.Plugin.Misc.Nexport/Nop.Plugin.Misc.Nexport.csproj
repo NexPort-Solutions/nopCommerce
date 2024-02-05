@@ -14,8 +14,8 @@
     You need to set this parameter to true if your plugin has a nuget package
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>1.0.0.14</AssemblyVersion>
-    <FileVersion>1.0.0.14</FileVersion>
+    <AssemblyVersion>1.0.0.15</AssemblyVersion>
+    <FileVersion>1.0.0.15</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -70,8 +70,10 @@
     <None Remove="Content\jquery-ui-timepicker-addon.min.css" />
     <None Remove="Content\jquery.dataTables.min.css" />
     <None Remove="Content\nexport-admin.css" />
+    <None Remove="Content\nexport-form-wizard.js" />
     <None Remove="Content\nexport-store.css" />
     <None Remove="Content\nexport.css" />
+    <None Remove="Content\redeem-product.css" />
     <None Remove="Content\rowGroup.dataTables.min.css" />
     <None Remove="Content\uikit.min.css" />
     <None Remove="logo.jpg" />
@@ -137,7 +139,13 @@
     <None Remove="Views\Widget\Order\WidgetsOrderSummaryCartFooter.cshtml" />
     <None Remove="Views\Widget\Product\WidgetsProductDetailsOverviewTop.cshtml" />
     <None Remove="Views\Widget\WidgetsHeaderLinksBefore.cshtml" />
+    <None Remove="Views\Widget\_EmailStep.cshtml" />
+    <None Remove="Views\_ConfirmStep.cshtml" />
+    <None Remove="Views\_CustomerStep.cshtml" />
+    <None Remove="Views\_EmailInfoStep.cshtml" />
+    <None Remove="Views\_EmailStep.cshtml" />
     <None Remove="Views\_RedeemOrViewOrder.cshtml" />
+    <None Remove="Views\_TrainingStep.cshtml" />
     <None Remove="Views\_ViewImports.cshtml" />
   </ItemGroup>
 
@@ -256,10 +264,18 @@
     <Content Include="Content\nexport-admin.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\redeem-product.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Content\nexport-store.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\nexport.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\redeem-product.js">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\rowGroup.dataTables.min.css">
@@ -321,6 +337,21 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\RedeemByEmail.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\_EmailInfoStep.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\_EmailStep.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\_ConfirmStep.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\_TrainingStep.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\_CustomerStep.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\RedeemProduct.cshtml">

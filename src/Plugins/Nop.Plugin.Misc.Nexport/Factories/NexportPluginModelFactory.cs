@@ -22,6 +22,7 @@ using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Models.Wholesale;
+using Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
@@ -1968,6 +1969,78 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
+        public async Task<TrainingStepModel> PrepareTrainingStepModel(int? productId, Guid? invoiceItemId)
+        {
+            if (productId < 1)
+                throw new ArgumentException("Invalid product id", nameof(productId));
+
+            var model = new TrainingStepModel();
+            
+            var product = await _productService.GetProductByIdAsync(productId.Value);
+            if (product != null)
+            {
+                model.CurrentProduct = product;
+
+                var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
+
+                if (invoiceItem != null)
+                {
+                    model.InvoiceItemId = invoiceItem.InvoiceItemId;
+
+                    var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+
+                    var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
+
+                    if (order != null && orderItem != null)
+                    {
+                        var mappingInfo = await _genericAttributeService.GetAttributeAsync<string>(orderItem,
+                            $"ProductMapping-{order.Id}-{orderItem.Id}", order.StoreId);
+
+                        // Retrieve the stored mapping info if existed; otherwise, get the current mapping info
+                        var mapping = mappingInfo != null
+                            ? JsonConvert.DeserializeObject<NexportProductMapping>(mappingInfo)
+                            : await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId, order.StoreId) ??
+                              await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
+                        if (mapping != null)
+                        {
+                            if (mapping.AssignWhenRedeemed.HasValue && mapping.AssignWhenRedeemed.Value)
+                            {
+                                model.ProductMappingIdForOpenEndedProduct = mapping.Id;
+                                var listOfMappings = await _nexportService.GetAllProductMappingsByCatalogIdAsync(mapping.NexportCatalogId);
+
+                                model.AvailableMappings = new List<SelectListItem>();
+
+                                foreach (var productMapping in listOfMappings)
+                                {
+                                    if (!productMapping.AutoRedeem && productMapping.NexportSyllabusId != null)
+                                    {
+                                        var productMappingProduct = await _productService.GetProductByIdAsync(productMapping.NopProductId);
+                                        if (productMappingProduct != null)
+                                        {
+                                            model.AvailableMappings.Add(new SelectListItem(productMappingProduct.Name,
+                                                $"{productMapping.Id}"));
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                model.SelectedProductMappingId = mapping.Id;
+
+                                model.AvailableMappings = new List<SelectListItem>
+                                {
+                                    new SelectListItem(product.Name, $"{mapping.Id}")
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+
+            return model;
+
+        }
+
         public async Task<RedeemProductModel> PrepareRedeemProductModel(Guid? groupId, Guid? invoiceItemId, int? productId)
         {
             if (groupId == Guid.Empty)
@@ -2057,13 +2130,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public async Task<RedeemByEmailModel> PrepareRedeemByEmailModel(Guid? nexportUserId, int? invoiceItemId,
+        public async Task<RedeemByEmailModel> PrepareRedeemByEmailModel(int? invoiceItemId,
             int? productMappingId)
         {
-            if (nexportUserId == null)
-                throw new ArgumentNullException(nameof(nexportUserId));
-            if (nexportUserId == Guid.Empty)
-                throw new ArgumentException("Nexport user id cannot be empty Guid", nameof(nexportUserId));
             if (invoiceItemId == null)
                 throw new ArgumentNullException(nameof(invoiceItemId));
             if (invoiceItemId < 1)
@@ -2088,7 +2157,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                      NexportOrderInvoiceItemRedemptionStatus.Assigned;
                     model.ProductName = product?.Name;
                     model.RedeemedDate = invoiceItem.UtcDateProcessed;
-                    model.NexportUserId = nexportUserId.Value;
+                    //find different way to get user id
+                    //model.NexportUserId = nexportUserId.Value;
                     model.ProductMappingId = productMappingId.Value;
                     model.Status = invoiceItem.RedemptionStatus;
                     model.EnrollmentId = invoiceItem.RedemptionEnrollmentId;
