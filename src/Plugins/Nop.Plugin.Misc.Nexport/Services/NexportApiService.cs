@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
-using Azure.Core;
-using DocumentFormat.OpenXml.Spreadsheet;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using NexportApi.Api;
 using NexportApi.Client;
 using NexportApi.Model;
 using Nop.Core.Infrastructure;
-using Nop.Plugin.Misc.Nexport.Migrations;
 using Nop.Plugin.Misc.Nexport.Models.Api;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
 using Nop.Plugin.Misc.Nexport.Models.Subscription;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
@@ -854,7 +848,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (string.IsNullOrWhiteSpace(accessToken))
                 throw new NullReferenceException("Access token cannot be empty");
 
-            if(!productId.HasValue)
+            if (!productId.HasValue)
                 throw new NullReferenceException("Product Id cannot be null");
 
             _apiConfiguration.BasePath = url;
@@ -867,7 +861,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var result = nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
                 new RedeemInvoiceItemRequest(invoiceItemRedemptionCode: invoiceItemRedemptionCode, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction,
-                    productId:productId.Value, productType:productType));
+                    productId: productId.Value, productType: productType));
 
             return result;
         }

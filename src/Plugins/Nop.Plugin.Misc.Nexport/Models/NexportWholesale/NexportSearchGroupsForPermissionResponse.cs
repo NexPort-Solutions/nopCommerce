@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
-using NexportApi.Model;
+﻿using NexportApi.Model;
 using Nop.Plugin.Misc.Nexport.Models.Api;
 
-namespace Nop.Plugin.Misc.Nexport.Models.Organization
+namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale
 {
     public class NexportSearchGroupsForPermissionResponse : NexportApiResponseBase
     {

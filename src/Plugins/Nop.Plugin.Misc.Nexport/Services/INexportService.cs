@@ -6,8 +6,8 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
-using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 
 namespace Nop.Plugin.Misc.Nexport.Services
 {
@@ -338,7 +338,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Task<IList<NexportOrderInvoiceItem>?> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
             string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc);
 
-        Task<string> RedeemProductForCustomer(RedeemProductModel model);
+        Task<bool> RedeemProductForCustomer(RedeemProductModel model);
 
         Task UnassignInvoiceItem(NexportOrderInvoiceItem invoiceItem);
 

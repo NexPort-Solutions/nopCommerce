@@ -66,25 +66,26 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 {
                     context.Result = new ChallengeResult();
                 }
-                else
-                {
-                    context.ActionArguments.TryGetValue("nexportUserId", out var nexportUserId);
+                //TODO - @js verify logged in user is allowed to access redeem by email link
+                //else
+                //{
+                //    context.ActionArguments.TryGetValue("nexportUserId", out var nexportUserId);
 
-                    if (nexportUserId == null)
-                    {
-                        _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Failed to access page. nexportUserId could not be found."));
-                        context.Result = new RedirectToRouteResult("Homepage", null);
-                    }
-                    else
-                    {
-                        var userMapping = await _nexportService.FindUserMappingByNexportUserId((Guid)nexportUserId);
-                        if (userMapping == null || userMapping.NopUserId != customer.Id)
-                        {
-                            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAuthorized"));
-                            context.Result = new RedirectToRouteResult("Homepage", null);
-                        }
-                    }
-                }
+                //    //if (nexportUserId == null)
+                //    //{
+                //    //    _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Failed to access page. nexportUserId could not be found."));
+                //    //    context.Result = new RedirectToRouteResult("Homepage", null);
+                //    //}
+                //    //else
+                //    //{
+                //        var userMapping = await _nexportService.FindUserMappingByNexportUserId((Guid)nexportUserId);
+                //        if (userMapping == null || userMapping.NopUserId != customer.Id)
+                //        {
+                //            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAuthorized"));
+                //            context.Result = new RedirectToRouteResult("Homepage", null);
+                //        }
+                //    //}
+                //}
             }
 
             await base.OnActionExecutionAsync(context, next);

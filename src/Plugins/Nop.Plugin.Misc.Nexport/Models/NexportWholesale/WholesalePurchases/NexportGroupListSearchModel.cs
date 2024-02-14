@@ -1,7 +1,7 @@
 ﻿using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
-namespace Nop.Plugin.Misc.Nexport.Models.Wholesale
+namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
 {
     public record NexportGroupListSearchModel : BaseSearchModel
     {

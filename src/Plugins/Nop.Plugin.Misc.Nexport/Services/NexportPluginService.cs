@@ -758,6 +758,30 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedTo", "Date assigned to");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedTo.Hint", "The date assigned to date for the search");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.SearchNameOrEmail", "Name or email");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.Email", "Email");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.FirstName", "First name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.LastName", "Last name");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.Table.Name", "Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.Table.Email", "Email");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.Table.OwnerOrg", "Owner org");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.SearchHeader","Search for existing customer");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.EnterNewHeader","Send redemption to customer via email");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm.Email", "Email");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm.FirstName", "First name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm.LastName", "Last name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm.Product", "Product selected");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm.RedemptionMethod", "Redemption method");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.SelectCustomer","Select customer");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.SelectProduct", "Select product");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm", "Confirm");
+
+            
         }
 
         public async Task DeleteResourcesAsync()
@@ -1094,6 +1118,28 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedFrom.Hint");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedTo");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedTo.Hint");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.SearchNameOrEmail");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.Email");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.FirstName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.LastName");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.Table.Name");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.Table.Email");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.Table.OwnerOrg");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.SearchHeader");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.EnterNewHeader");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm.Email");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm.FirstName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm.LastName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm.Product");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm.RedemptionMethod");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.SelectCustomer");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.SelectProduct");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm");
         }
 
         public async Task InstallPermissionProviderAsync()

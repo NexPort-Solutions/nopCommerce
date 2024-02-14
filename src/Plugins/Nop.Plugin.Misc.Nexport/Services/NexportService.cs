@@ -371,7 +371,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }).ToListAsync();
         }
 
-        public async Task<IList<int>> SendNewNexportManualRedemptionCustomerNotificationAsync(Order order, int invoiceItemId, Guid nexportUserId, int productMappingId, int languageId)
+        public async Task<IList<int>> SendNewNexportManualRedemptionCustomerNotificationAsync(Order order, int invoiceItemId, int productMappingId, int languageId, string email, string? firstName, string? lastName)
         {
             if (order == null)
                 throw new ArgumentNullException(nameof(order));
@@ -387,13 +387,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var commonTokens = new List<Token>();
             await _messageTokenProvider.AddOrderTokensAsync(commonTokens, order, languageId);
 
-            var nexportUser = await GetNexportUserAsync(nexportUserId);
-
             return await messageTemplates.SelectAwait(async messageTemplate =>
             {
                 var emailAccount = await GetEmailAccountOfMessageTemplateAsync(messageTemplate, languageId);
-                var toEmail = nexportUser.Email;
-                var toName = $"{nexportUser.FirstName} {nexportUser.LastName}";
+                var toEmail = email;
+                var toName = $"{firstName} {lastName}";
                 var tokens = new List<Token>(commonTokens);
 
                 //ensure that the store URL is specified
@@ -402,7 +400,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 //generate the relative URL
                 var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-                var url = urlHelper.RouteUrl("RedeemByEmail", new { invoiceItemId = invoiceItemId, nexportUserId = nexportUserId, productMappingId = productMappingId });
+                var url = urlHelper.RouteUrl("RedeemByEmail", new { invoiceItemId = invoiceItemId, productMappingId = productMappingId });
                 var path = new Uri(new Uri(store.Url), url).AbsoluteUri;
                 tokens.Add(new Token("Redemption.AcceptRedemptionUrl", path, true));
 

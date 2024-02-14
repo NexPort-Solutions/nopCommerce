@@ -8,7 +8,6 @@ using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
-using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Services.Catalog;
 using Nop.Services.Cms;
 using Nop.Services.Common;
