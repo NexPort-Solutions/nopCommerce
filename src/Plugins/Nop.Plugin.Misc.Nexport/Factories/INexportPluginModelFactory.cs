@@ -7,6 +7,9 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
@@ -14,8 +17,6 @@ using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
-using Nop.Plugin.Misc.Nexport.Models.Wholesale;
-using Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProduct;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Web.Areas.Admin.Models.Stores;
@@ -169,6 +170,6 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         Task<RedeemByEmailModel> PrepareRedeemByEmailModel(int? invoiceItemId, int? productMappingId);
 
-        Task<TrainingStepModel> PrepareTrainingStepModel(int? productId, Guid? invoiceItemId);
+        Task<ProductStepModel> PrepareProductStepModel(int? productId, Guid? invoiceItemId);
     }
 }

@@ -5,8 +5,6 @@ using Nop.Core.Domain.Common;
 using Nop.Core.Http.Extensions;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
-using Nop.Plugin.Misc.Nexport.Models.Wholesale;
-using Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Catalog;
@@ -22,6 +20,10 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using NexportApi.Model;
 using Nop.Core.Domain.Customers;
 using DocumentFormat.OpenXml.EMMA;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
+using Nop.Services.Orders;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
@@ -106,10 +108,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var searchModel = new NexportGroupListSearchModel();
             searchModel.AdminView = false;
-            ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportGroups.cshtml";
+            ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroups.cshtml";
             ViewData["ModelForPartialView"] = searchModel;
 
-            return View("~/Plugins/Misc.Nexport/Views/MyNexportGroups.cshtml");
+            return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
 
         }
 
@@ -125,10 +127,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
 
-            ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportGroupProducts.cshtml";
+            ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
             ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
 
-            return View("~/Plugins/Misc.Nexport/Views/MyNexportGroups.cshtml");
+            return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
         }
 
         [HttpsRequirement]
@@ -143,21 +145,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var nexportGroupProductRedemptionListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId);
 
-            ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportGroupProductRedemptions.cshtml";
+            ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProductRedemptions.cshtml";
             ViewData["ModelForPartialView"] = nexportGroupProductRedemptionListSearchModel;
 
-            return View("~/Plugins/Misc.Nexport/Views/MyNexportGroups.cshtml");
+            return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
         }
 
-
-        //[HttpPost]
-        //public async Task<IActionResult> RedeemProductForCustomer(RedeemProductModel model)
-        //{
-        //    if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-        //        return Challenge();
-
-        //    return Redirect(await _nexportService.RedeemProductForCustomer(model));
-        //}
 
         [HttpPost]
         [AutoValidateAntiforgeryToken]
@@ -236,53 +229,43 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             );
         }
 
-        public virtual async Task<IActionResult> SearchNexportUsers(string term)
+        public virtual async Task<IActionResult> GetMatchingUsers(CustomerStepModel searchModel)
         {
             if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
-            const int searchTermMinimumLength = 3;
-            if (string.IsNullOrWhiteSpace(term) || term.Length < searchTermMinimumLength)
-                return Content(string.Empty);
+            var paged = new List<NexportUserModel>().ToPagedList(searchModel);
 
-            var nexportUsers = await _nexportService.GetNexportUsersAsync(term);
-
-            var result = nexportUsers.Select(c => new
+            if (searchModel.TableFirstDraw)
             {
-                label = $"{c.FirstName} {c.LastName} ({c.Email})",
-                nexportUserId = c.UserId
-            }).ToList();
-
-            return Json(result);
-        }
-
-        public virtual async Task<IActionResult> GetMatchingUsers(NexportUserListSearchModel searchModel)
-        {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-                return Challenge();
+                return Json(paged);
+            }
 
             var customers = await _nexportService.SearchCustomersAsync(searchModel.SearchEmail ?? "");
-            var nexportUsers = new List<GetUserResponse>();
+            var nexportUsers = new List<NexportUserModel>();
             foreach (var customer in customers)
             {
                 var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
                 if (userMapping != null)
                 {
                     var nexUser = await _nexportService.GetNexportUserAsync(userMapping.NexportUserId);
-                    nexportUsers.Add(nexUser);
+
+                    // populate name and email from nop customer so we don't get confused if the
+                    // linked nexport account has a different name and email
+                    nexportUsers.Add(new NexportUserModel
+                    {
+                        UserId = nexUser.UserId,
+                        FirstName = customer.FirstName,
+                        LastName = customer.LastName,
+                        Email = customer.Email,
+                        OwnerOrgId = nexUser.OwnerOrgId,
+                        OwnerOrg = nexUser.OwnerOrgId != null ? (await _nexportService.GetOrganizationDetailsAsync(nexUser.OwnerOrgId.Value))?.Name : "",
+                        OwnerOrgShortName = nexUser.OwnerOrgShortName
+                    });
                 }
             }
 
-            var paged = await nexportUsers.SelectAwait(async x => new NexportUserModel
-            {
-                UserId = x.UserId,
-                FirstName = x.FirstName,
-                MiddleName = x.MiddleName,
-                LastName = x.LastName,
-                Email = x.Email,
-                OwnerOrgId = x.OwnerOrgId,
-                OwnerOrg = x.OwnerOrgId != null ? (await _nexportService.GetOrganizationDetailsAsync(x.OwnerOrgId.Value))?.Name : ""
-            }).ToPagedListAsync(searchModel);
+            paged = await nexportUsers.SelectAwait(async x => x).ToPagedListAsync(searchModel);
 
 
             var dtlist = new NexportUserListModel();
@@ -298,9 +281,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpsRequirement]
         public virtual async Task<IActionResult> RedeemByEmail(int invoiceItemId, int productMappingId)
         {
-            var model = _nexportPluginModelFactory.PrepareRedeemByEmailModel(invoiceItemId,
+            var model = await _nexportPluginModelFactory.PrepareRedeemByEmailModel(invoiceItemId,
                 productMappingId);
-            return View("~/Plugins/Misc.Nexport/Views/RedeemByEmail.cshtml", model);
+            return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemByEmail.cshtml", model);
         }
 
         [HttpsRequirement]
@@ -347,7 +330,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 return Challenge();
 
             var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId, invoiceItemId, productId);
-            ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/RedeemProduct.cshtml";
+            ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct.cshtml";
             ViewData["ModelForPartialView"] = model;
 
             //reset generic attributes for the redemption form
@@ -362,13 +345,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var selectedUserAttribute = await _genericAttributeService.GetAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId");
             if (selectedUserAttribute != null)
                 await _genericAttributeService.SaveAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId", null);
-            
+
             var firstName = await _genericAttributeService.GetAttributeAsync<string?>(customer, "RedeemProductModel_FirstName");
-            if(firstName != null)
+            if (firstName != null)
                 await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_FirstName", null);
 
             var lastName = await _genericAttributeService.GetAttributeAsync<string?>(customer, "RedeemProductModel_lastName");
-            if(lastName != null)
+            if (lastName != null)
                 await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_LastName", null);
 
             await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_ReturnUrl",
@@ -388,144 +371,45 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
 
 
-            return View("~/Plugins/Misc.Nexport/Views/MyNexportGroups.cshtml");
+            return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
         }
 
         [HttpPost]
-        public virtual async Task<IActionResult> AsnSaveEmail(EmailStepModel model, IFormCollection form)
+        public virtual async Task<IActionResult> AsnSaveCustomer(CustomerStepModel model, IFormCollection form)
         {
             try
             {
-                if (!ModelState.IsValid || model.Email == null)
-                {
-                    //model is not valid. redisplay the form with validation message
-                    return Json(new
-                    {
-                        update_section = new UpdateSectionJsonModel
-                        {
-                            name = "email",
-                            html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/_EmailStep.cshtml", model)
-                        }
-                    });
-                }
                 var customer = await _workContext.GetCurrentCustomerAsync();
 
-                //store email address in attribute for later steps
-                await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_EmailAddress", model.Email);
-
-                if (model.EmailStepSendViaEmail)
+                if (model.SelectedUserId != null)
                 {
-                    //store sendviaemail boolean in attribute for later steps//store email in attribute for later steps
-                    await _genericAttributeService.SaveAttributeAsync<bool?>(customer, "RedeemProductModel_SendViaEmail", model.EmailStepSendViaEmail);
-
-
-                    // go to the email info step
-                    return Json(new
-                    {
-                        update_section = new UpdateSectionJsonModel
-                        {
-                            name = "email-info",
-                            html = await RenderPartialViewToStringAsync(
-                                "~/Plugins/Misc.Nexport/Views/_EmailInfoStep.cshtml", new EmailInfoStepModel()
-                                {
-
-                                })
-                        },
-                        goto_section = "email-info"
-                    });
-
+                    await _genericAttributeService.SaveAttributeAsync<bool?>(customer, "RedeemProductModel_SendViaEmail", false);
+                    await _genericAttributeService.SaveAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId", model.SelectedUserId.Value);
+                    await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_EmailAddress", model.SelectedUserEmailAddress);
+                    await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_FirstName", model.SelectedUserFirstName);
+                    await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_LastName", model.SelectedUserLastName);
                 }
                 else
                 {
-
-                    var nexportUsers = await _nexportService.GetNexportUsersAsync(model.Email);
-
-                    var customerStepModel = new CustomerStepListSearchModel();
-
-                    if (nexportUsers != null && nexportUsers.Any())
+                    if (!ModelState.IsValid)
                     {
-                        Uri.TryCreate(new Uri(_nexportSettings.Url.TrimEnd('/')), $"Account/Info.nex?user=",
-                            out var userInfoUrl);
-                        if (userInfoUrl != null)
-                            customerStepModel.UserLinkUri = userInfoUrl.AbsoluteUri;
-
-                        customerStepModel.SearchEmail = model.Email;
+                        //model is not valid. redisplay the form with validation message
+                        return Json(new
+                        {
+                            update_section = new UpdateSectionJsonModel
+                            {
+                                name = "email",
+                                html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_CustomerStep.cshtml", model)
+                            }
+                        });
                     }
 
-                    return Json(new
-                    {
-                        update_section = new UpdateSectionJsonModel
-                        {
-                            name = "customer",
-                            html = await RenderPartialViewToStringAsync(
-                                "~/Plugins/Misc.Nexport/Views/_CustomerStep.cshtml", customerStepModel)
-                        },
-                        goto_section = "customer"
-                    });
+                    await _genericAttributeService.SaveAttributeAsync<bool?>(customer, "RedeemProductModel_SendViaEmail", true);
+                    await _genericAttributeService.SaveAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId", null);
+                    await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_EmailAddress", model.Email);
+                    await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_FirstName", model.FirstName);
+                    await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_LastName", model.LastName);
                 }
-            }
-            catch (Exception exc)
-            {
-                await _logger.WarningAsync(exc.Message, exc, await _workContext.GetCurrentCustomerAsync());
-                return Json(new { error = 1, message = exc.Message });
-            }
-        }
-
-        [HttpPost]
-        public virtual async Task<IActionResult> AsnSaveCustomer(CustomerStepListSearchModel model, IFormCollection form)
-        {
-            try
-            {
-                if (model.SelectedUserId == Guid.Empty)
-                    throw new Exception("Invalid. selected user id cannot be empty.");
-
-                if (model.CustomerStepSendViaEmail && model.SelectedUserId != null)
-                    throw new Exception("Invalid. Send via email and selected user id cannot both be checked.");
-
-                if (!ModelState.IsValid)
-                {
-                    //model is not valid. redisplay the form with validation message
-                    return Json(new
-                    {
-                        update_section = new UpdateSectionJsonModel
-                        {
-                            name = "customer",
-                            html = await RenderPartialViewToStringAsync(
-                                "~/Plugins/Misc.Nexport/Views/_CustomerStep.cshtml", model)
-                        },
-                        goto_section = "customer"
-                    });
-                }
-
-                var customer = await _workContext.GetCurrentCustomerAsync();
-
-
-                if (model.CustomerStepSendViaEmail)
-                {
-                    await _genericAttributeService.SaveAttributeAsync<bool?>(customer, "RedeemProductModel_SendViaEmail", model.CustomerStepSendViaEmail);
-
-                    // go to the email info step
-                    return Json(new
-                    {
-                        update_section = new UpdateSectionJsonModel
-                        {
-                            name = "email-info",
-                            html = await RenderPartialViewToStringAsync(
-                                "~/Plugins/Misc.Nexport/Views/_EmailInfoStep.cshtml", new EmailInfoStepModel()
-                                {
-
-                                })
-                        },
-                        goto_section = "email-info"
-                    });
-                }
-
-                if (model.SelectedUserId != null)
-                    await _genericAttributeService.SaveAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId", model.SelectedUserId.Value);
-
-                await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_FirstName", model.SelectedUserFirstName);
-                await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_LastName", model.SelectedUserLastName);
-
 
                 return await GoToTrainingStep(customer);
             }
@@ -544,14 +428,14 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var invoiceItemId =
                 await _genericAttributeService.GetAttributeAsync<Guid?>(customer, "RedeemProductModel_InvoiceItemId");
 
-            var trainingStepModel = await _nexportPluginModelFactory.PrepareTrainingStepModel(productId, invoiceItemId);
+            var productStepModel = await _nexportPluginModelFactory.PrepareProductStepModel(productId, invoiceItemId);
 
-            if (trainingStepModel.AvailableMappings.Count < 1)
+            if (productStepModel.AvailableMappings.Count < 1)
                 throw new Exception("Error preparing step. Could not load mappings for product");
 
-            if (trainingStepModel.AvailableMappings.Count == 1)
+            if (productStepModel.AvailableMappings.Count == 1)
             {
-               return await GoToConfirmStep(trainingStepModel, customer);
+                return await GoToConfirmStep(productStepModel, customer);
             }
 
             return Json(new
@@ -559,19 +443,19 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 update_section = new UpdateSectionJsonModel
                 {
                     name = "training",
-                    html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/_TrainingStep.cshtml", trainingStepModel)
+                    html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ProductStep.cshtml", productStepModel)
                 },
                 goto_section = "training"
             });
         }
 
-        public async Task<ActionResult> GoToConfirmStep(TrainingStepModel trainingStepModel, Customer customer)
+        public async Task<ActionResult> GoToConfirmStep(ProductStepModel model, Customer customer)
         {
-            if (trainingStepModel.SelectedProductMappingId == null)
+            if (model.SelectedProductMappingId == null)
                 throw new Exception("There was an error retreiving the product information from the previous steps");
             //await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
 
-            var productMapping = await _nexportService.GetProductMappingById(trainingStepModel.SelectedProductMappingId.Value);
+            var productMapping = await _nexportService.GetProductMappingById(model.SelectedProductMappingId.Value);
 
             if (productMapping == null)
                 throw new Exception("There was an error retrieving the product mapping information");
@@ -591,53 +475,22 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 update_section = new UpdateSectionJsonModel
                 {
                     name = "confirm",
-                    html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/_ConfirmStep.cshtml", new ConfirmStepModel
+                    html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ConfirmStep.cshtml", new ConfirmStepModel
                     {
                         Email = email,
                         FirstName = firstName,
                         LastName = lastName,
                         Product = product.Name,
-                        SendViaEmail = (sendViaEmail!=null && sendViaEmail.Value)?"Yes":"No"
+                        SendViaEmail = (sendViaEmail != null && sendViaEmail.Value) ? "Email" : "Instant"
                     })
                 },
                 goto_section = "confirm"
             });
         }
 
-        [HttpPost]
-        public virtual async Task<IActionResult> AsnSaveEmailInfo(EmailInfoStepModel model, IFormCollection form)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    //model is not valid. redisplay the form with validation message
-                    return Json(new
-                    {
-                        update_section = new UpdateSectionJsonModel
-                        {
-                            name = "email-info",
-                            html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/_EmailInfoStep.cshtml", model)
-                        }
-                    });
-                }
-
-                var customer = await _workContext.GetCurrentCustomerAsync();
-
-                await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_FirstName", model.FirstName);
-                await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_LastName", model.LastName);
-
-                return await GoToTrainingStep(customer);
-            }
-            catch (Exception exc)
-            {
-                await _logger.WarningAsync(exc.Message, exc, await _workContext.GetCurrentCustomerAsync());
-                return Json(new { error = 1, message = exc.Message });
-            }
-        }
 
         [HttpPost]
-        public virtual async Task<IActionResult> AsnSaveTraining(TrainingStepModel model, IFormCollection form)
+        public virtual async Task<IActionResult> AsnSaveProduct(ProductStepModel model, IFormCollection form)
         {
             try
             {
@@ -645,7 +498,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 if (model.SelectedProductMappingId == null)
                     throw new Exception("There was an error retreiving the product information from the previous steps");
-                
+
                 await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
 
                 var productMapping = await _nexportService.GetProductMappingById(model.SelectedProductMappingId.Value);
@@ -660,47 +513,26 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 var sendViaEmail = await _genericAttributeService.GetAttributeAsync<bool?>(customer, "RedeemProductModel_SendViaEmail");
 
-                if (sendViaEmail != null && sendViaEmail.Value)
+                var email = await _genericAttributeService.GetAttributeAsync<string?>(customer, "RedeemProductModel_EmailAddress");
+                var firstName = await _genericAttributeService.GetAttributeAsync<string?>(customer, "RedeemProductModel_FirstName");
+                var lastName = await _genericAttributeService.GetAttributeAsync<string?>(customer, "RedeemProductModel_LastName");
+
+                return Json(new
                 {
-                    var email = await _genericAttributeService.GetAttributeAsync<string?>(customer,
-                        "RedeemProductModel_EmailAddress");
-
-                    if (email == null)
-                        throw new Exception("There was an error retrieving the email address from the previous steps");
-
-
-                    return Json(new
+                    update_section = new UpdateSectionJsonModel
                     {
-                        update_section = new UpdateSectionJsonModel
+                        name = "confirm",
+                        html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ConfirmStep.cshtml", new ConfirmStepModel
                         {
-                            name = "confirm",
-                            html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/_ConfirmStep.cshtml", new ConfirmStepModel
-                            {
-                                Email = email,
-                                Product = product.Name,
-                                SendViaEmail = "Yes"
-                            })
-                        },
-                        goto_section = "confirm"
-                    });
-                }
-                else
-                {
-                    return Json(new
-                    {
-                        update_section = new UpdateSectionJsonModel
-                        {
-                            name = "confirm",
-                            html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/_ConfirmStep.cshtml", new ConfirmStepModel
-                            {
-                                Email = "",
-                                Product = product.Name,
-                                SendViaEmail = "Yes"
-                            })
-                        },
-                        goto_section = "confirm"
-                    });
-                }
+                            Email = email,
+                            Product = product.Name,
+                            FirstName = firstName,
+                            LastName = lastName,
+                            SendViaEmail = (sendViaEmail != null && sendViaEmail.Value) ? "Email" : "Instant"
+                        })
+                    },
+                    goto_section = "confirm"
+                });
             }
             catch (Exception exc)
             {
@@ -728,13 +560,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 if (invoiceItemId == null)
                     throw new Exception("error retreiving invoice item id for transaction.");
-                
-                
-                bool success =  await _nexportService.RedeemProductForCustomer(new RedeemProductModel
+
+
+                bool success = await _nexportService.RedeemProductForCustomer(new RedeemProductModel
                 {
-                    ReturnUrl = returnUrl??"",
+                    ReturnUrl = returnUrl ?? "",
                     SelectedProductMappingId = selectedProductMappingId,
-                    AssignmentType = sendViaEmail!=null && sendViaEmail.Value?"Email":"Instant",
+                    AssignmentType = sendViaEmail != null && sendViaEmail.Value ? "Email" : "Instant",
                     Email = emailAddress,
                     FirstName = firstName,
                     LastName = lastName,
@@ -742,6 +574,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     InvoiceItemId = invoiceItemId.Value,
                     UserId = selectedUserId
                 });
+
                 return Json(new { success = 1 });
             }
             catch (Exception exc)

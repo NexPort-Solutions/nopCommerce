@@ -2,9 +2,7 @@
 using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
-using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
-using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -12,8 +10,8 @@ using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
-using Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProduct;
 using StackExchange.Profiling.Internal;
 
 namespace Nop.Plugin.Misc.Nexport.Services
@@ -2262,8 +2260,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 if (model.Email == null)
                     throw new Exception("Sending email, email address cannot be null.");
 
+                //TODO - @js need some type of token stored here to verify correct user signs in to redeem the email
+                //generic attribute to check if correct user is accessing redeem by email
+                //await _genericAttributeService.SaveAttributeAsync(invoiceItem, "RedeemByEmailUserVerification",
+                //    model.Email + model.FirstName + model.LastName);
+
                 await SendNewNexportManualRedemptionCustomerNotificationAsync(order, invoiceItem.Id, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
-                    _localizationSettings.DefaultAdminLanguageId, model.Email, model.FirstName, model.LastName );
+                    _localizationSettings.DefaultAdminLanguageId, model.Email, model.FirstName, model.LastName);
                 invoiceItem.RedeemingUserId = model.UserId;
                 invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
 

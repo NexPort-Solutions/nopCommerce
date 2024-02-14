@@ -1,0 +1,115 @@
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.RedeemByEmailModel
+@{
+    Layout = "_ColumnsOne";
+    Nop.Web.Framework.Localization.LocalizedString status;
+    switch (Model.Status)
+    {
+        case NexportOrderInvoiceItemRedemptionStatus.Assigned:
+            status = @T("Plugins.Misc.Nexport.RedeemByEmail.Success");
+            break;
+        case NexportOrderInvoiceItemRedemptionStatus.Awaiting:
+            status = @T("Plugins.Misc.Nexport.RedeemByEmail.Available");
+            break;
+        case NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting:
+            status = @T("Plugins.Misc.Nexport.RedeemByEmail.Processing");
+            break;
+            default:
+            status = @T("Plugins.Misc.Nexport.RedeemByEmail.NotAvailable");
+                break;
+    }
+}
+<link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport.css" />
+
+<div class="page-title">
+    <h1>Redeem By Email</h1>
+</div>
+<div class="page-body">
+    <form>
+        <div class="fieldset">
+            <div class="title">
+                <strong>
+                    <label asp-for="InvoiceItemId" asp-postfix=":"></label>
+                    <label>@Model.InvoiceItemId</label>
+                </strong>
+            </div>
+            <div class="form-fields">
+                <div class="inputs">
+                    <label asp-for="ProductName" asp-postfix=":"></label>
+                    <label style="text-align:left">@Model.ProductName</label>
+                </div>
+                <div class="inputs">
+                    <label asp-for="RedeemedDate" asp-postfix=":"></label>
+                    <label style="text-align:left">@Model.RedeemedDate</label>
+                </div>
+                <div class="inputs">
+                    <label asp-for="Status" asp-postfix=":"></label>
+                    <label style="text-align:left">@status</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button type="button" name="redeem-item-button" class="button-1 redeem-item-btn" id="redeemOrGoToTraining">
+                @(Model.Status == NexportOrderInvoiceItemRedemptionStatus.Assigned ?
+                    @T("Plugins.Misc.Nexport.RedeemByEmail.Button.GoToTraining") :
+                    @T("Plugins.Misc.Nexport.RedeemByEmail.Button.Redeem"))
+            </button>
+        </div>
+    </form>
+</div>
+<script>
+    $("document").ready(function(){
+        $("#redeemOrGoToTraining").prop("disabled", @(Model.Status != NexportOrderInvoiceItemRedemptionStatus.Awaiting && Model.Status != NexportOrderInvoiceItemRedemptionStatus.Assigned ? "true" : "false"));
+    });
+    $("#redeemOrGoToTraining").on("click",function(){
+        if (@(Model.Status == NexportOrderInvoiceItemRedemptionStatus.Awaiting ? "true" : "false")) 
+        {
+            if (confirm("@T("Plugins.Misc.Nexport.RedeemByEmailModel.ConfirmRedeem")"))
+            {
+                var data = {invoiceItemId:@Model.InvoiceItemId, nexportUserId:"@Model.NexportUserId",productMappingId:@Model.ProductMappingId}
+                $.ajax({
+                    url: "@Url.Action("RedeemAwaitingInvoiceItem", "NexportWholesale")",
+                    type: "POST",
+                    data: data,
+                    success: function (result) {
+                        alert("@T("Plugins.Misc.Nexport.RedeemByEmail.Button.RedeemingMessage")");
+                        location.reload();
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                     
+                    }
+                });
+            }
+        } 
+        else if (@(Model.Status == NexportOrderInvoiceItemRedemptionStatus.Assigned ? "true" : "false")) {
+            if (@(Model.EnrollmentId!=null?"true":"false")) {
+                var url = "@Url.Action("GoToNexportClassroom", "NexportIntegration")";
+                url += "?enrollmentId=@Model.EnrollmentId";
+
+                navigateToNexport(url);
+            }
+        }
+    });
+    
+    function navigateToNexport(url) {
+        var nexportWindow = window.open("about:blank", "_blank");
+
+        $.ajax({
+            url: url,
+            type: "GET",
+            success: function (result) {
+                if (result && result.RedirectUrl) {
+                    nexportWindow.location.href = result.RedirectUrl;
+                }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                var response = xhr.responseJSON;
+                if (response && response.Error) {
+                    nexportWindow.close();
+                    displayBarNotification(response.Error, "error");
+                }
+            }
+        });
+    }
+</script>

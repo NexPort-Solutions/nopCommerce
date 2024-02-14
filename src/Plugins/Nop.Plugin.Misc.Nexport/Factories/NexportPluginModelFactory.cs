@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using System.Collections.Immutable;
+using DocumentFormat.OpenXml.Office2013.PowerPoint.Roaming;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using NexportApi.Model;
 using Nop.Core;
@@ -14,6 +16,9 @@ using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
@@ -21,8 +26,6 @@ using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
-using Nop.Plugin.Misc.Nexport.Models.Wholesale;
-using Nop.Plugin.Misc.Nexport.Models.Wholesale.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
@@ -1969,12 +1972,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public async Task<TrainingStepModel> PrepareTrainingStepModel(int? productId, Guid? invoiceItemId)
+        public async Task<ProductStepModel> PrepareProductStepModel(int? productId, Guid? invoiceItemId)
         {
             if (productId < 1)
                 throw new ArgumentException("Invalid product id", nameof(productId));
 
-            var model = new TrainingStepModel();
+            var model = new ProductStepModel();
             
             var product = await _productService.GetProductByIdAsync(productId.Value);
             if (product != null)
@@ -2105,10 +2108,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                             {
                                 model.SelectedProductMappingId = mapping.Id;
 
-                                model.AvailableMappings = new List<SelectListItem>
+                                var mappings = new List<SelectListItem>
                                 {
                                     new SelectListItem(product.Name, $"{mapping.Id}")
                                 };
+                                
+                                model.AvailableMappings = await mappings.OrderBy(x => x.Value).ToListAsync();
+                                
                             }
                         }
                     }
@@ -2144,6 +2150,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var model = new RedeemByEmailModel();
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemById(invoiceItemId.Value);
+            
             if (invoiceItem != null)
             {
                 if (productMappingId > 0)

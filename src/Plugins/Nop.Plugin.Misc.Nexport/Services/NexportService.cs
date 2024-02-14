@@ -371,7 +371,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }).ToListAsync();
         }
 
-        public async Task<IList<int>> SendNewNexportManualRedemptionCustomerNotificationAsync(Order order, int invoiceItemId, int productMappingId, int languageId,string email, string? firstName, string? lastName)
+        public async Task<IList<int>> SendNewNexportManualRedemptionCustomerNotificationAsync(Order order, int invoiceItemId, int productMappingId, int languageId, string email, string? firstName, string? lastName)
         {
             if (order == null)
                 throw new ArgumentNullException(nameof(order));

@@ -85,7 +85,7 @@ var Assign = {
     }
 };
 
-var CustomerEmail = {
+var Customer = {
   form: false,
   saveUrl: false,
 
@@ -95,14 +95,14 @@ var CustomerEmail = {
   },
 
   continue: function () {
-    $("#EmailStepSendViaEmail").prop("checked",true);
+    $("#CustomerStepSendViaEmail").prop("checked",true);
     this.save();
   },
 
   save: function() {
     if (Assign.loadWaiting !== false) return;
 
-    Assign.setLoadWaiting('email');
+    Assign.setLoadWaiting('customer');
 
     $.ajax({
       cache: false,
@@ -130,148 +130,12 @@ var CustomerEmail = {
 
       return false;
     }
-    $("#EmailStepSendViaEmail").prop("checked",false);
+    $("#CustomerStepSendViaEmail").prop("checked",false);
     Assign.setStepResponse(response);
   }
 };
 
-
-var Customer = {
-  form: false,
-  saveUrl: false,
-
-  init: function(form, saveUrl) {
-    this.form = form;
-    this.saveUrl = saveUrl;
-  },
-
-  save: function() {
-    if (Assign.loadWaiting !== false) return;
-
-    Assign.setLoadWaiting('customer');
-
-    $.ajax({
-      cache: false,
-      url: this.saveUrl,
-      data: $(this.form).serialize(),
-      type: "POST",
-      success: this.nextStep,
-      complete: this.resetLoadWaiting,
-      error: Assign.ajaxFailure
-    });
-  },
-
-  resetLoadWaiting: function() {
-    Assign.setLoadWaiting(false);
-  },
-
-  nextStep: function(response) {
-
-    if (response.error) {
-      if (typeof response.message === 'string') {
-        alert(response.message);
-      } else {
-        alert(response.message.join("\n"));
-      }
-
-      return false;
-    }
-
-    Assign.setStepResponse(response);
-  }
-};
-
-var EmailInfo = {
-  form: false,
-  saveUrl: false,
-
-  init: function(form, saveUrl) {
-    this.form = form;
-    this.saveUrl = saveUrl;
-  },
-
-  save: function() {
-    if (Assign.loadWaiting !== false) return;
-
-    Assign.setLoadWaiting('email-info');
-
-    $.ajax({
-      cache: false,
-      url: this.saveUrl,
-      data: $(this.form).serialize(),
-      type: "POST",
-      success: this.nextStep,
-      complete: this.resetLoadWaiting,
-      error: Assign.ajaxFailure
-    });
-  },
-
-  resetLoadWaiting: function() {
-    Assign.setLoadWaiting(false);
-  },
-
-  nextStep: function(response) {
-
-    if (response.error) {
-      if (typeof response.message === 'string') {
-        alert(response.message);
-      } else {
-        alert(response.message.join("\n"));
-      }
-
-      return false;
-    }
-
-    Assign.setStepResponse(response);
-  }
-};
-
-//var Send = {
-//  form: false,
-//  saveUrl: false,
-
-//  init: function(form, saveUrl) {
-//    this.form = form;
-//    this.saveUrl = saveUrl;
-//  },
-
-//  save: function() {
-//    if (Assign.loadWaiting !== false) return;
-
-//    Assign.setLoadWaiting('send');
-
-//    $.ajax({
-//      cache: false,
-//      url: this.saveUrl,
-//      data: $(this.form).serialize(),
-//      type: "POST",
-//      success: this.nextStep,
-//      complete: this.resetLoadWaiting,
-//      error: Assign.ajaxFailure
-//    });
-//  },
-
-//  resetLoadWaiting: function() {
-//    Assign.setLoadWaiting(false);
-//  },
-
-//  nextStep: function(response) {
-
-//    if (response.error) {
-//      if (typeof response.message === 'string') {
-//        alert(response.message);
-//      } else {
-//        alert(response.message.join("\n"));
-//      }
-
-//      return false;
-//    }
-
-//    Assign.setStepResponse(response);
-//  }
-//};
-
-var Training = {
+var Product = {
   form: false,
   saveUrl: false,
   productId: false,
@@ -284,7 +148,7 @@ var Training = {
   save: function() {
     if (Assign.loadWaiting !== false) return;
 
-    Assign.setLoadWaiting('training');
+    Assign.setLoadWaiting('product');
 
     $.ajax({
       cache: false,

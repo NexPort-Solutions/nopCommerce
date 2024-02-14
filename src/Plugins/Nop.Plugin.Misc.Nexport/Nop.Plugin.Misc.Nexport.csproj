@@ -34,7 +34,7 @@
   <ItemGroup>
     <None Remove="Areas\Admin\Views\Category\NexportOptions.cshtml" />
     <None Remove="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml" />
-    <None Remove="Areas\Admin\Views\NexportWholesale\NexportGroups\List.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\WholesalePurchases\NexportGroups\List.cshtml" />
     <None Remove="Areas\Admin\Views\Order\Create.cshtml" />
     <None Remove="Areas\Admin\Views\Order\List.cshtml" />
     <None Remove="Areas\Admin\Views\Order\_OrderDetails.Info.cshtml" />
@@ -141,8 +141,6 @@
     <None Remove="Views\Widget\WidgetsHeaderLinksBefore.cshtml" />
     <None Remove="Views\Widget\_EmailStep.cshtml" />
     <None Remove="Views\_ConfirmStep.cshtml" />
-    <None Remove="Views\_CustomerStep.cshtml" />
-    <None Remove="Views\_EmailInfoStep.cshtml" />
     <None Remove="Views\_EmailStep.cshtml" />
     <None Remove="Views\_RedeemOrViewOrder.cshtml" />
     <None Remove="Views\_TrainingStep.cshtml" />
@@ -156,7 +154,7 @@
     <Content Include="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\NexportWholesale\NexportGroups\List.cshtml">
+    <Content Include="Areas\Admin\Views\NexportWholesale\WholesalePurchases\NexportGroups\List.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Order\List.cshtml">
@@ -330,37 +328,31 @@
     <Content Include="Views\MapNexportProductList.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\NexportGroupProducts.cshtml">
+    <Content Include="Views\NexportWholesale\WholesalePurchases\NexportGroupProducts.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\NexportGroups.cshtml">
+    <Content Include="Views\NexportWholesale\WholesalePurchases\NexportGroups.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\RedeemByEmail.cshtml">
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemByEmail.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\_EmailInfoStep.cshtml">
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemProduct\_CustomerStep.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\_EmailStep.cshtml">
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemProduct\_ConfirmStep.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\_ConfirmStep.cshtml">
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemProduct\_ProductStep.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\_TrainingStep.cshtml">
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemProduct.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\_CustomerStep.cshtml">
+    <Content Include="Views\NexportWholesale\WholesalePurchases\NexportGroupProductRedemptions.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Views\RedeemProduct.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\NexportGroupProductRedemptions.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\MyNexportGroups.cshtml">
+    <Content Include="Views\NexportWholesale\WholesalePurchases\MyNexportGroups.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\NexportStore\List.cshtml">
@@ -511,7 +503,6 @@
   <ItemGroup>
     <Folder Include="Areas\Admin\Models\Wholesale\" />
     <Folder Include="Services\Caching\" />
-    <Folder Include="Views\NexportWholesale\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -13,7 +13,6 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
-using Nop.Plugin.Misc.Nexport.Models.Wholesale;
 using Nop.Services.Catalog;
 using Nop.Services.Cms;
 using Nop.Services.Common;
