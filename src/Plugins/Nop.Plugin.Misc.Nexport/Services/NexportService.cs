@@ -608,33 +608,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
         }
 
         [CanBeNull]
-        public async Task<GetUserResponse> GetNexportUserAsync(Guid userId)
+        public async Task<GetUserResponse?> GetNexportUserAsync(Guid userId)
         {
             try
             {
                 var response = _nexportApiService.GetNexportUserByUserId(_nexportSettings.Url, _nexportSettings.AuthenticationToken, userId);
 
-                if (response.StatusCode == 409)
-                    return null;
-
                 if (response.StatusCode == 200)
                     return response.Response;
-
-                if (response.StatusCode == 403)
-                {
-                    var message = $"Nexport plugin access does not have permission to look up the user with Id {userId}";
-                    await _logger.ErrorAsync(message);
-
-                    throw new ApiException(response.StatusCode, message);
-                }
-
-                if (response.StatusCode == 422)
-                {
-                    var message = $"Validation exception occurred when trying to get a user with Id {userId}";
-                    await _logger.ErrorAsync(message);
-
-                    throw new ApiException(response.StatusCode, message);
-                }
             }
             catch (Exception ex)
             {
@@ -643,10 +624,34 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (ex is ApiException exception)
                 {
-                    var errorResponse = JsonConvert.DeserializeObject<GetUserResponse>(exception.ErrorContent.ToString());
-                    if (errorResponse != null)
+                    switch (exception.ErrorCode)
                     {
-                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                        case 409:
+                            return null;
+
+                        case 403:
+                        {
+                            var message = $"Nexport plugin access does not have permission to look up the user with Id {userId}";
+                            await _logger.ErrorAsync(message);
+
+                            throw new ApiException(exception.ErrorCode, message);
+                        }
+                        case 422:
+                        {
+                            var message = $"Validation exception occurred when trying to get a user with Id {userId}";
+                            await _logger.ErrorAsync(message);
+
+                            throw new ApiException(exception.ErrorCode, message);
+                        }
+
+                        default:
+                            var errorResponse = JsonConvert.DeserializeObject<ApiResponseBase>(exception.ErrorContent.ToString());
+                            if (errorResponse != null)
+                            {
+                                throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                            }
+
+                            break;
                     }
                 }
 
@@ -663,27 +668,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 var response = _nexportApiService.GetNexportUserContactInfo(_nexportSettings.Url, _nexportSettings.AuthenticationToken, userId);
 
-                if (response.StatusCode == 409)
-                    return null;
-
                 if (response.StatusCode == 200)
                     return response.Response;
-
-                if (response.StatusCode == 403)
-                {
-                    var message = $"Nexport plugin access does not have permission to look up the contact info for user with Id {userId}";
-                    await _logger.ErrorAsync(message);
-
-                    throw new ApiException(response.StatusCode, message);
-                }
-
-                if (response.StatusCode == 422)
-                {
-                    var message = $"Validation exception occurred when trying to get the contact info for user with Id {userId}";
-                    await _logger.ErrorAsync(message);
-
-                    throw new ApiException(response.StatusCode, message);
-                }
             }
             catch (Exception ex)
             {
@@ -692,10 +678,34 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (ex is ApiException exception)
                 {
-                    var errorResponse = JsonConvert.DeserializeObject<UserContactInfoResponse>(exception.ErrorContent.ToString());
-                    if (errorResponse != null)
+                    switch (exception.ErrorCode)
                     {
-                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                        case 409:
+                            return null;
+
+                        case 403:
+                        {
+                            var message = $"Nexport plugin access does not have permission to look up the contact info for user with Id {userId}";
+                            await _logger.ErrorAsync(message);
+
+                            throw new ApiException(exception.ErrorCode, message);
+                        }
+                        case 422:
+                        {
+                            var message = $"Validation exception occurred when trying to get the contact info for user with Id {userId}";
+                            await _logger.ErrorAsync(message);
+
+                            throw new ApiException(exception.ErrorCode, message);
+                        }
+
+                        default:
+                            var errorResponse = JsonConvert.DeserializeObject<ApiResponseBase>(exception.ErrorContent.ToString());
+                            if (errorResponse != null)
+                            {
+                                throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                            }
+
+                            break;
                     }
                 }
 
@@ -718,31 +728,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (response.StatusCode == 200)
                     return response.Response;
-
-                if (response.StatusCode == 403)
-                {
-                    var message = $"Nexport plugin access does not have permission to edit user {userId}";
-                    await _logger.ErrorAsync(message);
-
-                    throw new ApiException(response.StatusCode, message);
-                }
-
-                if (response.StatusCode == 409)
-                {
-                    var message = $"Cannot find user with the Id of {userId}";
-                    await _logger.ErrorAsync(message);
-
-                    throw new ApiException(response.StatusCode, message);
-                }
-
-                if (response.StatusCode == 422)
-                {
-                    var message =
-                        $"Validation exception occurred when trying to edit user with the Id {userId}";
-                    await _logger.ErrorAsync(message);
-
-                    throw new ApiException(response.StatusCode, message);
-                }
             }
             catch (Exception ex)
             {
@@ -751,10 +736,39 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (ex is ApiException exception)
                 {
-                    var errorResponse = JsonConvert.DeserializeObject<EditUserResponse>(exception.ErrorContent.ToString());
-                    if (errorResponse != null)
+                    switch (exception.ErrorCode)
                     {
-                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                        case 409:
+                        {
+                            var message = $"Cannot find user with the Id of {userId}";
+                            await _logger.ErrorAsync(message);
+
+                            throw new ApiException(exception.ErrorCode, message);
+                        }
+
+                        case 403:
+                        {
+                            var message = $"Nexport plugin access does not have permission to edit user {userId}";
+                            await _logger.ErrorAsync(message);
+
+                            throw new ApiException(exception.ErrorCode, message);
+                        }
+                        case 422:
+                        {
+                            var message = $"Validation exception occurred when trying to edit user with the Id {userId}";
+                            await _logger.ErrorAsync(message);
+
+                            throw new ApiException(exception.ErrorCode, message);
+                        }
+
+                        default:
+                            var errorResponse = JsonConvert.DeserializeObject<ApiResponseBase>(exception.ErrorContent.ToString());
+                            if (errorResponse != null)
+                            {
+                                throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                            }
+
+                            break;
                     }
                 }
 
