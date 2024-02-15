@@ -608,7 +608,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         }
 
         [CanBeNull]
-        public async Task<GetUserResponse> GetNexportUserAsync(Guid userId)
+        public async Task<GetUserResponse?> GetNexportUserAsync(Guid userId)
         {
             try
             {

@@ -248,20 +248,33 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
                 if (userMapping != null)
                 {
-                    var nexUser = await _nexportService.GetNexportUserAsync(userMapping.NexportUserId);
-
-                    // populate name and email from nop customer so we don't get confused if the
-                    // linked nexport account has a different name and email
-                    nexportUsers.Add(new NexportUserModel
+                    try
                     {
-                        UserId = nexUser.UserId,
-                        FirstName = customer.FirstName,
-                        LastName = customer.LastName,
-                        Email = customer.Email,
-                        OwnerOrgId = nexUser.OwnerOrgId,
-                        OwnerOrg = nexUser.OwnerOrgId != null ? (await _nexportService.GetOrganizationDetailsAsync(nexUser.OwnerOrgId.Value))?.Name : "",
-                        OwnerOrgShortName = nexUser.OwnerOrgShortName
-                    });
+                        var nexUser = await _nexportService.GetNexportUserAsync(userMapping.NexportUserId);
+
+                        if (nexUser != null)
+                        {
+                            // populate name and email from nop customer so we don't get confused if the
+                            // linked nexport account has a different name and email
+                            nexportUsers.Add(new NexportUserModel
+                            {
+                                UserId = nexUser.UserId,
+                                FirstName = customer.FirstName,
+                                LastName = customer.LastName,
+                                Email = customer.Email,
+                                OwnerOrgId = nexUser.OwnerOrgId,
+                                OwnerOrg = nexUser.OwnerOrgId != null
+                                    ? (await _nexportService.GetOrganizationDetailsAsync(nexUser.OwnerOrgId.Value))
+                                    ?.Name
+                                    : "",
+                                OwnerOrgShortName = nexUser.OwnerOrgShortName
+                            });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await _logger.ErrorAsync(ex.Message, ex);
+                    }
                 }
             }
 

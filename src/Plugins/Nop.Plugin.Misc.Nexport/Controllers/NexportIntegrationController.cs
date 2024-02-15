@@ -510,7 +510,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
                 return ErrorJson(await _localizationService.GetResourceAsync("Admin.AccessDenied.Description"));
 
-            GetUserResponse nexportUser = null;
+            GetUserResponse? nexportUser = null;
 
             if (nexportUserId != Guid.Empty)
             {
@@ -561,7 +561,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             if (nexportUserId != Guid.Empty)
             {
-                GetUserResponse nexportUser = null;
+                GetUserResponse? nexportUser = null;
                 try
                 {
                     nexportUser = await _nexportService.GetNexportUserAsync(nexportUserId);
