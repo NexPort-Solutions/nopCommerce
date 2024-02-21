@@ -1735,24 +1735,27 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 {
                     foreach (var orderInfo in wholesaleOrderInfos)
                     {
-                        var product = await _productService.GetProductByIdAsync(orderInfo.ProductId);
-
-                        if (product != null)
+                        var orderItem = await _orderService.GetOrderItemByIdAsync(orderInfo.OrderItemId);
+                        if (orderItem != null)
                         {
-                            var groupProductModel = new NexportGroupProductModel
+                            var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
+
+                            if (product != null)
                             {
-                                Id = product.Id,
-                                Available = orderInfo.Available,
-                                Awaiting = orderInfo.Awaiting,
-                                Redeemed = orderInfo.Redeemed,
-                                GroupId = groupId
-                            };
+                                var groupProductModel = new NexportGroupProductModel
+                                {
+                                    Id = product.Id,
+                                    Available = orderInfo.Available,
+                                    Awaiting = orderInfo.Awaiting,
+                                    Redeemed = orderInfo.Redeemed,
+                                    GroupId = groupId
+                                };
 
-                            groupProductModel.Name = product.Name;
+                                groupProductModel.Name = product.Name;
 
-                            groupProductModels.Add(groupProductModel);
+                                groupProductModels.Add(groupProductModel);
+                            }
                         }
-
                     }
 
                 }
@@ -1778,7 +1781,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         }
 
         public virtual async Task<NexportGroupProductRedemptionListModel> PrepareNexportGroupProductRedemptionListModelAsync(
-            NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId, Customer currentCustomer)
+            NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId, Customer currentCustomer, int? orderId = null)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
@@ -1802,7 +1805,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.DateAssignedTo.Value, await _dateTimeHelper.GetCurrentTimeZoneAsync()).AddDays(1);
 
                 var invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
-                    searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue);
+                    searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue, orderId);
 
                 if (invoiceItems != null)
                 {
@@ -1924,7 +1927,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         }
 
         public async Task<NexportGroupProductRedemptionListSearchModel> PrepareNexportGroupProductRedemptionListSearchModelAsync(
-            Guid? groupId, int productId)
+            Guid? groupId, int productId, int? orderId = null)
         {
             if (groupId == Guid.Empty)
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
@@ -1932,6 +1935,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 throw new ArgumentOutOfRangeException(nameof(productId));
 
             var model = new NexportGroupProductRedemptionListSearchModel();
+
+            model.OrderId = orderId;
 
             var product = await _productService.GetProductByIdAsync(productId);
             if (product != null)

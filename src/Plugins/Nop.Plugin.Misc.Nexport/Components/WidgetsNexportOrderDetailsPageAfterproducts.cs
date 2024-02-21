@@ -8,6 +8,7 @@ using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.Order;
+using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Common;
 using Nop.Services.Orders;
 using Nop.Web.Framework.Components;
@@ -24,6 +25,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
         private readonly INexportPluginModelFactory _modelFactory;
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly IOrderService _orderService;
+        private readonly NexportService _nexportService;
 
         public WidgetsNexportOrderDetailsPageAfterproducts(
             IWorkContext workContext,
@@ -31,7 +33,8 @@ namespace Nop.Plugin.Misc.Nexport.Components
             IShoppingCartService shoppingCartService,
             INexportPluginModelFactory modelFactory,
             IGenericAttributeService genericAttributeService,
-            IOrderService orderService)
+            IOrderService orderService,
+            NexportService nexportService)
         {
             _workContext = workContext;
             _storeContext = storeContext;
@@ -39,6 +42,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _modelFactory = modelFactory;
             _genericAttributeService = genericAttributeService;
             _orderService = orderService;
+            _nexportService = nexportService;
         }
 
         public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
@@ -49,11 +53,14 @@ namespace Nop.Plugin.Misc.Nexport.Components
             var store = await _storeContext.GetCurrentStoreAsync();
             var customer = await _workContext.GetCurrentCustomerAsync();
 
-            var group = await _genericAttributeService.GetAttributeAsync<string>(order, $"GroupForOrder", store.Id);
-            var deserialized = JsonConvert.DeserializeObject<NexportGroupModel>(group);
-            ViewData["GroupNameForOrder"] = deserialized?.Name;
+            if(order!=null){
+                var group = await _nexportService.GetWholesalePurchaseGroupForOrderAsync(order);
+                if(group!=null){
+                    ViewData["GroupNameForOrder"] = group.NexportGroupName;
+                }
+            }
 
-            
+
             return View("~/Plugins/Misc.Nexport/Views/Widget/Order/WidgetsNexportOrderDetailsPageAfterproducts.cshtml");
         }
     }

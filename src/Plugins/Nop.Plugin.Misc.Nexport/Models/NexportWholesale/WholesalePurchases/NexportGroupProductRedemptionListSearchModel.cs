@@ -13,6 +13,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
 
         public Product CurrentProduct { get; set; }
 
+        public int? OrderId {get; set; }
+
         public bool AdminView = false;
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchName")]

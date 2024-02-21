@@ -122,6 +122,7 @@
                                 new RouteValueDictionary {
                                     { "GroupId", Model.CurrentGroup.Id }
                                     ,{ "ProductId", Model.CurrentProduct.Id }
+                                    ,{"OrderId", Model.OrderId}
                                 }),
                             SearchButtonId = "search-group-product-redemptions",
                             Length = Model.PageSize,
@@ -245,7 +246,7 @@
         }
     }
     function updateAvailableRedemptions() {
-        var redemptionData = { groupId: "@Model.CurrentGroup.Id", productId: "@Model.CurrentProduct.Id" };
+        var redemptionData = { groupId: "@Model.CurrentGroup.Id", productId: "@Model.CurrentProduct.Id", orderId: "@Model.OrderId" };
         addAntiForgeryToken(redemptionData);
 
         $.ajax({
