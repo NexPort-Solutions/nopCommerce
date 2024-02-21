@@ -336,7 +336,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Task<IList<WholesaleOrderInfo>?> SearchGroupProductsAsync(Guid? groupId, string productName);
 
         Task<IList<NexportOrderInvoiceItem>?> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
-            string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc);
+            string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc, int? orderId = null);
 
         Task<bool> RedeemProductForCustomer(RedeemProductModel model);
 

@@ -544,6 +544,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Order.ViewRedemption", "Launch this training");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Order.Redeem", "Redeem");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Order.Assign", "Assign");
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.SupplementalInfo.Question.Text", "Question text");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.SupplementalInfo.Question.Text.Hint", "The question text");
@@ -915,6 +916,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Order.ViewRedemption");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Order.Redeem");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Order.Assign");
 
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.SupplementalInfo.Question.Text");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.SupplementalInfo.Question.Text.Hint");
