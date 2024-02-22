@@ -29,6 +29,13 @@ namespace Nop.Plugin.Misc.Nexport.Migrations
                 DefaultTaxDisplayTypeId = 0,
                 PurchasedWithProductId = 0
             });
+            Execute.Sql(@"
+                INSERT INTO [dbo].[PermissionRecord_Role_Mapping]
+                           ([PermissionRecord_Id]
+                           ,[CustomerRole_Id])
+                     VALUES
+                           ((Select Id From PermissionRecord Where SystemName='ManageNexportWholesale')
+                           ,(Select Id From CustomerRole Where SystemName='NexportWholesaleManager')");
         }
 
         public override void Down()
@@ -37,6 +44,9 @@ namespace Nop.Plugin.Misc.Nexport.Migrations
             {
                 SystemName = "NexportWholesaleManager"
             });
+            Execute.Sql(@"Delete From PermissionRecord_Role_Mapping 
+                Where CustomerRole_Id=(Select Id From CustomerRole Where SystemName='NexportWholesaleManager') 
+                AND PermissionRecord_Id=(Select Id From PermissionRecord Where SystemName='ManageNexportWholesale')");
         }
     }
 }
