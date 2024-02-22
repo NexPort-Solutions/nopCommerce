@@ -1955,7 +1955,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
 
             var total = 0;
-
+            
             total += await _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId).SumAsync(x => x.Available);
             total += await _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId).SumAsync(x => x.Awaiting);
             total += await _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId).SumAsync(x => x.Redeemed);
@@ -1982,13 +1982,22 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await _customerService.GetCustomerByIdAsync(customerId);
         }
 
-        public async Task<int> GetAvailableNexportGroupProductRedemptionsCountAsync(Guid? groupId, int productId, int? orderId = null)
+        public async Task<int> GetAvailableNexportGroupProductRedemptionsCountAsync(Guid? groupId, int productId, int? orderId = null,Customer? customer = null)
         {
             if (groupId == Guid.Empty)
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
             if (productId < 0)
                 throw new ArgumentOutOfRangeException(nameof(productId));
-            var query = _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId && x.ProductId == productId);
+
+            var orderQuery  = _orderRepository.Table;
+            if (customer != null)
+            {
+                orderQuery = orderQuery.Where(x => x.CustomerId == customer.Id);
+            }
+
+            var orderIdList = await orderQuery.Select(x => x.Id).ToListAsync();
+
+            var query = _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId && x.ProductId == productId && orderIdList.Contains(x.OrderId));
             if (orderId != null)
             {
                 query = query.Where(x => x.OrderId == orderId);
@@ -2122,7 +2131,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await _nexportProductMappingRepository.Table.Where(x => x.NexportCatalogId == catalogId).ToListAsync();
         }
 
-        public async Task<IList<WholesaleOrderInfo>?> SearchGroupProductsAsync(Guid? groupId, string productName)
+        public async Task<IList<WholesaleOrderInfo>?> SearchGroupProductsAsync(Guid? groupId, string productName, Customer? customer = null)
         {
             if (groupId == Guid.Empty)
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
@@ -2133,8 +2142,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var productIdList = await productQuery.Select(x => x.Id).ToListAsync();
 
+            var orderQuery  = _orderRepository.Table;
+            if (customer != null)
+            {
+                orderQuery = orderQuery.Where(x => x.CustomerId == customer.Id);
+            }
+
+            var orderIdList = await orderQuery.Select(x => x.Id).ToListAsync();
+
             var wholesaleOrderInfoQuery =
-                _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId && productIdList.Contains(x.ProductId))
+                _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId && productIdList.Contains(x.ProductId) && orderIdList.Contains(x.OrderId))
                     .GroupBy(x => x.ProductId)
                     .Select(x =>
                         new WholesaleOrderInfo
@@ -2152,7 +2169,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await wholesaleOrderInfoQuery.ToListAsync();
         }
 
-        public async Task<IList<NexportOrderInvoiceItem>?> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId, string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc, int? orderId = null)
+        public async Task<IList<NexportOrderInvoiceItem>?> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId, string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Customer? currentCustomer = null)
         {
             if (groupId == Guid.Empty)
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
@@ -2161,6 +2178,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 throw new ArgumentOutOfRangeException(nameof(productId));
 
             var invoiceItemQuery = _nexportOrderInvoiceItemRepository.Table;
+
+            var orderQuery = _orderRepository.Table;
+            if (currentCustomer != null)
+            {
+                orderQuery = orderQuery.Where(x=>x.CustomerId == currentCustomer.Id);
+            }
+
+            var orderIdList = await orderQuery.Select(x => x.Id).ToListAsync();
+
+            invoiceItemQuery = invoiceItemQuery.Where(x => orderIdList.Contains(x.OrderId));
 
             if (orderId != null)
             {

@@ -13,6 +13,7 @@ using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
@@ -27,6 +28,7 @@ using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Helpers;
@@ -35,6 +37,7 @@ using Nop.Services.Logging;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Plugins;
+using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
@@ -70,6 +73,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly NexportService _nexportService;
         private readonly IAddressService _addressService;
         private readonly IPriceFormatter _priceFormatter;
+        private readonly IPermissionService _permissionService;
 
         #endregion
 
@@ -93,7 +97,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             NexportService nexportService,
             IPaymentPluginManager paymentPluginManager,
             IAddressService addressService,
-            IPriceFormatter priceFormatter)
+            IPriceFormatter priceFormatter,
+            IPermissionService permissionService)
         {
             _nexportSettings = nexportSettings;
             _baseAdminModelFactory = baseAdminModelFactory;
@@ -113,6 +118,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _paymentPluginManager = paymentPluginManager;
             _addressService = addressService;
             _priceFormatter = priceFormatter;
+            _permissionService = permissionService;
         }
 
         #endregion
@@ -1660,6 +1666,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 {
                     var groupModels = new List<NexportGroupModel>();
 
+
                     //check for wholesale purchases that have no group
                     var noGroupCount = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(null);
                     if (noGroupCount > 0)
@@ -1668,7 +1675,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     }
 
                     var groupsFromApi = await _nexportService.SearchGroupsForPermissionAsync(userMapping.NexportUserId,
-                        _nexportSettings.RootOrganizationId.Value);
+                    _nexportSettings.RootOrganizationId.Value);
 
                     foreach (var group in groupsFromApi)
                     {
@@ -1728,8 +1735,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             {
                 IList<NexportGroupProductModel> groupProductModels = new List<NexportGroupProductModel>();
 
-                var wholesaleOrderInfos =
-                    await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName);
+                //if a user doesn't have manage wholesale permission, they should only see the items they ordered
+                IList<WholesaleOrderInfo>? wholesaleOrderInfos = null;
+                if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+                    wholesaleOrderInfos = await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName, currentCustomer);
+                else
+                    wholesaleOrderInfos = await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName);
 
                 if (wholesaleOrderInfos != null)
                 {
@@ -1804,8 +1815,17 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 var dateAssignedToValue = !searchModel.DateAssignedTo.HasValue ? null
                     : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.DateAssignedTo.Value, await _dateTimeHelper.GetCurrentTimeZoneAsync()).AddDays(1);
 
-                var invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
-                    searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue, orderId);
+                IList<NexportOrderInvoiceItem>? invoiceItems = null;
+                //if the customer does not have the manage wholesale role then they should only see their own orders
+                if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+                    invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
+                        searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue, orderId, currentCustomer);
+                else
+                    invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
+                        searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue, orderId);
+                
+
+                
 
                 if (invoiceItems != null)
                 {
@@ -1983,7 +2003,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 throw new ArgumentException("Invalid product id", nameof(productId));
 
             var model = new ProductStepModel();
-            
+
             var product = await _productService.GetProductByIdAsync(productId.Value);
             if (product != null)
             {
@@ -2117,9 +2137,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                 {
                                     new SelectListItem(product.Name, $"{mapping.Id}")
                                 };
-                                
+
                                 model.AvailableMappings = await mappings.OrderBy(x => x.Value).ToListAsync();
-                                
+
                             }
                         }
                     }
@@ -2155,7 +2175,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var model = new RedeemByEmailModel();
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemById(invoiceItemId.Value);
-            
+
             if (invoiceItem != null)
             {
                 if (productMappingId > 0)

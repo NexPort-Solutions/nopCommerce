@@ -79,6 +79,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
         private readonly IRepository<WholesalePurchasingGroup> _wholesalePurchasingGroupRepository;
         private readonly IRepository<WholesaleOrderInfo> _wholesaleOrderInfoRepository;
+        private readonly IRepository<Order> _orderRepository;
         private readonly ICustomerService _customerService;
         private readonly IOrderService _orderService;
         private readonly ICategoryService _categoryService;
@@ -143,6 +144,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
             IRepository<WholesalePurchasingGroup> wholesalePurchasingGroupRepository,
             IRepository<WholesaleOrderInfo> wholesaleOrderInfoRepository,
+            IRepository<Order> orderRepository,
             ICustomerService customerService,
             IOrderService orderService,
             ICategoryService categoryService,
@@ -203,6 +205,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
             _wholesalePurchasingGroupRepository = wholesalePurchasingGroupRepository;
             _wholesaleOrderInfoRepository = wholesaleOrderInfoRepository;
+            _orderRepository = orderRepository;
             _customerService = customerService;
             _orderService = orderService;
             _categoryService = categoryService;
