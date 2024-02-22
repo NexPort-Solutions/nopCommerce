@@ -2105,6 +2105,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return info;
         }
 
+        public async Task<IList<Order>?> GetOrdersForCustomer(Customer? customer)
+        {
+            if(customer == null) throw new ArgumentNullException(nameof(customer));
+
+            var orders = await _orderRepository.Table.Where(x => x.CustomerId == customer.Id).ToListAsync();
+
+            return orders;
+        }
+
         public virtual async Task<IList<Customer>> SearchCustomersAsync(string searchNameAndEmail)
         {
             var query = _customerRepository.Table.Where(c => !c.Deleted && !c.IsSystemAccount && !string.IsNullOrWhiteSpace(c.Email));

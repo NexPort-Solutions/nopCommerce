@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
+using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Customers;
 using Nop.Web.Framework.Components;
 
@@ -11,19 +12,37 @@ namespace Nop.Plugin.Misc.Nexport.Components
     {
         private readonly ICustomerService _customerService;
         private readonly IWorkContext _workContext;
+        private readonly NexportService _nexportService;
 
         public WidgetsHeaderLinksBefore(
             ICustomerService customerService,
-            IWorkContext workContext)
+            IWorkContext workContext,
+            NexportService nexportService)
         {
             _customerService = customerService;
             _workContext = workContext;
+            _nexportService = nexportService;
         }
 
         public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
             if (!await _customerService.IsRegisteredAsync(await _workContext.GetCurrentCustomerAsync()))
                 return Content("");
+
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            var ordersForCustomer = await _nexportService.GetOrdersForCustomer(customer);
+            if (ordersForCustomer != null)
+            {
+                foreach (var order in ordersForCustomer)
+                {
+                    var orderInfo = await _nexportService.GetWholesaleOrderInfoForOrderAsync(order.Id);
+                    if (orderInfo != null)
+                    {
+                        ViewData["ShowNexportWholesalePurchases"] = true;
+                        break;
+                    }
+                }
+            }
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/WidgetsHeaderLinksBefore.cshtml");
         }
