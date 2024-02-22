@@ -1,6 +1,7 @@
 ﻿using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -333,10 +334,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<NexportOrderInvoiceItem?> FindNexportOrderInvoiceItemByGuidAsync(Guid? orderInvoiceItemId);
 
-        Task<IList<WholesaleOrderInfo>?> SearchGroupProductsAsync(Guid? groupId, string productName);
+        Task<IList<WholesaleOrderInfo>?> SearchGroupProductsAsync(Guid? groupId, string productName, Customer customer);
 
         Task<IList<NexportOrderInvoiceItem>?> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
-            string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc, int? orderId = null);
+            string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Customer? customer = null);
 
         Task<bool> RedeemProductForCustomer(RedeemProductModel model);
 

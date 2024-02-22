@@ -33,7 +33,7 @@
         Length = Model.PageSize,
         LengthMenu = Model.AvailablePageSizes,
         SearchButtonId = "search-nexport-users",
-        HeaderCallback = "myCallback",
+        HeaderCallback = "headerCallback",
         Filters = new List<FilterParameter>
         {
             new FilterParameter(nameof(Model.SearchEmail)),
@@ -142,7 +142,7 @@
     function RenderRadio(data, type, row, meta) {
         return "<input type=\"radio\" name=\"select-nexport-user\" onclick=\"SelectedUserClicked(this)\" data-control=\"nexport-user-selection\" data-user-id=\"" + row.UserId + "\" data-first-name=\"" + row.FirstName + "\" data-last-name=\"" + row.LastName + "\" data-email-address=\"" + row.Email + "\">";
     }
-    function myCallback(tfoot, data, start, end, display){
+    function headerCallback(tfoot, data, start, end, display){
         if($("#TableFirstDraw").val()=="False")
         {
             SetInputValsForSelectedRadio(null, null, null, null);

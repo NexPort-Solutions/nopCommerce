@@ -25,10 +25,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.Security
                     ManageSupplementalInfo,
                     ManageNexportOrderInvoice,
                     ManageNexportWholesale
-                }),
-                (NopCustomerDefaults.RegisteredRoleName, new []
-                {
-                    ManageNexportWholesale
                 })
             };
         }

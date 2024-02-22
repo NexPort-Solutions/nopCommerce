@@ -24,6 +24,7 @@ using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Services.Orders;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
+using Nop.Services.Localization;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
@@ -41,6 +42,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         private readonly NexportSettings _nexportSettings;
         private readonly IProductService _productService;
         private readonly ILogger _logger;
+        private readonly ILocalizationService _localizationService;
 
         #endregion
 
@@ -56,6 +58,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             IPermissionService permissionService,
             NexportSettings nexportSettings,
             IProductService productService,
+            ILocalizationService localizationService,
             ILogger logger
             )
         {
@@ -68,6 +71,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _permissionService = permissionService;
             _nexportSettings = nexportSettings;
             _productService = productService;
+            _localizationService = localizationService;
             _logger = logger;
         }
 
@@ -102,17 +106,25 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
-
+            // if customer doesnt have wholesale permissions then jump straight to the products page
             if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-                return Challenge();
+            {
+                var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(null);
 
-            var searchModel = new NexportGroupListSearchModel();
-            searchModel.AdminView = false;
-            ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroups.cshtml";
-            ViewData["ModelForPartialView"] = searchModel;
+                ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
+                ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
 
-            return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
+                return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
+            }
+            else
+            {
+                var searchModel = new NexportGroupListSearchModel();
+                searchModel.AdminView = false;
+                ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroups.cshtml";
+                ViewData["ModelForPartialView"] = searchModel;
 
+                return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
+            }
         }
 
         [HttpsRequirement]
@@ -120,9 +132,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
-                return Challenge();
-
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
             var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
@@ -140,9 +149,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-                return Challenge();
-
             var nexportGroupProductRedemptionListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId, orderId);
 
             ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProductRedemptions.cshtml";
@@ -156,12 +162,11 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(customer))
                 return await AccessDeniedDataTablesJson();
 
-            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
-
-            var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel, currentCustomer);
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel, customer);
 
             return Json(model);
         }
@@ -171,12 +176,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid? groupId)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(customer))
                 return await AccessDeniedDataTablesJson();
 
-            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
-            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId, currentCustomer);
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId, customer);
 
             return Json(model);
         }
@@ -185,12 +190,11 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId, int? orderId)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(customer))
                 return await AccessDeniedDataTablesJson();
 
-            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
-
-            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListModelAsync(searchModel, groupId, productId, currentCustomer, orderId);
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListModelAsync(searchModel, groupId, productId, customer, orderId);
 
             return Json(model);
         }
@@ -200,10 +204,17 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(
             NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId, int? orderId = null)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            var count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId);
+            int? count = null;
+            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+                count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, customer);
+            else
+                count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId);
+
+            
             return Json(
                 new { result = count }
             );
@@ -213,7 +224,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> InvoiceItemUnassign(Guid invoiceItemId)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
@@ -231,7 +243,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         public virtual async Task<IActionResult> GetMatchingUsers(CustomerStepModel searchModel)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(currentCustomer))
                 return Challenge();
 
             var paged = new List<NexportUserModel>().ToPagedList(searchModel);
@@ -316,7 +329,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> InvoiceItemCancelAwaiting(Guid invoiceItemId)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
@@ -337,9 +351,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
-                return Challenge();
-
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
                 return Challenge();
 
             var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId, invoiceItemId, productId);
