@@ -347,5 +347,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task CancelAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem);
 
+        Task<IList<Order>?> GetOrdersForCustomer(Customer? customer);
+
     }
 }
