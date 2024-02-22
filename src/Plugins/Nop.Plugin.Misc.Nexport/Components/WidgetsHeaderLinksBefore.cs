@@ -30,6 +30,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
                 return Content("");
 
             var customer = await _workContext.GetCurrentCustomerAsync();
+            ViewData["CustomerName"] = $"{customer.FirstName} {customer.LastName}'s";
             var ordersForCustomer = await _nexportService.GetOrdersForCustomer(customer);
             if (ordersForCustomer != null)
             {
