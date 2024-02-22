@@ -1902,6 +1902,24 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                 redemptionItem.Email = redeemer.Email;
                             }
                         }
+                        else
+                        {
+                            var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+                            if (order != null)
+                            {
+                                var email = await _genericAttributeService.GetAttributeAsync<string>(invoiceItem,
+                                    $"redeeming-user-email-for-invoice-{invoiceItem.Id}", order.StoreId);
+                                if (email != null)
+                                {
+                                    redemptionItem.Email =
+                                        await _genericAttributeService.GetAttributeAsync<string>(invoiceItem,
+                                            $"redeeming-user-email-for-invoice-{invoiceItem.Id}", order.StoreId);
+                                    redemptionItem.Name =
+                                        $"{await _genericAttributeService.GetAttributeAsync<string>(invoiceItem, $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}", order.StoreId)} {await _genericAttributeService.GetAttributeAsync<string>(invoiceItem, $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}", order.StoreId)}";
+                                }
+                            }
+                        }
+               
 
                         redemptions.Add(redemptionItem);
                     }
