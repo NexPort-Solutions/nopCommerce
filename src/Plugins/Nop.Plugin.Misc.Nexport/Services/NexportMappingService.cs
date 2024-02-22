@@ -2286,6 +2286,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 orderInfo.Available--;
                 await UpdateWholesaleOrderInfoAsync(orderInfo);
 
+                //attributes set so that processing and awaiting redemptions can display an email and name
+                await _genericAttributeService.SaveAttributeAsync(invoiceItem,
+                    $"redeeming-user-email-for-invoice-{invoiceItem.Id}",model.Email,order.StoreId);
+                await _genericAttributeService.SaveAttributeAsync(invoiceItem,
+                    $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}",model.FirstName,order.StoreId);
+                await _genericAttributeService.SaveAttributeAsync(invoiceItem,
+                    $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}",model.LastName,order.StoreId);
+
 
                 if (model.ProductMappingIdForOpenEndedProduct != null)
                 {
@@ -2349,6 +2357,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 if (wholesaleOrderInfo != null && wholesaleOrderInfo.Redeemed > 0)
                 {
+                    var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+                    if (order != null)
+                    {
+                        // reset processing and awaiting redemptions attributes for name and email
+                        await _genericAttributeService.SaveAttributeAsync<string>(invoiceItem,
+                            $"redeeming-user-email-for-invoice-{invoiceItem.Id}", null, order.StoreId);
+                        await _genericAttributeService.SaveAttributeAsync<string>(invoiceItem,
+                            $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}", null, order.StoreId);
+                        await _genericAttributeService.SaveAttributeAsync<string>(invoiceItem,
+                            $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}", null, order.StoreId);
+                    }
+
                     invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
 
                     await UpdateNexportOrderInvoiceItem(invoiceItem);
