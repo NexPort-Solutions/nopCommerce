@@ -35,7 +35,7 @@ namespace Nop.Plugin.Misc.Nexport.Migrations
                            ,[CustomerRole_Id])
                      VALUES
                            ((Select Id From PermissionRecord Where SystemName='ManageNexportWholesale')
-                           ,(Select Id From CustomerRole Where SystemName='NexportWholesaleManager')");
+                           ,(Select Id From CustomerRole Where SystemName='NexportWholesaleManager'))");
         }
 
         public override void Down()
