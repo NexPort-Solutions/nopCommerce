@@ -318,18 +318,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             if (nexportProductMappingId < 1)
                 return new PagedList<NexportProductGroupMembershipMapping>(new List<NexportProductGroupMembershipMapping>(), pageIndex, pageSize);
 
-            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductGroupMembershipMappingsAllCacheKey,
-                (await _storeContext.GetCurrentStoreAsync()).Id,
-                string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
-                showHidden, "", false);
+            var query = _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
+                np.NexportProductMappingId == nexportProductMappingId);
 
-            return await _cacheManager.GetAsync(cacheKey, async () =>
-            {
-                var query = _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
-                    np.NexportProductMappingId == nexportProductMappingId);
-
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
+            return await query.ToPagedListAsync(pageIndex, pageSize);
         }
 
         public async Task<IList<Guid>> GetProductGroupMembershipIds(int nexportProductMappingId)
@@ -1390,14 +1382,22 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     .Where(f => f.FieldCategoryId == categoryId).ToListAsync();
         }
 
-        public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(int pageIndex = 0, int pageSize = int.MaxValue)
+        public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(IList<int> storeIds, int pageIndex = 0, int pageSize = int.MaxValue)
         {
-            return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldAllCacheKey, async () =>
-            {
-                var query = _nexportRegistrationFieldRepository.Table;
-
+            var query = _nexportRegistrationFieldRepository.Table;
+            
+            //check if contains 0 because nopselect puts 0 in list of ids if "all" is selected
+            if (storeIds==null || storeIds.Contains(0))
                 return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
+
+            var storeQuery = _storeRepository.Table
+                .Where(s => storeIds.Contains(s.Id)).Select(s => s.Id).ToList();
+
+            var storeMappingQuery = _nexportRegistrationFieldStoreMappingRepository.Table.Where(sm => storeQuery.Contains(sm.StoreId)).Select(sm => sm.FieldId).ToList();
+
+            query = query.Where(f => storeMappingQuery.Contains(f.Id));
+
+            return await query.ToPagedListAsync(pageIndex, pageSize);
         }
 
         public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswersPagination(
@@ -1799,24 +1799,71 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return false;
         }
 
-        public virtual async Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string productName, NexportProductTypeEnum? productType, int storeId, int productId, int pageIndex = 0, int pageSize = int.MaxValue, bool excludeDefault = false)
+        public virtual async Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchProductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue)
         {
-            var productMappings = await _nexportProductMappingRepository.GetAllAsync(async query =>
-            {
-                query = query.Where(x => x.NopProductId == productId);
-                if (excludeDefault)
-                    query = query.Where(x => x.StoreId != null);
-                if (storeId > 0)
-                    query = query.Where(x => x.StoreId == storeId);
-                if(productName!=null) 
-                    query = query.Where(x => x.NexportProductName.Contains(productName));
-                if(productType!=null)
-                    query = query.Where(x => x.Type == productType);
-                return query;
-            });
+            //get product mappings for the product
+            var productMappings = _nexportProductMappingRepository.Table.Where(x => x.NopProductId == productId);
 
-            //paging
-            return new PagedList<NexportProductMapping>(productMappings, pageIndex, pageSize);
+            //this checks if a default mapping exists for the product. if it does not then set insert empty default to true and if
+            //it doesnt get filtered out we insert it at the end
+            var insertEmptyDefault = await _nexportProductMappingRepository.Table.FirstOrDefaultAsync(x => x.NopProductId == productId && x.StoreId == null) == null;
+
+            var left = _storeRepository.Table.Where(s=>!s.Deleted)
+                .GroupJoin(productMappings,
+                    s => s.Id,
+                    pm => pm.StoreId,
+                    (s, pm) => new { s, pm })
+                .SelectMany(joined => joined.pm.DefaultIfEmpty(),
+                    (joined, pm) => new { joined.s, pm });
+
+            var right = productMappings
+                .GroupJoin(_storeRepository.Table,
+                    pm => pm.StoreId,
+                    s => s.Id,
+                    (pm, s) => new { s, pm })
+                .SelectMany(joined => joined.s.DefaultIfEmpty(),
+                    (joined, s) => new { s = s, joined.pm });
+
+            var productMappingsQuery = left.Union(right);
+
+            if (!string.IsNullOrEmpty(searchStoreName))
+            {
+                if ("Default".Contains(searchStoreName, StringComparison.OrdinalIgnoreCase))
+                {
+                    productMappingsQuery = productMappingsQuery.Where(x =>
+                        x.s.Name.Contains(searchStoreName, StringComparison.OrdinalIgnoreCase) || x.s.Name==null);
+                }
+                else
+                {
+                    productMappingsQuery = productMappingsQuery.Where(x =>
+                        x.s.Name.Contains(searchStoreName, StringComparison.OrdinalIgnoreCase));
+                    insertEmptyDefault = false;
+                }
+                
+            }
+
+            if (!string.IsNullOrEmpty(searchProductName))
+            {
+                productMappingsQuery = productMappingsQuery.Where(x =>
+                    x.pm.NexportProductName.Contains(searchProductName, StringComparison.OrdinalIgnoreCase));
+                insertEmptyDefault = false;
+            }
+
+            if (searchProductType != null)
+            {
+                productMappingsQuery = productMappingsQuery.Where(x => x.pm.Type == searchProductType);
+                insertEmptyDefault = false;
+            }
+
+            var productMappingsList = await productMappingsQuery.Select(x => x.pm ?? new NexportProductMapping() { StoreId = x.s.Id, NexportCatalogId = Guid.Empty }).ToListAsync();
+
+            // insert an empty value for default if there is no default for the product and it wasnt filtered out by the search
+            if (insertEmptyDefault)
+                productMappingsList.Insert(0, new NexportProductMapping {NexportCatalogId = Guid.Empty});
+            
+
+            return new PagedList<NexportProductMapping>(productMappingsList, pageIndex, pageSize);
+
         }
     }
 }

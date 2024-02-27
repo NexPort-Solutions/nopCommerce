@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Stores;
@@ -10,5 +11,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Services
     {
         Task<PlaceOrderResult> PurchaseProductForCustomerAsync(Product product, Customer customer, Store store,
             bool notifyCustomer = false);
+
+        Task<IList<Customer>> SearchCustomersAsync(string searchNameAndEmail);
     }
 }

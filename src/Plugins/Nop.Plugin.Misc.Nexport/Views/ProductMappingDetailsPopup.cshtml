@@ -13,16 +13,6 @@
     ViewBag.PageTitle = "Product mapping details";
 }
 
-@if (ViewBag.RefreshPage == true)
-{
-    <script>
-        try {
-            window.opener.$("#@(Context.Request.Query["containerId"]) #@(Context.Request.Query["btnId"])").click();
-        }
-        catch (e) { }
-    </script>
-}
-
 @if (ViewBag.ClosePage == true)
 {
     <script>
@@ -35,7 +25,6 @@
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
 
     NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/nexport-admin.css", "", true);
-
     <form asp-controller="NexportIntegration" asp-action="EditMapping"
           asp-route-containerId="@Context.Request.Query["containerId"]"
           asp-route-btnId="@Context.Request.Query["btnId"]">
@@ -400,6 +389,13 @@
                 $("#extensionPurchaseLimitOption").hide();
             }
         }
+
+        $(window).on("unload", function (e) {
+            try {
+                window.opener.$("#@(Context.Request.Query["containerId"]) #@(Context.Request.Query["btnId"])").click();
+            }
+            catch (e) { }
+        });
 
         $(document).ready(function () {
             $.fn.bootstrapTypeahead = $.fn.typeahead.noConflict();

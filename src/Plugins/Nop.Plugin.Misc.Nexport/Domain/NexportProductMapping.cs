@@ -1,5 +1,4 @@
 ﻿using System;
-using NexportApi.Model;
 using Nop.Core;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 
@@ -30,9 +29,9 @@ namespace Nop.Plugin.Misc.Nexport.Domain
 
         public NexportProductTypeEnum Type { get; set; }
 
-        public CatalogResponseItem.PublishingModelEnum? PublishingModel { get; set; }
+        public NexportApi.Model.Enums.PublishingModelEnum? PublishingModel { get; set; }
 
-        public CatalogResponseItem.PricingModelEnum? PricingModel { get; set; }
+        public NexportApi.Model.Enums.PricingModelEnum? PricingModel { get; set; }
 
         public DateTime? UtcLastModifiedDate { get; set; }
 

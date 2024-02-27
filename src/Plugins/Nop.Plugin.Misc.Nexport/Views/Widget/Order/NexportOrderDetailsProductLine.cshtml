@@ -48,17 +48,18 @@
                             var targetWidth = 550;
                             var maxHeight = $(window).height() - 20;
 
-                        $("[data-id=redemption-view-popup][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").dialog({
-                            width: targetWidth,
-                            maxHeight: maxHeight,
-                            close: function(event, ui) {
-                                if ($("#redeemCompleted").data("redeemed")) {
-                                    $("[data-id=view-redemption-link]").hide();
-                                    $("[data-id=refreshLink]").click(function(e) {
-                                        location.reload();
-                                    }).show();
+                            $("[data-id=redemption-view-popup][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").dialog({
+                                width: targetWidth,
+                                maxHeight: maxHeight,
+                                close: function(event, ui) {
+                                    if ($("#redeemCompleted").data("redeemed")) {
+                                        $("[data-id=view-redemption-link]").hide();
+                                        $("[data-id=refreshLink]").click(function(e) {
+                                            location.reload();
+                                        }).show();
+                                    }
                                 }
-                            }
+                            });
                         });
                     });
                 </script>

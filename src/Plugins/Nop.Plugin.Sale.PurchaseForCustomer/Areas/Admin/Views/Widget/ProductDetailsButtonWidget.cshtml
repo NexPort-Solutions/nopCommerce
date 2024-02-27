@@ -5,7 +5,7 @@
 @if (Model.Id > 0)
 {
     <button type="submit" id="purchaseForCustomerBtn" class="btn btn-success" name="purchaseforcustomer"
-            onclick="javascript:OpenWindow('@Url.Action("PurchaseDetails", "PurchaseForCustomer", new { productId = Model.Id })', 800, 600, true);return false;">
+            onclick="javascript:OpenWindow('@Url.Action("PurchaseDetails", "PurchaseForCustomer", new { productId = Model.Id })', 1200, 800, true);return false;">
         <i class="fa fa-shopping-cart"></i>
         @T("Admin.Catalog.Products.PurchaseForCustomer")
     </button>

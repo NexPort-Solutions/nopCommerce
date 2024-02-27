@@ -151,6 +151,9 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                                 var store = await _storeService.GetStoreByIdAsync(order.StoreId);
 
+                                //order notes
+                                await _nexportService.AddOrderNoteAsync(order, $"Nexport invoice has started processing for order Number:{order.Id}, Store: {store.Name}");
+
                                 if (store != null)
                                 {
                                     var orgId = await _genericAttributeService.GetAttributeAsync<Guid>(store, "NexportSubscriptionOrganizationId", store.Id);
@@ -158,6 +161,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     if (orgId == Guid.Empty)
                                     {
                                         orgId = _nexportSettings.RootOrganizationId.Value;
+                                        await _logger.InformationAsync($"While processing order {order.Id} - orgid set to root organization id value");
                                     }
 
                                     // Check if there is an existing invoice. If not, begin a new invoice transaction.
@@ -167,7 +171,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                                     // Get the invoice details from Nexport (if existing)
                                     var invoiceDetails = await _nexportService.GetNexportInvoiceAsync(orderInvoiceId);
-
+                                    
                                     // Continue to process only if the invoice is opening
                                     if (invoiceDetails == null ||
                                         (invoiceDetails.State != GetInvoiceResponse.StateEnum.Committed &&
@@ -204,7 +208,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                     var existingInvoiceItemId =
                                                         await _nexportService.FindExistingInvoiceItemForOrderItem(order.Id, orderItem.Id);
 
-                                                    // If the invoice item does not existed, then add the order item into the invoice
+                                                    // If the invoice item does not exist, then add the order item into the invoice
                                                     if (existingInvoiceItemId == null ||
                                                         !invoiceDetails.InvoiceItems.Any(i => i.Id == existingInvoiceItemId))
                                                     {
@@ -312,7 +316,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                         if (!requireManualApproval)
                                         {
                                             completeOrder = true;
-                                            await _nexportService.AddOrderNoteAsync(order, "Nexport invoice has been successfully processed");
+                                            await _nexportService.AddOrderNoteAsync(order, $"Nexport invoice has been successfully processed Order number:{order.Id}, Store:{store.Name}");
                                         }
                                         else
                                         {
@@ -327,6 +331,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     {
                                         // Complete the order when the invoice has been committed
                                         completeOrder = true;
+                                        await _logger.InformationAsync($"Order number {queueItem.OrderId} invoice details state is committed. Complete the order");
                                     }
                                 }
                                 else
@@ -343,7 +348,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                         }
                         else
                         {
-                            await _logger.WarningAsync($"Cannot find the order {queueItem.OrderId}");
+                            await _logger.WarningAsync($"Cannot find the order {queueItem.OrderId} or it is deleted or its order status is not set to processing.");
                         }
 
                         // Update the order with order notes. This does not complete the order yet.

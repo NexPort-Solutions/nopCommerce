@@ -1,5 +1,4 @@
 ﻿using System;
-using NexportApi.Model;
 using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Catalog
@@ -16,7 +15,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.Catalog
 
         public DateTime? UtcDateLastModified { get; set; }
 
-        public CatalogResponseItem.PricingModelEnum? PricingModel { get; set; }
+        public NexportApi.Model.Enums.PricingModelEnum? PricingModel { get; set; }
 
         public Guid? OwnerId { get; set; }
 
@@ -28,7 +27,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.Catalog
 
         public bool? IsEnabled { get; set; }
 
-        public CatalogResponseItem.PublishingModelEnum? PublishingModel { get; set; }
+        public NexportApi.Model.Enums.PublishingModelEnum? PublishingModel { get; set; }
 
         public string AccessTimeLimit { get; set; }
     }

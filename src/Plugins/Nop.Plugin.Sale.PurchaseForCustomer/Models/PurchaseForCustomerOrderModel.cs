@@ -9,7 +9,6 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Models
         public PurchaseForCustomerOrderModel()
         {
             CustomerIds = new List<int>();
-            AvailableCustomers = new List<SelectListItem>();
             AvailableStores = new List<SelectListItem>();
         }
 
@@ -26,8 +25,6 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Models
 
         [NopResourceDisplayName("Plugins.Sale.Nexport.PurchaseForCustomer.NotifyCustomer")]
         public bool NotifyCustomer { get; set; }
-
-        public IList<SelectListItem> AvailableCustomers { get; set; }
 
         public IList<SelectListItem> AvailableStores { get; set; }
     }

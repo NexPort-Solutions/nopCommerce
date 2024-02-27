@@ -30,6 +30,7 @@ using Nop.Web.Areas.Admin.Controllers;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Customers;
+using Nop.Web.Framework.Controllers;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
@@ -380,6 +381,50 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             //if we got this far, something failed, redisplay form
             return View(model);
+        }
+
+        [HttpPost("Admin/Customer/Edit/{id}"), ActionName("Edit")]
+        [FormValueRequired("impersonate")]
+        //[ParameterBasedOnFormName("storeId", "storeId")]
+        public async Task<IActionResult> Impersonate(int id, [Bind("storeId")] int storeId)
+        {
+            var store = await _storeService.GetStoreByIdAsync(storeId);
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AllowCustomerImpersonation))
+                return AccessDeniedView();
+
+            //try to get a customer with the specified id
+            var customer = await _customerService.GetCustomerByIdAsync(id);
+            if (customer == null)
+                return RedirectToAction("List");
+
+            if (!customer.Active)
+            {
+                _notificationService.WarningNotification(
+                    await _localizationService.GetResourceAsync("Admin.Customers.Customers.Impersonate.Inactive"));
+                return RedirectToAction("Edit", customer.Id);
+            }
+
+            //ensure that a non-admin user cannot impersonate as an administrator
+            //otherwise, that user can simply impersonate as an administrator and gain additional administrative privileges
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsAdminAsync(currentCustomer) && await _customerService.IsAdminAsync(customer))
+            {
+                _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Admin.Customers.Customers.NonAdminNotImpersonateAsAdminError"));
+                return RedirectToAction("Edit", customer.Id);
+            }
+
+            //activity log
+            await _customerActivityService.InsertActivityAsync("Impersonation.Started",
+                string.Format(await _localizationService.GetResourceAsync("ActivityLog.Impersonation.Started.StoreOwner"), customer.Email, customer.Id), customer);
+            await _customerActivityService.InsertActivityAsync(customer, "Impersonation.Started",
+                string.Format(await _localizationService.GetResourceAsync("ActivityLog.Impersonation.Started.Customer"), currentCustomer.Email, currentCustomer.Id), currentCustomer);
+
+            //ensure login is not required
+            customer.RequireReLogin = false;
+            await _customerService.UpdateCustomerAsync(customer);
+            await _genericAttributeService.SaveAttributeAsync<int?>(currentCustomer, NopCustomerDefaults.ImpersonatedCustomerIdAttribute, customer.Id);
+
+            return Redirect(store.Url);
         }
     }
 }

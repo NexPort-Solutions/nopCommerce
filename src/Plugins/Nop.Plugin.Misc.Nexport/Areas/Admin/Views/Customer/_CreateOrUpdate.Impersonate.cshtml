@@ -1,0 +1,20 @@
+@using Nop.Services.Stores
+@using Nop.Core.Domain.Stores
+@model CustomerModel
+@inject IStoreService StoreService
+
+<div class="card-body">
+    <ul class="common-list">
+        <li>@T("Admin.Customers.Customers.Impersonate.Description1")</li>
+        <li>@T("Admin.Customers.Customers.Impersonate.Description2")</li>
+    </ul>
+    <button type="submit" name="impersonate" class="btn btn-primary">
+        <i class="fas fa-shopping-cart"></i>
+        @T("Admin.Customers.Customers.Impersonate.Button")
+    </button>
+    @{
+        var stores = await StoreService.GetAllStoresAsync();
+        var storeItems = stores.Select(store => new SelectListItem(store.Name, store.Id.ToString()));
+    }
+    <nop-select asp-for-name="storeId" asp-items="@storeItems" asp-multiple="false" title="Select store" asp-required="false" />
+</div>

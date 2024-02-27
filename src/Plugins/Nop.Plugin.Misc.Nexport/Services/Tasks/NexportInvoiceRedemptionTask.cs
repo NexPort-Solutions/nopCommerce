@@ -97,11 +97,15 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                         await _logger.DebugAsync($"Begin processing order invoice redemption for user {queueItem.RedeemingUserId} with invoice item {queueItem.OrderInvoiceItemId}");
 
+
                         var invoiceItem =
                             await _nexportService.FindNexportOrderInvoiceItemById(queueItem.OrderInvoiceItemId);
                         if (invoiceItem != null)
                         {
                             var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+
+                            await _nexportService.AddOrderNoteAsync(order,
+                                $"Nexport invoice item {invoiceItem.InvoiceItemId}, order number {order.Id} has started the redemption process");
 
                             if (order != null)
                                 if (queueItem.RetryCount > MAX_RETRY_COUNT)
@@ -137,7 +141,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                                                 var nexportUserMapping =
                                                     await _nexportService.FindUserMappingByNexportUserId(queueItem.RedeemingUserId);
-
+                                                
                                                 if (productMapping != null)
                                                 {
                                                     var userMapping = await _nexportService.FindUserMappingByNexportUserId(queueItem.RedeemingUserId);
@@ -153,9 +157,16 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                             await RedeemNexportInvoiceAsync(productMapping, userMapping,
                                                                 invoiceItem, queueItem.RedeemingUserId,
                                                                 queueItem.ManualApprovalAction);
-
+                                                            var user = await _nexportService.GetNexportUserAsync(
+                                                                queueItem.RedeemingUserId);
+                                                            var userText = $"ID:{queueItem.RedeemingUserId}";
+                                                            if (user != null)
+                                                            {
+                                                                userText +=
+                                                                    $" First name: {user.FirstName}, Last name: {user.LastName}";
+                                                            }
                                                             await _nexportService.AddOrderNoteAsync(order,
-                                                                $"Nexport invoice item {invoiceItem.InvoiceItemId} has been redeemed for user {queueItem.RedeemingUserId}");
+                                                                $"Nexport invoice item {invoiceItem.InvoiceItemId},Store:{store.Name}, Product:{productMapping.NexportProductName} has been redeemed for user {userText}");
 
                                                             // Find the list of supplemental question Ids that match the current product mapping
                                                             var questionIds = (await _nexportService

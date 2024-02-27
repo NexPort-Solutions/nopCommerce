@@ -1,15 +1,21 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Models.ProductMappings
 @using Nop.Services.Helpers
-@using Nop.Web.Framework.TagHelpers.Admin
-@using Nop.Web.Framework.TagHelpers.Shared
-@inject IDateTimeHelper dateTimeHelper
+@using Nop.Web.Areas.Admin.Models.Customers
+@inject IDateTimeHelper DateTimeHelper
 
 @model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingListSearchModel
 
 @{
-    var tableColumns = new List<ColumnProperty>
+    var productMappingTableColumns = new List<ColumnProperty>
     {
+        new(nameof(NexportProductMappingModel.Id))
+        {
+            Render = new RenderChildCaret(),
+            Width = "5",
+            Searchable = false,
+            ClassName =  NopColumnClassDefaults.ChildControl
+        },
         new(nameof(NexportProductMappingModel.Id))
         {
             Width = "50",
@@ -24,14 +30,9 @@
         },
         new(nameof(NexportProductMappingModel.NexportProductName))
         {
-            Title = "Nexport Product Name",
-            Width = "150"
-        },
-        new(nameof(NexportProductMappingModel.Id))
-        {
-            Title = "Nexport Product Details",
+            Title = "Product Info",
             Width = "550",
-            Render = new RenderCustom("renderNexportProductDetails")
+            Render = new RenderCustom("renderNexportProductInfo")
         },
         new(nameof(NexportProductMappingModel.Id))
         {
@@ -60,67 +61,128 @@
             AutoWidth = false
         }
     };
+    var groupMembershipChildTableColumns = new List<ColumnProperty>
+    {
+        new(nameof(NexportProductGroupMembershipMappingModel.NexportGroupId))
+        {
+            Title = "Group Id",
+            Width = "400",
+            Render = new RenderCustom("renderNexportGroupId")
+        },
+        new(nameof(NexportProductGroupMembershipMappingModel.NexportGroupName))
+        {
+            Title = "Group Name",
+            Width = "400",
+            Render = new RenderCustom("renderNexportGroupName")
+        },
+        new(nameof(NexportProductGroupMembershipMappingModel.NexportGroupShortName))
+        {
+            Title = "Group Short Name",
+            Width = "400",
+            Render = new RenderCustom("renderNexportGroupShortName")
+        }
+    };
+    var childGroupTable = new NexportDataTablesModel
+    {
+        Name = "product-mapping-group-memberships-grid",
+        UrlRead = new DataUrl("GetProductGroupMembershipMappings", "NexportIntegration", null),
+        IsChildTable = true,
+        Length = Model.PageSize,
+        LengthMenu = Model.AvailablePageSizes,
+        ColumnCollection = groupMembershipChildTableColumns,
+        Filters = new List<FilterParameter>
+        {
+            new FilterParameter(nameof(NexportProductGroupMembershipMappingModel.NexportProductMappingId), "Id", true)
+        }
+    };
+    var productMappingTable = new NexportDataTablesModel
+    {
+        Name = "product-mappings-grid",
+        PrimaryKeyColumn = nameof(NexportProductMappingModel.Id),
+        UrlRead = new DataUrl("GetProductMappings", "NexportIntegration",
+            new RouteValueDictionary {
+                { "nopProductId", Model.NopProductId }
+            }),
+        Filters = new List<FilterParameter>
+        {
+            new FilterParameter(nameof(Model.SearchNexportProductName)),
+            new FilterParameter(nameof(Model.SearchStoreName)),
+            new FilterParameter(nameof(Model.NexportProductType))
+        },
+        SearchButtonId = "search-mappings",
+        UrlDelete = new DataUrl("DeleteMapping", "NexportIntegration", null),
+        UrlUpdate = new DataUrl("EditMapping", "NexportIntegration", null),
+        Length = Model.PageSize,
+        LengthMenu = Model.AvailablePageSizes,
+        ColumnCollection = productMappingTableColumns,
+        ChildTable = childGroupTable
+    };
+    const string hideSearchNexportMappingsBlockAttributeName = "ProductPage.HideSearchNexportMappingsBlock";
+    var hideSearchNexportMappingsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchNexportMappingsBlockAttributeName);
 }
-<div class="container mapping-search-div">
-    <div class="row">
-        <div class="col-md-2">
-            <nop-label asp-for="SearchStoreId" />
-        </div>
-        <div class="col-md-2">
-            <nop-select asp-for="SearchStoreId" asp-items="Model.AvailableStores" />
-        </div>
-        <div class="col-md-2">
-            <nop-label asp-for="SearchNexportProductName"/>
-        </div>
-        <div class="col-md-2">
-            <nop-editor asp-for="SearchNexportProductName"/>
-        </div>
-        <div class="col-md-2">
-            <nop-label asp-for="NexportProductType"/>
-        </div>
-        <div class="col-md-2">
-            <nop-select asp-for="NexportProductType" asp-items="Model.AvailableNexportProductTypes"/>
-        </div>
-    </div>
-</div>
 <div class="row">
-    <div class="col-md-12">
-        <button type="button" id="delete-selected-mappings" class="btn bg-red">
-            <i class="fa fa-trash-o"></i>
-            @T("Admin.Common.Delete.Selected")
-        </button>
+    <div class="col-md-12" style="text-align: right; margin-bottom: 1rem;">
         <button class="btn btn-primary" id="duplicateProductMappingBtn">
             <i class="fa fa-clone"></i>
             Duplicate mapping
         </button>
-        <button type="button" id="search-mappings" class="btn btn-primary">
-            <i class="fa fa-search"></i>
-            Search
+        <button type="button" id="delete-selected-mappings" class="btn bg-red">
+            <i class="fa fa-trash-o"></i>
+            @T("Admin.Common.Delete.Selected")
         </button>
-        <nop-action-confirmation asp-button-id="delete-selected-mappings" />
-        <nop-alert asp-alert-id="deleteSelectedMappingsFailed" />
+        <nop-action-confirmation asp-button-id="delete-selected-mappings"/>
+        <nop-alert asp-alert-id="deleteSelectedMappingsFailed"/>
     </div>
     <div class="col-md-12">
-        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
-        {
-            Name = "product-mappings-grid",
-        UrlRead = new DataUrl("GetProductMappings", "NexportIntegration",
-            new RouteValueDictionary {
-                { "nopProductId",Model.NopProductId }
-            }),
-            Filters = new List<FilterParameter>
-            {
-                new FilterParameter(nameof(Model.SearchNexportProductName)),
-                new FilterParameter(nameof(Model.SearchStoreId)),
-                new FilterParameter(nameof(Model.NexportProductType))
-            },
-            SearchButtonId = "search-mappings",
-            UrlDelete = new DataUrl("DeleteMapping", "NexportIntegration", null),
-            UrlUpdate = new DataUrl("EditMapping", "NexportIntegration", null),
-            Length = Model.PageSize,
-            LengthMenu = Model.AvailablePageSizes,
-            ColumnCollection = tableColumns
-        })
+        <div class="card card-default card-search">
+            <div class="card-body">
+                <div class="row search-row @(!hideSearchNexportMappingsBlock ? "opened" : "")" data-hideAttribute="@hideSearchNexportMappingsBlockAttributeName">
+                    <div class="search-text">@T("Admin.Common.Search")</div>
+                    <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
+                    <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchNexportMappingsBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                </div>
+                <div class="search-body @(hideSearchNexportMappingsBlock ? "closed" : "")">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <div class="form-group row">
+                                <div class="col-md-4">
+                                    <nop-label asp-for="SearchStoreName" />
+                                </div>
+                                <div class="col-md-8">
+                                    <nop-editor asp-for="SearchStoreName" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-4">
+                                    <nop-label asp-for="NexportProductType" />
+                                </div>
+                                <div class="col-md-8">
+                                    <nop-select asp-for="NexportProductType" asp-items="Model.AvailableNexportProductTypes" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="form-group row">
+                                <div class="col-md-4">
+                                    <nop-label asp-for="SearchNexportProductName" />
+                                </div>
+                                <div class="col-md-8">
+                                    <nop-editor asp-for="SearchNexportProductName" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="text-center col-12">
+                            <button type="button" id="search-mappings" class="btn btn-primary btn-search"><i class="fas fa-search"></i>@T("Admin.Common.Search")</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12">
+        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", productMappingTable)
     </div>
 </div>
 
@@ -135,7 +197,6 @@
         if (data === null) {
             return "Default";
         }
-
         return data;
     }
 
@@ -148,11 +209,11 @@
             : '<input name="checkbox_delete_product_mappings" value="' + row.Id + '" type="checkbox" class="checkboxGroups" />';
     }
 
-    function renderNexportProductDetails(data, type, row, meta) {
-        if (data > 0) {
-            var displayText = "";
+    function renderNexportProductInfo(data, type, row, meta) {
+        if (data !== null) {
+            var displayText = "<b>Name: </b>" + data + "<br>";
             if (row.NexportCatalogId !== "00000000-0000-0000-0000-000000000000") {
-                displayText += "<b>Type: </b>";
+                displayText += "<br><b>Type: </b>";
                 if (row.Type === +"@((int)NexportProductTypeEnum.Catalog)") {
                     displayText += "Catalog";
                 } else if (row.Type === +"@((int)NexportProductTypeEnum.Section)") {
@@ -160,24 +221,18 @@
                 } else if (row.Type === +"@((int)NexportProductTypeEnum.TrainingPlan)") {
                     displayText += "Training Plain";
                 }
-
-                displayText += "<br>" + "<b>Nexport Catalog Id: </b>" + row.NexportCatalogId;
-
+                displayText += "<br>" + "<b>Nexport Catalog: </b>" + row.NexportCatalogName + " (" + row.NexportCatalogId + ")";
                 if (row.NexportSyllabusId || row.NexportSyllabus !== "00000000-0000-0000-0000-000000000000") {
-                    displayText += "<br>" + "<b>Nexport Syllabus Id: </b>" + row.NexportSyllabusId;
+                    displayText += "<br>" + "<b>Nexport Syllabus: </b>" + row.UniqueName + " (" + row.NexportSyllabusId + ")";
                 }
-
-                displayText += "<br>" + "<b>Nexport Product Id: </b>" + row.NexportCatalogSyllabusLinkId;
-
+                displayText += "<br>" + "<b>NexPort Product Id: </b>" + row.NexportCatalogSyllabusLinkId;
                 if (row.UtcLastSynchronizationDate) {
                     displayText += "<br>" + "<b>Last Synchronized Date: </b>" + renderLocalDateForTableEntry(row.UtcLastSynchronizationDate, null, null, null);
                 }
             }
-
             return displayText;
         }
-
-        return "";
+        return data;
     }
 
     function renderSubscriptionInformation(data, type, row, meta) {
@@ -194,7 +249,6 @@
 
             var groupMembershipNames = "";
             var groupMemberships = row.GroupMembershipMappingModels;
-
             if (groupMemberships) {
                 if (groupMemberships.length > 0) {
                     groupMembershipNames += "<br>" + "<b>Group Memberships: </b>";
@@ -221,9 +275,8 @@
 
         var renderCreateMapping = row.NexportCatalogId === "00000000-0000-0000-0000-000000000000";
         var buttonName;
-        var nopProductIdAvailable = @Json.Serialize(Model.NopProductId.HasValue);
 
-        if (nopProductIdAvailable) {
+        if (renderCreateMapping) {
             buttonName = "Create/edit mapping";
         } else {
             buttonName = "View/edit mapping details";
@@ -303,13 +356,27 @@
 
         return buttonElement;
     }
-
+    
     function renderLocalDateForTableEntry(data, type, row, meta) {
         return data ? moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss") : null;
     }
+    
+
+    function renderNexportGroupId(data, type, row, meta) {
+        return data;
+    }
+
+    function renderNexportGroupName(data, type, row, meta) {
+        return data;
+    }
+
+    function renderNexportGroupShortName(data, type, row, meta) {
+        return data;
+    }
+
+    checkDefaultMappingExisted();
 
     $(document).ready(function () {
-        checkDefaultMappingExisted();
 
         $("#product-mapping-container").on("xhr.dt", "#product-mappings-grid",
             function (e, settings, json, xhr) {
@@ -357,6 +424,9 @@
         });
 
         $("#btnRefreshMappings").click(function () {
+            
+            checkDefaultMappingExisted()
+
             // Refresh grid
             $("#product-mappings-grid").DataTable().draw(false);
 
@@ -371,11 +441,9 @@
         });
         $("div.mapping-search-div").keypress(function (n) {
             if (n.which == 13 || n.keyCode == 13)
-                return $("#search-mappings").click(),
-                    !1
+                $("#search-mappings").click();
         });
     });
-
     function checkDefaultMappingExisted() {
         var checkDefaultMappingData = {
             productId: @Model.NopProductId

@@ -3,7 +3,7 @@
 
 @model Nop.Plugin.Misc.Nexport.Models.SupplementalInfo.NexportSupplementalInfoOptionGroupAssociationListSearchModel
 
-@await Html.PartialAsync("Table", new DataTablesModel
+@await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
 {
     Name = "supplemental-info-option-group-memberships-grid",
     UrlRead = new DataUrl("GetSupplementalInfoOptionGroupAssociations", "NexportIntegration",

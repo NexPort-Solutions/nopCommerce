@@ -38,9 +38,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
                 return AccessDeniedView();
 
-            //prepare model
-            var model = await _nexportPluginModelFactory.PrepareStoreSearchModel(new NexportStoreSearchModel());
-            return View("~/Plugins/Misc.Nexport/Views/NexportStore/List.cshtml", model);
+            return View("~/Plugins/Misc.Nexport/Views/NexportStore/List.cshtml", new NexportStoreSearchModel());
         }
 
         [HttpPost]

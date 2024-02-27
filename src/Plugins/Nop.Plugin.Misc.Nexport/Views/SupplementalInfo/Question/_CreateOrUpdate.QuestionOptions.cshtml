@@ -10,7 +10,7 @@
         <p>
             Question options
         </p>
-        @await Html.PartialAsync("Table", new DataTablesModel
+        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
         {
             Name = "supplemental-info-question-options-grid",
             UrlRead = new DataUrl(

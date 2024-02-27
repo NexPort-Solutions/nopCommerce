@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using NexportApi.Model;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Web.Framework.Models;
@@ -28,6 +27,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
         [NopResourceDisplayName("Plugins.Misc.Nexport.CatalogId")]
         public Guid NexportCatalogId { get; set; }
 
+        public string NexportCatalogName { get; set; }
+
         [NopResourceDisplayName("Plugins.Misc.Nexport.SyllabusId")]
         public Guid? NexportSyllabusId { get; set; }
 
@@ -44,10 +45,10 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
         public NexportProductTypeEnum Type { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.PublishingModel")]
-        public CatalogResponseItem.PublishingModelEnum? PublishingModel { get; set; }
+        public NexportApi.Model.Enums.PublishingModelEnum? PublishingModel { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.PricingModel")]
-        public CatalogResponseItem.PricingModelEnum? PricingModel { get; set; }
+        public NexportApi.Model.Enums.PricingModelEnum? PricingModel { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.ModifiedDate")]
         [UIHint("DateTimeNullable")]

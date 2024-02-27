@@ -16,6 +16,7 @@ using Nop.Services.Security;
 using Nop.Plugin.Sale.PurchaseForCustomer.Factories;
 using Nop.Plugin.Sale.PurchaseForCustomer.Models;
 using Nop.Plugin.Sale.PurchaseForCustomer.Services;
+using Nop.Web.Areas.Admin.Models.Customers;
 
 namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
 {
@@ -33,6 +34,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
         private readonly INotificationService _notificationService;
         private readonly ILocalizationService _localizationService;
         private readonly ILogger _logger;
+        private readonly ICustomerActivityService _customerActivityService;
 
         public PurchaseForCustomerController(
             IPurchaseForCustomerModelFactory purchaseForCustomerModelFactory,
@@ -43,7 +45,8 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
             IPermissionService permissionService,
             INotificationService notificationService,
             ILocalizationService localizationService,
-            ILogger logger)
+            ILogger logger,
+            ICustomerActivityService customerActivityService)
         {
             _purchaseForCustomerModelFactory = purchaseForCustomerModelFactory;
             _purchaseForCustomerService = purchaseForCustomerService;
@@ -54,6 +57,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
             _notificationService = notificationService;
             _localizationService = localizationService;
             _logger = logger;
+            _customerActivityService = customerActivityService;
         }
 
         public async Task<IActionResult> PurchaseDetails(int productId)
@@ -89,6 +93,13 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
                             {
                                 result = await _purchaseForCustomerService
                                     .PurchaseProductForCustomerAsync(product, customer, store, model.NotifyCustomer);
+
+                                if (result != null && result.Success)
+                                {
+                                    //activity log
+                                    await _customerActivityService.InsertActivityAsync(PluginDefaults.NEXPORT_PURCHASE_PRODUCT_FOR_CUSTOMER,
+                                        $"Purchased product (ID:{product.Id}, Name:{product.Name}) for customer (ID:{customer.Id}, First Name:{customer.FirstName}, Last Name:{customer.LastName}, Email: {customer.Email}",product);
+                                }
                             }
                         }
                     }
@@ -124,6 +135,30 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers
             ViewBag.RefreshPage = true;
 
             return View("~/Plugins/Sale.PurchaseForCustomer/Areas/Admin/Views/PurchaseForCustomer/PurchaseDetails.cshtml", model);
+        }
+
+        public virtual async Task<IActionResult> SearchCustomers(string term)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return Content(string.Empty);
+
+            const int searchTermMinimumLength = 3;
+            if (string.IsNullOrWhiteSpace(term) || term.Length < searchTermMinimumLength)
+                return Content(string.Empty);
+
+            var customers = await _purchaseForCustomerService.SearchCustomersAsync(term);
+
+            var result = customers.Select(c=> new{
+                label=$"{c.FirstName} {c.LastName} ({c.Email})",
+                customer=new CustomerModel()
+                {
+                    FullName=$"{c.FirstName} {c.LastName}",
+                    Email = c.Email,
+                    Id = c.Id
+                }
+            }).ToList();
+
+            return Json(result);
         }
     }
 }
