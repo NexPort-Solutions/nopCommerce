@@ -311,6 +311,11 @@ span.required {
   color: #eee;
 }
 
-  .redeem-item-btn:hover {
+  .redeem-item-btn[disabled]:hover {
+    background: #8ab2f1;
+    color: #eee;
+  }
+
+ .redeem-item-btn:hover {
     background: #248ece;
   }

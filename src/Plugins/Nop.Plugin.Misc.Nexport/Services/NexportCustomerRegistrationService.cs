@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
+using System.Web;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using NexportApi.Model;
@@ -90,6 +92,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             shoppingCartService, storeContext, storeService, urlHelperFactory,
             workContext, workflowMessageService, rewardPointsSettings)
         {
+            _notificationService = notificationService;
+            _multiFactorAuthenticationPluginManager = multiFactorAuthenticationPluginManager;
             _customerSettings = customerSettings;
             _customerService = customerService;
             _encryptionService = encryptionService;
@@ -107,6 +111,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportService = nexportService;
             _nexportSettings = nexportSettings;
             _logger = logger;
+            _customerActivityService = customerActivityService;
+            _authenticationService = authenticationService;
+            _shoppingCartService = shoppingCartService;
+            _urlHelperFactory = urlHelperFactory;
+            _actionContextAccessor = actionContextAccessor;
         }
 
         public async Task<NexportCustomerLoginResults> ValidateNexportCustomerAsync(string usernameOrEmail, string password)
@@ -226,6 +235,37 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _customerService.UpdateCustomerAsync(customer);
 
             return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.Successful };
+        }
+
+        
+        public override async Task<IActionResult> SignInCustomerAsync(Customer customer, string returnUrl, bool isPersist = false)
+        {
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+            if (currentCustomer?.Id != customer.Id)
+            {
+                //migrate shopping cart
+                await _shoppingCartService.MigrateShoppingCartAsync(currentCustomer, customer, true);
+
+                await _workContext.SetCurrentCustomerAsync(customer);
+            }
+
+            //sign in new customer
+            await _authenticationService.SignInAsync(customer, isPersist);
+
+            //raise event       
+            await _eventPublisher.PublishAsync(new CustomerLoggedinEvent(customer));
+
+            //activity log
+            await _customerActivityService.InsertActivityAsync(customer, "PublicStore.Login",
+                await _localizationService.GetResourceAsync("ActivityLog.PublicStore.Login"), customer);
+
+            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+
+            //redirect to the return URL if it's specified
+            if (!string.IsNullOrEmpty(returnUrl) && urlHelper.IsLocalUrl(returnUrl))
+                return new RedirectResult(HttpUtility.UrlEncode(returnUrl));
+
+            return new RedirectToRouteResult("Homepage", null);
         }
     }
 }

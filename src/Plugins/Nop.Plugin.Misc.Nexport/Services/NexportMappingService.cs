@@ -4,6 +4,7 @@ using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
+using Nop.Core.Domain.Stores;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -2105,11 +2106,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return info;
         }
 
-        public async Task<IList<Order>?> GetOrdersForCustomer(Customer? customer)
+        public async Task<IList<Order>?> GetOrdersForCustomer(Customer? customer, Store? store = null)
         {
+            if (store == null)
+                store = await _storeContext.GetCurrentStoreAsync();
+
             if(customer == null) throw new ArgumentNullException(nameof(customer));
 
-            var orders = await _orderRepository.Table.Where(x => x.CustomerId == customer.Id).ToListAsync();
+            var orders = await _orderRepository.Table.Where(x => x.CustomerId == customer.Id && x.StoreId==store.Id).ToListAsync();
 
             return orders;
         }
@@ -2336,14 +2340,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 if (model.Email == null)
                     throw new Exception("Sending email, email address cannot be null.");
 
-                //TODO - @js need some type of token stored here to verify correct user signs in to redeem the email
-                //generic attribute to check if correct user is accessing redeem by email
-                //await _genericAttributeService.SaveAttributeAsync(invoiceItem, "RedeemByEmailUserVerification",
-                //    model.Email + model.FirstName + model.LastName);
-
                 await SendNewNexportManualRedemptionCustomerNotificationAsync(order, invoiceItem.Id, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
                     _localizationSettings.DefaultAdminLanguageId, model.Email, model.FirstName, model.LastName);
-                invoiceItem.RedeemingUserId = model.UserId;
+
                 invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
 
                 await UpdateNexportOrderInvoiceItem(invoiceItem);
@@ -2460,6 +2459,26 @@ namespace Nop.Plugin.Misc.Nexport.Services
             {
                 await _logger.ErrorAsync($"Failed to cancel awaiting status for invoice item {invoiceItem.InvoiceItemId}", ex);
             }
+        }
+
+        public async Task<bool> HasWholesaleOrders(Customer? customer,Store? store = null)
+        {
+            if(customer == null) throw new ArgumentNullException(nameof(customer));
+
+            var ordersForCustomer = await GetOrdersForCustomer(customer, store);
+            if (ordersForCustomer != null)
+            {
+                foreach (var order in ordersForCustomer)
+                {
+                    var orderInfo = await GetWholesaleOrderInfoForOrderAsync(order.Id);
+                    if (orderInfo != null)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

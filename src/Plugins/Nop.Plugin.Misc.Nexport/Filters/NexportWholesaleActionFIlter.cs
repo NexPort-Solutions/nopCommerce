@@ -1,18 +1,15 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Controllers;
+﻿using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
-using Nop.Core.Domain.Orders;
-using Nop.Services.Catalog;
-using Nop.Services.Messages;
-using Nop.Services.Orders;
-using Nop.Web.Controllers;
+using Nop.Core.Events;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Authentication;
+using Nop.Services.Catalog;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
+using Nop.Services.Messages;
+using Nop.Services.Orders;
 
 namespace Nop.Plugin.Misc.Nexport.Filters
 {
@@ -27,6 +24,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
         private readonly IStoreContext _storeContext;
         private readonly ICustomerService _customerService;
         private readonly ILocalizationService _localizationService;
+        private readonly IAuthenticationService _authenticationService;
+        private readonly IEventPublisher _eventPublisher;
 
         public NexportWholesaleActionFilter(
             INexportPluginModelFactory nexportPluginModelFactory,
@@ -37,8 +36,10 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             IWorkContext workContext,
             IStoreContext storeContext,
             ICustomerService customerService,
-            ILocalizationService localizationService
-            )
+            ILocalizationService localizationService,
+            IAuthenticationService authenticationService,
+            IEventPublisher eventPublisher
+        )
         {
             _nexportPluginModelFactory = nexportPluginModelFactory;
             _productService = productService;
@@ -49,6 +50,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             _storeContext = storeContext;
             _customerService = customerService;
             _localizationService = localizationService;
+            _authenticationService = authenticationService;
+            _eventPublisher = eventPublisher;
         }
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -60,32 +63,6 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 && actionDescriptor.ActionName is nameof(Nop.Plugin.Misc.Nexport.Controllers.NexportWholesaleController.RedeemByEmail))
             {
 
-                var customer = await _workContext.GetCurrentCustomerAsync();
-
-                if (!await _customerService.IsRegisteredAsync(customer))
-                {
-                    context.Result = new ChallengeResult();
-                }
-                //TODO - @js verify logged in user is allowed to access redeem by email link
-                //else
-                //{
-                //    context.ActionArguments.TryGetValue("nexportUserId", out var nexportUserId);
-
-                //    //if (nexportUserId == null)
-                //    //{
-                //    //    _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Failed to access page. nexportUserId could not be found."));
-                //    //    context.Result = new RedirectToRouteResult("Homepage", null);
-                //    //}
-                //    //else
-                //    //{
-                //        var userMapping = await _nexportService.FindUserMappingByNexportUserId((Guid)nexportUserId);
-                //        if (userMapping == null || userMapping.NopUserId != customer.Id)
-                //        {
-                //            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAuthorized"));
-                //            context.Result = new RedirectToRouteResult("Homepage", null);
-                //        }
-                //    //}
-                //}
             }
 
             await base.OnActionExecutionAsync(context, next);

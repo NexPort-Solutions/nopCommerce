@@ -55,12 +55,16 @@
                     @T("Plugins.Misc.Nexport.RedeemByEmail.Button.GoToTraining") :
                     @T("Plugins.Misc.Nexport.RedeemByEmail.Button.Redeem"))
             </button>
+            @if (Model.NexportUserId == Guid.Empty)
+            {
+            <span style="display: block; color: red; margin-top: 10px;">This customer is not configured correctly</span>
+            }
         </div>
     </form>
 </div>
 <script>
     $("document").ready(function(){
-        $("#redeemOrGoToTraining").prop("disabled", @(Model.Status != NexportOrderInvoiceItemRedemptionStatus.Awaiting && Model.Status != NexportOrderInvoiceItemRedemptionStatus.Assigned ? "true" : "false"));
+        $("#redeemOrGoToTraining").prop("disabled", @( Model.NexportUserId == Guid.Empty || (Model.Status != NexportOrderInvoiceItemRedemptionStatus.Awaiting && Model.Status != NexportOrderInvoiceItemRedemptionStatus.Assigned) ? "true" : "false"));
     });
     $("#redeemOrGoToTraining").on("click",function(){
         if (@(Model.Status == NexportOrderInvoiceItemRedemptionStatus.Awaiting ? "true" : "false")) 
