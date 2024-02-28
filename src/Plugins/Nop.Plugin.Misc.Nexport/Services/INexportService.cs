@@ -3,6 +3,7 @@ using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
+using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
@@ -347,7 +348,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task CancelAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem);
 
-        Task<IList<Order>?> GetOrdersForCustomer(Customer? customer);
+        Task<IList<Order>?> GetOrdersForCustomer(Customer? customer, Store? store = null);
+
+        Task<bool> HasWholesaleOrders(Customer? customer, Store? store = null);
 
     }
 }

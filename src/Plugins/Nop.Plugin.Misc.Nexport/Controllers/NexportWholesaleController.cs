@@ -106,17 +106,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
-            // if customer doesnt have wholesale permissions then jump straight to the products page
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            {
-                var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(null);
 
-                ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
-                ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
-
-                return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
-            }
-            else
+            if (await _nexportService.HasGroupPermissionAsync(customer))
             {
                 var searchModel = new NexportGroupListSearchModel();
                 searchModel.AdminView = false;
@@ -124,6 +115,15 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 ViewData["ModelForPartialView"] = searchModel;
 
                 return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
+            }
+            else
+            {
+                var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(null);
+
+                ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
+                ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
+
+                return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");   
             }
         }
 
@@ -133,6 +133,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
+
+            //customer must either have wholesale orders or be a purchasing agent to view this page
+            if(!await _nexportService.HasWholesaleOrders(customer) && !await _nexportService.HasGroupPermissionAsync(customer))
+                return Content("You are not authorized to view this page");
 
             var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
 
@@ -148,6 +152,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
+
+            //customer must either have wholesale orders or be a purchasing agent to view this page
+            if(!await _nexportService.HasWholesaleOrders(customer) && !await _nexportService.HasGroupPermissionAsync(customer))
+                return Content("You are not authorized to view this page");
 
             var nexportGroupProductRedemptionListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId, orderId);
 
@@ -305,10 +313,16 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [HttpsRequirement]
-        public virtual async Task<IActionResult> RedeemByEmail(int invoiceItemId, int productMappingId)
+        public virtual async Task<IActionResult> RedeemByEmail(int invoiceItemId, string email, int productMappingId)
         {
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(currentCustomer))
+                return Challenge();
+            //if (currentCustomer.Email!=email)
+            //    return Challenge();
+            
             var model = await _nexportPluginModelFactory.PrepareRedeemByEmailModel(invoiceItemId,
-                productMappingId);
+                email, productMappingId);
             return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemByEmail.cshtml", model);
         }
 

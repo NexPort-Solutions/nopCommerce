@@ -403,7 +403,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 //generate the relative URL
                 var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-                var url = urlHelper.RouteUrl("RedeemByEmail", new { invoiceItemId = invoiceItemId, productMappingId = productMappingId });
+                var url = urlHelper.RouteUrl("RedeemByEmail", new { invoiceItemId = invoiceItemId, email= email, productMappingId = productMappingId });
                 var path = new Uri(new Uri(store.Url), url).AbsoluteUri;
                 tokens.Add(new Token("Redemption.AcceptRedemptionUrl", path, true));
 
@@ -2894,6 +2894,27 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
                 throw;
             }
+        }
+
+        public async Task<bool> HasGroupPermissionAsync(Customer customer)
+        {
+            var userMapping = await FindUserMappingByCustomerId(customer.Id);
+
+            if (userMapping != null)
+            {
+                var store = await _storeContext.GetCurrentStoreAsync();
+                var orgId = await _genericAttributeService.GetAttributeAsync<Guid>(store,
+                    "NexportSubscriptionOrganizationId", store.Id);
+
+                if (orgId == Guid.Empty)
+                {
+                    orgId = _nexportSettings.RootOrganizationId.Value;
+                }
+
+                return  await HasGroupPermissionAsync(userMapping.NexportUserId, orgId,
+                    NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION);
+            }
+            return false;
         }
 
         public async Task<bool> HasGroupPermissionAsync(Guid userId, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION)

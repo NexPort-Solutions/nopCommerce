@@ -23,19 +23,10 @@ namespace Nop.Plugin.Misc.Nexport.Components
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             ViewData["CustomerName"] = $"{customer.FirstName} {customer.LastName}'s";
-            var ordersForCustomer = await _nexportService.GetOrdersForCustomer(customer);
-            if (ordersForCustomer != null)
-            {
-                foreach (var order in ordersForCustomer)
-                {
-                    var orderInfo = await _nexportService.GetWholesaleOrderInfoForOrderAsync(order.Id);
-                    if (orderInfo != null)
-                    {
-                        ViewData["ShowNexportWholesalePurchases"] = true;
-                        break;
-                    }
-                }
-            }
+
+
+            if(await _nexportService.HasWholesaleOrders(customer))
+                ViewData["ShowNexportWholesalePurchases"] = true;
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportSettingNavigation.cshtml");
         }

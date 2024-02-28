@@ -31,6 +31,7 @@ using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
+using Nop.Services.Customers;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
@@ -74,6 +75,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly IAddressService _addressService;
         private readonly IPriceFormatter _priceFormatter;
         private readonly IPermissionService _permissionService;
+        private readonly ICustomerService _customerService;
 
         #endregion
 
@@ -98,7 +100,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             IPaymentPluginManager paymentPluginManager,
             IAddressService addressService,
             IPriceFormatter priceFormatter,
-            IPermissionService permissionService)
+            IPermissionService permissionService,
+            ICustomerService customerService)
         {
             _nexportSettings = nexportSettings;
             _baseAdminModelFactory = baseAdminModelFactory;
@@ -119,6 +122,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _addressService = addressService;
             _priceFormatter = priceFormatter;
             _permissionService = permissionService;
+            _customerService = customerService;
         }
 
         #endregion
@@ -1823,9 +1827,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 else
                     invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
                         searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue, orderId);
-                
 
-                
+
+
 
                 if (invoiceItems != null)
                 {
@@ -1898,12 +1902,36 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                 var redeemer =
                                     await _nexportService.FindCustomerByIdAsync(redeemerUserMapping
                                         .NopUserId);
-                                redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
-                                redemptionItem.Email = redeemer.Email;
+                                if (redeemer != null)
+                                {
+                                    redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
+                                    redemptionItem.Email = redeemer.Email;
+                                }
+                                else
+                                {
+                                    redemptionItem.Name = $"Deleted user";
+                                }
+                            }
+                            else
+                            {
+                                //set the name and email for awaiting status redemption
+                                var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+                                if (order != null)
+                                {
+                                    var email = await _genericAttributeService.GetAttributeAsync<string>(invoiceItem,
+                                        $"redeeming-user-email-for-invoice-{invoiceItem.Id}", order.StoreId);
+                                    if (email != null)
+                                    {
+                                        redemptionItem.Email = email;
+                                        redemptionItem.Name =
+                                            $"{await _genericAttributeService.GetAttributeAsync<string>(invoiceItem, $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}", order.StoreId)} {await _genericAttributeService.GetAttributeAsync<string>(invoiceItem, $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}", order.StoreId)}";
+                                    }
+                                }
                             }
                         }
                         else
                         {
+                            //set the name and email for processing status redemption
                             var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
                             if (order != null)
                             {
@@ -1911,15 +1939,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                     $"redeeming-user-email-for-invoice-{invoiceItem.Id}", order.StoreId);
                                 if (email != null)
                                 {
-                                    redemptionItem.Email =
-                                        await _genericAttributeService.GetAttributeAsync<string>(invoiceItem,
-                                            $"redeeming-user-email-for-invoice-{invoiceItem.Id}", order.StoreId);
+                                    redemptionItem.Email = email;
                                     redemptionItem.Name =
                                         $"{await _genericAttributeService.GetAttributeAsync<string>(invoiceItem, $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}", order.StoreId)} {await _genericAttributeService.GetAttributeAsync<string>(invoiceItem, $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}", order.StoreId)}";
                                 }
                             }
                         }
-               
+
 
                         redemptions.Add(redemptionItem);
                     }
@@ -2180,7 +2206,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         }
 
         public async Task<RedeemByEmailModel> PrepareRedeemByEmailModel(int? invoiceItemId,
-            int? productMappingId)
+            string email, int? productMappingId)
         {
             if (invoiceItemId == null)
                 throw new ArgumentNullException(nameof(invoiceItemId));
@@ -2190,6 +2216,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 throw new ArgumentNullException(nameof(productMappingId));
             if (productMappingId < 1)
                 throw new ArgumentException("Invalid product mapping id", nameof(productMappingId));
+            if (email.IsNullOrWhiteSpace())
+                throw new ArgumentException("redemption email address cannot be empty", nameof(productMappingId));
 
             var model = new RedeemByEmailModel();
             var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemById(invoiceItemId.Value);
@@ -2207,8 +2235,15 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                      NexportOrderInvoiceItemRedemptionStatus.Assigned;
                     model.ProductName = product?.Name;
                     model.RedeemedDate = invoiceItem.UtcDateProcessed;
-                    //find different way to get user id
-                    //model.NexportUserId = nexportUserId.Value;
+
+                    var customer = await _customerService.GetCustomerByEmailAsync(email);
+                    if (customer != null)
+                    {
+                        var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+                        if (userMapping != null)
+                            model.NexportUserId = userMapping.NexportUserId;
+                    }
+                    
                     model.ProductMappingId = productMappingId.Value;
                     model.Status = invoiceItem.RedemptionStatus;
                     model.EnrollmentId = invoiceItem.RedemptionEnrollmentId;

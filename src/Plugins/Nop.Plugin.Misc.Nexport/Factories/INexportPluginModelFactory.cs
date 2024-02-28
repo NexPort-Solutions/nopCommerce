@@ -168,7 +168,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         Task<RedeemProductModel> PrepareRedeemProductModel(Guid? groupId, Guid? invoiceItemId, int? productId);
 
-        Task<RedeemByEmailModel> PrepareRedeemByEmailModel(int? invoiceItemId, int? productMappingId);
+        Task<RedeemByEmailModel> PrepareRedeemByEmailModel(int? invoiceItemId, string email, int? productMappingId);
 
         Task<ProductStepModel> PrepareProductStepModel(int? productId, Guid? invoiceItemId);
     }

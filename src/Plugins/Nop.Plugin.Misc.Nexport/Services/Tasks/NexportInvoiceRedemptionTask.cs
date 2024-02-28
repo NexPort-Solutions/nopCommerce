@@ -99,6 +99,13 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                         if (queueItem == null)
                             return;
 
+                        //user id is empty so this is a bad queueitem and we should increase the retry count and delete it
+                        if (queueItem.RedeemingUserId == Guid.Empty)
+                        {
+                            queueItem.RetryCount = MAX_RETRY_COUNT + 1;
+                            await _logger.WarningAsync($"Redeeming user id for redemption queue item:{queueItem.Id} is empty. queue item will be deleted.");
+                        }
+
                         await _logger.DebugAsync($"Begin processing order invoice redemption for user {queueItem.RedeemingUserId} with invoice item {queueItem.OrderInvoiceItemId}");
 
 
