@@ -14,20 +14,24 @@
 }
 
 <div class="content-header clearfix nex-plugin">
-    <nav aria-label="Breadcrumb">
-        <ul class="uk-breadcrumb">
-            <li >
-                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")">
-                    <span>@T("Plugins.Misc.Nexport.Groups")</span>
-                </a>
-            </li>
-            <li >
-                @groupProductText
-                <span id="@(groupProductsRouteUrl+"?groupId="+currentGroupId)">
-                </span>
-            </li>
-        </ul>
-    </nav>
+    @if (Model.HasGroupPermission)
+    {
+        <nav aria-label="Breadcrumb">
+            <ul class="uk-breadcrumb">
+                <li >
+                    <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")">
+                        <span>@T("Plugins.Misc.Nexport.Groups")</span>
+                    </a>
+                </li>
+
+                <li >
+                    @groupProductText
+                    <span id="@(groupProductsRouteUrl + "?groupId=" + currentGroupId)">
+                    </span>
+                </li>
+            </ul>
+        </nav>
+    }
     <h1>@groupProductText</h1>
 </div>
 

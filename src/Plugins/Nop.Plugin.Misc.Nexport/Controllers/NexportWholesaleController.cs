@@ -120,6 +120,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             {
                 var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(null);
 
+                // hide groups link in breadcrumbs
+                nexportGroupProductListSearchModel.HasGroupPermission = false;
                 ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
                 ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
 
@@ -140,6 +142,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
 
+            //show groups link in breadcrumbs
+            if(await _nexportService.HasGroupPermissionAsync(customer))
+                nexportGroupProductListSearchModel.HasGroupPermission = true;
+
             ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
             ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
 
@@ -157,7 +163,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if(!await _nexportService.HasWholesaleOrders(customer) && !await _nexportService.HasGroupPermissionAsync(customer))
                 return Content("You are not authorized to view this page");
 
+            //show groups link in breadcrumbs
+            
             var nexportGroupProductRedemptionListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId, orderId);
+
+            if(await _nexportService.HasGroupPermissionAsync(customer))
+                nexportGroupProductRedemptionListSearchModel.HasGroupPermission = true;
 
             ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProductRedemptions.cshtml";
             ViewData["ModelForPartialView"] = nexportGroupProductRedemptionListSearchModel;
