@@ -217,6 +217,7 @@ public class NexportWholesaleController : BaseAdminController
             return AccessDeniedView();
 
         var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
+        searchModel.HasGroupPermission = true;
         searchModel.AdminView = true;
         ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
         ViewData["ModelForPartialView"] = searchModel;
@@ -232,6 +233,7 @@ public class NexportWholesaleController : BaseAdminController
 
         var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId);
 
+        searchModel.HasGroupPermission = true;
         searchModel.AdminView = true;
         ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProductRedemptions.cshtml";
         ViewData["ModelForPartialView"] = searchModel;

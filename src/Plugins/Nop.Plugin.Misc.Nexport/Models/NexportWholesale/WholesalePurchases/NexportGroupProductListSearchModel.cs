@@ -5,6 +5,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
 {
     public record NexportGroupProductListSearchModel : BaseSearchModel
     {
+        public bool HasGroupPermission { get; set; } = false;
+
         public NexportGroupModel CurrentGroup { get; set; } =
             new NexportGroupModel {Id = null, Name = "No Group"};
 
