@@ -540,7 +540,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Account.Login.Fields.EmailOrUsername", "Email/Username");
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.UserInfo", "Nexport user info");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.MyTrainings", "training");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.MyTrainings", "My training");
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Order.ViewRedemption", "Launch this training");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Order.Redeem", "Redeem");
@@ -673,7 +673,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Order.GroupId", "Purchasing For Group/Org:");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.Groups", "Nexport wholesale purchases");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Groups", "Nexport Groups");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Products", "Products");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Products", "Purchases");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions", "Assignments");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem", "Assign");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining", "Training");

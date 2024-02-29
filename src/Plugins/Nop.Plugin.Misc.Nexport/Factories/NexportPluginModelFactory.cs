@@ -1931,7 +1931,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         }
                         else
                         {
-                            //set the name and email for processing status redemption
+                            //set the name and email for processing and awaiting status redemption
                             var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
                             if (order != null)
                             {

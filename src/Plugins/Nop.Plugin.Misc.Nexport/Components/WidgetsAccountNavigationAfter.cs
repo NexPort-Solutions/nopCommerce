@@ -22,8 +22,6 @@ namespace Nop.Plugin.Misc.Nexport.Components
         public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
-            ViewData["CustomerName"] = $"{customer.FirstName} {customer.LastName}'s";
-
 
             if(await _nexportService.HasWholesaleOrders(customer))
                 ViewData["ShowNexportWholesalePurchases"] = true;
