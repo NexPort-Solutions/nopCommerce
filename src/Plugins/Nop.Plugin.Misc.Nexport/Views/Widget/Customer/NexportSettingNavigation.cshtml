@@ -1,10 +1,9 @@
 ﻿@{
     bool showNexportWholesalePurchases = (bool)(ViewData["ShowNexportWholesalePurchases"]??false);
-    string? customerName = ViewData["CustomerName"] as string;
 }
 <li class="customer-nexport-training">
     <a href="@Url.RouteUrl("Plugin.Misc.Nexport.MyTraining")" class="inactive">
-        @(customerName+" "+T("Plugins.Misc.Nexport.Navigation.MyTrainings"))
+        @T("Plugins.Misc.Nexport.Navigation.MyTrainings")
     </a>
 </li>
 <li class="customer-nexport-supplemental-info-answers">

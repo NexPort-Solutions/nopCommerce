@@ -30,7 +30,7 @@ namespace Nop.Plugin.Misc.Nexport.Components
                 return Content("");
 
             var customer = await _workContext.GetCurrentCustomerAsync();
-            ViewData["CustomerName"] = $"{customer.FirstName} {customer.LastName}'s";
+            ViewData["CustomerName"] = $"{customer.FirstName} {customer.LastName}";
 
             if(await _nexportService.HasWholesaleOrders(customer))
                 ViewData["ShowNexportWholesalePurchases"] = true;
