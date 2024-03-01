@@ -5,24 +5,24 @@ using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Web.Areas.Admin.Models.Settings;
 using Nop.Web.Framework.Components;
 
-namespace Nop.Plugin.Misc.Nexport.Components
-{
-    [ViewComponent(Name = "WidgetsNexportCustomerUserDetailsBlock")]
-    public class WidgetsNexportCustomerUserDetailsBlock: NopViewComponent
-    {
-        private readonly NexportService _nexportService;
-        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+namespace Nop.Plugin.Misc.Nexport.Components;
 
-        public WidgetsNexportCustomerUserDetailsBlock(
-            NexportService nexportService,
-            INexportPluginModelFactory nexportPluginModelFactory)
-        {
+[ViewComponent(Name = "WidgetsNexportCustomerUserDetailsBlock")]
+public class WidgetsNexportCustomerUserDetailsBlock: NopViewComponent
+{
+    private readonly NexportService _nexportService;
+    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+
+    public WidgetsNexportCustomerUserDetailsBlock(
+        NexportService nexportService,
+        INexportPluginModelFactory nexportPluginModelFactory)
+    {
             _nexportService = nexportService;
             _nexportPluginModelFactory = nexportPluginModelFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
             var customerUserSettingsModel = (CustomerUserSettingsModel) additionalData;
 
             if (customerUserSettingsModel == null)
@@ -32,5 +32,4 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
             return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Setting/NexportCustomerUserSettings.cshtml", model);
         }
-    }
 }

@@ -11,30 +11,30 @@ using Nop.Web.Framework.Components;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 
-namespace Nop.Plugin.Misc.Nexport.Components
-{
-    [ViewComponent(Name = "WidgetsNexportCustomerDetailsBlock")]
-    public class WidgetsNexportCustomerDetailsBlock : NopViewComponent
-    {
-        private readonly NexportService _nexportService;
-        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
-        private readonly INotificationService _notificationService;
-        private readonly ILogger _logger;
+namespace Nop.Plugin.Misc.Nexport.Components;
 
-        public WidgetsNexportCustomerDetailsBlock(
-            NexportService nexportService,
-            INexportPluginModelFactory nexportPluginModelFactory,
-            INotificationService notificationService,
-            ILogger logger)
-        {
+[ViewComponent(Name = "WidgetsNexportCustomerDetailsBlock")]
+public class WidgetsNexportCustomerDetailsBlock : NopViewComponent
+{
+    private readonly NexportService _nexportService;
+    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+    private readonly INotificationService _notificationService;
+    private readonly ILogger _logger;
+
+    public WidgetsNexportCustomerDetailsBlock(
+        NexportService nexportService,
+        INexportPluginModelFactory nexportPluginModelFactory,
+        INotificationService notificationService,
+        ILogger logger)
+    {
             _nexportService = nexportService;
             _nexportPluginModelFactory = nexportPluginModelFactory;
             _notificationService = notificationService;
             _logger = logger;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
             var customerModel = (CustomerModel) additionalData;
 
             if (customerModel.Id == 0)
@@ -106,5 +106,4 @@ namespace Nop.Plugin.Misc.Nexport.Components
                 return Content("");
             }
         }
-    }
 }

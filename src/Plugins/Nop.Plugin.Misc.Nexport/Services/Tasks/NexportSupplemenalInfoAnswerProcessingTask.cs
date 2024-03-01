@@ -14,30 +14,30 @@ using Nop.Services.Customers;
 using Nop.Services.Logging;
 using Nop.Services.ScheduleTasks;
 
-namespace Nop.Plugin.Misc.Nexport.Services.Tasks
+namespace Nop.Plugin.Misc.Nexport.Services.Tasks;
+
+public class NexportSupplementalInfoAnswerProcessingTask : IScheduleTask
 {
-    public class NexportSupplementalInfoAnswerProcessingTask : IScheduleTask
+    private readonly ILogger _logger;
+    private readonly IWidgetPluginManager _widgetPluginManager;
+    private readonly IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> _nexportSupplementalInfoAnswerProcessingQueueRepository;
+    private readonly NexportService _nexportService;
+    private readonly ICustomerService _customerService;
+    private readonly ICustomerActivityService _customerActivityService;
+    private readonly ISettingService _settingService;
+
+    private int _batchSize;
+
+    public NexportSupplementalInfoAnswerProcessingTask(
+        IWidgetPluginManager widgetPluginManager,
+        ILogger logger,
+        ICustomerService customerService,
+        ICustomerActivityService customerActivityService,
+        ISettingService settingService,
+        IGenericAttributeService genericAttributeService,
+        IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> nexportSupplementalInfoAnswerProcessingQueueRepository,
+        NexportService nexportService)
     {
-        private readonly ILogger _logger;
-        private readonly IWidgetPluginManager _widgetPluginManager;
-        private readonly IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> _nexportSupplementalInfoAnswerProcessingQueueRepository;
-        private readonly NexportService _nexportService;
-        private readonly ICustomerService _customerService;
-        private readonly ICustomerActivityService _customerActivityService;
-        private readonly ISettingService _settingService;
-
-        private int _batchSize;
-
-        public NexportSupplementalInfoAnswerProcessingTask(
-            IWidgetPluginManager widgetPluginManager,
-            ILogger logger,
-            ICustomerService customerService,
-            ICustomerActivityService customerActivityService,
-            ISettingService settingService,
-            IGenericAttributeService genericAttributeService,
-            IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> nexportSupplementalInfoAnswerProcessingQueueRepository,
-            NexportService nexportService)
-        {
             _widgetPluginManager = widgetPluginManager;
             _logger = logger;
             _customerService = customerService;
@@ -47,8 +47,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             _nexportService = nexportService;
         }
 
-        public async Task ExecuteAsync()
-        {
+    public async Task ExecuteAsync()
+    {
             if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
                 return;
 
@@ -71,8 +71,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             }
         }
 
-        public async Task ProcessNexportSupplementalInfoAnswersAsync(IList<int> queueItemIds)
-        {
+    public async Task ProcessNexportSupplementalInfoAnswersAsync(IList<int> queueItemIds)
+    {
             try
             {
                 foreach (var queueItemId in queueItemIds)
@@ -160,5 +160,4 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 await _logger.ErrorAsync($"Cannot process the NexportSupplementalInfoAnswerQueue", ex);
             }
         }
-    }
 }

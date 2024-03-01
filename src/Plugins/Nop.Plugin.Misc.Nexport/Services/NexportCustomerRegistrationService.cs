@@ -20,76 +20,76 @@ using Nop.Services.Orders;
 using Nop.Services.Security;
 using Nop.Services.Stores;
 
-namespace Nop.Plugin.Misc.Nexport.Services
+namespace Nop.Plugin.Misc.Nexport.Services;
+
+public class NexportCustomerLoginResults
 {
-    public class NexportCustomerLoginResults
-    {
-        public CustomerLoginResults LoginResult;
+    public CustomerLoginResults LoginResult;
 
-        public int? NopUserId { get; set; }
-    }
+    public int? NopUserId { get; set; }
+}
 
-    public class NexportCustomerRegistrationService : CustomerRegistrationService
-    {
-        #region Fields
+public class NexportCustomerRegistrationService : CustomerRegistrationService
+{
+    #region Fields
 
-        private readonly CustomerSettings _customerSettings;
-        private readonly IActionContextAccessor _actionContextAccessor;
-        private readonly IAuthenticationService _authenticationService;
-        private readonly ICustomerActivityService _customerActivityService;
-        private readonly ICustomerService _customerService;
-        private readonly IEncryptionService _encryptionService;
-        private readonly IEventPublisher _eventPublisher;
-        private readonly IGenericAttributeService _genericAttributeService;
-        private readonly ILocalizationService _localizationService;
-        private readonly IMultiFactorAuthenticationPluginManager _multiFactorAuthenticationPluginManager;
-        private readonly INewsLetterSubscriptionService _newsLetterSubscriptionService;
-        private readonly INotificationService _notificationService;
-        private readonly IPermissionService _permissionService;
-        private readonly IRewardPointService _rewardPointService;
-        private readonly IShoppingCartService _shoppingCartService;
-        private readonly IStoreContext _storeContext;
-        private readonly IStoreService _storeService;
-        private readonly IUrlHelperFactory _urlHelperFactory;
-        private readonly IWorkContext _workContext;
-        private readonly IWorkflowMessageService _workflowMessageService;
-        private readonly RewardPointsSettings _rewardPointsSettings;
-        private readonly NexportService _nexportService;
-        private readonly NexportSettings _nexportSettings;
-        private readonly ILogger _logger;
+    private readonly CustomerSettings _customerSettings;
+    private readonly IActionContextAccessor _actionContextAccessor;
+    private readonly IAuthenticationService _authenticationService;
+    private readonly ICustomerActivityService _customerActivityService;
+    private readonly ICustomerService _customerService;
+    private readonly IEncryptionService _encryptionService;
+    private readonly IEventPublisher _eventPublisher;
+    private readonly IGenericAttributeService _genericAttributeService;
+    private readonly ILocalizationService _localizationService;
+    private readonly IMultiFactorAuthenticationPluginManager _multiFactorAuthenticationPluginManager;
+    private readonly INewsLetterSubscriptionService _newsLetterSubscriptionService;
+    private readonly INotificationService _notificationService;
+    private readonly IPermissionService _permissionService;
+    private readonly IRewardPointService _rewardPointService;
+    private readonly IShoppingCartService _shoppingCartService;
+    private readonly IStoreContext _storeContext;
+    private readonly IStoreService _storeService;
+    private readonly IUrlHelperFactory _urlHelperFactory;
+    private readonly IWorkContext _workContext;
+    private readonly IWorkflowMessageService _workflowMessageService;
+    private readonly RewardPointsSettings _rewardPointsSettings;
+    private readonly NexportService _nexportService;
+    private readonly NexportSettings _nexportSettings;
+    private readonly ILogger _logger;
 
-        #endregion
+    #endregion
 
-        public NexportCustomerRegistrationService(CustomerSettings customerSettings,
-            IActionContextAccessor actionContextAccessor,
-            IAuthenticationService authenticationService,
-            ICustomerActivityService customerActivityService,
-            ICustomerService customerService,
-            IEncryptionService encryptionService,
-            IEventPublisher eventPublisher,
-            IGenericAttributeService genericAttributeService,
-            ILocalizationService localizationService,
-            IMultiFactorAuthenticationPluginManager multiFactorAuthenticationPluginManager,
-            INewsLetterSubscriptionService newsLetterSubscriptionService,
-            INotificationService notificationService,
-            IPermissionService permissionService,
-            IRewardPointService rewardPointService,
-            IShoppingCartService shoppingCartService,
-            IStoreContext storeContext,
-            IStoreService storeService,
-            IUrlHelperFactory urlHelperFactory,
-            IWorkContext workContext,
-            IWorkflowMessageService workflowMessageService,
-            RewardPointsSettings rewardPointsSettings,
-            NexportService nexportService,
-            NexportSettings nexportSettings,
-            ILogger logger)
+    public NexportCustomerRegistrationService(CustomerSettings customerSettings,
+        IActionContextAccessor actionContextAccessor,
+        IAuthenticationService authenticationService,
+        ICustomerActivityService customerActivityService,
+        ICustomerService customerService,
+        IEncryptionService encryptionService,
+        IEventPublisher eventPublisher,
+        IGenericAttributeService genericAttributeService,
+        ILocalizationService localizationService,
+        IMultiFactorAuthenticationPluginManager multiFactorAuthenticationPluginManager,
+        INewsLetterSubscriptionService newsLetterSubscriptionService,
+        INotificationService notificationService,
+        IPermissionService permissionService,
+        IRewardPointService rewardPointService,
+        IShoppingCartService shoppingCartService,
+        IStoreContext storeContext,
+        IStoreService storeService,
+        IUrlHelperFactory urlHelperFactory,
+        IWorkContext workContext,
+        IWorkflowMessageService workflowMessageService,
+        RewardPointsSettings rewardPointsSettings,
+        NexportService nexportService,
+        NexportSettings nexportSettings,
+        ILogger logger)
         : base(customerSettings, actionContextAccessor, authenticationService, customerActivityService, customerService,
             encryptionService, eventPublisher, genericAttributeService, localizationService, multiFactorAuthenticationPluginManager,
             newsLetterSubscriptionService, notificationService, permissionService, rewardPointService,
             shoppingCartService, storeContext, storeService, urlHelperFactory,
             workContext, workflowMessageService, rewardPointsSettings)
-        {
+    {
             _customerSettings = customerSettings;
             _customerService = customerService;
             _encryptionService = encryptionService;
@@ -109,8 +109,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _logger = logger;
         }
 
-        public async Task<NexportCustomerLoginResults> ValidateNexportCustomerAsync(string usernameOrEmail, string password)
-        {
+    public async Task<NexportCustomerLoginResults> ValidateNexportCustomerAsync(string usernameOrEmail, string password)
+    {
             var isValidEmail = usernameOrEmail.IsValidEmail();
 
             var customer = !isValidEmail ?
@@ -227,5 +227,4 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.Successful };
         }
-    }
 }

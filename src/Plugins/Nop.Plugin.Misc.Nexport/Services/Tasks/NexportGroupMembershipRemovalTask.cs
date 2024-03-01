@@ -12,29 +12,29 @@ using Nop.Services.Customers;
 using Nop.Services.Logging;
 using Nop.Services.ScheduleTasks;
 
-namespace Nop.Plugin.Misc.Nexport.Services.Tasks
+namespace Nop.Plugin.Misc.Nexport.Services.Tasks;
+
+public class NexportGroupMembershipRemovalTask : IScheduleTask
 {
-    public class NexportGroupMembershipRemovalTask : IScheduleTask
+    private readonly ILogger _logger;
+    private readonly IWidgetPluginManager _widgetPluginManager;
+    private readonly IRepository<NexportGroupMembershipRemovalQueueItem> _nexportGroupMembershipRemovalQueueRepository;
+    private readonly NexportService _nexportService;
+    private readonly ICustomerService _customerService;
+    private readonly ICustomerActivityService _customerActivityService;
+    private readonly ISettingService _settingService;
+
+    private int _batchSize;
+
+    public NexportGroupMembershipRemovalTask(
+        IWidgetPluginManager widgetPluginManager,
+        ILogger logger,
+        ICustomerService customerService,
+        ICustomerActivityService customerActivityService,
+        ISettingService settingService,
+        IRepository<NexportGroupMembershipRemovalQueueItem> nexportGroupMembershipRemovalQueueRepository,
+        NexportService nexportService)
     {
-        private readonly ILogger _logger;
-        private readonly IWidgetPluginManager _widgetPluginManager;
-        private readonly IRepository<NexportGroupMembershipRemovalQueueItem> _nexportGroupMembershipRemovalQueueRepository;
-        private readonly NexportService _nexportService;
-        private readonly ICustomerService _customerService;
-        private readonly ICustomerActivityService _customerActivityService;
-        private readonly ISettingService _settingService;
-
-        private int _batchSize;
-
-        public NexportGroupMembershipRemovalTask(
-            IWidgetPluginManager widgetPluginManager,
-            ILogger logger,
-            ICustomerService customerService,
-            ICustomerActivityService customerActivityService,
-            ISettingService settingService,
-            IRepository<NexportGroupMembershipRemovalQueueItem> nexportGroupMembershipRemovalQueueRepository,
-            NexportService nexportService)
-        {
             _widgetPluginManager = widgetPluginManager;
             _logger = logger;
             _customerService = customerService;
@@ -44,8 +44,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             _nexportService = nexportService;
         }
 
-        public async Task ExecuteAsync()
-        {
+    public async Task ExecuteAsync()
+    {
             if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
                 return;
 
@@ -69,8 +69,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             }
         }
 
-        public async Task ProcessNexportGroupMembershipRemovalAsync(IList<int> queueItemIds)
-        {
+    public async Task ProcessNexportGroupMembershipRemovalAsync(IList<int> queueItemIds)
+    {
             try
             {
                 foreach (var queueItemId in queueItemIds)
@@ -136,5 +136,4 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 await _logger.ErrorAsync($"Cannot process the NexportGroupMembershipRemovalQueue", ex);
             }
         }
-    }
 }

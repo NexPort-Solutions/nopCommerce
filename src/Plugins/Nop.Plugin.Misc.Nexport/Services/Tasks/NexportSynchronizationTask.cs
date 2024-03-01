@@ -9,31 +9,31 @@ using Nop.Services.Cms;
 using Nop.Services.Logging;
 using Nop.Services.ScheduleTasks;
 
-namespace Nop.Plugin.Misc.Nexport.Services.Tasks
+namespace Nop.Plugin.Misc.Nexport.Services.Tasks;
+
+public class NexportSynchronizationTask : IScheduleTask
 {
-    public class NexportSynchronizationTask : IScheduleTask
+    private readonly ILogger _logger;
+    private readonly IWidgetPluginManager _widgetPluginManager;
+    private readonly NexportService _nexportService;
+    private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
+
+    private int _batchSize = 100;
+
+    public NexportSynchronizationTask(
+        IWidgetPluginManager widgetPluginManager,
+        ILogger logger,
+        IRepository<NexportProductMapping> nexportProductMappingRepository,
+        NexportService nexportService)
     {
-        private readonly ILogger _logger;
-        private readonly IWidgetPluginManager _widgetPluginManager;
-        private readonly NexportService _nexportService;
-        private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
-
-        private int _batchSize = 100;
-
-        public NexportSynchronizationTask(
-            IWidgetPluginManager widgetPluginManager,
-            ILogger logger,
-            IRepository<NexportProductMapping> nexportProductMappingRepository,
-            NexportService nexportService)
-        {
             _widgetPluginManager = widgetPluginManager;
             _logger = logger;
             _nexportProductMappingRepository = nexportProductMappingRepository;
             _nexportService = nexportService;
         }
 
-        public async Task ExecuteAsync()
-        {
+    public async Task ExecuteAsync()
+    {
             if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
                 return;
 
@@ -53,8 +53,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             }
         }
 
-        public async Task SynchronizeProductMappingsAsync(IList<int> mappingIds)
-        {
+    public async Task SynchronizeProductMappingsAsync(IList<int> mappingIds)
+    {
             try
             {
                 foreach (var mappingId in mappingIds)
@@ -71,5 +71,4 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 await _logger.ErrorAsync("Cannot synchronize mappings with Nexport", ex);
             }
         }
-    }
 }

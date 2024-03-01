@@ -1,19 +1,18 @@
-﻿namespace Nop.Plugin.Misc.Nexport.Archway.Data
-{
-    //public class ArchwayStoreEmployeePositionMap: NopEntityTypeConfiguration<ArchwayStoreEmployeePosition>
-    //{
-    //    public override void Configure(EntityTypeBuilder<ArchwayStoreEmployeePosition> builder)
-    //    {
-    //        builder.ToTable("ArchwayStoreEmployeePosition");
+﻿namespace Nop.Plugin.Misc.Nexport.Archway.Data;
 
-    //        builder.HasKey(m => m.Id);
+//public class ArchwayStoreEmployeePositionMap: NopEntityTypeConfiguration<ArchwayStoreEmployeePosition>
+//{
+//    public override void Configure(EntityTypeBuilder<ArchwayStoreEmployeePosition> builder)
+//    {
+//        builder.ToTable("ArchwayStoreEmployeePosition");
 
-    //        builder.Property(m => m.JobCode);
-    //        builder.Property(m => m.JobTitle);
-    //        builder.Property(m => m.JobType);
-    //        builder.Property(m => m.JobLevel);
+//        builder.HasKey(m => m.Id);
 
-    //        base.Configure(builder);
-    //    }
-    //}
-}
+//        builder.Property(m => m.JobCode);
+//        builder.Property(m => m.JobTitle);
+//        builder.Property(m => m.JobType);
+//        builder.Property(m => m.JobLevel);
+
+//        base.Configure(builder);
+//    }
+//}

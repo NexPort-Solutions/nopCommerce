@@ -45,140 +45,140 @@ using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Web.Framework;
 
-namespace Nop.Plugin.Misc.Nexport.Services
+namespace Nop.Plugin.Misc.Nexport.Services;
+
+public partial class NexportService
 {
-    public partial class NexportService
+    #region Fields
+
+    private readonly NexportApiService _nexportApiService;
+
+    private readonly EmailAccountSettings _emailAccountSettings;
+    private readonly NexportSettings _nexportSettings;
+
+    private readonly IAddressService _addressService;
+    private readonly IAclService _aclService;
+    private readonly IStaticCacheManager _cacheManager;
+    private readonly IEventPublisher _eventPublisher;
+    private readonly ILocalizationService _localizationService;
+    private readonly IProductService _productService;
+    private readonly IRepository<AclRecord> _aclRepository;
+    private readonly IRepository<Product> _productRepository;
+    private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
+    private readonly IRepository<NexportProductGroupMembershipMapping> _nexportProductGroupMembershipMappingRepository;
+    private readonly IRepository<NexportOrderProcessingQueueItem> _nexportOrderProcessingQueueRepository;
+    private readonly IRepository<NexportOrderInvoiceItem> _nexportOrderInvoiceItemRepository;
+    private readonly IRepository<NexportOrderInvoiceRedemptionQueueItem> _nexportOrderInvoiceRedemptionQueueRepository;
+    private readonly IRepository<NexportUserMapping> _nexportUserMappingRepository;
+    private readonly IRepository<NexportSupplementalInfoQuestion> _nexportSupplementalInfoQuestionRepository;
+    private readonly IRepository<NexportSupplementalInfoOption> _nexportSupplementalInfoOptionRepository;
+    private readonly IRepository<NexportSupplementalInfoQuestionMapping> _nexportSupplementalInfoQuestionMappingRepository;
+    private readonly IRepository<NexportSupplementalInfoAnswer> _nexportSupplementalInfoAnswerRepository;
+    private readonly IRepository<NexportSupplementalInfoOptionGroupAssociation> _nexportSupplementalInfoOptionGroupAssociationRepository;
+    private readonly IRepository<NexportSupplementalInfoAnswerMembership> _nexportSupplementalInfoAnswerMembershipRepository;
+    private readonly IRepository<NexportRequiredSupplementalInfo> _nexportRequiredSupplementalInfoRepository;
+    private readonly IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> _nexportSupplementalInfoAnswerProcessingQueueRepository;
+    private readonly IRepository<NexportGroupMembershipRemovalQueueItem> _nexportGroupMembershipRemovalQueueRepository;
+    private readonly IRepository<NexportRegistrationField> _nexportRegistrationFieldRepository;
+    private readonly IRepository<NexportRegistrationFieldOption> _nexportRegistrationFieldOptionRepository;
+    private readonly IRepository<NexportRegistrationFieldCategory> _nexportRegistrationFieldCategoryRepository;
+    private readonly IRepository<NexportRegistrationFieldStoreMapping> _nexportRegistrationFieldStoreMappingRepository;
+    private readonly IRepository<NexportRegistrationFieldAnswer> _nexportRegistrationFieldAnswerRepository;
+    private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
+    private readonly IRepository<StoreMapping> _storeMappingRepository;
+    private readonly IStaticCacheManager _staticCacheManager;
+    private readonly IStoreMappingService _storeMappingService;
+    private readonly ICustomerService _customerService;
+    private readonly ICustomerActivityService _customerActivityService;
+    private readonly IOrderService _orderService;
+    private readonly ICategoryService _categoryService;
+    private readonly ISettingService _settingService;
+    private readonly IStoreService _storeService;
+    private readonly IShoppingCartService _shoppingCartService;
+    private readonly ICountryService _countryService;
+    private readonly IStateProvinceService _stateProvinceService;
+    private readonly IGenericAttributeService _genericAttributeService;
+    private readonly INotificationService _notificationService;
+    private readonly IEmailAccountService _emailAccountService;
+    private readonly ILanguageService _languageService;
+    private readonly IMessageTemplateService _messageTemplateService;
+    private readonly IWorkflowMessageService _workflowMessageService;
+    private readonly IMessageTokenProvider _messageTokenProvider;
+
+    private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
+    private readonly IDateTimeHelper _dateTimeHelper;
+    private readonly IUrlHelperFactory _urlHelperFactory;
+    private readonly IActionContextAccessor _actionContextAccessor;
+    private readonly IWorkContext _workContext;
+    private readonly IStoreContext _storeContext;
+    private readonly ILogger _logger;
+    private readonly IRepository<Store> _storeRepository;
+
+    #endregion
+
+    #region Constructors
+
+    public NexportService(
+        NexportApiService nexportApiService,
+        EmailAccountSettings emailAccountSettings,
+        NexportSettings nexportSettings,
+        IAddressService addressService,
+        IAclService aclService,
+        IStaticCacheManager cacheManager,
+        IEventPublisher eventPublisher,
+        IProductService productService,
+        IRepository<AclRecord> aclRepository,
+        IRepository<Product> productRepository,
+        IRepository<NexportProductMapping> nexportProductMappingRepository,
+        IRepository<NexportProductGroupMembershipMapping> nexportProductGroupMembershipMappingRepository,
+        IRepository<NexportOrderProcessingQueueItem> nexportOrderProcessingQueueRepository,
+        IRepository<NexportOrderInvoiceItem> nexportOrderInvoiceItemRepository,
+        IRepository<NexportOrderInvoiceRedemptionQueueItem> nexportOrderInvoiceRedemptionQueueRepository,
+        IRepository<NexportUserMapping> nexportUserMappingRepository,
+        IRepository<NexportSupplementalInfoQuestion> nexportSupplementalInfoQuestionRepository,
+        IRepository<NexportSupplementalInfoOption> nexportSupplementalInfoOptionRepository,
+        IRepository<NexportSupplementalInfoQuestionMapping> nexportSupplementalInfoQuestionMappingRepository,
+        IRepository<NexportSupplementalInfoAnswer> nexportSupplementalInfoAnswerRepository,
+        IRepository<NexportSupplementalInfoOptionGroupAssociation> nexportSupplementalInfoOptionGroupAssociationRepository,
+        IRepository<NexportSupplementalInfoAnswerMembership> nexportSupplementalInfoAnswerMembershipRepository,
+        IRepository<NexportRequiredSupplementalInfo> nexportRequiredSupplementalInfoRepository,
+        IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> nexportSupplementalInfoAnswerProcessingQueueRepository,
+        IRepository<NexportGroupMembershipRemovalQueueItem> nexportGroupMembershipRemovalQueueRepository,
+        IRepository<NexportRegistrationField> nexportRegistrationFieldRepository,
+        IRepository<NexportRegistrationFieldOption> nexportRegistrationFieldOptionRepository,
+        IRepository<NexportRegistrationFieldCategory> nexportRegistrationFieldCategoryRepository,
+        IRepository<NexportRegistrationFieldStoreMapping> nexportRegistrationFieldStoreMappingRepository,
+        IRepository<NexportRegistrationFieldAnswer> nexportRegistrationFieldAnswerRepository,
+        IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
+        IRepository<StoreMapping> storeMappingRepository,
+        IStaticCacheManager staticCacheManager,
+        IStoreMappingService storeMappingService,
+        ICustomerService customerService,
+        ICustomerActivityService customerActivityService,
+        IOrderService orderService,
+        ICategoryService categoryService,
+        ISettingService settingService,
+        IStoreService storeService,
+        IShoppingCartService shoppingCartService,
+        ICountryService countryService,
+        IStateProvinceService stateProvinceService,
+        IGenericAttributeService genericAttributeService,
+        INotificationService notificationService,
+        ILanguageService languageService,
+        IMessageTemplateService messageTemplateService,
+        IEmailAccountService emailAccountService,
+        IMessageTokenProvider messageTokenProvider,
+        IWorkflowMessageService workflowMessageService,
+        ILocalizationService localizationService,
+        IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
+        IDateTimeHelper dateTimeHelper,
+        IUrlHelperFactory urlHelperFactory,
+        IActionContextAccessor actionContextAccessor,
+        IWorkContext workContext,
+        IStoreContext storeContext,
+        ILogger logger,
+        IRepository<Store> storeRepository)
     {
-        #region Fields
-
-        private readonly NexportApiService _nexportApiService;
-
-        private readonly EmailAccountSettings _emailAccountSettings;
-        private readonly NexportSettings _nexportSettings;
-
-        private readonly IAddressService _addressService;
-        private readonly IAclService _aclService;
-        private readonly IStaticCacheManager _cacheManager;
-        private readonly IEventPublisher _eventPublisher;
-        private readonly ILocalizationService _localizationService;
-        private readonly IProductService _productService;
-        private readonly IRepository<AclRecord> _aclRepository;
-        private readonly IRepository<Product> _productRepository;
-        private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
-        private readonly IRepository<NexportProductGroupMembershipMapping> _nexportProductGroupMembershipMappingRepository;
-        private readonly IRepository<NexportOrderProcessingQueueItem> _nexportOrderProcessingQueueRepository;
-        private readonly IRepository<NexportOrderInvoiceItem> _nexportOrderInvoiceItemRepository;
-        private readonly IRepository<NexportOrderInvoiceRedemptionQueueItem> _nexportOrderInvoiceRedemptionQueueRepository;
-        private readonly IRepository<NexportUserMapping> _nexportUserMappingRepository;
-        private readonly IRepository<NexportSupplementalInfoQuestion> _nexportSupplementalInfoQuestionRepository;
-        private readonly IRepository<NexportSupplementalInfoOption> _nexportSupplementalInfoOptionRepository;
-        private readonly IRepository<NexportSupplementalInfoQuestionMapping> _nexportSupplementalInfoQuestionMappingRepository;
-        private readonly IRepository<NexportSupplementalInfoAnswer> _nexportSupplementalInfoAnswerRepository;
-        private readonly IRepository<NexportSupplementalInfoOptionGroupAssociation> _nexportSupplementalInfoOptionGroupAssociationRepository;
-        private readonly IRepository<NexportSupplementalInfoAnswerMembership> _nexportSupplementalInfoAnswerMembershipRepository;
-        private readonly IRepository<NexportRequiredSupplementalInfo> _nexportRequiredSupplementalInfoRepository;
-        private readonly IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> _nexportSupplementalInfoAnswerProcessingQueueRepository;
-        private readonly IRepository<NexportGroupMembershipRemovalQueueItem> _nexportGroupMembershipRemovalQueueRepository;
-        private readonly IRepository<NexportRegistrationField> _nexportRegistrationFieldRepository;
-        private readonly IRepository<NexportRegistrationFieldOption> _nexportRegistrationFieldOptionRepository;
-        private readonly IRepository<NexportRegistrationFieldCategory> _nexportRegistrationFieldCategoryRepository;
-        private readonly IRepository<NexportRegistrationFieldStoreMapping> _nexportRegistrationFieldStoreMappingRepository;
-        private readonly IRepository<NexportRegistrationFieldAnswer> _nexportRegistrationFieldAnswerRepository;
-        private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
-        private readonly IRepository<StoreMapping> _storeMappingRepository;
-        private readonly IStaticCacheManager _staticCacheManager;
-        private readonly IStoreMappingService _storeMappingService;
-        private readonly ICustomerService _customerService;
-        private readonly ICustomerActivityService _customerActivityService;
-        private readonly IOrderService _orderService;
-        private readonly ICategoryService _categoryService;
-        private readonly ISettingService _settingService;
-        private readonly IStoreService _storeService;
-        private readonly IShoppingCartService _shoppingCartService;
-        private readonly ICountryService _countryService;
-        private readonly IStateProvinceService _stateProvinceService;
-        private readonly IGenericAttributeService _genericAttributeService;
-        private readonly INotificationService _notificationService;
-        private readonly IEmailAccountService _emailAccountService;
-        private readonly ILanguageService _languageService;
-        private readonly IMessageTemplateService _messageTemplateService;
-        private readonly IWorkflowMessageService _workflowMessageService;
-        private readonly IMessageTokenProvider _messageTokenProvider;
-
-        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
-        private readonly IDateTimeHelper _dateTimeHelper;
-        private readonly IUrlHelperFactory _urlHelperFactory;
-        private readonly IActionContextAccessor _actionContextAccessor;
-        private readonly IWorkContext _workContext;
-        private readonly IStoreContext _storeContext;
-        private readonly ILogger _logger;
-        private readonly IRepository<Store> _storeRepository;
-
-        #endregion
-
-        #region Constructors
-
-        public NexportService(
-            NexportApiService nexportApiService,
-            EmailAccountSettings emailAccountSettings,
-            NexportSettings nexportSettings,
-            IAddressService addressService,
-            IAclService aclService,
-            IStaticCacheManager cacheManager,
-            IEventPublisher eventPublisher,
-            IProductService productService,
-            IRepository<AclRecord> aclRepository,
-            IRepository<Product> productRepository,
-            IRepository<NexportProductMapping> nexportProductMappingRepository,
-            IRepository<NexportProductGroupMembershipMapping> nexportProductGroupMembershipMappingRepository,
-            IRepository<NexportOrderProcessingQueueItem> nexportOrderProcessingQueueRepository,
-            IRepository<NexportOrderInvoiceItem> nexportOrderInvoiceItemRepository,
-            IRepository<NexportOrderInvoiceRedemptionQueueItem> nexportOrderInvoiceRedemptionQueueRepository,
-            IRepository<NexportUserMapping> nexportUserMappingRepository,
-            IRepository<NexportSupplementalInfoQuestion> nexportSupplementalInfoQuestionRepository,
-            IRepository<NexportSupplementalInfoOption> nexportSupplementalInfoOptionRepository,
-            IRepository<NexportSupplementalInfoQuestionMapping> nexportSupplementalInfoQuestionMappingRepository,
-            IRepository<NexportSupplementalInfoAnswer> nexportSupplementalInfoAnswerRepository,
-            IRepository<NexportSupplementalInfoOptionGroupAssociation> nexportSupplementalInfoOptionGroupAssociationRepository,
-            IRepository<NexportSupplementalInfoAnswerMembership> nexportSupplementalInfoAnswerMembershipRepository,
-            IRepository<NexportRequiredSupplementalInfo> nexportRequiredSupplementalInfoRepository,
-            IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> nexportSupplementalInfoAnswerProcessingQueueRepository,
-            IRepository<NexportGroupMembershipRemovalQueueItem> nexportGroupMembershipRemovalQueueRepository,
-            IRepository<NexportRegistrationField> nexportRegistrationFieldRepository,
-            IRepository<NexportRegistrationFieldOption> nexportRegistrationFieldOptionRepository,
-            IRepository<NexportRegistrationFieldCategory> nexportRegistrationFieldCategoryRepository,
-            IRepository<NexportRegistrationFieldStoreMapping> nexportRegistrationFieldStoreMappingRepository,
-            IRepository<NexportRegistrationFieldAnswer> nexportRegistrationFieldAnswerRepository,
-            IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
-            IRepository<StoreMapping> storeMappingRepository,
-            IStaticCacheManager staticCacheManager,
-            IStoreMappingService storeMappingService,
-            ICustomerService customerService,
-            ICustomerActivityService customerActivityService,
-            IOrderService orderService,
-            ICategoryService categoryService,
-            ISettingService settingService,
-            IStoreService storeService,
-            IShoppingCartService shoppingCartService,
-            ICountryService countryService,
-            IStateProvinceService stateProvinceService,
-            IGenericAttributeService genericAttributeService,
-            INotificationService notificationService,
-            ILanguageService languageService,
-            IMessageTemplateService messageTemplateService,
-            IEmailAccountService emailAccountService,
-            IMessageTokenProvider messageTokenProvider,
-            IWorkflowMessageService workflowMessageService,
-            ILocalizationService localizationService,
-            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
-            IDateTimeHelper dateTimeHelper,
-            IUrlHelperFactory urlHelperFactory,
-            IActionContextAccessor actionContextAccessor,
-            IWorkContext workContext,
-            IStoreContext storeContext,
-            ILogger logger,
-            IRepository<Store> storeRepository)
-        {
             _nexportApiService = nexportApiService;
             _emailAccountSettings = emailAccountSettings;
             _nexportSettings = nexportSettings;
@@ -241,18 +241,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _storeRepository = storeRepository;
         }
 
-        #endregion
+    #endregion
 
-        #region Utilities
+    #region Utilities
 
-        /// <summary>
-        /// Ensure language is active
-        /// </summary>
-        /// <param name="languageId">Language identifier</param>
-        /// <param name="storeId">Store identifier</param>
-        /// <returns>Return a value language identifier</returns>
-        protected async Task<int> EnsureLanguageIsActiveAsync(int languageId, int storeId)
-        {
+    /// <summary>
+    /// Ensure language is active
+    /// </summary>
+    /// <param name="languageId">Language identifier</param>
+    /// <param name="storeId">Store identifier</param>
+    /// <returns>Return a value language identifier</returns>
+    protected async Task<int> EnsureLanguageIsActiveAsync(int languageId, int storeId)
+    {
             //load language by specified ID
             var language = await _languageService.GetLanguageByIdAsync(languageId);
 
@@ -274,14 +274,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return language.Id;
         }
 
-        /// <summary>
-        /// Get active message templates by the name
-        /// </summary>
-        /// <param name="messageTemplateName">Message template name</param>
-        /// <param name="storeId">Store identifier</param>
-        /// <returns>List of message templates</returns>
-        private async Task<IList<MessageTemplate>> GetActiveMessageTemplatesAsync(string messageTemplateName, int storeId)
-        {
+    /// <summary>
+    /// Get active message templates by the name
+    /// </summary>
+    /// <param name="messageTemplateName">Message template name</param>
+    /// <param name="storeId">Store identifier</param>
+    /// <returns>List of message templates</returns>
+    private async Task<IList<MessageTemplate>> GetActiveMessageTemplatesAsync(string messageTemplateName, int storeId)
+    {
             //get message templates by the name
             var messageTemplates = await _messageTemplateService.GetMessageTemplatesByNameAsync(messageTemplateName, storeId);
 
@@ -295,14 +295,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return messageTemplates;
         }
 
-        /// <summary>
-        /// Get EmailAccount to use with a message templates
-        /// </summary>
-        /// <param name="messageTemplate">Message template</param>
-        /// <param name="languageId">Language identifier</param>
-        /// <returns>EmailAccount</returns>
-        private async Task<EmailAccount> GetEmailAccountOfMessageTemplateAsync(MessageTemplate messageTemplate, int languageId)
-        {
+    /// <summary>
+    /// Get EmailAccount to use with a message templates
+    /// </summary>
+    /// <param name="messageTemplate">Message template</param>
+    /// <param name="languageId">Language identifier</param>
+    /// <returns>EmailAccount</returns>
+    private async Task<EmailAccount> GetEmailAccountOfMessageTemplateAsync(MessageTemplate messageTemplate, int languageId)
+    {
             var emailAccountId = await _localizationService.GetLocalizedAsync(messageTemplate,
                 mt => mt.EmailAccountId, languageId);
             //some 0 validation (for localizable "Email account" dropdownlist which saves 0 if "Standard" value is chosen)
@@ -315,14 +315,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return emailAccount;
         }
 
-        #endregion
+    #endregion
 
-        #region Workflow Message Services
+    #region Workflow Message Services
 
-        #region Message Token Builders
+    #region Message Token Builders
 
-        private async Task AddNexportOrderApprovalTokensAsync(IList<Token> tokens, Order order)
-        {
+    private async Task AddNexportOrderApprovalTokensAsync(IList<Token> tokens, Order order)
+    {
             tokens.Add(new Token("NexportOrderApproval.OrderId", order.Id));
 
             var store = await _storeService.GetStoreByIdAsync(order.StoreId) ?? throw new Exception("No store could be loaded");
@@ -345,10 +345,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             tokens.Add(new Token("NexportOrderApproval.AdminViewOrderUrl", orderUrl, true));
         }
 
-        #endregion
+    #endregion
 
-        public async Task<IList<int>> SendNewNexportOrderApprovalStoreOwnerNotificationAsync(Order order, int languageId)
-        {
+    public async Task<IList<int>> SendNewNexportOrderApprovalStoreOwnerNotificationAsync(Order order, int languageId)
+    {
             if (order == null)
                 throw new ArgumentNullException(nameof(order));
 
@@ -379,10 +379,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }).ToListAsync();
         }
 
-        #endregion
+    #endregion
 
-        public async Task GenerateNewNexportTokenAsync(ConfigurationModel model)
-        {
+    public async Task GenerateNewNexportTokenAsync(ConfigurationModel model)
+    {
             try
             {
                 DateTime? tokenExpiration = null;
@@ -420,9 +420,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        [CanBeNull]
-        public async Task<GetUserResponse> AuthenticateUserAsync(string username, string password)
-        {
+    [CanBeNull]
+    public async Task<GetUserResponse> AuthenticateUserAsync(string username, string password)
+    {
             GetUserResponse result;
             try
             {
@@ -451,9 +451,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        [CanBeNull]
-        public async Task<GetUserResponse> ValidateUserAsync(string username)
-        {
+    [CanBeNull]
+    public async Task<GetUserResponse> ValidateUserAsync(string username)
+    {
             try
             {
                 var response = _nexportApiService.GetNexportUserByLogin(_nexportSettings.Url, _nexportSettings.AuthenticationToken, username);
@@ -500,10 +500,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        [CanBeNull]
-        public async Task<CreateUserResponse> CreateNexportUserAsync(string login, string password,
-            string firstName, string lastName, string email, Guid ownerOrgId, UserContactInfoRequest contactInfo = null)
-        {
+    [CanBeNull]
+    public async Task<CreateUserResponse> CreateNexportUserAsync(string login, string password,
+        string firstName, string lastName, string email, Guid ownerOrgId, UserContactInfoRequest contactInfo = null)
+    {
             if (string.IsNullOrWhiteSpace(login))
                 throw new ArgumentNullException(nameof(login), "Login cannot be empty");
 
@@ -575,9 +575,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        [CanBeNull]
-        public async Task<GetUserResponse> GetNexportUserAsync(Guid userId)
-        {
+    [CanBeNull]
+    public async Task<GetUserResponse> GetNexportUserAsync(Guid userId)
+    {
             try
             {
                 var response = _nexportApiService.GetNexportUserByUserId(_nexportSettings.Url, _nexportSettings.AuthenticationToken, userId);
@@ -629,9 +629,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        [CanBeNull]
-        public async Task<UserContactInfoResponse> GetNexportUserContactInfoAsync(Guid userId)
-        {
+    [CanBeNull]
+    public async Task<UserContactInfoResponse> GetNexportUserContactInfoAsync(Guid userId)
+    {
             try
             {
                 var response = _nexportApiService.GetNexportUserContactInfo(_nexportSettings.Url, _nexportSettings.AuthenticationToken, userId);
@@ -683,9 +683,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        [CanBeNull]
-        public async Task<EditUserResponse> UpdateNexportUserContactInfoAsync(Guid userId, UserContactInfoRequest updatedInfo)
-        {
+    [CanBeNull]
+    public async Task<EditUserResponse> UpdateNexportUserContactInfoAsync(Guid userId, UserContactInfoRequest updatedInfo)
+    {
             if (updatedInfo == null)
                 throw new ArgumentNullException(nameof(updatedInfo), "Updated information be empty");
 
@@ -746,8 +746,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public async Task<List<DirectoryResponseItem>> SearchNexportDirectoryAsync(string searchTerm, int? page = null)
-        {
+    public async Task<List<DirectoryResponseItem>> SearchNexportDirectoryAsync(string searchTerm, int? page = null)
+    {
             try
             {
                 if (_nexportSettings.RootOrganizationId.HasValue)
@@ -779,8 +779,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public async Task<IList<OrganizationResponseItem>> FindAllOrganizationsAsync(Guid baseOrgId)
-        {
+    public async Task<IList<OrganizationResponseItem>> FindAllOrganizationsAsync(Guid baseOrgId)
+    {
             var items = new List<OrganizationResponseItem>();
 
             try
@@ -817,25 +817,25 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return items;
         }
 
-        public async Task<IList<OrganizationResponseItem>> FindAllOrganizationsUnderRootOrganizationAsync()
-        {
+    public async Task<IList<OrganizationResponseItem>> FindAllOrganizationsUnderRootOrganizationAsync()
+    {
             if (!_nexportSettings.RootOrganizationId.HasValue)
                 throw new NullReferenceException("Root organization has not been set");
 
             return await FindAllOrganizationsAsync(_nexportSettings.RootOrganizationId.Value);
         }
 
-        [CanBeNull]
-        public async Task<OrganizationResponseItem> GetOrganizationDetailsAsync(Guid orgId)
-        {
+    [CanBeNull]
+    public async Task<OrganizationResponseItem> GetOrganizationDetailsAsync(Guid orgId)
+    {
             var availableOrganizations = await FindAllOrganizationsAsync(orgId);
             var result = availableOrganizations.SingleOrDefault(s => s.OrgId == orgId);
 
             return result;
         }
 
-        public async Task<SubscriptionResponse> FindSubscription(Guid userId, Guid orgId)
-        {
+    public async Task<SubscriptionResponse> FindSubscription(Guid userId, Guid orgId)
+    {
             SubscriptionResponse result;
 
             try
@@ -869,8 +869,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public async Task<IList<SubscriptionResponse>> FindAllSubscriptionsAsync(Guid userId)
-        {
+    public async Task<IList<SubscriptionResponse>> FindAllSubscriptionsAsync(Guid userId)
+    {
             var items = new List<SubscriptionResponse>();
 
             try
@@ -907,9 +907,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return items;
         }
 
-        [CanBeNull]
-        public async Task<SetCustomProfileFieldValuesResponse> SetCustomProfileFieldValuesAsync(Guid subscriberId, Dictionary<string, string> profileFields)
-        {
+    [CanBeNull]
+    public async Task<SetCustomProfileFieldValuesResponse> SetCustomProfileFieldValuesAsync(Guid subscriberId, Dictionary<string, string> profileFields)
+    {
             SetCustomProfileFieldValuesResponse result;
 
             try
@@ -937,8 +937,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public async Task<IPagedList<CatalogResponseItem>> FindAllCatalogsAsync(Guid? orgId, int pageIndex = 0, int pageSize = int.MaxValue)
-        {
+    public async Task<IPagedList<CatalogResponseItem>> FindAllCatalogsAsync(Guid? orgId, int pageIndex = 0, int pageSize = int.MaxValue)
+    {
             var items = new List<CatalogResponseItem>();
 
             if (orgId.HasValue)
@@ -981,9 +981,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return pagedItems;
         }
 
-        [CanBeNull]
-        public async Task<CatalogResponseItem> GetCatalogDetailsAsync(Guid catalogId)
-        {
+    [CanBeNull]
+    public async Task<CatalogResponseItem> GetCatalogDetailsAsync(Guid catalogId)
+    {
             CatalogResponseItem result;
 
             try
@@ -1011,9 +1011,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        [CanBeNull]
-        public async Task<GetDescriptionResponse> GetCatalogDescriptionAsync(Guid catalogId)
-        {
+    [CanBeNull]
+    public async Task<GetDescriptionResponse> GetCatalogDescriptionAsync(Guid catalogId)
+    {
             GetDescriptionResponse result;
 
             try
@@ -1041,9 +1041,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        [CanBeNull]
-        public async Task<GetCatalogCreditHoursResponse> GetCatalogCreditHoursAsync(Guid catalogId)
-        {
+    [CanBeNull]
+    public async Task<GetCatalogCreditHoursResponse> GetCatalogCreditHoursAsync(Guid catalogId)
+    {
             GetCatalogCreditHoursResponse result;
 
             try
@@ -1071,8 +1071,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public async Task<IPagedList<GetSyllabiResponseItem>> FindAllSyllabusesAsync(Guid? catalogId, int pageIndex = 0, int pageSize = int.MaxValue)
-        {
+    public async Task<IPagedList<GetSyllabiResponseItem>> FindAllSyllabusesAsync(Guid? catalogId, int pageIndex = 0, int pageSize = int.MaxValue)
+    {
             var items = new List<GetSyllabiResponseItem>();
 
             if (catalogId.HasValue)
@@ -1115,9 +1115,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return pagedItems;
         }
 
-        [CanBeNull]
-        public async Task<SectionResponse> GetSectionDetailsAsync(Guid sectionId)
-        {
+    [CanBeNull]
+    public async Task<SectionResponse> GetSectionDetailsAsync(Guid sectionId)
+    {
             SectionResponse result;
 
             try
@@ -1145,9 +1145,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        [CanBeNull]
-        public async Task<GetDescriptionResponse> GetSectionDescriptionAsync(Guid sectionId)
-        {
+    [CanBeNull]
+    public async Task<GetDescriptionResponse> GetSectionDescriptionAsync(Guid sectionId)
+    {
             GetDescriptionResponse result;
 
             try
@@ -1175,9 +1175,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        [CanBeNull]
-        public async Task<GetObjectivesResponse> GetSectionObjectivesAsync(Guid sectionId)
-        {
+    [CanBeNull]
+    public async Task<GetObjectivesResponse> GetSectionObjectivesAsync(Guid sectionId)
+    {
             GetObjectivesResponse result;
 
             try
@@ -1205,9 +1205,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        [CanBeNull]
-        public async Task<SectionEnrollmentsResponse> GetSectionEnrollmentDetailsAsync(Guid orgId, Guid userId, Guid syllabusId)
-        {
+    [CanBeNull]
+    public async Task<SectionEnrollmentsResponse> GetSectionEnrollmentDetailsAsync(Guid orgId, Guid userId, Guid syllabusId)
+    {
             SectionEnrollmentsResponse result;
 
             try
@@ -1235,9 +1235,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        [CanBeNull]
-        public async Task<TrainingPlanResponse> GetTrainingPlanDetailsAsync(Guid trainingPlanId)
-        {
+    [CanBeNull]
+    public async Task<TrainingPlanResponse> GetTrainingPlanDetailsAsync(Guid trainingPlanId)
+    {
             TrainingPlanResponse result;
 
             try
@@ -1265,9 +1265,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        [CanBeNull]
-        public async Task<GetDescriptionResponse> GetTrainingPlanDescriptionAsync(Guid trainingPlanId)
-        {
+    [CanBeNull]
+    public async Task<GetDescriptionResponse> GetTrainingPlanDescriptionAsync(Guid trainingPlanId)
+    {
             GetDescriptionResponse result;
 
             try
@@ -1295,9 +1295,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        [CanBeNull]
-        public async Task<TrainingPlanEnrollmentsResponse> GetTrainingPlanEnrollmentDetailsAsync(Guid orgId, Guid userId, Guid trainingPlanId)
-        {
+    [CanBeNull]
+    public async Task<TrainingPlanEnrollmentsResponse> GetTrainingPlanEnrollmentDetailsAsync(Guid orgId, Guid userId, Guid trainingPlanId)
+    {
             TrainingPlanEnrollmentsResponse result;
 
             try
@@ -1325,9 +1325,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        [CanBeNull]
-        public async Task<GetInvoiceResponse> GetNexportInvoiceAsync(Guid invoiceId)
-        {
+    [CanBeNull]
+    public async Task<GetInvoiceResponse> GetNexportInvoiceAsync(Guid invoiceId)
+    {
             try
             {
                 var response = _nexportApiService.GetNexportInvoice(_nexportSettings.Url, _nexportSettings.AuthenticationToken, invoiceId);
@@ -1374,8 +1374,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public async Task<Guid> BeginNexportOrderInvoiceTransactionAsync(Guid orgId, Guid purchasingAgentId)
-        {
+    public async Task<Guid> BeginNexportOrderInvoiceTransactionAsync(Guid orgId, Guid purchasingAgentId)
+    {
             try
             {
                 var beginOrderResult = _nexportApiService.BeginNexportInvoiceTransaction(_nexportSettings.Url,
@@ -1402,12 +1402,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        [CanBeNull]
-        public async Task<Guid?> AddItemToNexportOrderInvoiceAsync(Guid invoiceId, Guid nexportProductId,
-            Enums.ProductTypeEnum productType, decimal productCost,
-            Guid subscriptionOrgId, IList<Guid> groupMembershipIds = null,
-            DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null, string note = null)
-        {
+    [CanBeNull]
+    public async Task<Guid?> AddItemToNexportOrderInvoiceAsync(Guid invoiceId, Guid nexportProductId,
+        Enums.ProductTypeEnum productType, decimal productCost,
+        Guid subscriptionOrgId, IList<Guid> groupMembershipIds = null,
+        DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null, string note = null)
+    {
             AddInvoiceItemResponse addInvoiceItemResult;
 
             try
@@ -1438,8 +1438,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return addInvoiceItemResult?.InvoiceItemId;
         }
 
-        public async Task CommitNexportOrderInvoiceTransactionAsync(Guid invoiceId)
-        {
+    public async Task CommitNexportOrderInvoiceTransactionAsync(Guid invoiceId)
+    {
             try
             {
                 _nexportApiService.CommitNexportInvoiceTransaction(_nexportSettings.Url,
@@ -1464,9 +1464,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task AddPaymentToNexportOrderInvoiceAsync(Guid invoiceId, decimal totalCost, Guid payeeId, int nopOrderId,
-            DateTime dueDate)
-        {
+    public async Task AddPaymentToNexportOrderInvoiceAsync(Guid invoiceId, decimal totalCost, Guid payeeId, int nopOrderId,
+        DateTime dueDate)
+    {
             if (!_nexportSettings.MerchantAccountId.HasValue)
                 throw new Exception("Merchant account is empty. Cannot processing payment without a merchant account.");
 
@@ -1496,10 +1496,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task RedeemNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId,
-            RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction =
-                RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
-        {
+    public async Task RedeemNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId,
+        RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction =
+            RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
+    {
             if (invoiceItem == null)
                 throw new ArgumentNullException(nameof(invoiceItem));
 
@@ -1545,9 +1545,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        [CanBeNull]
-        public async Task<InvoiceRedemptionResponse> GetNexportInvoiceRedemptionAsync(Guid invoiceItemId)
-        {
+    [CanBeNull]
+    public async Task<InvoiceRedemptionResponse> GetNexportInvoiceRedemptionAsync(Guid invoiceItemId)
+    {
             if (invoiceItemId == Guid.Empty)
                 throw new ArgumentException("Invoice item Id cannot be an empty GUID");
 
@@ -1597,8 +1597,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public async Task<string> SignInNexportAsync(NexportOrderInvoiceItem invoiceItem)
-        {
+    public async Task<string> SignInNexportAsync(NexportOrderInvoiceItem invoiceItem)
+    {
             if (invoiceItem == null)
                 throw new ArgumentNullException(nameof(invoiceItem));
 
@@ -1678,8 +1678,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public async Task<string> SignInNexportAsync(Guid orgId, Guid userId)
-        {
+    public async Task<string> SignInNexportAsync(Guid orgId, Guid userId)
+    {
             if (orgId == Guid.Empty)
                 throw new ArgumentException("Organization Id cannot be null", nameof(orgId));
 
@@ -1712,8 +1712,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public async Task<string> SignInNexportClassroomAsync(Guid enrollmentId)
-        {
+    public async Task<string> SignInNexportClassroomAsync(Guid enrollmentId)
+    {
             try
             {
                 var response = _nexportApiService.NexportClassroomSingleSignOn(_nexportSettings.Url,
@@ -1742,8 +1742,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public async Task<List<MemberShipInfo>> AddNexportMembershipsAsync(Guid userId, IList<Guid> groupIds)
-        {
+    public async Task<List<MemberShipInfo>> AddNexportMembershipsAsync(Guid userId, IList<Guid> groupIds)
+    {
             if (userId == Guid.Empty)
                 throw new ArgumentException("User Id cannot be an empty identifier", nameof(userId));
 
@@ -1777,8 +1777,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task<List<RemovedMembershipInfo>> RemoveNexportMembershipsAsync(IList<Guid> membershipIds)
-        {
+    public async Task<List<RemovedMembershipInfo>> RemoveNexportMembershipsAsync(IList<Guid> membershipIds)
+    {
             try
             {
                 var removeMembershipResult = _nexportApiService.RemoveNexportMemberships(_nexportSettings.Url,
@@ -1809,8 +1809,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task<List<NexportOrganizationModel>> FindNexportRedemptionOrganizationsByCustomerId(int customerId, bool checkSubscription = false)
-        {
+    public async Task<List<NexportOrganizationModel>> FindNexportRedemptionOrganizationsByCustomerId(int customerId, bool checkSubscription = false)
+    {
             var orders = await _orderService.SearchOrdersAsync((await _storeContext.GetCurrentStoreAsync()).Id, customerId: customerId);
             var organizationModelList = new List<NexportOrganizationModel>();
             NexportUserMapping userMapping = null;
@@ -1863,8 +1863,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return organizationModelList;
         }
 
-        public async Task SyncNexportProductAsync(int mappingId, [CanBeNull] Product product = null)
-        {
+    public async Task SyncNexportProductAsync(int mappingId, [CanBeNull] Product product = null)
+    {
             if (mappingId == 0)
                 throw new ArgumentException("Mapping Id is invalid!", nameof(mappingId));
 
@@ -1947,8 +1947,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task AddOrderNoteAsync(Order order, string note, bool? displayToCustomer = null, DateTime? utcNoteCreationDate = null)
-        {
+    public async Task AddOrderNoteAsync(Order order, string note, bool? displayToCustomer = null, DateTime? utcNoteCreationDate = null)
+    {
             await _orderService.InsertOrderNoteAsync(new OrderNote
             {
                 OrderId = order.Id,
@@ -1958,8 +1958,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public async Task CreateAndMapNewNexportUserAsync(Customer customer)
-        {
+    public async Task CreateAndMapNewNexportUserAsync(Customer customer)
+    {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer), "Customer cannot be null");
 
@@ -2016,8 +2016,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task SynchronizeContactInfoFromNexportAsync(Customer customer, Guid nexportUserId)
-        {
+    public async Task SynchronizeContactInfoFromNexportAsync(Customer customer, Guid nexportUserId)
+    {
             var userContactInfo = await GetNexportUserContactInfoAsync(nexportUserId);
 
             if (userContactInfo != null)
@@ -2065,12 +2065,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        [CanBeNull]
-        public async Task<(Guid EnrollmentId, Enums.PhaseEnum Phase, Enums.ResultEnum Result,
+    [CanBeNull]
+    public async Task<(Guid EnrollmentId, Enums.PhaseEnum Phase, Enums.ResultEnum Result,
             DateTime? enrollementExpirationDate, int completionPercentage)?>
-            VerifyNexportEnrollmentStatusAsync(Product product, Customer customer,
+        VerifyNexportEnrollmentStatusAsync(Product product, Customer customer,
             int? storeId = null)
-        {
+    {
             var mapping = await GetProductMappingByNopProductId(product.Id, storeId) ?? await GetProductMappingByNopProductId(product.Id);
             if (mapping != null)
             {
@@ -2085,11 +2085,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public async Task<(Guid EnrollmentId, Enums.PhaseEnum Phase, Enums.ResultEnum Result,
-                DateTime? EnrollmentExpirationDate, int CompletionPercentage)?>
-            VerifyNexportEnrollmentStatusAsync(NexportProductMapping productMapping,
+    public async Task<(Guid EnrollmentId, Enums.PhaseEnum Phase, Enums.ResultEnum Result,
+            DateTime? EnrollmentExpirationDate, int CompletionPercentage)?>
+        VerifyNexportEnrollmentStatusAsync(NexportProductMapping productMapping,
             NexportUserMapping nexportUserMapping)
-        {
+    {
             if (productMapping == null)
                 throw new ArgumentNullException(nameof(productMapping), "Product mapping cannot be null!");
 
@@ -2152,8 +2152,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return null;
         }
 
-        public async Task<bool> CanPurchaseNexportProductAsync(Product product, Customer customer)
-        {
+    public async Task<bool> CanPurchaseNexportProductAsync(Product product, Customer customer)
+    {
             if (product == null)
                 throw new ArgumentNullException(nameof(product));
 
@@ -2245,9 +2245,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return true;
         }
 
-        public async Task<(ShoppingCartItem, Category)> CanPurchaseProductInNexportCategoryAsync(Product product,
-            int storeId)
-        {
+    public async Task<(ShoppingCartItem, Category)> CanPurchaseProductInNexportCategoryAsync(Product product,
+        int storeId)
+    {
             if (product == null)
                 throw new ArgumentNullException(nameof(product));
 
@@ -2284,9 +2284,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return (null, null);
         }
 
-        public async Task<bool> CanPurchaseDifferentProductInNexportCategoryAsync(Product product, Customer customer,
-            int storeId)
-        {
+    public async Task<bool> CanPurchaseDifferentProductInNexportCategoryAsync(Product product, Customer customer,
+        int storeId)
+    {
             if (product == null)
                 throw new ArgumentNullException(nameof(product));
 
@@ -2344,9 +2344,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return true;
         }
 
-        public async Task<bool> ExceedExtensionPurchaseLimitAsync(Customer customer, NexportProductMapping productMapping,
-            Guid enrollmentId)
-        {
+    public async Task<bool> ExceedExtensionPurchaseLimitAsync(Customer customer, NexportProductMapping productMapping,
+        Guid enrollmentId)
+    {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
 
@@ -2368,14 +2368,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return false;
         }
 
-        public async Task<string> GetStoreNameAsync(int storeId)
-        {
+    public async Task<string> GetStoreNameAsync(int storeId)
+    {
             var store = await _storeService.GetStoreByIdAsync(storeId);
             return store != null ? store.Name : "";
         }
 
-        public async Task<List<SelectListItem>> GetSupplementalInfoQuestionList()
-        {
+    public async Task<List<SelectListItem>> GetSupplementalInfoQuestionList()
+    {
             var supplementalInfoQuestions = await GetAllNexportSupplementalInfoQuestions();
             var listItems = supplementalInfoQuestions.Select(s => new SelectListItem
             {
@@ -2386,8 +2386,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await listItems.Select(item => new SelectListItem { Text = item.Text, Value = item.Value }).ToListAsync();
         }
 
-        public async Task<List<int>> GetUnansweredQuestions(int customerId, int storeId, List<int> questionIds)
-        {
+    public async Task<List<int>> GetUnansweredQuestions(int customerId, int storeId, List<int> questionIds)
+    {
             var currentAnswers = await GetNexportSupplementalInfoAnswers(customerId, storeId);
             var currentAnswered =
                 currentAnswers.Where(x => questionIds.Contains(x.QuestionId)).ToList();
@@ -2398,8 +2398,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await questionIds.Except(questionWithAnswerIds).ToListAsync();
         }
 
-        public async Task<List<SelectListItem>> GetRegistrationFieldCategoryList()
-        {
+    public async Task<List<SelectListItem>> GetRegistrationFieldCategoryList()
+    {
             var registrationFieldCategories = await GetNexportRegistrationFieldCategories();
             var listItems = registrationFieldCategories.Select(s => new SelectListItem
             {
@@ -2414,9 +2414,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public async Task<Dictionary<int, string>> ParseRegistrationFieldsAsync(IFormCollection form,
-            int? storeId = null)
-        {
+    public async Task<Dictionary<int, string>> ParseRegistrationFieldsAsync(IFormCollection form,
+        int? storeId = null)
+    {
             if (form == null)
                 throw new ArgumentNullException(nameof(form));
 
@@ -2444,9 +2444,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public async Task<Dictionary<int, Dictionary<string, string>>> ParseCustomRegistrationFieldsAsync(
-            IFormCollection form, int? storeId = null)
-        {
+    public async Task<Dictionary<int, Dictionary<string, string>>> ParseCustomRegistrationFieldsAsync(
+        IFormCollection form, int? storeId = null)
+    {
             if (form == null)
                 throw new ArgumentNullException(nameof(form));
 
@@ -2475,8 +2475,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public virtual async Task<IList<string>> GetRegistrationFieldWarnings(Dictionary<int, string> fields)
-        {
+    public virtual async Task<IList<string>> GetRegistrationFieldWarnings(Dictionary<int, string> fields)
+    {
             var warnings = new List<string>();
 
             foreach (var field in fields)
@@ -2517,8 +2517,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return warnings;
         }
 
-        public virtual async Task<IList<string>> GetCustomRegistrationFieldWarnings(Dictionary<int, Dictionary<string, string>> fields)
-        {
+    public virtual async Task<IList<string>> GetCustomRegistrationFieldWarnings(Dictionary<int, Dictionary<string, string>> fields)
+    {
             var warnings = new List<string>();
 
             //foreach (var customField in fields)
@@ -2528,8 +2528,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return warnings;
         }
 
-        public virtual async Task SaveNexportRegistrationFields(Customer customer, Dictionary<int, string> fields)
-        {
+    public virtual async Task SaveNexportRegistrationFields(Customer customer, Dictionary<int, string> fields)
+    {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
 
@@ -2601,9 +2601,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public virtual async Task<Dictionary<string, string>> ConvertFieldAnswersToSubmissionProfileFields(
-            IList<NexportRegistrationFieldAnswer> fieldAnswers)
-        {
+    public virtual async Task<Dictionary<string, string>> ConvertFieldAnswersToSubmissionProfileFields(
+        IList<NexportRegistrationFieldAnswer> fieldAnswers)
+    {
             var result = new Dictionary<string, string>();
 
             var fieldAnswersByFieldId = fieldAnswers
@@ -2660,9 +2660,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public async Task<Dictionary<string, string>> ConvertCustomFieldAnswersToSubmissionProfileFieldsAsync(
-            IList<NexportRegistrationFieldAnswer> fieldAnswers)
-        {
+    public async Task<Dictionary<string, string>> ConvertCustomFieldAnswersToSubmissionProfileFieldsAsync(
+        IList<NexportRegistrationFieldAnswer> fieldAnswers)
+    {
             var result = new Dictionary<string, string>();
 
             foreach (var answer in fieldAnswers)
@@ -2686,8 +2686,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public async Task<IList<NexportRegistrationFieldCustomRender>> GetNexportRegistrationFieldCustomRendersAsync()
-        {
+    public async Task<IList<NexportRegistrationFieldCustomRender>> GetNexportRegistrationFieldCustomRendersAsync()
+    {
             var availablePlugins = await (await _registrationFieldCustomRenderPluginManager.LoadAllPluginsAsync()).ToListAsync();
 
             var list = new List<NexportRegistrationFieldCustomRender>();
@@ -2709,8 +2709,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return list;
         }
 
-        public async Task<List<SelectListItem>> GetCustomRegistrationFieldRendersAsync()
-        {
+    public async Task<List<SelectListItem>> GetCustomRegistrationFieldRendersAsync()
+    {
             var customRegistrationFieldRenders = await GetNexportRegistrationFieldCustomRendersAsync();
             var listItems = customRegistrationFieldRenders.Select(s => new SelectListItem
             {
@@ -2729,8 +2729,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public virtual async Task<PagedList<Store>> GetAllStoresAsync(string storeName, string storeUrl, int pageIndex = 0, int pageSize = int.MaxValue, bool excludeDeleted = true)
-        {
+    public virtual async Task<PagedList<Store>> GetAllStoresAsync(string storeName, string storeUrl, int pageIndex = 0, int pageSize = int.MaxValue, bool excludeDeleted = true)
+    {
             var stores = await _storeRepository.GetAllAsync(async query =>
             {
                 if(excludeDeleted)
@@ -2745,5 +2745,4 @@ namespace Nop.Plugin.Misc.Nexport.Services
             //paging
             return new PagedList<Store>(stores, pageIndex, pageSize);
         }
-    }
 }

@@ -1,13 +1,12 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Archway.Models
+namespace Nop.Plugin.Misc.Nexport.Archway.Models;
+
+public record ArchwayStoreAddressModel : BaseNopModel
 {
-    public record ArchwayStoreAddressModel : BaseNopModel
-    {
-        public int storeNumber { get; set; }
+    public int storeNumber { get; set; }
 
-        public string name { get; set; }
+    public string name { get; set; }
 
-        public string storeType { get; set; }
-    }
+    public string storeType { get; set; }
 }

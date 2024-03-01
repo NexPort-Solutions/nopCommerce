@@ -11,32 +11,32 @@ using Nop.Services.Cms;
 using Nop.Services.Logging;
 using Nop.Services.ScheduleTasks;
 
-namespace Nop.Plugin.Misc.Nexport.Services.Tasks
+namespace Nop.Plugin.Misc.Nexport.Services.Tasks;
+
+public class NexportRegistrationFieldSynchronizationTask : IScheduleTask
 {
-    public class NexportRegistrationFieldSynchronizationTask : IScheduleTask
+    private readonly ILogger _logger;
+    private readonly IWidgetPluginManager _widgetPluginManager;
+    private readonly NexportService _nexportService;
+    private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
+
+    private int _batchSize = 100;
+    private const int MAX_ATTEMPT_COUNT = 5;
+
+    public NexportRegistrationFieldSynchronizationTask(
+        IWidgetPluginManager widgetPluginManager,
+        ILogger logger,
+        IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
+        NexportService nexportService)
     {
-        private readonly ILogger _logger;
-        private readonly IWidgetPluginManager _widgetPluginManager;
-        private readonly NexportService _nexportService;
-        private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
-
-        private int _batchSize = 100;
-        private const int MAX_ATTEMPT_COUNT = 5;
-
-        public NexportRegistrationFieldSynchronizationTask(
-            IWidgetPluginManager widgetPluginManager,
-            ILogger logger,
-            IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
-            NexportService nexportService)
-        {
             _widgetPluginManager = widgetPluginManager;
             _logger = logger;
             _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
             _nexportService = nexportService;
         }
 
-        public async Task ExecuteAsync()
-        {
+    public async Task ExecuteAsync()
+    {
             if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
                 return;
 
@@ -57,8 +57,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             }
         }
 
-        public async Task SynchronizeRegistrationFieldsAsync(IList<int> queueItemIds)
-        {
+    public async Task SynchronizeRegistrationFieldsAsync(IList<int> queueItemIds)
+    {
             try
             {
                 foreach (var queueItemId in queueItemIds)
@@ -118,8 +118,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             }
         }
 
-        private async Task SynchronizeRegistrationFields(NexportRegistrationFieldSynchronizationQueueItem syncItem, NexportUserMapping userMapping)
-        {
+    private async Task SynchronizeRegistrationFields(NexportRegistrationFieldSynchronizationQueueItem syncItem, NexportUserMapping userMapping)
+    {
             if (syncItem == null)
                 throw new ArgumentNullException(nameof(syncItem));
 
@@ -180,5 +180,4 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 }
             }
         }
-    }
 }

@@ -11,9 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Nop.Core;
 using Nop.Core.Domain.Cms;
 using Nop.Core.Domain.Customers;
-using Nop.Core.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Archway.Components;
-using Nop.Services.Cms;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Logging;
@@ -22,184 +20,189 @@ using Nop.Plugin.Misc.Nexport.Archway.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Archway.Services;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Cms;
+using Nop.Web.Framework.Infrastructure;
 
-namespace Nop.Plugin.Misc.Nexport.Archway
+namespace Nop.Plugin.Misc.Nexport.Archway;
+
+[CustomRegistrationFieldRender]
+public class ArchwayPlugin : BasePlugin, IMiscPlugin, IWidgetPlugin, IRegistrationFieldCustomRender
 {
-    [CustomRegistrationFieldRender]
-    public class ArchwayPlugin : BasePlugin, IMiscPlugin, IRegistrationFieldCustomRender
+    private readonly ArchwayPluginService _archwayPluginService;
+    private readonly IArchwayStudentEmployeeRegistrationFieldService _archwayStudentEmployeeRegistrationFieldService;
+    private readonly IUrlHelperFactory _urlHelperFactory;
+    private readonly IActionContextAccessor _actionContextAccessor;
+    private readonly ISettingService _settingService;
+    private readonly WidgetSettings _widgetSettings;
+    private readonly IWorkContext _workContext;
+    private readonly IWebHelper _webHelper;
+    private readonly ILogger _logger;
+
+    public ArchwayPlugin(
+        ArchwayPluginService archwayPluginService,
+        IArchwayStudentEmployeeRegistrationFieldService archwayStudentEmployeeRegistrationFieldService,
+        IUrlHelperFactory urlHelperFactory,
+        IActionContextAccessor actionContextAccessor,
+        WidgetSettings widgetSetting,
+        ISettingService settingService,
+        IWorkContext workContext,
+        IWebHelper webHelper, ILogger logger)
     {
-        private readonly ArchwayPluginService _archwayPluginService;
-        private readonly IArchwayStudentEmployeeRegistrationFieldService _archwayStudentEmployeeRegistrationFieldService;
-        private readonly IUrlHelperFactory _urlHelperFactory;
-        private readonly IActionContextAccessor _actionContextAccessor;
-        private readonly ISettingService _settingService;
-        private readonly WidgetSettings _widgetSettings;
-        private readonly IWorkContext _workContext;
-        private readonly IWebHelper _webHelper;
-        private readonly ILogger _logger;
+        _archwayPluginService = archwayPluginService;
+        _archwayStudentEmployeeRegistrationFieldService = archwayStudentEmployeeRegistrationFieldService;
+        _urlHelperFactory = urlHelperFactory;
+        _actionContextAccessor = actionContextAccessor;
+        _widgetSettings = widgetSetting;
+        _settingService = settingService;
+        _workContext = workContext;
+        _webHelper = webHelper;
+        _logger = logger;
+    }
 
-        public ArchwayPlugin(
-            ArchwayPluginService archwayPluginService,
-            IArchwayStudentEmployeeRegistrationFieldService archwayStudentEmployeeRegistrationFieldService,
-            IUrlHelperFactory urlHelperFactory,
-            IActionContextAccessor actionContextAccessor,
-            WidgetSettings widgetSetting,
-            ISettingService settingService,
-            IWorkContext workContext,
-            IWebHelper webHelper, ILogger logger)
+    public override async Task InstallAsync()
+    {
+        try
         {
-            _archwayPluginService = archwayPluginService;
-            _archwayStudentEmployeeRegistrationFieldService = archwayStudentEmployeeRegistrationFieldService;
-            _urlHelperFactory = urlHelperFactory;
-            _actionContextAccessor = actionContextAccessor;
-            _widgetSettings = widgetSetting;
-            _settingService = settingService;
-            _workContext = workContext;
-            _webHelper = webHelper;
-            _logger = logger;
-        }
-
-        public override async Task InstallAsync()
-        {
+            var migratorRunnerService = PluginStartup.CreateFluentMigratorRunnerService();
+            using var serviceScope = migratorRunnerService.CreateScope();
+            var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
             try
             {
-                var migratorRunnerService = PluginStartup.CreateFluentMigratorRunnerService();
-                using var serviceScope = migratorRunnerService.CreateScope();
-                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-                try
-                {
-                    runner.MigrateUp();
-                }
-                catch (MissingMigrationsException)
-                {
-                    // ignored
-                }
+                runner.MigrateUp();
             }
-            catch (Exception ex)
+            catch (MissingMigrationsException)
             {
-                await _logger.ErrorAsync($"Error occurred during database migration process: {ex.Message}", ex);
+                // ignored
             }
-
-            if (!_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
-            {
-                _widgetSettings.ActiveWidgetSystemNames.Add(PluginDefaults.SystemName);
-                await _settingService.SaveSettingAsync(_widgetSettings);
-            }
-
-            await _archwayPluginService.AddOrUpdateResourcesAsync();
-
-            await base.InstallAsync();
+        }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync($"Error occurred during database migration process: {ex.Message}", ex);
         }
 
-        public override async Task UninstallAsync()
+        if (!_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
         {
-            if (_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
-            {
-                _widgetSettings.ActiveWidgetSystemNames.Remove(PluginDefaults.SystemName);
-                await _settingService.SaveSettingAsync(_widgetSettings);
-            }
+            _widgetSettings.ActiveWidgetSystemNames.Add(PluginDefaults.SystemName);
+            await _settingService.SaveSettingAsync(_widgetSettings);
+        }
 
-            await _archwayPluginService.DeleteResourcesAsync();
+        await _archwayPluginService.AddOrUpdateResourcesAsync();
 
+        await base.InstallAsync();
+    }
+
+    public override async Task UninstallAsync()
+    {
+        if (_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
+        {
+            _widgetSettings.ActiveWidgetSystemNames.Remove(PluginDefaults.SystemName);
+            await _settingService.SaveSettingAsync(_widgetSettings);
+        }
+
+        await _archwayPluginService.DeleteResourcesAsync();
+
+        try
+        {
+            var migratorRunnerService = PluginStartup.CreateFluentMigratorRunnerService();
+            using var serviceScope = migratorRunnerService.CreateScope();
+            var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
             try
             {
-                var migratorRunnerService = PluginStartup.CreateFluentMigratorRunnerService();
-                using var serviceScope = migratorRunnerService.CreateScope();
-                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-                try
-                {
-                    runner.MigrateDown(0);
-                    ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
-                }
-                catch (MissingMigrationsException)
-                {
-                    // ignored
-                }
+                runner.MigrateDown(0);
+                ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
             }
-            catch (Exception ex)
+            catch (MissingMigrationsException)
             {
-                await _logger.ErrorAsync($"Error occurred while removing plugin {PluginDefaults.SystemName} version table : {ex.Message}", ex);
+                // ignored
             }
-
-            await base.UninstallAsync();
         }
-
-        public string GetRenderOptionUrl(int fieldId)
+        catch (Exception ex)
         {
-            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-
-            return urlHelper.Action("Configure", "ArchwayEmployeeRegistrationField",
-                new { fieldId }, _webHelper.GetCurrentRequestProtocol());
+            await _logger.ErrorAsync($"Error occurred while removing plugin {PluginDefaults.SystemName} version table : {ex.Message}", ex);
         }
 
-        public Task<string> GetCustomRenderUrl(int fieldId, bool renderAdminView)
+        await base.UninstallAsync();
+    }
+
+    public string GetRenderOptionUrl(int fieldId)
+    {
+        var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+
+        return urlHelper.Action("Configure", "ArchwayEmployeeRegistrationField",
+            new { fieldId }, _webHelper.GetCurrentRequestProtocol());
+    }
+
+    public Task<string> GetCustomRenderUrl(int fieldId, bool renderAdminView)
+    {
+        var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+
+        return Task.FromResult(urlHelper.Action("CustomRender", "ArchwayEmployeeRegistrationField",
+            new { fieldId }, _webHelper.GetCurrentRequestProtocol()));
+    }
+
+    public string GetCustomFieldPrefix()
+    {
+        return PluginDefaults.HtmlFieldPrefix;
+    }
+
+    public async Task<Dictionary<string, string>> ParseCustomRegistrationFields(int fieldId, IFormCollection form)
+    {
+        return await _archwayStudentEmployeeRegistrationFieldService
+            .ParseArchwayStoreEmployeeRegistrationFields(fieldId, form);
+    }
+
+    public async Task SaveCustomRegistrationFields(Customer customer, int fieldId, Dictionary<string, string> fields)
+    {
+        await _archwayStudentEmployeeRegistrationFieldService
+            .SaveArchwayStoreEmployeeRegistrationFields(customer, fieldId, fields);
+    }
+
+    public async Task<Dictionary<string, string>> ProcessCustomRegistrationFields(int customerId, int fieldId)
+    {
+        return await _archwayStudentEmployeeRegistrationFieldService
+            .ProcessArchwayStoreEmployeeRegistrationFields(customerId, fieldId);
+    }
+
+    public async Task<Dictionary<string, string>> GetCustomFieldNamesAndValues(int customerId, int fieldId)
+    {
+        return await _archwayStudentEmployeeRegistrationFieldService.GetCustomFieldNamesAndValues(customerId, fieldId);
+    }
+
+    public string GetEditCustomerRegistrationFieldAnswersViewUrl(int customerId, int fieldId)
+    {
+        var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+
+        return urlHelper.Action("EditCustomerRegistrationFieldAnswers", "ArchwayEmployeeRegistrationField",
+            new { customerId = customerId, fieldId = fieldId }, _webHelper.GetCurrentRequestProtocol());
+    }
+
+    public async Task UpdateCustomRegistrationFieldAnswers(int customerId, int fieldId, Dictionary<string, string> fields)
+    {
+        await _archwayStudentEmployeeRegistrationFieldService.UpdateArchwayStudentRegistrationFieldAnswersForCustomer(customerId, fieldId, fields);
+    }
+
+    public bool HideInWidgetList => true;
+
+    public Task<IList<string>> GetWidgetZonesAsync()
+    {
+        return Task.FromResult<IList<string>>(new List<string>
         {
-            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+            NexportDefaults.NexportCustomRegistrationFieldZone,
+            AdminWidgetZones.PluginDetailsBottom
+        });
+    }
 
-            return Task.FromResult(urlHelper.Action("CustomRender", "ArchwayEmployeeRegistrationField",
-                new { fieldId }, _webHelper.GetCurrentRequestProtocol()));
-        }
+    public Type GetWidgetViewComponent(string widgetZone)
+    {
+        if (widgetZone == null)
+            throw new ArgumentNullException(nameof(widgetZone));
 
-        public string GetCustomFieldPrefix()
-        {
-            return PluginDefaults.HtmlFieldPrefix;
-        }
+        if (widgetZone == NexportDefaults.NexportCustomRegistrationFieldZone)
+            return typeof(ArchwayCustomRegistrationFieldDetailsWidget);
 
-        public async Task<Dictionary<string, string>> ParseCustomRegistrationFields(int fieldId, IFormCollection form)
-        {
-            return await _archwayStudentEmployeeRegistrationFieldService
-                .ParseArchwayStoreEmployeeRegistrationFields(fieldId, form);
-        }
+        if (widgetZone == AdminWidgetZones.PluginDetailsBottom)
+            return typeof(WidgetsArchwayModifiedLocaleResourcesDataTableBlock);
 
-        public async Task SaveCustomRegistrationFields(Customer customer, int fieldId, Dictionary<string, string> fields)
-        {
-            await _archwayStudentEmployeeRegistrationFieldService
-                .SaveArchwayStoreEmployeeRegistrationFields(customer, fieldId, fields);
-        }
-
-        public async Task<Dictionary<string, string>> ProcessCustomRegistrationFields(int customerId, int fieldId)
-        {
-            return await _archwayStudentEmployeeRegistrationFieldService
-                .ProcessArchwayStoreEmployeeRegistrationFields(customerId, fieldId);
-        }
-
-        public async Task<Dictionary<string, string>> GetCustomFieldNamesAndValues(int customerId, int fieldId)
-        {
-            return await _archwayStudentEmployeeRegistrationFieldService.GetCustomFieldNamesAndValues(customerId, fieldId);
-        }
-
-        public string GetEditCustomerRegistrationFieldAnswersViewUrl(int customerId, int fieldId)
-        {
-            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-
-            return urlHelper.Action("EditCustomerRegistrationFieldAnswers", "ArchwayEmployeeRegistrationField",
-                new { customerId = customerId, fieldId = fieldId }, _webHelper.GetCurrentRequestProtocol());
-        }
-
-        public async Task UpdateCustomRegistrationFieldAnswers(int customerId, int fieldId, Dictionary<string, string> fields)
-        {
-            await _archwayStudentEmployeeRegistrationFieldService.UpdateArchwayStudentRegistrationFieldAnswersForCustomer(customerId, fieldId, fields);
-        }
-
-        public bool HideInWidgetList => true;
-
-        //public Type GetWidgetViewComponent(string widgetZone)
-        //{
-        //    if (widgetZone == null)
-        //        throw new ArgumentNullException(nameof(widgetZone));
-
-        //    if (widgetZone == NexportDefaults.NexportCustomRegistrationFieldZone)
-        //        return typeof(ArchwayCustomRegistrationFieldDetailsWidget);
-
-        //    return null;
-        //}
-
-        //public Task<IList<string>> GetWidgetZonesAsync()
-        //{
-        //    return Task.FromResult<IList<string>>(new List<string>
-        //    {
-        //        NexportDefaults.NexportCustomRegistrationFieldZone
-        //    });
-        //}
+        return null;
     }
 }

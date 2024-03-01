@@ -12,29 +12,29 @@ using Nop.Web.Areas.Admin.Controllers;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Services;
 
-namespace Nop.Plugin.Misc.Nexport.Filters
-{
-    public class ProductEditActionFilter : ActionFilterAttribute
-    {
-        private readonly INotificationService _notificationService;
-        private readonly IProductService _productService;
-        private readonly NexportService _nexportService;
-        private readonly ITempDataDictionaryFactory _tempDataDictionaryFactory;
+namespace Nop.Plugin.Misc.Nexport.Filters;
 
-        public ProductEditActionFilter(
-            INotificationService notificationService,
-            IProductService productService,
-            NexportService nexportService,
-            ITempDataDictionaryFactory tempDataDictionaryFactory)
-        {
+public class ProductEditActionFilter : ActionFilterAttribute
+{
+    private readonly INotificationService _notificationService;
+    private readonly IProductService _productService;
+    private readonly NexportService _nexportService;
+    private readonly ITempDataDictionaryFactory _tempDataDictionaryFactory;
+
+    public ProductEditActionFilter(
+        INotificationService notificationService,
+        IProductService productService,
+        NexportService nexportService,
+        ITempDataDictionaryFactory tempDataDictionaryFactory)
+    {
             _notificationService = notificationService;
             _productService = productService;
             _nexportService = nexportService;
             _tempDataDictionaryFactory = tempDataDictionaryFactory;
         }
 
-        public override async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
-        {
+    public override async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
+    {
             if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
@@ -67,8 +67,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             await base.OnResultExecutionAsync(context, next);
         }
 
-        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
-        {
+    public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    {
             if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
@@ -105,8 +105,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             await base.OnActionExecutionAsync(context, next);
         }
 
-        private static int? GetProductId(ActionExecutingContext context)
-        {
+    private static int? GetProductId(ActionExecutingContext context)
+    {
             if (context.ActionArguments.TryGetValue("model", out var value)
                 && value is ProductModel model)
             {
@@ -115,5 +115,4 @@ namespace Nop.Plugin.Misc.Nexport.Filters
 
             return null;
         }
-    }
 }

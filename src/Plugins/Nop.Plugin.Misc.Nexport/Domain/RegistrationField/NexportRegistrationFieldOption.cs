@@ -1,13 +1,12 @@
 ﻿using Nop.Core;
 
-namespace Nop.Plugin.Misc.Nexport.Domain.RegistrationField
+namespace Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
+
+public class NexportRegistrationFieldOption : BaseEntity
 {
-    public class NexportRegistrationFieldOption : BaseEntity
-    {
-        public int FieldId { get; set; }
+    public int FieldId { get; set; }
 
-        public string OptionValue { get; set; }
+    public string OptionValue { get; set; }
 
-        public int DisplayOrder { get; set; }
-    }
+    public int DisplayOrder { get; set; }
 }

@@ -10,26 +10,26 @@ using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Security;
 
-namespace Nop.Plugin.Misc.Nexport.Components
-{
-    [ViewComponent(Name = "WidgetsNexportOrderDetailsBlock")]
-    public class WidgetsNexportOrderDetailsBlock : NopViewComponent
-    {
-        private readonly NexportSettings _nexportSettings;
-        private readonly NexportService _nexportService;
-        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
-        private readonly IOrderService _orderService;
-        private readonly IPermissionService _permissionService;
-        private readonly IGenericAttributeService _genericAttributeService;
+namespace Nop.Plugin.Misc.Nexport.Components;
 
-        public WidgetsNexportOrderDetailsBlock(
-            NexportSettings nexportSettings,
-            NexportService nexportService,
-            INexportPluginModelFactory nexportPluginModelFactory,
-            IOrderService orderService,
-            IPermissionService permissionService,
-            IGenericAttributeService genericAttributeService)
-        {
+[ViewComponent(Name = "WidgetsNexportOrderDetailsBlock")]
+public class WidgetsNexportOrderDetailsBlock : NopViewComponent
+{
+    private readonly NexportSettings _nexportSettings;
+    private readonly NexportService _nexportService;
+    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+    private readonly IOrderService _orderService;
+    private readonly IPermissionService _permissionService;
+    private readonly IGenericAttributeService _genericAttributeService;
+
+    public WidgetsNexportOrderDetailsBlock(
+        NexportSettings nexportSettings,
+        NexportService nexportService,
+        INexportPluginModelFactory nexportPluginModelFactory,
+        IOrderService orderService,
+        IPermissionService permissionService,
+        IGenericAttributeService genericAttributeService)
+    {
             _nexportSettings = nexportSettings;
             _nexportService = nexportService;
             _nexportPluginModelFactory = nexportPluginModelFactory;
@@ -38,8 +38,8 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _permissionService = permissionService;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
                 !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportOrderInvoice))
                 return Content("");
@@ -65,5 +65,4 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
             return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Order/NexportOrderDetails.cshtml", model);
         }
-    }
 }

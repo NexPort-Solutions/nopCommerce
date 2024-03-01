@@ -9,24 +9,24 @@ using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Security;
 
-namespace Nop.Plugin.Misc.Nexport.Components
-{
-    [ViewComponent(Name = "WidgetsNexportProductMappingsInProductPage")]
-    public class WidgetsNexportProductMappingsInProductPage : NopViewComponent
-    {
-        private readonly NexportSettings _nexportSettings;
-        private readonly IStaticCacheManager _cacheManager;
-        private readonly NexportService _nexportService;
-        private readonly IPermissionService _permissionService;
-        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+namespace Nop.Plugin.Misc.Nexport.Components;
 
-        public WidgetsNexportProductMappingsInProductPage(
-            NexportSettings nexportSettings,
-            NexportService nexportService,
-            IStaticCacheManager cacheManager,
-            IPermissionService permissionService,
+[ViewComponent(Name = "WidgetsNexportProductMappingsInProductPage")]
+public class WidgetsNexportProductMappingsInProductPage : NopViewComponent
+{
+    private readonly NexportSettings _nexportSettings;
+    private readonly IStaticCacheManager _cacheManager;
+    private readonly NexportService _nexportService;
+    private readonly IPermissionService _permissionService;
+    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+
+    public WidgetsNexportProductMappingsInProductPage(
+        NexportSettings nexportSettings,
+        NexportService nexportService,
+        IStaticCacheManager cacheManager,
+        IPermissionService permissionService,
         INexportPluginModelFactory nexportPluginModelFactory)
-        {
+    {
             _nexportSettings = nexportSettings;
             _nexportService = nexportService;
             _cacheManager = cacheManager;
@@ -34,8 +34,8 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _nexportPluginModelFactory = nexportPluginModelFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
                 !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
                 return Content("");
@@ -49,5 +49,4 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductMappingsInProductPage.cshtml", model);
         }
-    }
 }

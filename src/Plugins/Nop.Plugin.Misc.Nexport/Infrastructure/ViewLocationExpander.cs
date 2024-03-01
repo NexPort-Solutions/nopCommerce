@@ -1,23 +1,39 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Nop.Core.Infrastructure;
+using Nop.Web.Framework.Themes;
+using Nop.Web.Framework;
 
-namespace Nop.Plugin.Misc.Nexport.Infrastructure
+namespace Nop.Plugin.Misc.Nexport.Infrastructure;
+
+public class ViewLocationExpander : IViewLocationExpander
 {
-    public class ViewLocationExpander : IViewLocationExpander
-    {
-        public void PopulateValues(ViewLocationExpanderContext context)
-        {
-        }
+    private const string THEME_KEY = "nop.themename";
 
-        public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
+    public void PopulateValues(ViewLocationExpanderContext context)
+    {
+        if (context.AreaName?.Equals(AreaNames.Admin) ?? false)
+            return;
+
+        context.Values[THEME_KEY] = EngineContext.Current.Resolve<IThemeContext>().GetWorkingThemeNameAsync().Result;
+    }
+
+    public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
+    {
+        viewLocations = new[] {
+            "/Plugins/Misc.Nexport/Views/{1}/{0}.cshtml",
+            "/Plugins/Misc.Nexport/Areas/Admin/Views/{1}/{0}.cshtml"
+        }.Concat(viewLocations);
+
+        if (context.Values.TryGetValue(THEME_KEY, out var theme))
         {
             viewLocations = new[] {
-                "/Plugins/Misc.Nexport/Views/{1}/{0}.cshtml",
-                "/Plugins/Misc.Nexport/Areas/Admin/Views/{1}/{0}.cshtml"
+                $"/Themes/{theme}/Views/{{1}}/{{0}}.cshtml",
+                $"/Themes/{theme}/Views/Shared/{{0}}.cshtml",
             }.Concat(viewLocations);
-
-            return viewLocations;
         }
+
+        return viewLocations;
     }
 }

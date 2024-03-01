@@ -14,27 +14,27 @@ using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Customers;
 
-namespace Nop.Plugin.Misc.Nexport.Filters
-{
-    public class ProductDetailsActionFilter : ActionFilterAttribute
-    {
-        private readonly ICustomerService _customerService;
-        private readonly IProductService _productService;
-        private readonly IShoppingCartService _shoppingCartService;
-        private readonly IGenericAttributeService _genericAttributeService;
-        private readonly IStoreContext _storeContext;
-        private readonly IWorkContext _workContext;
-        private readonly NexportService _nexportService;
+namespace Nop.Plugin.Misc.Nexport.Filters;
 
-        public ProductDetailsActionFilter(
-            ICustomerService customerService,
-            IProductService productService,
-            IShoppingCartService shoppingCartService,
-            IGenericAttributeService genericAttributeService,
-            IStoreContext storeContext,
-            IWorkContext workContext,
-            NexportService nexportService)
-        {
+public class ProductDetailsActionFilter : ActionFilterAttribute
+{
+    private readonly ICustomerService _customerService;
+    private readonly IProductService _productService;
+    private readonly IShoppingCartService _shoppingCartService;
+    private readonly IGenericAttributeService _genericAttributeService;
+    private readonly IStoreContext _storeContext;
+    private readonly IWorkContext _workContext;
+    private readonly NexportService _nexportService;
+
+    public ProductDetailsActionFilter(
+        ICustomerService customerService,
+        IProductService productService,
+        IShoppingCartService shoppingCartService,
+        IGenericAttributeService genericAttributeService,
+        IStoreContext storeContext,
+        IWorkContext workContext,
+        NexportService nexportService)
+    {
             _customerService = customerService;
             _productService = productService;
             _shoppingCartService = shoppingCartService;
@@ -44,8 +44,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             _nexportService = nexportService;
         }
 
-        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
-        {
+    public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    {
             if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
@@ -103,5 +103,4 @@ namespace Nop.Plugin.Misc.Nexport.Filters
 
             await base.OnActionExecutionAsync(context, next);
         }
-    }
 }

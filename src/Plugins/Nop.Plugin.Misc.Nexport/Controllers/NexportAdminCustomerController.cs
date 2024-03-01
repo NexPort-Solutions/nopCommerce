@@ -32,97 +32,97 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Web.Framework.Controllers;
 
-namespace Nop.Plugin.Misc.Nexport.Controllers
+namespace Nop.Plugin.Misc.Nexport.Controllers;
+
+public class NexportAdminCustomerController : CustomerController
 {
-    public class NexportAdminCustomerController : CustomerController
+    #region Fields
+
+    private readonly CustomerSettings _customerSettings;
+    private readonly DateTimeSettings _dateTimeSettings;
+    private readonly EmailAccountSettings _emailAccountSettings;
+    private readonly ForumSettings _forumSettings;
+    private readonly GdprSettings _gdprSettings;
+    private readonly IAddressAttributeParser _addressAttributeParser;
+    private readonly IAddressService _addressService;
+    private readonly ICustomerActivityService _customerActivityService;
+    private readonly ICustomerAttributeParser _customerAttributeParser;
+    private readonly ICustomerAttributeService _customerAttributeService;
+    private readonly ICustomerModelFactory _customerModelFactory;
+    private readonly ICustomerRegistrationService _customerRegistrationService;
+    private readonly ICustomerService _customerService;
+    private readonly IDateTimeHelper _dateTimeHelper;
+    private readonly IEmailAccountService _emailAccountService;
+    private readonly IEventPublisher _eventPublisher;
+    private readonly IExportManager _exportManager;
+    private readonly IForumService _forumService;
+    private readonly IGdprService _gdprService;
+    private readonly IGenericAttributeService _genericAttributeService;
+    private readonly ILocalizationService _localizationService;
+    private readonly INewsLetterSubscriptionService _newsLetterSubscriptionService;
+    private readonly INotificationService _notificationService;
+    private readonly IPermissionService _permissionService;
+    private readonly IQueuedEmailService _queuedEmailService;
+    private readonly IRewardPointService _rewardPointService;
+    private readonly IStoreContext _storeContext;
+    private readonly IStoreService _storeService;
+    private readonly ITaxService _taxService;
+    private readonly IWorkContext _workContext;
+    private readonly IWorkflowMessageService _workflowMessageService;
+    private readonly TaxSettings _taxSettings;
+    private readonly NexportService _nexportService;
+    private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
+    private readonly ILogger _logger;
+
+    #endregion
+
+    #region Constructor
+
+    public NexportAdminCustomerController(CustomerSettings customerSettings,
+        DateTimeSettings dateTimeSettings,
+        EmailAccountSettings emailAccountSettings,
+        ForumSettings forumSettings,
+        GdprSettings gdprSettings,
+        IAddressAttributeParser addressAttributeParser,
+        IAddressService addressService,
+        ICustomerActivityService customerActivityService,
+        ICustomerAttributeParser customerAttributeParser,
+        ICustomerAttributeService customerAttributeService,
+        ICustomerModelFactory customerModelFactory,
+        ICustomerRegistrationService customerRegistrationService,
+        ICustomerService customerService,
+        IDateTimeHelper dateTimeHelper,
+        IEmailAccountService emailAccountService,
+        IEventPublisher eventPublisher,
+        IExportManager exportManager,
+        IForumService forumService,
+        IGdprService gdprService,
+        IGenericAttributeService genericAttributeService,
+        ILocalizationService localizationService,
+        INewsLetterSubscriptionService newsLetterSubscriptionService,
+        INotificationService notificationService,
+        IPermissionService permissionService,
+        IQueuedEmailService queuedEmailService,
+        IRewardPointService rewardPointService,
+        IStoreContext storeContext,
+        IStoreService storeService,
+        ITaxService taxService,
+        IWorkContext workContext,
+        IWorkflowMessageService workflowMessageService,
+        TaxSettings taxSettings,
+        NexportService nexportService,
+        IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
+        ILogger logger) :
+        base(customerSettings, dateTimeSettings, emailAccountSettings,
+            forumSettings, gdprSettings, addressAttributeParser, addressService,
+            customerActivityService, customerAttributeParser, customerAttributeService, customerModelFactory, customerRegistrationService,
+            customerService, dateTimeHelper, emailAccountService, eventPublisher,
+            exportManager, forumService, gdprService, genericAttributeService,
+            localizationService, newsLetterSubscriptionService, notificationService,
+            permissionService, queuedEmailService, rewardPointService,
+            storeContext, storeService, taxService, workContext,
+            workflowMessageService, taxSettings)
     {
-        #region Fields
-
-        private readonly CustomerSettings _customerSettings;
-        private readonly DateTimeSettings _dateTimeSettings;
-        private readonly EmailAccountSettings _emailAccountSettings;
-        private readonly ForumSettings _forumSettings;
-        private readonly GdprSettings _gdprSettings;
-        private readonly IAddressAttributeParser _addressAttributeParser;
-        private readonly IAddressService _addressService;
-        private readonly ICustomerActivityService _customerActivityService;
-        private readonly ICustomerAttributeParser _customerAttributeParser;
-        private readonly ICustomerAttributeService _customerAttributeService;
-        private readonly ICustomerModelFactory _customerModelFactory;
-        private readonly ICustomerRegistrationService _customerRegistrationService;
-        private readonly ICustomerService _customerService;
-        private readonly IDateTimeHelper _dateTimeHelper;
-        private readonly IEmailAccountService _emailAccountService;
-        private readonly IEventPublisher _eventPublisher;
-        private readonly IExportManager _exportManager;
-        private readonly IForumService _forumService;
-        private readonly IGdprService _gdprService;
-        private readonly IGenericAttributeService _genericAttributeService;
-        private readonly ILocalizationService _localizationService;
-        private readonly INewsLetterSubscriptionService _newsLetterSubscriptionService;
-        private readonly INotificationService _notificationService;
-        private readonly IPermissionService _permissionService;
-        private readonly IQueuedEmailService _queuedEmailService;
-        private readonly IRewardPointService _rewardPointService;
-        private readonly IStoreContext _storeContext;
-        private readonly IStoreService _storeService;
-        private readonly ITaxService _taxService;
-        private readonly IWorkContext _workContext;
-        private readonly IWorkflowMessageService _workflowMessageService;
-        private readonly TaxSettings _taxSettings;
-        private readonly NexportService _nexportService;
-        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
-        private readonly ILogger _logger;
-
-        #endregion
-
-        #region Constructor
-
-        public NexportAdminCustomerController(CustomerSettings customerSettings,
-            DateTimeSettings dateTimeSettings,
-            EmailAccountSettings emailAccountSettings,
-            ForumSettings forumSettings,
-            GdprSettings gdprSettings,
-            IAddressAttributeParser addressAttributeParser,
-            IAddressService addressService,
-            ICustomerActivityService customerActivityService,
-            ICustomerAttributeParser customerAttributeParser,
-            ICustomerAttributeService customerAttributeService,
-            ICustomerModelFactory customerModelFactory,
-            ICustomerRegistrationService customerRegistrationService,
-            ICustomerService customerService,
-            IDateTimeHelper dateTimeHelper,
-            IEmailAccountService emailAccountService,
-            IEventPublisher eventPublisher,
-            IExportManager exportManager,
-            IForumService forumService,
-            IGdprService gdprService,
-            IGenericAttributeService genericAttributeService,
-            ILocalizationService localizationService,
-            INewsLetterSubscriptionService newsLetterSubscriptionService,
-            INotificationService notificationService,
-            IPermissionService permissionService,
-            IQueuedEmailService queuedEmailService,
-            IRewardPointService rewardPointService,
-            IStoreContext storeContext,
-            IStoreService storeService,
-            ITaxService taxService,
-            IWorkContext workContext,
-            IWorkflowMessageService workflowMessageService,
-            TaxSettings taxSettings,
-            NexportService nexportService,
-            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
-            ILogger logger) :
-                base(customerSettings, dateTimeSettings, emailAccountSettings,
-                    forumSettings, gdprSettings, addressAttributeParser, addressService,
-                    customerActivityService, customerAttributeParser, customerAttributeService, customerModelFactory, customerRegistrationService,
-                    customerService, dateTimeHelper, emailAccountService, eventPublisher,
-                    exportManager, forumService, gdprService, genericAttributeService,
-                    localizationService, newsLetterSubscriptionService, notificationService,
-                    permissionService, queuedEmailService, rewardPointService,
-                    storeContext, storeService, taxService, workContext,
-                    workflowMessageService, taxSettings)
-        {
             _customerSettings = customerSettings;
             _dateTimeSettings = dateTimeSettings;
             _emailAccountSettings = emailAccountSettings;
@@ -159,10 +159,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _logger = logger;
         }
 
-        #endregion
+    #endregion
 
-        public override async Task<IActionResult> Create(CustomerModel model, bool continueEditing, IFormCollection form)
-        {
+    public override async Task<IActionResult> Create(CustomerModel model, bool continueEditing, IFormCollection form)
+    {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
                 return AccessDeniedView();
 
@@ -383,11 +383,11 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return View(model);
         }
 
-        [HttpPost("Admin/Customer/Edit/{id}"), ActionName("Edit")]
-        [FormValueRequired("impersonate")]
-        //[ParameterBasedOnFormName("storeId", "storeId")]
-        public async Task<IActionResult> Impersonate(int id, [Bind("storeId")] int storeId)
-        {
+    [HttpPost("Admin/Customer/Edit/{id}"), ActionName("Edit")]
+    [FormValueRequired("impersonate")]
+    //[ParameterBasedOnFormName("storeId", "storeId")]
+    public async Task<IActionResult> Impersonate(int id, [Bind("storeId")] int storeId)
+    {
             var store = await _storeService.GetStoreByIdAsync(storeId);
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AllowCustomerImpersonation))
                 return AccessDeniedView();
@@ -426,5 +426,4 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             return Redirect(store.Url);
         }
-    }
 }

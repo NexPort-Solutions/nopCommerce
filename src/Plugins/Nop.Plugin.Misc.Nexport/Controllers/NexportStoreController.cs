@@ -7,46 +7,46 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Plugin.Misc.Nexport.Controllers
+namespace Nop.Plugin.Misc.Nexport.Controllers;
+
+public class NexportStoreController : BasePluginController
 {
-    public class NexportStoreController : BasePluginController
+    #region Fields
+    private readonly IPermissionService _permissionService;
+    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+
+    #endregion
+
+    #region Constructor
+
+    public NexportStoreController(
+        IPermissionService permissionService,
+        INexportPluginModelFactory nexportPluginModelFactory)
     {
-        #region Fields
-        private readonly IPermissionService _permissionService;
-        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
-
-        #endregion
-
-        #region Constructor
-
-        public NexportStoreController(
-            IPermissionService permissionService,
-            INexportPluginModelFactory nexportPluginModelFactory)
-        {
             _permissionService = permissionService;
             _nexportPluginModelFactory = nexportPluginModelFactory;
         }
 
-        #endregion
+    #endregion
 
-        #region General Actions
+    #region General Actions
 
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        public virtual async Task<IActionResult> List()
-        {
+    [AuthorizeAdmin]
+    [Area(AreaNames.Admin)]
+    public virtual async Task<IActionResult> List()
+    {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
                 return AccessDeniedView();
 
             return View("~/Plugins/Misc.Nexport/Views/NexportStore/List.cshtml", new NexportStoreSearchModel());
         }
 
-        [HttpPost]
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        [AutoValidateAntiforgeryToken]
-        public virtual async Task<IActionResult> List(NexportStoreSearchModel searchModel)
-        {
+    [HttpPost]
+    [AuthorizeAdmin]
+    [Area(AreaNames.Admin)]
+    [AutoValidateAntiforgeryToken]
+    public virtual async Task<IActionResult> List(NexportStoreSearchModel searchModel)
+    {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
                 return await AccessDeniedDataTablesJson();
 
@@ -56,6 +56,5 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return Json(model);
         }
 
-        #endregion
-    }
+    #endregion
 }

@@ -1,14 +1,13 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
+
+public record NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel: BaseSearchModel
 {
-    public record NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel: BaseSearchModel
+    public NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel()
     {
-        public NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel()
-        {
             SetGridPageSize();
         }
 
-        public int CustomerId { get; set; }
-    }
+    public int CustomerId { get; set; }
 }

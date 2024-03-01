@@ -9,24 +9,24 @@ using Nop.Core.Domain.Logging;
 using Nop.Core.Infrastructure;
 using Nop.Data;
 
-namespace Nop.Plugin.Misc.Nexport.Infrastructure.Logging
-{
-    public class DefaultLogger : Nop.Services.Logging.DefaultLogger
-    {
-        private readonly CommonSettings _commonSettings;
-        private readonly IRepository<Log> _logRepository;
-        private readonly IWebHelper _webHelper;
+namespace Nop.Plugin.Misc.Nexport.Infrastructure.Logging;
 
-        public DefaultLogger(CommonSettings commonSettings, IRepository<Log> logRepository, IWebHelper webHelper) :
-            base(commonSettings, logRepository, webHelper)
-        {
+public class DefaultLogger : Nop.Services.Logging.DefaultLogger
+{
+    private readonly CommonSettings _commonSettings;
+    private readonly IRepository<Log> _logRepository;
+    private readonly IWebHelper _webHelper;
+
+    public DefaultLogger(CommonSettings commonSettings, IRepository<Log> logRepository, IWebHelper webHelper) :
+        base(commonSettings, logRepository, webHelper)
+    {
             _commonSettings = commonSettings;
             _logRepository = logRepository;
             _webHelper = webHelper;
         }
 
-        public override async Task<Log> InsertLogAsync(LogLevel logLevel, string shortMessage, string fullMessage = "", Customer customer = null)
-        {
+    public override async Task<Log> InsertLogAsync(LogLevel logLevel, string shortMessage, string fullMessage = "", Customer customer = null)
+    {
             if (!IsEnabled(logLevel))
                 return null;
 
@@ -51,8 +51,8 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure.Logging
             return log;
         }
 
-        public override bool IsEnabled(LogLevel level)
-        {
+    public override bool IsEnabled(LogLevel level)
+    {
             switch (level)
             {
                 case LogLevel.Debug:
@@ -67,49 +67,48 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure.Logging
             }
         }
 
-        ///// <summary>
-        ///// Information
-        ///// </summary>
-        ///// <param name="message">Message</param>
-        ///// <param name="exception">Exception</param>
-        ///// <param name="customer">Customer</param>
-        //public override void Information(string message, Exception exception = null, Customer customer = null)
-        //{
-        //    //don't log thread abort exception
-        //    if (exception is System.Threading.ThreadAbortException)
-        //        return;
+    ///// <summary>
+    ///// Information
+    ///// </summary>
+    ///// <param name="message">Message</param>
+    ///// <param name="exception">Exception</param>
+    ///// <param name="customer">Customer</param>
+    //public override void Information(string message, Exception exception = null, Customer customer = null)
+    //{
+    //    //don't log thread abort exception
+    //    if (exception is System.Threading.ThreadAbortException)
+    //        return;
 
-        //    InsertLog(LogLevel.Information, message, exception?.ToString() ?? string.Empty, customer);
-        //}
+    //    InsertLog(LogLevel.Information, message, exception?.ToString() ?? string.Empty, customer);
+    //}
 
-        ///// <summary>
-        ///// Warning
-        ///// </summary>
-        ///// <param name="message">Message</param>
-        ///// <param name="exception">Exception</param>
-        ///// <param name="customer">Customer</param>
-        //public override void Warning(string message, Exception exception = null, Customer customer = null)
-        //{
-        //    //don't log thread abort exception
-        //    if (exception is System.Threading.ThreadAbortException)
-        //        return;
+    ///// <summary>
+    ///// Warning
+    ///// </summary>
+    ///// <param name="message">Message</param>
+    ///// <param name="exception">Exception</param>
+    ///// <param name="customer">Customer</param>
+    //public override void Warning(string message, Exception exception = null, Customer customer = null)
+    //{
+    //    //don't log thread abort exception
+    //    if (exception is System.Threading.ThreadAbortException)
+    //        return;
 
-        //    InsertLog(LogLevel.Warning, message, exception?.ToString() ?? string.Empty, customer);
-        //}
+    //    InsertLog(LogLevel.Warning, message, exception?.ToString() ?? string.Empty, customer);
+    //}
 
-        ///// <summary>
-        ///// Error
-        ///// </summary>
-        ///// <param name="message">Message</param>
-        ///// <param name="exception">Exception</param>
-        ///// <param name="customer">Customer</param>
-        //public override void Error(string message, Exception exception = null, Customer customer = null)
-        //{
-        //    //don't log thread abort exception
-        //    if (exception is System.Threading.ThreadAbortException)
-        //        return;
+    ///// <summary>
+    ///// Error
+    ///// </summary>
+    ///// <param name="message">Message</param>
+    ///// <param name="exception">Exception</param>
+    ///// <param name="customer">Customer</param>
+    //public override void Error(string message, Exception exception = null, Customer customer = null)
+    //{
+    //    //don't log thread abort exception
+    //    if (exception is System.Threading.ThreadAbortException)
+    //        return;
 
-        //    InsertLog(LogLevel.Error, message, exception?.ToString() ?? string.Empty, customer);
-        //}
-    }
+    //    InsertLog(LogLevel.Error, message, exception?.ToString() ?? string.Empty, customer);
+    //}
 }

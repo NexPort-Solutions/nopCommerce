@@ -46,111 +46,111 @@ using Nop.Plugin.Misc.Nexport.Services;
 using System.Collections.Generic;
 using Nop.Core.Infrastructure;
 
-namespace Nop.Plugin.Misc.Nexport.Controllers
+namespace Nop.Plugin.Misc.Nexport.Controllers;
+
+[AutoValidateAntiforgeryToken]
+public class NexportCustomerController : BasePublicController
 {
-    [AutoValidateAntiforgeryToken]
-    public class NexportCustomerController : BasePublicController
+    #region Fields
+
+    private readonly AddressSettings _addressSettings;
+    private readonly CaptchaSettings _captchaSettings;
+    private readonly CustomerSettings _customerSettings;
+    private readonly DateTimeSettings _dateTimeSettings;
+    private readonly IDownloadService _downloadService;
+    private readonly ForumSettings _forumSettings;
+    private readonly GdprSettings _gdprSettings;
+    private readonly IAddressAttributeParser _addressAttributeParser;
+    private readonly IAddressModelFactory _addressModelFactory;
+    private readonly IAddressService _addressService;
+    private readonly IAuthenticationService _authenticationService;
+    private readonly ICountryService _countryService;
+    private readonly ICurrencyService _currencyService;
+    private readonly ICustomerActivityService _customerActivityService;
+    private readonly ICustomerAttributeParser _customerAttributeParser;
+    private readonly ICustomerAttributeService _customerAttributeService;
+    private readonly ICustomerModelFactory _customerModelFactory;
+    private readonly ICustomerRegistrationService _customerRegistrationService;
+    private readonly ICustomerService _customerService;
+    private readonly IEventPublisher _eventPublisher;
+    private readonly IExportManager _exportManager;
+    private readonly IExternalAuthenticationService _externalAuthenticationService;
+    private readonly IGdprService _gdprService;
+    private readonly IGenericAttributeService _genericAttributeService;
+    private readonly IGiftCardService _giftCardService;
+    private readonly ILocalizationService _localizationService;
+    private readonly ILogger _logger;
+    private readonly INewsLetterSubscriptionService _newsLetterSubscriptionService;
+    private readonly IOrderService _orderService;
+    private readonly IPictureService _pictureService;
+    private readonly IPriceFormatter _priceFormatter;
+    private readonly IShoppingCartService _shoppingCartService;
+    private readonly IStateProvinceService _stateProvinceService;
+    private readonly IStoreContext _storeContext;
+    private readonly ITaxService _taxService;
+    private readonly IWebHelper _webHelper;
+    private readonly IWorkContext _workContext;
+    private readonly IWorkflowMessageService _workflowMessageService;
+    private readonly LocalizationSettings _localizationSettings;
+    private readonly MediaSettings _mediaSettings;
+    private readonly StoreInformationSettings _storeInformationSettings;
+    private readonly TaxSettings _taxSettings;
+    private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
+    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+    private readonly NexportService _nexportService;
+
+
+    #endregion
+
+    #region Ctor
+
+    public NexportCustomerController(
+        AddressSettings addressSettings,
+        CaptchaSettings captchaSettings,
+        CustomerSettings customerSettings,
+        DateTimeSettings dateTimeSettings,
+        IDownloadService downloadService,
+        ForumSettings forumSettings,
+        GdprSettings gdprSettings,
+        IAddressAttributeParser addressAttributeParser,
+        IAddressModelFactory addressModelFactory,
+        IAddressService addressService,
+        IAuthenticationService authenticationService,
+        ICountryService countryService,
+        ICurrencyService currencyService,
+        ICustomerActivityService customerActivityService,
+        ICustomerAttributeParser customerAttributeParser,
+        ICustomerAttributeService customerAttributeService,
+        ICustomerModelFactory customerModelFactory,
+        ICustomerRegistrationService customerRegistrationService,
+        ICustomerService customerService,
+        IEventPublisher eventPublisher,
+        IExportManager exportManager,
+        IExternalAuthenticationService externalAuthenticationService,
+        IGdprService gdprService,
+        IGenericAttributeService genericAttributeService,
+        IGiftCardService giftCardService,
+        ILocalizationService localizationService,
+        ILogger logger,
+        INewsLetterSubscriptionService newsLetterSubscriptionService,
+        IOrderService orderService,
+        IPictureService pictureService,
+        IPriceFormatter priceFormatter,
+        IShoppingCartService shoppingCartService,
+        IStateProvinceService stateProvinceService,
+        IStoreContext storeContext,
+        ITaxService taxService,
+        IWebHelper webHelper,
+        IWorkContext workContext,
+        IWorkflowMessageService workflowMessageService,
+        LocalizationSettings localizationSettings,
+        MediaSettings mediaSettings,
+        StoreInformationSettings storeInformationSettings,
+        TaxSettings taxSettings,
+        IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
+        INexportPluginModelFactory nexportPluginModelFactory,
+        NexportService nexportService)
     {
-        #region Fields
-
-        private readonly AddressSettings _addressSettings;
-        private readonly CaptchaSettings _captchaSettings;
-        private readonly CustomerSettings _customerSettings;
-        private readonly DateTimeSettings _dateTimeSettings;
-        private readonly IDownloadService _downloadService;
-        private readonly ForumSettings _forumSettings;
-        private readonly GdprSettings _gdprSettings;
-        private readonly IAddressAttributeParser _addressAttributeParser;
-        private readonly IAddressModelFactory _addressModelFactory;
-        private readonly IAddressService _addressService;
-        private readonly IAuthenticationService _authenticationService;
-        private readonly ICountryService _countryService;
-        private readonly ICurrencyService _currencyService;
-        private readonly ICustomerActivityService _customerActivityService;
-        private readonly ICustomerAttributeParser _customerAttributeParser;
-        private readonly ICustomerAttributeService _customerAttributeService;
-        private readonly ICustomerModelFactory _customerModelFactory;
-        private readonly ICustomerRegistrationService _customerRegistrationService;
-        private readonly ICustomerService _customerService;
-        private readonly IEventPublisher _eventPublisher;
-        private readonly IExportManager _exportManager;
-        private readonly IExternalAuthenticationService _externalAuthenticationService;
-        private readonly IGdprService _gdprService;
-        private readonly IGenericAttributeService _genericAttributeService;
-        private readonly IGiftCardService _giftCardService;
-        private readonly ILocalizationService _localizationService;
-        private readonly ILogger _logger;
-        private readonly INewsLetterSubscriptionService _newsLetterSubscriptionService;
-        private readonly IOrderService _orderService;
-        private readonly IPictureService _pictureService;
-        private readonly IPriceFormatter _priceFormatter;
-        private readonly IShoppingCartService _shoppingCartService;
-        private readonly IStateProvinceService _stateProvinceService;
-        private readonly IStoreContext _storeContext;
-        private readonly ITaxService _taxService;
-        private readonly IWebHelper _webHelper;
-        private readonly IWorkContext _workContext;
-        private readonly IWorkflowMessageService _workflowMessageService;
-        private readonly LocalizationSettings _localizationSettings;
-        private readonly MediaSettings _mediaSettings;
-        private readonly StoreInformationSettings _storeInformationSettings;
-        private readonly TaxSettings _taxSettings;
-        private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
-        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
-        private readonly NexportService _nexportService;
-
-
-        #endregion
-
-        #region Ctor
-
-        public NexportCustomerController(
-            AddressSettings addressSettings,
-            CaptchaSettings captchaSettings,
-            CustomerSettings customerSettings,
-            DateTimeSettings dateTimeSettings,
-            IDownloadService downloadService,
-            ForumSettings forumSettings,
-            GdprSettings gdprSettings,
-            IAddressAttributeParser addressAttributeParser,
-            IAddressModelFactory addressModelFactory,
-            IAddressService addressService,
-            IAuthenticationService authenticationService,
-            ICountryService countryService,
-            ICurrencyService currencyService,
-            ICustomerActivityService customerActivityService,
-            ICustomerAttributeParser customerAttributeParser,
-            ICustomerAttributeService customerAttributeService,
-            ICustomerModelFactory customerModelFactory,
-            ICustomerRegistrationService customerRegistrationService,
-            ICustomerService customerService,
-            IEventPublisher eventPublisher,
-            IExportManager exportManager,
-            IExternalAuthenticationService externalAuthenticationService,
-            IGdprService gdprService,
-            IGenericAttributeService genericAttributeService,
-            IGiftCardService giftCardService,
-            ILocalizationService localizationService,
-            ILogger logger,
-            INewsLetterSubscriptionService newsLetterSubscriptionService,
-            IOrderService orderService,
-            IPictureService pictureService,
-            IPriceFormatter priceFormatter,
-            IShoppingCartService shoppingCartService,
-            IStateProvinceService stateProvinceService,
-            IStoreContext storeContext,
-            ITaxService taxService,
-            IWebHelper webHelper,
-            IWorkContext workContext,
-            IWorkflowMessageService workflowMessageService,
-            LocalizationSettings localizationSettings,
-            MediaSettings mediaSettings,
-            StoreInformationSettings storeInformationSettings,
-            TaxSettings taxSettings,
-            IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
-            INexportPluginModelFactory nexportPluginModelFactory,
-            NexportService nexportService)
-        {
             _addressSettings = addressSettings;
             _captchaSettings = captchaSettings;
             _customerSettings = customerSettings;
@@ -198,12 +198,12 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _nexportService = nexportService;
         }
 
-        #endregion
+    #endregion
 
-        #region Utilities
+    #region Utilities
 
-        protected virtual async Task<string> ParseCustomCustomerAttributesAsync(IFormCollection form)
-        {
+    protected virtual async Task<string> ParseCustomCustomerAttributesAsync(IFormCollection form)
+    {
             if (form == null)
                 throw new ArgumentNullException(nameof(form));
 
@@ -281,9 +281,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return attributesXml;
         }
 
-        protected virtual async Task LogGdpr(Customer customer, CustomerInfoModel oldCustomerInfoModel,
-            CustomerInfoModel newCustomerInfoModel, IFormCollection form)
-        {
+    protected virtual async Task LogGdpr(Customer customer, CustomerInfoModel oldCustomerInfoModel,
+        CustomerInfoModel newCustomerInfoModel, IFormCollection form)
+    {
             try
             {
                 //consents
@@ -375,8 +375,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }
         }
 
-        protected virtual void ValidateRequiredConsents(List<GdprConsent> consents, IFormCollection form)
-        {
+    protected virtual void ValidateRequiredConsents(List<GdprConsent> consents, IFormCollection form)
+    {
             foreach (var consent in consents)
             {
                 var controlId = $"consent{consent.Id}";
@@ -388,28 +388,28 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }
         }
 
-        #endregion
+    #endregion
 
-        //available even when a store is closed
-        [CheckAccessClosedStore(true)]
-        //available even when navigation is not allowed
-        [CheckAccessPublicStore(true)]
-        public virtual async Task<IActionResult> Login(bool? checkoutAsGuest)
-        {
+    //available even when a store is closed
+    [CheckAccessClosedStore(true)]
+    //available even when navigation is not allowed
+    [CheckAccessPublicStore(true)]
+    public virtual async Task<IActionResult> Login(bool? checkoutAsGuest)
+    {
             var model = await _nexportPluginModelFactory.PrepareNexportLoginModelAsync(checkoutAsGuest);
 
             return View("Login", model);
         }
 
-        [HttpPost]
-        [ValidateCaptcha]
-        //available even when a store is closed
-        [CheckAccessClosedStore(true)]
-        //available even when navigation is not allowed
-        [CheckAccessPublicStore(true)]
-        [AutoValidateAntiforgeryToken]
-        public virtual async Task<IActionResult> Login(NexportLoginModel model, string returnUrl, bool captchaValid)
-        {
+    [HttpPost]
+    [ValidateCaptcha]
+    //available even when a store is closed
+    [CheckAccessClosedStore(true)]
+    //available even when navigation is not allowed
+    [CheckAccessPublicStore(true)]
+    [AutoValidateAntiforgeryToken]
+    public virtual async Task<IActionResult> Login(NexportLoginModel model, string returnUrl, bool captchaValid)
+    {
             //validate CAPTCHA
             if (_captchaSettings.Enabled && _captchaSettings.ShowOnLoginPage && !captchaValid)
             {
@@ -505,9 +505,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return View(model);
         }
 
-        [CheckAccessPublicStore(true)]
-        public virtual async Task<IActionResult> Register(string returnUrl)
-        {
+    [CheckAccessPublicStore(true)]
+    public virtual async Task<IActionResult> Register(string returnUrl)
+    {
             //check whether registration is allowed
             if (_customerSettings.UserRegistrationType == UserRegistrationType.Disabled)
                 return RedirectToRoute("RegisterResult", new { resultId = (int)UserRegistrationType.Disabled, returnUrl });
@@ -518,14 +518,14 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return View(model);
         }
 
-        [HttpPost]
-        [ValidateCaptcha]
-        [ValidateHoneypot]
-        [AutoValidateAntiforgeryToken]
-        //available even when navigation is not allowed
-        [CheckAccessPublicStore(true)]
-        public virtual async Task<IActionResult> Register(RegisterModel model, string returnUrl, bool captchaValid, IFormCollection form)
-        {
+    [HttpPost]
+    [ValidateCaptcha]
+    [ValidateHoneypot]
+    [AutoValidateAntiforgeryToken]
+    //available even when navigation is not allowed
+    [CheckAccessPublicStore(true)]
+    public virtual async Task<IActionResult> Register(RegisterModel model, string returnUrl, bool captchaValid, IFormCollection form)
+    {
             //check whether registration is allowed
             if (_customerSettings.UserRegistrationType == UserRegistrationType.Disabled)
                 return RedirectToRoute("RegisterResult", new { resultId = (int)UserRegistrationType.Disabled, returnUrl });
@@ -838,5 +838,4 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             return View(model);
         }
-    }
 }

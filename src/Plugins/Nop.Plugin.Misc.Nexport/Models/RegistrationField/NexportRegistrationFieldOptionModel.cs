@@ -1,16 +1,15 @@
 ﻿using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
-namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
+namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField;
+
+public record NexportRegistrationFieldOptionModel : BaseNopEntityModel
 {
-    public record NexportRegistrationFieldOptionModel : BaseNopEntityModel
-    {
-        public int FieldId { get; set; }
+    public int FieldId { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Option.Value")]
-        public string OptionValue { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Option.Value")]
+    public string OptionValue { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Option.DisplayOrder")]
-        public int DisplayOrder { get; set; }
-    }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Option.DisplayOrder")]
+    public int DisplayOrder { get; set; }
 }

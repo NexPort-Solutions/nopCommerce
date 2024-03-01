@@ -4,209 +4,238 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Nop.Core;
+using Nop.Core.Domain.Localization;
 using Nop.Plugin.Misc.Nexport.Archway.Extensions;
 using Nop.Plugin.Misc.Nexport.Archway.Models;
 using Nop.Plugin.Misc.Nexport.Archway.Services;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
+using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
+using Nop.Web.Areas.Admin.Models.Localization;
+using Nop.Web.Framework.Models.Extensions;
 
-namespace Nop.Plugin.Misc.Nexport.Archway.Factories
+namespace Nop.Plugin.Misc.Nexport.Archway.Factories;
+
+public class ArchwayStudentEmployeeRegistrationFieldModelFactory : IArchwayStudentEmployeeRegistrationFieldModelFactory
 {
-    public class ArchwayStudentEmployeeRegistrationFieldModelFactory : IArchwayStudentEmployeeRegistrationFieldModelFactory
+    private readonly ArchwayPluginService _pluginService;
+    private readonly IArchwayStudentEmployeeRegistrationFieldService _archwayStudentEmployeeRegistrationFieldService;
+    private readonly IStateProvinceService _stateProvinceService;
+    private readonly ILocalizationService _localizationService;
+
+    public ArchwayStudentEmployeeRegistrationFieldModelFactory(
+        ArchwayPluginService pluginService,
+        IArchwayStudentEmployeeRegistrationFieldService archwayStudentEmployeeRegistrationFieldService,
+        IStateProvinceService stateProvinceService,
+        ILocalizationService localizationService)
     {
-        private readonly IArchwayStudentEmployeeRegistrationFieldService _archwayStudentEmployeeRegistrationFieldService;
-        private readonly IStateProvinceService _stateProvinceService;
-        private readonly ILocalizationService _localizationService;
+        _pluginService = pluginService;
+        _archwayStudentEmployeeRegistrationFieldService = archwayStudentEmployeeRegistrationFieldService;
+        _stateProvinceService = stateProvinceService;
+        _localizationService = localizationService;
+    }
 
-        public ArchwayStudentEmployeeRegistrationFieldModelFactory(
-            IArchwayStudentEmployeeRegistrationFieldService archwayStudentEmployeeRegistrationFieldService,
-            IStateProvinceService stateProvinceService,
-            ILocalizationService localizationService)
+    public async Task<ArchwayPluginResourceListModel> PrepareArchwayPluginResourceListModelAsync(ArchwayPluginResourceListSearchModel searchModel)
+    {
+        if (searchModel == null)
+            throw new ArgumentNullException(nameof(searchModel));
+
+        var results = await _pluginService.GetConflictedLocalizedResourcesAsync();
+
+        var resources = new PagedList<LocaleStringResource>(results, searchModel.Page - 1, searchModel.PageSize);
+
+        var model = await new ArchwayPluginResourceListModel().PrepareToGridAsync(searchModel, resources, () =>
         {
-            _archwayStudentEmployeeRegistrationFieldService = archwayStudentEmployeeRegistrationFieldService;
-            _stateProvinceService = stateProvinceService;
-            _localizationService = localizationService;
-        }
-
-        public async Task<ArchwayStudentEmployeeRegistrationFieldModel>
-            PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(int fieldId, bool renderAdminView)
-        {
-            var model = new ArchwayStudentEmployeeRegistrationFieldModel { FieldId = fieldId, RenderAdminView = renderAdminView };
-
-            var storeRecords = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
-
-            var storeAbbreviations = storeRecords.Select(r => r.State).Distinct().ToList();
-
-            var states = (await _stateProvinceService.GetStateProvincesAsync())
-                .Where(s => storeAbbreviations.Contains(s.Abbreviation)).ToList();
-            if (states.Any())
+            return resources.SelectAwait(async resource =>
             {
-                model.AvailableStates.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectState"), Value = null });
+                var localeResourceModel = resource.ToModel<LocaleResourceModel>();
+                return localeResourceModel;
+            });
+        });
 
-                foreach (var s in states)
+        return model;
+    }
+
+    public async Task<ArchwayStudentEmployeeRegistrationFieldModel>
+        PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(int fieldId, bool renderAdminView)
+    {
+        var model = new ArchwayStudentEmployeeRegistrationFieldModel { FieldId = fieldId, RenderAdminView = renderAdminView };
+
+        var storeRecords = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
+
+        var storeAbbreviations = storeRecords.Select(r => r.State).Distinct().ToList();
+
+        var states = (await _stateProvinceService.GetStateProvincesAsync())
+            .Where(s => storeAbbreviations.Contains(s.Abbreviation)).ToList();
+
+        if (states.Any())
+        {
+            model.AvailableStates.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectState"), Value = null });
+
+            foreach (var s in states)
+            {
+                var stateName = await _localizationService.GetLocalizedAsync(s, x => x.Name);
+
+                model.AvailableStates.Add(new SelectListItem
                 {
-                    var stateName = await _localizationService.GetLocalizedAsync(s, x => x.Name);
-
-                    model.AvailableStates.Add(new SelectListItem
-                    {
-                        Text = stateName,
-                        Value = stateName
-                    });
-                }
+                    Text = stateName,
+                    Value = stateName
+                });
             }
-
-            return model;
         }
 
-        public async Task<ArchwayStudentEmployeeRegistrationFieldOptionModel>
-            PrepareArchwayStudentEmployeeRegistrationFieldOptionModelAsync(int fieldId)
-        {
-            var model = new ArchwayStudentEmployeeRegistrationFieldOptionModel
-            {
-                FieldId = fieldId
-            };
+        return model;
+    }
 
-            foreach (var prop in model.GetType().GetProperties())
+    public async Task<ArchwayStudentEmployeeRegistrationFieldOptionModel>
+        PrepareArchwayStudentEmployeeRegistrationFieldOptionModelAsync(int fieldId)
+    {
+        var model = new ArchwayStudentEmployeeRegistrationFieldOptionModel
+        {
+            FieldId = fieldId
+        };
+
+        foreach (var prop in model.GetType().GetProperties())
+        {
+            var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+            if (type == typeof(string))
             {
-                var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-                if (type == typeof(string))
+                var propAttribute = prop.GetCustomAttribute<ArchwayStudentRegistrationFieldControlAttribute>();
+                if (propAttribute != null)
                 {
-                    var propAttribute = prop.GetCustomAttribute<ArchwayStudentRegistrationFieldControlAttribute>();
-                    if (propAttribute != null)
+                    var keyMapping =
+                        await _archwayStudentEmployeeRegistrationFieldService
+                            .GetArchwayStudentRegistrationFieldKeyMapping(propAttribute.ControlName);
+                    if (!string.IsNullOrWhiteSpace(keyMapping?.FieldKey))
                     {
-                        var keyMapping =
-                            await _archwayStudentEmployeeRegistrationFieldService
-                                .GetArchwayStudentRegistrationFieldKeyMapping(propAttribute.ControlName);
-                        if (!string.IsNullOrWhiteSpace(keyMapping?.FieldKey))
-                        {
-                            prop.SetValue(model, keyMapping.FieldKey, null);
-                        }
+                        prop.SetValue(model, keyMapping.FieldKey, null);
                     }
                 }
             }
-
-            return model;
         }
 
-        public async Task<ArchwayStudentEmployeeRegistrationFieldModel>
-            PrepareEditArchwayStudentEmployeeRegistrationFieldModel(int customerId, int fieldId)
+        return model;
+    }
+
+    public async Task<ArchwayStudentEmployeeRegistrationFieldModel>
+        PrepareEditArchwayStudentEmployeeRegistrationFieldModel(int customerId, int fieldId)
+    {
+        var model = await PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(fieldId, false);
+
+        var currentAnswers = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
+
+        model.StoreLocationState = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreStateField")?.TextValue;
+
+        model.StoreLocationCity = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreCityField")?.TextValue;
+
+        var citiesFromCurrentState = await GetArchwayStoreCitiesByState(model.StoreLocationState, true);
+        foreach (var city in citiesFromCurrentState)
         {
-            var model = await PrepareArchwayStudentEmployeeRegistrationFieldModelAsync(fieldId, false);
-
-            var currentAnswers = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
-
-            model.StoreLocationState = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreStateField")?.TextValue;
-
-            model.StoreLocationCity = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreCityField")?.TextValue;
-
-            var citiesFromCurrentState = await GetArchwayStoreCitiesByState(model.StoreLocationState, true);
-            foreach (var city in citiesFromCurrentState)
+            model.AvailableCities.Add(new SelectListItem
             {
-                model.AvailableCities.Add(new SelectListItem
-                {
-                    Text = city.name,
-                    Value = city.name
-                });
-            }
-
-            model.StoreLocationAddress = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreAddressField")?.TextValue;
-
-            var addressFromCurrentCity = await GetArchwayStoreAddressesByCity(model.StoreLocationCity, model.StoreLocationState, true);
-            foreach (var address in addressFromCurrentCity)
-            {
-                model.AvailableAddresses.Add(new SelectListItem
-                {
-                    Text = address.name,
-                    Value = address.name
-                });
-            }
-
-            model.EmployeePosition = currentAnswers.FirstOrDefault(x => x.FieldKey == "EmployeePositionField")?.TextValue;
-
-            model.StoreNumber = int.Parse(currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreIdField")?.TextValue ?? "0");
-            model.StoreType = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreTypeField")?.TextValue;
-
-            var positionFromCurrentAddress = await GetArchwayStoreEmployeePositionsByStore(model.StoreNumber.ToString(), true);
-            foreach(var position in positionFromCurrentAddress)
-            {
-                model.AvailableEmployeePositions.Add(new SelectListItem
-                {
-                    Text = position.name,
-                    Value = position.name
-                });
-            }
-
-            model.EmployeeId = currentAnswers.FirstOrDefault(x => x.FieldKey == "EmployeeIdField")?.TextValue;
-
-            return model;
+                Text = city.name,
+                Value = city.name
+            });
         }
 
-        public async Task<IList<ArchwayStoreCityModel>> GetArchwayStoreCitiesByState(string state,
-            bool addSelectCityItem)
+        model.StoreLocationAddress = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreAddressField")?.TextValue;
+
+        var addressFromCurrentCity = await GetArchwayStoreAddressesByCity(model.StoreLocationCity, model.StoreLocationState, true);
+        foreach (var address in addressFromCurrentCity)
         {
-            if (string.IsNullOrWhiteSpace(state))
-                return new List<ArchwayStoreCityModel>();
-
-            var stateProvince = (await _stateProvinceService.GetStateProvincesAsync())
-                .FirstOrDefault(x => x.Name == state);
-
-            if (stateProvince == null)
-                return new List<ArchwayStoreCityModel>();
-
-            var storeRecords = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
-
-            var cities = storeRecords
-                .Where(r => r.State == stateProvince.Abbreviation)
-                .OrderBy(r => r.City)
-                .Select(r => r.City)
-                .Distinct()
-                .ToList();
-
-            return cities.Select(city => new ArchwayStoreCityModel { name = city }).ToList();
+            model.AvailableAddresses.Add(new SelectListItem
+            {
+                Text = address.name,
+                Value = address.name
+            });
         }
 
-        public async Task<IList<ArchwayStoreAddressModel>> GetArchwayStoreAddressesByCity(string city,
-            string state, bool addSelectAddressItem)
+        model.EmployeePosition = currentAnswers.FirstOrDefault(x => x.FieldKey == "EmployeePositionField")?.TextValue;
+
+        model.StoreNumber = int.Parse(currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreIdField")?.TextValue ?? "0");
+        model.StoreType = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreTypeField")?.TextValue;
+
+        var positionFromCurrentAddress = await GetArchwayStoreEmployeePositionsByStore(model.StoreNumber.ToString(), true);
+        foreach (var position in positionFromCurrentAddress)
         {
-            if (string.IsNullOrWhiteSpace(city))
-                return new List<ArchwayStoreAddressModel>();
+            model.AvailableEmployeePositions.Add(new SelectListItem
+            {
+                Text = position.name,
+                Value = position.name
+            });
+        }
 
-            var stateProvince = (await _stateProvinceService.GetStateProvincesAsync())
-                .FirstOrDefault(x => x.Name == state);
+        model.EmployeeId = currentAnswers.FirstOrDefault(x => x.FieldKey == "EmployeeIdField")?.TextValue;
 
-            if (stateProvince == null)
-                return new List<ArchwayStoreAddressModel>();
+        return model;
+    }
 
-            var storeRecords = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
+    public async Task<IList<ArchwayStoreCityModel>> GetArchwayStoreCitiesByState(string state,
+        bool addSelectCityItem)
+    {
+        if (string.IsNullOrWhiteSpace(state))
+            return new List<ArchwayStoreCityModel>();
 
-            var records = storeRecords
-                .Where(r => r.City == city && r.State == stateProvince.Abbreviation)
-                .OrderBy(r => r.Address)
-                .ToList();
+        var stateProvince = (await _stateProvinceService.GetStateProvincesAsync())
+            .FirstOrDefault(x => x.Name == state);
 
-            return records.Select(record =>
+        if (stateProvince == null)
+            return new List<ArchwayStoreCityModel>();
+
+        var storeRecords = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
+
+        var cities = storeRecords
+            .Where(r => r.State == stateProvince.Abbreviation)
+            .OrderBy(r => r.City)
+            .Select(r => r.City)
+            .Distinct()
+            .ToList();
+
+        return cities.Select(city => new ArchwayStoreCityModel { name = city }).ToList();
+    }
+
+    public async Task<IList<ArchwayStoreAddressModel>> GetArchwayStoreAddressesByCity(string city,
+        string state, bool addSelectAddressItem)
+    {
+        if (string.IsNullOrWhiteSpace(city))
+            return new List<ArchwayStoreAddressModel>();
+
+        var stateProvince = (await _stateProvinceService.GetStateProvincesAsync())
+            .FirstOrDefault(x => x.Name == state);
+
+        if (stateProvince == null)
+            return new List<ArchwayStoreAddressModel>();
+
+        var storeRecords = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfos();
+
+        var records = storeRecords
+            .Where(r => r.City == city && r.State == stateProvince.Abbreviation)
+            .OrderBy(r => r.Address)
+            .ToList();
+
+        return records.Select(record =>
                 new ArchwayStoreAddressModel { name = record.Address, storeNumber = record.Id, storeType = record.StoreType })
-                .ToList();
-        }
+            .ToList();
+    }
 
-        public async Task<IList<ArchwayStoreEmployeePositionModel>> GetArchwayStoreEmployeePositionsByStore(
-            string storeNumber, bool addSelectPositionItem)
-        {
-            if (string.IsNullOrWhiteSpace(storeNumber))
-                return new List<ArchwayStoreEmployeePositionModel>();
+    public async Task<IList<ArchwayStoreEmployeePositionModel>> GetArchwayStoreEmployeePositionsByStore(
+        string storeNumber, bool addSelectPositionItem)
+    {
+        if (string.IsNullOrWhiteSpace(storeNumber))
+            return new List<ArchwayStoreEmployeePositionModel>();
 
-            var storeRecord = await _archwayStudentEmployeeRegistrationFieldService
-                .GetArchwayStoreRecordInfo(int.Parse(storeNumber));
+        var storeRecord = await _archwayStudentEmployeeRegistrationFieldService
+            .GetArchwayStoreRecordInfo(int.Parse(storeNumber));
 
-            if (storeRecord == null)
-                return new List<ArchwayStoreEmployeePositionModel>();
+        if (storeRecord == null)
+            return new List<ArchwayStoreEmployeePositionModel>();
 
-            var employePositions =
-                (await _archwayStudentEmployeeRegistrationFieldService
-                    .GetArchwayStoreEmployeePositions(storeRecord.StoreType))
-                    .OrderBy(p => p.JobTitle);
+        var employePositions =
+            (await _archwayStudentEmployeeRegistrationFieldService
+                .GetArchwayStoreEmployeePositions(storeRecord.StoreType))
+            .OrderBy(p => p.JobTitle);
 
-            return employePositions.Select(position => new ArchwayStoreEmployeePositionModel { name = position.JobTitle }).ToList();
-        }
+        return employePositions.Select(position => new ArchwayStoreEmployeePositionModel { name = position.JobTitle }).ToList();
     }
 }

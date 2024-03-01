@@ -1,11 +1,10 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Archway.Models
-{
-    public record ArchwayStoreEmployeePositionModel : BaseNopModel
-    {
-        public string id { get; set; }
+namespace Nop.Plugin.Misc.Nexport.Archway.Models;
 
-        public string name { get; set; }
-    }
+public record ArchwayStoreEmployeePositionModel : BaseNopModel
+{
+    public string id { get; set; }
+
+    public string name { get; set; }
 }

@@ -9,12 +9,12 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Primitives;
 
-namespace Nop.Plugin.Misc.Nexport.Extensions
+namespace Nop.Plugin.Misc.Nexport.Extensions;
+
+public static class Extensions
 {
-    public static class Extensions
+    public static NameValueCollection AsNameValueCollection(this IDictionary<string, StringValues> collection)
     {
-        public static NameValueCollection AsNameValueCollection(this IDictionary<string, StringValues> collection)
-        {
             var values = new NameValueCollection();
             foreach (var pair in collection)
             {
@@ -23,8 +23,8 @@ namespace Nop.Plugin.Misc.Nexport.Extensions
             return values;
         }
 
-        public static string GetDisplayName<TEnum>(this TEnum enumValue)
-        {
+    public static string GetDisplayName<TEnum>(this TEnum enumValue)
+    {
             return enumValue
                 .GetType()
                 .GetMember(enumValue.ToString())
@@ -33,8 +33,8 @@ namespace Nop.Plugin.Misc.Nexport.Extensions
                 .GetName();
         }
 
-        public static bool IsValidEmail(this string email)
-        {
+    public static bool IsValidEmail(this string email)
+    {
             if (string.IsNullOrWhiteSpace(email))
                 return false;
             try
@@ -65,29 +65,29 @@ namespace Nop.Plugin.Misc.Nexport.Extensions
             }
         }
 
-        public static bool IsValidUrl(this string url)
-        {
+    public static bool IsValidUrl(this string url)
+    {
             var tryCreateResult = Uri.TryCreate(url, UriKind.Absolute, out var uriResult);
             return tryCreateResult && uriResult != null;
         }
 
-        public static bool IsValidDateFormat(this string dateStr, string format)
-        {
+    public static bool IsValidDateFormat(this string dateStr, string format)
+    {
             return DateTime.TryParseExact(dateStr, format, CultureInfo.InvariantCulture,
                 DateTimeStyles.None, out _);
         }
 
-        public static string TruncateAtWord(this string input, int length)
-        {
+    public static string TruncateAtWord(this string input, int length)
+    {
             if (input == null || input.Length < length)
                 return input;
             var nextSpaceIndex = input.LastIndexOf(" ", length, StringComparison.Ordinal);
             return $"{input.Substring(0, (nextSpaceIndex > 0) ? nextSpaceIndex : length).Trim()}…";
         }
 
-        public static SelectList ToNexportSelectList<TEnum>(this TEnum enumObj,
-            bool markCurrentAsSelected = true, int[] valuesToExclude = null) where TEnum : struct
-        {
+    public static SelectList ToNexportSelectList<TEnum>(this TEnum enumObj,
+        bool markCurrentAsSelected = true, int[] valuesToExclude = null) where TEnum : struct
+    {
             if (!typeof(TEnum).IsEnum)
                 throw new ArgumentException("An Enumeration type is required.", nameof(enumObj));
 
@@ -99,5 +99,4 @@ namespace Nop.Plugin.Misc.Nexport.Extensions
                 selectedValue = Convert.ToInt32(enumObj);
             return new SelectList(values, "ID", "Name", selectedValue);
         }
-    }
 }

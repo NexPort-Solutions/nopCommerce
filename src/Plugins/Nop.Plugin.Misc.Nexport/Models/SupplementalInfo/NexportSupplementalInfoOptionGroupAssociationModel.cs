@@ -2,20 +2,19 @@
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
-namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
+
+public record NexportSupplementalInfoOptionGroupAssociationModel : BaseNopEntityModel
 {
-    public record NexportSupplementalInfoOptionGroupAssociationModel : BaseNopEntityModel
-    {
-        [NopResourceDisplayName("Plugins.Misc.Nexport.GroupId")]
-        public Guid NexportGroupId { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.GroupId")]
+    public Guid NexportGroupId { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.GroupName")]
-        public string NexportGroupName { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.GroupName")]
+    public string NexportGroupName { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.GroupShortName")]
-        public string NexportGroupShortName { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.GroupShortName")]
+    public string NexportGroupShortName { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.Active")]
-        public bool IsActive { get; set; }
-    }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Active")]
+    public bool IsActive { get; set; }
 }

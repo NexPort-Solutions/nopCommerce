@@ -12,27 +12,27 @@ using Nop.Web.Controllers;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 
-namespace Nop.Plugin.Misc.Nexport.Filters
-{
-    public class CheckoutActionFilter : ActionFilterAttribute
-    {
-        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
-        private readonly IProductService _productService;
-        private readonly IShoppingCartService _shoppingCartService;
-        private readonly INotificationService _notificationService;
-        private readonly NexportService _nexportService;
-        private readonly IWorkContext _workContext;
-        private readonly IStoreContext _storeContext;
+namespace Nop.Plugin.Misc.Nexport.Filters;
 
-        public CheckoutActionFilter(
-            INexportPluginModelFactory nexportPluginModelFactory,
-            IProductService productService,
-            IShoppingCartService shoppingCartService,
-            INotificationService notificationService,
-            NexportService nexportService,
-            IWorkContext workContext,
-            IStoreContext storeContext)
-        {
+public class CheckoutActionFilter : ActionFilterAttribute
+{
+    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+    private readonly IProductService _productService;
+    private readonly IShoppingCartService _shoppingCartService;
+    private readonly INotificationService _notificationService;
+    private readonly NexportService _nexportService;
+    private readonly IWorkContext _workContext;
+    private readonly IStoreContext _storeContext;
+
+    public CheckoutActionFilter(
+        INexportPluginModelFactory nexportPluginModelFactory,
+        IProductService productService,
+        IShoppingCartService shoppingCartService,
+        INotificationService notificationService,
+        NexportService nexportService,
+        IWorkContext workContext,
+        IStoreContext storeContext)
+    {
             _nexportPluginModelFactory = nexportPluginModelFactory;
             _productService = productService;
             _shoppingCartService = shoppingCartService;
@@ -42,8 +42,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             _storeContext = storeContext;
         }
 
-        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
-        {
+    public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    {
             if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
@@ -96,5 +96,4 @@ namespace Nop.Plugin.Misc.Nexport.Filters
 
             await base.OnActionExecutionAsync(context, next);
         }
-    }
 }

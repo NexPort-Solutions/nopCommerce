@@ -7,24 +7,24 @@ using Nop.Core.Domain.Orders;
 using Nop.Services.Orders;
 using Nop.Web.Framework.Components;
 
-namespace Nop.Plugin.Misc.Nexport.Components
-{
-    [ViewComponent(Name = "WidgetsOrderSummaryCartFooter")]
-    public class WidgetsOrderSummaryCartFooter : NopViewComponent
-    {
-        private readonly IWorkContext _workContext;
-        private readonly IStoreContext _storeContext;
-        private readonly IOrderTotalCalculationService _orderTotalCalculationService;
-        private readonly IShoppingCartService _shoppingCartService;
-        private readonly IActionContextAccessor _actionContextAccessor;
+namespace Nop.Plugin.Misc.Nexport.Components;
 
-        public WidgetsOrderSummaryCartFooter(
-            IWorkContext workContext,
-            IStoreContext storeContext,
-            IOrderTotalCalculationService orderTotalCalculationService,
-            IShoppingCartService shoppingCartService,
-            IActionContextAccessor actionContextAccessor)
-        {
+[ViewComponent(Name = "WidgetsOrderSummaryCartFooter")]
+public class WidgetsOrderSummaryCartFooter : NopViewComponent
+{
+    private readonly IWorkContext _workContext;
+    private readonly IStoreContext _storeContext;
+    private readonly IOrderTotalCalculationService _orderTotalCalculationService;
+    private readonly IShoppingCartService _shoppingCartService;
+    private readonly IActionContextAccessor _actionContextAccessor;
+
+    public WidgetsOrderSummaryCartFooter(
+        IWorkContext workContext,
+        IStoreContext storeContext,
+        IOrderTotalCalculationService orderTotalCalculationService,
+        IShoppingCartService shoppingCartService,
+        IActionContextAccessor actionContextAccessor)
+    {
             _workContext = workContext;
             _storeContext = storeContext;
             _orderTotalCalculationService = orderTotalCalculationService;
@@ -32,8 +32,8 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _actionContextAccessor = actionContextAccessor;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
             var cart = await _shoppingCartService.GetShoppingCartAsync(
                 await _workContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart,
                 (await _storeContext.GetCurrentStoreAsync()).Id);
@@ -46,5 +46,4 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Order/WidgetsOrderSummaryCartFooter.cshtml");
         }
-    }
 }

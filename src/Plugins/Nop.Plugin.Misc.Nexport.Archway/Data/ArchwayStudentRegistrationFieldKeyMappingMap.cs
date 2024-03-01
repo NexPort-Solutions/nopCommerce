@@ -1,19 +1,18 @@
 ﻿using Nop.Plugin.Misc.Nexport.Archway.Domains;
 
-namespace Nop.Plugin.Misc.Nexport.Archway.Data
-{
-    //public class ArchwayStudentRegistrationFieldKeyMappingMap : NopEntityTypeConfiguration<ArchwayStudentRegistrationFieldKeyMapping>
-    //{
-    //    public override void Configure(EntityTypeBuilder<ArchwayStudentRegistrationFieldKeyMapping> builder)
-    //    {
-    //        builder.ToTable(nameof(ArchwayStudentRegistrationFieldKeyMapping));
+namespace Nop.Plugin.Misc.Nexport.Archway.Data;
 
-    //        builder.HasKey(m => m.Id);
+//public class ArchwayStudentRegistrationFieldKeyMappingMap : NopEntityTypeConfiguration<ArchwayStudentRegistrationFieldKeyMapping>
+//{
+//    public override void Configure(EntityTypeBuilder<ArchwayStudentRegistrationFieldKeyMapping> builder)
+//    {
+//        builder.ToTable(nameof(ArchwayStudentRegistrationFieldKeyMapping));
 
-    //        builder.Property(m => m.FieldControlName);
-    //        builder.Property(m => m.FieldKey);
+//        builder.HasKey(m => m.Id);
 
-    //        base.Configure(builder);
-    //    }
-    //}
-}
+//        builder.Property(m => m.FieldControlName);
+//        builder.Property(m => m.FieldKey);
+
+//        base.Configure(builder);
+//    }
+//}

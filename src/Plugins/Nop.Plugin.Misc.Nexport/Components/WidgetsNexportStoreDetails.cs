@@ -12,26 +12,26 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Stores;
 using Nop.Web.Framework.Components;
 
-namespace Nop.Plugin.Misc.Nexport.Components
-{
-    [ViewComponent(Name = "WidgetsNexportStoreDetails")]
-    public class WidgetsNexportStoreDetails : NopViewComponent
-    {
-        private readonly NexportSettings _nexportSettings;
-        private readonly IStaticCacheManager _cacheManager;
-        private readonly IStoreModelFactory _storeModelFactory;
-        private readonly ISettingService _settingService;
-        private readonly IStoreService _storeService;
-        private readonly IGenericAttributeService _genericAttributeService;
+namespace Nop.Plugin.Misc.Nexport.Components;
 
-        public WidgetsNexportStoreDetails(
-            NexportSettings nexportSettings,
-            IStaticCacheManager cacheManager,
-            IStoreModelFactory storeModelFactory,
-            ISettingService settingService,
-            IStoreService storeService,
-            IGenericAttributeService genericAttributeService)
-        {
+[ViewComponent(Name = "WidgetsNexportStoreDetails")]
+public class WidgetsNexportStoreDetails : NopViewComponent
+{
+    private readonly NexportSettings _nexportSettings;
+    private readonly IStaticCacheManager _cacheManager;
+    private readonly IStoreModelFactory _storeModelFactory;
+    private readonly ISettingService _settingService;
+    private readonly IStoreService _storeService;
+    private readonly IGenericAttributeService _genericAttributeService;
+
+    public WidgetsNexportStoreDetails(
+        NexportSettings nexportSettings,
+        IStaticCacheManager cacheManager,
+        IStoreModelFactory storeModelFactory,
+        ISettingService settingService,
+        IStoreService storeService,
+        IGenericAttributeService genericAttributeService)
+    {
             _nexportSettings = nexportSettings;
             _cacheManager = cacheManager;
             _storeModelFactory = storeModelFactory;
@@ -40,8 +40,8 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _genericAttributeService = genericAttributeService;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return Content("");
 
@@ -68,5 +68,4 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Store/NexportStoreDetails.cshtml", model);
         }
-    }
 }

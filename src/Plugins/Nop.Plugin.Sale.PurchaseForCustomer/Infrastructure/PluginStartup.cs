@@ -9,57 +9,60 @@ using Nop.Services.Configuration;
 using Nop.Plugin.Sale.PurchaseForCustomer.Services;
 using Nop.Plugin.Sale.PurchaseForCustomer.Factories;
 using System.Threading.Tasks;
+using Nop.Plugin.Sale.PurchaseForCustomer.Filters;
 
-namespace Nop.Plugin.Sale.PurchaseForCustomer.Infrastructure
+namespace Nop.Plugin.Sale.PurchaseForCustomer.Infrastructure;
+
+public class PluginStartup : INopStartup
 {
-    public class PluginStartup : INopStartup
+    public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+        services.Configure<RazorViewEngineOptions>(options =>
         {
-            services.Configure<RazorViewEngineOptions>(options =>
-            {
-                options.ViewLocationExpanders.Add(new ViewLocationExpander());
-            });
+            options.ViewLocationExpanders.Add(new ViewLocationExpander());
+        });
 
-            services.AddScoped<IPurchaseForCustomerService, PurchaseForCustomerService>();
-            services.AddScoped<IPurchaseForCustomerModelFactory, PurchaseForCustomerModelFactory>();
-            services.AddScoped<PurchaseForCustomerPluginService>();
-        }
-
-        public void Configure(IApplicationBuilder application)
+        services.AddMvc(options =>
         {
-            using var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>()?.CreateScope();
-            if (serviceScope != null)
-            {
-                var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
+            options.Filters.Add<DashboardNotificationActionFilter>();
+        });
 
-                var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-                if (currentAssemblyVersion != null)
+        services.AddScoped<IPurchaseForCustomerService, PurchaseForCustomerService>();
+        services.AddScoped<IPurchaseForCustomerModelFactory, PurchaseForCustomerModelFactory>();
+        services.AddScoped<IPluginLocalizationService, PluginLocalizationService>();
+        services.AddScoped<PurchaseForCustomerPluginService>();
+    }
+
+    public void Configure(IApplicationBuilder application)
+    {
+        using var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>()?.CreateScope();
+        if (serviceScope != null)
+        {
+            var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
+
+            var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            if (currentAssemblyVersion != null)
+            {
+                var getSettingKeyTask = Task.Run(() => settingService.GetSettingByKeyAsync<string>(PluginDefaults.ASSEMBLY_VERSION_KEY));
+                var versionSettingValue = getSettingKeyTask.GetAwaiter().GetResult();
+                Version installedAssemblyVersion = null;
+
+                if (!string.IsNullOrEmpty(versionSettingValue))
                 {
-                    var getSettingKeyTask = Task.Run(() => settingService.GetSettingByKeyAsync<string>(PluginDefaults.ASSEMBLY_VERSION_KEY));
-                    getSettingKeyTask.Wait();
-                    var versionSettingValue = getSettingKeyTask.Result;
-                    Version installedAssemblyVersion = null;
+                    installedAssemblyVersion = Version.Parse(versionSettingValue);
+                }
 
-                    if (!string.IsNullOrEmpty(versionSettingValue))
-                    {
-                        installedAssemblyVersion =
-                            Version.Parse(versionSettingValue);
-                    }
+                if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
+                {
+                    settingService.SetSettingAsync(PluginDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
 
-                    if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
-                    {
-                        settingService.SetSettingAsync(PluginDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
+                    var pluginService = serviceScope.ServiceProvider.GetRequiredService<PurchaseForCustomerPluginService>();
 
-                        var pluginService =
-                            serviceScope.ServiceProvider.GetRequiredService<PurchaseForCustomerPluginService>();
-
-                        Task.Run(() => pluginService.AddOrUpdateResourcesAsync());
-                    }
+                    Task.Run(() => pluginService.AddOrUpdateResourcesAsync());
                 }
             }
         }
-
-        public int Order => 11;
     }
+
+    public int Order => 1001;
 }

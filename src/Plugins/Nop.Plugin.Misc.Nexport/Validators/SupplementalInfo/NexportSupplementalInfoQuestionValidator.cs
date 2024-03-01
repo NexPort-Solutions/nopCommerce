@@ -6,12 +6,12 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Data.Mapping;
 
-namespace Nop.Plugin.Misc.Nexport.Validators.SupplementalInfo
+namespace Nop.Plugin.Misc.Nexport.Validators.SupplementalInfo;
+
+public class NexportSupplementalInfoQuestionValidator : BaseNopValidator<NexportSupplementalInfoQuestionModel>
 {
-    public class NexportSupplementalInfoQuestionValidator : BaseNopValidator<NexportSupplementalInfoQuestionModel>
+    public NexportSupplementalInfoQuestionValidator(ILocalizationService localizationService, IMappingEntityAccessor mappingEntityAccessor)
     {
-        public NexportSupplementalInfoQuestionValidator(ILocalizationService localizationService, IMappingEntityAccessor mappingEntityAccessor)
-        {
             RuleFor(x => x.QuestionText)
                 .NotEmpty()
                 .WithMessage("Question text is required");
@@ -22,5 +22,4 @@ namespace Nop.Plugin.Misc.Nexport.Validators.SupplementalInfo
 
             SetDatabaseValidationRules<NexportSupplementalInfoQuestion>(mappingEntityAccessor);
         }
-    }
 }

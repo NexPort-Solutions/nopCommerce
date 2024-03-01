@@ -5,30 +5,30 @@ using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Web.Framework.Components;
 
-namespace Nop.Plugin.Misc.Nexport.Components
-{
-    [ViewComponent(Name = "WidgetsNexportRegistrationFields")]
-    public class WidgetsNexportRegistrationFields : NopViewComponent
-    {
-        private readonly NexportSettings _nexportSettings;
-        private readonly NexportService _nexportService;
-        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
-        private readonly IStoreContext _storeContext;
+namespace Nop.Plugin.Misc.Nexport.Components;
 
-        public WidgetsNexportRegistrationFields(
-            NexportSettings nexportSettings,
-            NexportService nexportService,
-            INexportPluginModelFactory nexportPluginModelFactory,
-            IStoreContext storeContext)
-        {
+[ViewComponent(Name = "WidgetsNexportRegistrationFields")]
+public class WidgetsNexportRegistrationFields : NopViewComponent
+{
+    private readonly NexportSettings _nexportSettings;
+    private readonly NexportService _nexportService;
+    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+    private readonly IStoreContext _storeContext;
+
+    public WidgetsNexportRegistrationFields(
+        NexportSettings nexportSettings,
+        NexportService nexportService,
+        INexportPluginModelFactory nexportPluginModelFactory,
+        IStoreContext storeContext)
+    {
             _nexportSettings = nexportSettings;
             _nexportService = nexportService;
             _nexportPluginModelFactory = nexportPluginModelFactory;
             _storeContext = storeContext;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return Content("");
 
@@ -37,5 +37,4 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportRegistrationFields.cshtml", model);
         }
-    }
 }

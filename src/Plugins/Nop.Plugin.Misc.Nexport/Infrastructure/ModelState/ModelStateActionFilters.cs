@@ -1,20 +1,20 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace Nop.Plugin.Misc.Nexport.Infrastructure.ModelState
-{
-    public abstract class ModelStateTransfer : ActionFilterAttribute
-    {
-        protected const string Key = nameof(ModelStateTransfer);
-    }
+namespace Nop.Plugin.Misc.Nexport.Infrastructure.ModelState;
 
-    /// <summary>
-    /// Model state exporting action filter
-    /// </summary>
-    public class ExportModelStateAttribute : ModelStateTransfer
+public abstract class ModelStateTransfer : ActionFilterAttribute
+{
+    protected const string Key = nameof(ModelStateTransfer);
+}
+
+/// <summary>
+/// Model state exporting action filter
+/// </summary>
+public class ExportModelStateAttribute : ModelStateTransfer
+{
+    public override void OnActionExecuted(ActionExecutedContext filterContext)
     {
-        public override void OnActionExecuted(ActionExecutedContext filterContext)
-        {
             // Export only when ModelState is not valid
             if (!filterContext.ModelState.IsValid)
             {
@@ -33,15 +33,15 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure.ModelState
 
             base.OnActionExecuted(filterContext);
         }
-    }
+}
 
-    /// <summary>
-    /// Model state importing action filter
-    /// </summary>
-    public class ImportModelStateAttribute : ModelStateTransfer
+/// <summary>
+/// Model state importing action filter
+/// </summary>
+public class ImportModelStateAttribute : ModelStateTransfer
+{
+    public override void OnActionExecuted(ActionExecutedContext filterContext)
     {
-        public override void OnActionExecuted(ActionExecutedContext filterContext)
-        {
             var controller = filterContext.Controller as Controller;
 
             if (controller?.TempData[Key] is string serializedModelState)
@@ -61,5 +61,4 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure.ModelState
 
             base.OnActionExecuted(filterContext);
         }
-    }
 }

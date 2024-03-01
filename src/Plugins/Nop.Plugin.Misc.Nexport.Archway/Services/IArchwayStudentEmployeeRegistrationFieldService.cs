@@ -4,59 +4,58 @@ using Microsoft.AspNetCore.Http;
 using Nop.Core.Domain.Customers;
 using Nop.Plugin.Misc.Nexport.Archway.Domains;
 
-namespace Nop.Plugin.Misc.Nexport.Archway.Services
+namespace Nop.Plugin.Misc.Nexport.Archway.Services;
+
+public interface IArchwayStudentEmployeeRegistrationFieldService
 {
-    public interface IArchwayStudentEmployeeRegistrationFieldService
-    {
-        Task<string> SaveUploadedStoreDataFile(IFormFile storeDataFile);
+    Task<string> SaveUploadedStoreDataFile(IFormFile storeDataFile);
 
-        Task ProcessUploadedStoreDataFile(string storeDataFilePath);
+    Task ProcessUploadedStoreDataFile(string storeDataFilePath);
 
-        Task<ArchwayStoreRecordInfo> GetArchwayStoreRecordInfo(int storeNumber);
+    Task<ArchwayStoreRecordInfo> GetArchwayStoreRecordInfo(int storeNumber);
 
-        Task<IList<ArchwayStoreRecordInfo>> GetArchwayStoreRecordInfos();
+    Task<IList<ArchwayStoreRecordInfo>> GetArchwayStoreRecordInfos();
 
-        Task InsertOrUpdateArchwayStoreRecord(ArchwayStoreRecordInfo record);
+    Task InsertOrUpdateArchwayStoreRecord(ArchwayStoreRecordInfo record);
 
-        Task DeleteArchwayStoreRecord(ArchwayStoreRecordInfo record);
+    Task DeleteArchwayStoreRecord(ArchwayStoreRecordInfo record);
 
-        Task<ArchwayStoreEmployeePosition> GetArchwayStoreEmployeePositionById(int id);
+    Task<ArchwayStoreEmployeePosition> GetArchwayStoreEmployeePositionById(int id);
 
-        Task<IList<ArchwayStoreEmployeePosition>> GetArchwayStoreEmployeePositions(string jobType);
+    Task<IList<ArchwayStoreEmployeePosition>> GetArchwayStoreEmployeePositions(string jobType);
 
-        Task InsertArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position);
+    Task InsertArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position);
 
-        Task UpdateArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position);
+    Task UpdateArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position);
 
-        Task DeleteArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position);
+    Task DeleteArchwayStoreEmployeePosition(ArchwayStoreEmployeePosition position);
 
-        Task<ArchwayStudentRegistrationFieldKeyMapping> GetArchwayStudentRegistrationFieldKeyMapping(string fieldControlName);
+    Task<ArchwayStudentRegistrationFieldKeyMapping> GetArchwayStudentRegistrationFieldKeyMapping(string fieldControlName);
 
-        ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMappingByFieldKey(string fieldKey);
+    ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMappingByFieldKey(string fieldKey);
 
-        Task InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping);
+    Task InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping);
 
-        Task DeleteArchwayStudentRegistrationFieldKeyMapping(ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping);
+    Task DeleteArchwayStudentRegistrationFieldKeyMapping(ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping);
 
-        Task<IList<ArchwayStudentRegistrationFieldAnswer>> GetArchwayStudentRegistrationFieldAnswers(int customerId, int fieldId);
+    Task<IList<ArchwayStudentRegistrationFieldAnswer>> GetArchwayStudentRegistrationFieldAnswers(int customerId, int fieldId);
 
-        Task<ArchwayStudentRegistrationFieldAnswer> GetArchwayStudentRegistrationFieldAnswer(int id);
+    Task<ArchwayStudentRegistrationFieldAnswer> GetArchwayStudentRegistrationFieldAnswer(int id);
 
-        Task InsertArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer);
+    Task InsertArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer);
 
-        Task DeleteArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer);
+    Task DeleteArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer);
 
-        Task UpdateArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer);
+    Task UpdateArchwayStudentRegistrationFieldAnswer(ArchwayStudentRegistrationFieldAnswer answer);
 
-        Task UpdateArchwayStudentRegistrationFieldAnswersForCustomer(int customerId, int fieldId,
-            Dictionary<string, string> fields);
+    Task UpdateArchwayStudentRegistrationFieldAnswersForCustomer(int customerId, int fieldId,
+        Dictionary<string, string> fields);
 
-        Task<Dictionary<string, string>> ParseArchwayStoreEmployeeRegistrationFields(int fieldId, IFormCollection form);
+    Task<Dictionary<string, string>> ParseArchwayStoreEmployeeRegistrationFields(int fieldId, IFormCollection form);
 
-        Task SaveArchwayStoreEmployeeRegistrationFields(Customer customer, int fieldId, Dictionary<string, string> fields);
+    Task SaveArchwayStoreEmployeeRegistrationFields(Customer customer, int fieldId, Dictionary<string, string> fields);
 
-        Task<Dictionary<string, string>> ProcessArchwayStoreEmployeeRegistrationFields(int customerId, int fieldId);
+    Task<Dictionary<string, string>> ProcessArchwayStoreEmployeeRegistrationFields(int customerId, int fieldId);
 
-        Task<Dictionary<string, string>> GetCustomFieldNamesAndValues(int customerId, int fieldId);
-    }
+    Task<Dictionary<string, string>> GetCustomFieldNamesAndValues(int customerId, int fieldId);
 }

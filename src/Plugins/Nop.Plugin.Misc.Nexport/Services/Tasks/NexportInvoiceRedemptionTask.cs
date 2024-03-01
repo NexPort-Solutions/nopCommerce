@@ -18,34 +18,34 @@ using Nop.Services.Orders;
 using Nop.Services.ScheduleTasks;
 using Nop.Services.Stores;
 
-namespace Nop.Plugin.Misc.Nexport.Services.Tasks
+namespace Nop.Plugin.Misc.Nexport.Services.Tasks;
+
+public class NexportInvoiceRedemptionTask : IScheduleTask
 {
-    public class NexportInvoiceRedemptionTask : IScheduleTask
+    private readonly ILogger _logger;
+    private readonly IWidgetPluginManager _widgetPluginManager;
+    private readonly IRepository<NexportOrderInvoiceRedemptionQueueItem> _nexportOrderInvoiceRedemptionQueueRepository;
+    private readonly NexportService _nexportService;
+    private readonly IOrderService _orderService;
+    private readonly IOrderProcessingService _orderProcessingService;
+    private readonly ISettingService _settingService;
+    private readonly IStoreService _storeService;
+    private readonly IGenericAttributeService _genericAttributeService;
+
+    private int _batchSize;
+    private const int MAX_RETRY_COUNT = 5;
+
+    public NexportInvoiceRedemptionTask(
+        IWidgetPluginManager widgetPluginManager,
+        ILogger logger,
+        IOrderService orderService,
+        IOrderProcessingService orderProcessingService,
+        ISettingService settingService,
+        IStoreService storeService,
+        IGenericAttributeService genericAttributeService,
+        IRepository<NexportOrderInvoiceRedemptionQueueItem> nexportOrderInvoiceRedemptionQueueRepository,
+        NexportService nexportService)
     {
-        private readonly ILogger _logger;
-        private readonly IWidgetPluginManager _widgetPluginManager;
-        private readonly IRepository<NexportOrderInvoiceRedemptionQueueItem> _nexportOrderInvoiceRedemptionQueueRepository;
-        private readonly NexportService _nexportService;
-        private readonly IOrderService _orderService;
-        private readonly IOrderProcessingService _orderProcessingService;
-        private readonly ISettingService _settingService;
-        private readonly IStoreService _storeService;
-        private readonly IGenericAttributeService _genericAttributeService;
-
-        private int _batchSize;
-        private const int MAX_RETRY_COUNT = 5;
-
-        public NexportInvoiceRedemptionTask(
-            IWidgetPluginManager widgetPluginManager,
-            ILogger logger,
-            IOrderService orderService,
-            IOrderProcessingService orderProcessingService,
-            ISettingService settingService,
-            IStoreService storeService,
-            IGenericAttributeService genericAttributeService,
-            IRepository<NexportOrderInvoiceRedemptionQueueItem> nexportOrderInvoiceRedemptionQueueRepository,
-            NexportService nexportService)
-        {
             _widgetPluginManager = widgetPluginManager;
             _logger = logger;
             _orderService = orderService;
@@ -57,8 +57,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             _nexportService = nexportService;
         }
 
-        public async Task ExecuteAsync()
-        {
+    public async Task ExecuteAsync()
+    {
             if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
                 return;
 
@@ -83,8 +83,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             }
         }
 
-        public async Task ProcessNexportOrderInvoiceRedemptionsAsync(IList<int> queueItemIds)
-        {
+    public async Task ProcessNexportOrderInvoiceRedemptionsAsync(IList<int> queueItemIds)
+    {
             try
             {
                 foreach (var queueItemId in queueItemIds)
@@ -248,17 +248,17 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             }
         }
 
-        /// <summary>
-        /// Redeem the Nexport invoice based on the enrollment condition (if existed)
-        /// </summary>
-        /// <param name="productMapping">The Nexport product mapping</param>
-        /// <param name="userMapping">The Nexport user mapping</param>
-        /// <param name="invoiceItem">The Nexport order invoice item</param>
-        /// <param name="redeemingUserId">The Nexport user Id</param>
-        /// <param name="extensionAction">The extension action: 1 - Renew and extend enrollment; 2 - Restart enrollment</param>
-        private async Task RedeemNexportInvoiceAsync(NexportProductMapping productMapping, NexportUserMapping userMapping,
-            NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, int? extensionAction = null)
-        {
+    /// <summary>
+    /// Redeem the Nexport invoice based on the enrollment condition (if existed)
+    /// </summary>
+    /// <param name="productMapping">The Nexport product mapping</param>
+    /// <param name="userMapping">The Nexport user mapping</param>
+    /// <param name="invoiceItem">The Nexport order invoice item</param>
+    /// <param name="redeemingUserId">The Nexport user Id</param>
+    /// <param name="extensionAction">The extension action: 1 - Renew and extend enrollment; 2 - Restart enrollment</param>
+    private async Task RedeemNexportInvoiceAsync(NexportProductMapping productMapping, NexportUserMapping userMapping,
+        NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, int? extensionAction = null)
+    {
             if (productMapping == null)
                 throw new ArgumentNullException(nameof(productMapping));
 
@@ -337,9 +337,9 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId);
         }
 
-        private async Task DeleteRedemptionQueueItemAndAddFinalOrderNote(Order order,
-            NexportOrderInvoiceRedemptionQueueItem queueItem, NexportOrderInvoiceItem invoiceItem)
-        {
+    private async Task DeleteRedemptionQueueItemAndAddFinalOrderNote(Order order,
+        NexportOrderInvoiceRedemptionQueueItem queueItem, NexportOrderInvoiceItem invoiceItem)
+    {
             await _nexportService.AddOrderNoteAsync(order,
                 $"Nexport invoice item {invoiceItem.InvoiceItemId} cannot be automatically redeemed for user {queueItem.RedeemingUserId}. " +
                 "However, this invoice item can still be manually redeem by the user in the order history page.");
@@ -347,10 +347,9 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             await _nexportService.DeleteNexportOrderInvoiceRedemptionQueueItem(queueItem);
         }
 
-        private async Task CleanUpStoredMappingInfoAsync(int orderItemId)
-        {
+    private async Task CleanUpStoredMappingInfoAsync(int orderItemId)
+    {
             var cleanUpAttributes = await _genericAttributeService.GetAttributesForEntityAsync(orderItemId, "OrderItem");
             await _genericAttributeService.DeleteAttributesAsync(cleanUpAttributes);
         }
-    }
 }

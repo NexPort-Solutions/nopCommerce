@@ -21,61 +21,61 @@ using Nop.Services.ScheduleTasks;
 using Nop.Services.Stores;
 using ILogger = Nop.Services.Logging.ILogger;
 
-namespace Nop.Plugin.Misc.Nexport.Services.Tasks
+namespace Nop.Plugin.Misc.Nexport.Services.Tasks;
+
+public class NexportOrderProcessingTask : IScheduleTask
 {
-    public class NexportOrderProcessingTask : IScheduleTask
+    private readonly EmailAccountSettings _emailAccountSettings;
+    private readonly LocalizationSettings _localizationSettings;
+    private readonly NexportSettings _nexportSettings;
+
+    private readonly ILogger _logger;
+    private readonly IWidgetPluginManager _widgetPluginManager;
+    private readonly IRepository<NexportOrderProcessingQueueItem> _nexportOrderProcessingQueueRepository;
+    private readonly NexportService _nexportService;
+    private readonly IAddressService _addressService;
+    private readonly IProductService _productService;
+    private readonly IOrderService _orderService;
+    private readonly IOrderProcessingService _orderProcessingService;
+    private readonly IStoreService _storeService;
+    private readonly ICustomerService _customerService;
+    private readonly IStateProvinceService _stateProvinceService;
+    private readonly ICountryService _countryService;
+    private readonly ISettingService _settingService;
+    private readonly IGenericAttributeService _genericAttributeService;
+
+    private int _batchSize;
+
+    private struct AutoRedeemingInvoiceItem
     {
-        private readonly EmailAccountSettings _emailAccountSettings;
-        private readonly LocalizationSettings _localizationSettings;
-        private readonly NexportSettings _nexportSettings;
+        public int Id;
 
-        private readonly ILogger _logger;
-        private readonly IWidgetPluginManager _widgetPluginManager;
-        private readonly IRepository<NexportOrderProcessingQueueItem> _nexportOrderProcessingQueueRepository;
-        private readonly NexportService _nexportService;
-        private readonly IAddressService _addressService;
-        private readonly IProductService _productService;
-        private readonly IOrderService _orderService;
-        private readonly IOrderProcessingService _orderProcessingService;
-        private readonly IStoreService _storeService;
-        private readonly ICustomerService _customerService;
-        private readonly IStateProvinceService _stateProvinceService;
-        private readonly ICountryService _countryService;
-        private readonly ISettingService _settingService;
-        private readonly IGenericAttributeService _genericAttributeService;
+        public int ProductMappingId;
 
-        private int _batchSize;
+        public int OrderItemId;
 
-        private struct AutoRedeemingInvoiceItem
-        {
-            public int Id;
+        public int? ExtensionAction;
+    }
 
-            public int ProductMappingId;
-
-            public int OrderItemId;
-
-            public int? ExtensionAction;
-        }
-
-        public NexportOrderProcessingTask(
-            EmailAccountSettings emailAccountSettings,
-            LocalizationSettings localizationSettings,
-            IWidgetPluginManager widgetPluginManager,
-            ILogger logger,
-            IAddressService addressService,
-            IProductService productService,
-            IOrderService orderService,
-            IOrderProcessingService orderProcessingService,
-            IStoreService storeService,
-            ICustomerService customerService,
-            IStateProvinceService stateProvinceService,
-            ICountryService countryService,
-            ISettingService settingService,
-            IGenericAttributeService genericAttributeService,
-            IRepository<NexportOrderProcessingQueueItem> nexportOrderProcessingQueueRepository,
-            NexportService nexportService,
-            NexportSettings nexportSettings)
-        {
+    public NexportOrderProcessingTask(
+        EmailAccountSettings emailAccountSettings,
+        LocalizationSettings localizationSettings,
+        IWidgetPluginManager widgetPluginManager,
+        ILogger logger,
+        IAddressService addressService,
+        IProductService productService,
+        IOrderService orderService,
+        IOrderProcessingService orderProcessingService,
+        IStoreService storeService,
+        ICustomerService customerService,
+        IStateProvinceService stateProvinceService,
+        ICountryService countryService,
+        ISettingService settingService,
+        IGenericAttributeService genericAttributeService,
+        IRepository<NexportOrderProcessingQueueItem> nexportOrderProcessingQueueRepository,
+        NexportService nexportService,
+        NexportSettings nexportSettings)
+    {
             _emailAccountSettings = emailAccountSettings;
             _localizationSettings = localizationSettings;
 
@@ -96,8 +96,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             _nexportSettings = nexportSettings;
         }
 
-        public async Task ExecuteAsync()
-        {
+    public async Task ExecuteAsync()
+    {
             if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
                 return;
 
@@ -118,8 +118,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             }
         }
 
-        public async Task ProcessNexportOrdersAsync(IList<int> queueItemIds)
-        {
+    public async Task ProcessNexportOrdersAsync(IList<int> queueItemIds)
+    {
             try
             {
                 foreach (var queueItemId in queueItemIds)
@@ -377,8 +377,8 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             }
         }
 
-        private async Task SynchronizeCustomerContactInformationAsync(NexportUserMapping userMapping)
-        {
+    private async Task SynchronizeCustomerContactInformationAsync(NexportUserMapping userMapping)
+    {
             if (userMapping == null)
                 throw new ArgumentNullException(nameof(userMapping));
 
@@ -425,15 +425,15 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             }
         }
 
-        /// <summary>
-        /// Generate the list of group membership identifiers
-        /// </summary>
-        /// <param name="order">The order</param>
-        /// <param name="orderItem">The order item</param>
-        /// <param name="productMapping">The Nexport product mapping</param>
-        /// <returns>The list of group membership identifiers from the Nexport product mapping of the particular product.</returns>
-        private async Task<IList<Guid>> GenerateGroupMembershipIds(Order order, OrderItem orderItem, NexportProductMapping productMapping)
-        {
+    /// <summary>
+    /// Generate the list of group membership identifiers
+    /// </summary>
+    /// <param name="order">The order</param>
+    /// <param name="orderItem">The order item</param>
+    /// <param name="productMapping">The Nexport product mapping</param>
+    /// <returns>The list of group membership identifiers from the Nexport product mapping of the particular product.</returns>
+    private async Task<IList<Guid>> GenerateGroupMembershipIds(Order order, OrderItem orderItem, NexportProductMapping productMapping)
+    {
             IList<Guid> groupMembershipIds = new List<Guid>();
 
             var groupMembershipMappingInfo = (await _genericAttributeService
@@ -460,20 +460,20 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             return groupMembershipIds;
         }
 
-        /// <summary>
-        /// Add the product to the invoice
-        /// </summary>
-        /// <param name="productMapping">The Nexport product mapping entity</param>
-        /// <param name="userMapping">The Nexport user mapping entity</param>
-        /// <param name="orderInvoiceId">The Nexport invoice Id</param>
-        /// <param name="productCost">The actual cost of the product</param>
-        /// <param name="subscriptionOrgId">The Nexport subscription organization Id</param>
-        /// <param name="groupMembershipIds">The list of group membership Ids</param>
-        /// <returns>The Nexport invoice item Id</returns>
-        private async Task<(Guid? InvoiceItemId, int? CompletionPercentage, bool? RequireManualApproval, int? ExtensionAction)>
-            AddItemToNexportInvoiceAsync(NexportProductMapping productMapping, NexportUserMapping userMapping,
+    /// <summary>
+    /// Add the product to the invoice
+    /// </summary>
+    /// <param name="productMapping">The Nexport product mapping entity</param>
+    /// <param name="userMapping">The Nexport user mapping entity</param>
+    /// <param name="orderInvoiceId">The Nexport invoice Id</param>
+    /// <param name="productCost">The actual cost of the product</param>
+    /// <param name="subscriptionOrgId">The Nexport subscription organization Id</param>
+    /// <param name="groupMembershipIds">The list of group membership Ids</param>
+    /// <returns>The Nexport invoice item Id</returns>
+    private async Task<(Guid? InvoiceItemId, int? CompletionPercentage, bool? RequireManualApproval, int? ExtensionAction)>
+        AddItemToNexportInvoiceAsync(NexportProductMapping productMapping, NexportUserMapping userMapping,
             Guid orderInvoiceId, decimal productCost, Guid subscriptionOrgId, IList<Guid> groupMembershipIds)
-        {
+    {
             Guid? invoiceItemId = null;
 
             int? completionPercentage = null;
@@ -566,12 +566,11 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
             return (invoiceItemId, completionPercentage, requireManualApproval, extensionAction);
         }
 
-        private async Task LogAndAddOrderNoteForErrorAsync(Order order, string errMsg, Exception ex = null)
-        {
+    private async Task LogAndAddOrderNoteForErrorAsync(Order order, string errMsg, Exception ex = null)
+    {
             ex ??= new Exception(errMsg);
             await _logger.ErrorAsync(errMsg, ex);
 
             await _nexportService.AddOrderNoteAsync(order, errMsg);
         }
-    }
 }

@@ -1,8 +1,7 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Models
+namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
+
+public record PendingOrderCancellationRequestReasonListModel : BasePagedListModel<PendingOrderCancellationRequestReasonModel>
 {
-    public record PendingOrderCancellationRequestReasonListModel : BasePagedListModel<PendingOrderCancellationRequestReasonModel>
-    {
-    }
 }

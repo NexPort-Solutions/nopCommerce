@@ -21,31 +21,31 @@ using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Customers;
 
-namespace Nop.Plugin.Misc.Nexport.Filters
-{
-    public class ShoppingCartActionFilter : ActionFilterAttribute
-    {
-        private readonly ICustomerService _customerService;
-        private readonly IProductService _productService;
-        private readonly IShoppingCartService _shoppingCartService;
-        private readonly INotificationService _notificationService;
-        private readonly ILocalizationService _localizationService;
-        private readonly IGenericAttributeService _genericAttributeService;
-        private readonly NexportService _nexportService;
-        private readonly IWorkContext _workContext;
-        private readonly IStoreContext _storeContext;
+namespace Nop.Plugin.Misc.Nexport.Filters;
 
-        public ShoppingCartActionFilter(
-            ICustomerService customerService,
-            IProductService productService,
-            IShoppingCartService shoppingCartService,
-            INotificationService notificationService,
-            ILocalizationService localizationService,
-            IGenericAttributeService genericAttributeService,
-            NexportService nexportService,
-            IWorkContext workContext,
-            IStoreContext storeContext)
-        {
+public class ShoppingCartActionFilter : ActionFilterAttribute
+{
+    private readonly ICustomerService _customerService;
+    private readonly IProductService _productService;
+    private readonly IShoppingCartService _shoppingCartService;
+    private readonly INotificationService _notificationService;
+    private readonly ILocalizationService _localizationService;
+    private readonly IGenericAttributeService _genericAttributeService;
+    private readonly NexportService _nexportService;
+    private readonly IWorkContext _workContext;
+    private readonly IStoreContext _storeContext;
+
+    public ShoppingCartActionFilter(
+        ICustomerService customerService,
+        IProductService productService,
+        IShoppingCartService shoppingCartService,
+        INotificationService notificationService,
+        ILocalizationService localizationService,
+        IGenericAttributeService genericAttributeService,
+        NexportService nexportService,
+        IWorkContext workContext,
+        IStoreContext storeContext)
+    {
             _customerService = customerService;
             _productService = productService;
             _shoppingCartService = shoppingCartService;
@@ -57,8 +57,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             _storeContext = storeContext;
         }
 
-        public override async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
-        {
+    public override async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
+    {
             if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
@@ -88,8 +88,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             await base.OnResultExecutionAsync(context, next);
         }
 
-        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
-        {
+    public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    {
             if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
@@ -104,8 +104,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
         }
 
 
-        protected async Task CheckProductPurchaseEligibilityAsync(ActionExecutingContext context)
-        {
+    protected async Task CheckProductPurchaseEligibilityAsync(ActionExecutingContext context)
+    {
             if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
@@ -261,8 +261,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             }
         }
 
-        private async Task CheckNexportCategoryPurchaseEligibilityAsync(ActionExecutingContext context, Product product, int storeId)
-        {
+    private async Task CheckNexportCategoryPurchaseEligibilityAsync(ActionExecutingContext context, Product product, int storeId)
+    {
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
@@ -290,5 +290,4 @@ namespace Nop.Plugin.Misc.Nexport.Filters
                 }
             }
         }
-    }
 }

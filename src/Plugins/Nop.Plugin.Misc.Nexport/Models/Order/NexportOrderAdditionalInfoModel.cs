@@ -1,11 +1,10 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.Order
-{
-    public record NexportOrderAdditionalInfoModel : BaseNopModel
-    {
-        public int OrderId { get; set; }
+namespace Nop.Plugin.Misc.Nexport.Models.Order;
 
-        public NexportOrderApprovalModel NexportOrderApprovalModel { get; set; }
-    }
+public record NexportOrderAdditionalInfoModel : BaseNopModel
+{
+    public int OrderId { get; set; }
+
+    public NexportOrderApprovalModel NexportOrderApprovalModel { get; set; }
 }

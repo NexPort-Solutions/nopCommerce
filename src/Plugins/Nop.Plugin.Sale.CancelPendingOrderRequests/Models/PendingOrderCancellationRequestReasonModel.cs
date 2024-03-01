@@ -2,24 +2,23 @@
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
-namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Models
+namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
+
+public record PendingOrderCancellationRequestReasonModel : BaseNopEntityModel, ILocalizedModel<PendingOrderCancellationRequestReasonLocalizedModel>
 {
-    public record PendingOrderCancellationRequestReasonModel : BaseNopEntityModel, ILocalizedModel<PendingOrderCancellationRequestReasonLocalizedModel>
-    {
-        [NopResourceDisplayName("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name")]
-        public string Name { get; set; }
+    [NopResourceDisplayName("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name")]
+    public string Name { get; set; }
 
-        [NopResourceDisplayName("Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder")]
-        public int DisplayOrder { get; set; }
+    [NopResourceDisplayName("Admin.Configuration.Settings.Order.CancellationRequestReasons.DisplayOrder")]
+    public int DisplayOrder { get; set; }
 
-        public IList<PendingOrderCancellationRequestReasonLocalizedModel> Locales { get; set; } = new List<PendingOrderCancellationRequestReasonLocalizedModel>();
-    }
+    public IList<PendingOrderCancellationRequestReasonLocalizedModel> Locales { get; set; } = new List<PendingOrderCancellationRequestReasonLocalizedModel>();
+}
 
-    public record PendingOrderCancellationRequestReasonLocalizedModel : ILocalizedLocaleModel
-    {
-        [NopResourceDisplayName("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name")]
-        public string Name { get; set; }
+public record PendingOrderCancellationRequestReasonLocalizedModel : ILocalizedLocaleModel
+{
+    [NopResourceDisplayName("Admin.Configuration.Settings.Order.CancellationRequestReasons.Name")]
+    public string Name { get; set; }
 
-        public int LanguageId { get; set; }
-    }
+    public int LanguageId { get; set; }
 }

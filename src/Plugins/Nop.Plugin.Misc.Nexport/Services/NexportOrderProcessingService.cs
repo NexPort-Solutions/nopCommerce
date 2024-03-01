@@ -27,87 +27,87 @@ using Nop.Services.Stores;
 using Nop.Services.Tax;
 using Nop.Services.Vendors;
 
-namespace Nop.Plugin.Misc.Nexport.Services
+namespace Nop.Plugin.Misc.Nexport.Services;
+
+public class NexportOrderProcessingService : OrderProcessingService
 {
-    public class NexportOrderProcessingService : OrderProcessingService
+    private readonly IOrderService _orderService;
+    private readonly OrderSettings _orderSettings;
+    private readonly NexportService _nexportService;
+
+    #region Constructor
+
+    public NexportOrderProcessingService(CurrencySettings currencySettings,
+        IAddressService addressService,
+        IAffiliateService affiliateService,
+        ICheckoutAttributeFormatter checkoutAttributeFormatter,
+        ICountryService countryService,
+        ICurrencyService currencyService,
+        ICustomerActivityService customerActivityService,
+        ICustomerService customerService,
+        ICustomNumberFormatter customNumberFormatter,
+        IDiscountService discountService,
+        IEncryptionService encryptionService,
+        IEventPublisher eventPublisher,
+        IGenericAttributeService genericAttributeService,
+        IGiftCardService giftCardService,
+        ILanguageService languageService,
+        ILocalizationService localizationService,
+        ILogger logger,
+        IOrderService orderService,
+        IOrderTotalCalculationService orderTotalCalculationService,
+        IPaymentPluginManager paymentPluginManager,
+        IPaymentService paymentService,
+        IPdfService pdfService,
+        IPriceCalculationService priceCalculationService,
+        IPriceFormatter priceFormatter,
+        IProductAttributeFormatter productAttributeFormatter,
+        IProductAttributeParser productAttributeParser,
+        IProductService productService,
+        IReturnRequestService returnRequestService,
+        IRewardPointService rewardPointService,
+        IShipmentService shipmentService,
+        IShippingService shippingService,
+        IShoppingCartService shoppingCartService,
+        IStateProvinceService stateProvinceService,
+        IStoreService storeService,
+        ITaxService taxService,
+        IVendorService vendorService,
+        IWebHelper webHelper,
+        IWorkContext workContext,
+        IWorkflowMessageService workflowMessageService,
+        LocalizationSettings localizationSettings,
+        OrderSettings orderSettings,
+        PaymentSettings paymentSettings,
+        RewardPointsSettings rewardPointsSettings,
+        ShippingSettings shippingSettings,
+        TaxSettings taxSettings,
+        NexportService nexportService) :
+        base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter,
+            countryService, currencyService, customerActivityService, customerService,
+            customNumberFormatter, discountService, encryptionService, eventPublisher,
+            genericAttributeService, giftCardService, languageService, localizationService,
+            logger, orderService, orderTotalCalculationService, paymentPluginManager, paymentService,
+            pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser, productService,
+            returnRequestService, rewardPointService, shipmentService, shippingService, shoppingCartService,
+            stateProvinceService, storeService, taxService, vendorService, webHelper, workContext, workflowMessageService,
+            localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
     {
-        private readonly IOrderService _orderService;
-        private readonly OrderSettings _orderSettings;
-        private readonly NexportService _nexportService;
-
-        #region Constructor
-
-        public NexportOrderProcessingService(CurrencySettings currencySettings,
-            IAddressService addressService,
-            IAffiliateService affiliateService,
-            ICheckoutAttributeFormatter checkoutAttributeFormatter,
-            ICountryService countryService,
-            ICurrencyService currencyService,
-            ICustomerActivityService customerActivityService,
-            ICustomerService customerService,
-            ICustomNumberFormatter customNumberFormatter,
-            IDiscountService discountService,
-            IEncryptionService encryptionService,
-            IEventPublisher eventPublisher,
-            IGenericAttributeService genericAttributeService,
-            IGiftCardService giftCardService,
-            ILanguageService languageService,
-            ILocalizationService localizationService,
-            ILogger logger,
-            IOrderService orderService,
-            IOrderTotalCalculationService orderTotalCalculationService,
-            IPaymentPluginManager paymentPluginManager,
-            IPaymentService paymentService,
-            IPdfService pdfService,
-            IPriceCalculationService priceCalculationService,
-            IPriceFormatter priceFormatter,
-            IProductAttributeFormatter productAttributeFormatter,
-            IProductAttributeParser productAttributeParser,
-            IProductService productService,
-            IReturnRequestService returnRequestService,
-            IRewardPointService rewardPointService,
-            IShipmentService shipmentService,
-            IShippingService shippingService,
-            IShoppingCartService shoppingCartService,
-            IStateProvinceService stateProvinceService,
-            IStoreService storeService,
-            ITaxService taxService,
-            IVendorService vendorService,
-            IWebHelper webHelper,
-            IWorkContext workContext,
-            IWorkflowMessageService workflowMessageService,
-            LocalizationSettings localizationSettings,
-            OrderSettings orderSettings,
-            PaymentSettings paymentSettings,
-            RewardPointsSettings rewardPointsSettings,
-            ShippingSettings shippingSettings,
-            TaxSettings taxSettings,
-            NexportService nexportService) :
-            base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter,
-                countryService, currencyService, customerActivityService, customerService,
-                customNumberFormatter, discountService, encryptionService, eventPublisher,
-                genericAttributeService, giftCardService, languageService, localizationService,
-                logger, orderService, orderTotalCalculationService, paymentPluginManager, paymentService,
-                pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser, productService,
-                returnRequestService, rewardPointService, shipmentService, shippingService, shoppingCartService,
-                stateProvinceService, storeService, taxService, vendorService, webHelper, workContext, workflowMessageService,
-                localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
-        {
             _orderService = orderService;
             _orderSettings = orderSettings;
             _nexportService = nexportService;
         }
 
-        #endregion
+    #endregion
 
-        /// <summary>
-        /// Check and set the order status.
-        /// This will validate the order status based on the payment and shipping status of the order, then it will set the status according to the algorithm.
-        /// If the order has any item that has Nexport mapping and is being processed by the scheduled task, then the status will not be set to complete.
-        /// </summary>
-        /// <param name="order">The order</param>
-        public override async Task CheckOrderStatusAsync(Order order)
-        {
+    /// <summary>
+    /// Check and set the order status.
+    /// This will validate the order status based on the payment and shipping status of the order, then it will set the status according to the algorithm.
+    /// If the order has any item that has Nexport mapping and is being processed by the scheduled task, then the status will not be set to complete.
+    /// </summary>
+    /// <param name="order">The order</param>
+    public override async Task CheckOrderStatusAsync(Order order)
+    {
             if (order == null)
                 throw new ArgumentNullException(nameof(order));
 
@@ -187,5 +187,4 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 await SetOrderStatusAsync(order, OrderStatus.Complete, true);
             }
         }
-    }
 }

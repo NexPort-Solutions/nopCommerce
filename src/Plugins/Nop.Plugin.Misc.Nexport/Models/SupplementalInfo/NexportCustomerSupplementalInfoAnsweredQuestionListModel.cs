@@ -1,8 +1,7 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
+
+public record NexportCustomerSupplementalInfoAnsweredQuestionListModel : BasePagedListModel<NexportCustomerSupplementalInfoAnsweredQuestionModel>
 {
-    public record NexportCustomerSupplementalInfoAnsweredQuestionListModel : BasePagedListModel<NexportCustomerSupplementalInfoAnsweredQuestionModel>
-    {
-    }
 }

@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
+
+public record NexportCustomerSupplementalInfoAnswersModel
 {
-    public record NexportCustomerSupplementalInfoAnswersModel
-    {
-        public Dictionary<int, Dictionary<int, int>> QuestionWithAnswersList { get; set; } = new();
-    }
+    public Dictionary<int, Dictionary<int, int>> QuestionWithAnswersList { get; set; } = new();
 }

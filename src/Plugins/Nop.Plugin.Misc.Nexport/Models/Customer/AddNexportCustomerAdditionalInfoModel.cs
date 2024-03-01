@@ -3,16 +3,15 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.Customer
+namespace Nop.Plugin.Misc.Nexport.Models.Customer;
+
+public record AddNexportCustomerAdditionalInfoModel : BaseNopModel
 {
-    public record AddNexportCustomerAdditionalInfoModel : BaseNopModel
-    {
-        public int CustomerId { get; set; }
+    public int CustomerId { get; set; }
 
-        public int StoreId { get; set; }
+    public int StoreId { get; set; }
 
-        public IList<SelectListItem> AvailableStores { get; set; }
+    public IList<SelectListItem> AvailableStores { get; set; }
 
-        public NexportCustomerRegistrationFieldAnswerListSearchModel NexportCustomerRegistrationFieldAnswerListSearchModel { get; set; }
-    }
+    public NexportCustomerRegistrationFieldAnswerListSearchModel NexportCustomerRegistrationFieldAnswerListSearchModel { get; set; }
 }

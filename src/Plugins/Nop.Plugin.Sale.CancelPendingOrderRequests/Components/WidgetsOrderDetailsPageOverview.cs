@@ -6,24 +6,24 @@ using Nop.Services.Orders;
 using Nop.Web.Framework.Components;
 using Nop.Web.Models.Order;
 
-namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Components
-{
-    [ViewComponent(Name = "WidgetsOrderDetailsPageOverview")]
-    public class WidgetsOrderDetailsPageOverview : NopViewComponent
-    {
-        private readonly IStoreContext _storeContext;
-        private readonly IOrderService _orderService;
+namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Components;
 
-        public WidgetsOrderDetailsPageOverview(
-            IOrderService orderService,
-            IStoreContext storeContext)
-        {
+[ViewComponent(Name = "WidgetsOrderDetailsPageOverview")]
+public class WidgetsOrderDetailsPageOverview : NopViewComponent
+{
+    private readonly IStoreContext _storeContext;
+    private readonly IOrderService _orderService;
+
+    public WidgetsOrderDetailsPageOverview(
+        IOrderService orderService,
+        IStoreContext storeContext)
+    {
             _orderService = orderService;
             _storeContext = storeContext;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
             if (await _storeContext.GetCurrentStoreAsync() == null)
                 return Content("");
 
@@ -38,5 +38,4 @@ namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Components
 
             return View("~/Plugins/Sale.CancelPendingOrderRequests/Views/Widget/Order/WidgetsOrderDetailsPageOverview.cshtml", orderDetailsModel);
         }
-    }
 }

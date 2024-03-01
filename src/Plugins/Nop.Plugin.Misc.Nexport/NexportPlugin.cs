@@ -25,37 +25,37 @@ using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
 using Nop.Plugin.Misc.Nexport.Components;
 
-namespace Nop.Plugin.Misc.Nexport
+namespace Nop.Plugin.Misc.Nexport;
+
+public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
 {
-    public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
+    private readonly NexportSettings _nexportSettings;
+    private readonly NexportPluginService _nexportPluginService;
+
+    private readonly IUrlHelperFactory _urlHelperFactory;
+    private readonly IActionContextAccessor _actionContextAccessor;
+    private readonly IDiscountService _discountService;
+    private readonly ILocalizationService _localizationService;
+    private readonly IPermissionService _permissionService;
+    private readonly ISettingService _settingService;
+    private readonly IScheduleTaskService _scheduleTaskService;
+    private readonly WidgetSettings _widgetSettings;
+    private readonly IWebHelper _webHelper;
+    private readonly ILogger _logger;
+
+    public NexportPlugin(
+        NexportSettings nexportSettings,
+        NexportPluginService nexportPluginService,
+        IUrlHelperFactory urlHelperFactory,
+        IActionContextAccessor actionContextAccessor,
+        IDiscountService discountService,
+        WidgetSettings widgetSetting,
+        ILocalizationService localizationService,
+        IPermissionService permissionService,
+        ISettingService settingService,
+        IScheduleTaskService scheduleTaskService,
+        IWebHelper webHelper, ILogger logger)
     {
-        private readonly NexportSettings _nexportSettings;
-        private readonly NexportPluginService _nexportPluginService;
-
-        private readonly IUrlHelperFactory _urlHelperFactory;
-        private readonly IActionContextAccessor _actionContextAccessor;
-        private readonly IDiscountService _discountService;
-        private readonly ILocalizationService _localizationService;
-        private readonly IPermissionService _permissionService;
-        private readonly ISettingService _settingService;
-        private readonly IScheduleTaskService _scheduleTaskService;
-        private readonly WidgetSettings _widgetSettings;
-        private readonly IWebHelper _webHelper;
-        private readonly ILogger _logger;
-
-        public NexportPlugin(
-            NexportSettings nexportSettings,
-            NexportPluginService nexportPluginService,
-            IUrlHelperFactory urlHelperFactory,
-            IActionContextAccessor actionContextAccessor,
-            IDiscountService discountService,
-            WidgetSettings widgetSetting,
-            ILocalizationService localizationService,
-            IPermissionService permissionService,
-            ISettingService settingService,
-            IScheduleTaskService scheduleTaskService,
-            IWebHelper webHelper, ILogger logger)
-        {
             _nexportSettings = nexportSettings;
             _nexportPluginService = nexportPluginService;
 
@@ -72,8 +72,8 @@ namespace Nop.Plugin.Misc.Nexport
             _logger = logger;
         }
 
-        public async Task ManageSiteMapAsync(SiteMapNode rootNode)
-        {
+    public async Task ManageSiteMapAsync(SiteMapNode rootNode)
+    {
             var pluginNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Nexport");
             if (pluginNode != null)
                 return;
@@ -122,13 +122,13 @@ namespace Nop.Plugin.Misc.Nexport
             rootNode.ChildNodes.Add(node);
         }
 
-        public override string GetConfigurationPageUrl()
-        {
+    public override string GetConfigurationPageUrl()
+    {
             return $"{_webHelper.GetStoreLocation()}Admin/NexportIntegration/Configure";
         }
 
-        public override async Task InstallAsync()
-        {
+    public override async Task InstallAsync()
+    {
             try
             {
                 var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
@@ -170,8 +170,8 @@ namespace Nop.Plugin.Misc.Nexport
             await base.InstallAsync();
         }
 
-        public override async Task UninstallAsync()
-        {
+    public override async Task UninstallAsync()
+    {
             if (_widgetSettings.ActiveWidgetSystemNames.Contains(NexportDefaults.SystemName))
             {
                 _widgetSettings.ActiveWidgetSystemNames.Remove(NexportDefaults.SystemName);
@@ -214,10 +214,10 @@ namespace Nop.Plugin.Misc.Nexport
             await base.UninstallAsync();
         }
 
-        public bool HideInWidgetList => true;
+    public bool HideInWidgetList => true;
 
-        public Task<IList<string>> GetWidgetZonesAsync()
-        {
+    public Task<IList<string>> GetWidgetZonesAsync()
+    {
             return Task.FromResult<IList<string>>(new List<string>
             {
                 AdminWidgetZones.StoreDetailsBottom,
@@ -228,6 +228,7 @@ namespace Nop.Plugin.Misc.Nexport
                 AdminWidgetZones.CustomerUserDetailsBlock,
                 AdminWidgetZones.CategoryDetailsBlock,
                 AdminWidgetZones.OrderDetailsBlock,
+                AdminWidgetZones.PluginDetailsBottom,
                 PublicWidgetZones.OrderDetailsProductLine,
                 PublicWidgetZones.AccountNavigationAfter,
                 PublicWidgetZones.HeaderLinksBefore,
@@ -237,10 +238,13 @@ namespace Nop.Plugin.Misc.Nexport
             });
         }
 
-        public Type GetWidgetViewComponent(string widgetZone)
-        {
+    public Type GetWidgetViewComponent(string widgetZone)
+    {
             if (widgetZone == null)
                 throw new ArgumentNullException(nameof(widgetZone));
+
+            if (widgetZone == AdminWidgetZones.PluginDetailsBottom)
+                return typeof(WidgetsNexportModifiedLocaleResourcesDataTableBlock);
 
             if (widgetZone == AdminWidgetZones.StoreDetailsBottom)
                 return typeof(WidgetsNexportStoreDetails);
@@ -286,5 +290,4 @@ namespace Nop.Plugin.Misc.Nexport
 
             return null;
         }
-    }
 }

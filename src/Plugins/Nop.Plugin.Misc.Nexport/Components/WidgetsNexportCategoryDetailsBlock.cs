@@ -9,24 +9,24 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Components;
 
-namespace Nop.Plugin.Misc.Nexport.Components
-{
-    [ViewComponent(Name = "WidgetsNexportCategoryDetailsBlock")]
-    public class WidgetsNexportCategoryDetailsBlock : NopViewComponent
-    {
-        private readonly NexportSettings _nexportSettings;
-        private readonly NexportService _nexportService;
-        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
-        private readonly ICategoryService _categoryService;
-        private readonly IGenericAttributeService _genericAttributeService;
+namespace Nop.Plugin.Misc.Nexport.Components;
 
-        public WidgetsNexportCategoryDetailsBlock(
-            NexportSettings nexportSettings,
-            NexportService nexportService,
-            INexportPluginModelFactory nexportPluginModelFactory,
-            ICategoryService categoryService,
-            IGenericAttributeService genericAttributeService)
-        {
+[ViewComponent(Name = "WidgetsNexportCategoryDetailsBlock")]
+public class WidgetsNexportCategoryDetailsBlock : NopViewComponent
+{
+    private readonly NexportSettings _nexportSettings;
+    private readonly NexportService _nexportService;
+    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+    private readonly ICategoryService _categoryService;
+    private readonly IGenericAttributeService _genericAttributeService;
+
+    public WidgetsNexportCategoryDetailsBlock(
+        NexportSettings nexportSettings,
+        NexportService nexportService,
+        INexportPluginModelFactory nexportPluginModelFactory,
+        ICategoryService categoryService,
+        IGenericAttributeService genericAttributeService)
+    {
             _nexportSettings = nexportSettings;
             _nexportService = nexportService;
             _nexportPluginModelFactory = nexportPluginModelFactory;
@@ -34,8 +34,8 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _genericAttributeService = genericAttributeService;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
             if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
                 return Content("");
 
@@ -59,5 +59,4 @@ namespace Nop.Plugin.Misc.Nexport.Components
 
             return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Category/NexportCategoryDetails.cshtml", model);
         }
-    }
 }

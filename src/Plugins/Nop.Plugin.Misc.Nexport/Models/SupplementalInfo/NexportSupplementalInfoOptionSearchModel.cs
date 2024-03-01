@@ -1,9 +1,8 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
+namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
+
+public record NexportSupplementalInfoOptionSearchModel : BaseSearchModel
 {
-    public record NexportSupplementalInfoOptionSearchModel : BaseSearchModel
-    {
-        public int QuestionId { get; set; }
-    }
+    public int QuestionId { get; set; }
 }

@@ -4,19 +4,18 @@ using Nop.Data.Mapping;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 
-namespace Nop.Plugin.Misc.Nexport.Data
-{
-    public class PluginDataMappingNameCompatibility : INameCompatibility
-    {
-        public Dictionary<Type, string> TableNames => new Dictionary<Type, string>
-        {
-            { typeof(NexportSupplementalInfoAnswerProcessingQueueItem), "NexportSupplementalInfoAnswerProcessingQueue" },
-            { typeof(NexportOrderProcessingQueueItem), "NexportOrderProcessingQueue" },
-            { typeof(NexportOrderInvoiceRedemptionQueueItem), "NexportOrderInvoiceRedemptionQueue" },
-            { typeof(NexportRegistrationFieldSynchronizationQueueItem), "NexportRegistrationFieldSynchronizationQueue" },
-            { typeof(NexportGroupMembershipRemovalQueueItem), "NexportGroupMembershipRemovalQueue" }
-        };
+namespace Nop.Plugin.Misc.Nexport.Data;
 
-        public Dictionary<(Type, string), string> ColumnName => new Dictionary<(Type, string), string>();
-    }
+public class PluginDataMappingNameCompatibility : INameCompatibility
+{
+    public Dictionary<Type, string> TableNames => new Dictionary<Type, string>
+    {
+        { typeof(NexportSupplementalInfoAnswerProcessingQueueItem), "NexportSupplementalInfoAnswerProcessingQueue" },
+        { typeof(NexportOrderProcessingQueueItem), "NexportOrderProcessingQueue" },
+        { typeof(NexportOrderInvoiceRedemptionQueueItem), "NexportOrderInvoiceRedemptionQueue" },
+        { typeof(NexportRegistrationFieldSynchronizationQueueItem), "NexportRegistrationFieldSynchronizationQueue" },
+        { typeof(NexportGroupMembershipRemovalQueueItem), "NexportGroupMembershipRemovalQueue" }
+    };
+
+    public Dictionary<(Type, string), string> ColumnName => new Dictionary<(Type, string), string>();
 }

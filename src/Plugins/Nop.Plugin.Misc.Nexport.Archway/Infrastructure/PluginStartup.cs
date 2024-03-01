@@ -19,126 +19,135 @@ using Nop.Plugin.Misc.Nexport.Archway.Migrations;
 using Nop.Plugin.Misc.Nexport.Archway.Services;
 using ILogger = Nop.Services.Logging.ILogger;
 using Nop.Plugin.Misc.Nexport.Archway.Factories;
+using Nop.Plugin.Misc.Nexport.Archway.Filters;
 
-namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure
+namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure;
+
+public class PluginStartup : INopStartup
 {
-    public class PluginStartup : INopStartup
+    public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+        services.Configure<RazorViewEngineOptions>(options =>
         {
-            services.Configure<RazorViewEngineOptions>(options =>
+            options.ViewLocationExpanders.Add(new ViewLocationExpander());
+        });
+
+        // Add action filters
+        services.AddMvc(options =>
+        {
+            options.Filters.Add<ArchwayDashboardNotificationActionFilter>();
+        });
+
+        services.AddScoped<IArchwayStudentEmployeeRegistrationFieldModelFactory, ArchwayStudentEmployeeRegistrationFieldModelFactory>();
+        services.AddScoped<IArchwayStudentEmployeeRegistrationFieldService, ArchwayStudentEmployeeRegistrationFieldService>();
+        services.AddScoped<ArchwayPluginService>();
+    }
+
+    public static IServiceProvider CreateFluentMigratorRunnerService()
+    {
+        var dataSettings = DataSettingsManager.LoadSettings();
+
+        return new ServiceCollection()
+            // Add common FluentMigrator services
+            .AddFluentMigratorCore().ConfigureRunner(builder =>
             {
-                options.ViewLocationExpanders.Add(new ViewLocationExpander());
-            });
+                builder.AddSqlServer()
+                    .WithGlobalConnectionString(dataSettings.ConnectionString)
+                    .WithVersionTable(new ArchwayPluginMigrationVersionTable())
+                    .ScanIn(typeof(Nop.Plugin.Misc.Nexport.Archway.Migrations.M001_CreatePluginSchemas).Assembly)
+                    .For.Migrations()
+                    .For.VersionTableMetaData();
+            })
+            .AddLogging(lb => lb.AddEventSourceLogger())
+            .Configure<RunnerOptions>(opt =>
+            {
+                opt.Tags = new[] { PluginDefaults.PluginMigrationTag };
+            })
+            // Build the service provider
+            .BuildServiceProvider(false);
+    }
 
-            services.AddScoped<IArchwayStudentEmployeeRegistrationFieldModelFactory, ArchwayStudentEmployeeRegistrationFieldModelFactory>();
-            services.AddScoped<IArchwayStudentEmployeeRegistrationFieldService, ArchwayStudentEmployeeRegistrationFieldService>();
-            services.AddScoped<ArchwayPluginService>();
-        }
+    /// <summary>
+    /// Apply migrations
+    /// </summary>
+    /// <param name="application"></param>
+    private async Task ApplyMigration(IApplicationBuilder application)
+    {
+        var logger = EngineContext.Current.Resolve<ILogger>();
 
-        public static IServiceProvider CreateFluentMigratorRunnerService()
+        try
         {
-            var dataSettings = DataSettingsManager.LoadSettings();
-
-            return new ServiceCollection()
-                // Add common FluentMigrator services
-                .AddFluentMigratorCore().ConfigureRunner(builder =>
-                {
-                    builder.AddSqlServer()
-                        .WithGlobalConnectionString(dataSettings.ConnectionString)
-                        .WithVersionTable(new ArchwayPluginMigrationVersionTable())
-                        .ScanIn(typeof(Nop.Plugin.Misc.Nexport.Archway.Migrations.M001_CreatePluginSchemas).Assembly)
-                        .For.Migrations()
-                        .For.VersionTableMetaData();
-                })
-                .AddLogging(lb => lb.AddEventSourceLogger())
-                .Configure<RunnerOptions>(opt =>
-                {
-                    opt.Tags = new[] { PluginDefaults.PluginMigrationTag };
-                })
-                // Build the service provider
-                .BuildServiceProvider(false);
-        }
-
-        /// <summary>
-        /// Apply migrations
-        /// </summary>
-        /// <param name="application"></param>
-        private async Task ApplyMigration(IApplicationBuilder application)
-        {
-            var logger = EngineContext.Current.Resolve<ILogger>();
-
+            var migratorRunnerService = CreateFluentMigratorRunnerService();
+            using var serviceScope = migratorRunnerService.CreateScope();
+            var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
             try
             {
-                var migratorRunnerService = CreateFluentMigratorRunnerService();
-                using var serviceScope = migratorRunnerService.CreateScope();
-                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-                try
-                {
-                    runner.MigrateUp();
-                }
-                catch (MissingMigrationsException)
-                {
-                    // ignored
-                }
+                runner.MigrateUp();
             }
-            catch (Exception ex)
+            catch (MissingMigrationsException)
             {
-                await logger.ErrorAsync($"Error occurred during database migration process: {ex.Message}", ex);
+                // ignored
             }
         }
-
-        public void Configure(IApplicationBuilder application)
+        catch (Exception ex)
         {
-            var dataSettings = DataSettingsManager.LoadSettings();
-            if (dataSettings == null ||
-                dataSettings.DataProvider == DataProviderType.Unknown ||
-                string.IsNullOrWhiteSpace(dataSettings.ConnectionString))
-                return;
+            await logger.ErrorAsync($"Error occurred during database migration process: {ex.Message}", ex);
+        }
+    }
 
-            var migrationTask = Task.Run(() => ApplyMigration(application));
-            migrationTask.Wait();
+    public void Configure(IApplicationBuilder application)
+    {
+        var dataSettings = DataSettingsManager.LoadSettings();
+        if (dataSettings == null ||
+            dataSettings.DataProvider == DataProviderType.Unknown ||
+            string.IsNullOrWhiteSpace(dataSettings.ConnectionString))
+            return;
 
-            using var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>()?.CreateScope();
-            if (serviceScope != null)
+        var migrationTask = Task.Run(() => ApplyMigration(application));
+        migrationTask.Wait();
+
+        using var serviceScope = application.ApplicationServices.GetService<IServiceScopeFactory>()?.CreateScope();
+        if (serviceScope != null)
+        {
+            var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
+
+            var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            if (currentAssemblyVersion != null)
             {
-                var settingService = serviceScope.ServiceProvider.GetRequiredService<ISettingService>();
-
-                var currentAssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-                var versionSettingValue = settingService.GetSettingByKeyAsync<string>(NexportDefaults.ASSEMBLY_VERSION_KEY).Result;
+                var getAssemblyVersionSettingKeyTask = Task.Run(() => settingService.GetSettingByKeyAsync<string>(PluginDefaults.ASSEMBLY_VERSION_KEY));
+                var versionSettingValue = getAssemblyVersionSettingKeyTask.GetAwaiter().GetResult();
                 Version installedAssemblyVersion = null;
 
                 if (!string.IsNullOrEmpty(versionSettingValue))
                 {
-                    installedAssemblyVersion =
-                        Version.Parse(versionSettingValue);
+                    installedAssemblyVersion = Version.Parse(versionSettingValue);
                 }
 
                 if (installedAssemblyVersion == null || currentAssemblyVersion > installedAssemblyVersion)
                 {
                     settingService.SetSettingAsync(PluginDefaults.ASSEMBLY_VERSION_KEY, currentAssemblyVersion.ToString());
 
-                    var pluginService =
-                        serviceScope.ServiceProvider.GetRequiredService<ArchwayPluginService>();
+                    var pluginService = serviceScope.ServiceProvider.GetRequiredService<ArchwayPluginService>();
 
                     Task.Run(() => pluginService.AddOrUpdateResourcesAsync());
                 }
+            }
 
-                var customEnrollmentRouteControl =
-                    (settingService.GetSettingByKeyAsync<bool>(PluginDefaults.CustomEnrollmentRouteControlSettingKey)).Result;
-                if (customEnrollmentRouteControl)
+            var getCustomEnrollmentRouteControlSettingKeyTask = Task.Run(() => settingService.GetSettingByKeyAsync<bool>(PluginDefaults.CustomEnrollmentRouteControlSettingKey));
+            var customEnrollmentRouteControl = getCustomEnrollmentRouteControlSettingKeyTask.GetAwaiter().GetResult();
+            if (customEnrollmentRouteControl)
+            {
+                var getCustomEnrollmentRouteSettingKeyTask = Task.Run(() => settingService.GetSettingByKeyAsync<string>(PluginDefaults.CustomEnrollmentRouteSettingKey));
+                var customEnrollmentRoute = getCustomEnrollmentRouteSettingKeyTask.GetAwaiter().GetResult();
+                if (!string.IsNullOrWhiteSpace(customEnrollmentRoute))
                 {
-                    var customEnrollmentRoute = (settingService.GetSettingByKeyAsync<string>(PluginDefaults.CustomEnrollmentRouteSettingKey)).Result;
-                    if (!string.IsNullOrWhiteSpace(customEnrollmentRoute))
-                    {
-                        var customShoppingCartRoutingRule = new CustomShoppingCartRoutingRule(customEnrollmentRoute);
-                        var options = new RewriteOptions().Add(customShoppingCartRoutingRule);
-                        application.UseRewriter(options);
-                    }
+                    var customShoppingCartRoutingRule = new CustomShoppingCartRoutingRule(customEnrollmentRoute);
+                    var options = new RewriteOptions().Add(customShoppingCartRoutingRule);
+                    application.UseRewriter(options);
                 }
             }
         }
-
-        public int Order => 11;
     }
+
+    public int Order => 11;
 }

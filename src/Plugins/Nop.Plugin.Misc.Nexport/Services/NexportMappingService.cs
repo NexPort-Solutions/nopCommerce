@@ -13,12 +13,12 @@ using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
 
-namespace Nop.Plugin.Misc.Nexport.Services
+namespace Nop.Plugin.Misc.Nexport.Services;
+
+public partial class NexportService : INexportService
 {
-    public partial class NexportService : INexportService
+    public async Task InsertNexportProductMapping(NexportProductMapping nexportProductMapping)
     {
-        public async Task InsertNexportProductMapping(NexportProductMapping nexportProductMapping)
-        {
             if (nexportProductMapping == null)
                 throw new ArgumentNullException(nameof(nexportProductMapping));
 
@@ -30,9 +30,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportProductMappingRepository.InsertAsync(nexportProductMapping);
         }
 
-        public async Task InsertNexportProductGroupMembershipMapping(
-            NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping)
-        {
+    public async Task InsertNexportProductGroupMembershipMapping(
+        NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping)
+    {
             if (nexportProductGroupMembershipMapping == null)
                 throw new ArgumentNullException(nameof(nexportProductGroupMembershipMapping));
 
@@ -44,10 +44,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportProductGroupMembershipMappingRepository.InsertAsync(nexportProductGroupMembershipMapping);
         }
 
-        public async Task<IPagedList<NexportProductMapping>> GetProductCatalogsByCatalogId(Guid catalogId,
-            int pageIndex = 0, int pageSize = int.MaxValue,
-            bool showHidden = false)
-        {
+    public async Task<IPagedList<NexportProductMapping>> GetProductCatalogsByCatalogId(Guid catalogId,
+        int pageIndex = 0, int pageSize = int.MaxValue,
+        bool showHidden = false)
+    {
             if (catalogId == Guid.Empty)
             {
                 return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
@@ -112,10 +112,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public async Task<IPagedList<NexportProductMapping>> GetProductSectionsBySectionId(Guid sectionId, int pageIndex = 0,
-            int pageSize = int.MaxValue,
-            bool showHidden = false)
-        {
+    public async Task<IPagedList<NexportProductMapping>> GetProductSectionsBySectionId(Guid sectionId, int pageIndex = 0,
+        int pageSize = int.MaxValue,
+        bool showHidden = false)
+    {
             if (sectionId == Guid.Empty)
             {
                 return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
@@ -171,10 +171,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public async Task<IPagedList<NexportProductMapping>> GetProductTrainingPlansByTrainingPlanId(Guid trainingPlanId,
-            int pageIndex = 0, int pageSize = int.MaxValue,
-            bool showHidden = false)
-        {
+    public async Task<IPagedList<NexportProductMapping>> GetProductTrainingPlansByTrainingPlanId(Guid trainingPlanId,
+        int pageIndex = 0, int pageSize = int.MaxValue,
+        bool showHidden = false)
+    {
             if (trainingPlanId == Guid.Empty)
             {
                 return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
@@ -230,41 +230,41 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public NexportProductMapping FindProductCatalog(IList<NexportProductMapping> source, int productId,
-            Guid catalogId, int? storeId = null)
-        {
+    public NexportProductMapping FindProductCatalog(IList<NexportProductMapping> source, int productId,
+        Guid catalogId, int? storeId = null)
+    {
             return source.FirstOrDefault(productCatalog => productCatalog.NopProductId == productId &&
                                                            productCatalog.NexportCatalogId == catalogId &&
                                                            productCatalog.StoreId == storeId);
         }
 
-        public NexportProductMapping FindProductSection(IList<NexportProductMapping> source, int productId,
-            Guid sectionId, int? storeId = null)
-        {
+    public NexportProductMapping FindProductSection(IList<NexportProductMapping> source, int productId,
+        Guid sectionId, int? storeId = null)
+    {
             return source.FirstOrDefault(productSectionMapping => productSectionMapping.NopProductId == productId &&
                                                            productSectionMapping.NexportSyllabusId == sectionId &&
                                                            productSectionMapping.Type == NexportProductTypeEnum.Section &&
                                                            productSectionMapping.StoreId == storeId);
         }
 
-        public NexportProductMapping FindProductTrainingPlan(IList<NexportProductMapping> source,
-            int productId, Guid trainingPlanId, int? storeId = null)
-        {
+    public NexportProductMapping FindProductTrainingPlan(IList<NexportProductMapping> source,
+        int productId, Guid trainingPlanId, int? storeId = null)
+    {
             return source.FirstOrDefault(productTrainingPlanMapping => productTrainingPlanMapping.NopProductId == productId &&
                                                            productTrainingPlanMapping.NexportSyllabusId == trainingPlanId &&
                                                            productTrainingPlanMapping.Type == NexportProductTypeEnum.TrainingPlan &&
                                                            productTrainingPlanMapping.StoreId == storeId);
         }
 
-        public async Task<IList<NexportProductMapping>> GetProductMappingsByStoreId(int storeId)
-        {
+    public async Task<IList<NexportProductMapping>> GetProductMappingsByStoreId(int storeId)
+    {
             return storeId < 1
                 ? new List<NexportProductMapping>()
                 : await _nexportProductMappingRepository.Table.Where(np => np.StoreId == storeId).ToListAsync();
         }
 
-        public async Task<NexportProductMapping> GetProductMappingByNopProductId(int nopProductId, int? storeId = null)
-        {
+    public async Task<NexportProductMapping> GetProductMappingByNopProductId(int nopProductId, int? storeId = null)
+    {
             return nopProductId < 1
                 ? null
                 : await _nexportProductMappingRepository
@@ -273,8 +273,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         np.StoreId == storeId);
         }
 
-        public async Task<IList<NexportProductMapping>> GetProductMappings(int? nopProductId = null, int? storeId = null)
-        {
+    public async Task<IList<NexportProductMapping>> GetProductMappings(int? nopProductId = null, int? storeId = null)
+    {
             var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
                 (await _storeContext.GetCurrentStoreAsync()).Id,
                 string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
@@ -294,9 +294,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public async Task<IList<NexportProductGroupMembershipMapping>> GetProductGroupMembershipMappings(
-            int nexportProductMappingId)
-        {
+    public async Task<IList<NexportProductGroupMembershipMapping>> GetProductGroupMembershipMappings(
+        int nexportProductMappingId)
+    {
             if (nexportProductMappingId < 1)
                 return new List<NexportProductGroupMembershipMapping>();
 
@@ -312,9 +312,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public async Task<IPagedList<NexportProductGroupMembershipMapping>> GetProductGroupMembershipMappingsPagination(
-            int nexportProductMappingId, int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
-        {
+    public async Task<IPagedList<NexportProductGroupMembershipMapping>> GetProductGroupMembershipMappingsPagination(
+        int nexportProductMappingId, int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
+    {
             if (nexportProductMappingId < 1)
                 return new PagedList<NexportProductGroupMembershipMapping>(new List<NexportProductGroupMembershipMapping>(), pageIndex, pageSize);
 
@@ -324,8 +324,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToPagedListAsync(pageIndex, pageSize);
         }
 
-        public async Task<IList<Guid>> GetProductGroupMembershipIds(int nexportProductMappingId)
-        {
+    public async Task<IList<Guid>> GetProductGroupMembershipIds(int nexportProductMappingId)
+    {
             return nexportProductMappingId < 1
                 ? new List<Guid>()
                 : await _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
@@ -333,8 +333,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     .Select(g => g.NexportGroupId).ToListAsync();
         }
 
-        public async Task<Dictionary<Guid, int>> FindMappingCountPerSyllabus(IList<GetSyllabiResponseItem> syllabusList)
-        {
+    public async Task<Dictionary<Guid, int>> FindMappingCountPerSyllabus(IList<GetSyllabiResponseItem> syllabusList)
+    {
             var result = new Dictionary<Guid, int>();
             foreach (var item in syllabusList)
             {
@@ -345,23 +345,23 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return result;
         }
 
-        public async Task<int> FindMappingCountPerSyllabi(Guid syllabusId)
-        {
+    public async Task<int> FindMappingCountPerSyllabi(Guid syllabusId)
+    {
             return await (from np in _nexportProductMappingRepository.Table
                     where np.NexportSyllabusId == syllabusId
                     select np.Id).CountAsync();
         }
 
-        public async Task<bool> HasDefaultMapping(int nopProductId)
-        {
+    public async Task<bool> HasDefaultMapping(int nopProductId)
+    {
             return nopProductId > 0 &&
                    await _nexportProductMappingRepository.Table.AnyAsync(np =>
                        np.NopProductId == nopProductId &&
                        np.StoreId == null);
         }
 
-        public async Task<bool> HasProductMappingForStore(int nopProductId, int storeId)
-        {
+    public async Task<bool> HasProductMappingForStore(int nopProductId, int storeId)
+    {
             if (nopProductId <= 0 || storeId <= 0)
                 return false;
 
@@ -369,50 +369,50 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 np.NopProductId == nopProductId && np.StoreId == storeId);
         }
 
-        public async Task<bool> HasProductMappingForNopProduct(int nopProductId, Guid catalogId, Guid? syllabusId)
-        {
+    public async Task<bool> HasProductMappingForNopProduct(int nopProductId, Guid catalogId, Guid? syllabusId)
+    {
             return await _nexportProductMappingRepository.Table.AnyAsync(np =>
                 np.NopProductId == nopProductId && np.NexportCatalogId == catalogId && np.NexportSyllabusId == syllabusId);
         }
 
-        public async Task<NexportProductMapping> GetProductMappingById(int mappingId)
-        {
+    public async Task<NexportProductMapping> GetProductMappingById(int mappingId)
+    {
             return mappingId == 0 ? null : await _nexportProductMappingRepository.GetByIdAsync(mappingId);
         }
 
-        public async Task DeleteNexportProductMapping(NexportProductMapping mapping)
-        {
+    public async Task DeleteNexportProductMapping(NexportProductMapping mapping)
+    {
             if (mapping == null)
                 throw new ArgumentNullException(nameof(mapping));
 
             await _nexportProductMappingRepository.DeleteAsync(mapping);
         }
 
-        public async Task UpdateNexportProductMapping(NexportProductMapping mapping)
-        {
+    public async Task UpdateNexportProductMapping(NexportProductMapping mapping)
+    {
             if (mapping == null)
                 throw new ArgumentNullException(nameof(mapping));
 
             await _nexportProductMappingRepository.UpdateAsync(mapping);
         }
 
-        public async Task<NexportProductGroupMembershipMapping> GetProductGroupMembershipMappingById(int mappingId)
-        {
+    public async Task<NexportProductGroupMembershipMapping> GetProductGroupMembershipMappingById(int mappingId)
+    {
             return mappingId == 0
                 ? null
                 : await _nexportProductGroupMembershipMappingRepository.GetByIdAsync(mappingId);
         }
 
-        public async Task DeleteGroupMembershipMapping(NexportProductGroupMembershipMapping mapping)
-        {
+    public async Task DeleteGroupMembershipMapping(NexportProductGroupMembershipMapping mapping)
+    {
             if (mapping == null)
                 throw new ArgumentNullException(nameof(mapping));
 
             await _nexportProductGroupMembershipMappingRepository.DeleteAsync(mapping);
         }
 
-        public async Task InsertNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem)
-        {
+    public async Task InsertNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem)
+    {
             if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
@@ -423,16 +423,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportOrderProcessingQueueRepository.InsertAsync(queueItem);
         }
 
-        public async Task DeleteNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem)
-        {
+    public async Task DeleteNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem)
+    {
             if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
             await _nexportOrderProcessingQueueRepository.DeleteAsync(queueItem);
         }
 
-        public async Task InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item)
-        {
+    public async Task InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item)
+    {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
 
@@ -464,8 +464,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task InsertNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem)
-        {
+    public async Task InsertNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem)
+    {
             if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
@@ -476,40 +476,40 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _logger.InformationAsync($"Invoice redemption {queueItem.OrderInvoiceItemId} for user {queueItem.RedeemingUserId} has been scheduled.");
         }
 
-        public async Task DeleteNexportOrderInvoiceItem(NexportOrderInvoiceItem item)
-        {
+    public async Task DeleteNexportOrderInvoiceItem(NexportOrderInvoiceItem item)
+    {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
 
             await _nexportOrderInvoiceItemRepository.DeleteAsync(item);
         }
 
-        public async Task UpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item)
-        {
+    public async Task UpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item)
+    {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
 
             await _nexportOrderInvoiceItemRepository.UpdateAsync(item);
         }
 
-        public async Task DeleteNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem)
-        {
+    public async Task DeleteNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem)
+    {
             if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
             await _nexportOrderInvoiceRedemptionQueueRepository.DeleteAsync(queueItem);
         }
 
-        public async Task UpdateNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem)
-        {
+    public async Task UpdateNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem)
+    {
             if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
             await _nexportOrderInvoiceRedemptionQueueRepository.UpdateAsync(queueItem);
         }
 
-        public async Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItem(int orderId, int orderItemId)
-        {
+    public async Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItem(int orderId, int orderItemId)
+    {
             if (orderId < 1)
                 return null;
 
@@ -519,15 +519,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     .Table.SingleOrDefaultAsync(o => o.OrderId == orderId && o.OrderItemId == orderItemId);
         }
 
-        public async Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemById(int orderInvoiceItemId)
-        {
+    public async Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemById(int orderInvoiceItemId)
+    {
             return orderInvoiceItemId < 1
                 ? null
                 : await _nexportOrderInvoiceItemRepository.GetByIdAsync(orderInvoiceItemId);
         }
 
-        public async Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId)
-        {
+    public async Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId)
+    {
             return userId == Guid.Empty
                 ? new List<NexportOrderInvoiceItem>()
                 : await _nexportOrderInvoiceItemRepository.Table
@@ -535,10 +535,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     .ToListAsync();
         }
 
-        public async Task<IPagedList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(int orderId,
-            bool excludeNonApproval = false,
-            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
-        {
+    public async Task<IPagedList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(int orderId,
+        bool excludeNonApproval = false,
+        int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
+    {
             if (orderId < 1)
                 return new PagedList<NexportOrderInvoiceItem>(new List<NexportOrderInvoiceItem>(), pageIndex, pageSize);
 
@@ -557,8 +557,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToPagedListAsync(pageIndex, pageSize);
         }
 
-        public async Task MapNexportProduct(MapNexportProductModel model)
-        {
+    public async Task MapNexportProduct(MapNexportProductModel model)
+    {
             //get selected products
             var product = await _productService.GetProductByIdAsync(model.NopProductId);
             if (product != null)
@@ -650,8 +650,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task InsertUserMapping(NexportUserMapping nexportUserMapping)
-        {
+    public async Task InsertUserMapping(NexportUserMapping nexportUserMapping)
+    {
             if (nexportUserMapping == null)
                 throw new ArgumentNullException(nameof(nexportUserMapping));
 
@@ -669,46 +669,46 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportUserMappingRepository.InsertAsync(nexportUserMapping);
         }
 
-        public async Task DeleteUserMapping(NexportUserMapping nexportUserMapping)
-        {
+    public async Task DeleteUserMapping(NexportUserMapping nexportUserMapping)
+    {
             if (nexportUserMapping == null)
                 throw new ArgumentNullException(nameof(nexportUserMapping));
 
             await _nexportUserMappingRepository.DeleteAsync(nexportUserMapping);
         }
 
-        public async Task UpdateUserMapping(NexportUserMapping nexportUserMapping)
-        {
+    public async Task UpdateUserMapping(NexportUserMapping nexportUserMapping)
+    {
             if (nexportUserMapping == null)
                 throw new ArgumentNullException(nameof(nexportUserMapping));
 
             await _nexportUserMappingRepository.UpdateAsync(nexportUserMapping);
         }
 
-        public async Task<NexportUserMapping> FindUserMappingByCustomerId(int nopCustomerId)
-        {
+    public async Task<NexportUserMapping> FindUserMappingByCustomerId(int nopCustomerId)
+    {
             return nopCustomerId < 1
                 ? null
                 : await _nexportUserMappingRepository.Table.SingleOrDefaultAsync(np => np.NopUserId == nopCustomerId);
         }
 
-        public async Task<NexportUserMapping> FindUserMappingByNexportUserId(Guid userId)
-        {
+    public async Task<NexportUserMapping> FindUserMappingByNexportUserId(Guid userId)
+    {
             return userId == Guid.Empty
                 ? null
                 : await _nexportUserMappingRepository.Table.SingleOrDefaultAsync(np => np.NexportUserId == userId);
         }
 
-        public async Task<Guid?> FindExistingInvoiceForOrder(int orderId)
-        {
+    public async Task<Guid?> FindExistingInvoiceForOrder(int orderId)
+    {
             return orderId < 1
                 ? null
                 : (await _nexportOrderInvoiceItemRepository.Table
                     .FirstOrDefaultAsync(i => i.OrderId == orderId))?.InvoiceId;
         }
 
-        public async Task<Guid?> FindExistingInvoiceItemForOrderItem(int orderId, int orderItemId)
-        {
+    public async Task<Guid?> FindExistingInvoiceItemForOrderItem(int orderId, int orderItemId)
+    {
             if (orderId < 1)
                 return null;
 
@@ -719,14 +719,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         }
 
-        public async Task<bool> HasNexportOrderProcessingQueueItem(int orderId)
-        {
+    public async Task<bool> HasNexportOrderProcessingQueueItem(int orderId)
+    {
             return orderId > 0 &&
                    await _nexportOrderProcessingQueueRepository.Table.AnyAsync(q => q.OrderId == orderId);
         }
 
-        public async Task<bool> HasNexportProductMapping(Order order)
-        {
+    public async Task<bool> HasNexportProductMapping(Order order)
+    {
             if (order == null)
                 return false;
 
@@ -738,13 +738,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 .AnyAsync();
         }
 
-        public async Task<bool> HasNexportProductMapping(int productId)
-        {
+    public async Task<bool> HasNexportProductMapping(int productId)
+    {
             return productId > 0 && await _nexportProductMappingRepository.Table.AnyAsync(p => p.NopProductId == productId);
         }
 
-        public async Task<IList<int?>> GetStoreIdsPerProductMapping(int productId)
-        {
+    public async Task<IList<int?>> GetStoreIdsPerProductMapping(int productId)
+    {
             return productId < 1
                 ? new List<int?>()
                 : await _nexportProductMappingRepository.Table
@@ -753,8 +753,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     .ToListAsync();
         }
 
-        public async Task CopyProductMappingsAsync(Product originalProduct, Product copyingProduct)
-        {
+    public async Task CopyProductMappingsAsync(Product originalProduct, Product copyingProduct)
+    {
             if (originalProduct == null)
                 throw new ArgumentNullException(nameof(originalProduct));
 
@@ -810,8 +810,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task DuplicateProductMappingAsync(NexportProductMapping productMapping, int storeId)
-        {
+    public async Task DuplicateProductMappingAsync(NexportProductMapping productMapping, int storeId)
+    {
             var newMapping = AutoMapperConfiguration.Mapper.Map<NexportProductMapping>(productMapping);
             newMapping.StoreId = storeId;
 
@@ -832,9 +832,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task<IPagedList<NexportSupplementalInfoQuestion>> GetAllNexportSupplementalInfoQuestionsPagination(
-            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
-        {
+    public async Task<IPagedList<NexportSupplementalInfoQuestion>> GetAllNexportSupplementalInfoQuestionsPagination(
+        int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
+    {
             var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoQuestionAllCacheKey, pageIndex, pageSize);
             return await _cacheManager.GetAsync(cacheKey, async () =>
             {
@@ -844,18 +844,18 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public async Task<IList<NexportSupplementalInfoQuestion>> GetAllNexportSupplementalInfoQuestions()
-        {
+    public async Task<IList<NexportSupplementalInfoQuestion>> GetAllNexportSupplementalInfoQuestions()
+    {
             return (await GetAllNexportSupplementalInfoQuestionsPagination()).ToList();
         }
 
-        public async Task<NexportSupplementalInfoQuestion> GetNexportSupplementalInfoQuestionById(int questionId)
-        {
+    public async Task<NexportSupplementalInfoQuestion> GetNexportSupplementalInfoQuestionById(int questionId)
+    {
             return questionId > 0 ? await _nexportSupplementalInfoQuestionRepository.GetByIdAsync(questionId) : null;
         }
 
-        public async Task<IList<NexportSupplementalInfoQuestion>> GetNexportSupplementalInfoQuestionsByIds(int[] questionIds)
-        {
+    public async Task<IList<NexportSupplementalInfoQuestion>> GetNexportSupplementalInfoQuestionsByIds(int[] questionIds)
+    {
             if (questionIds == null || questionIds.Length == 0)
                 return new List<NexportSupplementalInfoQuestion>();
 
@@ -870,24 +870,24 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 .ToListAsync();
         }
 
-        public async Task InsertNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question)
-        {
+    public async Task InsertNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question)
+    {
             if (question == null)
                 throw new ArgumentNullException(nameof(question));
 
             await _nexportSupplementalInfoQuestionRepository.InsertAsync(question);
         }
 
-        public async Task DeleteNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question)
-        {
+    public async Task DeleteNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question)
+    {
             if (question == null)
                 throw new ArgumentNullException(nameof(question));
 
             await _nexportSupplementalInfoQuestionRepository.DeleteAsync(question);
         }
 
-        public async Task DeleteNexportSupplementalInfoQuestions(IList<NexportSupplementalInfoQuestion> questions)
-        {
+    public async Task DeleteNexportSupplementalInfoQuestions(IList<NexportSupplementalInfoQuestion> questions)
+    {
             if (questions == null)
                 throw new ArgumentNullException(nameof(questions));
 
@@ -897,8 +897,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task UpdateNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question)
-        {
+    public async Task UpdateNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question)
+    {
             if (question == null)
                 throw new ArgumentNullException(nameof(question));
 
@@ -907,14 +907,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportSupplementalInfoQuestionRepository.UpdateAsync(question);
         }
 
-        public async Task<NexportSupplementalInfoOption> GetNexportSupplementalInfoOptionById(int optionId)
-        {
+    public async Task<NexportSupplementalInfoOption> GetNexportSupplementalInfoOptionById(int optionId)
+    {
             return optionId > 0 ? await _nexportSupplementalInfoOptionRepository.GetByIdAsync(optionId) : null;
         }
 
-        public async Task<IList<NexportSupplementalInfoOption>> GetNexportSupplementalInfoOptionsByQuestionId(int questionId,
-            bool showHidden = false)
-        {
+    public async Task<IList<NexportSupplementalInfoOption>> GetNexportSupplementalInfoOptionsByQuestionId(int questionId,
+        bool showHidden = false)
+    {
             if (questionId <= 0)
                 return new List<NexportSupplementalInfoOption>();
 
@@ -926,16 +926,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 : await query.Where(opt => !opt.Deleted).ToListAsync();
         }
 
-        public async Task InsertNexportSupplementalInfoOption(NexportSupplementalInfoOption option)
-        {
+    public async Task InsertNexportSupplementalInfoOption(NexportSupplementalInfoOption option)
+    {
             if (option == null)
                 throw new ArgumentNullException(nameof(option));
 
             await _nexportSupplementalInfoOptionRepository.InsertAsync(option);
         }
 
-        public async Task DeleteNexportSupplementalInfoOption(NexportSupplementalInfoOption option)
-        {
+    public async Task DeleteNexportSupplementalInfoOption(NexportSupplementalInfoOption option)
+    {
             if (option == null)
                 throw new ArgumentNullException(nameof(option));
 
@@ -944,8 +944,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await UpdateNexportSupplementalInfoOption(option);
         }
 
-        public async Task UpdateNexportSupplementalInfoOption(NexportSupplementalInfoOption option)
-        {
+    public async Task UpdateNexportSupplementalInfoOption(NexportSupplementalInfoOption option)
+    {
             if (option == null)
                 throw new ArgumentNullException(nameof(option));
 
@@ -954,16 +954,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportSupplementalInfoOptionRepository.UpdateAsync(option);
         }
 
-        public async Task<NexportSupplementalInfoQuestionMapping> GetNexportSupplementalInfoQuestionMappingById(int questionMappingId)
-        {
+    public async Task<NexportSupplementalInfoQuestionMapping> GetNexportSupplementalInfoQuestionMappingById(int questionMappingId)
+    {
             return questionMappingId > 0
                 ? await _nexportSupplementalInfoQuestionMappingRepository.GetByIdAsync(questionMappingId)
                 : null;
         }
 
-        public async Task<IList<NexportSupplementalInfoQuestionMapping>>
-            GetNexportSupplementalInfoQuestionMappingsByProductMappingId(int nexportProductMappingId)
-        {
+    public async Task<IList<NexportSupplementalInfoQuestionMapping>>
+        GetNexportSupplementalInfoQuestionMappingsByProductMappingId(int nexportProductMappingId)
+    {
             return nexportProductMappingId > 0
                 ? await _nexportSupplementalInfoQuestionMappingRepository
                     .Table
@@ -972,9 +972,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 : new List<NexportSupplementalInfoQuestionMapping>();
         }
 
-        public async Task<NexportSupplementalInfoQuestionMapping> GetNexportSupplementalInfoQuestionMapping(int nexportProductMappingId,
-            int questionId)
-        {
+    public async Task<NexportSupplementalInfoQuestionMapping> GetNexportSupplementalInfoQuestionMapping(int nexportProductMappingId,
+        int questionId)
+    {
             if (nexportProductMappingId < 1 || questionId < 1)
                 return null;
 
@@ -985,8 +985,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     qm.QuestionId == questionId);
         }
 
-        public async Task InsertNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping)
-        {
+    public async Task InsertNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping)
+    {
             if (questionMapping == null)
                 throw new ArgumentNullException(nameof(questionMapping));
 
@@ -998,26 +998,26 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportSupplementalInfoQuestionMappingRepository.InsertAsync(questionMapping);
         }
 
-        public async Task DeleteNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping)
-        {
+    public async Task DeleteNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping)
+    {
             if (questionMapping == null)
                 throw new ArgumentNullException(nameof(questionMapping));
 
             await _nexportSupplementalInfoQuestionMappingRepository.DeleteAsync(questionMapping);
         }
 
-        public async Task UpdateNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping)
-        {
+    public async Task UpdateNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping)
+    {
             if (questionMapping == null)
                 throw new ArgumentNullException(nameof(questionMapping));
 
             await _nexportSupplementalInfoQuestionMappingRepository.UpdateAsync(questionMapping);
         }
 
-        public async Task<IPagedList<NexportSupplementalInfoOptionGroupAssociation>>
-            GetNexportSupplementalInfoOptionGroupAssociationsPagination(int optionId, int pageIndex = 0,
-                int pageSize = int.MaxValue)
-        {
+    public async Task<IPagedList<NexportSupplementalInfoOptionGroupAssociation>>
+        GetNexportSupplementalInfoOptionGroupAssociationsPagination(int optionId, int pageIndex = 0,
+            int pageSize = int.MaxValue)
+    {
             if (optionId < 1)
                 return new PagedList<NexportSupplementalInfoOptionGroupAssociation>(
                     new List<NexportSupplementalInfoOptionGroupAssociation>(), pageIndex, pageSize);
@@ -1035,9 +1035,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public async Task<IList<NexportSupplementalInfoOptionGroupAssociation>>
-            GetNexportSupplementalInfoOptionGroupAssociations(int optionId, bool excludeInactive = false)
-        {
+    public async Task<IList<NexportSupplementalInfoOptionGroupAssociation>>
+        GetNexportSupplementalInfoOptionGroupAssociations(int optionId, bool excludeInactive = false)
+    {
             if (optionId < 1)
                 return new List<NexportSupplementalInfoOptionGroupAssociation>();
 
@@ -1050,15 +1050,15 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToListAsync();
         }
 
-        public async Task<NexportSupplementalInfoOptionGroupAssociation> GetNexportSupplementalInfoOptionGroupAssociationById(int groupAssociationId)
-        {
+    public async Task<NexportSupplementalInfoOptionGroupAssociation> GetNexportSupplementalInfoOptionGroupAssociationById(int groupAssociationId)
+    {
             return groupAssociationId < 1
                 ? null
                 : await _nexportSupplementalInfoOptionGroupAssociationRepository.GetByIdAsync(groupAssociationId);
         }
 
-        public async Task InsertNexportSupplementalInfoOptionGroupAssociation(NexportSupplementalInfoOptionGroupAssociation groupAssociation)
-        {
+    public async Task InsertNexportSupplementalInfoOptionGroupAssociation(NexportSupplementalInfoOptionGroupAssociation groupAssociation)
+    {
             if (groupAssociation == null)
                 throw new ArgumentNullException(nameof(groupAssociation));
 
@@ -1070,24 +1070,24 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportSupplementalInfoOptionGroupAssociationRepository.InsertAsync(groupAssociation);
         }
 
-        public async Task DeleteNexportSupplementalInfoOptionGroupAssociation(NexportSupplementalInfoOptionGroupAssociation groupAssociation)
-        {
+    public async Task DeleteNexportSupplementalInfoOptionGroupAssociation(NexportSupplementalInfoOptionGroupAssociation groupAssociation)
+    {
             if (groupAssociation == null)
                 throw new ArgumentNullException(nameof(groupAssociation));
 
             await _nexportSupplementalInfoOptionGroupAssociationRepository.DeleteAsync(groupAssociation);
         }
 
-        public async Task UpdateNexportSupplementalInfoOptionGroupAssociation(NexportSupplementalInfoOptionGroupAssociation groupAssociation)
-        {
+    public async Task UpdateNexportSupplementalInfoOptionGroupAssociation(NexportSupplementalInfoOptionGroupAssociation groupAssociation)
+    {
             if (groupAssociation == null)
                 throw new ArgumentNullException(nameof(groupAssociation));
 
             await _nexportSupplementalInfoOptionGroupAssociationRepository.UpdateAsync(groupAssociation);
         }
 
-        public async Task InsertNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer)
-        {
+    public async Task InsertNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer)
+    {
             if (answer == null)
                 throw new ArgumentNullException(nameof(answer));
 
@@ -1101,25 +1101,25 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportSupplementalInfoAnswerRepository.InsertAsync(answer);
         }
 
-        public async Task DeleteNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer)
-        {
+    public async Task DeleteNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer)
+    {
             if (answer == null)
                 throw new ArgumentNullException(nameof(answer));
 
             await _nexportSupplementalInfoAnswerRepository.DeleteAsync(answer);
         }
 
-        public async Task UpdateNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer)
-        {
+    public async Task UpdateNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer)
+    {
             if (answer == null)
                 throw new ArgumentNullException(nameof(answer));
 
             await _nexportSupplementalInfoAnswerRepository.UpdateAsync(answer);
         }
 
-        public async Task<IList<NexportSupplementalInfoAnswer>> GetNexportSupplementalInfoAnswers(int customerId, int storeId,
-            int? questionId = null)
-        {
+    public async Task<IList<NexportSupplementalInfoAnswer>> GetNexportSupplementalInfoAnswers(int customerId, int storeId,
+        int? questionId = null)
+    {
             if (customerId < 1 || storeId < 1)
                 return new List<NexportSupplementalInfoAnswer>();
 
@@ -1134,10 +1134,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToListAsync();
         }
 
-        public async Task<IPagedList<NexportSupplementalInfoAnswer>> GetNexportSupplementalInfoAnswersPagination(
-            int customerId, int? questionId = null,
-            int pageIndex = 0, int pageSize = int.MaxValue)
-        {
+    public async Task<IPagedList<NexportSupplementalInfoAnswer>> GetNexportSupplementalInfoAnswersPagination(
+        int customerId, int? questionId = null,
+        int pageIndex = 0, int pageSize = int.MaxValue)
+    {
             if (customerId < 1)
                 return new PagedList<NexportSupplementalInfoAnswer>(
                     new List<NexportSupplementalInfoAnswer>(), pageIndex, pageSize);
@@ -1155,17 +1155,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public async Task<NexportSupplementalInfoAnswer> GetNexportSupplementalInfoAnswerById(int answerId)
-        {
+    public async Task<NexportSupplementalInfoAnswer> GetNexportSupplementalInfoAnswerById(int answerId)
+    {
             return answerId < 1
                 ? null
                 : await _nexportSupplementalInfoAnswerRepository.GetByIdAsync(answerId);
         }
 
-        public async Task<IPagedList<NexportSupplementalInfoQuestion>> GetNexportSupplementalInfoAnsweredQuestionsPagination(
-            int customerId, int pageIndex = 0,
-            int pageSize = int.MaxValue)
-        {
+    public async Task<IPagedList<NexportSupplementalInfoQuestion>> GetNexportSupplementalInfoAnsweredQuestionsPagination(
+        int customerId, int pageIndex = 0,
+        int pageSize = int.MaxValue)
+    {
             if (customerId < 1)
                 return new PagedList<NexportSupplementalInfoQuestion>(
                     new List<NexportSupplementalInfoQuestion>(), pageIndex, pageSize);
@@ -1180,8 +1180,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToPagedListAsync(pageIndex, pageSize);
         }
 
-        public async Task InsertNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership)
-        {
+    public async Task InsertNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership)
+    {
             if (answerMembership == null)
                 throw new ArgumentNullException(nameof(answerMembership));
 
@@ -1193,17 +1193,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportSupplementalInfoAnswerMembershipRepository.InsertAsync(answerMembership);
         }
 
-        public async Task DeleteNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership)
-        {
+    public async Task DeleteNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership)
+    {
             if (answerMembership == null)
                 throw new ArgumentNullException(nameof(answerMembership));
 
             await _nexportSupplementalInfoAnswerMembershipRepository.DeleteAsync(answerMembership);
         }
 
-        public async Task<IList<NexportSupplementalInfoAnswerMembership>>
-            GetNexportSupplementalInfoAnswerMembershipsByAnswerId(int answerId)
-        {
+    public async Task<IList<NexportSupplementalInfoAnswerMembership>>
+        GetNexportSupplementalInfoAnswerMembershipsByAnswerId(int answerId)
+    {
             return answerId < 1
                 ? new List<NexportSupplementalInfoAnswerMembership>()
                 : await _nexportSupplementalInfoAnswerMembershipRepository.Table
@@ -1211,14 +1211,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     .ToListAsync();
         }
 
-        public async Task<NexportSupplementalInfoAnswerMembership> GetNexportSupplementalInfoAnswerMembership(Guid nexportMembershipId)
-        {
+    public async Task<NexportSupplementalInfoAnswerMembership> GetNexportSupplementalInfoAnswerMembership(Guid nexportMembershipId)
+    {
             return await _nexportSupplementalInfoAnswerMembershipRepository.Table
                     .FirstOrDefaultAsync(am => am.NexportMembershipId == nexportMembershipId);
         }
 
-        public async Task InsertNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement)
-        {
+    public async Task InsertNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement)
+    {
             if (requirement == null)
                 throw new ArgumentNullException(nameof(requirement));
 
@@ -1231,17 +1231,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportRequiredSupplementalInfoRepository.InsertAsync(requirement);
         }
 
-        public async Task DeleteNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement)
-        {
+    public async Task DeleteNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement)
+    {
             if (requirement == null)
                 throw new ArgumentNullException(nameof(requirement));
 
             await _nexportRequiredSupplementalInfoRepository.DeleteAsync(requirement);
         }
 
-        public async Task<IList<NexportRequiredSupplementalInfo>> GetNexportRequiredSupplementalInfos(int customerId,
-            int storeId, int? questionId = null)
-        {
+    public async Task<IList<NexportRequiredSupplementalInfo>> GetNexportRequiredSupplementalInfos(int customerId,
+        int storeId, int? questionId = null)
+    {
             if (customerId < 1 || storeId < 1)
                 return new List<NexportRequiredSupplementalInfo>();
 
@@ -1254,9 +1254,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToListAsync();
         }
 
-        public async Task<NexportRequiredSupplementalInfo> GetNexportRequiredSupplementalInfoByNopProductId(int customerId,
-            int storeId, int questionId)
-        {
+    public async Task<NexportRequiredSupplementalInfo> GetNexportRequiredSupplementalInfoByNopProductId(int customerId,
+        int storeId, int questionId)
+    {
             if (customerId < 1 || storeId < 1 || questionId < 1)
                 return null;
 
@@ -1267,8 +1267,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     r.QuestionId == questionId);
         }
 
-        public async Task<bool> HasRequiredSupplementalInfo(int customerId, int storeId)
-        {
+    public async Task<bool> HasRequiredSupplementalInfo(int customerId, int storeId)
+    {
             if (customerId < 1 || storeId < 1)
                 return false;
 
@@ -1278,8 +1278,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     r.StoreId == storeId);
         }
 
-        public async Task<bool> HasUnprocessedAnswer(int orderId)
-        {
+    public async Task<bool> HasUnprocessedAnswer(int orderId)
+    {
             if (orderId < 1)
                 return false;
 
@@ -1308,40 +1308,40 @@ namespace Nop.Plugin.Misc.Nexport.Services
                                     .FirstOrDefaultAsync();
         }
 
-        public async Task InsertNexportSupplementalInfoAnswerProcessingQueueItem(NexportSupplementalInfoAnswerProcessingQueueItem queueItem)
-        {
+    public async Task InsertNexportSupplementalInfoAnswerProcessingQueueItem(NexportSupplementalInfoAnswerProcessingQueueItem queueItem)
+    {
             if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
             await _nexportSupplementalInfoAnswerProcessingQueueRepository.InsertAsync(queueItem);
         }
 
-        public async Task DeleteNexportSupplementalInfoAnswerProcessingQueueItem(NexportSupplementalInfoAnswerProcessingQueueItem queueItem)
-        {
+    public async Task DeleteNexportSupplementalInfoAnswerProcessingQueueItem(NexportSupplementalInfoAnswerProcessingQueueItem queueItem)
+    {
             if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
             await _nexportSupplementalInfoAnswerProcessingQueueRepository.DeleteAsync(queueItem);
         }
 
-        public async Task InsertNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem)
-        {
+    public async Task InsertNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem)
+    {
             if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
             await _nexportGroupMembershipRemovalQueueRepository.InsertAsync(queueItem);
         }
 
-        public async Task DeleteNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem)
-        {
+    public async Task DeleteNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem)
+    {
             if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
             await _nexportGroupMembershipRemovalQueueRepository.DeleteAsync(queueItem);
         }
 
-        public async Task<NexportRegistrationField> GetNexportRegistrationFieldById(int fieldId, int? categoryId = null)
-        {
+    public async Task<NexportRegistrationField> GetNexportRegistrationFieldById(int fieldId, int? categoryId = null)
+    {
             if (fieldId < 1)
                 return null;
 
@@ -1353,8 +1353,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.FirstOrDefaultAsync();
         }
 
-        public async Task<IList<NexportRegistrationField>> GetNexportRegistrationFields(int storeId)
-        {
+    public async Task<IList<NexportRegistrationField>> GetNexportRegistrationFields(int storeId)
+    {
             if (storeId < 1)
                 return new List<NexportRegistrationField>();
 
@@ -1374,16 +1374,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await fields.ToListAsync();
         }
 
-        public async Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsByCategoryId(int categoryId)
-        {
+    public async Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsByCategoryId(int categoryId)
+    {
             return categoryId < 1
                 ? new List<NexportRegistrationField>()
                 : await _nexportRegistrationFieldRepository.Table
                     .Where(f => f.FieldCategoryId == categoryId).ToListAsync();
         }
 
-        public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(IList<int> storeIds, int pageIndex = 0, int pageSize = int.MaxValue)
-        {
+    public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(IList<int> storeIds, int pageIndex = 0, int pageSize = int.MaxValue)
+    {
             var query = _nexportRegistrationFieldRepository.Table;
             
             //check if contains 0 because nopselect puts 0 in list of ids if "all" is selected
@@ -1400,10 +1400,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToPagedListAsync(pageIndex, pageSize);
         }
 
-        public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswersPagination(
-            int customerId, int? storeId = null,
-            int pageIndex = 0, int pageSize = int.MaxValue)
-        {
+    public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswersPagination(
+        int customerId, int? storeId = null,
+        int pageIndex = 0, int pageSize = int.MaxValue)
+    {
             var registrationFieldWithAnswerIds = await
                 _nexportRegistrationFieldAnswerRepository
                     .Table
@@ -1430,9 +1430,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToPagedListAsync(pageIndex, pageSize);
         }
 
-        public async Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswers(int customerId,
-            int? storeId = null)
-        {
+    public async Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswers(int customerId,
+        int? storeId = null)
+    {
             var registrationFieldWithAnswerIds = await
                 _nexportRegistrationFieldAnswerRepository
                     .Table
@@ -1459,32 +1459,32 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToListAsync();
         }
 
-        public async Task InsertNexportRegistrationField(NexportRegistrationField registrationField)
-        {
+    public async Task InsertNexportRegistrationField(NexportRegistrationField registrationField)
+    {
             if (registrationField == null)
                 throw new ArgumentNullException(nameof(registrationField));
 
             await _nexportRegistrationFieldRepository.InsertAsync(registrationField);
         }
 
-        public async Task DeleteNexportRegistrationField(NexportRegistrationField registrationField)
-        {
+    public async Task DeleteNexportRegistrationField(NexportRegistrationField registrationField)
+    {
             if (registrationField == null)
                 throw new ArgumentNullException(nameof(registrationField));
 
             await _nexportRegistrationFieldRepository.DeleteAsync(registrationField);
         }
 
-        public async Task UpdateNexportRegistrationField(NexportRegistrationField registrationField)
-        {
+    public async Task UpdateNexportRegistrationField(NexportRegistrationField registrationField)
+    {
             if (registrationField == null)
                 throw new ArgumentNullException(nameof(registrationField));
 
             await _nexportRegistrationFieldRepository.UpdateAsync(registrationField);
         }
 
-        public async Task<NexportRegistrationFieldOption> GetNexportRegistrationFieldOptionById(int fieldOptionId, int? fieldId = null)
-        {
+    public async Task<NexportRegistrationFieldOption> GetNexportRegistrationFieldOptionById(int fieldOptionId, int? fieldId = null)
+    {
             if (fieldOptionId < 1)
                 return null;
 
@@ -1495,8 +1495,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await _nexportRegistrationFieldOptionRepository.GetByIdAsync(fieldOptionId);
         }
 
-        public async Task<IList<NexportRegistrationFieldOption>> GetNexportRegistrationFieldOptions(int? fieldId = null)
-        {
+    public async Task<IList<NexportRegistrationFieldOption>> GetNexportRegistrationFieldOptions(int? fieldId = null)
+    {
             var query = _nexportRegistrationFieldOptionRepository.Table;
 
             if (fieldId != null)
@@ -1505,9 +1505,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToListAsync();
         }
 
-        public async Task<IPagedList<NexportRegistrationFieldOption>> GetNexportRegistrationFieldOptionsPagination(
-            int fieldId, int pageIndex = 0, int pageSize = int.MaxValue)
-        {
+    public async Task<IPagedList<NexportRegistrationFieldOption>> GetNexportRegistrationFieldOptionsPagination(
+        int fieldId, int pageIndex = 0, int pageSize = int.MaxValue)
+    {
             if (fieldId < 1)
                 return new PagedList<NexportRegistrationFieldOption>(new List<NexportRegistrationFieldOption>(), pageIndex, pageSize);
 
@@ -1520,39 +1520,39 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public async Task InsertNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
-        {
+    public async Task InsertNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
+    {
             if (registrationFieldOption == null)
                 throw new ArgumentNullException(nameof(registrationFieldOption));
 
             await _nexportRegistrationFieldOptionRepository.InsertAsync(registrationFieldOption);
         }
 
-        public async Task DeleteNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
-        {
+    public async Task DeleteNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
+    {
             if (registrationFieldOption == null)
                 throw new ArgumentNullException(nameof(registrationFieldOption));
 
             await _nexportRegistrationFieldOptionRepository.DeleteAsync(registrationFieldOption);
         }
 
-        public async Task UpdateNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
-        {
+    public async Task UpdateNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
+    {
             if (registrationFieldOption == null)
                 throw new ArgumentNullException(nameof(registrationFieldOption));
 
             await _nexportRegistrationFieldOptionRepository.UpdateAsync(registrationFieldOption);
         }
 
-        public async Task<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategoryById(int fieldCategoryId)
-        {
+    public async Task<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategoryById(int fieldCategoryId)
+    {
             return fieldCategoryId < 1
                 ? null
                 : await _nexportRegistrationFieldCategoryRepository.GetByIdAsync(fieldCategoryId);
         }
 
-        public async Task<IList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategories()
-        {
+    public async Task<IList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategories()
+    {
             var query =
                 _nexportRegistrationFieldCategoryRepository.Table
                     .OrderBy(s => s.DisplayOrder)
@@ -1561,17 +1561,17 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToListAsync();
         }
 
-        public async Task<IList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategories(IList<int> fieldCategoryIds)
-        {
+    public async Task<IList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategories(IList<int> fieldCategoryIds)
+    {
             return await fieldCategoryIds
                 .SelectAwait(async fieldCategoryId =>
                     await GetNexportRegistrationFieldCategoryById(fieldCategoryId))
                 .ToListAsync();
         }
 
-        public async Task<IPagedList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategoriesPagination(
-            int pageIndex = 0, int pageSize = int.MaxValue)
-        {
+    public async Task<IPagedList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategoriesPagination(
+        int pageIndex = 0, int pageSize = int.MaxValue)
+    {
             return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldCategoryAllCacheKey, async () =>
             {
                 var query = _nexportRegistrationFieldCategoryRepository.Table;
@@ -1580,39 +1580,39 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public async Task InsertNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
-        {
+    public async Task InsertNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
+    {
             if (registrationFieldCategory == null)
                 throw new ArgumentNullException(nameof(registrationFieldCategory));
 
             await _nexportRegistrationFieldCategoryRepository.InsertAsync(registrationFieldCategory);
         }
 
-        public async Task DeleteNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
-        {
+    public async Task DeleteNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
+    {
             if (registrationFieldCategory == null)
                 throw new ArgumentNullException(nameof(registrationFieldCategory));
 
             await _nexportRegistrationFieldCategoryRepository.DeleteAsync(registrationFieldCategory);
         }
 
-        public async Task UpdateNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
-        {
+    public async Task UpdateNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
+    {
             if (registrationFieldCategory == null)
                 throw new ArgumentNullException(nameof(registrationFieldCategory));
 
             await _nexportRegistrationFieldCategoryRepository.UpdateAsync(registrationFieldCategory);
         }
 
-        public async Task<NexportRegistrationFieldStoreMapping> GetNexportRegistrationFieldStoreMappingById(int fieldStoreMappingId)
-        {
+    public async Task<NexportRegistrationFieldStoreMapping> GetNexportRegistrationFieldStoreMappingById(int fieldStoreMappingId)
+    {
             return fieldStoreMappingId < 1
                 ? null
                 : await _nexportRegistrationFieldStoreMappingRepository.GetByIdAsync(fieldStoreMappingId);
         }
 
-        public async Task<IList<NexportRegistrationFieldStoreMapping>> GetNexportRegistrationFieldStoreMappings(int fieldId)
-        {
+    public async Task<IList<NexportRegistrationFieldStoreMapping>> GetNexportRegistrationFieldStoreMappings(int fieldId)
+    {
             if (fieldId < 1)
                 return new List<NexportRegistrationFieldStoreMapping>();
 
@@ -1621,8 +1621,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 .ToListAsync();
         }
 
-        public async Task InsertNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping)
-        {
+    public async Task InsertNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping)
+    {
             if (registrationFieldStoreMapping == null)
                 throw new ArgumentNullException(nameof(registrationFieldStoreMapping));
 
@@ -1633,24 +1633,24 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportRegistrationFieldStoreMappingRepository.InsertAsync(registrationFieldStoreMapping);
         }
 
-        public async Task DeleteNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping)
-        {
+    public async Task DeleteNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping)
+    {
             if (registrationFieldStoreMapping == null)
                 throw new ArgumentNullException(nameof(registrationFieldStoreMapping));
 
             await _nexportRegistrationFieldStoreMappingRepository.DeleteAsync(registrationFieldStoreMapping);
         }
 
-        public async Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerById(int fieldAnswerId)
-        {
+    public async Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerById(int fieldAnswerId)
+    {
             return fieldAnswerId < 1
                 ? null
                 : await _nexportRegistrationFieldAnswerRepository.GetByIdAsync(fieldAnswerId);
         }
 
-        public async Task<IList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswers(int customerId,
-            int? fieldId = null)
-        {
+    public async Task<IList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswers(int customerId,
+        int? fieldId = null)
+    {
             if (customerId < 1)
                 return new List<NexportRegistrationFieldAnswer>();
 
@@ -1665,11 +1665,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await query.ToListAsync();
         }
 
-        public async Task<IPagedList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswersPagination(
-            int customerId,
-            int? fieldId = null,
-            int pageIndex = 0, int pageSize = int.MaxValue)
-        {
+    public async Task<IPagedList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswersPagination(
+        int customerId,
+        int? fieldId = null,
+        int pageIndex = 0, int pageSize = int.MaxValue)
+    {
             return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldAnswerAllCacheKey, async () =>
             {
                 var query = _nexportRegistrationFieldAnswerRepository
@@ -1684,9 +1684,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             });
         }
 
-        public async Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerByFieldOption(int customerId,
-            int fieldId, int fieldOptionId)
-        {
+    public async Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerByFieldOption(int customerId,
+        int fieldId, int fieldOptionId)
+    {
             if (customerId < 1 || fieldId < 1)
                 return null;
 
@@ -1697,8 +1697,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 fa.FieldOptionId == fieldOptionId);
         }
 
-        public async Task InsertNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)
-        {
+    public async Task InsertNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)
+    {
             if (registrationFieldAnswer == null)
                 throw new ArgumentNullException(nameof(registrationFieldAnswer));
 
@@ -1721,48 +1721,48 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _nexportRegistrationFieldAnswerRepository.InsertAsync(registrationFieldAnswer);
         }
 
-        public async Task DeleteNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)
-        {
+    public async Task DeleteNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)
+    {
             if (registrationFieldAnswer == null)
                 throw new ArgumentNullException(nameof(registrationFieldAnswer));
 
             await _nexportRegistrationFieldAnswerRepository.DeleteAsync(registrationFieldAnswer);
         }
 
-        public async Task UpdateNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)
-        {
+    public async Task UpdateNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)
+    {
             if (registrationFieldAnswer == null)
                 throw new ArgumentNullException(nameof(registrationFieldAnswer));
 
             await _nexportRegistrationFieldAnswerRepository.UpdateAsync(registrationFieldAnswer);
         }
 
-        public async Task InsertNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem)
-        {
+    public async Task InsertNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem)
+    {
             if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
             await _nexportRegistrationFieldSynchronizationQueueRepository.InsertAsync(queueItem);
         }
 
-        public async Task DeleteNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem)
-        {
+    public async Task DeleteNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem)
+    {
             if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
             await _nexportRegistrationFieldSynchronizationQueueRepository.DeleteAsync(queueItem);
         }
 
-        public async Task UpdateNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem)
-        {
+    public async Task UpdateNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem)
+    {
             if (queueItem == null)
                 throw new ArgumentNullException(nameof(queueItem));
 
             await _nexportRegistrationFieldSynchronizationQueueRepository.UpdateAsync(queueItem);
         }
 
-        public async Task<bool> HasCustomRegistrationFieldRenderForStores(int fieldId, IList<int> storeIds, string customFieldRender)
-        {
+    public async Task<bool> HasCustomRegistrationFieldRenderForStores(int fieldId, IList<int> storeIds, string customFieldRender)
+    {
             var fieldWithCustomFieldRenders = _nexportRegistrationFieldRepository.Table
                 .Where(x => x.CustomFieldRender == customFieldRender);
 
@@ -1799,8 +1799,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return false;
         }
 
-        public virtual async Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchProductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue)
-        {
+    public virtual async Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchProductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue)
+    {
             //get product mappings for the product
             var productMappings = _nexportProductMappingRepository.Table.Where(x => x.NopProductId == productId);
 
@@ -1865,5 +1865,4 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return new PagedList<NexportProductMapping>(productMappingsList, pageIndex, pageSize);
 
         }
-    }
 }

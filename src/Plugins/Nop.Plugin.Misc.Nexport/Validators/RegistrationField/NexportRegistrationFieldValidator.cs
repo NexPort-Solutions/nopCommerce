@@ -3,12 +3,12 @@ using Nop.Web.Framework.Validators;
 using Nop.Services.Localization;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 
-namespace Nop.Plugin.Misc.Nexport.Validators.RegistrationField
+namespace Nop.Plugin.Misc.Nexport.Validators.RegistrationField;
+
+public class NexportRegistrationFieldValidator : BaseNopValidator<NexportRegistrationFieldModel>
 {
-    public class NexportRegistrationFieldValidator : BaseNopValidator<NexportRegistrationFieldModel>
+    public NexportRegistrationFieldValidator(ILocalizationService localizationService)
     {
-        public NexportRegistrationFieldValidator(ILocalizationService localizationService)
-        {
             RuleFor(x => x.Name)
                 .NotEmpty()
                 .WithMessageAwait(localizationService.GetResourceAsync("Admin.Customers.CustomerAttributes.Fields.Name.Required"));
@@ -19,5 +19,4 @@ namespace Nop.Plugin.Misc.Nexport.Validators.RegistrationField
                 .Matches("^[a-zA-Z_]+[a-zA-Z0-9_]*$")
                 .WithMessage("The Nexport custom profile key can only contain letters, numbers, and underscores, and must not start with a number.");
         }
-    }
 }
