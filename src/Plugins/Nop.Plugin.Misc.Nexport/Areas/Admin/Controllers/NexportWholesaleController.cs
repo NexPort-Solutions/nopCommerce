@@ -200,9 +200,6 @@ public class NexportWholesaleController : BaseAdminController
     [HttpsRequirement]
     public virtual async Task<IActionResult> AdminNexportGroups()
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return AccessDeniedView();
-
         var searchModel = new NexportGroupListSearchModel();
         searchModel.AdminView = true;
         ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroups.cshtml";
@@ -213,9 +210,6 @@ public class NexportWholesaleController : BaseAdminController
     [HttpsRequirement]
     public async Task<IActionResult> AdminNexportGroupProducts(Guid? groupId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return AccessDeniedView();
-
         var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
         searchModel.HasGroupPermission = true;
         searchModel.AdminView = true;
@@ -228,9 +222,6 @@ public class NexportWholesaleController : BaseAdminController
     [HttpsRequirement]
     public async Task<IActionResult> AdminNexportGroupProductRedemptions(Guid? groupId, int productId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return AccessDeniedView();
-
         var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId);
 
         searchModel.HasGroupPermission = true;
@@ -246,9 +237,6 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return await AccessDeniedDataTablesJson();
-
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel, currentCustomer);
@@ -260,9 +248,6 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid? groupId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return await AccessDeniedDataTablesJson();
-
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId, currentCustomer);
@@ -275,9 +260,6 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return await AccessDeniedDataTablesJson();
-
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListModelAsync(searchModel, groupId, productId, currentCustomer);
@@ -289,9 +271,6 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return await AccessDeniedDataTablesJson();
-
         var count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId);
         return Json(
             new { result = count }
@@ -300,9 +279,6 @@ public class NexportWholesaleController : BaseAdminController
 
     public virtual async Task<IActionResult> GetMatchingUsers(CustomerStepModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return Challenge();
-
         var paged = new List<NexportUserModel>().ToPagedList(searchModel);
 
         if (searchModel.TableFirstDraw)
@@ -365,9 +341,6 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> InvoiceItemUnassign(Guid invoiceItemId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return AccessDeniedView();
-
         var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
 
         if (invoiceItem != null)
@@ -385,9 +358,6 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> InvoiceItemCancelAwaiting(Guid invoiceItemId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return AccessDeniedView();
-
         var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
 
         if (invoiceItem != null)
@@ -404,9 +374,6 @@ public class NexportWholesaleController : BaseAdminController
     [HttpsRequirement]
     public async Task<IActionResult> RedeemProduct(Guid? groupId, Guid? invoiceItemId, int? productId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return Challenge();
-
         var customer = await _workContext.GetCurrentCustomerAsync();
 
         var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId, invoiceItemId, productId);

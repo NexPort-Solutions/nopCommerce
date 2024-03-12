@@ -707,7 +707,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAuthorized","Failed to access page. The user id did not match the current logged in user.");
 
             
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.NoGroup", "No Group");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.NoGroup", "Group not assigned");
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Name", "Name");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.ShortName", "Short Name");

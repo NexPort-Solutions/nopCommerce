@@ -2896,22 +2896,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }
         }
 
-        public async Task<bool> HasGroupPermissionAsync(Customer customer)
+        public async Task<bool> HasGroupPermissionAsync(Customer customer, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION)
         {
             var userMapping = await FindUserMappingByCustomerId(customer.Id);
 
             if (userMapping != null)
             {
-                var store = await _storeContext.GetCurrentStoreAsync();
-                var orgId = await _genericAttributeService.GetAttributeAsync<Guid>(store,
-                    "NexportSubscriptionOrganizationId", store.Id);
-
-                if (orgId == Guid.Empty)
-                {
-                    orgId = _nexportSettings.RootOrganizationId.Value;
-                }
-
-                return  await HasGroupPermissionAsync(userMapping.NexportUserId, orgId,
+                return  await HasGroupPermissionAsync(userMapping.NexportUserId, groupId,
                     NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION);
             }
             return false;

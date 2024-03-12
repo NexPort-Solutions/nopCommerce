@@ -1,30 +1,23 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
-using Nop.Core.Domain.Common;
-using Nop.Core.Http.Extensions;
+using Nop.Core.Domain.Customers;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Services;
-using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
+using Nop.Services.Localization;
+using Nop.Services.Logging;
 using Nop.Services.Security;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Models.Checkout;
-using Nop.Services.Logging;
-using DocumentFormat.OpenXml.Spreadsheet;
-using NexportApi.Model;
-using Nop.Core.Domain.Customers;
-using DocumentFormat.OpenXml.EMMA;
-using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
-using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
-using Nop.Services.Orders;
-using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
-using Nop.Services.Localization;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
@@ -84,9 +77,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [HttpPost]
         public async Task<IActionResult> SetPurchaseGroupForCustomer(string groupSelected)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-                return Challenge();
-
             var customer = await _workContext.GetCurrentCustomerAsync();
             var store = await _storeContext.GetCurrentStoreAsync();
 
@@ -107,8 +97,15 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            if (await _nexportService.HasGroupPermissionAsync(customer))
+            var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+
+            var groupsFromApi = await _nexportService.SearchGroupsForPermissionAsync(
+                userMapping.NexportUserId,
+                _nexportSettings.RootOrganizationId.Value);
+
+            if (groupsFromApi.Count > 0)
             {
+
                 var searchModel = new NexportGroupListSearchModel();
                 searchModel.AdminView = false;
                 ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroups.cshtml";
@@ -121,11 +118,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(null);
 
                 // hide groups link in breadcrumbs
+                // don't want the customer to be able to get back to the groups page 
+                // if they don't have permission on groups
                 nexportGroupProductListSearchModel.HasGroupPermission = false;
                 ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
                 ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
 
-                return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");   
+                return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
             }
         }
 
@@ -136,15 +135,36 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            //customer must either have wholesale orders or be a purchasing agent to view this page
-            if(!await _nexportService.HasWholesaleOrders(customer) && !await _nexportService.HasGroupPermissionAsync(customer))
-                return Content("You are not authorized to view this page");
-
             var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
 
             //show groups link in breadcrumbs
-            if(await _nexportService.HasGroupPermissionAsync(customer))
-                nexportGroupProductListSearchModel.HasGroupPermission = true;
+            if (groupId != null)
+            {
+                if (await _nexportService.HasGroupPermissionAsync(customer, groupId.Value))
+                    nexportGroupProductListSearchModel.HasGroupPermission = true;
+            }
+            else
+            {
+                // could be a null groupid aka group not assigned but customer may still have group permissions on other groups.
+                // in that case we want to display breadcrumbs so that the customer can get back to the groups page. that is what the below accomplishes
+                var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+                if (userMapping != null)
+                {
+                    var searchGroupsForPermissionResult = await _nexportService.SearchGroupsForPermissionAsync(
+                        userMapping.NexportUserId,
+                        _nexportSettings.RootOrganizationId.Value);
+
+                    foreach (var item in searchGroupsForPermissionResult)
+                    {
+                        var store = await _storeContext.GetCurrentStoreAsync();
+                        if (await _nexportService.HasWholesaleOrderInfo(item.Id, store))
+                        {
+                            nexportGroupProductListSearchModel.HasGroupPermission = true;
+                            break;
+                        }
+                    }
+                }
+            }
 
             ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
             ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
@@ -159,16 +179,38 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            //customer must either have wholesale orders or be a purchasing agent to view this page
-            if(!await _nexportService.HasWholesaleOrders(customer) && !await _nexportService.HasGroupPermissionAsync(customer))
-                return Content("You are not authorized to view this page");
 
-            //show groups link in breadcrumbs
-            
             var nexportGroupProductRedemptionListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId, orderId);
 
-            if(await _nexportService.HasGroupPermissionAsync(customer))
-                nexportGroupProductRedemptionListSearchModel.HasGroupPermission = true;
+            //show groups link in breadcrumbs
+            if (groupId != null)
+            {
+                if (await _nexportService.HasGroupPermissionAsync(customer, groupId.Value))
+                    nexportGroupProductRedemptionListSearchModel.HasGroupPermission = true;
+            }
+            else
+            {
+                // could be a null groupid aka group not assigned but customer may still have group permissions on other groups.
+                // in that case we want to display breadcrumbs so that the customer can get back to the groups page. that is what the below accomplishes
+                var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+                if (userMapping != null)
+                {
+                    var searchGroupsForPermissionResult = await _nexportService.SearchGroupsForPermissionAsync(
+                        userMapping.NexportUserId,
+                        _nexportSettings.RootOrganizationId.Value);
+
+                    foreach (var item in searchGroupsForPermissionResult)
+                    {
+                        var store = await _storeContext.GetCurrentStoreAsync();
+
+                        if (await _nexportService.HasWholesaleOrderInfo(item.Id, store))
+                        {
+                            nexportGroupProductRedemptionListSearchModel.HasGroupPermission = true;
+                            break;
+                        }
+                    }
+                }
+            }
 
             ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProductRedemptions.cshtml";
             ViewData["ModelForPartialView"] = nexportGroupProductRedemptionListSearchModel;
@@ -224,16 +266,42 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId, int? orderId = null)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
+            var store = await _storeContext.GetCurrentStoreAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
             int? count = null;
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-                count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, customer);
-            else
-                count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId);
 
-            
+            if (groupId == null)
+            {
+                var isAdmin = await _customerService.IsAdminAsync(customer);
+                if (searchModel.AdminView && isAdmin)
+                {
+                    //show all items under group not assigned
+                    count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId);
+                }
+                else
+                {
+                    //show only items for group not assigned that belong to the current store and current customer
+                    count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, store, customer);
+                }
+            }
+            else
+            {
+                var hasGroupPermission = await _nexportService.HasGroupPermissionAsync(customer, groupId.Value);
+                if (searchModel.AdminView && hasGroupPermission)
+                {
+                    //show all items for the group
+                    count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId);
+                }
+                else
+                {
+                    //show only items for the group that belong to the current store
+                    count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, store);
+
+                }
+            }
+
             return Json(
                 new { result = count }
             );
@@ -331,7 +399,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 return Challenge();
             //if (currentCustomer.Email!=email)
             //    return Challenge();
-            
+
             var model = await _nexportPluginModelFactory.PrepareRedeemByEmailModel(invoiceItemId,
                 email, productMappingId);
             return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemByEmail.cshtml", model);

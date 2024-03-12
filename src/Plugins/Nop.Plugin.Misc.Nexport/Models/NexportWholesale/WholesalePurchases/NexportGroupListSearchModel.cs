@@ -5,7 +5,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
 {
     public record NexportGroupListSearchModel : BaseSearchModel
     {
-        public bool AdminView = false;
+        public bool AdminView { get; set; } = false;
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.Group.SearchName")]
         public string SearchName { get; set; }
