@@ -55,6 +55,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<Dictionary<Guid, int>> FindMappingCountPerSyllabus(IList<GetSyllabiResponseItem> syllabusList);
 
+        Task<int> FindMappingCountPerSyllabi(Guid syllabusId);
+
+        Task<bool> HasDefaultMapping(int nopProductId);
+
+        Task<bool> HasProductMappingForStore(int nopProductId, int storeId);
+
+        Task<bool> HasProductMappingForNopProduct(int nopProductId, Guid catalogId, Guid? syllabusId);
+
         Task<NexportProductMapping> GetProductMappingById(int mappingId);
 
         Task DeleteNexportProductMapping(NexportProductMapping mapping);
@@ -71,11 +79,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<bool> InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
+        Task InsertNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
+
+        Task InsertNexportOrderInvoiceResetRedemptionQueueItem(NexportOrderInvoiceResetRedemptionQueueItem queueItem);
+
         Task DeleteNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
         Task UpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
-
-        Task InsertNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
 
         Task DeleteNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
 
@@ -84,9 +94,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Task UpdateNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
 
         Task UpdateNexportOrderInvoiceResetRedemptionQueueItem(NexportOrderInvoiceResetRedemptionQueueItem queueItem);
-
-        //TODO @JS - this probably needs to go away in favor of the one that return list of invoiceitems
-        Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItem(int orderId, int orderItemId);
 
         Task<IList<NexportOrderInvoiceItem>?> FindNexportOrderInvoiceItems(int orderId, int orderItemId);
 
@@ -213,6 +220,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task DeleteNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership);
 
+        Task<IList<NexportSupplementalInfoAnswerMembership>> GetNexportSupplementalInfoAnswerMembershipsByAnswerId(int answerId);
+
+        Task<NexportSupplementalInfoAnswerMembership> GetNexportSupplementalInfoAnswerMembership(
+            Guid nexportMembershipId);
+
         Task InsertNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement);
 
         Task DeleteNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement);
@@ -233,11 +245,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Task DeleteNexportSupplementalInfoAnswerProcessingQueueItem(
             NexportSupplementalInfoAnswerProcessingQueueItem queueItem);
 
-        Task<IList<NexportSupplementalInfoAnswerMembership>> GetNexportSupplementalInfoAnswerMembershipsByAnswerId(
-            int answerId);
-
-        Task<NexportSupplementalInfoAnswerMembership> GetNexportSupplementalInfoAnswerMembership(
-            Guid nexportMembershipId);
 
         Task InsertNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem);
 
@@ -256,6 +263,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(IList<int> storeIds,
             int pageIndex = 0, int pageSize = int.MaxValue);
 
+        Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswersPagination(
+            int customerId, int? storeId = null,
+            int pageIndex = 0, int pageSize = int.MaxValue);
+
+        Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswers(int customerId,
+            int? storeId = null);
+
         Task InsertNexportRegistrationField(NexportRegistrationField registrationField);
 
         Task DeleteNexportRegistrationField(NexportRegistrationField registrationField);
@@ -269,12 +283,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IPagedList<NexportRegistrationFieldOption>> GetNexportRegistrationFieldOptionsPagination(int fieldId,
             int pageIndex = 0, int pageSize = int.MaxValue);
-
-        Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswersPagination(int customerId,
-            int? storeId = null, int pageIndex = 0, int pageSize = int.MaxValue);
-
-        Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswers(int customerId,
-            int? storeId = null);
 
         Task InsertNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption);
 
@@ -312,6 +320,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Task<IPagedList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswersPagination(int customerId,
             int? fieldId = null, int pageIndex = 0, int pageSize = int.MaxValue);
 
+        Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerByFieldOption(int customerId,
+            int fieldId, int fieldOptionId);
+
         Task InsertNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
 
         Task DeleteNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
@@ -324,8 +335,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task UpdateNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
 
-        Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerByFieldOption(int customerId, int fieldId,
-            int fieldOptionId);
 
         Task<bool> HasCustomRegistrationFieldRenderForStores(int fieldId, IList<int> storeIds, string customFieldRender);
 
@@ -333,12 +342,41 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchproductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue);
 
+        Task<int> GetWholesalePurchaseGroupNumberOfProductsAsync(string searchName, string searchShortName,
+            Guid? groupId = null, Store? store = null, Customer? customer = null);
+
         Task<NexportOrderInvoiceItem?> FindNexportOrderInvoiceItemByGuidAsync(Guid? orderInvoiceItemId);
 
-        Task<IList<WholesaleOrderInfo>?> SearchGroupProductsAsync(Guid? groupId, string productName, Customer customer);
+        Task<Customer> FindCustomerByIdAsync(int customerId);
+
+        Task<int> GetAvailableNexportGroupProductRedemptionsCountAsync(Guid? groupId, int productId,
+            int? orderId = null, Store? store = null, Customer? customer = null);
+
+        Task InsertOrUpdateWholesalePurchaseGroupAsync(WholesalePurchasingGroup wholesalePurchasingGroup);
+
+        Task InsertWholesaleOrderInfoAsync(WholesaleOrderInfo wholesaleOrderInfo);
+
+        Task UpdateWholesaleOrderInfoAsync(WholesaleOrderInfo wholesaleOrderInfo);
+
+        Task<WholesalePurchasingGroup?> GetWholesalePurchaseGroupAsync(Guid groupId);
+
+        Task<WholesalePurchasingGroup?> GetWholesalePurchaseGroupForOrderAsync(Order order);
+
+        Task<WholesaleOrderInfo?> GetWholesaleOrderInfoForOrderItemAsync(int orderId, int orderItemId);
+
+        Task<WholesaleOrderInfo?> GetWholesaleOrderInfoForOrderAsync(int orderId);
+
+        Task<IList<Order>?> FindOrdersForCustomerAsync(Customer? customer, Store? store = null);
+
+        Task<IList<Customer>> SearchCustomersAsync(string searchNameAndEmail);
+
+        Task<IList<NexportProductMapping>> GetAllProductMappingsByCatalogIdAsync(Guid catalogId);
+
+        Task<IList<WholesaleOrderInfo>?> SearchGroupProductsAsync(Guid? groupId, string productName,
+            Store? store = null, Customer? customer = null);
 
         Task<IList<NexportOrderInvoiceItem>?> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
-            string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Customer? customer = null);
+            string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Store? store = null, Customer? customer = null);
 
         Task<bool> RedeemProductForCustomer(RedeemProductModel model);
 
@@ -348,9 +386,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task CancelAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem);
 
-        Task<IList<Order>?> GetOrdersForCustomer(Customer? customer, Store? store = null);
+        Task<bool> HasWholesaleOrderInfo(Guid? groupId = null, Store? store = null, Customer? customer = null);
 
-        Task<bool> HasWholesaleOrders(Customer? customer, Store? store = null);
+        Task<int> CountWholesaleOrderInfo(Guid? groupId = null, Store? store = null, Customer? customer = null);
 
+        Task<IQueryable<WholesaleOrderInfo>> FindWholesaleOrderInfoQuery(Guid? groupId = null, Store? store = null,
+            Customer? customer = null);
     }
 }

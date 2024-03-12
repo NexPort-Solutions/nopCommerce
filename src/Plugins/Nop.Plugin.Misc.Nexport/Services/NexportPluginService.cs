@@ -383,9 +383,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
                 {
                     Name = NexportDefaults.REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE,
-                    Subject = "Redemption assigned",
+                    Subject = "Product assigned",
                     Body = $"<p>{Environment.NewLine}"
-                           + $"An item has been redeemed to your account.<br />{Environment.NewLine}"
+                           + $"An item has been assigned to your account.<br />{Environment.NewLine}"
                            + $"<br />{Environment.NewLine}"
                            + $"Please click <a href=\"%Redemption.AcceptRedemptionUrl%\">here</a> to accept it.</p>{Environment.NewLine}",
                     IsActive = true,
@@ -707,7 +707,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.RedeemByEmail.NotAuthorized","Failed to access page. The user id did not match the current logged in user.");
 
             
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.NoGroup", "No Group");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.NoGroup", "Group not assigned");
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Name", "Name");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.ShortName", "Short Name");

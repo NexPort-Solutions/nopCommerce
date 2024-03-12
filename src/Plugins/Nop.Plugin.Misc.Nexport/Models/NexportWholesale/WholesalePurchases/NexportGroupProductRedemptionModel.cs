@@ -10,6 +10,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
         public string Status { get; set; } = "Available";
         public string? DateRedeemed { get; set; }
         public Guid InvoiceItemId { get; set; }
+        public string? PurchasedBy { get; set; }
+        public string? PurchasedIn { get; set; }
 
     }
 }

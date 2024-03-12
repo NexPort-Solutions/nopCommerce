@@ -9,7 +9,7 @@
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
 
-    var groupProductText = Model.CurrentGroup.Id != null ? Model.CurrentGroup.Name : (Model.AdminView ? @T("Plugins.Misc.Nexport.Group.NoGroup") + " - " + T("Plugins.Misc.Nexport.Group.Products") : T("Plugins.Misc.Nexport.Group.Products").Text);
+    var groupProductText = Model.CurrentGroup.Id != null ? Model.CurrentGroup.Name : (Model.AdminView ? T("Plugins.Misc.Nexport.Group.NoGroup") + " - " + T("Plugins.Misc.Nexport.Group.Products") : T("Plugins.Misc.Nexport.Group.Products").Text);
     var currentGroupId = @Model.CurrentGroup.Id?.ToString() ?? "null";
 }
 
@@ -57,6 +57,7 @@
                                         </div>
                                         <div class="col-md-8">
                                             <nop-editor asp-for="SearchName" />
+                                            <input type="hidden" asp-for="@Model.AdminView"/>
                                         </div>
                                     </div>
                                 </div>
@@ -86,6 +87,7 @@
                             Filters = new List<FilterParameter>
                         {
                             new FilterParameter(nameof(Model.SearchName)),
+                            new FilterParameter(nameof(Model.AdminView))
                         },
                         ColumnCollection = new List<ColumnProperty>
                         {

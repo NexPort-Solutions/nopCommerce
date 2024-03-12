@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using DocumentFormat.OpenXml.Office2013.PowerPoint.Roaming;
+using Humanizer;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using NexportApi.Model;
@@ -76,6 +77,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly IPriceFormatter _priceFormatter;
         private readonly IPermissionService _permissionService;
         private readonly ICustomerService _customerService;
+        private readonly IStoreContext _storeContext;
 
         #endregion
 
@@ -101,7 +103,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             IAddressService addressService,
             IPriceFormatter priceFormatter,
             IPermissionService permissionService,
-            ICustomerService customerService)
+            ICustomerService customerService,
+            IStoreContext storeContext)
         {
             _nexportSettings = nexportSettings;
             _baseAdminModelFactory = baseAdminModelFactory;
@@ -123,6 +126,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _priceFormatter = priceFormatter;
             _permissionService = permissionService;
             _customerService = customerService;
+            _storeContext = storeContext;
         }
 
         #endregion
@@ -1598,6 +1602,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 // gets default product mapping if there is no product mapping for store specified
                 var npmInCart = (await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId, store.Id)) ?? (await _nexportService.GetProductMappingByNopProductId(shoppingCartItem.ProductId, null));
 
+                //hide purchasing group area if there is no product mapping or if product is set to autoredeem
                 if (npmInCart != null)
                 {
                     if (npmInCart.AutoRedeem)
@@ -1616,6 +1621,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
 
+
+            //hide purchasing group area if user mapping is null or if there are no available groups
             if (userMapping != null)
             {
 
@@ -1649,6 +1656,10 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
                 }
             }
+            else
+            {
+                orderSummaryCartFooterModel.ShowPurchasingGroupArea = false;
+            }
 
             return orderSummaryCartFooterModel;
         }
@@ -1661,33 +1672,57 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
             var model = new NexportGroupListModel();
 
-            var userMapping = await _nexportService.FindUserMappingByCustomerId(currentCustomer.Id);
-
-            if (userMapping != null)
+            try
             {
-
-                try
+                var groupModels = new List<NexportGroupModel>();
+                var currentStore = await _storeContext.GetCurrentStoreAsync();
+                int noGroupCount = 0;
+                // check for wholesale purchases that have no group
+                // if current customer is admin, get all purchases for group not assigned
+                // otherwise only get the ones for the current store and the current customer
+                if (searchModel.AdminView && await _customerService.IsAdminAsync(currentCustomer))
                 {
-                    var groupModels = new List<NexportGroupModel>();
+                    noGroupCount = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName,searchModel.SearchShortName,null);
+                }
+                else
+                {
+                    noGroupCount = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName,searchModel.SearchShortName,null, currentStore, currentCustomer);
+                }
 
+                if (noGroupCount > 0)
+                {
+                    groupModels.Add(new NexportGroupModel { Id = null, Name = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Group.NoGroup"), NumberOfProducts = noGroupCount });
+                }
 
-                    //check for wholesale purchases that have no group
-                    var noGroupCount = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(null);
-                    if (noGroupCount > 0)
-                    {
-                        groupModels.Add(new NexportGroupModel { Id = null, Name = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Group.NoGroup"), NumberOfProducts = noGroupCount });
-                    }
-
-                    var groupsFromApi = await _nexportService.SearchGroupsForPermissionAsync(userMapping.NexportUserId,
-                    _nexportSettings.RootOrganizationId.Value);
+                // get wholesale purchases for groups the customer is purchasing agent on
+                var userMapping = await _nexportService.FindUserMappingByCustomerId(currentCustomer.Id);
+                if (userMapping != null)
+                {
+                    var groupsFromApi = await _nexportService.SearchGroupsForPermissionAsync(
+                        userMapping.NexportUserId,
+                        _nexportSettings.RootOrganizationId.Value);
 
                     foreach (var group in groupsFromApi)
                     {
-                        var groupModel = new NexportGroupModel { Id = group.Id, Name = group.Name, ShortName = group.ShortName };
+                        var groupModel = new NexportGroupModel
+                        {
+                            Id = group.Id,
+                            Name = group.Name,
+                            ShortName = group.ShortName
+                        };
 
-                        groupModel.NumberOfProducts =
-                            await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(
-                                groupModel.Id);
+                        // if current customer is admin, get all purchases for group
+                        // otherwise only get the ones for the current store
+                        if (searchModel.AdminView && await _customerService.IsAdminAsync(currentCustomer))
+                        {
+                            groupModel.NumberOfProducts =
+                                await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName,searchModel.SearchShortName,groupModel.Id);
+                        }
+                        else
+                        {
+                            groupModel.NumberOfProducts =
+                                await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName,searchModel.SearchShortName,groupModel.Id, currentStore);
+                        }
 
                         if (groupModel.NumberOfProducts > 0)
                         {
@@ -1695,32 +1730,26 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         }
 
                     }
-
-                    if (!searchModel.SearchName.IsNullOrWhiteSpace())
-                        groupModels = groupModels.Where(x => x.Name != null && x.Name.Contains(searchModel.SearchName)).ToList();
-
-                    if (!searchModel.SearchShortName.IsNullOrWhiteSpace())
-                        groupModels = groupModels.Where(x => x.ShortName != null && x.ShortName.Contains(searchModel.SearchShortName)).ToList();
-
-                    var pagedGroups = groupModels.ToPagedList(searchModel);
-
-                    model = await model.PrepareToGridAsync(searchModel, pagedGroups, () =>
-                    {
-                        return pagedGroups.SelectAwait(async group =>
-                        {
-                            return group;
-                        });
-                    });
-
-                    return model;
                 }
-                catch (Exception ex)
+
+                var pagedGroups = groupModels.ToPagedList(searchModel);
+
+                model = await model.PrepareToGridAsync(searchModel, pagedGroups, () =>
                 {
-                    await _logger.WarningAsync(
-                        $"Unable to prepare nexport group list model", ex);
-                }
+                    return pagedGroups.SelectAwait(async group =>
+                    {
+                        return group;
+                    });
+                });
 
+                return model;
             }
+            catch (Exception ex)
+            {
+                await _logger.WarningAsync(
+                    $"Unable to prepare nexport group list model", ex);
+            }
+
             return model;
         }
 
@@ -1730,21 +1759,47 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            //if (groupId == Guid.Empty)
-            //    throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
-
             var model = new NexportGroupProductListModel();
 
             try
             {
                 IList<NexportGroupProductModel> groupProductModels = new List<NexportGroupProductModel>();
 
-                //if a user doesn't have manage wholesale permission, they should only see the items they ordered
+
                 IList<WholesaleOrderInfo>? wholesaleOrderInfos = null;
-                if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-                    wholesaleOrderInfos = await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName, currentCustomer);
+
+                // check for wholesale purchases that have no group
+                // if current customer is admin, get all purchases for group not assigned
+                // otherwise only get the ones for the current store and the current customer
+                if (groupId == null)
+                {
+                    var isAdmin = await _customerService.IsAdminAsync(currentCustomer);
+                    if (searchModel.AdminView && isAdmin)
+                    {
+                        wholesaleOrderInfos = await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName);
+                    }
+                    else
+                    {
+                        var store = await _storeContext.GetCurrentStoreAsync();
+                        wholesaleOrderInfos = await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName, store, currentCustomer);
+                    }
+                }
+                // check for wholesale purchases which the customer has purchasing agent permission on
+                // if current customer is admin, get all purchases 
+                // otherwise only get the ones for the current store
                 else
-                    wholesaleOrderInfos = await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName);
+                {
+                    var hasGroupPermission = await _nexportService.HasGroupPermissionAsync(currentCustomer, groupId.Value);
+                    if (searchModel.AdminView && hasGroupPermission)
+                    {
+                        wholesaleOrderInfos = await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName);
+                    }
+                    else
+                    {
+                        var store = await _storeContext.GetCurrentStoreAsync();
+                        wholesaleOrderInfos = await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName, store);
+                    }
+                }
 
                 if (wholesaleOrderInfos != null)
                 {
@@ -1820,65 +1875,94 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.DateAssignedTo.Value, await _dateTimeHelper.GetCurrentTimeZoneAsync()).AddDays(1);
 
                 IList<NexportOrderInvoiceItem>? invoiceItems = null;
-                //if the customer does not have the manage wholesale role then they should only see their own orders
-                if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-                    invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
-                        searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue, orderId, currentCustomer);
+
+                // check for wholesale purchases that have no group
+                // if current customer is admin, get all purchases for group not assigned
+                // otherwise only get the ones for the current store and the current customer
+                if (groupId == null)
+                {
+                    var isAdmin = await _customerService.IsAdminAsync(currentCustomer);
+                    if (searchModel.AdminView && isAdmin)
+                    {
+                        //show all items under group not assigned
+                        invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
+                            searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId,
+                            dateAssignedFromValue, dateAssignedToValue, orderId);
+                    }
+                    else
+                    {
+                        //show only items for group not assigned that belong to the current store and current customer
+                        var store = await _storeContext.GetCurrentStoreAsync();
+                        invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
+                                        searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue, orderId, store, currentCustomer);
+                    }
+                }
+                // check for wholesale purchases which the customer has purchasing agent permission on
+                // if current customer is admin, get all purchases 
+                // otherwise only get the ones for the current store
                 else
-                    invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
-                        searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue, orderId);
-
-
-
+                {
+                    var hasGroupPermission = await _nexportService.HasGroupPermissionAsync(currentCustomer, groupId.Value);
+                    if (searchModel.AdminView && hasGroupPermission)
+                    {
+                        //show all items for the group
+                        invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
+                            searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId,
+                            dateAssignedFromValue, dateAssignedToValue, orderId);
+                    }
+                    else
+                    {
+                        //show only items for the group that belong to the current store
+                        var store = await _storeContext.GetCurrentStoreAsync();
+                        invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
+                                        searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue, orderId, store);
+                    }
+                }
 
                 if (invoiceItems != null)
                 {
                     foreach (var invoiceItem in invoiceItems)
                     {
+                        var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+                        var storeForOrder = await _storeService.GetStoreByIdAsync(order.StoreId);
+                        var purchasedBy = await _customerService.GetCustomerByIdAsync(order.CustomerId);
+                        if (order == null)
+                        {
+                            await _logger.WarningAsync($"Invoice item: {invoiceItem.Id} in redemptions list has null order");
+                            continue;
+                        }
                         var redemptionItem = new NexportGroupProductRedemptionModel
                         {
                             InvoiceItemId = invoiceItem.InvoiceItemId,
                             Status = invoiceItem.RedemptionStatus.GetDisplayName(),
-                            DateRedeemed = invoiceItem.UtcDateRedemption.HasValue ? (await _dateTimeHelper.ConvertToUserTimeAsync(invoiceItem.UtcDateRedemption.Value, DateTimeKind.Utc)).ToString("MM/dd/yyyy h:mm tt") : null
+                            DateRedeemed = invoiceItem.UtcDateRedemption.HasValue ? (await _dateTimeHelper.ConvertToUserTimeAsync(invoiceItem.UtcDateRedemption.Value, DateTimeKind.Utc)).ToString("MM/dd/yyyy h:mm tt") : null,
+                            PurchasedBy = purchasedBy != null ? $"{purchasedBy.Email}" : "",
+                            PurchasedIn = storeForOrder != null ? storeForOrder.Name : ""
+
                         };
 
-                        if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Assigned ||
-                            invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Awaiting)
+                        var selectedMappingForOpenEndedProductStr =
+                            await _genericAttributeService.GetAttributeAsync<string>(
+                                invoiceItem,
+                                $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
+                                order.StoreId);
+
+                        //is open ended product and status is assigned or awaiting then display the product name from the generic attribute
+                        //otherwise display the product name the normal way
+                        if (selectedMappingForOpenEndedProductStr != null && (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Assigned ||
+                            invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Awaiting))
                         {
-                            var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+                            var selectedMappingForOpenEndedProduct =
+                                    JsonConvert.DeserializeObject<NexportProductMapping>(
+                                        selectedMappingForOpenEndedProductStr);
 
-                            if (order != null)
+                            if (selectedMappingForOpenEndedProduct != null)
                             {
-                                var selectedMappingForOpenEndedProductStr =
-                                        await _genericAttributeService.GetAttributeAsync<string>(
-                                            invoiceItem,
-                                            $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
-                                            order.StoreId);
-
-                                if (selectedMappingForOpenEndedProductStr != null)
+                                var product = await _productService.GetProductByIdAsync(selectedMappingForOpenEndedProduct.NopProductId);
+                                if (product != null)
                                 {
-                                    var selectedMappingForOpenEndedProduct =
-                                        JsonConvert.DeserializeObject<NexportProductMapping>(
-                                            selectedMappingForOpenEndedProductStr);
-
-                                    if (selectedMappingForOpenEndedProduct != null)
-                                    {
-                                        var product = await _productService.GetProductByIdAsync(selectedMappingForOpenEndedProduct.NopProductId);
-                                        if (product != null)
-                                        {
-                                            redemptionItem.ProductName = product.Name;
-                                        }
-                                    }
+                                    redemptionItem.ProductName = product.Name;
                                 }
-                                else
-                                {
-                                    var product = await _productService.GetProductByIdAsync(productId);
-                                    if (product != null)
-                                    {
-                                        redemptionItem.ProductName = product.Name;
-                                    }
-                                }
-
                             }
                         }
                         else
@@ -1890,6 +1974,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                             }
                         }
 
+
+                        //set the name and email of the redeeming customer for the redemption item
                         if (invoiceItem.RedeemingUserId.HasValue)
                         {
                             var redeemerUserMapping =
@@ -1915,26 +2001,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                             else
                             {
                                 //set the name and email for awaiting status redemption
-                                var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
-                                if (order != null)
-                                {
-                                    var email = await _genericAttributeService.GetAttributeAsync<string>(invoiceItem,
-                                        $"redeeming-user-email-for-invoice-{invoiceItem.Id}", order.StoreId);
-                                    if (email != null)
-                                    {
-                                        redemptionItem.Email = email;
-                                        redemptionItem.Name =
-                                            $"{await _genericAttributeService.GetAttributeAsync<string>(invoiceItem, $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}", order.StoreId)} {await _genericAttributeService.GetAttributeAsync<string>(invoiceItem, $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}", order.StoreId)}";
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            //set the name and email for processing and awaiting status redemption
-                            var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
-                            if (order != null)
-                            {
+
                                 var email = await _genericAttributeService.GetAttributeAsync<string>(invoiceItem,
                                     $"redeeming-user-email-for-invoice-{invoiceItem.Id}", order.StoreId);
                                 if (email != null)
@@ -1945,7 +2012,20 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                 }
                             }
                         }
+                        else
+                        {
+                            //set the name and email for processing and awaiting status redemption
 
+                            var email = await _genericAttributeService.GetAttributeAsync<string>(invoiceItem,
+                                $"redeeming-user-email-for-invoice-{invoiceItem.Id}", order.StoreId);
+                            if (email != null)
+                            {
+                                redemptionItem.Email = email;
+                                redemptionItem.Name =
+                                    $"{await _genericAttributeService.GetAttributeAsync<string>(invoiceItem, $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}", order.StoreId)} {await _genericAttributeService.GetAttributeAsync<string>(invoiceItem, $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}", order.StoreId)}";
+                            }
+
+                        }
 
                         redemptions.Add(redemptionItem);
                     }
@@ -2243,7 +2323,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         if (userMapping != null)
                             model.NexportUserId = userMapping.NexportUserId;
                     }
-                    
+
                     model.ProductMappingId = productMappingId.Value;
                     model.Status = invoiceItem.RedemptionStatus;
                     model.EnrollmentId = invoiceItem.RedemptionEnrollmentId;
