@@ -72,7 +72,10 @@
     <input type="hidden" asp-for="SelectedUserLastName"/>
     <span asp-validation-for="SelectedUserId"></span>
 </div>
-<div id="via-email-div" style="display:none">
+<div class="section">
+    <label>Or</label>
+</div>
+<div id="via-email-div">
     <div class="section">
         <label>@T("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.EnterNewHeader")</label>
     </div>
@@ -153,8 +156,6 @@
 
             if(data.length<1)
             {
-
-                $("#via-email-div").css("display","initial");
                 $("#Email").val($("#SearchEmail").val());
                 $("#Email").focus();
                 
@@ -164,7 +165,6 @@
                 $("#Email").val("");
                 $("#FirstName").val("");
                 $("#LastName").val("");
-                $("#via-email-div").css("display", "none");
             }
         }
     }
