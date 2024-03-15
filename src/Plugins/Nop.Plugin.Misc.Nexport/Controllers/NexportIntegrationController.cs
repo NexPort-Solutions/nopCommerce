@@ -3398,7 +3398,29 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
                 try
                 {
-                    await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem, redeemingUserId.Value);
+                    var isWholesale = await _genericAttributeService.GetAttributeAsync<bool>(order, "isWholesaleOrder", order.StoreId);
+
+                    if (isWholesale)
+                    {
+                       var redeemed =  await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem,
+                            redeemingUserId.Value);
+                       if (redeemed)
+                       {
+                           var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(order.Id, nexportOrderInvoiceItem.OrderItemId);
+                           if (wholesaleOrderInfo != null)
+                           {
+                               if (wholesaleOrderInfo.Available > 0)
+                                   wholesaleOrderInfo.Available--;
+                               wholesaleOrderInfo.Redeemed++;
+                               await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+                           }
+                       }
+                    }
+                    else
+                    {
+                        await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem,
+                            redeemingUserId.Value);
+                    }
 
                     await _nexportService.AddOrderNoteAsync(order,
                         $"Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} has been redeemed for user {redeemingUserId}");

@@ -342,8 +342,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                 if (invoiceDetails?.State ==
                                     GetInvoiceResponse.StateEnum.Committed)
                                 {
-
-                                    var lastRedemptionStatus = invoiceItem.RedemptionStatus;
                                     var redeemed = false;
 
                                     if (productMapping.Type == NexportProductTypeEnum.OpenEnded &&
