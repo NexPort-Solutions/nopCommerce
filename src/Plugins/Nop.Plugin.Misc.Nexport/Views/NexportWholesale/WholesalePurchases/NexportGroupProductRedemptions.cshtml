@@ -2,8 +2,10 @@
 @using Nop.Plugin.Misc.Nexport.Extensions
 @using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
 @using Nop.Plugin.Misc.Nexport.Services
+@using Nop.Services.Customers
 @model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.NexportGroupProductRedemptionListSearchModel
 @inject NexportService NexportService
+@inject ICustomerService CustomerService
 @{
     var currentCustomer = await workContext.GetCurrentCustomerAsync();
     const string hideSearchBlockAttributeName = "NexportGroupsPage.HideSearchBlock";
@@ -45,9 +47,9 @@
     {
         redemptionsColumns.Add(
             new(nameof(NexportGroupProductRedemptionModel.PurchasedIn))
-            {
-                Title = "Purchased In"
-            }
+                    {
+                        Title = "Purchased In"
+                    }
             );
         redemptionsColumns.Add(
             new(nameof(NexportGroupProductRedemptionModel.PurchasedBy))
@@ -79,12 +81,12 @@
             {
                 Name = "group-product-redemptions-grid",
                 UrlRead = new DataUrl("GetNexportGroupProductRedemptions", "NexportWholesale",
-                            new RouteValueDictionary
-                            {
+                                    new RouteValueDictionary
+                                    {
                 {"GroupId", Model.CurrentGroup.Id}
                 , {"ProductId", Model.CurrentProduct.Id}
                 , {"OrderId", Model.OrderId}
-                            }),
+                                    }),
                 SearchButtonId = "search-group-product-redemptions",
                 Length = Model.PageSize,
                 LengthMenu = Model.AvailablePageSizes,
@@ -215,14 +217,19 @@
     function renderModifyGroupProductRedemptions(data, type, row, meta) {
 
         if (row.InvoiceItemId != null) {
+
             if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Assigned.GetDisplayName())") {
-                return "<center><button class=\"btn btn-default\" onclick=\"unassignRedemption('" + row.InvoiceItemId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")</button></center>";
+                if (@((Model.AdminView && await CustomerService.IsAdminAsync(currentCustomer)).ToString().ToLower())) {
+                    return "<center><button class=\"btn btn-default\" onclick=\"unassignRedemption('" + row.InvoiceItemId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")</button></center>";
+                }
             }
             else if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Available.GetDisplayName())") {
                 return "<center><button class=\"btn btn-default\" onclick=\"assignRedemption('" + row.InvoiceItemId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign")</button></center>";
             }
             else if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Awaiting.GetDisplayName())") {
-                return "<center><button class=\"btn btn-default\" onclick=\"cancelAwaitingRedemption('" + row.InvoiceItemId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting")</button></center>";
+                if (@((Model.AdminView && await CustomerService.IsAdminAsync(currentCustomer)).ToString().ToLower())) {
+                    return "<center><button class=\"btn btn-default\" onclick=\"cancelAwaitingRedemption('" + row.InvoiceItemId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting")</button></center>";
+                }
             }
         }
         return '';
