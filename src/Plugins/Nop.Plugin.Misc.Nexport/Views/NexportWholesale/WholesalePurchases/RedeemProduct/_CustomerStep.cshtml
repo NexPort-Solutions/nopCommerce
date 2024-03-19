@@ -70,9 +70,9 @@
     <input type="hidden" asp-for="SelectedUserEmailAddress"/>
     <input type="hidden" asp-for="SelectedUserFirstName"/>
     <input type="hidden" asp-for="SelectedUserLastName"/>
-    <span asp-validation-for="SelectedUserId"></span>
 </div>
 <div class="section">
+    <span asp-validation-for="SelectedUserId"></span>
     <label>Or</label>
 </div>
 <div id="via-email-div">
@@ -84,7 +84,7 @@
             <nop-label asp-for="Email" />
         </div>
         <div class="col-sm-4">
-            <nop-editor asp-for="Email" />
+            <nop-editor asp-for="Email"/>
             <span asp-validation-for="Email"></span>
         </div>
     </div>
@@ -108,11 +108,26 @@
     </div>
 </div>
 <script>
+    $(document).ready(function () {
+            $("#Email").on("blur",function(){
+                if($("#Email").val().length>0)
+                {
+                    $("input[name=select-nexport-user]:checked").prop("checked",false);
+                    SetInputValsForSelectedRadio(null, null, null, null);
+                }
+                $('#Email').valid()
+            })
+            $("#FirstName").on("blur",function(){
+            $('#FirstName').valid()
+            })
+            $("#LastName").on("blur", function () {
+                $('#LastName').valid()
+            })
+        });
     function SearchClicked(){
 
         if ($("#TableFirstDraw").val() == "True") {
             $("#TableFirstDraw").val("False");
-            $("#CustomerContinue").css("display","initial");
         }
 
         if ($("#search-table-div").css("display") == "none") {
@@ -123,6 +138,9 @@
         if (radio.checked) {
             SetInputValsForSelectedRadio(radio.dataset.userId, radio.dataset.firstName, radio.dataset.lastName, radio.dataset.emailAddress);
             $(".field-validation-error").empty();
+            $("#Email").val("");
+            $("#FirstName").val("");
+            $("#LastName").val("");
         }
     }
     function SetInputValsForSelectedRadio(userId,firstName,lastName,emailAddress)
@@ -153,19 +171,7 @@
             if ($("#search-table-div").css("display") == "none") {
                 $("#search-table-div").css("display", "initial")
             }
-
-            if(data.length<1)
-            {
-                $("#Email").val($("#SearchEmail").val());
-                $("#Email").focus();
-                
-            }
-            else
-            {
-                $("#Email").val("");
-                $("#FirstName").val("");
-                $("#LastName").val("");
-            }
         }
     }
+
 </script>

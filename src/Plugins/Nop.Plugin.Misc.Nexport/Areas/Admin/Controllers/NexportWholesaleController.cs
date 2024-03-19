@@ -446,7 +446,7 @@ public class NexportWholesaleController : BaseAdminController
                     {
                         update_section = new UpdateSectionJsonModel
                         {
-                            name = "email",
+                            name = "customer",
                             html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_CustomerStep.cshtml", model)
                         }
                     });
@@ -459,7 +459,7 @@ public class NexportWholesaleController : BaseAdminController
                 await _genericAttributeService.SaveAttributeAsync<string?>(customer, "RedeemProductModel_LastName", model.LastName);
             }
 
-            return await GoToTrainingStep(customer);
+            return await GoToProductStep(customer);
         }
         catch (Exception exc)
         {
@@ -468,7 +468,7 @@ public class NexportWholesaleController : BaseAdminController
         }
     }
 
-    public async Task<IActionResult> GoToTrainingStep(Customer customer)
+    public async Task<IActionResult> GoToProductStep(Customer customer)
     {
         var productId =
             await _genericAttributeService.GetAttributeAsync<int?>(customer, "RedeemProductModel_productId");
@@ -490,10 +490,10 @@ public class NexportWholesaleController : BaseAdminController
         {
             update_section = new UpdateSectionJsonModel
             {
-                name = "training",
+                name = "product",
                 html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ProductStep.cshtml", productStepModel)
             },
-            goto_section = "training"
+            goto_section = "product"
         });
     }
 

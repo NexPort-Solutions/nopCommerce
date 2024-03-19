@@ -676,7 +676,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Products", "Purchases");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions", "Assignments");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem", "Assign");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining", "Training");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectProduct", "Product");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectCustomer", "Customer");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType", "AssignmentType");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.AssignmentType.Option1", "By Email");
