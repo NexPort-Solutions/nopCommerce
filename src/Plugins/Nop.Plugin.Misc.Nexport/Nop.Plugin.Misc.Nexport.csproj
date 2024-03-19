@@ -104,6 +104,7 @@
     <None Remove="Views\ProductMappingGroupMembership.cshtml" />
     <None Remove="Views\ProductMappingTable.cshtml" />
     <None Remove="Views\Product\_AddToCart.cshtml" />
+    <None Remove="Views\Product\_ProductRedemptionStatuses.cshtml" />
     <None Remove="Views\RedeemByEmail.cshtml" />
     <None Remove="Views\RedeemProduct.cshtml" />
     <None Remove="Views\RegistrationField\_CustomerFields.Control.cshtml" />
@@ -137,6 +138,8 @@
     <None Remove="Views\Widget\Order\WidgetsNexportOrderDetailsPageAfterproducts.cshtml" />
     <None Remove="Views\Widget\Order\WidgetsOrderDetailsPageOverview.cshtml" />
     <None Remove="Views\Widget\Order\WidgetsOrderSummaryCartFooter.cshtml" />
+    <None Remove="Views\Widget\Product\NexportProductBoxAddInfoBefore.cshtml" />
+    <None Remove="Views\Widget\Product\NexportProductDetailsAfterPictures.cshtml" />
     <None Remove="Views\Widget\Product\WidgetsProductDetailsOverviewTop.cshtml" />
     <None Remove="Views\Widget\WidgetsHeaderLinksBefore.cshtml" />
     <None Remove="Views\Widget\_EmailStep.cshtml" />
@@ -373,6 +376,9 @@
     <Content Include="Views\ProductMappingGroupMembership.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\Product\_ProductRedemptionStatuses.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\Product\_AddToCart.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -454,6 +460,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Widget\Order\WidgetsOrderSummaryCartFooter.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Widget\Product\NexportProductBoxAddInfoBefore.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Widget\Product\NexportProductDetailsAfterPictures.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Widget\Product\NexportProductDetailsButtons.cshtml">
