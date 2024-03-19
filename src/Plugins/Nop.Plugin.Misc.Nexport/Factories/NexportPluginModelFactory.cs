@@ -2320,8 +2320,15 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     if (customer != null)
                     {
                         var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
-                        if (userMapping != null)
-                            model.NexportUserId = userMapping.NexportUserId;
+
+                        // Create new Nexport user and map to this customer if the mapping does not existed
+                        if (userMapping == null)
+                        {
+                            await _nexportService.CreateAndMapNewNexportUserAsync(customer);
+                            userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+                        }
+
+                        model.NexportUserId = userMapping.NexportUserId;
                     }
 
                     model.ProductMappingId = productMappingId.Value;

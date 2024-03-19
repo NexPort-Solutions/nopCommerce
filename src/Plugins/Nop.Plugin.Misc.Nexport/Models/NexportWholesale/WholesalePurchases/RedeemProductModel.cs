@@ -29,7 +29,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
 
         public IList<SelectListItem>? AvailableMappings { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining")]
+        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectProduct")]
         public int? SelectedProductMappingId { get; set; }
 
         public int? ProductMappingIdForOpenEndedProduct { get; set; }
