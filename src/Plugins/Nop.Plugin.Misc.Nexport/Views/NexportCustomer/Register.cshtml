@@ -298,7 +298,7 @@
                         }
                         @if (Model.CustomerAttributes.Count > 0)
                         {
-                            @await Html.PartialAsync("_CustomerAttributes", Model.CustomerAttributes)
+                            @await Html.PartialAsync("/Views/Customer/_CustomerAttributes.cshtml", Model.CustomerAttributes)
                         }
                     </div>
                 </div>
