@@ -14,8 +14,8 @@
     You need to set this parameter to true if your plugin has a nuget package
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>1.0.0.21</AssemblyVersion>
-    <FileVersion>1.0.0.21</FileVersion>
+    <AssemblyVersion>1.0.0.22</AssemblyVersion>
+    <FileVersion>1.0.0.22</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -32,7 +32,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Areas\Admin\Views\Category\NexportOptions.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportCategory\List.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportCategory\NexportOptions.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportCategory\NexportProductMappingsInCategoryPage.cshtml" />
     <None Remove="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\WholesalePurchases\NexportGroups\List.cshtml" />
     <None Remove="Areas\Admin\Views\Order\Create.cshtml" />
@@ -86,6 +88,7 @@
     <None Remove="Scripts\uikit.min.js" />
     <None Remove="Scripts\xregexp-all.min.js" />
     <None Remove="Views\Configure.cshtml" />
+    <None Remove="Views\MapProductToCategory.cshtml" />
     <None Remove="Views\MyNexportGroups.cshtml" />
     <None Remove="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml" />
     <None Remove="Views\NexportCustomer\Login.cshtml" />
@@ -104,6 +107,7 @@
     <None Remove="Views\ProductMappingGroupMembership.cshtml" />
     <None Remove="Views\ProductMappingTable.cshtml" />
     <None Remove="Views\Product\_AddToCart.cshtml" />
+    <None Remove="Views\Product\_ProductRedemptionStatuses.cshtml" />
     <None Remove="Views\RedeemByEmail.cshtml" />
     <None Remove="Views\RedeemProduct.cshtml" />
     <None Remove="Views\RegistrationField\_CustomerFields.Control.cshtml" />
@@ -137,6 +141,8 @@
     <None Remove="Views\Widget\Order\WidgetsNexportOrderDetailsPageAfterproducts.cshtml" />
     <None Remove="Views\Widget\Order\WidgetsOrderDetailsPageOverview.cshtml" />
     <None Remove="Views\Widget\Order\WidgetsOrderSummaryCartFooter.cshtml" />
+    <None Remove="Views\Widget\Product\NexportProductBoxAddInfoBefore.cshtml" />
+    <None Remove="Views\Widget\Product\NexportProductDetailsAfterPictures.cshtml" />
     <None Remove="Views\Widget\Product\WidgetsProductDetailsOverviewTop.cshtml" />
     <None Remove="Views\Widget\WidgetsHeaderLinksBefore.cshtml" />
     <None Remove="Views\Widget\_EmailStep.cshtml" />
@@ -148,7 +154,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Areas\Admin\Views\Category\NexportOptions.cshtml">
+    <Content Include="Areas\Admin\Views\NexportCategory\List.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportCategory\NexportOptions.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Widget\Category\NexportCategoryProductMappings.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml">
@@ -309,6 +323,9 @@
     <Content Include="Scripts\xregexp-all.min.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\MapProductToCategory.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -371,6 +388,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\ProductMappingGroupMembership.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Product\_ProductRedemptionStatuses.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Product\_AddToCart.cshtml">
@@ -456,6 +476,12 @@
     <Content Include="Views\Widget\Order\WidgetsOrderSummaryCartFooter.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\Widget\Product\NexportProductBoxAddInfoBefore.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Widget\Product\NexportProductDetailsAfterPictures.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\Widget\Product\NexportProductDetailsButtons.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -503,6 +529,7 @@
   <ItemGroup>
     <Folder Include="Areas\Admin\Models\Wholesale\" />
     <Folder Include="Services\Caching\" />
+    <Folder Include="Views\Widget\NewFolder\" />
   </ItemGroup>
 
   <ItemGroup>

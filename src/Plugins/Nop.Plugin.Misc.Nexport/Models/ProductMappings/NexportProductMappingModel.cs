@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -83,7 +81,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
         public string SectionCeus { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.SectionNumber")]
-        public string SectionNumber { get;set; }
+        public string SectionNumber { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.IsSynchronized")]
         public bool IsSynchronized { get; set; }
@@ -106,7 +104,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
         public string RenewalWindow { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.RenewalDuration")]
-        public string RenewalDuration{ get; set; }
+        public string RenewalDuration { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.RenewalCompletionThreshold")]
         [UIHint("Int32Nullable")]
@@ -130,6 +128,11 @@ namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
         public bool Editable { get; set; }
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.AssignWhenRedeemed")]
-        public bool? AssignWhenRedeemed {get; set; }
+        public bool? AssignWhenRedeemed { get; set; }
+
+        [NopResourceDisplayName("Plugins.Misc.Nexport.CategoryName")]
+        public string NopCategoryName { get; set; }
+
+        public int? NopCategoryId { get; set; }
     }
 }

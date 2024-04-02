@@ -1,0 +1,24 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.Products.NexportProductRedemptionStatusesModel
+<style>
+    .redemption-statuses {
+        margin-bottom: 1em;
+    }
+    .redemption-statuses a {
+        color: #4ab2f1;
+        margin-left: 0.3em;
+    }
+    .redemption-statuses a:hover {
+        color: #248ece;
+    }
+    .redemption-statuses a:focus {
+                color: #248ece;
+    }
+
+</style>
+<div class="redemption-statuses">
+    <label>@Model.Available<a>@(nameof(Model.Available))</a></label>
+    <label>|</label>
+    <label>@Model.Awaiting<a>@(nameof(Model.Awaiting))</a></label>
+    <label>|</label>
+    <label>@Model.Assigned<a>@(nameof(Model.Assigned))</a></label>
+</div>

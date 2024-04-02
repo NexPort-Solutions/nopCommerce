@@ -1,0 +1,44 @@
+﻿@using Nop.Plugin.Misc.Nexport.Models
+@using Nop.Plugin.Misc.Nexport.Models.ProductMappings
+@model Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Category.NexportCategoryProductMappingListSearchModel
+@{
+    const string hideNexportMappingsBlockAttributeName = "CategoryPage.HideNexportMappingsBlock";
+    var hideNexportMappingsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideNexportMappingsBlockAttributeName);
+    
+    var productMappingTableColumns = new List<ColumnProperty>
+    {
+        new(nameof(NexportProductMappingModel.DisplayName))
+        {
+            Title = T("Plugins.Misc.Nexport.DisplayName").Text,
+            Width = "550",
+        },
+        new ColumnProperty(nameof(NexportProductMappingModel.NopProductId))
+        {
+            Title = T("Admin.Common.View").Text,
+            Width = "150",
+            ClassName = NopColumnClassDefaults.Button,
+            Render = new RenderButtonView(new DataUrl("~/Admin/Product/Edit/", nameof(CategoryProductModel.ProductId)))
+        },
+    };
+
+    var productMappingTable = new NexportDataTablesModel
+            {
+                Name = "product-mappings-grid",
+                PrimaryKeyColumn = nameof(NexportProductMappingModel.Id),
+                UrlRead = new DataUrl("GetProductMappingsForCategoryId", "NexportIntegration",
+                    new RouteValueDictionary
+                    {
+                        [nameof(Model.NopCategoryId)] = Model.NopCategoryId
+                    }),
+                Length = Model.PageSize,
+                LengthMenu = Model.AvailablePageSizes,
+                ColumnCollection = productMappingTableColumns
+            };
+
+}
+<nop-card asp-name="nexport-mapping-list" asp-icon="fas fa-paperclip" asp-title="Products mapped to this category"
+           asp-hide-block-attribute-name="@hideNexportMappingsBlockAttributeName" asp-hide="@hideNexportMappingsBlock" asp-advanced="false">
+    <div class="card-body">
+        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", productMappingTable)
+    </div>
+</nop-card>

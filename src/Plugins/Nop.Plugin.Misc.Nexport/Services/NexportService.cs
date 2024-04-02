@@ -37,6 +37,7 @@ using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
 using Nop.Services.Plugins;
+using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Web.Framework;
 
@@ -54,6 +55,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IAddressService _addressService;
         private readonly IStaticCacheManager _cacheManager;
         private readonly ILocalizationService _localizationService;
+        private readonly IStoreMappingService _storeMappingService;
+        private readonly IAclService _aclService;
         private readonly IProductService _productService;
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
@@ -79,6 +82,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
         private readonly IRepository<WholesalePurchasingGroup> _wholesalePurchasingGroupRepository;
         private readonly IRepository<WholesaleOrderInfo> _wholesaleOrderInfoRepository;
+        private readonly IRepository<Category> _categoryRepository;
         private readonly IRepository<Order> _orderRepository;
         private readonly ICustomerService _customerService;
         private readonly IOrderService _orderService;
@@ -108,6 +112,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<Customer> _customerRepository;
         private readonly IRepository<CustomerCustomerRoleMapping> _customerCustomerRoleMappingRepository;
         private readonly LocalizationSettings _localizationSettings;
+        private readonly IRepository<ProductCategory> _productCategoryMappingRepository;
 
         #endregion
 
@@ -144,6 +149,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
             IRepository<WholesalePurchasingGroup> wholesalePurchasingGroupRepository,
             IRepository<WholesaleOrderInfo> wholesaleOrderInfoRepository,
+            IRepository<Category> categoryRepository,
             IRepository<Order> orderRepository,
             ICustomerService customerService,
             IOrderService orderService,
@@ -161,6 +167,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IMessageTokenProvider messageTokenProvider,
             IWorkflowMessageService workflowMessageService,
             ILocalizationService localizationService,
+            IStoreMappingService storeMappingService,
+            IAclService aclService,
             IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
             IDateTimeHelper dateTimeHelper,
             IUrlHelperFactory urlHelperFactory,
@@ -172,7 +180,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<NexportOrderInvoiceResetRedemptionQueueItem> nexportOrderInvoiceResetRedemptionQueueRepository,
             IRepository<Customer> customerRepository,
             IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMapping,
-            LocalizationSettings localizationSettings)
+            LocalizationSettings localizationSettings,
+            IRepository<ProductCategory> productCategoryMappingRepository)
         {
             _nexportApiService = nexportApiService;
             _emailAccountSettings = emailAccountSettings;
@@ -180,6 +189,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _addressService = addressService;
             _cacheManager = cacheManager;
             _localizationService = localizationService;
+            _storeMappingService = storeMappingService;
+            _aclService = aclService;
             _productService = productService;
             _productRepository = productRepository;
             _nexportProductMappingRepository = nexportProductMappingRepository;
@@ -205,6 +216,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
             _wholesalePurchasingGroupRepository = wholesalePurchasingGroupRepository;
             _wholesaleOrderInfoRepository = wholesaleOrderInfoRepository;
+            _categoryRepository = categoryRepository;
             _orderRepository = orderRepository;
             _customerService = customerService;
             _orderService = orderService;
@@ -234,6 +246,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _customerRepository = customerRepository;
             _customerCustomerRoleMappingRepository = customerCustomerRoleMapping;
             _localizationSettings = localizationSettings;
+            _productCategoryMappingRepository = productCategoryMappingRepository;
         }
 
         #endregion

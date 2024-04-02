@@ -49,6 +49,9 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure
             endpointRouteBuilder.MapControllerRoute("StoreList",
                 "admin/store/list",
                 new { area = "Admin", controller = "NexportStore", action = "List" });
+            endpointRouteBuilder.MapControllerRoute("CategoryList",
+                "admin/category/list",
+                new { area = "Admin", controller = "NexportCategory", action = "List" });
 
 
 

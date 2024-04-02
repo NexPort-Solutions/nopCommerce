@@ -2,6 +2,7 @@
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Category;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
@@ -171,5 +172,14 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         Task<RedeemByEmailModel> PrepareRedeemByEmailModel(int? invoiceItemId, string email, int? productMappingId);
 
         Task<ProductStepModel> PrepareProductStepModel(int? productId, Guid? invoiceItemId);
+
+        Task<MapProductToCategoryModel> PrepareMapProductToCategoryModel();
+
+        Task<NexportProductMappingListModel> PrepareNexportCategoryProductMappingListModelAsync(
+            NexportCategoryProductMappingListSearchModel searchModel);
+
+        Task<NexportCategorySearchModel> PrepareCategorySearchModelAsync(NexportCategorySearchModel searchModel);
+
+        Task<NexportCategoryListModel> PrepareCategoryListModelAsync(NexportCategorySearchModel searchModel);
     }
 }

@@ -76,6 +76,7 @@
                                 <text>Create new mapping</text>
                             }
                         </button>
+                        <button id="mapToCategory" class="btn btn-primary">Map to marketplace category</button>
                         <div id="error-msg-container" style="padding-top: 10px; color: red; display: none;"></div>
                     </div>
                 </div>
@@ -85,6 +86,11 @@
 </form>
 <script>
     $(document).ready(function () {
+        $("#mapToCategory").on("click", function(){
+            $("#error-msg-container").hide();
+
+            window.location.href = "@Url.Action("MapProductToCategory", "NexportIntegration")" + "?nopProductId=@productId" + "&containerId=@containerId" + "&btnId=@refreshMappingBtnId";;
+        })
         $("#nexport-organization-list").on("change",
             function (e) {
                 var orgId = $(this).val();
