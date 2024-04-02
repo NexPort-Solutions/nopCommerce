@@ -2,6 +2,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using NexportApi.Client;
 using NexportApi.Model;
@@ -14,6 +15,7 @@ using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Vendors;
 using Nop.Core.Events;
 using Nop.Data;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Category;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
@@ -800,6 +802,22 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetProductMappingsForCategoryId(NexportCategoryProductMappingListSearchModel searchModel, int nopCategoryId)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
+                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+                return await AccessDeniedDataTablesJson();
+            searchModel.NopCategoryId = nopCategoryId;
+            var model = await _nexportPluginModelFactory.PrepareNexportCategoryProductMappingListModelAsync(searchModel);
+
+            return Json(model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
         [ParameterBasedOnFormName("save-continue", "continueEditing")]
         [FormValueRequired("save", "save-continue")]
         [AutoValidateAntiforgeryToken]
@@ -1175,6 +1193,60 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             {
                 result.Error = $"Cannot map the product [{model.NopProductId}] with the Nexport product [{model.NexportProductId}]";
 
+                HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            }
+
+            return Json(result);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public async Task<IActionResult> MapProductToCategory()
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
+                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+                return AccessDeniedView();
+
+            var model = await _nexportPluginModelFactory.PrepareMapProductToCategoryModel();
+
+            return View("~/Plugins/Misc.Nexport/Views/MapProductToCategory.cshtml",model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [FormValueRequired("save")]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> MapProductToCategory(MapProductToCategoryModel model)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
+                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+                return AccessDeniedView();
+            
+            dynamic result = new ExpandoObject();
+
+            try
+            {
+                await _nexportService.MapProductToCategory(model);
+                
+                ViewBag.RefreshPage = true;
+
+                ViewBag.ClosePage = false;
+
+                var newMapping = await _nexportService.GetProductMappingByNopProductId(model.ProductId, model.StoreId);
+                    
+                result.MappingId = newMapping.Id;
+            }
+            catch(Exception ex)
+            {
+                await _logger.ErrorAsync(
+                    $"Error occurred while mapping the product [{model.ProductId}] with the Category [{model.SelectedCategoryId}]",
+                    ex, await _workContext.GetCurrentCustomerAsync());
+
+                result.Error = $"Cannot map the product [{model.ProductId}] with the Category [{model.SelectedCategoryId}].";
+                
                 HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
 

@@ -392,5 +392,16 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IQueryable<WholesaleOrderInfo>> FindWholesaleOrderInfoQuery(Guid? groupId = null, Store? store = null,
             Customer? customer = null);
+
+        Task MapProductToCategory(MapProductToCategoryModel model);
+
+        Task<IList<Product>> GetAllProductsByCategoryId(int? nopCategoryId);
+
+        Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsByCategoryIdAsync(int nopCategoryId,
+            int pageIndex = 0, int pageSize = int.MaxValue);
+
+        Task<IPagedList<Category>> GetAllCategoriesAsync(string categoryName, int storeId = 0,
+            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false, bool? overridePublished = null, bool? hasProductMapping = null);
+
     }
 }

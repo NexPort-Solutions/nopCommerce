@@ -70,5 +70,7 @@ namespace Nop.Plugin.Misc.Nexport.Domain
         public int? StoreId { get; set; }
 
         public bool? AssignWhenRedeemed {get; set; }
+
+        public int? NopCategoryId { get; set; }
     }
 }

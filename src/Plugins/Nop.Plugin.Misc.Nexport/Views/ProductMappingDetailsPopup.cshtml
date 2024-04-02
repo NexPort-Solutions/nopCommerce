@@ -20,7 +20,7 @@
     </script>
 }
 
-@if (Model is { Id: > 0 })
+@if (Model is { Id: > 0 } && Model.NopCategoryId is null)
 {
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
 
@@ -544,4 +544,43 @@
 
         //# sourceURL=ProductMappingDetailsPopup.js
     </script>
+}
+else if(Model.NopCategoryId!=null)
+{
+    <div class="content-header clearfix">
+        <div class="float-right">
+            <button class="btn btn-primary" onclick="window.close();">
+                Close
+            </button>
+        </div>
+    </div>
+    <div class="content">
+        <div class="form-horizontal">
+            <div class="card-body">
+                <div class="card card-default card-popup">
+                    <div class="card-header">
+                        Product mapped to category
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group row">
+                            <div class="col-sm-5 col-md-4">
+                                <nop-label asp-for="DisplayName" />
+                            </div>
+                            <div class="col-sm-7 col-md-8">
+                                <div class="form-text-row">@Model.DisplayName</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-5 col-md-4">
+                                <nop-label asp-for="NopCategoryName" />
+                            </div>
+                            <div class="col-sm-7 col-md-8">
+                                <div class="form-text-row">@Model.NopCategoryName</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 }

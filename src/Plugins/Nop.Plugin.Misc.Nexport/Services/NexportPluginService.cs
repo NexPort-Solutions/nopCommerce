@@ -782,6 +782,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.SelectProduct", "Select product");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm", "Confirm");
 
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CategoryName", "Category Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CategoryName.Hint", "Name of the category that the product is mapped to.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Category.HasProductMapping", "Includes product mapped to category");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Category.HasProductMapping.Hint", "Search if category has a product mapped to it.");
             
         }
 
@@ -1142,6 +1146,14 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.SelectCustomer");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.SelectProduct");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.CategoryName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.CategoryName.Hint");
+
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Category.HasProductMapping");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Category.HasProductMapping.Hint");
+
+            
         }
 
         public async Task InstallPermissionProviderAsync()

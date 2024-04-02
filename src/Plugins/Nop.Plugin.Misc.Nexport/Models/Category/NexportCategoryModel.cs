@@ -13,5 +13,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.Category
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.Category.AllowProductPurchaseInCategoryDuringEnrollment")]
         public bool AllowProductPurchaseInCategoryDuringEnrollment { get; set; }
+
+        public bool IncludesProductMapping { get; set; }
     }
 }

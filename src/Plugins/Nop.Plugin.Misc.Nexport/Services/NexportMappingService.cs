@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.Drawing.Diagrams;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
@@ -639,6 +638,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 }
 
                 productMapping.AssignWhenRedeemed = false;
+                productMapping.NopCategoryId = null;
 
                 switch (model.NexportProductType)
                 {
@@ -1939,12 +1939,21 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         }
 
-        public async Task<int> GetWholesalePurchaseGroupNumberOfProductsAsync(string searchName, string searchShortName, Guid? groupId = null, Store? store = null, Customer? customer = null)
+         public virtual async Task<IPagedList<NexportProductMapping>>  GetAllNexportProductMappingsByCategoryIdAsync(int nopCategoryId, int pageIndex = 0, int pageSize = int.MaxValue)
+        {
+            //get product mappings for the product
+            var productMappings = await _nexportProductMappingRepository.Table.Where(x => x.NopCategoryId == nopCategoryId).ToListAsync();
+
+            return new PagedList<NexportProductMapping>(productMappings, pageIndex, pageSize);
+
+        }
+
+         public async Task<int> GetWholesalePurchaseGroupNumberOfProductsAsync(string searchName, string searchShortName, Guid? groupId = null, Store? store = null, Customer? customer = null)
         {
             if (groupId == Guid.Empty)
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
 
-            var wholesaleOrderInfoQuery = _wholesaleOrderInfoRepository.Table.Where(x=> x.NexportGroupId==groupId);
+            var wholesaleOrderInfoQuery = _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId);
 
             var orderIdList = new List<int>();
             IQueryable<Order>? orderQuery = null;
@@ -1955,12 +1964,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 orderQuery = _orderRepository.Table.Where(x => x.StoreId == store.Id);
 
             if (customer != null)
-                orderQuery = orderQuery!=null ? orderQuery.Where(x=>x.CustomerId==customer.Id) :  _orderRepository.Table.Where(x => x.CustomerId == customer.Id);
+                orderQuery = orderQuery != null ? orderQuery.Where(x => x.CustomerId == customer.Id) : _orderRepository.Table.Where(x => x.CustomerId == customer.Id);
 
-            if(orderQuery != null)
-               orderIdList.AddRange(await orderQuery.Select(x => x.Id).ToListAsync());
+            if (orderQuery != null)
+                orderIdList.AddRange(await orderQuery.Select(x => x.Id).ToListAsync());
 
-            if (store!=null || customer!=null)
+            if (store != null || customer != null)
                 wholesaleOrderInfoQuery = wholesaleOrderInfoQuery.Where(x => orderIdList.Contains(x.OrderId));
 
             var groupIdList = new List<Guid>();
@@ -1968,7 +1977,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             if (!searchName.IsNullOrWhiteSpace())
                 groupQuery =
-                    _wholesalePurchasingGroupRepository.Table.Where(x => x.NexportGroupName!=null && x.NexportGroupName.Contains(searchName));
+                    _wholesalePurchasingGroupRepository.Table.Where(x => x.NexportGroupName != null && x.NexportGroupName.Contains(searchName));
 
             if (!searchShortName.IsNullOrWhiteSpace())
                 groupQuery = groupQuery != null
@@ -1978,19 +1987,19 @@ namespace Nop.Plugin.Misc.Nexport.Services
                         x.NexportGroupShortName != null && x.NexportGroupShortName.Contains(searchShortName));
 
 
-            if(groupQuery != null)
+            if (groupQuery != null)
                 groupIdList.AddRange(await groupQuery.Select(x => x.NexportGroupId).ToListAsync());
 
             // if search name or search short name do the following
             // if group id is not null check if exists in groupid list
             // if is null check if "no group" name contains either of the searches
             if (!searchName.IsNullOrWhiteSpace() || !searchShortName.IsNullOrWhiteSpace())
-                wholesaleOrderInfoQuery = wholesaleOrderInfoQuery.Where(x => 
-                    (x.NexportGroupId !=null &&  groupIdList.Contains(x.NexportGroupId.Value)) || 
-                    (x.NexportGroupId==null && noGroupName.Contains(searchName))
+                wholesaleOrderInfoQuery = wholesaleOrderInfoQuery.Where(x =>
+                    (x.NexportGroupId != null && groupIdList.Contains(x.NexportGroupId.Value)) ||
+                    (x.NexportGroupId == null && noGroupName.Contains(searchName))
                 );
 
-            return await wholesaleOrderInfoQuery.SumAsync(x=>x.Available+x.Awaiting+x.Redeemed);
+            return await wholesaleOrderInfoQuery.SumAsync(x => x.Available + x.Awaiting + x.Redeemed);
         }
 
         public async Task<NexportOrderInvoiceItem?> FindNexportOrderInvoiceItemByGuidAsync(Guid? orderInvoiceItemId)
@@ -2012,13 +2021,13 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await _customerService.GetCustomerByIdAsync(customerId);
         }
 
-        public async Task<int> GetAvailableNexportGroupProductRedemptionsCountAsync(Guid? groupId, int productId, int? orderId = null,Store? store = null, Customer? customer = null)
+        public async Task<int> GetAvailableNexportGroupProductRedemptionsCountAsync(Guid? groupId, int productId, int? orderId = null, Store? store = null, Customer? customer = null)
         {
             if (groupId == Guid.Empty)
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
             if (productId < 0)
                 throw new ArgumentOutOfRangeException(nameof(productId));
-            
+
             var orderIdList = new List<int>();
             IQueryable<Order>? orderQuery = null;
 
@@ -2028,12 +2037,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 orderQuery = _orderRepository.Table.Where(x => x.StoreId == store.Id);
 
             if (customer != null)
-                orderQuery = orderQuery!=null ? orderQuery.Where(x=>x.CustomerId==customer.Id) :  _orderRepository.Table.Where(x => x.CustomerId == customer.Id);
+                orderQuery = orderQuery != null ? orderQuery.Where(x => x.CustomerId == customer.Id) : _orderRepository.Table.Where(x => x.CustomerId == customer.Id);
 
-            if(orderQuery != null)
+            if (orderQuery != null)
                 orderIdList.AddRange(await orderQuery.Select(x => x.Id).ToListAsync());
 
-            if (store!=null || customer!=null)
+            if (store != null || customer != null)
                 orderInfoQuery = orderInfoQuery.Where(x => orderIdList.Contains(x.OrderId));
 
             if (orderId != null)
@@ -2101,7 +2110,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
         public async Task<WholesalePurchasingGroup?> GetWholesalePurchaseGroupForOrderAsync(Order order)
         {
 
-            if(order==null)
+            if (order == null)
                 throw new ArgumentNullException(nameof(order));
 
             if (order.Id < 0)
@@ -2145,7 +2154,8 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public async Task<IList<Order>?> FindOrdersForCustomerAsync(Customer? customer, Store? store = null)
         {
-            if(customer == null) throw new ArgumentNullException(nameof(customer));
+            if (customer == null)
+                throw new ArgumentNullException(nameof(customer));
 
             var ordersQuery = _orderRepository.Table.Where(x => x.CustomerId == customer.Id);
 
@@ -2184,7 +2194,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             return await _nexportProductMappingRepository.Table.Where(x => x.NexportCatalogId == catalogId).ToListAsync();
         }
 
-        public async Task<IList<WholesaleOrderInfo>?> SearchGroupProductsAsync(Guid? groupId, string productName,Store? store = null, Customer? customer = null)
+        public async Task<IList<WholesaleOrderInfo>?> SearchGroupProductsAsync(Guid? groupId, string productName, Store? store = null, Customer? customer = null)
         {
             if (groupId == Guid.Empty)
                 throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
@@ -2195,7 +2205,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             var productIdList = await productQuery.Select(x => x.Id).ToListAsync();
 
-            var orderQuery  = _orderRepository.Table;
+            var orderQuery = _orderRepository.Table;
             if (customer != null)
             {
                 orderQuery = orderQuery.Where(x => x.CustomerId == customer.Id);
@@ -2203,7 +2213,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             if (store != null)
             {
-                 orderQuery = orderQuery.Where(x => x.StoreId == store.Id);
+                orderQuery = orderQuery.Where(x => x.StoreId == store.Id);
             }
 
             var orderIdList = await orderQuery.Select(x => x.Id).ToListAsync();
@@ -2240,7 +2250,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             var orderQuery = _orderRepository.Table;
             if (currentCustomer != null)
             {
-                orderQuery = orderQuery.Where(x=>x.CustomerId == currentCustomer.Id);
+                orderQuery = orderQuery.Where(x => x.CustomerId == currentCustomer.Id);
             }
 
             if (store != null)
@@ -2325,11 +2335,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             //attributes set so that processing and awaiting redemptions can display an email and name
             await _genericAttributeService.SaveAttributeAsync(invoiceItem,
-                $"redeeming-user-email-for-invoice-{invoiceItem.Id}",model.Email,order.StoreId);
+                $"redeeming-user-email-for-invoice-{invoiceItem.Id}", model.Email, order.StoreId);
             await _genericAttributeService.SaveAttributeAsync(invoiceItem,
-                $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}",model.FirstName,order.StoreId);
+                $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}", model.FirstName, order.StoreId);
             await _genericAttributeService.SaveAttributeAsync(invoiceItem,
-                $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}",model.LastName,order.StoreId);
+                $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}", model.LastName, order.StoreId);
 
             //set generic attribute for open ended product 
             if (model.ProductMappingIdForOpenEndedProduct != null)
@@ -2525,7 +2535,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public async Task<bool> HasWholesaleOrderInfo(Guid? groupId = null, Store? store = null, Customer? customer = null)
         {
-            if(groupId==Guid.Empty)
+            if (groupId == Guid.Empty)
                 throw new ArgumentException("groupid cannot be empty");
 
             var query = await FindWholesaleOrderInfoQuery(groupId, store, customer);
@@ -2535,7 +2545,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public async Task<int> CountWholesaleOrderInfo(Guid? groupId = null, Store? store = null, Customer? customer = null)
         {
-            if(groupId==Guid.Empty)
+            if (groupId == Guid.Empty)
                 throw new ArgumentException("groupid cannot be empty");
 
             var query = await FindWholesaleOrderInfoQuery(groupId, store, customer);
@@ -2545,7 +2555,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         public async Task<IQueryable<WholesaleOrderInfo>> FindWholesaleOrderInfoQuery(Guid? groupId = null, Store? store = null, Customer? customer = null)
         {
-            if(groupId==Guid.Empty)
+            if (groupId == Guid.Empty)
                 throw new ArgumentException("groupid cannot be empty");
 
             var orderInfoQuery = _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId);
@@ -2557,16 +2567,177 @@ namespace Nop.Plugin.Misc.Nexport.Services
                 orderQuery = _orderRepository.Table.Where(x => x.StoreId == store.Id);
 
             if (customer != null)
-                orderQuery = orderQuery!=null ? orderQuery.Where(x=>x.CustomerId==customer.Id) :  _orderRepository.Table.Where(x => x.CustomerId == customer.Id);
+                orderQuery = orderQuery != null ? orderQuery.Where(x => x.CustomerId == customer.Id) : _orderRepository.Table.Where(x => x.CustomerId == customer.Id);
 
-            if(orderQuery != null)
+            if (orderQuery != null)
                 orderIdList.AddRange(await orderQuery.Select(x => x.Id).ToListAsync());
 
-            if (store!=null || customer!=null)
+            if (store != null || customer != null)
                 orderInfoQuery = orderInfoQuery.Where(x => orderIdList.Contains(x.OrderId));
 
 
             return orderInfoQuery;
+        }
+
+        public async Task MapProductToCategory(MapProductToCategoryModel model)
+        {
+            if (model.ProductId < 1)
+                throw new ArgumentException("Product id cannot be less than 1");
+            if (model.SelectedCategoryId < 1)
+                throw new ArgumentException("Category id cannot be less than 1");
+
+            var product = await _productService.GetProductByIdAsync(model.ProductId);
+
+            if (product == null)
+                throw new ArgumentNullException(nameof(product));
+
+
+            var updateProductMapping = false;
+
+            var productMapping = await GetProductMappingByNopProductId(product.Id, model.StoreId);
+
+            if (productMapping != null)
+            {
+                updateProductMapping = true;
+                productMapping.NexportCatalogId = Guid.Empty;
+                productMapping.PricingModel = null;
+                productMapping.PublishingModel = null;
+                productMapping.CreditHours = null;
+                productMapping.NexportSyllabusId = null;
+                productMapping.NexportCatalogSyllabusLinkId = null;
+                productMapping.UtcAvailableDate = null;
+                productMapping.UtcEndDate = null;
+                productMapping.UtcLastModifiedDate = null;
+                productMapping.SectionCeus = null;
+            }
+            else
+            {
+                productMapping = new NexportProductMapping
+                {
+                    NopProductId = product.Id
+                };
+            }
+
+            productMapping.DisplayName = product.Name;
+            productMapping.NexportProductName = "";
+            productMapping.Type =NexportProductTypeEnum.OpenEnded;
+            productMapping.NopCategoryId = model.SelectedCategoryId;
+            productMapping.AssignWhenRedeemed = true;
+            productMapping.StoreId = model.StoreId;
+
+            if (updateProductMapping)
+            {
+                await UpdateNexportProductMapping(productMapping);
+            }
+            else
+            {
+                await InsertNexportProductMapping(productMapping);
+            }
+        }
+
+        public async Task<IList<Product>> GetAllProductsByCategoryId(int? nopCategoryId)
+        {
+            if (nopCategoryId == null)
+                throw new ArgumentNullException(nameof(nopCategoryId));
+
+            var productIds = await _productCategoryMappingRepository.Table.Where(x => x.CategoryId == nopCategoryId).Select(x=>x.ProductId).ToListAsync();
+
+            var products = await  _productRepository.Table.Where(x => productIds.Contains(x.Id)).ToListAsync();
+
+            return products;
+        }
+
+        /// <summary>
+        /// Gets all categories
+        /// </summary>
+        /// <param name="categoryName">Category name</param>
+        /// <param name="storeId">Store identifier; 0 if you want to get all records</param>
+        /// <param name="pageIndex">Page index</param>
+        /// <param name="pageSize">Page size</param>
+        /// <param name="showHidden">A value indicating whether to show hidden records</param>
+        /// <param name="overridePublished">
+        /// null - process "Published" property according to "showHidden" parameter
+        /// true - load only "Published" products
+        /// false - load only "Unpublished" products
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the categories
+        /// </returns>
+        public virtual async Task<IPagedList<Category>> GetAllCategoriesAsync(string categoryName, int storeId = 0,
+            int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false, bool? overridePublished = null, bool? hasProductMapping = null)
+        {
+            var unsortedCategories = await _categoryRepository.GetAllAsync(async query =>
+            {
+                if (!showHidden)
+                    query = query.Where(c => c.Published);
+                else if (overridePublished.HasValue)
+                    query = query.Where(c => c.Published == overridePublished.Value);
+
+                if (!showHidden)
+                {
+                    //apply store mapping constraints
+                    query = await _storeMappingService.ApplyStoreMapping(query, storeId);
+
+                    //apply ACL constraints
+                    var customer = await _workContext.GetCurrentCustomerAsync();
+                    query = await _aclService.ApplyAcl(query, customer);
+                }
+
+                if (hasProductMapping ?? false)
+                {
+                    var mappingsQueryIdList = await _nexportProductMappingRepository.Table.Where(x => x.NopCategoryId != null).Select(x=>x.NopCategoryId).ToListAsync();
+                    query = query.Where(c => mappingsQueryIdList.Contains(c.Id));
+                }
+
+                if (!string.IsNullOrWhiteSpace(categoryName))
+                    query = query.Where(c => c.Name.Contains(categoryName));
+
+                query = query.Where(c => !c.Deleted);
+
+                return query.OrderBy(c => c.ParentCategoryId).ThenBy(c => c.DisplayOrder).ThenBy(c => c.Id);
+            });
+
+            //sort categories
+            var sortedCategories = await SortCategoriesForTreeAsync(unsortedCategories);
+
+            //paging
+            return new PagedList<Category>(sortedCategories, pageIndex, pageSize);
+        }
+
+        /// <summary>
+        /// Sort categories for tree representation
+        /// </summary>
+        /// <param name="source">Source</param>
+        /// <param name="parentId">Parent category identifier</param>
+        /// <param name="ignoreCategoriesWithoutExistingParent">A value indicating whether categories without parent category in provided category list (source) should be ignored</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the sorted categories
+        /// </returns>
+        protected virtual async Task<IList<Category>> SortCategoriesForTreeAsync(IList<Category> source, int parentId = 0,
+            bool ignoreCategoriesWithoutExistingParent = false)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+
+            var result = new List<Category>();
+
+            foreach (var cat in source.Where(c => c.ParentCategoryId == parentId).ToList())
+            {
+                result.Add(cat);
+                result.AddRange(await SortCategoriesForTreeAsync(source, cat.Id, true));
+            }
+
+            if (ignoreCategoriesWithoutExistingParent || result.Count == source.Count)
+                return result;
+
+            //find categories without parent in provided category source and insert them into result
+            foreach (var cat in source)
+                if (result.FirstOrDefault(x => x.Id == cat.Id) == null)
+                    result.Add(cat);
+
+            return result;
         }
     }
 }

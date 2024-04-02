@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using DocumentFormat.OpenXml.Office2013.PowerPoint.Roaming;
 using Humanizer;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -10,6 +11,7 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Category;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -17,6 +19,7 @@ using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
+using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
@@ -40,6 +43,7 @@ using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Plugins;
 using Nop.Services.Security;
+using Nop.Services.Seo;
 using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
@@ -47,6 +51,7 @@ using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Web.Areas.Admin.Models.Payments;
 using Nop.Web.Areas.Admin.Models.Stores;
+using Nop.Web.Framework.Extensions;
 using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Models.Extensions;
 using StackExchange.Profiling.Internal;
@@ -78,6 +83,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly IPermissionService _permissionService;
         private readonly ICustomerService _customerService;
         private readonly IStoreContext _storeContext;
+        private readonly ICategoryService _categoryService;
+        private readonly CatalogSettings _catalogSettings;
+        private readonly IUrlRecordService _urlRecordService;
 
         #endregion
 
@@ -104,7 +112,10 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             IPriceFormatter priceFormatter,
             IPermissionService permissionService,
             ICustomerService customerService,
-            IStoreContext storeContext)
+            IStoreContext storeContext,
+            ICategoryService categoryService,
+            CatalogSettings catalogSettings,
+            IUrlRecordService urlRecordService)
         {
             _nexportSettings = nexportSettings;
             _baseAdminModelFactory = baseAdminModelFactory;
@@ -127,6 +138,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _permissionService = permissionService;
             _customerService = customerService;
             _storeContext = storeContext;
+            _categoryService = categoryService;
+            _catalogSettings = catalogSettings;
+            _urlRecordService = urlRecordService;
         }
 
         #endregion
@@ -176,6 +190,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 questionItem.Selected = int.TryParse(questionItem.Value, out var questionId) &&
                                         model.SupplementalInfoQuestionIds.Contains(questionId);
             }
+
+            if(model.NopCategoryId!=null)
+              model.NopCategoryName = (await _categoryService.GetCategoryByIdAsync(model.NopCategoryId.Value)).Name;
 
             return model;
         }
@@ -273,6 +290,34 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         mappingModel.GroupMembershipMappingModels.Add(groupMembershipModel);
                     }
 
+                    if(mappingModel.NopCategoryId!=null)
+                        mappingModel.NopCategoryName = (await _categoryService.GetCategoryByIdAsync(mappingModel.NopCategoryId.Value)).Name;
+
+                    return mappingModel;
+                });
+            });
+
+            return model;
+        }
+
+         public virtual async Task<NexportProductMappingListModel> PrepareNexportCategoryProductMappingListModelAsync(
+            NexportCategoryProductMappingListSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var mappings =
+                await _nexportService.GetAllNexportProductMappingsByCategoryIdAsync(searchModel.NopCategoryId,
+                    searchModel.Page-1, searchModel.PageSize);
+
+            // Prepare grid model
+            var model = await new NexportProductMappingListModel().PrepareToGridAsync(searchModel, mappings, () =>
+            {
+                return mappings.SelectAwait(async mapping =>
+                {
+                    // Fill in model values from the entity
+                    var mappingModel = mapping.ToModel<NexportProductMappingModel>();
+                    
                     return mappingModel;
                 });
             });
@@ -1682,11 +1727,11 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 // otherwise only get the ones for the current store and the current customer
                 if (searchModel.AdminView && await _customerService.IsAdminAsync(currentCustomer))
                 {
-                    noGroupCount = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName,searchModel.SearchShortName,null);
+                    noGroupCount = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName, searchModel.SearchShortName, null);
                 }
                 else
                 {
-                    noGroupCount = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName,searchModel.SearchShortName,null, currentStore, currentCustomer);
+                    noGroupCount = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName, searchModel.SearchShortName, null, currentStore, currentCustomer);
                 }
 
                 if (noGroupCount > 0)
@@ -1716,12 +1761,12 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         if (searchModel.AdminView && await _customerService.IsAdminAsync(currentCustomer))
                         {
                             groupModel.NumberOfProducts =
-                                await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName,searchModel.SearchShortName,groupModel.Id);
+                                await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName, searchModel.SearchShortName, groupModel.Id);
                         }
                         else
                         {
                             groupModel.NumberOfProducts =
-                                await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName,searchModel.SearchShortName,groupModel.Id, currentStore);
+                                await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName, searchModel.SearchShortName, groupModel.Id, currentStore);
                         }
 
                         if (groupModel.NumberOfProducts > 0)
@@ -2123,74 +2168,114 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         public async Task<ProductStepModel> PrepareProductStepModel(int? productId, Guid? invoiceItemId)
         {
-            if (productId < 1)
+            if (productId is null or < 1)
                 throw new ArgumentException("Invalid product id", nameof(productId));
 
             var model = new ProductStepModel();
 
-            var product = await _productService.GetProductByIdAsync(productId.Value);
-            if (product != null)
+            var product = await _productService.GetProductByIdAsync(productId.Value)
+                          ?? throw new ArgumentException("No product found with the specified id", nameof(productId));
+
+            model.CurrentProduct = product;
+
+            var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId)
+                              ?? throw new ArgumentException("No invoiceItem found with the specified id", nameof(invoiceItemId));
+
+            model.InvoiceItemId = invoiceItem.InvoiceItemId;
+
+            var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId)
+                        ?? throw new ArgumentException("No order found with the specified id", nameof(invoiceItem.OrderId));
+
+            var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId)
+                            ?? throw new ArgumentException("No orderItem found with the specified id", nameof(invoiceItem.OrderItemId));
+
+            var mappingInfo = await _genericAttributeService.GetAttributeAsync<string>(orderItem,
+                $"ProductMapping-{order.Id}-{orderItem.Id}", order.StoreId);
+
+            // Retrieve the stored mapping info if existed; otherwise, get the current mapping info
+            var mapping = mappingInfo != null
+                ? JsonConvert.DeserializeObject<NexportProductMapping>(mappingInfo)
+                : await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId, order.StoreId) ??
+                  await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
+
+            if (mapping == null)
+                throw new ArgumentException("Product mapping could not be found");
+
+            if (mapping.AssignWhenRedeemed.HasValue && mapping.AssignWhenRedeemed.Value)
             {
-                model.CurrentProduct = product;
-
-                var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
-
-                if (invoiceItem != null)
+                if (mapping.NopCategoryId != null)
                 {
-                    model.InvoiceItemId = invoiceItem.InvoiceItemId;
-
-                    var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
-
-                    var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
-
-                    if (order != null && orderItem != null)
-                    {
-                        var mappingInfo = await _genericAttributeService.GetAttributeAsync<string>(orderItem,
-                            $"ProductMapping-{order.Id}-{orderItem.Id}", order.StoreId);
-
-                        // Retrieve the stored mapping info if existed; otherwise, get the current mapping info
-                        var mapping = mappingInfo != null
-                            ? JsonConvert.DeserializeObject<NexportProductMapping>(mappingInfo)
-                            : await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId, order.StoreId) ??
-                              await _nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
-                        if (mapping != null)
-                        {
-                            if (mapping.AssignWhenRedeemed.HasValue && mapping.AssignWhenRedeemed.Value)
-                            {
-                                model.ProductMappingIdForOpenEndedProduct = mapping.Id;
-                                var listOfMappings = await _nexportService.GetAllProductMappingsByCatalogIdAsync(mapping.NexportCatalogId);
-
-                                model.AvailableMappings = new List<SelectListItem>();
-
-                                foreach (var productMapping in listOfMappings)
-                                {
-                                    if (!productMapping.AutoRedeem && productMapping.NexportSyllabusId != null)
-                                    {
-                                        var productMappingProduct = await _productService.GetProductByIdAsync(productMapping.NopProductId);
-                                        if (productMappingProduct != null)
-                                        {
-                                            model.AvailableMappings.Add(new SelectListItem(productMappingProduct.Name,
-                                                $"{productMapping.Id}"));
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                model.SelectedProductMappingId = mapping.Id;
-
-                                model.AvailableMappings = new List<SelectListItem>
-                                {
-                                    new SelectListItem(product.Name, $"{mapping.Id}")
-                                };
-                            }
-                        }
-                    }
+                    model.AvailableMappings= await ProductStepModelGetAvailableMappingsForCategoryAsync(mapping.NopCategoryId.Value, mapping.NexportCatalogId, model.AvailableMappings);
+                }
+                else
+                {
+                    model.ProductMappingIdForOpenEndedProduct = mapping.Id;
+                    model.AvailableMappings = await ProductStepModelGetAvailableMappingsForCatalogIdAsync(mapping.NexportCatalogId, model.AvailableMappings);
                 }
             }
+            else
+            {
+                model.SelectedProductMappingId = mapping.Id;
+
+                model.AvailableMappings = new List<SelectListItem>
+                {
+                    new SelectListItem(product.Name, $"{mapping.Id}")
+                };
+            }
+
+
 
             return model;
 
+        }
+
+        private async Task<IList<SelectListItem>> ProductStepModelGetAvailableMappingsForCategoryAsync(int nopCategoryId, Guid nexportCatalogId, IList<SelectListItem> availableMappings)
+        {
+            //show available products for the category
+            var products = await _nexportService.GetAllProductsByCategoryId(nopCategoryId);
+
+            foreach (var product in products)
+            {
+                var productMapping =
+                    await _nexportService.GetProductMappingByNopProductId(product.Id);
+                if (productMapping == null)
+                    continue;
+                if (productMapping.AutoRedeem)
+                    continue;
+
+                if (productMapping.AssignWhenRedeemed ?? false)
+                {
+                    availableMappings = await ProductStepModelGetAvailableMappingsForCatalogIdAsync(productMapping.NexportCatalogId, availableMappings);
+                }
+                else
+                {
+                    availableMappings.Add(new SelectListItem(product.Name,
+                        $"{productMapping.Id}"));
+                }
+            }
+
+            return availableMappings;
+        }
+
+        private async Task<IList<SelectListItem>> ProductStepModelGetAvailableMappingsForCatalogIdAsync(Guid nexportCatalogId, IList<SelectListItem> availableMappings)
+        {
+            var listOfMappings = await _nexportService.GetAllProductMappingsByCatalogIdAsync(nexportCatalogId);
+
+            foreach (var productMapping in listOfMappings)
+            {
+                if (productMapping.AutoRedeem || productMapping.NexportSyllabusId == null)
+                    continue;
+
+                var productMappingProduct = await _productService.GetProductByIdAsync(productMapping.NopProductId);
+
+                if (productMappingProduct == null)
+                    continue;
+
+                if (availableMappings.All(x => x.Value != $"{productMapping.Id}"))
+                        availableMappings.Add(new SelectListItem(productMappingProduct.Name, $"{productMapping.Id}"));
+
+            }
+            return availableMappings;
         }
 
         public async Task<RedeemProductModel> PrepareRedeemProductModel(Guid? groupId, Guid? invoiceItemId, int? productId)
@@ -2362,6 +2447,102 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 }
 
             }
+
+            return model;
+        }
+
+        public async Task<MapProductToCategoryModel> PrepareMapProductToCategoryModel()
+        {
+            var model = new MapProductToCategoryModel();
+
+            model.AvailableCategories = (await _categoryService.GetAllCategoriesAsync()).Select(x =>
+            new SelectListItem(x.Name, $"{x.Id}")).ToList();
+
+            return model;
+        }
+
+        /// <summary>
+        /// Prepare category search model
+        /// </summary>
+        /// <param name="searchModel">Category search model</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the category search model
+        /// </returns>
+        public virtual async Task<NexportCategorySearchModel> PrepareCategorySearchModelAsync(NexportCategorySearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            //prepare available stores
+            await _baseAdminModelFactory.PrepareStoresAsync(searchModel.AvailableStores);
+
+            searchModel.HideStoresList = _catalogSettings.IgnoreStoreLimitations || searchModel.AvailableStores.SelectionIsNotPossible();
+
+            //prepare "published" filter (0 - all; 1 - published only; 2 - unpublished only)
+            searchModel.AvailablePublishedOptions.Add(new SelectListItem
+            {
+                Value = "0",
+                Text = await _localizationService.GetResourceAsync("Admin.Catalog.Categories.List.SearchPublished.All")
+            });
+            searchModel.AvailablePublishedOptions.Add(new SelectListItem
+            {
+                Value = "1",
+                Text = await _localizationService.GetResourceAsync("Admin.Catalog.Categories.List.SearchPublished.PublishedOnly")
+            });
+            searchModel.AvailablePublishedOptions.Add(new SelectListItem
+            {
+                Value = "2",
+                Text = await _localizationService.GetResourceAsync("Admin.Catalog.Categories.List.SearchPublished.UnpublishedOnly")
+            });
+
+            //prepare page parameters
+            searchModel.SetGridPageSize();
+
+            return searchModel;
+        }
+
+        /// <summary>
+        /// Prepare paged category list model
+        /// </summary>
+        /// <param name="searchModel">Category search model</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the category list model
+        /// </returns>
+        public virtual async Task<NexportCategoryListModel> PrepareCategoryListModelAsync(NexportCategorySearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            //get categories
+            var categories = await _nexportService.GetAllCategoriesAsync(categoryName: searchModel.SearchCategoryName,
+                showHidden: true,
+                storeId: searchModel.SearchStoreId,
+                pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize,
+                overridePublished: searchModel.SearchPublishedId == 0 ? null : (bool?)(searchModel.SearchPublishedId == 1), 
+                hasProductMapping:searchModel.HasProductMapping);
+
+            //prepare grid model
+            var model = await new NexportCategoryListModel().PrepareToGridAsync(searchModel, categories, () =>
+            {
+                return categories.SelectAwait(async category =>
+                {
+                    //fill in model values from the entity
+                    var categoryModel = category.ToModel<NexportCategoryModel>();
+
+                    var mappings =
+                        await _nexportService.GetAllNexportProductMappingsByCategoryIdAsync(categoryModel.Id);
+                    if (mappings.Count > 0)
+                        categoryModel.IncludesProductMapping = true;
+
+                    //fill in additional values (not existing in the entity)
+                    categoryModel.Breadcrumb = await _categoryService.GetFormattedBreadCrumbAsync(category);
+                    categoryModel.SeName = await _urlRecordService.GetSeNameAsync(category, 0, true, false);
+
+                    return categoryModel;
+                });
+            });
 
             return model;
         }
