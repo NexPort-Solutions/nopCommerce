@@ -342,9 +342,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchproductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue);
 
-        Task<int> GetWholesalePurchaseGroupNumberOfProductsAsync(string searchName, string searchShortName,
-            Guid? groupId = null, Store? store = null, Customer? customer = null);
-
         Task<NexportOrderInvoiceItem?> FindNexportOrderInvoiceItemByGuidAsync(Guid? orderInvoiceItemId);
 
         Task<Customer> FindCustomerByIdAsync(int customerId);
@@ -371,9 +368,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Task<IList<Customer>> SearchCustomersAsync(string searchNameAndEmail);
 
         Task<IList<NexportProductMapping>> GetAllProductMappingsByCatalogIdAsync(Guid catalogId);
-
-        Task<IList<WholesaleOrderInfo>?> SearchGroupProductsAsync(Guid? groupId, string productName,
-            Store? store = null, Customer? customer = null);
 
         Task<IList<NexportOrderInvoiceItem>?> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
             string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Store? store = null, Customer? customer = null);
@@ -402,6 +396,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
         Task<IPagedList<Category>> GetAllCategoriesAsync(string categoryName, int storeId = 0,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false, bool? overridePublished = null, bool? hasProductMapping = null);
+
+        Task<IPagedList<WholesaleOrderInfo>> GetAllWholesaleOrderInfosAsync(string groupName, string shortName,
+            string productName,NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, int? customerId, int? storeId, int pageIndex = 0, int pageSize = int.MaxValue);
 
     }
 }

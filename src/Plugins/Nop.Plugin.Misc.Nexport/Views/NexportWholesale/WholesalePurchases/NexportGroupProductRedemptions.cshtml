@@ -13,13 +13,12 @@
 
     var currentGroupId = Model.CurrentGroup.Id?.ToString() ?? "null";
 
-    var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
 
     var groupText = Model.CurrentGroup.Id != null ? Model.CurrentGroup.Name : (Model.AdminView ? @T("Plugins.Misc.Nexport.Group.NoGroup").Text : T("Plugins.Misc.Nexport.Group.Products").Text);
 
-    var groupProductRedemptionText = Model.CurrentProduct.Name + " - " + T("Plugins.Misc.Nexport.Group.Product.Redemptions");
+    var groupProductRedemptionText = T("Plugins.Misc.Nexport.Group.Product.Redemptions") + " - " + groupText + " - " + Model.CurrentProduct.Name;
 
     var hasGroupPermission = Model.CurrentGroup.Id != null && await NexportService.HasGroupPermissionAsync(currentCustomer, Model.CurrentGroup.Id.Value);
 
@@ -104,29 +103,13 @@
 }
 
 <div class="content-header clearfix nex-plugin">
-    <nav aria-label="Breadcrumb">
-        <ul class="uk-breadcrumb">
-            @if (Model.HasGroupPermission)
-            {
-                <li>
-                    <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")">
-                        <span>@T("Plugins.Misc.Nexport.Groups")</span>
-                    </a>
-                </li>
-            }
-            <li>
-                <a href="@(groupProductsRouteUrl + "?groupId=" + currentGroupId)" title="@T("Plugins.Misc.Nexport.Group.Products")">
-                    <span>@groupText</span>
-                </a>
-            </li>
-            <li>
-                @groupProductRedemptionText
-                <span id="@(groupProductRedemptionsRouteUrl + "?groupId=" + currentGroupId + "&productId=" + Model.CurrentProduct.Id)">
-                </span>
-            </li>
-        </ul>
-    </nav>
-    <h1>@groupProductRedemptionText</h1>
+    <h1 class="float-left">
+        @(groupProductRedemptionText)
+        <small>
+            <i class="fas fa-arrow-circle-left"></i>
+            <a href="@(groupProductsRouteUrl+"?groupId="+currentGroupId)">Back to purchases list</a>
+        </small>
+    </h1>
 </div>
 
 <section class="content">

@@ -91,80 +91,13 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [HttpsRequirement]
-        public async Task<IActionResult> CustomerNexportGroups(int? pageNumber)
-        {
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            if (!await _customerService.IsRegisteredAsync(customer))
-                return Challenge();
-
-            var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
-
-            var groupsFromApi = await _nexportService.SearchGroupsForPermissionAsync(
-                userMapping.NexportUserId,
-                _nexportSettings.RootOrganizationId.Value);
-
-            if (groupsFromApi.Count > 0)
-            {
-
-                var searchModel = new NexportGroupListSearchModel();
-                searchModel.AdminView = false;
-                ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroups.cshtml";
-                ViewData["ModelForPartialView"] = searchModel;
-
-                return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
-            }
-            else
-            {
-                var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(null);
-
-                // hide groups link in breadcrumbs
-                // don't want the customer to be able to get back to the groups page 
-                // if they don't have permission on groups
-                nexportGroupProductListSearchModel.HasGroupPermission = false;
-                ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
-                ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
-
-                return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
-            }
-        }
-
-        [HttpsRequirement]
         public async Task<IActionResult> CustomerNexportGroupProducts(Guid? groupId)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
-
-            //show groups link in breadcrumbs
-            if (groupId != null)
-            {
-                if (await _nexportService.HasGroupPermissionAsync(customer, groupId.Value))
-                    nexportGroupProductListSearchModel.HasGroupPermission = true;
-            }
-            else
-            {
-                // could be a null groupid aka group not assigned but customer may still have group permissions on other groups.
-                // in that case we want to display breadcrumbs so that the customer can get back to the groups page. that is what the below accomplishes
-                var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
-                if (userMapping != null)
-                {
-                    var searchGroupsForPermissionResult = await _nexportService.SearchGroupsForPermissionAsync(
-                        userMapping.NexportUserId,
-                        _nexportSettings.RootOrganizationId.Value);
-
-                    foreach (var item in searchGroupsForPermissionResult)
-                    {
-                        var store = await _storeContext.GetCurrentStoreAsync();
-                        if (await _nexportService.HasWholesaleOrderInfo(item.Id, store))
-                        {
-                            nexportGroupProductListSearchModel.HasGroupPermission = true;
-                            break;
-                        }
-                    }
-                }
-            }
+            var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync();
 
             ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
             ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
@@ -182,56 +115,11 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
             var nexportGroupProductRedemptionListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId, orderId);
 
-            //show groups link in breadcrumbs
-            if (groupId != null)
-            {
-                if (await _nexportService.HasGroupPermissionAsync(customer, groupId.Value))
-                    nexportGroupProductRedemptionListSearchModel.HasGroupPermission = true;
-            }
-            else
-            {
-                // could be a null groupid aka group not assigned but customer may still have group permissions on other groups.
-                // in that case we want to display breadcrumbs so that the customer can get back to the groups page. that is what the below accomplishes
-                var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
-                if (userMapping != null)
-                {
-                    var searchGroupsForPermissionResult = await _nexportService.SearchGroupsForPermissionAsync(
-                        userMapping.NexportUserId,
-                        _nexportSettings.RootOrganizationId.Value);
-
-                    foreach (var item in searchGroupsForPermissionResult)
-                    {
-                        var store = await _storeContext.GetCurrentStoreAsync();
-
-                        if (await _nexportService.HasWholesaleOrderInfo(item.Id, store))
-                        {
-                            nexportGroupProductRedemptionListSearchModel.HasGroupPermission = true;
-                            break;
-                        }
-                    }
-                }
-            }
-
             ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProductRedemptions.cshtml";
             ViewData["ModelForPartialView"] = nexportGroupProductRedemptionListSearchModel;
 
             return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
         }
-
-
-        [HttpPost]
-        [AutoValidateAntiforgeryToken]
-        public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
-        {
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            if (!await _customerService.IsRegisteredAsync(customer))
-                return await AccessDeniedDataTablesJson();
-
-            var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel, customer);
-
-            return Json(model);
-        }
-
 
         [HttpPost]
         [AutoValidateAntiforgeryToken]
@@ -242,7 +130,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 return await AccessDeniedDataTablesJson();
 
 
-            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId, customer);
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, customer);
 
             return Json(model);
         }

@@ -154,16 +154,13 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(
             OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer? customer, Store? store, IList<ShoppingCartItem?> cart);
 
-        Task<NexportGroupListModel> PrepareNexportGroupListModelAsync(
-            NexportGroupListSearchModel searchModel, Customer currentCustomer);
-
         Task<NexportGroupProductListModel> PrepareNexportGroupProductListModelAsync(
-            NexportGroupProductListSearchModel searchModel, Guid? groupId, Customer currentCustomer);
+            NexportGroupProductListSearchModel searchModel, Customer currentCustomer);
 
         Task<NexportGroupProductRedemptionListModel> PrepareNexportGroupProductRedemptionListModelAsync(
             NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId, Customer currentCustomer, int? orderId = null);
 
-        Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(Guid? groupId = null);
+        Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync();
 
         Task<NexportGroupProductRedemptionListSearchModel> PrepareNexportGroupProductRedemptionListSearchModelAsync(Guid? groupId, int productId, int? orderId = null);
 

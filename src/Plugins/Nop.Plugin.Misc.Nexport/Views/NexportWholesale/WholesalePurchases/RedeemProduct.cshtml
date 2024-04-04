@@ -6,10 +6,12 @@
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProductModel
 @{
-    var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
-    var redeemOrModifyText = T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem") + " - " + Model.CurrentProduct.Name;
+
+    var groupText = Model.CurrentGroup.Id != null ? Model.CurrentGroup.Name : (Model.AdminView ? @T("Plugins.Misc.Nexport.Group.NoGroup").Text : T("Plugins.Misc.Nexport.Group.Products").Text);
+
+    var redeemOrModifyText = T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem") + " - " + groupText + " - " + Model.CurrentProduct.Name;
 
     var currentGroupId = @Model.CurrentGroup.Id?.ToString() ?? "null";
 
@@ -20,7 +22,7 @@
     var themeName = await themeContext.GetWorkingThemeNameAsync();
     var backIconLink = $"{storeLocation}Themes/{themeName}/Content/images/back-button.png";
 
-    var groupText = Model.CurrentGroup.Id != null ? Model.CurrentGroup.Name : (Model.AdminView ? @T("Plugins.Misc.Nexport.Group.NoGroup").Text : T("Plugins.Misc.Nexport.Group.Products").Text);
+    
 
 }
 
@@ -31,31 +33,13 @@
 </style>
 
 <div class="content-header clearfix nex-plugin">
-    <nav aria-label="Breadcrumb">
-        <ul class="uk-breadcrumb">
-            <li>
-                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")">
-                    <span>@T("Plugins.Misc.Nexport.Groups")</span>
-                </a>
-            </li>
-            <li>
-                <a href="@(groupProductsRouteUrl+"?groupId="+currentGroupId)" title="@T("Plugins.Misc.Nexport.Group.Products")">
-                    <span>@groupText</span>
-                </a>
-            </li>
-            <li>
-                <a href="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)" title="Redemptions">
-                    <span>@Model.CurrentProduct.Name</span>
-                </a>
-            </li>
-            <li>
-                @redeemOrModifyText
-                <span id="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)">
-                </span>
-            </li>
-        </ul>
-    </nav>
-    <h1>@redeemOrModifyText</h1>
+    <h1>
+        @redeemOrModifyText
+        <small>
+            <i class="fas fa-arrow-circle-left"></i>
+            <a href="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)" >Back to assignments list</a>
+        </small>
+    </h1>
 </div>
 
 <section class="content">
@@ -146,4 +130,3 @@
     Accordion.openSection('#assign-customer');
     Assign.init('@(storeLocation)');
 </script>
-

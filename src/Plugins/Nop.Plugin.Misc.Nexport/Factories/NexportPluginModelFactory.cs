@@ -191,8 +191,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                         model.SupplementalInfoQuestionIds.Contains(questionId);
             }
 
-            if(model.NopCategoryId!=null)
-              model.NopCategoryName = (await _categoryService.GetCategoryByIdAsync(model.NopCategoryId.Value)).Name;
+            if (model.NopCategoryId != null)
+                model.NopCategoryName = (await _categoryService.GetCategoryByIdAsync(model.NopCategoryId.Value)).Name;
 
             return model;
         }
@@ -290,7 +290,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                         mappingModel.GroupMembershipMappingModels.Add(groupMembershipModel);
                     }
 
-                    if(mappingModel.NopCategoryId!=null)
+                    if (mappingModel.NopCategoryId != null)
                         mappingModel.NopCategoryName = (await _categoryService.GetCategoryByIdAsync(mappingModel.NopCategoryId.Value)).Name;
 
                     return mappingModel;
@@ -300,15 +300,15 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-         public virtual async Task<NexportProductMappingListModel> PrepareNexportCategoryProductMappingListModelAsync(
-            NexportCategoryProductMappingListSearchModel searchModel)
+        public virtual async Task<NexportProductMappingListModel> PrepareNexportCategoryProductMappingListModelAsync(
+           NexportCategoryProductMappingListSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             var mappings =
                 await _nexportService.GetAllNexportProductMappingsByCategoryIdAsync(searchModel.NopCategoryId,
-                    searchModel.Page-1, searchModel.PageSize);
+                    searchModel.Page - 1, searchModel.PageSize);
 
             // Prepare grid model
             var model = await new NexportProductMappingListModel().PrepareToGridAsync(searchModel, mappings, () =>
@@ -317,7 +317,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 {
                     // Fill in model values from the entity
                     var mappingModel = mapping.ToModel<NexportProductMappingModel>();
-                    
+
                     return mappingModel;
                 });
             });
@@ -1709,188 +1709,90 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return orderSummaryCartFooterModel;
         }
 
-        public virtual async Task<NexportGroupListModel> PrepareNexportGroupListModelAsync(
-            NexportGroupListSearchModel searchModel, Customer currentCustomer)
-        {
-            if (searchModel == null)
-                throw new ArgumentNullException(nameof(searchModel));
-
-            var model = new NexportGroupListModel();
-
-            try
-            {
-                var groupModels = new List<NexportGroupModel>();
-                var currentStore = await _storeContext.GetCurrentStoreAsync();
-                int noGroupCount = 0;
-                // check for wholesale purchases that have no group
-                // if current customer is admin, get all purchases for group not assigned
-                // otherwise only get the ones for the current store and the current customer
-                if (searchModel.AdminView && await _customerService.IsAdminAsync(currentCustomer))
-                {
-                    noGroupCount = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName, searchModel.SearchShortName, null);
-                }
-                else
-                {
-                    noGroupCount = await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName, searchModel.SearchShortName, null, currentStore, currentCustomer);
-                }
-
-                if (noGroupCount > 0)
-                {
-                    groupModels.Add(new NexportGroupModel { Id = null, Name = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Group.NoGroup"), NumberOfProducts = noGroupCount });
-                }
-
-                // get wholesale purchases for groups the customer is purchasing agent on
-                var userMapping = await _nexportService.FindUserMappingByCustomerId(currentCustomer.Id);
-                if (userMapping != null)
-                {
-                    var groupsFromApi = await _nexportService.SearchGroupsForPermissionAsync(
-                        userMapping.NexportUserId,
-                        _nexportSettings.RootOrganizationId.Value);
-
-                    foreach (var group in groupsFromApi)
-                    {
-                        var groupModel = new NexportGroupModel
-                        {
-                            Id = group.Id,
-                            Name = group.Name,
-                            ShortName = group.ShortName
-                        };
-
-                        // if current customer is admin, get all purchases for group
-                        // otherwise only get the ones for the current store
-                        if (searchModel.AdminView && await _customerService.IsAdminAsync(currentCustomer))
-                        {
-                            groupModel.NumberOfProducts =
-                                await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName, searchModel.SearchShortName, groupModel.Id);
-                        }
-                        else
-                        {
-                            groupModel.NumberOfProducts =
-                                await _nexportService.GetWholesalePurchaseGroupNumberOfProductsAsync(searchModel.SearchName, searchModel.SearchShortName, groupModel.Id, currentStore);
-                        }
-
-                        if (groupModel.NumberOfProducts > 0)
-                        {
-                            groupModels.Add(groupModel);
-                        }
-
-                    }
-                }
-
-                var pagedGroups = groupModels.ToPagedList(searchModel);
-
-                model = await model.PrepareToGridAsync(searchModel, pagedGroups, () =>
-                {
-                    return pagedGroups.SelectAwait(async group =>
-                    {
-                        return group;
-                    });
-                });
-
-                return model;
-            }
-            catch (Exception ex)
-            {
-                await _logger.WarningAsync(
-                    $"Unable to prepare nexport group list model", ex);
-            }
-
-            return model;
-        }
-
         public virtual async Task<NexportGroupProductListModel> PrepareNexportGroupProductListModelAsync(
-           NexportGroupProductListSearchModel searchModel, Guid? groupId, Customer currentCustomer)
+           NexportGroupProductListSearchModel searchModel, Customer currentCustomer)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             var model = new NexportGroupProductListModel();
 
-            try
+            IPagedList<WholesaleOrderInfo>? wholesaleOrderInfos = null;
+
+            var isAdmin = await _customerService.IsAdminAsync(currentCustomer);
+            if (searchModel.AdminView && isAdmin)
             {
-                IList<NexportGroupProductModel> groupProductModels = new List<NexportGroupProductModel>();
+                wholesaleOrderInfos =
+                    await _nexportService.GetAllWholesaleOrderInfosAsync(searchModel.SearchGroupName, searchModel.SearchGroupShortName, searchModel.SearchProductName, searchModel.SearchStatusId, null, null,
+                        searchModel.Page - 1, searchModel.PageSize);
+            }
+            else
+            {
+                var store = await _storeContext.GetCurrentStoreAsync();
+                wholesaleOrderInfos =
+                    await _nexportService.GetAllWholesaleOrderInfosAsync(searchModel.SearchGroupName, searchModel.SearchGroupShortName, searchModel.SearchProductName, searchModel.SearchStatusId, currentCustomer.Id, store.Id,
+                        searchModel.Page - 1, searchModel.PageSize);
+            }
 
+            IList<NexportGroupProductModel> groupProductModels = new List<NexportGroupProductModel>();
 
-                IList<WholesaleOrderInfo>? wholesaleOrderInfos = null;
-
-                // check for wholesale purchases that have no group
-                // if current customer is admin, get all purchases for group not assigned
-                // otherwise only get the ones for the current store and the current customer
-                if (groupId == null)
+            foreach (var orderInfo in wholesaleOrderInfos)
+            {
+                if (orderInfo.NexportGroupId != null && !searchModel.AdminView && !isAdmin)
                 {
-                    var isAdmin = await _customerService.IsAdminAsync(currentCustomer);
-                    if (searchModel.AdminView && isAdmin)
-                    {
-                        wholesaleOrderInfos = await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName);
-                    }
-                    else
-                    {
-                        var store = await _storeContext.GetCurrentStoreAsync();
-                        wholesaleOrderInfos = await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName, store, currentCustomer);
-                    }
-                }
-                // check for wholesale purchases which the customer has purchasing agent permission on
-                // if current customer is admin, get all purchases 
-                // otherwise only get the ones for the current store
-                else
-                {
-                    var hasGroupPermission = await _nexportService.HasGroupPermissionAsync(currentCustomer, groupId.Value);
-                    if (searchModel.AdminView && hasGroupPermission)
-                    {
-                        wholesaleOrderInfos = await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName);
-                    }
-                    else
-                    {
-                        var store = await _storeContext.GetCurrentStoreAsync();
-                        wholesaleOrderInfos = await _nexportService.SearchGroupProductsAsync(groupId, searchModel.SearchName, store);
-                    }
+                    //skip group if not admin view and user doesn't have group permission
+                    if (!await _nexportService.HasGroupPermissionAsync(currentCustomer, orderInfo.NexportGroupId.Value))
+                        continue;
                 }
 
-                if (wholesaleOrderInfos != null)
+
+                var orderItem = await _orderService.GetOrderItemByIdAsync(orderInfo.OrderItemId);
+                if (orderItem != null)
                 {
-                    foreach (var orderInfo in wholesaleOrderInfos)
+                    var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
+
+                    if (product != null)
                     {
-                        var orderItem = await _orderService.GetOrderItemByIdAsync(orderInfo.OrderItemId);
-                        if (orderItem != null)
+                        var groupProductModel = new NexportGroupProductModel
                         {
-                            var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
+                            Id = product.Id,
+                            Available = orderInfo.Available,
+                            Awaiting = orderInfo.Awaiting,
+                            Redeemed = orderInfo.Redeemed,
+                            GroupId = orderInfo.NexportGroupId
+                        };
 
-                            if (product != null)
+                        groupProductModel.ProductName = product.Name;
+
+                        if (orderInfo.NexportGroupId != null)
+                        {
+                            var group = await _nexportService.GetWholesalePurchaseGroupAsync(orderInfo.NexportGroupId.Value);
+
+                            if (group != null)
                             {
-                                var groupProductModel = new NexportGroupProductModel
-                                {
-                                    Id = product.Id,
-                                    Available = orderInfo.Available,
-                                    Awaiting = orderInfo.Awaiting,
-                                    Redeemed = orderInfo.Redeemed,
-                                    GroupId = groupId
-                                };
-
-                                groupProductModel.Name = product.Name;
-
-                                groupProductModels.Add(groupProductModel);
+                                groupProductModel.GroupName = group.NexportGroupName;
+                                groupProductModel.GroupShortName = group.NexportGroupShortName;
                             }
                         }
-                    }
-
-                }
-
-                var pagedProducts = groupProductModels.ToPagedList(searchModel);
-
-                model = await model.PrepareToGridAsync(searchModel, pagedProducts,
-                    () =>
-                    {
-                        return pagedProducts.SelectAwait(async products =>
+                        else
                         {
-                            return products;
-                        });
-                    });
-            }
-            catch (Exception ex)
-            {
-                await _logger.WarningAsync("Unable to prepare group products list");
-            }
+                            groupProductModel.GroupName =
+                                await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Group.NoGroup");
+                        }
 
+                        groupProductModels.Add(groupProductModel);
+                    }
+                }
+            }
+            var pagedProducts = groupProductModels.ToPagedList(searchModel);
+
+            model = await model.PrepareToGridAsync(searchModel, pagedProducts, () =>
+            {
+                return pagedProducts.SelectAwait(async groupProductModel =>
+                {
+                    return groupProductModel;
+                });
+            });
 
             return model;
         }
@@ -2091,26 +1993,29 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public async Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(
-            Guid? groupId = null)
+        public async Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync()
         {
-            if (groupId == Guid.Empty)
-                throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
 
             var model = new NexportGroupProductListSearchModel();
 
-            if (groupId == null)
-                return model;
+            //prepare available statuses
+            model.AvailableStatuses.Add(new SelectListItem { Value = null, Text = "All" });
 
-            var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId.Value);
+            //for each status enum create a selectlistitem and add it for the status filter
+            foreach (var e in Enum.GetValues(typeof(NexportOrderInvoiceItemRedemptionStatus)))
+            {
+                if (e.GetDisplayName() ==
+                    NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable.GetDisplayName() ||
+                    e.GetDisplayName() == NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting.GetDisplayName())
+                    continue;
 
-            if (group == null)
-                return model;
+                model.AvailableStatuses.Add(new SelectListItem
+                {
+                    Value = e.ToString(),
+                    Text = e.GetDisplayName()
+                });
+            }
 
-            var groupModel = group.ToModel<NexportGroupModel>();
-
-            if (groupModel != null)
-                model.CurrentGroup = groupModel;
 
             return model;
         }
@@ -2205,7 +2110,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             {
                 if (mapping.NopCategoryId != null)
                 {
-                    model.AvailableMappings= await ProductStepModelGetAvailableMappingsForCategoryAsync(mapping.NopCategoryId.Value, mapping.NexportCatalogId, model.AvailableMappings);
+                    model.AvailableMappings = await ProductStepModelGetAvailableMappingsForCategoryAsync(mapping.NopCategoryId.Value, mapping.NexportCatalogId, model.AvailableMappings);
                 }
                 else
                 {
@@ -2272,7 +2177,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                     continue;
 
                 if (availableMappings.All(x => x.Value != $"{productMapping.Id}"))
-                        availableMappings.Add(new SelectListItem(productMappingProduct.Name, $"{productMapping.Id}"));
+                    availableMappings.Add(new SelectListItem(productMappingProduct.Name, $"{productMapping.Id}"));
 
             }
             return availableMappings;
@@ -2520,8 +2425,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 showHidden: true,
                 storeId: searchModel.SearchStoreId,
                 pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize,
-                overridePublished: searchModel.SearchPublishedId == 0 ? null : (bool?)(searchModel.SearchPublishedId == 1), 
-                hasProductMapping:searchModel.HasProductMapping);
+                overridePublished: searchModel.SearchPublishedId == 0 ? null : (bool?)(searchModel.SearchPublishedId == 1),
+                hasProductMapping: searchModel.HasProductMapping);
 
             //prepare grid model
             var model = await new NexportCategoryListModel().PrepareToGridAsync(searchModel, categories, () =>
