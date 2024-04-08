@@ -11,5 +11,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.Products
         public int Awaiting { get; set; }
         [NopResourceDisplayName("Assigned")]
         public int Assigned { get; set; }
+
+        public int ProductId { get; set;}
     }
 }

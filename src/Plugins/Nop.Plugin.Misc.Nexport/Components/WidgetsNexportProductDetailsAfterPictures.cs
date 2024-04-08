@@ -8,6 +8,10 @@ using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Components;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Stores;
+using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Web.Models.Catalog;
 
 namespace Nop.Plugin.Misc.Nexport.Components
 {
@@ -17,6 +21,8 @@ namespace Nop.Plugin.Misc.Nexport.Components
         private readonly IStoreContext _storeContext;
         private readonly IStaticCacheManager _cacheManager;
         private readonly ISettingService _settingService;
+        private readonly IWorkContext _workContext;
+        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
         private readonly IStoreModelFactory _storeModelFactory;
         private readonly IProductModelFactory _productModelFactory;
         private readonly NexportService _nexportService;
@@ -27,7 +33,9 @@ namespace Nop.Plugin.Misc.Nexport.Components
             IStoreModelFactory storeModelFactory,
             IStoreContext storeContext,
             IStaticCacheManager cacheManager,
-            ISettingService settingService)
+            ISettingService settingService,
+            IWorkContext workContext,
+            INexportPluginModelFactory nexportPluginModelFactory)
         {
             _nexportService = nexportService;
             _productModelFactory = productModelFactory;
@@ -35,15 +43,25 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _storeContext = storeContext;
             _cacheManager = cacheManager;
             _settingService = settingService;
+            _workContext = workContext;
+            _nexportPluginModelFactory = nexportPluginModelFactory;
         }
 
         public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
-            if ((await _storeContext.GetCurrentStoreAsync()) == null)
+            var store = await _storeContext.GetCurrentStoreAsync();
+
+            if (store == null)
                 return Content("");
 
+            var customer = await _workContext.GetCurrentCustomerAsync();
 
-            var model = new NexportProductRedemptionStatusesModel {Available = 2, Awaiting = 4, Assigned = 8};
+            var productDetailsModel = (ProductDetailsModel?)additionalData;
+
+            if (productDetailsModel == null)
+                return Content("");
+
+            var model = await _nexportPluginModelFactory.PrepareNexportProductRedemptionStatusesModel(customer, productDetailsModel.Id, store.Id);
             return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductDetailsAfterPictures.cshtml", model);
         }
     }

@@ -2,12 +2,14 @@
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Caching;
+using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Services.Configuration;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Components;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.Products;
+using Nop.Web.Models.Catalog;
 
 namespace Nop.Plugin.Misc.Nexport.Components
 {
@@ -17,6 +19,8 @@ namespace Nop.Plugin.Misc.Nexport.Components
         private readonly IStoreContext _storeContext;
         private readonly IStaticCacheManager _cacheManager;
         private readonly ISettingService _settingService;
+        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+        private readonly IWorkContext _workContext;
         private readonly IStoreModelFactory _storeModelFactory;
         private readonly IProductModelFactory _productModelFactory;
         private readonly NexportService _nexportService;
@@ -27,7 +31,9 @@ namespace Nop.Plugin.Misc.Nexport.Components
             IStoreModelFactory storeModelFactory,
             IStoreContext storeContext,
             IStaticCacheManager cacheManager,
-            ISettingService settingService)
+            ISettingService settingService,
+            INexportPluginModelFactory nexportPluginModelFactory,
+            IWorkContext workContext)
         {
             _nexportService = nexportService;
             _productModelFactory = productModelFactory;
@@ -35,19 +41,26 @@ namespace Nop.Plugin.Misc.Nexport.Components
             _storeContext = storeContext;
             _cacheManager = cacheManager;
             _settingService = settingService;
+            _nexportPluginModelFactory = nexportPluginModelFactory;
+            _workContext = workContext;
         }
 
         public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
         {
-            if ((await _storeContext.GetCurrentStoreAsync()) == null)
+            var store = await _storeContext.GetCurrentStoreAsync();
+            
+            if (store == null)
                 return Content("");
 
-            //var productModel = (ProductModel)additionalData;
+            var customer = await _workContext.GetCurrentCustomerAsync();
 
-            //if (productModel == null)
-            //    return Content("");
+            var productOverviewModel = (ProductOverviewModel?)additionalData;
 
-            var model = new NexportProductRedemptionStatusesModel {Available = 2, Awaiting = 4, Assigned = 8};
+            if (productOverviewModel == null)
+                return Content("");
+
+
+            var model = await _nexportPluginModelFactory.PrepareNexportProductRedemptionStatusesModel(customer, productOverviewModel.Id, store.Id);
 
             return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductBoxAddInfoBefore.cshtml", model);
         }

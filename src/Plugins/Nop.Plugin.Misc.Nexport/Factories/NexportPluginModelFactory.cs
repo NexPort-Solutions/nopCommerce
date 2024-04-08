@@ -22,6 +22,7 @@ using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.Products;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Models.Order;
@@ -1993,10 +1994,21 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public async Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync()
+        public async Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(int? productId = null, int? statusId = null)
         {
 
             var model = new NexportGroupProductListSearchModel();
+
+            if (productId != null)
+            {
+                var product = await _productService.GetProductByIdAsync(productId.Value);
+                model.SearchProductName = product.Name;
+            }
+
+            if (statusId != null)
+            {
+                model.SearchStatusId = (NexportOrderInvoiceItemRedemptionStatus)statusId.Value;
+            }
 
             //prepare available statuses
             model.AvailableStatuses.Add(new SelectListItem { Value = null, Text = "All" });
@@ -2449,6 +2461,41 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 });
             });
 
+            return model;
+        }
+
+        public async Task<NexportProductRedemptionStatusesModel> PrepareNexportProductRedemptionStatusesModel(Customer customer, int productId, int storeId)
+        {
+            var model = new NexportProductRedemptionStatusesModel();
+            
+            
+            IPagedList<WholesaleOrderInfo>? wholesaleOrderInfos = null;
+
+            var product = await _productService.GetProductByIdAsync(productId);
+
+            model.ProductId = product.Id;
+
+            var store = await _storeContext.GetCurrentStoreAsync();
+            wholesaleOrderInfos =
+                await _nexportService.GetAllWholesaleOrderInfosAsync(null, null, product.Name, null, customer.Id, storeId);
+            
+
+            IList<NexportGroupProductModel> groupProductModels = new List<NexportGroupProductModel>();
+
+            foreach (var orderInfo in wholesaleOrderInfos)
+            {
+                if (orderInfo.NexportGroupId != null )
+                {
+                    //skip group if not admin view and user doesn't have group permission
+                    if (!await _nexportService.HasGroupPermissionAsync(customer, orderInfo.NexportGroupId.Value))
+                        continue;
+                }
+
+                model.Available += orderInfo.Available;
+                model.Awaiting += orderInfo.Awaiting;
+                model.Assigned += orderInfo.Redeemed;
+            }
+            
             return model;
         }
     }
