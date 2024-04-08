@@ -672,6 +672,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Organization", "Organization");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Order.GroupId", "Purchasing For Group/Org:");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.Groups", "Nexport wholesale purchases");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups", "Wholesale Purchases");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Groups", "Nexport Groups");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Products", "Purchases");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions", "Assignments");
@@ -714,7 +715,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.NumberOfProducts", "Products Purchased");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Button.View", "View");
 
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Name","Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.GroupName","Group name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.GroupShortName","Group short name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.ProductName","Product name");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Available","Available");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Awaiting","Awaiting");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Assigned","Assigned");
@@ -742,8 +745,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.SearchShortName.Hint", "Search by group short name");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.SearchNumberOfProducts", "Number of products");
 
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchName", "Name");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchName.Hint", "Search by product name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchGroupName", "Group name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchGroupName.Hint", "Search by group name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchGroupShortName", "Group short name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchGroupShortName.Hint", "Search by group short name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchProductName", "Product Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchProductName.Hint", "Search by product name");
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.SearchName", "Name");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.SearchName.Hint", "Search by customer name");
@@ -1047,6 +1054,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Organization");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Order.GroupId");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Navigation.Groups");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Groups");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Products");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemptions");
@@ -1086,7 +1094,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.NumberOfProducts");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Button.View");
 
-            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Name");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.GroupName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.GroupShortName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.ProductName");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Available");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Awaiting");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Assigned");
@@ -1110,8 +1120,12 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.SearchShortName.Hint");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.SearchNumberOfProducts");
 
-            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchName");
-            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchName.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchGroupName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchGroupName.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchGroupShortName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchGroupShortName.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchProductName");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.SearchProductName.Hint");
 
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.SearchName");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.SearchName.Hint");

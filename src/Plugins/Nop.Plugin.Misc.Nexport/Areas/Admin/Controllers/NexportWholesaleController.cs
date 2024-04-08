@@ -198,20 +198,9 @@ public class NexportWholesaleController : BaseAdminController
     };
 
     [HttpsRequirement]
-    public virtual async Task<IActionResult> AdminNexportGroups()
+    public async Task<IActionResult> AdminNexportGroupProducts()
     {
-        var searchModel = new NexportGroupListSearchModel();
-        searchModel.AdminView = true;
-        ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroups.cshtml";
-        ViewData["ModelForPartialView"] = searchModel;
-        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/WholesalePurchases/NexportGroups/List.cshtml");
-    }
-
-    [HttpsRequirement]
-    public async Task<IActionResult> AdminNexportGroupProducts(Guid? groupId)
-    {
-        var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
-        searchModel.HasGroupPermission = true;
+        var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync();
         searchModel.AdminView = true;
         ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
         ViewData["ModelForPartialView"] = searchModel;
@@ -224,7 +213,6 @@ public class NexportWholesaleController : BaseAdminController
     {
         var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId);
 
-        searchModel.HasGroupPermission = true;
         searchModel.AdminView = true;
         ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProductRedemptions.cshtml";
         ViewData["ModelForPartialView"] = searchModel;
@@ -235,22 +223,11 @@ public class NexportWholesaleController : BaseAdminController
 
     [HttpPost]
     [AutoValidateAntiforgeryToken]
-    public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
+    public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel)
     {
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
-        var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel, currentCustomer);
-
-        return Json(model);
-    }
-
-    [HttpPost]
-    [AutoValidateAntiforgeryToken]
-    public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid? groupId)
-    {
-        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
-
-        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId, currentCustomer);
+        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, currentCustomer);
 
         return Json(model);
     }

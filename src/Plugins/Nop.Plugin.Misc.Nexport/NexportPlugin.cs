@@ -1,29 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using FluentMigrator.Runner;
+using FluentMigrator.Runner.Exceptions;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
-using FluentMigrator.Runner;
-using FluentMigrator.Runner.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core;
 using Nop.Core.Domain.Cms;
-using Nop.Services.Common;
-using Nop.Services.Configuration;
-using Nop.Services.Localization;
-using Nop.Services.Logging;
-using Nop.Services.Cms;
-using Nop.Services.Plugins;
-using Nop.Services.Discounts;
-using Nop.Web.Framework.Menu;
-using Nop.Web.Framework.Infrastructure;
+using Nop.Plugin.Misc.Nexport.Components;
 using Nop.Plugin.Misc.Nexport.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
+using Nop.Services.Cms;
+using Nop.Services.Common;
+using Nop.Services.Configuration;
+using Nop.Services.Discounts;
+using Nop.Services.Localization;
+using Nop.Services.Logging;
+using Nop.Services.Plugins;
 using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
-using Nop.Plugin.Misc.Nexport.Components;
+using Nop.Web.Framework.Infrastructure;
+using Nop.Web.Framework.Menu;
 
 namespace Nop.Plugin.Misc.Nexport
 {
@@ -118,7 +114,7 @@ namespace Nop.Plugin.Misc.Nexport
                 ActionName = "ListSupplementalInfoQuestion",
                 IconClass = "far fa-dot-circle"
             });
-            
+
             var wholesaleNode = new SiteMapNode()
             {
                 SystemName = "Nexport",
@@ -130,10 +126,10 @@ namespace Nop.Plugin.Misc.Nexport
             wholesaleNode.ChildNodes.Add(new SiteMapNode()
             {
                 Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-                Title = "Wholesale Purchases",
+                Title = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
                 SystemName = "Wholesale Purchases",
                 ControllerName = "NexportWholesale",
-                ActionName = "AdminNexportGroups",
+                ActionName = "AdminNexportGroupProducts",
                 IconClass = "far fa-dot-circle"
             });
             wholesaleNode.ChildNodes.Add(new SiteMapNode()
@@ -307,8 +303,9 @@ namespace Nop.Plugin.Misc.Nexport
                 return typeof(WidgetsNexportProductDetailsAfterPictures);
             else if (widgetZone == PublicWidgetZones.ProductBoxAddinfoBefore)
                 return typeof(WidgetsNexportProductBoxAddInfoBefore);
-            else return null;
-            
+            else
+                return null;
+
         }
     }
 }
