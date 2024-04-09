@@ -16,9 +16,9 @@
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
 
-    var groupText = Model.CurrentGroup.Id != null ? Model.CurrentGroup.Name : (Model.AdminView ? @T("Plugins.Misc.Nexport.Group.NoGroup").Text : T("Plugins.Misc.Nexport.Group.Products").Text);
+    var groupText = Model.CurrentGroup.Id!=null? Model.CurrentGroup.Name+ " - ":"";
 
-    var groupProductRedemptionText = T("Plugins.Misc.Nexport.Group.Product.Redemptions") + " - " + groupText + " - " + Model.CurrentProduct.Name;
+    var groupProductRedemptionText = T("Plugins.Misc.Nexport.Group.Product.Redemptions") + " - " + groupText + Model.CurrentProduct.Name;
 
     var hasGroupPermission = Model.CurrentGroup.Id != null && await NexportService.HasGroupPermissionAsync(currentCustomer, Model.CurrentGroup.Id.Value);
 

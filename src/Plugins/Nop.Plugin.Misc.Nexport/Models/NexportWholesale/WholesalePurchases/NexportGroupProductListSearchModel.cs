@@ -9,6 +9,8 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
     {
         public bool AdminView { get; set; } = false;
 
+        public bool HasPurchasingAgentPermissions { get; set; } = false;
+
         [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.SearchGroupName")]
         public string SearchGroupName { get; set; }
 

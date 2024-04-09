@@ -6,6 +6,48 @@
     var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
 
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
+
+    var columnCollection = new List<ColumnProperty>();
+    if (Model.HasPurchasingAgentPermissions || Model.AdminView)
+    {
+        columnCollection.AddRange(new List<ColumnProperty>
+        {
+            new ColumnProperty(nameof(NexportGroupProductModel.GroupName))
+            {
+                Title = @T("Plugins.Misc.Nexport.Group.Product.GroupName").Text
+            },
+            new ColumnProperty(nameof(NexportGroupProductModel.GroupShortName))
+            {
+                Title = @T("Plugins.Misc.Nexport.Group.Product.GroupShortName").Text
+            }
+        });
+    }
+    columnCollection.AddRange(new List<ColumnProperty>
+    {
+        new ColumnProperty(nameof(NexportGroupProductModel.ProductName))
+        {
+            Title = @T("Plugins.Misc.Nexport.Group.Product.ProductName").Text
+        },
+        new ColumnProperty(nameof(NexportGroupProductModel.Available))
+        {
+            Title = @T("Plugins.Misc.Nexport.Group.Product.Available").Text
+        },
+        new ColumnProperty(nameof(NexportGroupProductModel.Awaiting))
+        {
+            Title = @T("Plugins.Misc.Nexport.Group.Product.Awaiting").Text
+        },
+        new ColumnProperty(nameof(NexportGroupProductModel.Redeemed))
+        {
+            Title = @T("Plugins.Misc.Nexport.Group.Product.Assigned").Text
+        },
+        new(nameof(NexportGroupModel.Id))
+        {
+            Width = "100",
+            Render = new RenderCustom("renderViewGroupProductRedemptions"),
+            ClassName = NopColumnClassDefaults.Button,
+            AutoWidth = false
+        }
+    });
 }
 
 <div class="content-header clearfix nex-plugin">
@@ -27,25 +69,28 @@
 
                         <div class="search-body @(hideSearchBlock ? "closed" : "")">
                             <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group row">
-                                        <div class="col-md-4">
-                                            <nop-label asp-for="SearchGroupName" />
+                                @if (Model.HasPurchasingAgentPermissions || Model.AdminView)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="SearchGroupName" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="SearchGroupName" />
+                                                <input type="hidden" asp-for="@Model.AdminView" />
+                                            </div>
                                         </div>
-                                        <div class="col-md-8">
-                                            <nop-editor asp-for="SearchGroupName" />
-                                            <input type="hidden" asp-for="@Model.AdminView"/>
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="SearchGroupShortName" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="SearchGroupShortName" />
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="form-group row">
-                                        <div class="col-md-4">
-                                            <nop-label asp-for="SearchGroupShortName" />
-                                        </div>
-                                        <div class="col-md-8">
-                                            <nop-editor asp-for="SearchGroupShortName" />
-                                        </div>
-                                    </div>
-                                </div>
+                                }
                                 <div class="col-md-6">
                                     <div class="form-group row">
                                         <div class="col-md-4">
@@ -78,55 +123,22 @@
                     <div class="card-body">
 
                         @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new DataTablesModel
+                   {
+                       Name = "group-products-grid",
+                       UrlRead = new DataUrl("GetNexportGroupProducts", "NexportWholesale", null),
+                       SearchButtonId = "search-group-products",
+                       Length = Model.PageSize,
+                       LengthMenu = Model.AvailablePageSizes,
+                       Filters = new List<FilterParameter>
                         {
-                        Name = "group-products-grid",
-                        UrlRead = new DataUrl("GetNexportGroupProducts", "NexportWholesale", null),
-                        SearchButtonId = "search-group-products",
-                        Length = Model.PageSize,
-                        LengthMenu = Model.AvailablePageSizes,
-                            Filters = new List<FilterParameter>
-                        {
-                            new FilterParameter(nameof(Model.SearchGroupName)),
-                            new FilterParameter(nameof(Model.SearchGroupShortName)),
-                            new FilterParameter(nameof(Model.SearchProductName)),
-                            new FilterParameter(nameof(Model.SearchStatusId)),
-                            new FilterParameter(nameof(Model.AdminView))
+                        new FilterParameter(nameof(Model.SearchGroupName)),
+                        new FilterParameter(nameof(Model.SearchGroupShortName)),
+                        new FilterParameter(nameof(Model.SearchProductName)),
+                        new FilterParameter(nameof(Model.SearchStatusId)),
+                        new FilterParameter(nameof(Model.AdminView))
                         },
-                        ColumnCollection = new List<ColumnProperty>
-                        {
-                            new ColumnProperty(nameof(NexportGroupProductModel.GroupName))
-                            {
-                                Title = @T("Plugins.Misc.Nexport.Group.Product.GroupName").Text
-                            },
-                            new ColumnProperty(nameof(NexportGroupProductModel.GroupShortName))
-                            {
-                            Title = @T("Plugins.Misc.Nexport.Group.Product.GroupShortName").Text
-                            },
-                            new ColumnProperty(nameof(NexportGroupProductModel.ProductName))
-                            {
-                            Title = @T("Plugins.Misc.Nexport.Group.Product.ProductName").Text
-                            },
-                            new ColumnProperty(nameof(NexportGroupProductModel.Available))
-                            {
-                            Title = @T("Plugins.Misc.Nexport.Group.Product.Available").Text
-                            },
-                            new ColumnProperty(nameof(NexportGroupProductModel.Awaiting))
-                            {
-                            Title = @T("Plugins.Misc.Nexport.Group.Product.Awaiting").Text
-                            },
-                            new ColumnProperty(nameof(NexportGroupProductModel.Redeemed))
-                            {
-                                Title = @T("Plugins.Misc.Nexport.Group.Product.Assigned").Text
-                            },
-                            new(nameof(NexportGroupModel.Id))
-                            {
-                            Width = "100",
-                            Render = new RenderCustom("renderViewGroupProductRedemptions"),
-                            ClassName = NopColumnClassDefaults.Button,
-                            AutoWidth = false
-                            }
-                        }
-                        })
+                       ColumnCollection = columnCollection
+                   })
                     </div>
                 </div>
             </div>
