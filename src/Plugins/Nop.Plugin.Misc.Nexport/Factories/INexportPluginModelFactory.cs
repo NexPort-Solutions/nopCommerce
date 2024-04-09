@@ -161,7 +161,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         Task<NexportGroupProductRedemptionListModel> PrepareNexportGroupProductRedemptionListModelAsync(
             NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId, Customer currentCustomer, int? orderId = null);
 
-        Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(int? productId = null, int? statusId = null);
+        Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(int? customerId = null,int? productId = null, int? statusId = null);
 
         Task<NexportGroupProductRedemptionListSearchModel> PrepareNexportGroupProductRedemptionListSearchModelAsync(Guid? groupId, int productId, int? orderId = null);
 

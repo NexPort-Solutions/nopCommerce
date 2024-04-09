@@ -1994,10 +1994,20 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
-        public async Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(int? productId = null, int? statusId = null)
+        public async Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(int? customerId = null,int? productId = null, int? statusId = null)
         {
 
             var model = new NexportGroupProductListSearchModel();
+
+            if (customerId != null)
+            {
+                var userMapping = await _nexportService.FindUserMappingByCustomerId(customerId.Value);
+                if (userMapping != null)
+                {
+                    model.HasPurchasingAgentPermissions = (await _nexportService.SearchGroupsForPermissionAsync(userMapping.NexportUserId,
+                        _nexportSettings.RootOrganizationId.Value)).Any();
+                }
+            }
 
             if (productId != null)
             {

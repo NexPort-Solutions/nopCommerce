@@ -97,7 +97,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(productId, statusId);
+            var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(customer.Id, productId, statusId);
 
             ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
             ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
