@@ -1,19 +1,26 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using DocumentFormat.OpenXml.EMMA;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Localization;
+using Nop.Core.Domain.Orders;
+using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Plugin.Misc.Nexport.Validators;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Security;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Web.Framework.Mvc.Filters;
@@ -35,6 +42,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         private readonly NexportSettings _nexportSettings;
         private readonly IProductService _productService;
         private readonly ILogger _logger;
+        private readonly LocalizationSettings _localizationSettings;
         private readonly ILocalizationService _localizationService;
 
         #endregion
@@ -52,7 +60,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             NexportSettings nexportSettings,
             IProductService productService,
             ILocalizationService localizationService,
-            ILogger logger
+            ILogger logger,
+            LocalizationSettings localizationSettings
             )
         {
             _nexportPluginModelFactory = nexportPluginModelFactory;
@@ -66,6 +75,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _productService = productService;
             _localizationService = localizationService;
             _logger = logger;
+            _localizationSettings = localizationSettings;
         }
 
         #endregion
@@ -377,6 +387,60 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
 
             return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
+        }
+
+        [HttpsRequirement]
+        public async Task<IActionResult> RequestUnassignment(Guid? groupId, Guid? invoiceItemId, int? productId, int? customerId)
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(customer))
+                return Challenge();
+            var model = await _nexportPluginModelFactory.PrepareSubmitUnassignmentRequestModel(groupId, invoiceItemId, productId, customerId);
+            return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestUnassignment.cshtml", model);
+        }
+
+        [HttpPost, ActionName("RequestUnassignment")]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> UnassignmentRequestSubmit(SubmitRedemptionUnassignmentRequestModel model, IFormCollection form)
+        {
+            if (!ModelState.IsValid)
+                return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestUnassignment.cshtml", model);
+
+            model.Result = await _localizationService.GetResourceAsync("RedemptionUnassignmentRequests.Submitted");
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+
+            var requestReason =
+                await _nexportService.GetNexportRedemptionUnassignmentRequestReasonByIdAsync(model.RedemptionUnassignmentRequestReasonId);
+            var currentStore = await _storeContext.GetCurrentStoreAsync();
+
+            var unassignmentRequest = new NexportRedemptionUnassignmentRequest
+            {
+                InvoiceItemId = model.InvoiceItemId,
+                RequestedByCustomerId = currentCustomer.Id,
+                CustomerComments = model.Comments,
+                RequestStatus = NexportRedemptionUnassignmentRequestStatus.Received,
+                ReasonForUnassignment = requestReason != null
+                    ? await _localizationService.GetLocalizedAsync(requestReason, x => x.Name)
+                    : "not available",
+                StaffNotes = string.Empty,
+                UtcCreatedDate = DateTime.UtcNow,
+                UtcLastModifiedDate = DateTime.UtcNow
+            };
+
+            await _nexportService.InsertRedemptionUnassignmentRequestAsync(unassignmentRequest);
+
+            var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
+
+            await _nexportService.SendNewRedemptionUnassignmentRequestStoreOwnerNotificationAsync(
+                unassignmentRequest, invoiceItem, _localizationSettings.DefaultAdminLanguageId);
+
+            await _nexportService.SendNewRedemptionUnassignmentRequestCustomerNotificationAsync(
+                unassignmentRequest, invoiceItem);
+            
+            model = await _nexportPluginModelFactory.PrepareSubmitRedemptionUnassignmentRequestModelAsync(model);
+            model.Result = await _localizationService.GetResourceAsync("RedemptionUnassignmentRequests.Submitted");
+
+            return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestUnassignment.cshtml", model);
         }
 
         [HttpPost]

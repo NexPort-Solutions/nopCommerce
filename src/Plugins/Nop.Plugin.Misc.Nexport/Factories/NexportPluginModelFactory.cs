@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using DocumentFormat.OpenXml.EMMA;
 using DocumentFormat.OpenXml.Office2013.PowerPoint.Roaming;
 using Humanizer;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -23,6 +24,7 @@ using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.Products;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Models.Order;
@@ -56,6 +58,8 @@ using Nop.Web.Framework.Extensions;
 using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Models.Extensions;
 using StackExchange.Profiling.Internal;
+using DocumentFormat.OpenXml.InkML;
+using Nop.Core.Caching;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -87,6 +91,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         private readonly ICategoryService _categoryService;
         private readonly CatalogSettings _catalogSettings;
         private readonly IUrlRecordService _urlRecordService;
+        private readonly IStaticCacheManager _cacheManager;
 
         #endregion
 
@@ -116,7 +121,8 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             IStoreContext storeContext,
             ICategoryService categoryService,
             CatalogSettings catalogSettings,
-            IUrlRecordService urlRecordService)
+            IUrlRecordService urlRecordService,
+            IStaticCacheManager cacheManager)
         {
             _nexportSettings = nexportSettings;
             _baseAdminModelFactory = baseAdminModelFactory;
@@ -142,6 +148,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             _categoryService = categoryService;
             _catalogSettings = catalogSettings;
             _urlRecordService = urlRecordService;
+            _cacheManager = cacheManager;
         }
 
         #endregion
@@ -1940,6 +1947,7 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                                 {
                                     redemptionItem.Name = $"{redeemer.FirstName} {redeemer.LastName}";
                                     redemptionItem.Email = redeemer.Email;
+                                    redemptionItem.CustomerId = redeemer.Id;
                                 }
                                 else
                                 {
@@ -2506,6 +2514,172 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 model.Assigned += orderInfo.Redeemed;
             }
             
+            return model;
+        }
+
+        public async Task<SubmitRedemptionUnassignmentRequestModel> PrepareSubmitUnassignmentRequestModel(Guid? groupId, Guid? invoiceItemId, int? productId, int? customerId)
+        {
+            var model = new SubmitRedemptionUnassignmentRequestModel();
+
+            if (groupId != null)
+            {
+                var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId.Value);
+                if (group != null)
+                    model.GroupName = group.NexportGroupName;
+            }
+
+            if (productId != null)
+            {
+                var product = await _productService.GetProductByIdAsync(productId.Value);
+                model.ProductName = product.Name;
+            }
+
+            if (customerId != null)
+            {
+                var customer = await _customerService.GetCustomerByIdAsync(customerId.Value);
+                model.CustomerName = $"{customer.FirstName} {customer.LastName}";
+            }
+
+            var workingLanguage = await _workContext.GetWorkingLanguageAsync();
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportDefaults.RedemptionUnassignmentRequestReasonsCacheKey, workingLanguage.Id);
+
+            
+            model.AvailableUnassignmentReasons = await _cacheManager.GetAsync(cacheKey,
+                async () =>
+                {
+                    var requestReasons = await _nexportService
+                        .GetAllRedemptionUnassignmentRequestReasonsAsync();
+                    return await requestReasons.SelectAwait(async reason =>
+                        new NexportRedemptionUnassignmentRequestReasonModel
+                        {
+                            Id = reason.Id,
+                            Name = await _localizationService.GetLocalizedAsync(reason, x => x.Name)
+                        }).ToListAsync();
+                });
+
+
+            return model;
+        }
+
+        public async Task<NexportRedemptionRequestUnassignmentListModel> PrepareNexportRedemptionUnassignmentRequestListModel(NexportRedemptionUnassignmentRequestListSearchModel searchModel)
+        {
+            var model = new NexportRedemptionRequestUnassignmentListModel();
+            var pagedRequests = await _nexportService.GetAllNexportRedemptionUnassignmentRequests(pageIndex: searchModel.Page - 1,
+                pageSize: searchModel.PageSize);
+
+            model = await model.PrepareToGridAsync(searchModel, pagedRequests, () =>
+            {
+                return pagedRequests.SelectAwait(async x =>
+                {
+                    var requestModel = x.ToModel<NexportRedemptionUnassignmentRequestModel>();
+                    return requestModel;
+                });
+            });
+            return model;
+        }
+
+        public async Task<NexportRedemptionUnassignmentRequestReasonListModel>
+            PrepareRedemptionUnassignmentRequestReasonListModelAsync(NexportRedemptionUnassignmentRequestReasonSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var reasons =
+                (await _nexportService.GetAllRedemptionUnassignmentRequestReasonsAsync()).ToPagedList(searchModel);
+
+            var model = new NexportRedemptionUnassignmentRequestReasonListModel().PrepareToGrid(searchModel, reasons, () =>
+            {
+                return reasons.Select(reason => reason.ToModel<NexportRedemptionUnassignmentRequestReasonModel>());
+            });
+
+            return model;
+        }
+
+        public async Task<NexportRedemptionUnassignmentRequestReasonModel> PrepareRedemptionUnassignmentRequestReasonModelAsync(
+            NexportRedemptionUnassignmentRequestReasonModel model,
+            NexportRedemptionUnassignmentRequestReason cancellationRequestReason, bool excludeProperties = false)
+        {
+            Func<NexportRedemptionUnassignmentRequestReasonLocalizedModel, int, Task> localizedModelConfiguration = null;
+
+            if (cancellationRequestReason != null)
+            {
+                model ??= cancellationRequestReason.ToModel<NexportRedemptionUnassignmentRequestReasonModel>();
+
+                localizedModelConfiguration = async (locale, languageId) =>
+                {
+                    locale.Name = await _localizationService.GetLocalizedAsync(
+                        cancellationRequestReason,
+                        entity => entity.Name,
+                        languageId, false, false);
+                };
+            }
+
+            if (!excludeProperties)
+                model.Locales = await _localizedModelFactory.PrepareLocalizedModelsAsync(localizedModelConfiguration);
+
+            return model;
+        }
+
+        public async Task<NexportRedemptionUnassignmentRequestModel> PrepareRedemptionUnassignmentRequestModelAsync(
+            NexportRedemptionUnassignmentRequestModel model, NexportRedemptionUnassignmentRequest unassignmentRequest,
+            bool excludeProperties = false)
+        {
+            if ( unassignmentRequest == null)
+                return model;
+
+            //fill in model values from the entity
+            model ??= new NexportRedemptionUnassignmentRequestModel
+            {
+                Id =  unassignmentRequest.Id,
+                RequestedByCustomerId =  unassignmentRequest.RequestedByCustomerId,
+            };
+
+            var customer = await _customerService.GetCustomerByIdAsync( unassignmentRequest.RequestedByCustomerId);
+
+            model.UtcCreatedDate = _dateTimeHelper.ConvertToUserTime(
+                unassignmentRequest.UtcCreatedDate,
+                TimeZoneInfo.Utc,
+                await _dateTimeHelper.GetCustomerTimeZoneAsync(customer));
+
+            //model.CustomerInfo = await _customerService.IsRegisteredAsync(customer)
+            //    ? customer.Email
+            //    : await _localizationService.GetResourceAsync("Admin.Customers.Guest");
+            model.InvoiceItemId = unassignmentRequest.InvoiceItemId;
+
+            if (excludeProperties)
+                return model;
+
+            model.ReasonForUnassignment =  unassignmentRequest.ReasonForUnassignment;
+            model.CustomerComments =  unassignmentRequest.CustomerComments;
+            model.StaffNotes =  unassignmentRequest.StaffNotes;
+            model.RequestStatus =  unassignmentRequest.RequestStatus;
+
+            return model;
+        }
+
+        public async Task<SubmitRedemptionUnassignmentRequestModel>
+            PrepareSubmitRedemptionUnassignmentRequestModelAsync(SubmitRedemptionUnassignmentRequestModel model)
+        {
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            var workingLanguage = await _workContext.GetWorkingLanguageAsync();
+            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportDefaults.RedemptionUnassignmentRequestReasonsCacheKey, workingLanguage.Id);
+
+
+            model.AvailableUnassignmentReasons = await _cacheManager.GetAsync(cacheKey,
+                async () =>
+                {
+                    var requestReasons = await _nexportService
+                        .GetAllRedemptionUnassignmentRequestReasonsAsync();
+                    return await requestReasons.SelectAwait(async reason =>
+                        new NexportRedemptionUnassignmentRequestReasonModel
+                        {
+                            Id = reason.Id,
+                            Name = await _localizationService.GetLocalizedAsync(reason, x => x.Name)
+                        }).ToListAsync();
+                });
+
             return model;
         }
     }

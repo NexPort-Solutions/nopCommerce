@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Messages;
@@ -392,6 +393,60 @@ namespace Nop.Plugin.Misc.Nexport.Services
                     EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
                 });
             }
+
+            if (!messageTemplates.Any(x =>
+                x.Name.Equals(NexportDefaults.NEW_REDEMPTION_UNASSIGNMENT_REQUEST_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE)))
+            {
+                await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
+                {
+                    Name = NexportDefaults.NEW_REDEMPTION_UNASSIGNMENT_REQUEST_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE,
+                    Subject = "%Store.Name%. New unassignment request.",
+                    Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}%Customer.FullName% has just submitted a redemption unassignment request. Details are below:{Environment.NewLine}<br />{Environment.NewLine}Request ID: %UnassignmentRequest.Id%{Environment.NewLine}<br />{Environment.NewLine}Invoice Item ID: %UnassignmentRequest.InvoiceItemId%{Environment.NewLine}<br /{Environment.NewLine}>Reason for unassignment: %CancellationRequest.Reason%{Environment.NewLine}<br />{Environment.NewLine}Customer comments:{Environment.NewLine}<br />{Environment.NewLine}%UnassignmentRequest.CustomerComment%</p>{Environment.NewLine}",
+                    IsActive = true,
+                    EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
+                });
+                
+            }
+
+            if (!messageTemplates.Any(x =>
+                x.Name.Equals(NexportDefaults.NEW_REDEMPTION_UNASSIGNMENT_REQUEST_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE)))
+            {
+                await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
+                {
+                    Name = NexportDefaults.NEW_REDEMPTION_UNASSIGNMENT_REQUEST_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE,
+                    Subject = "%Store.Name%. New unassignment request.",
+                    Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Customer.FullName%!{Environment.NewLine}<br />{Environment.NewLine}You have just submitted a new unassignment request. Details are below:{Environment.NewLine}<br />{Environment.NewLine}Request ID: %UnassignmentRequest.Id%{Environment.NewLine}<br />{Environment.NewLine}Invoice Item ID: %UnassignmentRequest.InvoiceItemId%{Environment.NewLine}<br />{Environment.NewLine}Reason for return: %UnassignmentnRequest.Reason%{Environment.NewLine}<br />{Environment.NewLine}Customer comments:{Environment.NewLine}<br />{Environment.NewLine}%UnassignmentRequest.CustomerComment%{Environment.NewLine}</p>{Environment.NewLine}",
+                    IsActive = true,
+                    EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
+                });
+                
+            }
+
+            if (!messageTemplates.Any(x =>
+                    x.Name.Equals(NexportDefaults.REDEMPTION_UNASSIGNMENT_REQUEST_ACCEPTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE)))
+            {
+                await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
+                {
+                    Name = NexportDefaults.REDEMPTION_UNASSIGNMENT_REQUEST_ACCEPTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE,
+                    Subject = "%Store.Name%.Unassignment request status.",
+                    Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Customer.FullName%,{Environment.NewLine}<br />{Environment.NewLine}Your unassignment request #%UnassignmentRequest.Id% for invoiceitem #%UnassignmentRequest.InvoiceItemId% has been accepted. The invoice item will be unassigned shortly and you will receive additional email regarding the unassignment.{Environment.NewLine}</p>{Environment.NewLine}",
+                    IsActive = true,
+                    EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
+                });
+            }
+
+            if (!messageTemplates.Any(x =>
+                    x.Name.Equals(NexportDefaults.REDEMPTION_UNASSIGNMENT_REQUEST_REJECTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE)))
+            {
+                await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
+                {
+                    Name = NexportDefaults.REDEMPTION_UNASSIGNMENT_REQUEST_REJECTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE,
+                    Subject = "%Store.Name%. Unassignment request status.",
+                    Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Customer.FullName%,{Environment.NewLine}<br />{Environment.NewLine}Your unassignment request #%UnassignmentRequest.Id% for invoice item #%UnassignmentRequest.InvoiceItemId% has been rejected. Please contact Customer Service for further details.{Environment.NewLine}</p>{Environment.NewLine}",
+                    IsActive = true,
+                    EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
+                });
+            }
         }
 
         public async Task DeleteMessageTemplatesAsync()
@@ -734,6 +789,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssigned", "Date Assigned");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign", "Assign");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign", "Unassign");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestUnassignment", "Unassign Request");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting", "Cancel");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.CancelAwaiting.Confirm","Are you sure you want to make cancel this assignment that is awaiting redemption and make it available again?");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Unassign.Failed", "Failed to unassign");
@@ -793,7 +849,38 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Nexport.CategoryName.Hint", "Name of the category that the product is mapped to.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Category.HasProductMapping", "Includes product mapped to category");
             await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Misc.Category.HasProductMapping.Hint", "Search if category has a product mapped to it.");
-            
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.WhyUnassigning", "Why do you want to unassign this?");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.UnassignReason", "Reason for unassignment");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Comments", "Comments");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Submit", "Submit unassignment Request");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Submitted", "Your unassignment request has been submitted successfully.");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequestReasons.CardHeader", "Unassignment request reasons");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequestReasons.CardBody.Hint", "List of reasons a customer will be able to choose when submitting an unassignment request.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequestReasons.Name", "Name");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequestReasons.DisplayOrder", "Display Order");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequestReasons.AddNew", "Add new unassignment request reason");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequestReasons.BackToList", "back to unassignment request reason list");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequestReasons.EditDetails", "Edit unassignment request reason details");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests", "Unassignment requests");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Description", "List of customer requests to unassign redemptions");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.CustomerComments", "Customer Comments");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.RequestStatus", "Request Status");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.CreatedOn", "Created On");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.EditUnassignmenrRequestDetails", "Edit unassignment request details");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.EditUnassignmentRequest.BackToList", "back to unassignment request list");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequestReasons.Added", "The new unassignment request reason has been added successfully.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequestReasons.Deleted", "The unassignment request reason has been deleted successfully.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequestReasons.Updated", "The unassignment request reason has been updated successfully.");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("ActivityLog.EditUnassignmentRequest", "Edited an unassignment request (ID = {0})");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("ActivityLog.DeleteUnassignmentRequest", "Deleted an unassignment request (ID = {0})");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Deleted", "The unassignment request has been deleted successfully.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Updated", "The unassignment request has been updated successfully.");
         }
 
         public async Task DeleteResourcesAsync()
@@ -1109,6 +1196,7 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssigned");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestUnassignment");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.CancelAwaiting.Confirm");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Nexport.Group.Product.Redemption.Unassign.Failed");
@@ -1166,6 +1254,37 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Category.HasProductMapping");
             await _localizationService.DeleteLocaleResourceAsync("Plugins.Misc.Category.HasProductMapping.Hint");
+
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.WhyUnassigning");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.UnassignReason");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Comments");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Submit");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Submitted");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequestReasons.CardHeader");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequestReasons.CardBody.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequestReasons.Name");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequestReasons.DisplayOrder");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequestReasons.AddNew");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequestReasons.BackToList");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequestReasons.EditDetails");
+
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Description");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.CustomerComments");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.RequestStatus");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.CreatedOn");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.EditUnassignmenrRequestDetails");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.EditUnassignmentRequest.BackToList");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequestReasons.Added");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequestReasons.Deleted");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequestReasons.Updated");
+
+            await _localizationService.DeleteLocaleResourceAsync("ActivityLog.EditUnassignmentRequest");
+            await _localizationService.DeleteLocaleResourceAsync("ActivityLog.DeleteUnassignmentRequest");
+
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Deleted");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Updated");
+
 
             
         }

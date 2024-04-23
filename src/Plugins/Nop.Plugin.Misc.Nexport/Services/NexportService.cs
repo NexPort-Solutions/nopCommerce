@@ -18,6 +18,7 @@ using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
+using Nop.Core.Events;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -32,6 +33,7 @@ using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Helpers;
+using Nop.Services.Html;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
@@ -113,6 +115,10 @@ namespace Nop.Plugin.Misc.Nexport.Services
         private readonly IRepository<CustomerCustomerRoleMapping> _customerCustomerRoleMappingRepository;
         private readonly LocalizationSettings _localizationSettings;
         private readonly IRepository<ProductCategory> _productCategoryMappingRepository;
+        private readonly IRepository<NexportRedemptionUnassignmentRequest> _nexportRedemptionUnassignmentRequestRepository;
+        private readonly IRepository<NexportRedemptionUnassignmentRequestReason> _nexportRedemptionUnassignmentRequestReasonRepository;
+        private readonly IHtmlFormatter _htmlFormatter;
+        private readonly IEventPublisher _eventPublisher;
 
         #endregion
 
@@ -181,7 +187,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
             IRepository<Customer> customerRepository,
             IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMapping,
             LocalizationSettings localizationSettings,
-            IRepository<ProductCategory> productCategoryMappingRepository)
+            IRepository<ProductCategory> productCategoryMappingRepository,
+            IRepository<NexportRedemptionUnassignmentRequest> nexportRedemptionUnassignmentRequestRepository,
+            IRepository<NexportRedemptionUnassignmentRequestReason> nexportRedemptionUnassignmentRequestReasonRepository,
+            IHtmlFormatter htmlFormatter,
+            IEventPublisher eventPublisher)
         {
             _nexportApiService = nexportApiService;
             _emailAccountSettings = emailAccountSettings;
@@ -247,6 +257,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
             _customerCustomerRoleMappingRepository = customerCustomerRoleMapping;
             _localizationSettings = localizationSettings;
             _productCategoryMappingRepository = productCategoryMappingRepository;
+            _nexportRedemptionUnassignmentRequestRepository = nexportRedemptionUnassignmentRequestRepository;
+            _nexportRedemptionUnassignmentRequestReasonRepository =
+                nexportRedemptionUnassignmentRequestReasonRepository;
+            _htmlFormatter = htmlFormatter;
+            _eventPublisher = eventPublisher;
         }
 
         #endregion
