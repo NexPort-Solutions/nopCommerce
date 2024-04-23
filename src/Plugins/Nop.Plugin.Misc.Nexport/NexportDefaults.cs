@@ -1,4 +1,5 @@
-﻿using Nop.Plugin.Misc.Nexport.Services.Tasks;
+﻿using Nop.Core.Caching;
+using Nop.Plugin.Misc.Nexport.Services.Tasks;
 
 namespace Nop.Plugin.Misc.Nexport
 {
@@ -254,5 +255,23 @@ namespace Nop.Plugin.Misc.Nexport
         public const string CR_MANAGE_WHOLESALE_SYS_NAME = "ManageNexportWholesale";
 
         public const string REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE = "Nexport.Redemption.StudentNotification";
+
+        public const string NEW_REDEMPTION_UNASSIGNMENT_REQUEST_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE =
+            "NewRedemptionUnassignmentRequest.StoreOwnerNotification";
+
+        public const string NEW_REDEMPTION_UNASSIGNMENT_REQUEST_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE =
+            "NewRedemptionUnassignmentRequest.CustomerNotification";
+
+        public const string REDEMPTION_UNASSIGNMENT_REQUEST_ACCEPTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE =
+            "RedemptionUnassignmentRequestAccepted.CustomerNotification";
+
+        public const string REDEMPTION_UNASSIGNMENT_REQUEST_REJECTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE =
+            "RedemptionUnassignmentRequestRejected.CustomerNotification";
+
+        public static CacheKey RedemptionUnassignmentRequestReasonsCacheKey => new CacheKey("Nop.plugin.misc.nexport.redemptionunassignmentrequestreasons-{0}");
+
+        public const string EDIT_UNASSIGNMENT_REQUEST_ACTIVITY_LOG_TYPE = "EditUnassignmentRequest";
+
+        public const string DELETE_UNASSIGNMENT_REQUEST_ACTIVITY_LOG_TYPE = "DeleteUnassignmentRequest";
     }
 }

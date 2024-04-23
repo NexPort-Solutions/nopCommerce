@@ -3,9 +3,11 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Category;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
@@ -181,5 +183,24 @@ namespace Nop.Plugin.Misc.Nexport.Factories
         Task<NexportCategoryListModel> PrepareCategoryListModelAsync(NexportCategorySearchModel searchModel);
 
         Task<NexportProductRedemptionStatusesModel> PrepareNexportProductRedemptionStatusesModel(Customer customer, int productId, int storeId);
+
+        Task<SubmitRedemptionUnassignmentRequestModel> PrepareSubmitUnassignmentRequestModel(Guid? groupId, Guid? invoiceItemId, int? productId, int? customerId);
+
+        Task<NexportRedemptionRequestUnassignmentListModel> PrepareNexportRedemptionUnassignmentRequestListModel(NexportRedemptionUnassignmentRequestListSearchModel searchModel);
+
+        Task<NexportRedemptionUnassignmentRequestReasonListModel>
+            PrepareRedemptionUnassignmentRequestReasonListModelAsync(
+                NexportRedemptionUnassignmentRequestReasonSearchModel searchModel);
+
+        Task<NexportRedemptionUnassignmentRequestReasonModel> PrepareRedemptionUnassignmentRequestReasonModelAsync(
+            NexportRedemptionUnassignmentRequestReasonModel model,
+            NexportRedemptionUnassignmentRequestReason cancellationRequestReason, bool excludeProperties = false);
+
+        Task<NexportRedemptionUnassignmentRequestModel> PrepareRedemptionUnassignmentRequestModelAsync(
+            NexportRedemptionUnassignmentRequestModel model, NexportRedemptionUnassignmentRequest unassignmentRequest,
+            bool excludeProperties = false);
+
+        Task<SubmitRedemptionUnassignmentRequestModel>
+            PrepareSubmitRedemptionUnassignmentRequestModelAsync(SubmitRedemptionUnassignmentRequestModel model);
     }
 }

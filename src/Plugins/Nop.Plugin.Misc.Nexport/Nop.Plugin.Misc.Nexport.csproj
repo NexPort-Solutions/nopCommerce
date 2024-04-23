@@ -14,8 +14,8 @@
     You need to set this parameter to true if your plugin has a nuget package
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>1.0.0.24</AssemblyVersion>
-    <FileVersion>1.0.0.24</FileVersion>
+    <AssemblyVersion>1.0.0.25</AssemblyVersion>
+    <FileVersion>1.0.0.25</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -36,7 +36,14 @@
     <None Remove="Areas\Admin\Views\NexportCategory\NexportOptions.cshtml" />
     <None Remove="Areas\Admin\Views\NexportCategory\NexportProductMappingsInCategoryPage.cshtml" />
     <None Remove="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\Edit.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\RedemptionUnassignmentRequestReasonCreate.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\RedemptionUnassignmentRequestReasonEdit.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\_CreateOrUpdate.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\_CreateOrUpdate.RedemptionUnassignmentRequestReason.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\_RedemptionUnassignmentRequestReasons.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\WholesalePurchases\NexportGroups\List.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\WholesalePurchases\UnassignmentRequestsList.cshtml" />
     <None Remove="Areas\Admin\Views\Order\Create.cshtml" />
     <None Remove="Areas\Admin\Views\Order\List.cshtml" />
     <None Remove="Areas\Admin\Views\Order\_OrderDetails.Info.cshtml" />
@@ -78,6 +85,7 @@
     <None Remove="Content\redeem-product.css" />
     <None Remove="Content\rowGroup.dataTables.min.css" />
     <None Remove="Content\uikit.min.css" />
+    <None Remove="Content\unassign_redemption_request.css" />
     <None Remove="logo.jpg" />
     <None Remove="plugin.json" />
     <None Remove="Scripts\bootstrap3-typeahead.js" />
@@ -101,6 +109,7 @@
     <None Remove="Views\NexportGroups.cshtml" />
     <None Remove="Views\NexportStore\List.cshtml" />
     <None Remove="Views\NexportTrainings.cshtml" />
+    <None Remove="Views\NexportWholesale\WholesalePurchases\RequestUnassignment.cshtml" />
     <None Remove="Views\Order\CustomerOrders.cshtml" />
     <None Remove="Views\ProductMappingDetails.cshtml" />
     <None Remove="Views\ProductMappingDetailsPopup.cshtml" />
@@ -160,6 +169,27 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\NexportCategory\NexportOptions.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\RedemptionUnassignmentRequestReasonEdit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\RedemptionUnassignmentRequestReasonCreate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\Edit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\List.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\_CreateOrUpdate.RedemptionUnassignmentRequestReason.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\_RedemptionUnassignmentRequestReasons.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\_CreateOrUpdate.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Widget\Category\NexportCategoryProductMappings.cshtml">
@@ -285,6 +315,9 @@
     <Content Include="Content\nexport.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\unassign_redemption_request.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Scripts\redeem-product.js">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -349,6 +382,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemByEmail.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RequestUnassignment.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemProduct\_CustomerStep.cshtml">
@@ -532,6 +568,12 @@
     <Content Include="Areas\Admin\Views\Widget\Order\Wholesale.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Domain\Wholesale\NexportRedemptionUnassignmentRequest.cs">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Compile>
   </ItemGroup>
 
   <!-- This target execute after "Build" target -->

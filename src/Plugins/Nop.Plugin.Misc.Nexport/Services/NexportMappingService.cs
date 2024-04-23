@@ -3,6 +3,7 @@ using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Infrastructure.Mapper;
@@ -14,6 +15,7 @@ using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using Nop.Services.Messages;
 using StackExchange.Profiling.Internal;
 
 namespace Nop.Plugin.Misc.Nexport.Services
@@ -2734,5 +2736,261 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             return new PagedList<WholesaleOrderInfo>(await orderInfoQuery.ToListAsync(),pageIndex,pageSize);
         }
+
+        public async Task InsertRedemptionUnassignmentRequestAsync(NexportRedemptionUnassignmentRequest unassignmentRequest)
+        {
+            if (unassignmentRequest == null)
+                throw new ArgumentNullException(nameof(unassignmentRequest));
+
+            if (_nexportRedemptionUnassignmentRequestRepository.Table.Any(x => x.InvoiceItemId == unassignmentRequest.InvoiceItemId))
+                return;
+
+            await _nexportRedemptionUnassignmentRequestRepository.InsertAsync(unassignmentRequest);
+        }
+
+        public async Task AddRedemptionUnassignmentRequestTokensAsync(IList<Token> tokens, NexportRedemptionUnassignmentRequest unassignmentRequest, NexportOrderInvoiceItem invoiceItem)
+        {
+            tokens.Add(new Token("UnassignmentRequest.Id", unassignmentRequest.Id));
+            tokens.Add(new Token("UnassignmentRequest.InvoiceItemId", invoiceItem.Id));
+            //tokens.Add(new Token("UnassignmentRequest.Reason", cancellationRequest.ReasonForCancellation));
+            tokens.Add(new Token("UnassignmentRequest.CustomerComment",
+                _htmlFormatter.FormatText(unassignmentRequest.CustomerComments, false, true, false, false, false, false), true));
+            tokens.Add(new Token("UnassignmentRequest.StaffNotes",
+                _htmlFormatter.FormatText(unassignmentRequest.StaffNotes, false, true, false, false, false, false), true));
+            tokens.Add(new Token("UnassignmentRequest.Status", await _localizationService.GetLocalizedEnumAsync(unassignmentRequest.RequestStatus)));
+
+        }
+
+        /// <summary>
+        /// Get EmailAccount to use with a message templates
+        /// </summary>
+        /// <param name="messageTemplate">Message template</param>
+        /// <param name="languageId">Language identifier</param>
+        /// <returns>EmailAccount</returns>
+        private async Task<EmailAccount> GetEmailAccountOfMessageTemplate(MessageTemplate messageTemplate, int languageId)
+        {
+            var emailAccountId = await _localizationService.GetLocalizedAsync(messageTemplate, mt => mt.EmailAccountId, languageId);
+            //some 0 validation (for localizable "Email account" dropdownlist which saves 0 if "Standard" value is chosen)
+            if (emailAccountId == 0)
+                emailAccountId = messageTemplate.EmailAccountId;
+
+            var emailAccount = await (_emailAccountService.GetEmailAccountByIdAsync(emailAccountId) ??
+                                      _emailAccountService.GetEmailAccountByIdAsync(_emailAccountSettings.DefaultEmailAccountId)) ??
+                               (await _emailAccountService.GetAllEmailAccountsAsync()).FirstOrDefault();
+            return emailAccount;
+        }
+
+        public async Task<IList<int>> SendNewRedemptionUnassignmentRequestStoreOwnerNotificationAsync(NexportRedemptionUnassignmentRequest unassignmentRequest,
+            NexportOrderInvoiceItem invoiceItem, int languageId)
+        {
+            if (unassignmentRequest == null)
+                throw new ArgumentNullException(nameof(unassignmentRequest));
+
+            var store = await _storeContext.GetCurrentStoreAsync();
+            languageId = await EnsureLanguageIsActiveAsync(languageId, store.Id);
+
+                var messageTemplates = await GetActiveMessageTemplatesAsync(NexportDefaults.NEW_REDEMPTION_UNASSIGNMENT_REQUEST_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE, store.Id);
+            if (!messageTemplates.Any())
+                return new List<int>();
+
+            var customer = await _customerService.GetCustomerByIdAsync(unassignmentRequest.RequestedByCustomerId)
+                           ?? throw new Exception($"Customer with Id {unassignmentRequest.RequestedByCustomerId} does not existed");
+
+            var commonTokens = new List<Token>();
+            await _messageTokenProvider.AddCustomerTokensAsync(commonTokens, customer);
+            await AddRedemptionUnassignmentRequestTokensAsync(commonTokens, unassignmentRequest, invoiceItem);
+
+            return await messageTemplates.SelectAwait(async messageTemplate =>
+            {
+                var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
+
+                var tokens = new List<Token>(commonTokens);
+                await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+
+                await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
+
+                var toEmail = emailAccount.Email;
+                var toName = emailAccount.DisplayName;
+
+                return await _workflowMessageService
+                    .SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
+            }).ToListAsync();
+        }
+
+         public async Task<IList<int>> SendNewRedemptionUnassignmentRequestCustomerNotificationAsync(NexportRedemptionUnassignmentRequest unassignmentRequest,
+            NexportOrderInvoiceItem invoiceItem)
+        {
+            if (unassignmentRequest == null)
+                throw new ArgumentNullException(nameof(unassignmentRequest));
+            var invoiceOrder = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+
+            var store = await _storeService.GetStoreByIdAsync(invoiceOrder.StoreId) ?? await _storeContext.GetCurrentStoreAsync();
+
+            var languageId = invoiceOrder.CustomerLanguageId;
+                
+            languageId =  await EnsureLanguageIsActiveAsync(languageId, store.Id);
+
+            var messageTemplates = await GetActiveMessageTemplatesAsync(NexportDefaults.NEW_REDEMPTION_UNASSIGNMENT_REQUEST_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE, store.Id);
+            if (!messageTemplates.Any())
+                return new List<int>();
+
+            var customer = await _customerService.GetCustomerByIdAsync(unassignmentRequest.RequestedByCustomerId)
+                           ?? throw new Exception($"Customer with Id {unassignmentRequest.RequestedByCustomerId} does not existed");
+
+            var commonTokens = new List<Token>();
+            await _messageTokenProvider.AddCustomerTokensAsync(commonTokens, customer);
+            await AddRedemptionUnassignmentRequestTokensAsync(commonTokens, unassignmentRequest, invoiceItem);
+
+            return await messageTemplates.SelectAwait(async messageTemplate =>
+            {
+                var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
+
+                var tokens = new List<Token>(commonTokens);
+                await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+
+                await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
+
+                var billingAddress = await _addressService.GetAddressByIdAsync(invoiceOrder.BillingAddressId);
+
+                var customerIsGuest = await _customerService.IsGuestAsync(customer);
+                var toEmail = customerIsGuest
+                    ? billingAddress.Email
+                    : customer.Email;
+                var toName = customerIsGuest
+                    ? billingAddress.FirstName
+                    : await _customerService.GetCustomerFullNameAsync(customer);
+
+                return await _workflowMessageService
+                    .SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
+            }).ToListAsync();
+        }
+
+         public async Task<IPagedList<NexportRedemptionUnassignmentRequest>> GetAllNexportRedemptionUnassignmentRequests(
+             int pageIndex = 0, int pageSize = int.MaxValue)
+         {
+             return await _nexportRedemptionUnassignmentRequestRepository.GetAllPagedAsync(x=>x, pageIndex, pageSize);
+             //var query = 
+             //var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoQuestionAllCacheKey, pageIndex, pageSize);
+             //return await _cacheManager.GetAsync(cacheKey, async () =>
+             //{
+             //    var query = _nexportSupplementalInfoQuestionRepository.Table.Select(question => question);
+
+             //    return await query.ToPagedListAsync(pageIndex, pageSize);
+             //});
+         }
+
+         public async Task<NexportRedemptionUnassignmentRequest>
+             GetNexportRedemptionUnassignmentRequestByIdAsync(int? requestId)
+         {
+             return await _nexportRedemptionUnassignmentRequestRepository.GetByIdAsync(requestId);
+         }
+
+        public async Task<IList<NexportRedemptionUnassignmentRequestReason>> GetAllRedemptionUnassignmentRequestReasonsAsync()
+        {
+            var query =
+                _nexportRedemptionUnassignmentRequestReasonRepository
+                    .Table
+                    .OrderBy(reason => reason.DisplayOrder)
+                    .ThenBy(reason => reason.Id);
+            return await query.ToListAsync();
+        }
+
+        public async Task<NexportRedemptionUnassignmentRequestReason>
+            GetNexportRedemptionUnassignmentRequestReasonByIdAsync(int? reasonId)
+        {
+            return await _nexportRedemptionUnassignmentRequestReasonRepository.GetByIdAsync(reasonId);
+        }
+
+        public async Task UpdateNexportRedemptionUnassignmentRequestReasonAsync(NexportRedemptionUnassignmentRequestReason unassignmentRequestReason)
+        {
+            if (unassignmentRequestReason == null)
+                throw new ArgumentNullException(nameof(unassignmentRequestReason));
+
+            await _nexportRedemptionUnassignmentRequestReasonRepository.UpdateAsync(unassignmentRequestReason);
+        }
+
+        public async Task DeleteUnassignmentRequestReasonAsync(NexportRedemptionUnassignmentRequestReason unassignmentRequestReason)
+        {
+            if (unassignmentRequestReason == null)
+                throw new ArgumentNullException(nameof(unassignmentRequestReason));
+
+            if (_nexportRedemptionUnassignmentRequestReasonRepository.Table.Count() == 1)
+                throw new NopException("You cannot delete unassignment request reason. At least one unassignment request reason is required.");
+
+            await _nexportRedemptionUnassignmentRequestReasonRepository.DeleteAsync(unassignmentRequestReason);
+        }
+
+        public async Task InsertNexportRedemptionUnassignmentRequestReasonAsync(NexportRedemptionUnassignmentRequestReason unassignmentRequestReason)
+        {
+            if (unassignmentRequestReason == null)
+                throw new ArgumentNullException(nameof(unassignmentRequestReason));
+
+            await _nexportRedemptionUnassignmentRequestReasonRepository.InsertAsync(unassignmentRequestReason);
+        }
+
+        public async Task DeleteNexportRedemptionUnassignmentRequestAsync(NexportRedemptionUnassignmentRequest unassignmentRequest)
+        {
+            if (unassignmentRequest == null)
+                throw new ArgumentNullException(nameof(unassignmentRequest));
+
+            await _nexportRedemptionUnassignmentRequestRepository.DeleteAsync(unassignmentRequest);
+        }
+
+        public async Task UpdateNexportRedemptionUnassignmentRequestAsync(NexportRedemptionUnassignmentRequest unassignmentRequest)
+        {
+            if (unassignmentRequest == null)
+                throw new ArgumentNullException(nameof(unassignmentRequest));
+
+            await _nexportRedemptionUnassignmentRequestRepository.UpdateAsync(unassignmentRequest);
+        }
+
+        public async Task<IList<int>> SendRedemptionUnassignmentRequestCustomerNotificationAsync(NexportRedemptionUnassignmentRequest unassignmentRequest,
+            NexportOrderInvoiceItem invoiceItem, string template)
+        {
+            var invoiceOrder = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+            var languageId = invoiceOrder.CustomerLanguageId;
+            if (unassignmentRequest == null)
+                throw new ArgumentNullException(nameof(unassignmentRequest));
+
+            var store = await _storeService.GetStoreByIdAsync(invoiceOrder.StoreId) ?? await _storeContext.GetCurrentStoreAsync();
+            languageId = await EnsureLanguageIsActiveAsync(languageId, store.Id);
+
+            var messageTemplates = await GetActiveMessageTemplatesAsync(template, store.Id);
+            if (!messageTemplates.Any())
+                return new List<int>();
+
+            var customer = await _customerService.GetCustomerByIdAsync(unassignmentRequest.RequestedByCustomerId)
+                           ?? throw new Exception($"Customer with Id {unassignmentRequest.RequestedByCustomerId} does not existed");
+
+            var commonTokens = new List<Token>();
+
+
+            await _messageTokenProvider.AddCustomerTokensAsync(commonTokens, customer);
+            await AddRedemptionUnassignmentRequestTokensAsync(commonTokens, unassignmentRequest, invoiceItem);
+
+            return await messageTemplates.SelectAwait(async messageTemplate =>
+            {
+                var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
+
+                var tokens = new List<Token>(commonTokens);
+                await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+
+                await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
+
+                var billingAddress = await _addressService.GetAddressByIdAsync(invoiceOrder.BillingAddressId);
+
+                var customerIsGuest = await _customerService.IsGuestAsync(customer);
+                var toEmail = customerIsGuest
+                    ? billingAddress.Email
+                    : customer.Email;
+                var toName = customerIsGuest
+                    ? billingAddress.FirstName
+                    : await _customerService.GetCustomerFullNameAsync(customer);
+
+                return await _workflowMessageService
+                    .SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
+            }).ToListAsync();
+        }
+
     }
 }

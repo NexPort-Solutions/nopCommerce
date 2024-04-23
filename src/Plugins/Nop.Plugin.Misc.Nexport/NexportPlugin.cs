@@ -141,6 +141,24 @@ namespace Nop.Plugin.Misc.Nexport
                 ActionName = "Create",
                 IconClass = "far fa-dot-circle"
             });
+            wholesaleNode.ChildNodes.Add(new SiteMapNode()
+            {
+                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+                Title = "Unassignment Requests",
+                SystemName = "UnassignmentRequests",
+                ControllerName = "NexportWholesale",
+                ActionName = "UnassignmentRequestsList",
+                IconClass = "far fa-dot-circle"
+            });
+            wholesaleNode.ChildNodes.Add(new SiteMapNode()
+            {
+                Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+                Title = "Unassignment Request Reasons",
+                SystemName = "UnassignmentRequestReasons",
+                ControllerName = "NexportWholesale",
+                ActionName = "UnassignmentRequestReasonsList",
+                IconClass = "far fa-dot-circle"
+            });
 
             rootNode.ChildNodes.Add(node);
             rootNode.ChildNodes.Add(wholesaleNode);

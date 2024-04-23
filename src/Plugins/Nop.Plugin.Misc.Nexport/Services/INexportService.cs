@@ -400,5 +400,41 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Task<IPagedList<WholesaleOrderInfo>> GetAllWholesaleOrderInfosAsync(string groupName, string shortName,
             string productName,NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, int? customerId, int? storeId, int pageIndex = 0, int pageSize = int.MaxValue);
 
+        Task InsertRedemptionUnassignmentRequestAsync(NexportRedemptionUnassignmentRequest unassignmentRequest);
+
+        Task<IList<int>> SendNewRedemptionUnassignmentRequestStoreOwnerNotificationAsync(
+            NexportRedemptionUnassignmentRequest unassignmentRequest,
+            NexportOrderInvoiceItem invoiceItem, int languageId);
+
+        Task<IList<int>> SendNewRedemptionUnassignmentRequestCustomerNotificationAsync(
+            NexportRedemptionUnassignmentRequest unassignmentRequest,
+            NexportOrderInvoiceItem invoiceItem);
+
+        Task<IPagedList<NexportRedemptionUnassignmentRequest>> GetAllNexportRedemptionUnassignmentRequests(
+            int pageIndex = 0, int pageSize = int.MaxValue);
+
+        Task<NexportRedemptionUnassignmentRequest>
+            GetNexportRedemptionUnassignmentRequestByIdAsync(int? requestId);
+
+        Task<IList<NexportRedemptionUnassignmentRequestReason>> GetAllRedemptionUnassignmentRequestReasonsAsync();
+
+        Task<NexportRedemptionUnassignmentRequestReason>
+            GetNexportRedemptionUnassignmentRequestReasonByIdAsync(int? reasonId);
+
+        Task UpdateNexportRedemptionUnassignmentRequestReasonAsync(
+            NexportRedemptionUnassignmentRequestReason unassignmentRequestReason);
+
+        Task DeleteUnassignmentRequestReasonAsync(NexportRedemptionUnassignmentRequestReason unassignmentRequestReason);
+
+        Task InsertNexportRedemptionUnassignmentRequestReasonAsync(
+            NexportRedemptionUnassignmentRequestReason unassignmentRequestReason);
+
+        Task DeleteNexportRedemptionUnassignmentRequestAsync(NexportRedemptionUnassignmentRequest unassignmentRequest);
+
+        Task UpdateNexportRedemptionUnassignmentRequestAsync(NexportRedemptionUnassignmentRequest unassignmentRequest);
+
+        Task<IList<int>> SendRedemptionUnassignmentRequestCustomerNotificationAsync(
+            NexportRedemptionUnassignmentRequest unassignmentRequest,
+            NexportOrderInvoiceItem invoiceItem, string template);
     }
 }

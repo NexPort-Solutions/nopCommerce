@@ -205,6 +205,10 @@
                 if (@((Model.AdminView && await CustomerService.IsAdminAsync(currentCustomer)).ToString().ToLower())) {
                     return "<center><button class=\"btn btn-default\" onclick=\"unassignRedemption('" + row.InvoiceItemId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")</button></center>";
                 }
+                else
+                {
+                    return "<center><button class=\"btn btn-default\" onclick=\"requestUnassignment('" + row.InvoiceItemId + "','" + row.CustomerId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestUnassignment")</button></center>";
+                }
             }
             else if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Available.GetDisplayName())") {
                 return "<center><button class=\"btn btn-default\" onclick=\"assignRedemption('" + row.InvoiceItemId + "')\" >@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign")</button></center>";
@@ -218,7 +222,11 @@
         return '';
 
     }
-
+    
+    function requestUnassignment(invoiceItemId,customerId)
+    {
+        window.location.href = "@Url.Action("RequestUnassignment", "NexportWholesale")" + "?GroupId=" + "@currentGroupId" + "&InvoiceItemId=" + invoiceItemId + "&ProductId=" + "@Model.CurrentProduct.Id" + "&CustomerId=" + customerId;
+    }
     function assignRedemption(invoiceItemId) {
         window.location.href = "@Url.Action("RedeemProduct", "NexportWholesale")" + "?GroupId=" + "@currentGroupId" + "&InvoiceItemId=" + invoiceItemId + "&ProductId=" + "@Model.CurrentProduct.Id";
     }

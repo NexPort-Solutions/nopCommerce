@@ -1,0 +1,70 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.SubmitRedemptionUnassignmentRequestModel
+@{
+    Layout = "_ColumnsOne";
+
+    NopHtml.AddTitleParts("Request Redemption Unassignment");
+
+}
+
+<link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/unassign_redemption_request.css" />
+<div class="page unassignment-request-page">
+    <div class="page-title">
+        <h1>Request Unassignment</h1>
+    </div>
+    <div class="page-body">
+        @if (!string.IsNullOrEmpty(Model.Result))
+        {
+            <div class="result">
+                @Model.Result
+            </div>
+        }
+        else
+        {
+            <form asp-route="UnassignmentRequest" method="post">
+                <div class="fieldset">
+                    <div class="title">
+                        <strong>
+                        @T("RedemptionUnassignmentRequests.WhyUnassigning")
+                        </strong>
+                    </div>
+                    <div class="form-fields">
+                        <div class="inputs">
+                            <label for="GroupName">Group:</label>
+                            <label style="text-align:left"id="GroupName">@Model.GroupName</label>
+                        </div>
+                        <div class="inputs">
+                            <label for="ProductName">Product:</label>
+                            <label style="text-align:left" id="ProductName">@Model.ProductName</label>
+                        </div>
+                        <div class="inputs">
+                            <label for="CustomerName">Customer:</label>
+                            <label style="text-align:left"id="CustomerName">@Model.CustomerName</label>
+                        </div>
+                         <div class="inputs">
+                            @{
+                                var reasonsSelectList = Model.AvailableUnassignmentReasons.Select(x => new SelectListItem
+                                {
+                                    Text = x.Name,
+                                    Value = x.Id.ToString()
+                                }).ToList();
+                            }
+                            <label asp-for="RedemptionUnassignmentRequestReasonId" asp-postfix=":"></label>
+                            <select asp-for="RedemptionUnassignmentRequestReasonId" asp-items="@reasonsSelectList" class="unassignment-reasons"></select>
+                            
+                        </div>
+                        <div class="inputs">
+                            <label asp-for="Comments" asp-postfix=":"></label>
+                            <textarea asp-for="Comments" class="comment"></textarea>
+                            <span asp-validation-for="Comments"></span>
+                            <input asp-for="InvoiceItemId" type="hidden"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="buttons">
+                    <input type="submit" name="submit-unassignment-request" class="button-1 submit-unassignment-request-button"
+                       value="@T("RedemptionUnassignmentRequests.Submit")" />
+                </div>
+            </form>
+        }
+    </div>
+</div>
