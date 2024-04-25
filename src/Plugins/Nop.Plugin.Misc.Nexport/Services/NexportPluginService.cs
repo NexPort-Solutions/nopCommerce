@@ -901,6 +901,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.SearchEndDate.Hint", "The end date for the search");
             await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.RequestStatus", "Request status");
             await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.RequestStatus.Hint", "Search by a specific unassignment request status e.g. Received.");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.OrderId", "Order Id");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.OrderId.Hint", "The Id of the order");
         }
 
         public async Task DeleteResourcesAsync()
@@ -1325,6 +1328,9 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.SearchEndDate.Hint");
             await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.RequestStatus");
             await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.RequestStatus.Hint");
+
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.OrderId");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.OrderId.Hint");
         }
 
         public async Task InstallPermissionProviderAsync()

@@ -2616,6 +2616,10 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 {
                     var requestModel = unassignmentRequest.ToModel<NexportRedemptionUnassignmentRequestModel>();
 
+                    var invoiceItem =
+                       await  _nexportService.FindNexportOrderInvoiceItemByGuidAsync(unassignmentRequest.InvoiceItemId);
+
+                    requestModel.OrderId = invoiceItem?.OrderId ?? 0;
                     requestModel.UtcCreatedDate =
                         _dateTimeHelper.ConvertToUserTime(
                             unassignmentRequest.UtcCreatedDate,
@@ -2703,6 +2707,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 : await _localizationService.GetResourceAsync("Admin.Customers.Guest");
 
             model.InvoiceItemId = unassignmentRequest.InvoiceItemId;
+
+            var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
+            model.OrderId = invoiceItem?.OrderId ?? 0;
 
             if (excludeProperties)
                 return model;
