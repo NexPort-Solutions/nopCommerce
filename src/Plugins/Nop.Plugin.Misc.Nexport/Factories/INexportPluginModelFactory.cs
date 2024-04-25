@@ -202,5 +202,9 @@ namespace Nop.Plugin.Misc.Nexport.Factories
 
         Task<SubmitRedemptionUnassignmentRequestModel>
             PrepareSubmitRedemptionUnassignmentRequestModelAsync(SubmitRedemptionUnassignmentRequestModel model);
+
+        Task<NexportRedemptionUnassignmentRequestListSearchModel>
+            PrepareRedemptionUnassignmentRequestSearchModelAsync(
+                NexportRedemptionUnassignmentRequestListSearchModel searchModel);
     }
 }

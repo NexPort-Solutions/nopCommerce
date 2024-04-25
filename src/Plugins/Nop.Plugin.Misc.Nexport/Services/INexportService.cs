@@ -436,5 +436,11 @@ namespace Nop.Plugin.Misc.Nexport.Services
         Task<IList<int>> SendRedemptionUnassignmentRequestCustomerNotificationAsync(
             NexportRedemptionUnassignmentRequest unassignmentRequest,
             NexportOrderInvoiceItem invoiceItem, string template);
+
+        Task<IPagedList<NexportRedemptionUnassignmentRequest>> SearchUnassignmentRequestsAsync(int storeId = 0,
+            int customerId = 0,
+            NexportRedemptionUnassignmentRequestStatus? requestStatus = null,
+            DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
+            int pageIndex = 0, int pageSize = int.MaxValue);
     }
 }

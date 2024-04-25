@@ -60,6 +60,7 @@ using Nop.Web.Framework.Models.Extensions;
 using StackExchange.Profiling.Internal;
 using DocumentFormat.OpenXml.InkML;
 using Nop.Core.Caching;
+using Nop.Services;
 
 namespace Nop.Plugin.Misc.Nexport.Factories
 {
@@ -2561,17 +2562,73 @@ namespace Nop.Plugin.Misc.Nexport.Factories
             return model;
         }
 
+        public async Task<NexportRedemptionUnassignmentRequestListSearchModel>
+            PrepareRedemptionUnassignmentRequestSearchModelAsync(NexportRedemptionUnassignmentRequestListSearchModel searchModel)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            var availableStatusItems = await NexportRedemptionUnassignmentRequestStatus.Accepted.ToSelectListAsync(false);
+            foreach (var statusItem in availableStatusItems)
+            {
+                searchModel.RequestStatusList.Add(statusItem);
+            }
+            
+            searchModel.RequestStatusId = -1;
+            searchModel.RequestStatusList.Insert(0, new SelectListItem
+            {
+                Value = "-1",
+                Text = await _localizationService.GetResourceAsync("RedemptionUnassignmentRequests.SearchUnassignmentRequestStatus.All")
+            });
+
+            searchModel.SetGridPageSize();
+
+            return searchModel;
+        }
+
         public async Task<NexportRedemptionRequestUnassignmentListModel> PrepareNexportRedemptionUnassignmentRequestListModel(NexportRedemptionUnassignmentRequestListSearchModel searchModel)
         {
-            var model = new NexportRedemptionRequestUnassignmentListModel();
-            var pagedRequests = await _nexportService.GetAllNexportRedemptionUnassignmentRequests(pageIndex: searchModel.Page - 1,
-                pageSize: searchModel.PageSize);
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
 
-            model = await model.PrepareToGridAsync(searchModel, pagedRequests, () =>
+            var currentTimeZone = await _dateTimeHelper.GetCurrentTimeZoneAsync();
+
+            var startDateValue = !searchModel.StartDate.HasValue
+                ? null
+                : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.StartDate.Value, currentTimeZone);
+            var endDateValue = !searchModel.EndDate.HasValue
+                ? null
+                : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.EndDate.Value, currentTimeZone).AddDays(1);
+            var cancelRequestStatus = searchModel.RequestStatusId == -1
+                ? null
+                : (NexportRedemptionUnassignmentRequestStatus?)searchModel.RequestStatusId;
+
+            // Get cancellation requests
+            var unassignmentRequests =
+                await _nexportService.SearchUnassignmentRequestsAsync(
+                    requestStatus: cancelRequestStatus,
+                    createdFromUtc: startDateValue, createdToUtc: endDateValue,
+                    pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
+
+            var model = await new NexportRedemptionRequestUnassignmentListModel().PrepareToGridAsync(searchModel, unassignmentRequests, () =>
             {
-                return pagedRequests.SelectAwait(async x =>
+                return unassignmentRequests.SelectAwait(async unassignmentRequest =>
                 {
-                    var requestModel = x.ToModel<NexportRedemptionUnassignmentRequestModel>();
+                    var requestModel = unassignmentRequest.ToModel<NexportRedemptionUnassignmentRequestModel>();
+
+                    requestModel.UtcCreatedDate =
+                        _dateTimeHelper.ConvertToUserTime(
+                            unassignmentRequest.UtcCreatedDate,
+                            TimeZoneInfo.Utc,
+                            await _dateTimeHelper.GetCustomerTimeZoneAsync(await _workContext.GetCurrentCustomerAsync()));
+
+                    var customer = await _customerService.GetCustomerByIdAsync(unassignmentRequest.RequestedByCustomerId);
+
+                    requestModel.CustomerInfo =
+                        customer != null && await _customerService.IsRegisteredAsync(customer)
+                            ? customer.Email
+                            : await _localizationService.GetResourceAsync("Admin.Customers.Guest");
+
                     return requestModel;
                 });
             });
@@ -2641,9 +2698,10 @@ namespace Nop.Plugin.Misc.Nexport.Factories
                 TimeZoneInfo.Utc,
                 await _dateTimeHelper.GetCustomerTimeZoneAsync(customer));
 
-            //model.CustomerInfo = await _customerService.IsRegisteredAsync(customer)
-            //    ? customer.Email
-            //    : await _localizationService.GetResourceAsync("Admin.Customers.Guest");
+            model.CustomerInfo = await _customerService.IsRegisteredAsync(customer)
+                ? customer.Email
+                : await _localizationService.GetResourceAsync("Admin.Customers.Guest");
+
             model.InvoiceItemId = unassignmentRequest.InvoiceItemId;
 
             if (excludeProperties)
