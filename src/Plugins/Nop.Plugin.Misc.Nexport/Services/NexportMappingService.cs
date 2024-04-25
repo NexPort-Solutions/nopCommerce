@@ -2992,5 +2992,35 @@ namespace Nop.Plugin.Misc.Nexport.Services
             }).ToListAsync();
         }
 
+        public async Task<IPagedList<NexportRedemptionUnassignmentRequest>> SearchUnassignmentRequestsAsync(int storeId = 0,
+            int customerId = 0,
+            NexportRedemptionUnassignmentRequestStatus? requestStatus = null,
+            DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
+            int pageIndex = 0, int pageSize = int.MaxValue)
+        {
+            var query = _nexportRedemptionUnassignmentRequestRepository.Table;
+
+            //if (storeId > 0)
+            //    query = query.Where(request => storeId == request.StoreId);
+            if (customerId > 0)
+                query = query.Where(request => customerId == request.RequestedByCustomerId);
+
+            if (requestStatus.HasValue)
+            {
+                var returnStatusId = (int)requestStatus.Value;
+                query = query.Where(request => (int)request.RequestStatus == returnStatusId);
+            }
+
+            if (createdFromUtc.HasValue)
+                query = query.Where(request => createdFromUtc.Value <= request.UtcCreatedDate);
+            if (createdToUtc.HasValue)
+                query = query.Where(request => createdToUtc.Value >= request.UtcCreatedDate);
+
+            query = query.OrderByDescending(request => request.UtcCreatedDate)
+                .ThenByDescending(request => request.Id);
+
+            return await query.ToPagedListAsync(pageIndex, pageSize);
+        }
+
     }
 }

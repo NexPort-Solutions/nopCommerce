@@ -866,9 +866,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests", "Unassignment requests");
             await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Description", "List of customer requests to unassign redemptions");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.CustomerComments", "Customer Comments");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.RequestStatus", "Request Status");
-            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.CreatedOn", "Created On");
             await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.EditUnassignmenrRequestDetails", "Edit unassignment request details");
             await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.EditUnassignmentRequest.BackToList", "back to unassignment request list");
 
@@ -881,6 +878,29 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Deleted", "The unassignment request has been deleted successfully.");
             await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Updated", "The unassignment request has been updated successfully.");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.InvoiceItemId", "Invoice Item Id");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.InvoieItemId.Hint", "The Id of the invoice item");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.Customer", "Customer");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.Customer.Hint", "The customer that requested the unassignment");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.CustomerComments", "Customer comments");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.CustomerComments.Hint", "The comments of the customer when requesting the unassignment");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.RequestStatus", "Request status");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.RequestStatus.Hint", "The status of the request");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.ReasonForUnassignment", "Unassignment reason");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.ReasonForUnassignment.Hint", "The reason for unassignment");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.StaffNotes", "Staff notes");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.StaffNotes.Hint", "The notes from staff member");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.UtcCreatedDate", "Created on");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.UtcCreatedDate.Hint", "The date/time the request was made");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.SearchUnassignmentRequestStatus.All", "All");
+
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.SearchStartDate", "Start date");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.SearchStartDate.Hint", "The start date for the search");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.SearchEndDate", "End date");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.SearchEndDate.Hint", "The end date for the search");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.RequestStatus", "Request status");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("RedemptionUnassignmentRequests.RequestStatus.Hint", "Search by a specific unassignment request status e.g. Received.");
         }
 
         public async Task DeleteResourcesAsync()
@@ -1270,9 +1290,6 @@ namespace Nop.Plugin.Misc.Nexport.Services
 
             await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests");
             await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Description");
-            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.CustomerComments");
-            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.RequestStatus");
-            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.CreatedOn");
             await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.EditUnassignmenrRequestDetails");
             await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.EditUnassignmentRequest.BackToList");
             await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequestReasons.Added");
@@ -1285,8 +1302,29 @@ namespace Nop.Plugin.Misc.Nexport.Services
             await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Deleted");
             await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Updated");
 
-
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.InvoiceItemId");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.InvoieItemId.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.Customer");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.Customer.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.CustomerComments");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.CustomerComments.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.RequestStatus");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.RequestStatus.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.ReasonForUnassignment");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.ReasonForUnassignment.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.StaffNotes");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.StaffNotes.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.UtcCreatedDate");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.Fields.UtcCreatedDate.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.SearchUnassignmentRequestStatus.All");
             
+
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.SearchStartDate");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.SearchStartDate.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.SearchEndDate");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.SearchEndDate.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.RequestStatus");
+            await _localizationService.DeleteLocaleResourceAsync("RedemptionUnassignmentRequests.RequestStatus.Hint");
         }
 
         public async Task InstallPermissionProviderAsync()

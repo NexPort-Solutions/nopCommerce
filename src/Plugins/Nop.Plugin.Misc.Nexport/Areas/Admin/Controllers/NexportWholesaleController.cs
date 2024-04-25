@@ -632,7 +632,10 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/NexportWholesale/UnassignmentRequests/List")]
     public async Task<IActionResult> UnassignmentRequestsList()
     {
-        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/List.cshtml", new NexportRedemptionUnassignmentRequestListSearchModel());
+        var model = await _nexportPluginModelFactory
+            .PrepareRedemptionUnassignmentRequestSearchModelAsync(new NexportRedemptionUnassignmentRequestListSearchModel());
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/List.cshtml", model);
     }
 
     [HttpsRequirement]

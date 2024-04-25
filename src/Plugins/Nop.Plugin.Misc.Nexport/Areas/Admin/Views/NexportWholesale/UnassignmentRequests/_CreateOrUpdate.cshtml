@@ -22,7 +22,7 @@
                             <nop-label asp-for="InvoiceItemId" />
                         </div>
                         <div class="col-md-9">
-                            <text>@Model.InvoiceItemId</text>
+                            <div class="form-text-row">@Model.InvoiceItemId</div>
                             <input asp-for="InvoiceItemId" type="hidden" />
                         </div>
                     </div>
@@ -31,7 +31,7 @@
                             <nop-label asp-for="RequestedByCustomerId" />
                         </div>
                         <div class="col-md-9">
-                            <text>@Model.RequestedByCustomerId</text>
+                            <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.RequestedByCustomerId">@Model.CustomerInfo</a>
                             <input asp-for="RequestedByCustomerId" type="hidden" />
                         </div>
                     </div> 
