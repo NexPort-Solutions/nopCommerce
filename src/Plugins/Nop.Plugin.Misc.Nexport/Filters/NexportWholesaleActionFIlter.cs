@@ -1,15 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc.Controllers;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
 using Nop.Core.Events;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
-using Nop.Services.Authentication;
 using Nop.Services.Catalog;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
+using IAuthenticationService = Nop.Services.Authentication.IAuthenticationService;
 
 namespace Nop.Plugin.Misc.Nexport.Filters
 {
@@ -26,6 +27,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
         private readonly ILocalizationService _localizationService;
         private readonly IAuthenticationService _authenticationService;
         private readonly IEventPublisher _eventPublisher;
+        private readonly IWebHelper _webHelper;
 
         public NexportWholesaleActionFilter(
             INexportPluginModelFactory nexportPluginModelFactory,
@@ -38,7 +40,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             ICustomerService customerService,
             ILocalizationService localizationService,
             IAuthenticationService authenticationService,
-            IEventPublisher eventPublisher
+            IEventPublisher eventPublisher,
+            IWebHelper webHelper
         )
         {
             _nexportPluginModelFactory = nexportPluginModelFactory;
@@ -52,6 +55,7 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             _localizationService = localizationService;
             _authenticationService = authenticationService;
             _eventPublisher = eventPublisher;
+            _webHelper = webHelper;
         }
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -62,6 +66,14 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             if (actionDescriptor.ControllerTypeInfo == typeof(Nop.Plugin.Misc.Nexport.Controllers.NexportWholesaleController)
                 && actionDescriptor.ActionName is nameof(Nop.Plugin.Misc.Nexport.Controllers.NexportWholesaleController.RedeemByEmail))
             {
+                //force the customer to reauthenticate when they click the link to redeem from their email
+                var isMarketplaceUrl = _webHelper.GetUrlReferrer() != null;
+
+                if (!isMarketplaceUrl)
+                {
+                    await _authenticationService.SignOutAsync();
+                    context.Result = new ChallengeResult();
+                }
 
             }
 
