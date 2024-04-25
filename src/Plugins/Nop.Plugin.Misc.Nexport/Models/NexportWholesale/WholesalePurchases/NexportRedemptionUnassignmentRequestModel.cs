@@ -11,6 +11,9 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
         [NopResourceDisplayName("RedemptionUnassignmentRequests.Fields.InvoiceItemId")]
         public Guid InvoiceItemId { get; set; }
 
+        [NopResourceDisplayName("RedemptionUnassignmentRequests.Fields.OrderId")]
+        public int OrderId { get; set; }
+
         [NopResourceDisplayName("RedemptionUnassignmentRequests.Fields.Customer")]
         public int RequestedByCustomerId { get; set; }
 

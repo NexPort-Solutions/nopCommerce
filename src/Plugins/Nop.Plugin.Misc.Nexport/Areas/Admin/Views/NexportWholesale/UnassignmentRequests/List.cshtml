@@ -104,6 +104,14 @@
                         {
                             Title = "Nexport Invoice Item"
                         },
+                        new(nameof(NexportRedemptionUnassignmentRequestModel.OrderId))
+                        {
+                            Title = "Order",
+                            ClassName = NopColumnClassDefaults.Button,
+                            Render =  new RenderCustom("renderOrderInfo"),
+                            Width = "100",
+                            AutoWidth = false
+                        },
                         new(nameof(NexportRedemptionUnassignmentRequestModel.RequestedByCustomerId))
                         {
                             Title = T("RedemptionUnassignmentRequests.Fields.Customer").Text,
@@ -137,7 +145,7 @@
                })
 
                   <script>
-                        @*
+                    
                         function renderOrderInfo(data, type, row, meta) {
                             if (row.OrderId > 0) {
                                 var textRenderer = $.fn.dataTable.render.text().display;
@@ -148,7 +156,7 @@
                                 return "order item is deleted";
                             }
                         }
-                        *@
+                        
                         function renderCustomerInfo(data, type, row, meta) {
                             var textRenderer = $.fn.dataTable.render.text().display;
                             return "<a href=\"@Url.Content("~/Admin/Customer/Edit/")" + row.RequestedByCustomerId + "\">" +
