@@ -89,6 +89,32 @@ public class NexportDefaults
     /// </summary>
     public static string NexportOrderInvoiceRedemptionTaskBatchSizeSettingKey => "nexportsettings.tasks.orderinvoiceredemption.batchsize";
 
+
+    /// <summary>
+    /// Name of the Nexport order invoice reset redemption schedule task
+    /// </summary>
+    public static string NexportOrderInvoiceResetRedemptionTaskName => "Reset Nexport invoice item redemption";
+
+    /// <summary>
+    /// Type of the Nexport order invoice reset redemption schedule task
+    /// </summary>
+    public static string NexportOrderInvoiceResetRedemptionTaskType => $"{typeof(NexportInvoiceResetRedemptionTask).Namespace}.{nameof(NexportInvoiceResetRedemptionTask)}";
+
+    /// <summary>
+    /// Nexport order invoice reset redemption task interval (in seconds)
+    /// </summary>
+    public static int NexportOrderInvoiceResetRedemptionTaskInterval => 5;
+
+    /// <summary>
+    /// Nexport order invoice reset redemption default batch size
+    /// </summary>
+    public static int NexportOrderInvoiceResetRedemptionTaskBatchSize => 100;
+
+    /// <summary>
+    /// Nexport order invoice reset redemption batch size setting key
+    /// </summary>
+    public static string NexportOrderInvoiceResetRedemptionTaskBatchSizeSettingKey => "nexportsettings.tasks.orderinvoiceresetredemption.batchsize";
+
     /// <summary>
     /// Name of the Nexport supplemental info answer processing schedule task
     /// </summary>
@@ -220,4 +246,18 @@ public class NexportDefaults
         "Nexport.DeleteSupplementalInfoQuestion";
 
     public const string NEXPORT_PURCHASE_PRODUCT_FOR_CUSTOMER = "Nexport.PurchaseForCustomer";
+
+    public const string NEXPORT_PURCHASING_AGENT_PERMISSION = "ActAsPurchasingAgent";
+
+    public const string REMOTE_SYS_NAME_FOR_API = "Marketplace";
+
+    public const string MANAGE_NEXPORT_WHOLESALE_PERMISSION_NAME = "Manage Nexport wholesale";
+
+    public const string MANAGE_NEXPORT_WHOLESALE_PERMISSION_SYSTEM_NAME = "ManageNexportWholesale";
+
+    public const string MANAGE_NEXPORT_FUNDING_POOLS_PERMISSION_NAME = "Manage Nexport funding pools";
+
+    public const string MANAGE_NEXPORT_FUNDING_POOLS_PERMISSION_SYSTEM_NAME = "ManageNexportFundingPools";
+
+    public const string REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE = "Nexport.Redemption.StudentNotification";
 }

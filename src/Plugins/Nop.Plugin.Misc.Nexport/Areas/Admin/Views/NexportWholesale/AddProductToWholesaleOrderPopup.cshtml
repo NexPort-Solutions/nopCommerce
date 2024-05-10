@@ -1,0 +1,165 @@
+@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders
+@model Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders.WholesaleOrderProductSearchModel
+
+@{
+    Layout = "_AdminPopupLayout";
+
+    ViewBag.PageTitle = T("Admin.Customers.Nexport.Order.Wholesale.Create").Text;
+    NopHtml.SetActiveMenuItemSystemName("Orders");
+}
+
+@{
+    const string hideSearchBlockAttributeName = "ProductListPage.HideSearchBlock";
+    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
+}
+
+<form asp-route-formId="@Context.Request.Query["formId"]" asp-route-btnId="@Context.Request.Query["btnId"]" asp-route-storeId="@Context.Request.Query["storeId"]" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Admin.Customers.Nexport.Order.Wholesale.Create")
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="add" class="btn btn-primary" id="add-products">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.Add")
+            </button>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-horizontal">
+                <div class="cards-group">
+                    <div class="card card-default card-search">
+                        <div class="card-body">
+                            <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
+                                <div class="search-text">@T("Admin.Common.Search")</div>
+                                <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
+                                <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                            </div>
+
+                            <div class="search-body @(hideSearchBlock ? "closed" : "")">
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="@Model.SearchProductName" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="@Model.SearchProductName" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="SearchOnlyNexportProduct" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="SearchOnlyNexportProduct" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="@Model.SearchCategoryId" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-select asp-for="@Model.SearchCategoryId" asp-items="@Model.AvailableCategories" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="text-center col-12">
+                                        <button type="button" id="search-products" class="btn btn-primary btn-search">
+                                            <i class="fas fa-search"></i>
+                                            @T("Admin.Common.Search")
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-default">
+                        <div class="card-body">
+                            @await Html.PartialAsync("Table", new DataTablesModel
+                            {
+                               Name = "wholesale-order-products-grid",
+                               UrlRead = new DataUrl("WholesaleOrderProductList", "NexportWholesale", new RouteValueDictionary { [nameof(Model.SearchStoreId)] = Model.SearchStoreId }),
+                               SearchButtonId = "search-products",
+                               Length = Model.PageSize,
+                               LengthMenu = Model.AvailablePageSizes,
+                               Filters = new List<FilterParameter>
+                               {
+                                 new(nameof(Model.SearchProductName)),
+                                 new(nameof(Model.SearchCategoryId)),
+                                 new(nameof(Model.SearchOnlyNexportProduct), typeof(bool)),
+                               },
+                               ColumnCollection = new List<ColumnProperty>
+                               {
+                                 new(nameof(WholesaleOrderProductModel.Id))
+                                 {
+                                    IsMasterCheckBox = true,
+                                    Render = new RenderCheckBox("checkbox_products"),
+                                    ClassName =  NopColumnClassDefaults.CenterAll,
+                                    Width = "50"
+                                 },
+                                 new(nameof(WholesaleOrderProductModel.PictureThumbnailUrl))
+                                 {
+                                     Title = T("Admin.Catalog.Products.Fields.PictureThumbnailUrl").Text,
+                                     Width = "100",
+                                     Render = new RenderPicture(width: 100)
+                                 },
+                                 new(nameof(WholesaleOrderProductModel.Name))
+                                 {
+                                     Title = T("Admin.Catalog.Products.Fields.Name").Text
+                                 },
+                                 new(nameof(WholesaleOrderProductModel.Price))
+                                 {
+                                     Title = T("Admin.Catalog.Products.Fields.Price").Text,
+                                     Render = new RenderCustom("renderColumnPrice")
+                                 },
+                                 new(nameof(WholesaleOrderProductModel.NexportProductMappingId))
+                                 {
+                                     Title = "Nexport Product",
+                                     Render = new RenderCustom("renderNexportProductMappingAvailable"),
+                                     ClassName = "text-center"
+                                     }
+                                }
+                            })
+
+                            <script>
+                                function renderColumnPrice(data, type, row, meta) {
+                                    return (row.ProductTypeId != @((int)ProductType.GroupedProduct) ) ? data : null;
+                                }
+
+                                function renderNexportProductMappingAvailable(data, type, row, meta) {
+                                    if (row.NexportProductMappingId !== null) {
+                                        return "<i class=\"fas fa-check true-icon\" nop-value=\"true\"></i>";
+                                    } else {
+                                        return "<i class=\"fas fa-times false-icon\" nop-value=\"false\"></i>";
+                                    }
+                                }
+                            </script>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</form>
+<script>
+    $("#add-products").on("click", function (e) {
+        var postData = {
+            selectedIds: selectedIds
+        };
+        console.log(postData);
+        window.opener.wholesaleOrderProductsList = postData;
+        // $(window.opener.document.forms["@(Context.Request.Query["formId"])"].wholesaleOrderProducts).val(JSON.stringify(postData));
+        window.opener.document.forms["@(Context.Request.Query["formId"])"].btnRefreshWholesaleOrderProducts.click();
+        window.opener.document.forms["@(Context.Request.Query["formId"])"].btnShowPayment.click();
+
+        window.close();
+    });
+</script>

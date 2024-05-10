@@ -9,6 +9,7 @@ using Nop.Core.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Models.Api;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
 using Nop.Plugin.Misc.Nexport.Models.Subscription;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
@@ -21,685 +22,685 @@ public class NexportApiService
 
     public NexportApiService(Configuration apiConfiguration)
     {
-            _apiConfiguration = apiConfiguration;
-        }
+        _apiConfiguration = apiConfiguration;
+    }
 
     public NexportAuthenticationResponseDetails AuthenticateNexportApi([NotNull] string url, [NotNull] string username, [NotNull] string password, DateTime? tokenExp)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(username))
-                throw new NullReferenceException("User name cannot be empty");
+        if (string.IsNullOrWhiteSpace(username))
+            throw new NullReferenceException("User name cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(password))
-                throw new NullReferenceException("Password cannot be empty");
+        if (string.IsNullOrWhiteSpace(password))
+            throw new NullReferenceException("Password cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.AdminApiAuthenticateWithHttpInfo(new AuthenticationTokenRequest(username, password,
-                "password", utcExpirationDate: tokenExp));
+        var response = nexportApi.AdminApiAuthenticateWithHttpInfo(new AuthenticationTokenRequest(username, password,
+            "password", utcExpirationDate: tokenExp));
 
-            var result = new NexportAuthenticationResponseDetails
-            {
-                Response = response.Data,
-                StatusCode = (int)response.StatusCode
-            };
+        var result = new NexportAuthenticationResponseDetails
+        {
+            Response = response.Data,
+            StatusCode = (int)response.StatusCode
+        };
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportGetUserResponseDetails AuthenticateNexportUser([NotNull] string url, [NotNull] string accessToken, [NotNull] string loginName, [NotNull] string password)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(loginName))
-                throw new NullReferenceException("Login name cannot be empty");
+        if (string.IsNullOrWhiteSpace(loginName))
+            throw new NullReferenceException("Login name cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(password))
-                throw new NullReferenceException("Password cannot be empty");
+        if (string.IsNullOrWhiteSpace(password))
+            throw new NullReferenceException("Password cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.AdminApiAuthenticateUserWithHttpInfo(loginName, password, accessToken);
+        var response = nexportApi.AdminApiAuthenticateUserWithHttpInfo(loginName, password, accessToken);
 
-            var result = new NexportGetUserResponseDetails
-            {
-                Response = response.Data,
-                StatusCode = (int)response.StatusCode
-            };
+        var result = new NexportGetUserResponseDetails
+        {
+            Response = response.Data,
+            StatusCode = (int)response.StatusCode
+        };
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportGetUserResponseDetails GetNexportUserByLogin([NotNull] string url, [NotNull] string accessToken, [NotNull] string loginName)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(loginName))
-                throw new NullReferenceException("Login name cannot be empty");
+        if (string.IsNullOrWhiteSpace(loginName))
+            throw new NullReferenceException("Login name cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, loginName);
+        var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, loginName);
 
-            var result = new NexportGetUserResponseDetails
-            {
-                Response = response.Data,
-                StatusCode = (int)response.StatusCode
-            };
+        var result = new NexportGetUserResponseDetails
+        {
+            Response = response.Data,
+            StatusCode = (int)response.StatusCode
+        };
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportGetUserResponseDetails GetNexportUserByUserId([NotNull] string url, [NotNull] string accessToken, Guid userId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, userId: userId);
+        var response = nexportApi.AdminApiGetUserWithHttpInfo(accessToken, userId: userId);
 
-            var result = new NexportGetUserResponseDetails
-            {
-                Response = response.Data,
-                StatusCode = (int)response.StatusCode
-            };
+        var result = new NexportGetUserResponseDetails
+        {
+            Response = response.Data,
+            StatusCode = (int)response.StatusCode
+        };
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportUserContactInfoResponseDetails GetNexportUserContactInfo([NotNull] string url, [NotNull] string accessToken,
         Guid userId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.AdminApiGetUserContactInformationWithHttpInfo(accessToken, userId);
+        var response = nexportApi.AdminApiGetUserContactInformationWithHttpInfo(accessToken, userId);
 
-            var result = new NexportUserContactInfoResponseDetails
-            {
-                Response = response.Data,
-                StatusCode = (int)response.StatusCode
-            };
+        var result = new NexportUserContactInfoResponseDetails
+        {
+            Response = response.Data,
+            StatusCode = (int)response.StatusCode
+        };
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportUserListResponse GetNexportUsers([NotNull] string url, [NotNull] string accessToken, string searchTerm, int? page = null)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.AdminApiGetUsersWithHttpInfo(accessToken, searchTerm, page);
+        var response = nexportApi.AdminApiGetUsersWithHttpInfo(accessToken, searchTerm, page, perPage: 30);
 
-            var result = new NexportUserListResponse
-            {
-                UserList = response.Data
-            };
+        var result = new NexportUserListResponse
+        {
+            UserList = response.Data
+        };
 
-            if (response.Headers.ContainsKey("X-Total-Count"))
-                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Total-Count"))
+            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
 
-            if (response.Headers.ContainsKey("X-Per-Page"))
-                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Per-Page"))
+            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
 
-            if (response.Headers.ContainsKey("X-Page"))
-                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Page"))
+            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportCreateUserResponseDetails CreateNexportUser([NotNull] string url, [NotNull] string accessToken,
         [NotNull] string login, [NotNull] string password,
         [NotNull] string firstName, [NotNull] string lastName, [NotNull] string email, Guid ownerOrgId, UserContactInfoRequest contactInfo = null)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(login))
-                throw new NullReferenceException("Login cannot be empty");
+        if (string.IsNullOrWhiteSpace(login))
+            throw new NullReferenceException("Login cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(password))
-                throw new NullReferenceException("Password cannot be empty");
+        if (string.IsNullOrWhiteSpace(password))
+            throw new NullReferenceException("Password cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(firstName))
-                throw new NullReferenceException("First name cannot be empty");
+        if (string.IsNullOrWhiteSpace(firstName))
+            throw new NullReferenceException("First name cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(lastName))
-                throw new NullReferenceException("Last name cannot be empty");
+        if (string.IsNullOrWhiteSpace(lastName))
+            throw new NullReferenceException("Last name cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(email))
-                throw new NullReferenceException("Email cannot be empty");
+        if (string.IsNullOrWhiteSpace(email))
+            throw new NullReferenceException("Email cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(url)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(url)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.AdminApiCreateUserWithHttpInfo(accessToken,
-                new CreateUserRequest(ownerOrgId, login, password, firstName, "", lastName, email, contactInfo: contactInfo));
+        var response = nexportApi.AdminApiCreateUserWithHttpInfo(accessToken,
+            new CreateUserRequest(ownerOrgId, login, password, firstName, "", lastName, email, contactInfo: contactInfo));
 
-            var result = new NexportCreateUserResponseDetails
-            {
-                Response = response.Data,
-                StatusCode = (int)response.StatusCode
-            };
+        var result = new NexportCreateUserResponseDetails
+        {
+            Response = response.Data,
+            StatusCode = (int)response.StatusCode
+        };
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportEditUserResponseDetails EditNexportUserContactInfo([NotNull] string url, [NotNull] string accessToken,
         Guid userId, UserContactInfoRequest updatedInfo)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            if (updatedInfo == null)
-                throw new NullReferenceException("Updated information cannot be empty");
+        if (updatedInfo == null)
+            throw new NullReferenceException("Updated information cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(url)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(url)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response =
-                nexportApi.AdminApiEditUserWithHttpInfo(accessToken, new EditUserRequest(userId, contactInfo: updatedInfo));
+        var response =
+            nexportApi.AdminApiEditUserWithHttpInfo(accessToken, new EditUserRequest(userId, contactInfo: updatedInfo));
 
-            var result = new NexportEditUserResponseDetails()
-            {
-                Response = response.Data,
-                StatusCode = (int)response.StatusCode
-            };
+        var result = new NexportEditUserResponseDetails()
+        {
+            Response = response.Data,
+            StatusCode = (int)response.StatusCode
+        };
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportDirectoryResponse SearchNexportDirectory([NotNull] string url, [NotNull] string accessToken,
         Guid baseOrgId, string searchTerm, int? page = null)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.AdminApiSearchDirectoryWithHttpInfo(0, baseOrgId, accessToken, searchTerm, searchTerm, page);
+        var response = nexportApi.AdminApiSearchDirectoryWithHttpInfo(0, baseOrgId, accessToken, searchTerm, searchTerm, page, perPage: 30);
 
-            var result = new NexportDirectoryResponse
-            {
-                DirectoryList = response.Data
-            };
+        var result = new NexportDirectoryResponse
+        {
+            DirectoryList = response.Data
+        };
 
-            if (response.Headers.ContainsKey("X-Total-Count"))
-                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Total-Count"))
+            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
 
-            if (response.Headers.ContainsKey("X-Per-Page"))
-                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Per-Page"))
+            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
 
-            if (response.Headers.ContainsKey("X-Page"))
-                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Page"))
+            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportOrganizationResponse GetNexportOrganizations([NotNull] string url, [NotNull] string accessToken, Guid orgId, int? page = null)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.AdminApiGetOrganizationsWithHttpInfo(accessToken, orgId, page: page);
+        var response = nexportApi.AdminApiGetOrganizationsWithHttpInfo(accessToken, orgId, page: page, perPage: 30);
 
-            var result = new NexportOrganizationResponse
-            {
-                OrganizationList = response.Data
-            };
+        var result = new NexportOrganizationResponse
+        {
+            OrganizationList = response.Data
+        };
 
-            if (response.Headers.ContainsKey("X-Total-Count"))
-                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Total-Count"))
+            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
 
-            if (response.Headers.ContainsKey("X-Per-Page"))
-                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Per-Page"))
+            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
 
-            if (response.Headers.ContainsKey("X-Page"))
-                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Page"))
+            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
-            return result;
-        }
+        return result;
+    }
 
     public SubscriptionResponse GetNexportSubscription([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid orgId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.AdminApiGetSubscription(accessToken, userId, orgId: orgId);
+        var result = nexportApi.AdminApiGetSubscription(accessToken, userId, orgId: orgId);
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportSubscriptionsResponse GetNexportSubscriptions([NotNull] string url, [NotNull] string accessToken, Guid userId, int? page = null)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.AdminApiGetSubscriptionsWithHttpInfo(accessToken, userId, page: page);
+        var response = nexportApi.AdminApiGetSubscriptionsWithHttpInfo(accessToken, userId, page: page, perPage: 30);
 
-            var result = new NexportSubscriptionsResponse
-            {
-                Subscriptions = response.Data
-            };
+        var result = new NexportSubscriptionsResponse
+        {
+            Subscriptions = response.Data
+        };
 
-            if (response.Headers.ContainsKey("X-Total-Count"))
-                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Total-Count"))
+            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
 
-            if (response.Headers.ContainsKey("X-Per-Page"))
-                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Per-Page"))
+            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
 
-            if (response.Headers.ContainsKey("X-Page"))
-                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Page"))
+            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportCatalogResponse GetNexportCatalogs([NotNull] string url, [NotNull] string accessToken, Guid orgId, int? page = null)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var catalogRequest = new CatalogRequest(orgId, Enums.PublishingModelEnum.ForSaleInMarketPlace, CatalogRequest.CatalogAccessOptionEnum.Owned);
-            var response = nexportApi.LearningApiGetCatalogsWithHttpInfo(accessToken, catalogRequest, page);
+        var catalogRequest = new CatalogRequest(orgId, Enums.PublishingModelEnum.ForSaleInMarketPlace, CatalogRequest.CatalogAccessOptionEnum.Owned);
+        var response = nexportApi.LearningApiGetCatalogsWithHttpInfo(accessToken, catalogRequest, page, perPage: 30);
 
-            var result = new NexportCatalogResponse
-            {
-                CatalogList = response.Data.Catalogs
-            };
+        var result = new NexportCatalogResponse
+        {
+            CatalogList = response.Data.Catalogs
+        };
 
-            if (response.Headers.ContainsKey("X-Total-Count"))
-                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Total-Count"))
+            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
 
-            if (response.Headers.ContainsKey("X-Per-Page"))
-                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Per-Page"))
+            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
 
-            if (response.Headers.ContainsKey("X-Page"))
-                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Page"))
+            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
-            return result;
-        }
+        return result;
+    }
 
     public CatalogResponseItem GetNexportCatalogDetails([NotNull] string url, [NotNull] string accessToken, Guid catalogId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.LearningApiGetCatalog(catalogId, accessToken);
+        var result = nexportApi.LearningApiGetCatalog(catalogId, accessToken);
 
-            return result;
-        }
+        return result;
+    }
 
     public GetDescriptionResponse GetNexportCatalogDescription([NotNull] string url, [NotNull] string accessToken, Guid catalogId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.LearningApiGetCatalogDescription(catalogId, accessToken);
+        var result = nexportApi.LearningApiGetCatalogDescription(catalogId, accessToken);
 
-            return result;
-        }
+        return result;
+    }
 
     public GetCatalogCreditHoursResponse GetNexportCatalogCreditHours([NotNull] string url, [NotNull] string accessToken, Guid catalogId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.LearningApiGetCatalogCreditHours(catalogId, accessToken);
+        var result = nexportApi.LearningApiGetCatalogCreditHours(catalogId, accessToken);
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportSyllabusResponse GetNexportSyllabuses([NotNull] string url, [NotNull] string accessToken, Guid catalogId, int? page = null)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.LearningApiGetCatalogSyllabiWithHttpInfo(catalogId, accessToken, page);
+        var response = nexportApi.LearningApiGetCatalogSyllabiWithHttpInfo(catalogId, accessToken, page, perPage: 30);
 
-            var result = new NexportSyllabusResponse
-            {
-                SyllabusList = response.Data
-            };
+        var result = new NexportSyllabusResponse
+        {
+            SyllabusList = response.Data
+        };
 
-            if (response.Headers.ContainsKey("X-Total-Count"))
-                result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Total-Count"))
+            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
 
-            if (response.Headers.ContainsKey("X-Per-Page"))
-                result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Per-Page"))
+            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
 
-            if (response.Headers.ContainsKey("X-Page"))
-                result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.ContainsKey("X-Page"))
+            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
 
-            return result;
-        }
+        return result;
+    }
 
     public SectionResponse GetNexportSectionDetails([NotNull] string url, [NotNull] string accessToken, Guid sectionId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.LearningApiGetSection(accessToken, sectionId);
+        var result = nexportApi.LearningApiGetSection(accessToken, sectionId);
 
-            return result;
-        }
+        return result;
+    }
 
     public GetDescriptionResponse GetNexportSectionDescription([NotNull] string url, [NotNull] string accessToken, Guid sectionId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.LearningApiGetSectionDescription(sectionId, accessToken);
+        var result = nexportApi.LearningApiGetSectionDescription(sectionId, accessToken);
 
-            return result;
-        }
+        return result;
+    }
 
     public GetObjectivesResponse GetNexportSectionObjectives([NotNull] string url, [NotNull] string accessToken, Guid sectionId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.LearningApiGetSectionObjectives(sectionId, accessToken);
+        var result = nexportApi.LearningApiGetSectionObjectives(sectionId, accessToken);
 
-            return result;
-        }
+        return result;
+    }
 
     public TrainingPlanResponse GetNexportTrainingPlanDetails([NotNull] string url, [NotNull] string accessToken, Guid trainingPlanId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.LearningApiGetTrainingPlan(accessToken, trainingPlanId);
+        var result = nexportApi.LearningApiGetTrainingPlan(accessToken, trainingPlanId);
 
-            return result;
-        }
+        return result;
+    }
 
     public GetDescriptionResponse GetNexportTrainingPlanDescription([NotNull] string url, [NotNull] string accessToken, Guid trainingPlanId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.LearningApiGetTrainingPlanDescription(trainingPlanId, accessToken);
+        var result = nexportApi.LearningApiGetTrainingPlanDescription(trainingPlanId, accessToken);
 
-            return result;
-        }
+        return result;
+    }
 
     public NexportGetInvoiceResponseDetails GetNexportInvoice([NotNull] string url, [NotNull] string accessToken, Guid invoiceId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.PointOfSaleApiGetInvoiceWithHttpInfo(invoiceId, accessToken);
+        var response = nexportApi.PointOfSaleApiGetInvoiceWithHttpInfo(invoiceId, accessToken);
 
-            var result = new NexportGetInvoiceResponseDetails
-            {
-                Response = response.Data,
-                StatusCode = (int)response.StatusCode
-            };
+        var result = new NexportGetInvoiceResponseDetails
+        {
+            Response = response.Data,
+            StatusCode = (int)response.StatusCode
+        };
 
-            return result;
-        }
+        return result;
+    }
 
     public BeginInvoiceTransactionResponse BeginNexportInvoiceTransaction([NotNull] string url, [NotNull] string accessToken,
-        Guid orgId, Guid purchasingAgentId)
+        Guid orgId, Guid purchasingAgentId, Guid? purchasingGroupId = null)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.PointOfSaleApiBeginInvoiceTransaction(accessToken,
-                new CreateInvoiceMessageRequest(purchasingAgentId, orgId));
+        var result = nexportApi.PointOfSaleApiBeginInvoiceTransaction(accessToken,
+            new CreateInvoiceMessageRequest(purchasingAgentId, orgId, purchasingGroupId));
 
-            return result;
-        }
+        return result;
+    }
 
     public AddInvoiceItemResponse AddNexportInvoiceItem([NotNull] string url, [NotNull] string accessToken,
         Guid invoiceId, Guid productId, Enums.ProductTypeEnum productType,
@@ -707,56 +708,56 @@ public class NexportApiService
         decimal cost, string note = null, DateTime? accessExpirationDate = null,
         string accessExpirationTimeLimit = null)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var result = nexportApi.PointOfSaleApiAddInvoiceItem(accessToken,
+            new CreateInvoiceItemRequest(invoiceId, productId)
             {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+                ProductType = productType,
+                SubscriptionOrgId = subscriptionOrgId,
+                GroupMembershipIds = groupMembershipIds.ToList(),
+                Note = note,
+                Cost = cost,
+                UtcAccessExpirationDate = accessExpirationDate,
+                AccessExpirationTimeLimit = accessExpirationTimeLimit
+            });
 
-            var result = nexportApi.PointOfSaleApiAddInvoiceItem(accessToken,
-                new CreateInvoiceItemRequest(invoiceId, productId)
-                {
-                    ProductType = productType,
-                    SubscriptionOrgId = subscriptionOrgId,
-                    GroupMembershipIds = groupMembershipIds.ToList(),
-                    Note = note,
-                    Cost = cost,
-                    UtcAccessExpirationDate = accessExpirationDate,
-                    AccessExpirationTimeLimit = accessExpirationTimeLimit
-                });
-
-            return result;
-        }
+        return result;
+    }
 
     public AddInvoiceScheduledPaymentResponse AddNexportInvoiceScheduledPayment([NotNull] string url, [NotNull] string accessToken,
         Guid invoiceId, decimal amount, DateTime dueDate, string note = null)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.PointOfSaleApiAddInvoiceScheduledPayment(accessToken, new InvoiceScheduledPaymentRequest(invoiceId, amount, dueDate, note));
+        var result = nexportApi.PointOfSaleApiAddInvoiceScheduledPayment(accessToken, new InvoiceScheduledPaymentRequest(invoiceId, amount, dueDate, note));
 
-            return result;
-        }
+        return result;
+    }
 
     public AddInvoicePaymentResponse AddNexportInvoicePayment([NotNull] string url, [NotNull] string accessToken,
         Guid invoiceId, decimal amount, Guid merchantAccountId,
@@ -766,264 +767,373 @@ public class NexportApiService
         Guid? paymentCollectorId = null,
         string note = null)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var result = nexportApi.PointOfSaleApiAddInvoicePayment(accessToken,
+            new InvoicePaymentRequest(
+                invoiceId,
+                merchantAccountId: merchantAccountId,
+                payeeId: payeeId,
+                paymentProcessor: paymentProcessor,
+                paymentProcessorTransactionId: paymentProcessorTransactionId,
+                amountUsd: amount,
+                utcPaymentDate: dueDate)
             {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+                PaymentCollectorId = paymentCollectorId ?? Guid.NewGuid(),
+                Note = note
+            });
 
-            var result = nexportApi.PointOfSaleApiAddInvoicePayment(accessToken,
-                new InvoicePaymentRequest(
-                    invoiceId,
-                    merchantAccountId: merchantAccountId,
-                    payeeId: payeeId,
-                    paymentProcessor: paymentProcessor,
-                    paymentProcessorTransactionId: paymentProcessorTransactionId,
-                    amountUsd: amount,
-                    utcPaymentDate: dueDate)
-                {
-                    PaymentCollectorId = paymentCollectorId ?? Guid.NewGuid(),
-                    Note = note
-                });
-
-            return result;
-        }
+        return result;
+    }
 
     public CommitInvoiceResponse CommitNexportInvoiceTransaction([NotNull] string url, [NotNull] string accessToken, Guid invoiceId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.PointOfSaleApiCommitInvoiceTransaction(accessToken, new CommitInvoiceRequest(invoiceId));
+        var result = nexportApi.PointOfSaleApiCommitInvoiceTransaction(accessToken, new CommitInvoiceRequest(invoiceId));
 
-            return result;
-        }
+        return result;
+    }
 
-    public InvoiceRedemptionResponse RedeemNexportInvoice([NotNull] string url, [NotNull] string accessToken, Guid invoiceItemId,
-        Guid redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction)
+    public InvoiceRedemptionResponse RedeemNexportInvoice([NotNull] string url, [NotNull] string accessToken,
+        Guid redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction, string invoiceItemRedemptionCode)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
-                    new RedeemInvoiceItemRequest(invoiceItemId, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction));
+        var result = nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
+                new RedeemInvoiceItemRequest(invoiceItemRedemptionCode: invoiceItemRedemptionCode, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction));
 
-            return result;
-        }
+        return result;
+    }
+
+    public InvoiceRedemptionResponse RedeemOpenEndedNexportInvoice([NotNull] string url, [NotNull] string accessToken,
+        Guid redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction, string invoiceItemRedemptionCode, Guid? productId, Enums.ProductTypeEnum productType)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
+
+        if (!productId.HasValue)
+            throw new NullReferenceException("Product Id cannot be null");
+
+        _apiConfiguration.BasePath = url;
+
+        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var result = nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
+            new RedeemInvoiceItemRequest(invoiceItemRedemptionCode: invoiceItemRedemptionCode, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction,
+                productId: productId.Value, productType: productType));
+
+        return result;
+    }
 
     public NexportGetInvoiceRedemptionDetails GetNexportInvoiceRedemption([NotNull] string url, [NotNull] string accessToken, Guid invoiceItemId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new PointOfSaleApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var response = nexportApi.PointOfSaleApiGetInvoiceRedemptionWithHttpInfo(invoiceItemId, accessToken);
+        var response = nexportApi.PointOfSaleApiGetInvoiceRedemptionWithHttpInfo(invoiceItemId, accessToken);
 
-            var result = new NexportGetInvoiceRedemptionDetails
-            {
-                Response = response.Data,
-                StatusCode = (int)response.StatusCode
-            };
+        var result = new NexportGetInvoiceRedemptionDetails
+        {
+            Response = response.Data,
+            StatusCode = (int)response.StatusCode
+        };
 
-            return result;
-        }
+        return result;
+    }
 
     public SsoResponse NexportSingleSignOn([NotNull] string url, [NotNull] string accessToken, Guid orgId, Guid userId, string redirectUrl)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new SsoApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new SsoApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.SsoApiSignIn(accessToken,
-                    new SsoRequest(Enums.DisplayEnum.Normal, userId, orgId,
-                    redirectEntityRequest: new RedirectEntityRequest(redirectUrl, redirectUrl, redirectUrl)));
+        var result = nexportApi.SsoApiSignIn(accessToken,
+                new SsoRequest(Enums.DisplayEnum.Normal, userId, orgId,
+                redirectEntityRequest: new RedirectEntityRequest(redirectUrl, redirectUrl, redirectUrl)));
 
-            return result;
-        }
+        return result;
+    }
 
     public SsoResponse NexportClassroomSingleSignOn([NotNull] string url, [NotNull] string accessToken, Guid enrollmentId, string redirectUrl)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new SsoApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new SsoApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.SsoApiClassroom(accessToken,
-                    new ClassroomSsoRequest(Enums.DisplayEnum.Normal, enrollmentId,
-                    new RedirectEntityRequest(redirectUrl, redirectUrl, redirectUrl)));
+        var result = nexportApi.SsoApiClassroom(accessToken,
+                new ClassroomSsoRequest(Enums.DisplayEnum.Normal, enrollmentId,
+                new RedirectEntityRequest(redirectUrl, redirectUrl, redirectUrl)));
 
-            return result;
-        }
+        return result;
+    }
 
     public SectionEnrollmentsResponse GetNexportSectionEnrollment([NotNull] string url, [NotNull] string accessToken, Guid orgId, Guid userId, Guid syllabusId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var apiResult = nexportApi.LearningApiGetSectionEnrollments(accessToken, orgId, null, userId, syllabusId);
+        var apiResult = nexportApi.LearningApiGetSectionEnrollments(accessToken, orgId, null, userId, syllabusId);
 
-            var result = apiResult.FirstOrDefault();
+        var result = apiResult.FirstOrDefault();
 
-            return result;
-        }
+        return result;
+    }
 
     public TrainingPlanEnrollmentsResponse GetNexportTrainingPlanEnrollment([NotNull] string url,
         [NotNull] string accessToken, Guid orgId, Guid userId, Guid syllabusId)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new LearningApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.LearningApiGetTrainingPlanEnrollments(accessToken, orgId, userId: userId, syllabusId: syllabusId)
-                .FirstOrDefault();
+        var result = nexportApi.LearningApiGetTrainingPlanEnrollments(accessToken, orgId, userId: userId, syllabusId: syllabusId)
+            .FirstOrDefault();
 
-            return result;
-        }
+        return result;
+    }
 
     public CreateMembershipResponse CreateNexportMemberships([NotNull] string url, [NotNull] string accessToken, Guid userId, IList<Guid> groupIds)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.AdminApiCreateMembership(accessToken,
-                new CreateMembershipRequest(groupIds.ToList(), userId));
+        var result = nexportApi.AdminApiCreateMembership(accessToken,
+            new CreateMembershipRequest(groupIds.ToList(), userId));
 
-            return result;
-        }
+        return result;
+    }
 
     public RemoveMembershipResponse RemoveNexportMemberships([NotNull] string url, [NotNull] string accessToken, IList<Guid> membershipIds)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.AdminApiRemoveMembership(accessToken,
-                new RemoveMembershipRequest(memberships: membershipIds.ToList()));
+        var result = nexportApi.AdminApiRemoveMembership(accessToken,
+            new RemoveMembershipRequest(memberships: membershipIds.ToList()));
 
-            return result;
-        }
+        return result;
+    }
 
     public SetCustomProfileFieldValuesResponse SetNexportCustomerProfileFieldValues([NotNull] string url, [NotNull] string accessToken,
         Guid subscriberId, Dictionary<string, string> profileFields)
     {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new NullReferenceException("Api url cannot be empty");
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(accessToken))
-                throw new NullReferenceException("Access token cannot be empty");
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
 
-            _apiConfiguration.BasePath = url;
+        _apiConfiguration.BasePath = url;
 
-            var nexportApi = new AdminApi(_apiConfiguration)
-            {
-                Client = EngineContext.Current.Resolve<ISynchronousClient>(),
-                AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
-            };
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
 
-            var result = nexportApi.AdminApiSetCustomProfileFieldValues(accessToken,
-                new SetCustomProfileFieldValuesRequest(subscriberId: subscriberId, customProfileFieldValues: profileFields));
+        var result = nexportApi.AdminApiSetCustomProfileFieldValues(accessToken,
+            new SetCustomProfileFieldValuesRequest(subscriberId: subscriberId, customProfileFieldValues: profileFields));
 
-            return result;
-        }
+        return result;
+    }
+
+    public HasGroupPermissionResponse HasGroupPermission([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
+
+        _apiConfiguration.BasePath = url;
+
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var result = nexportApi.AdminApiHasGroupPermission(accessToken: accessToken,
+            new HasGroupPermissionRequest(userId: userId, groupId: groupId, permission: permission));
+
+        return result;
+    }
+
+    public NexportSearchGroupsForPermissionResponse SearchGroupsForPermission([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION, int? page = null)
+    {
+
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
+
+        _apiConfiguration.BasePath = url;
+
+        var nexportApi = new AdminApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var response = nexportApi.AdminApiSearchGroupsForPermissionWithHttpInfo(accessToken, new SearchGroupsForPermissionRequest(userId: userId, orgId: groupId, permission: permission, page: page, perPage: 30));
+
+
+        var result = new NexportSearchGroupsForPermissionResponse
+        {
+            SearchGroupsForPermissionList = response.Data.Groups
+        };
+
+        if (response.Headers.ContainsKey("X-Total-Count"))
+            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+
+        if (response.Headers.ContainsKey("X-Per-Page"))
+            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+
+        if (response.Headers.ContainsKey("X-Page"))
+            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+
+        return result;
+    }
+
+    public ResetInvoiceRedemptionResponse ResetInvoiceRedemption([NotNull] string url, [NotNull] string accessToken, Guid invoiceItemId)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
+
+        _apiConfiguration.BasePath = url;
+
+        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var result =
+            nexportApi.PointOfSaleApiResetInvoiceRedemption(accessToken,
+                new ResetInvoiceRedemptionRequest(invoiceItemId, $"reset redemption for invoice item with id:{invoiceItemId} on {DateTime.UtcNow}", NexportDefaults.REMOTE_SYS_NAME_FOR_API));
+
+        return result;
+    }
 }

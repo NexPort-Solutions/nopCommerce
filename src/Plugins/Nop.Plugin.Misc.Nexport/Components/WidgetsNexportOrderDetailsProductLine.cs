@@ -32,28 +32,28 @@ public class WidgetsNexportOrderDetailsProductLine : NopViewComponent
         ISettingService settingService,
         IOrderService orderService)
     {
-            _nexportService = nexportService;
-            _productModelFactory = productModelFactory;
-            _storeModelFactory = storeModelFactory;
-            _storeContext = storeContext;
-            _cacheManager = cacheManager;
-            _settingService = settingService;
-            _orderService = orderService;
-        }
+        _nexportService = nexportService;
+        _productModelFactory = productModelFactory;
+        _storeModelFactory = storeModelFactory;
+        _storeContext = storeContext;
+        _cacheManager = cacheManager;
+        _settingService = settingService;
+        _orderService = orderService;
+    }
 
     public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
     {
-            var model = (OrderDetailsModel.OrderItemModel)additionalData;
+        var model = (OrderDetailsModel.OrderItemModel)additionalData;
 
-            var orderItem = await _orderService.GetOrderItemByGuidAsync(model.OrderItemGuid);
-            if (orderItem == null)
-                return Content("");
+        var orderItem = await _orderService.GetOrderItemByGuidAsync(model.OrderItemGuid);
+        if (orderItem == null)
+            return Content("");
 
-            var order = await _orderService.GetOrderByIdAsync(orderItem.OrderId);
+        var order = await _orderService.GetOrderByIdAsync(orderItem.OrderId);
 
-            if (order == null || order.OrderStatus != OrderStatus.Complete)
-                return Content("");
+        if (order is not { OrderStatus: OrderStatus.Complete })
+            return Content("");
 
-            return View("~/Plugins/Misc.Nexport/Views/Widget/Order/NexportOrderDetailsProductLine.cshtml", model);
-        }
+        return View("~/Plugins/Misc.Nexport/Views/Widget/Order/NexportOrderDetailsProductLine.cshtml", model);
+    }
 }

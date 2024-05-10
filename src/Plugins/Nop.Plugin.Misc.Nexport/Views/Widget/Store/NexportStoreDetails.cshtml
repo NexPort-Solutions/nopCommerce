@@ -37,36 +37,9 @@
 
             <div class="card card-default">
                 <div class="card-header">
-                    Nexport Sale Model Configuration
+                    Nexport Repurchasing Configuration
                 </div>
                 <div class="card-body">
-                    <div class="form-group row">
-                        <div class="col-md-3">
-                            <nop-label asp-for="SaleModel" />
-                        </div>
-                        <div class="col-md-9">
-                            <div class="theme-selection-block clearfix">
-                                <div class="checkbox">
-                                    <label>
-                                        <span>
-                                            <input type="radio" name="@Html.NameFor(x => x.SaleModel)" value="@NexportStoreSaleModel.Retail"
-                                                   @if (Model.SaleModel != null & Model.SaleModel == NexportStoreSaleModel.Retail) { <text> checked</text> }>
-                                            @T("Plugins.Misc.Nexport.SaleModel.Retail")
-                                        </span>
-                                    </label>
-                                </div>
-                                <div class="checkbox">
-                                    <label>
-                                        <span>
-                                            <input type="radio" name="@Html.NameFor(x => x.SaleModel)" value="@NexportStoreSaleModel.Wholesale"
-                                                   @if (Model.SaleModel != null & Model.SaleModel == NexportStoreSaleModel.Wholesale) { <text> checked</text> }>
-                                            @T("Plugins.Misc.Nexport.SaleModel.Wholesale")
-                                        </span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="form-group row">
                         <div class="col-md-3">
                             <nop-label asp-for="AllowRepurchaseFailedCourses" />

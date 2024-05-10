@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Services.Security;
@@ -23,14 +22,14 @@ public class NexportOrderController : BaseAdminController
         }
 
     [HttpPost]
-    public virtual async Task<IActionResult> OrderList(OrderSearchModel searchModel)
+    public async Task<IActionResult> OrderList(OrderSearchModel searchModel)
     {
-            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders))
-                return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders))
+            return await AccessDeniedDataTablesJson();
 
-            //prepare model
-            var model = await _nexportPluginModelFactory.PrepareOrderListModelAsync(searchModel);
+        //prepare model
+        var model = await _nexportPluginModelFactory.PrepareOrderListModelAsync(searchModel);
 
-            return Json(model);
-        }
+        return Json(model);
+    }
 }

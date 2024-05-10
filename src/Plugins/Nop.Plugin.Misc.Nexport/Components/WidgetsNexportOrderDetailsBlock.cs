@@ -30,39 +30,39 @@ public class WidgetsNexportOrderDetailsBlock : NopViewComponent
         IPermissionService permissionService,
         IGenericAttributeService genericAttributeService)
     {
-            _nexportSettings = nexportSettings;
-            _nexportService = nexportService;
-            _nexportPluginModelFactory = nexportPluginModelFactory;
-            _orderService = orderService;
-            _genericAttributeService = genericAttributeService;
-            _permissionService = permissionService;
-        }
+        _nexportSettings = nexportSettings;
+        _nexportService = nexportService;
+        _nexportPluginModelFactory = nexportPluginModelFactory;
+        _orderService = orderService;
+        _genericAttributeService = genericAttributeService;
+        _permissionService = permissionService;
+    }
 
     public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
     {
-            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
-                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportOrderInvoice))
-                return Content("");
+        if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportOrderInvoice))
+            return Content("");
 
-            var orderModel = (OrderModel)additionalData;
+        var orderModel = (OrderModel)additionalData;
 
-            var order = _orderService.GetOrderByIdAsync(orderModel.Id);
+        var order = _orderService.GetOrderByIdAsync(orderModel.Id);
 
-            if (order == null)
-                return Content("");
+        if (order == null)
+            return Content("");
 
-            var model = new NexportOrderAdditionalInfoModel()
+        var model = new NexportOrderAdditionalInfoModel()
+        {
+            OrderId = order.Id,
+            NexportOrderApprovalModel = new NexportOrderApprovalModel
             {
-                OrderId = order.Id,
-                NexportOrderApprovalModel = new NexportOrderApprovalModel
+                SearchModel = new NexportOrderInvoiceItemSearchModel
                 {
-                    SearchModel = new NexportOrderInvoiceItemSearchModel
-                    {
-                        OrderId = order.Id
-                    }
+                    OrderId = order.Id
                 }
-            };
+            }
+        };
 
-            return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Order/NexportOrderDetails.cshtml", model);
-        }
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Order/NexportOrderDetails.cshtml", model);
+    }
 }

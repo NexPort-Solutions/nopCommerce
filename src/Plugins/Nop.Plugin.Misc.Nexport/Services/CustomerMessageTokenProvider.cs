@@ -104,16 +104,16 @@ public class CustomerMessageTokenProvider : MessageTokenProvider
         storeInformationSettings,
         taxSettings)
     {
-        }
+    }
 
     public override IEnumerable<string> GetTokenGroups(MessageTemplate messageTemplate)
     {
-            switch (messageTemplate.Name)
-            {
-                case "Test":
-                    return new[] { TokenGroupNames.StoreTokens, TokenGroupNames.OrderTokens, TokenGroupNames.CustomerTokens, TokenGroupNames.ReturnRequestTokens };
-            }
-
-            return base.GetTokenGroups(messageTemplate);
+        switch (messageTemplate.Name)
+        {
+            case "Test":
+                return new[] { TokenGroupNames.StoreTokens, TokenGroupNames.OrderTokens, TokenGroupNames.CustomerTokens, TokenGroupNames.ReturnRequestTokens };
         }
+
+        return base.GetTokenGroups(messageTemplate);
+    }
 }

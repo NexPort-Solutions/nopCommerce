@@ -12,9 +12,6 @@ public record NexportStoreModel : StoreModel
     [UIHint("~/Plugins/Misc.Nexport/Views/Shared/EditorTemplates/GuidNullable.cshtml")]
     public Guid? NexportSubscriptionOrgId { get; set; }
 
-    [NopResourceDisplayName("Plugins.Misc.Nexport.SaleModel")]
-    public NexportStoreSaleModel? SaleModel { get; set; }
-
     [NopResourceDisplayName("Plugins.Misc.Nexport.AllowRepurchaseFailedCourses")]
     public bool AllowRepurchaseFailedCourses { get; set; }
 

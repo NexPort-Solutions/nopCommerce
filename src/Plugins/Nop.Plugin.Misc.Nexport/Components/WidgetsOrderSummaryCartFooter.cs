@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
+using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Services.Orders;
 using Nop.Web.Framework.Components;
 
@@ -17,33 +19,45 @@ public class WidgetsOrderSummaryCartFooter : NopViewComponent
     private readonly IOrderTotalCalculationService _orderTotalCalculationService;
     private readonly IShoppingCartService _shoppingCartService;
     private readonly IActionContextAccessor _actionContextAccessor;
+    private readonly INexportPluginModelFactory _modelFactory;
 
     public WidgetsOrderSummaryCartFooter(
         IWorkContext workContext,
         IStoreContext storeContext,
         IOrderTotalCalculationService orderTotalCalculationService,
         IShoppingCartService shoppingCartService,
-        IActionContextAccessor actionContextAccessor)
+        IActionContextAccessor actionContextAccessor,
+        INexportPluginModelFactory modelFactory)
     {
-            _workContext = workContext;
-            _storeContext = storeContext;
-            _orderTotalCalculationService = orderTotalCalculationService;
-            _shoppingCartService = shoppingCartService;
-            _actionContextAccessor = actionContextAccessor;
-        }
+        _workContext = workContext;
+        _storeContext = storeContext;
+        _orderTotalCalculationService = orderTotalCalculationService;
+        _shoppingCartService = shoppingCartService;
+        _actionContextAccessor = actionContextAccessor;
+        _modelFactory = modelFactory;
+    }
 
     public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
     {
-            var cart = await _shoppingCartService.GetShoppingCartAsync(
-                await _workContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart,
-                (await _storeContext.GetCurrentStoreAsync()).Id);
-            var (_, appliedDiscounts, _, _, _) = await _orderTotalCalculationService.GetShoppingCartSubTotalAsync(cart, false);
+        var store = await _storeContext.GetCurrentStoreAsync();
+        var customer = await _workContext.GetCurrentCustomerAsync();
 
-            if ((_actionContextAccessor.ActionContext?.ActionDescriptor as ControllerActionDescriptor)?.ActionName == "Cart")
-                return Content("");
+        var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
 
+        var (_, appliedDiscounts, _, _, _) = await _orderTotalCalculationService.GetShoppingCartSubTotalAsync(cart, false);
+
+        var model = await _modelFactory.PrepareOrderSummaryCartFooterModel(new OrderSummaryCartFooterModel(), customer, store, cart);
+
+        if ((_actionContextAccessor.ActionContext?.ActionDescriptor as ControllerActionDescriptor)?.ActionName != "Cart")
+        {
             ViewData["DiscountList"] = appliedDiscounts;
-
-            return View("~/Plugins/Misc.Nexport/Views/Widget/Order/WidgetsOrderSummaryCartFooter.cshtml");
+            model.TogglePurchasingGroupText = true;
         }
+        else
+        {
+            model.TogglePurchasingGroupText = false;
+        }
+
+        return View("~/Plugins/Misc.Nexport/Views/Widget/Order/WidgetsOrderSummaryCartFooter.cshtml", model);
+    }
 }

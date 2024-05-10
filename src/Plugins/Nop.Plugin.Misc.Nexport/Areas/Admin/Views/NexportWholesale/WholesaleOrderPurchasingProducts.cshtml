@@ -1,0 +1,83 @@
+﻿@model Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders.WholesaleOrderPurchasingProducts
+
+<style>
+    .wholesale-purchasing-products td {
+        vertical-align: middle;
+    }
+</style>
+<script>
+    var currentPurchasingProducts = new Array();
+    @foreach (var item in Model.Items)
+    {
+        @:currentPurchasingProducts.push(@item.Id);
+    }
+    $("#productIds").val(JSON.stringify(currentPurchasingProducts));
+</script>
+
+<input type="hidden" id="productIds" name="productIds" />
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Products</h3>
+    </div>
+
+    <div class="card-body">
+        <table class="table wholesale-purchasing-products">
+            <colgroup>
+                <col />
+                <col width="1" />
+                <col width="200" />
+                <col width="150" />
+            </colgroup>
+
+            <thead>
+                <tr>
+                    <th>
+                        @T("ShoppingCart.Product(s)")
+                    </th>
+                    <th>
+                        @T("ShoppingCart.UnitPrice")
+                    </th>
+                    <th>
+                        @T("ShoppingCart.Quantity")
+                    </th>
+                    <th>
+                        @T("ShoppingCart.Remove")
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr data-product-id="@item.Id">
+                        <td>
+                            <a href="@(Url.RouteUrl<Product>(new { SeName = item.Name }))" class="product-name">@item.Name</a>
+                        </td>
+                        <td>
+                            @* <label class="td-title">@T("ShoppingCart.UnitPrice"):</label> *@
+                            <span class="product-unit-price">$@item.Price.ToString("0.00")</span>
+                        </td>
+                        <td>
+                            @* <label class="td-title" for="itemquantity@(item.Id)">@T("ShoppingCart.Quantity"):</label> *@
+                            <input name="itemquantity@(item.Id)" id="itemquantity@(item.Id)" type="number" value="1" class="form-control" aria-label="@T("ShoppingCart.Quantity")" />
+                        </td>
+                        <td>
+                            @* <input type="checkbox" name="removefromcart" id="removefromcart@(item.Id)" value="@(item.Id)" aria-label="@T("ShoppingCart.Remove")" /> *@
+                            <button type="button" name="removefromcart" data-product-Id="@(item.Id)" class="btn btn-outline-danger">
+                                <i class="fas fa-times"></i> Remove
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    $("[name='removefromcart']").on("click", function (e) {
+        console.log("test");
+        var removingProductId = $(e.target).attr("data-product-id");
+        $("[data-product-id='" + removingProductId + "']").remove();
+        console.log(currentPurchasingProducts);
+    });
+</script>

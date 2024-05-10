@@ -14,8 +14,8 @@
     You need to set this parameter to true if your plugin has a nuget package
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>1.0.0.10</AssemblyVersion>
-    <FileVersion>1.0.0.10</FileVersion>
+    <AssemblyVersion>1.0.0.19</AssemblyVersion>
+    <FileVersion>1.0.0.19</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,6 +32,16 @@
   <ItemGroup>
     <None Remove="Areas\Admin\Views\Category\NexportOptions.cshtml" />
     <None Remove="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\AddProductToWholesaleOrderPopup.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\FundingPool\Create.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\FundingPool\Edit.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\FundingPool\List.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\FundingPool\_CreateOrUpdate.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\WholesaleOrderPaymentDetails.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\WholesaleOrderPurchasingProducts.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\WholesalePurchases\NexportGroups\List.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\_CreateOrUpdate.cshtml" />
+    <None Remove="Areas\Admin\Views\Order\Create.cshtml" />
     <None Remove="Areas\Admin\Views\Order\List.cshtml" />
     <None Remove="Areas\Admin\Views\Order\_OrderDetails.Info.cshtml" />
     <None Remove="Areas\Admin\Views\Order\_OrderDetails.NexportOrderApproval.cshtml" />
@@ -56,15 +66,21 @@
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Info.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Options.cshtml" />
     <None Remove="Areas\Admin\Views\Setting\_CustomerUser.NexportRegistrationFields.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\Redirect.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Category\NexportCategoryDetails.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Order\NexportOrderDetails.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Plugin\NexportModifiedLocaleResources.cshtml" />
+    <None Remove="Areas\Admin\Views\Widget\Order\Wholesale.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewImports.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewStart.cshtml" />
+    <None Remove="Content\buttons.dataTables.min.css" />
     <None Remove="Content\jquery-ui-timepicker-addon.min.css" />
+    <None Remove="Content\jquery.dataTables.min.css" />
     <None Remove="Content\nexport-admin.css" />
+    <None Remove="Content\nexport-form-wizard.js" />
     <None Remove="Content\nexport-store.css" />
     <None Remove="Content\nexport.css" />
+    <None Remove="Content\redeem-product.css" />
     <None Remove="Content\rowGroup.dataTables.min.css" />
     <None Remove="Content\uikit.min.css" />
     <None Remove="logo.jpg" />
@@ -77,12 +93,16 @@
     <None Remove="Scripts\uikit.min.js" />
     <None Remove="Scripts\xregexp-all.min.js" />
     <None Remove="Views\Configure.cshtml" />
+    <None Remove="Views\MyNexportGroups.cshtml" />
     <None Remove="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml" />
     <None Remove="Views\NexportCustomer\Login.cshtml" />
     <None Remove="Views\NexportCustomer\NexportSupplementalInfoAnswers.cshtml" />
     <None Remove="Views\NexportCustomer\Register.cshtml" />
     <None Remove="Views\MapNexportProduct.cshtml" />
     <None Remove="Views\MapNexportProductList.cshtml" />
+    <None Remove="Views\NexportGroupProductRedemptions.cshtml" />
+    <None Remove="Views\NexportGroupProducts.cshtml" />
+    <None Remove="Views\NexportGroups.cshtml" />
     <None Remove="Views\NexportStore\List.cshtml" />
     <None Remove="Views\NexportTrainings.cshtml" />
     <None Remove="Views\Order\CustomerOrders.cshtml" />
@@ -91,11 +111,17 @@
     <None Remove="Views\ProductMappingGroupMembership.cshtml" />
     <None Remove="Views\ProductMappingTable.cshtml" />
     <None Remove="Views\Product\_AddToCart.cshtml" />
+    <None Remove="Views\RedeemByEmail.cshtml" />
+    <None Remove="Views\RedeemProduct.cshtml" />
     <None Remove="Views\RegistrationField\_CustomerFields.Control.cshtml" />
     <None Remove="Views\RegistrationField\_CustomerFields.cshtml" />
     <None Remove="Views\Shared\Components\TagHelpers\NexportDurationPicker\Default.cshtml" />
     <None Remove="Views\Shared\GuidNullable.cshtml" />
     <None Remove="Views\Shared\Table.cshtml" />
+    <None Remove="Views\Shared\_ColumnsOne_groups.cshtml" />
+    <None Remove="Views\Shared\_Root.Head_Groups.cshtml" />
+    <None Remove="Views\Shared\_Root_Groups.cshtml" />
+    <None Remove="Views\Shared\_Table.Definition.cshtml" />
     <None Remove="Views\SupplementalInfo\AddQuestion.cshtml" />
     <None Remove="Views\SupplementalInfo\EditCustomerSupplementalInfoAnsweredQuestion.cshtml" />
     <None Remove="Views\SupplementalInfo\EditQuestion.cshtml" />
@@ -115,11 +141,16 @@
     <None Remove="Views\Widget\Customer\NexportRegistrationFields.cshtml" />
     <None Remove="Views\Widget\Customer\NexportSettingNavigation.cshtml" />
     <None Remove="Views\Widget\Order\NexportOrderDetailsProductLine.cshtml" />
+    <None Remove="Views\Widget\Order\WidgetsNexportOrderDetailsPageAfterproducts.cshtml" />
     <None Remove="Views\Widget\Order\WidgetsOrderDetailsPageOverview.cshtml" />
     <None Remove="Views\Widget\Order\WidgetsOrderSummaryCartFooter.cshtml" />
     <None Remove="Views\Widget\Product\WidgetsProductDetailsOverviewTop.cshtml" />
     <None Remove="Views\Widget\WidgetsHeaderLinksBefore.cshtml" />
+    <None Remove="Views\Widget\_EmailStep.cshtml" />
+    <None Remove="Views\_ConfirmStep.cshtml" />
+    <None Remove="Views\_EmailStep.cshtml" />
     <None Remove="Views\_RedeemOrViewOrder.cshtml" />
+    <None Remove="Views\_TrainingStep.cshtml" />
     <None Remove="Views\_ViewImports.cshtml" />
   </ItemGroup>
 
@@ -130,7 +161,34 @@
     <Content Include="Areas\Admin\Views\Customer\_CreateOrUpdate.Impersonate.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\AddProductToWholesaleOrderPopup.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\FundingPool\Create.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\FundingPool\Edit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\FundingPool\List.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\FundingPool\_CreateOrUpdate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\WholesaleOrderPaymentDetails.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\WholesaleOrderPurchasingProducts.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\WholesalePurchases\NexportGroups\List.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Areas\Admin\Views\Order\List.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\CreateWholesaleOrder.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Order\_OrderDetails.Info.cshtml">
@@ -205,6 +263,9 @@
     <Content Include="Areas\Admin\Views\Setting\_CustomerUser.NexportRegistrationFields.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\Redirect.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Areas\Admin\Views\Widget\Category\NexportCategoryDetails.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -220,16 +281,30 @@
     <Content Include="Areas\Admin\Views\_ViewStart.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\buttons.dataTables.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Content\jquery-ui-timepicker-addon.min.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\jquery.dataTables.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Content\nexport-admin.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\redeem-product.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\nexport-store.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\nexport.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\redeem-product.js">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\rowGroup.dataTables.min.css">
@@ -284,6 +359,33 @@
     <Content Include="Views\MapNexportProductList.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\NexportGroupProducts.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\NexportGroups.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemByEmail.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemProduct\_CustomerStep.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemProduct\_ConfirmStep.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemProduct\_ProductStep.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemProduct.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\NexportGroupProductRedemptions.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\MyNexportGroups.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\NexportStore\List.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -315,6 +417,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Shared\Table.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\_Table.Definition.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\SupplementalInfo\AnswerQuestions.cshtml">
@@ -374,6 +481,9 @@
     <Content Include="Views\Widget\Order\NexportOrderDetailsProductLine.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\Widget\Order\WidgetsNexportOrderDetailsPageAfterproducts.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\Widget\Order\WidgetsOrderSummaryCartFooter.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -422,7 +532,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Areas\Admin\Models\Wholesale\" />
     <Folder Include="Services\Caching\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Areas\Admin\Views\Widget\Order\Wholesale.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <!-- This target execute after "Build" target -->

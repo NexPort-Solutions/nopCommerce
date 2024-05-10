@@ -1,4 +1,7 @@
-﻿<li class="customer-nexport-training">
+﻿@{
+    bool showNexportWholesalePurchases = (bool)(ViewData["ShowNexportWholesalePurchases"]??false);
+}
+<li class="customer-nexport-training">
     <a href="@Url.RouteUrl("Plugin.Misc.Nexport.MyTraining")" class="inactive">
         @T("Plugins.Misc.Nexport.Navigation.MyTrainings")
     </a>
@@ -8,6 +11,13 @@
         @T("Plugins.Misc.Nexport.Navigation.SupplementalInfoAnswers")
     </a>
 </li>
+@if(showNexportWholesalePurchases){
+    <li class="customer-nexport-groups">
+        <a href="@Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups")" class="inactive">
+            @T("Plugins.Misc.Nexport.Navigation.Groups")
+        </a>
+    </li>
+}
 
 <script asp-location="Footer">
     $(document).ready(function() {

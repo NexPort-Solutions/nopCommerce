@@ -33,7 +33,7 @@
         @await Html.PartialAsync("Table", new NexportDataTablesModel
         {
             Name = "nexport-resources-grid",
-            UrlRead = new DataUrl("GetModifiedLocaleResources", "NexportIntegration"),
+            UrlRead = new DataUrl("GetModifiedLocaleResources", "NexportIntegration", null),
             Length = Model.PageSize,
             LengthMenu = Model.AvailablePageSizes,
             ColumnCollection = new List<ColumnProperty>

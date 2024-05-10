@@ -4,10 +4,14 @@ using System.Threading.Tasks;
 using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
+using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 
 namespace Nop.Plugin.Misc.Nexport.Services;
@@ -16,8 +20,7 @@ public interface INexportService
 {
     Task InsertNexportProductMapping(NexportProductMapping nexportProductMapping);
 
-    Task InsertNexportProductGroupMembershipMapping(
-        NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping);
+    Task InsertNexportProductGroupMembershipMapping(NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping);
 
     Task<IPagedList<NexportProductMapping>> GetProductCatalogsByCatalogId(Guid catalogId,
         int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
@@ -43,8 +46,7 @@ public interface INexportService
 
     Task<IList<NexportProductMapping>> GetProductMappings(int? nopProductId = null, int? storeId = null);
 
-    Task<IList<NexportProductGroupMembershipMapping>> GetProductGroupMembershipMappings(
-        int nexportProductMappingId);
+    Task<IList<NexportProductGroupMembershipMapping>> GetProductGroupMembershipMappings(int nexportProductMappingId);
 
     Task<IPagedList<NexportProductGroupMembershipMapping>> GetProductGroupMembershipMappingsPagination(
         int nexportProductMappingId,
@@ -68,7 +70,7 @@ public interface INexportService
 
     Task DeleteNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem);
 
-    Task InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
+    Task<bool> InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
     Task DeleteNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
@@ -78,9 +80,16 @@ public interface INexportService
 
     Task DeleteNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
 
+    Task DeleteNexportOrderInvoiceResetRedemptionQueueItem(NexportOrderInvoiceResetRedemptionQueueItem queueItem);
+
     Task UpdateNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem);
 
+    Task UpdateNexportOrderInvoiceResetRedemptionQueueItem(NexportOrderInvoiceResetRedemptionQueueItem queueItem);
+
+    //TODO @JS - this probably needs to go away in favor of the one that return list of invoiceitems
     Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItem(int orderId, int orderItemId);
+
+    Task<IList<NexportOrderInvoiceItem>> FindNexportOrderInvoiceItems(int orderId, int orderItemId);
 
     Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemById(int orderInvoiceItemId);
 
@@ -324,4 +333,23 @@ public interface INexportService
     #endregion
 
     Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchproductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue);
+
+    Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemByGuidAsync(Guid? orderInvoiceItemId);
+
+    Task<IList<WholesaleOrderInfo>> SearchGroupProductsAsync(Guid? groupId, string productName, Customer customer);
+
+    Task<IList<NexportOrderInvoiceItem>> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
+        string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Customer customer = null);
+
+    Task<bool> RedeemProductForCustomer(RedeemProductModel model);
+
+    Task UnassignInvoiceItem(NexportOrderInvoiceItem invoiceItem);
+
+    Task RedeemAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem, Guid nexportUserId, int productMappingId);
+
+    Task CancelAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem);
+
+    Task<IList<Order>> GetOrdersForCustomer(Customer customer, Store store = null);
+
+    Task<bool> HasWholesaleOrders(Customer customer, Store store = null);
 }

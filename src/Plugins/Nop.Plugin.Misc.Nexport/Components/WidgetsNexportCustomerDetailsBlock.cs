@@ -27,83 +27,83 @@ public class WidgetsNexportCustomerDetailsBlock : NopViewComponent
         INotificationService notificationService,
         ILogger logger)
     {
-            _nexportService = nexportService;
-            _nexportPluginModelFactory = nexportPluginModelFactory;
-            _notificationService = notificationService;
-            _logger = logger;
-        }
+        _nexportService = nexportService;
+        _nexportPluginModelFactory = nexportPluginModelFactory;
+        _notificationService = notificationService;
+        _logger = logger;
+    }
 
     public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
     {
-            var customerModel = (CustomerModel) additionalData;
+        var customerModel = (CustomerModel)additionalData;
 
-            if (customerModel.Id == 0)
-            {
-                var model =
-                    await _nexportPluginModelFactory.PrepareAddNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
+        if (customerModel.Id == 0)
+        {
+            var model =
+                await _nexportPluginModelFactory.PrepareAddNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
 
-                return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/AddNexportCustomerAdditionalInfo.cshtml", model);
-            }
-
-            try
-            {
-                var model =
-                    await _nexportPluginModelFactory.PrepareNexportAdditionalInfoModelAsync(customerModel.ToEntity<Customer>());
-
-                var mapping = await _nexportService.FindUserMappingByCustomerId(customerModel.Id);
-                if (mapping != null)
-                {
-                    try
-                    {
-                        var nexportUser = await _nexportService.GetNexportUserAsync(mapping.NexportUserId)!;
-
-                        if (nexportUser != null)
-                        {
-                            model.NexportUserFullName = $"{nexportUser.FirstName} {nexportUser.LastName}";
-                            model.NexportEmail = nexportUser.InternalEmail;
-
-                            if (nexportUser.OwnerOrgId != null)
-                            {
-                                model.OwnerOrgId = nexportUser.OwnerOrgId;
-                            }
-
-                            if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgShortName))
-                            {
-                                model.OwnerOrgShortName = nexportUser.OwnerOrgShortName;
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        var errorMsg = $"Unable to retrieve user information from Nexport for customer {customerModel.Id}";
-
-                        if (ex is ApiException exception)
-                        {
-                            errorMsg += $" ({exception.Message})";
-                        }
-
-                        await _logger.ErrorAsync(errorMsg, ex);
-                        _notificationService.ErrorNotification(errorMsg);
-                    }
-                }
-
-                model.Editable = true;
-
-                return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportCustomerDetails.cshtml", model);
-            }
-            catch (Exception ex)
-            {
-                var errorMsg = $"Unable to retrieve additional information for customer {customerModel.Id}";
-
-                if (ex is ApiException exception)
-                {
-                    errorMsg += $" ({exception.Message})";
-                }
-
-                await _logger.ErrorAsync(errorMsg, ex);
-                _notificationService.ErrorNotification(errorMsg);
-
-                return Content("");
-            }
+            return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/AddNexportCustomerAdditionalInfo.cshtml", model);
         }
+
+        try
+        {
+            var model =
+                await _nexportPluginModelFactory.PrepareNexportAdditionalInfoModelAsync(customerModel.ToEntity<Customer>());
+
+            var mapping = await _nexportService.FindUserMappingByCustomerId(customerModel.Id);
+            if (mapping != null)
+            {
+                try
+                {
+                    var nexportUser = await _nexportService.GetNexportUserAsync(mapping.NexportUserId)!;
+
+                    if (nexportUser != null)
+                    {
+                        model.NexportUserFullName = $"{nexportUser.FirstName} {nexportUser.LastName}";
+                        model.NexportEmail = nexportUser.InternalEmail;
+
+                        if (nexportUser.OwnerOrgId != null)
+                        {
+                            model.OwnerOrgId = nexportUser.OwnerOrgId;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(nexportUser.OwnerOrgShortName))
+                        {
+                            model.OwnerOrgShortName = nexportUser.OwnerOrgShortName;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var errorMsg = $"Unable to retrieve user information from Nexport for customer {customerModel.Id}";
+
+                    if (ex is ApiException exception)
+                    {
+                        errorMsg += $" ({exception.Message})";
+                    }
+
+                    await _logger.ErrorAsync(errorMsg, ex);
+                    _notificationService.ErrorNotification(errorMsg);
+                }
+            }
+
+            model.Editable = true;
+
+            return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportCustomerDetails.cshtml", model);
+        }
+        catch (Exception ex)
+        {
+            var errorMsg = $"Unable to retrieve additional information for customer {customerModel.Id}";
+
+            if (ex is ApiException exception)
+            {
+                errorMsg += $" ({exception.Message})";
+            }
+
+            await _logger.ErrorAsync(errorMsg, ex);
+            _notificationService.ErrorNotification(errorMsg);
+
+            return Content("");
+        }
+    }
 }

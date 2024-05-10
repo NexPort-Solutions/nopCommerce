@@ -28,24 +28,24 @@ public class WidgetsNexportProductDetailsButtons : NopViewComponent
         IStaticCacheManager cacheManager,
         ISettingService settingService)
     {
-            _nexportService = nexportService;
-            _productModelFactory = productModelFactory;
-            _storeModelFactory = storeModelFactory;
-            _storeContext = storeContext;
-            _cacheManager = cacheManager;
-            _settingService = settingService;
-        }
+        _nexportService = nexportService;
+        _productModelFactory = productModelFactory;
+        _storeModelFactory = storeModelFactory;
+        _storeContext = storeContext;
+        _cacheManager = cacheManager;
+        _settingService = settingService;
+    }
 
     public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
     {
-            if ((await _storeContext.GetCurrentStoreAsync()) == null)
-                return Content("");
+        if ((await _storeContext.GetCurrentStoreAsync()) == null)
+            return Content("");
 
-            var productModel = (ProductModel)additionalData;
+        var productModel = (ProductModel)additionalData;
 
-            if (productModel == null)
-                return Content("");
+        if (productModel == null)
+            return Content("");
 
-            return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductDetailsButtons.cshtml", productModel);
-        }
+        return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductDetailsButtons.cshtml", productModel);
+    }
 }

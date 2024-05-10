@@ -93,10 +93,10 @@ public class NexportOrderProcessingService : OrderProcessingService
             stateProvinceService, storeService, taxService, vendorService, webHelper, workContext, workflowMessageService,
             localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
     {
-            _orderService = orderService;
-            _orderSettings = orderSettings;
-            _nexportService = nexportService;
-        }
+        _orderService = orderService;
+        _orderSettings = orderSettings;
+        _nexportService = nexportService;
+    }
 
     #endregion
 
@@ -108,83 +108,83 @@ public class NexportOrderProcessingService : OrderProcessingService
     /// <param name="order">The order</param>
     public override async Task CheckOrderStatusAsync(Order order)
     {
-            if (order == null)
-                throw new ArgumentNullException(nameof(order));
+        if (order == null)
+            throw new ArgumentNullException(nameof(order));
 
-            if (order.PaymentStatus == PaymentStatus.Paid && !order.PaidDateUtc.HasValue)
-            {
-                // Ensure that paid date is set
-                order.PaidDateUtc = DateTime.UtcNow;
-                await _orderService.UpdateOrderAsync(order);
-            }
+        if (order.PaymentStatus == PaymentStatus.Paid && !order.PaidDateUtc.HasValue)
+        {
+            // Ensure that paid date is set
+            order.PaidDateUtc = DateTime.UtcNow;
+            await _orderService.UpdateOrderAsync(order);
+        }
 
-            switch (order.OrderStatus)
-            {
-                case OrderStatus.Pending:
-                    if (order.PaymentStatus == PaymentStatus.Authorized ||
-                        order.PaymentStatus == PaymentStatus.Paid)
-                    {
-                        await SetOrderStatusAsync(order, OrderStatus.Processing, false);
-                    }
+        switch (order.OrderStatus)
+        {
+            case OrderStatus.Pending:
+                if (order.PaymentStatus == PaymentStatus.Authorized ||
+                    order.PaymentStatus == PaymentStatus.Paid)
+                {
+                    await SetOrderStatusAsync(order, OrderStatus.Processing, false);
+                }
 
-                    if (order.ShippingStatus == ShippingStatus.PartiallyShipped ||
-                        order.ShippingStatus == ShippingStatus.Shipped ||
-                        order.ShippingStatus == ShippingStatus.Delivered)
-                    {
-                        await SetOrderStatusAsync(order, OrderStatus.Processing, false);
-                    }
+                if (order.ShippingStatus == ShippingStatus.PartiallyShipped ||
+                    order.ShippingStatus == ShippingStatus.Shipped ||
+                    order.ShippingStatus == ShippingStatus.Delivered)
+                {
+                    await SetOrderStatusAsync(order, OrderStatus.Processing, false);
+                }
 
-                    break;
-                // Is order complete?
-                case OrderStatus.Cancelled:
-                case OrderStatus.Complete:
-                    return;
-            }
-
-            if (order.PaymentStatus != PaymentStatus.Paid)
+                break;
+            // Is order complete?
+            case OrderStatus.Cancelled:
+            case OrderStatus.Complete:
                 return;
+        }
 
-            bool completed;
+        if (order.PaymentStatus != PaymentStatus.Paid)
+            return;
 
-            if (order.ShippingStatus == ShippingStatus.ShippingNotRequired)
+        bool completed;
+
+        if (order.ShippingStatus == ShippingStatus.ShippingNotRequired)
+        {
+            // Shipping is not required
+            completed = true;
+        }
+        else
+        {
+            // Shipping is required
+            if (_orderSettings.CompleteOrderWhenDelivered)
             {
-                // Shipping is not required
-                completed = true;
+                completed = order.ShippingStatus == ShippingStatus.Delivered;
             }
             else
             {
-                // Shipping is required
-                if (_orderSettings.CompleteOrderWhenDelivered)
-                {
-                    completed = order.ShippingStatus == ShippingStatus.Delivered;
-                }
-                else
-                {
-                    completed = order.ShippingStatus == ShippingStatus.Shipped ||
-                                order.ShippingStatus == ShippingStatus.Delivered;
-                }
-            }
-
-            var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
-
-            // Check if the order has any item that has Nexport mapping
-            var hasAnyNexportProduct = await orderItems
-                .SelectAwait(async item => await _nexportService.GetProductMappingByNopProductId(item.ProductId))
-                .AnyAsync(productMapping => productMapping != null);
-
-            // If the order contains Nexport product and is being processed, then do not set the status to complete
-            if (hasAnyNexportProduct)
-            {
-                if (await _nexportService.HasNexportOrderProcessingQueueItem(order.Id) ||
-                    (await _nexportService.GetNexportOrderInvoiceItems(order.Id, true)).Any())
-                {
-                    completed = false;
-                }
-            }
-
-            if (completed)
-            {
-                await SetOrderStatusAsync(order, OrderStatus.Complete, true);
+                completed = order.ShippingStatus == ShippingStatus.Shipped ||
+                            order.ShippingStatus == ShippingStatus.Delivered;
             }
         }
+
+        var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
+
+        // Check if the order has any item that has Nexport mapping
+        var hasAnyNexportProduct = await orderItems
+            .SelectAwait(async item => await _nexportService.GetProductMappingByNopProductId(item.ProductId))
+            .AnyAsync(productMapping => productMapping != null);
+
+        // If the order contains Nexport product and is being processed, then do not set the status to complete
+        if (hasAnyNexportProduct)
+        {
+            if (await _nexportService.HasNexportOrderProcessingQueueItem(order.Id) ||
+                (await _nexportService.GetNexportOrderInvoiceItems(order.Id, true)).Any())
+            {
+                completed = false;
+            }
+        }
+
+        if (completed)
+        {
+            await SetOrderStatusAsync(order, OrderStatus.Complete, true);
+        }
+    }
 }

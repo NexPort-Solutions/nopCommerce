@@ -9,10 +9,10 @@ public class NexportSettingsValidator : BaseNopValidator<ConfigurationModel>
 {
     public NexportSettingsValidator()
     {
-            RuleFor(x => x.Url).NotEmpty().WithMessage("Server url cannot be empty!");
-            RuleFor(x => x.RootOrganizationId).NotEqual(Guid.Empty)
-                .WithMessage("Root organization Id cannot be an empty GUID!");
-            RuleFor(x => x.MerchantAccountId).NotEqual(Guid.Empty)
-                .WithMessage("Merchant account Id cannot be an empty GUID!");
-        }
+        RuleFor(x => x.Url).NotEmpty().WithMessage("Server url cannot be empty!");
+        RuleFor(x => x.RootOrganizationId).NotEqual(Guid.Empty)
+            .WithMessage("Root organization Id cannot be an empty GUID!");
+        RuleFor(x => x.MerchantAccountId).NotEqual(Guid.Empty)
+            .WithMessage("Merchant account Id cannot be an empty GUID!");
+    }
 }

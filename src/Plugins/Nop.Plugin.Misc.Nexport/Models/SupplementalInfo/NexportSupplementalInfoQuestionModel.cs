@@ -12,9 +12,9 @@ public record NexportSupplementalInfoQuestionModel : BaseNopEntityModel
 {
     public NexportSupplementalInfoQuestionModel()
     {
-            AvailableQuestionTypes = new List<SelectListItem>();
-            NexportSupplementalInfoOptionSearchModel = new NexportSupplementalInfoOptionSearchModel();
-        }
+        AvailableQuestionTypes = new List<SelectListItem>();
+        NexportSupplementalInfoOptionSearchModel = new NexportSupplementalInfoOptionSearchModel();
+    }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.SupplementalInfo.Question.Text")]
     public string QuestionText { get; set; }

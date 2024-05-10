@@ -28,7 +28,7 @@ public class WidgetsNexportModifiedLocaleResourcesDataTableBlock : NopViewCompon
         if (pluginSetting == null)
             return Content("");
 
-        var model = new NexportPluginResourceListSearchModel(){ FriendlyName = pluginModel.FriendlyName };
+        var model = new NexportPluginResourceListSearchModel { FriendlyName = pluginModel.FriendlyName };
 
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Plugin/NexportModifiedLocaleResources.cshtml", model);
     }

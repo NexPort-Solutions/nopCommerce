@@ -14,16 +14,14 @@ public class NexportStoreService : StoreService
     public NexportStoreService(IRepository<Store> storeRepository)
         : base(storeRepository)
     {
-            _storeRepository = storeRepository;
-        }
+        _storeRepository = storeRepository;
+    }
 
     public override async Task<IList<Store>> GetAllStoresAsync()
     {
-            var result = await _storeRepository.GetAllAsync(query =>
-            {
-                return from s in query orderby s.Name, s.DisplayOrder, s.Id select s;
-            }, cache => default);
+        var result = await _storeRepository.GetAllAsync(query => 
+            from s in query orderby s.Name, s.DisplayOrder, s.Id select s, cache => default);
 
-            return result;
-        }
+        return result;
+    }
 }

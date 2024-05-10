@@ -20,4 +20,6 @@ public record MapNexportProductModel : BaseNopModel
     public NexportProductTypeEnum NexportProductType { get; set; }
 
     public int? StoreId { get; set; }
+
+    public bool? AssignWhenRedeemed { get; set; }
 }

@@ -33,7 +33,7 @@
         @await Html.PartialAsync("Table", new DataTablesModel
         {
             Name = "purchaseforcustomer-resources-grid",
-            UrlRead = new DataUrl("GetModifiedLocaleResources", "PurchaseForCustomer"),
+            UrlRead = new DataUrl("GetModifiedLocaleResources", "PurchaseForCustomer", null),
             Length = Model.PageSize,
             LengthMenu = Model.AvailablePageSizes,
             ColumnCollection = new List<ColumnProperty>

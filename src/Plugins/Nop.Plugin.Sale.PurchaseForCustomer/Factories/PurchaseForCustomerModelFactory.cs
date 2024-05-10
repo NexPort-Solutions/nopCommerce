@@ -40,7 +40,14 @@ public class PurchaseForCustomerModelFactory : IPurchaseForCustomerModelFactory
         {
             return resources.SelectAwait(async resource =>
             {
-                var localeResourceModel = resource.ToModel<LocaleResourceModel>();
+                var localeResourceModel = new LocaleResourceModel
+                {
+                    Id = resource.Id,
+                    ResourceValue = resource.ResourceValue,
+                    ResourceName = resource.ResourceName,
+                    LanguageId = resource.LanguageId
+                };
+
                 return localeResourceModel;
             });
         });

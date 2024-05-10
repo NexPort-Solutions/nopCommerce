@@ -49,5 +49,45 @@ public class RouteProvider : IRouteProvider
         endpointRouteBuilder.MapControllerRoute("StoreList",
             "admin/store/list",
             new { area = "Admin", controller = "NexportStore", action = "List" });
+
+
+
+        //endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Groups",
+        //    "Admin/NexportIntegration/NexportGroups",
+        //    new { area = "Admin", controller = "NexportWholesale", action = "AdminNexportGroups" });
+
+        //endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Group.Products",
+        //    "Admin/NexportIntegration/NexportGroups/Products",
+        //    new { area = "Admin", controller = "NexportWholesale", action = "AdminNexportGroupProducts" });
+
+        //endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions",
+        //    "Admin/NexportIntegration/NexportGroups/Products/Redemptions",
+        //    new { area = "Admin", controller = "NexportWholesale", action = "AdminNexportGroupProductRedemptions" });
+
+        //endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions.Redeem",
+        //    "Admin/NexportIntegration/NexportGroups/Products/Redemptions/Redeem",
+        //    new { area = "Admin", controller = "NexportWholesale", action = "RedeemProduct" });
+
+
+
+        //endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Groups",
+        //    "customer/nexportgroups",
+        //    new { controller = "NexportWholesale", action = "CustomerNexportGroups" });
+
+        //endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Group.Products",
+        //    "customer/nexportgroups/products",
+        //    new { controller = "NexportWholesale", action = "CustomerNexportGroupProducts" });
+
+        //endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions",
+        //    "customer/nexportgroups/products/redemptions",
+        //    new { controller = "NexportWholesale", action = "CustomerNexportGroupProductRedemptions" });
+
+        //endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions.Redeem",
+        //    "customer/nexportgroups/products/redemptions/redeem",
+        //    new { controller = "NexportWholesale", action = "RedeemProduct" });
+
+        //endpointRouteBuilder.MapControllerRoute(name: "RedeemByEmail",
+        //    pattern: $"redeembyemail/{{invoiceItemId:min(0)}}",
+        //    defaults: new { controller = "NexportWholesale", action = "RedeemByEmail" });
     }
 }

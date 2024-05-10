@@ -11,5 +11,8 @@ public enum NexportProductTypeEnum
     Section = 1,
 
     [Display(Name = "Training Plan")]
-    TrainingPlan = 2
+    TrainingPlan = 2,
+
+    [Display(Name = "Open Ended")]
+    OpenEnded = 3
 }

@@ -19,25 +19,25 @@ public class WidgetsProductDetailsOverviewTop : NopViewComponent
         IWorkContext workContext,
         IStoreContext storeContext)
     {
-            _nexportService = nexportService;
-            _workContext = workContext;
-            _storeContext = storeContext;
-        }
+        _nexportService = nexportService;
+        _workContext = workContext;
+        _storeContext = storeContext;
+    }
 
     public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
     {
-            if ((await _storeContext.GetCurrentStoreAsync()) == null)
-                return Content("");
+        if ((await _storeContext.GetCurrentStoreAsync()) == null)
+            return Content("");
 
-            var productDetailsModel = (ProductDetailsModel)additionalData;
+        var productDetailsModel = (ProductDetailsModel)additionalData;
 
-            if (productDetailsModel == null)
-                return Content("");
+        if (productDetailsModel == null)
+            return Content("");
 
-            var model = await _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id,
-                            (await _storeContext.GetCurrentStoreAsync()).Id) ??
-                        await _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id);
+        var model = await _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id,
+                        (await _storeContext.GetCurrentStoreAsync()).Id) ??
+                    await _nexportService.GetProductMappingByNopProductId(productDetailsModel.Id);
 
-            return View("~/Plugins/Misc.Nexport/Views/Widget/Product/WidgetsProductDetailsOverviewTop.cshtml", model);
-        }
+        return View("~/Plugins/Misc.Nexport/Views/Widget/Product/WidgetsProductDetailsOverviewTop.cshtml", model);
+    }
 }

@@ -68,4 +68,6 @@ public class NexportProductMapping : BaseEntity, INexportProductMapping
     public int? ExtensionPurchaseLimit { get; set; }
 
     public int? StoreId { get; set; }
+
+    public bool? AssignWhenRedeemed { get; set; }
 }

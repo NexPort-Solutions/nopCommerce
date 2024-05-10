@@ -30,4 +30,6 @@ public record NexportCatalogResponseItemModel : BaseNopModel
     public NexportApi.Model.Enums.PublishingModelEnum? PublishingModel { get; set; }
 
     public string AccessTimeLimit { get; set; }
+
+    public bool? AssignWhenRedeemed { get; set; }
 }

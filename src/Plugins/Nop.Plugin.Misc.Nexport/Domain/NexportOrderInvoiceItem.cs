@@ -1,5 +1,7 @@
 ﻿using System;
 using Nop.Core;
+using Nop.Core.Domain.Orders;
+using Nop.Plugin.Misc.Nexport.Domain.Enums;
 
 namespace Nop.Plugin.Misc.Nexport.Domain;
 
@@ -22,4 +24,16 @@ public class NexportOrderInvoiceItem : BaseEntity
     public DateTime? UtcDateRedemption { get; set; }
 
     public bool? RequireManualApproval { get; set; }
+
+    public string InvoiceRedemptionCode { get; set; }
+
+    public string InvoiceItemRedemptionCode { get; set; }
+
+    public int RedemptionStatusId { get; set; }
+
+    public NexportOrderInvoiceItemRedemptionStatus RedemptionStatus
+    {
+        get => (NexportOrderInvoiceItemRedemptionStatus)RedemptionStatusId;
+        set => RedemptionStatusId = (int)value;
+    }
 }

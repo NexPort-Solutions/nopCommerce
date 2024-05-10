@@ -96,12 +96,11 @@ public class PurchaseForCustomerPluginService
 
         foreach (var localeResource in GetLocaleResources())
         {
-            var lsrList = await _localeStringResourceRepository
-                .Table
-                .WhereAwait(async l => l.ResourceName == localeResource.Key && l.ResourceValue != localeResource.Value)
-                .ToListAsync();
-
-            results.AddRange(lsrList);
+            var currentResource = await _localizationService.GetLocaleStringResourceByNameAsync(localeResource.Key, 1, false);
+            if (currentResource.ResourceValue != localeResource.Value)
+            {
+                results.Add(currentResource);
+            }
         }
 
         return results;

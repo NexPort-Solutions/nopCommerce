@@ -5,12 +5,17 @@ using System.Reflection;
 using AutoMapper;
 using AutoMapper.Internal;
 using AutoMapper.Configuration;
+using NexportApi.Model;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Infrastructure.Mapper;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Models.Category;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
@@ -40,7 +45,8 @@ public static class AutoMapperExtensions
         {
             var destinationTypeDetails = (TypeDetails)DestinationTypeDetailsProperty.GetValue(typeMap);
 
-            if (destinationTypeDetails == null) return;
+            if (destinationTypeDetails == null)
+                return;
             foreach (var accessor in destinationTypeDetails.WriteAccessors.Where(m =>
                          typeMapConfiguration.GetDestinationMemberConfiguration(m) == null))
             {
@@ -162,6 +168,21 @@ public class NexportPluginMapperConfiguration : Profile, IOrderedMapperProfile
             .ForMember(model => model.NexportSyllabusId, opts => opts.Ignore())
             .ForMember(model => model.ExistingEnrollmentId, opts => opts.Ignore())
             .ForMember(model => model.UtcExistingEnrollmentExpirationDate, opts => opts.Ignore());
+
+        //TODO @js - determine if we still need this
+        CreateMap<WholesalePurchasingGroup, NexportGroupModel>()
+            .ForMember(model => model.Id, opts => opts.MapFrom(entity => entity.NexportGroupId))
+            .ForMember(model => model.Name, opts => opts.MapFrom(entity => entity.NexportGroupName))
+            .ForMember(model => model.ShortName, opts => opts.MapFrom(entity => entity.NexportGroupShortName))
+            .ForMember(model => model.NumberOfProducts, opts => opts.Ignore())
+            .ForMember(model => model.ParentId, opts => opts.Ignore())
+            .ForMember(model => model.Type, opts => opts.Ignore());
+
+        CreateMap<NexportFundingPool, NexportFundingPoolModel>();
+        CreateMap<NexportFundingPoolModel, NexportFundingPool>();
+
+        CreateMap<Product, WholesaleOrderProductModel>()
+            .ForMember(model => model.NexportProductMappingId, opts => opts.Ignore());
     }
 
     public int Order => 0;

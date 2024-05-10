@@ -14,13 +14,14 @@ using Nop.Core.Infrastructure;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Controllers;
 using Nop.Plugin.Misc.Nexport.Factories;
-using Nop.Services.Configuration;
 using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Plugin.Misc.Nexport.Infrastructure.Logging;
 using Nop.Plugin.Misc.Nexport.Migrations;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Orders;
+using Nop.Services.Stores;
 using ILogger = Nop.Services.Logging.ILogger;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure;
@@ -48,6 +49,7 @@ public class PluginStartup : INopStartup
             options.Filters.Add<ProductDetailsActionFilter>();
             options.Filters.Add<ShoppingCartActionFilter>();
             options.Filters.Add<OrderDetailsActionFilter>();
+            options.Filters.Add<NexportWholesaleActionFilter>();
             options.Filters.Add<NexportDashboardNotificationActionFilter>();
         });
 
@@ -59,6 +61,7 @@ public class PluginStartup : INopStartup
 
         services.AddScoped<ILogger, DefaultLogger>();
 
+        services.AddScoped<IStoreService, NexportStoreService>();
         services.AddScoped<NexportCustomerRegistrationService>();
         services.AddScoped<ICustomerRegistrationService, NexportCustomerRegistrationService>();
         services.AddScoped<IOrderProcessingService, NexportOrderProcessingService>();
@@ -67,6 +70,14 @@ public class PluginStartup : INopStartup
         services.AddScoped<NexportPluginService>();
         services.AddScoped<INexportPluginModelFactory, NexportPluginModelFactory>();
         services.AddScoped<NexportIntegrationController>();
+        services.AddScoped<INexportWholesaleService, NexportNexportWholesaleService>();
+
+        //added this line because the modelstate was invalid when trying to save product mapping
+        //(line 818 editmapping in nexportintegrationcontroller) which was keeping the save from happening
+        //happens because we have the nullable property set in the nop.plugin.misc.nexport.csproj
+        //and there are null strings in the model.
+        //TODO @JS - possibly we should change string to string? in the nexportproductmappingmodel
+        services.AddControllers(options => options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true);
         services.AddScoped<INexportPluginLocalizationService, NexportPluginLocalizationService>();
     }
 
@@ -76,6 +87,8 @@ public class PluginStartup : INopStartup
 
         return new ServiceCollection()
             // Add common FluentMigrator services
+            .AddTransient<IDataProviderManager, DataProviderManager>()
+            .AddTransient(serviceProvider => serviceProvider.GetRequiredService<IDataProviderManager>().DataProvider)
             .AddFluentMigratorCore().ConfigureRunner(builder =>
             {
                 builder.AddSqlServer()

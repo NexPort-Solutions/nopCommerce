@@ -18,35 +18,35 @@ public class WidgetsNexportCustomerDetailsButtons : NopViewComponent
         NexportService nexportService,
         ILogger logger)
     {
-            _nexportService = nexportService;
-            _logger = logger;
-        }
+        _nexportService = nexportService;
+        _logger = logger;
+    }
 
     public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
     {
-            var customerModel = (CustomerModel)additionalData;
+        var customerModel = (CustomerModel)additionalData;
 
-            if (customerModel == null)
-                return Content("");
+        if (customerModel == null)
+            return Content("");
 
-            if (customerModel.Id == 0)
-                return Content("");
+        if (customerModel.Id == 0)
+            return Content("");
 
-            try
+        try
+        {
+            var mapping = await _nexportService.FindUserMappingByCustomerId(customerModel.Id);
+            if (mapping != null)
             {
-                var mapping = await _nexportService.FindUserMappingByCustomerId(customerModel.Id);
-                if (mapping != null)
-                {
-                    return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportCustomerDetailsButtons.cshtml", customerModel);
-                }
-
-                return Content("");
+                return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportCustomerDetailsButtons.cshtml", customerModel);
             }
-            catch (Exception ex)
-            {
-                await _logger.ErrorAsync($"Unable to find Nexport user mapping for customer {customerModel.Id}", ex);
 
-                return Content("");
-            }
+            return Content("");
         }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync($"Unable to find Nexport user mapping for customer {customerModel.Id}", ex);
+
+            return Content("");
+        }
+    }
 }

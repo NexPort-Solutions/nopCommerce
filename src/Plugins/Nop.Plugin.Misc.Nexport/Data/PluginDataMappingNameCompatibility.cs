@@ -13,6 +13,7 @@ public class PluginDataMappingNameCompatibility : INameCompatibility
         { typeof(NexportSupplementalInfoAnswerProcessingQueueItem), "NexportSupplementalInfoAnswerProcessingQueue" },
         { typeof(NexportOrderProcessingQueueItem), "NexportOrderProcessingQueue" },
         { typeof(NexportOrderInvoiceRedemptionQueueItem), "NexportOrderInvoiceRedemptionQueue" },
+            { typeof(NexportOrderInvoiceResetRedemptionQueueItem), "NexportOrderInvoiceResetRedemptionQueue" },
         { typeof(NexportRegistrationFieldSynchronizationQueueItem), "NexportRegistrationFieldSynchronizationQueue" },
         { typeof(NexportGroupMembershipRemovalQueueItem), "NexportGroupMembershipRemovalQueue" }
     };

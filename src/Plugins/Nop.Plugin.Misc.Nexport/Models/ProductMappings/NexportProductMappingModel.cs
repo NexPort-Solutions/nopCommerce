@@ -83,7 +83,7 @@ public record NexportProductMappingModel : BaseNopEntityModel, INexportProductMa
     public string SectionCeus { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.SectionNumber")]
-    public string SectionNumber { get;set; }
+    public string SectionNumber { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.IsSynchronized")]
     public bool IsSynchronized { get; set; }
@@ -106,7 +106,7 @@ public record NexportProductMappingModel : BaseNopEntityModel, INexportProductMa
     public string RenewalWindow { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.RenewalDuration")]
-    public string RenewalDuration{ get; set; }
+    public string RenewalDuration { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.RenewalCompletionThreshold")]
     [UIHint("Int32Nullable")]
@@ -128,4 +128,7 @@ public record NexportProductMappingModel : BaseNopEntityModel, INexportProductMa
     public IList<SelectListItem> AvailableSupplementalInfoQuestions { get; set; } = new List<SelectListItem>();
 
     public bool Editable { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.AssignWhenRedeemed")]
+    public bool? AssignWhenRedeemed { get; set; }
 }

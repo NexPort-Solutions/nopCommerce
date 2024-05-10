@@ -1,10 +1,10 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Services
 @using Nop.Services.Orders
 @using Nop.Core.Domain.Orders
+@using Nop.Services.Catalog
 
 @inject IOrderService orderService
 @inject NexportService nexportService
-@inject IStoreContext storeContext
 
 @model Nop.Web.Models.Order.OrderDetailsModel.OrderItemModel
 
@@ -16,53 +16,85 @@
         var order = await orderService.GetOrderByIdAsync(orderItem.OrderId);
         if (order?.OrderStatus == OrderStatus.Complete)
         {
-            var nexportOrderInvoice = await nexportService.FindNexportOrderInvoiceItem(orderItem.OrderId, orderItem.Id);
-
-            if (nexportOrderInvoice != null)
+            var nexportOrderInvoiceItems = await nexportService.FindNexportOrderInvoiceItems(orderItem.OrderId, orderItem.Id);
+            if (nexportOrderInvoiceItems != null && nexportOrderInvoiceItems.Count > 0)
             {
-                var popupTitle = "";
-                if (nexportOrderInvoice.UtcDateRedemption != null)
+                var orderInfo = await nexportService.GetWholesaleOrderInfoForOrderItemAsync(orderItem.OrderId, orderItem.Id);
+                var mapping = await nexportService.GetProductMappingByNopProductId(orderItem.ProductId, order.StoreId) ?? await nexportService.GetProductMappingByNopProductId(orderItem.ProductId);
+                var drawRedeemLink = false;
+                if (orderInfo == null)
                 {
-                    <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">
-                        (@T("Plugins.Misc.Nexport.Order.ViewRedemption"))
-                    </a>
-                    popupTitle = T("Plugins.Misc.Nexport.Order.ViewRedemption").Text;
+                    drawRedeemLink = true;
                 }
                 else
                 {
-                    <input type="hidden" id="redeemCompleted" data-redeemed=false />
-                    <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">
-                        (@T("Plugins.Misc.Nexport.Order.Redeem"))
-                    </a>
-                    <a href="javascript:void(0);" data-id="refreshLink" style="display: none;">(Check the redemption)</a>
-                    popupTitle = T("Plugins.Misc.Nexport.Order.Redeem").Text;
+                    if (mapping == null)
+                    {
+                        drawRedeemLink = true;
+                    }
+                    else
+                    {
+                        if (mapping.AutoRedeem)
+                        {
+                            drawRedeemLink = true;
+                        }
+                        else
+                        {
+                            <a href="@(Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions") + "?GroupId=" + orderInfo.NexportGroupId + " &ProductId=" + orderItem.ProductId + " &OrderId=" + orderItem.OrderId)" data-id="view-redemption-link" data-order-id="orderItem.OrderId">
+                                (@T("Plugins.Misc.Nexport.Order.Assign"))
+                            </a>
+                        }
+                    }
                 }
 
-                <div data-id="redemption-view-popup" data-nexport-order-invoice-id="@nexportOrderInvoice.Id" title="@popupTitle" style="display: none;">
-                    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/_RedeemOrViewOrder.cshtml", nexportOrderInvoice)
-                </div>
+                if (drawRedeemLink)
+                {
+                    var nexportOrderInvoice = nexportOrderInvoiceItems[0];
 
-                <script asp-location="Footer">
-                    $(document).ready(function () {
-                        $("[data-id=view-redemption-link][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").on("click", function () {
-                            var targetWidth = 550;
-                            var maxHeight = $(window).height() - 20;
+                    var popupTitle = "";
+                    if (nexportOrderInvoice.UtcDateRedemption != null)
+                    {
+                        <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">
+                            (@T("Plugins.Misc.Nexport.Order.ViewRedemption"))
+                        </a>
+                        popupTitle = T("Plugins.Misc.Nexport.Order.ViewRedemption").Text;
+                    }
+                    else
+                    {
+                        <input type="hidden" id="redeemCompleted" data-redeemed=false />
+                        <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">
+                            (@T("Plugins.Misc.Nexport.Order.Redeem"))
+                        </a>
+                        <a href="javascript:void(0);" data-id="refreshLink" style="display: none;">(Check the redemption)</a>
+                        popupTitle = T("Plugins.Misc.Nexport.Order.Redeem").Text;
+                    }
 
-                            $("[data-id=redemption-view-popup][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").dialog({
-                                width: targetWidth,
-                                maxHeight: maxHeight,
-                                close: function(event, ui) {
-                                    if ($("#redeemCompleted").data("redeemed")) {
-                                        $("[data-id=view-redemption-link]").hide();
-                                        $("[data-id=refreshLink]").click(function(e) {
-                                            location.reload();
-                                        }).show();
+                    <div data-id="redemption-view-popup" data-nexport-order-invoice-id="@nexportOrderInvoice.Id" title="@popupTitle" style="display: none;">
+                        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/_RedeemOrViewOrder.cshtml", nexportOrderInvoice)
+                    </div>
+
+                    <script asp-location="Footer">
+                        $(document).ready(function () {
+                            $("[data-id=view-redemption-link][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").on("click", function () {
+                                var targetWidth = 550;
+                                var maxHeight = $(window).height() - 20;
+
+                                $("[data-id=redemption-view-popup][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").dialog({
+                                    width: targetWidth,
+                                    maxHeight: maxHeight,
+                                    close: function (event, ui) {
+                                        if ($("#redeemCompleted").data("redeemed")) {
+                                            $("[data-id=view-redemption-link]").hide();
+                                            $("[data-id=refreshLink]").click(function (e) {
+                                                location.reload();
+                                            }).show();
+                                        }
                                     }
-                                }
+                                });
                             });
                         });
-                    });
-                </script>
+                    </script>
+                }
             }
         }
     }

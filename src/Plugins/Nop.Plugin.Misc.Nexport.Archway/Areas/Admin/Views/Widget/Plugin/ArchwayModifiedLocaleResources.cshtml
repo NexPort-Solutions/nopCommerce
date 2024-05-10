@@ -35,7 +35,7 @@
         @await Html.PartialAsync("Table", new NexportDataTablesModel
         {
             Name = "archway-resources-grid",
-            UrlRead = new DataUrl("GetModifiedLocaleResources", "ArchwayEmployeeRegistrationField"),
+            UrlRead = new DataUrl("GetModifiedLocaleResources", "ArchwayEmployeeRegistrationField", null),
             Length = Model.PageSize,
             LengthMenu = Model.AvailablePageSizes,
             ColumnCollection = new List<ColumnProperty>

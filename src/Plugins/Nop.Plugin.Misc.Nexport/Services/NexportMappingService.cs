@@ -2,16 +2,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
+using Nop.Core.Domain.Stores;
+using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
-using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
-using Nop.Core.Infrastructure.Mapper;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
+using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using StackExchange.Profiling.Internal;
 
 namespace Nop.Plugin.Misc.Nexport.Services;
 
@@ -19,805 +25,863 @@ public partial class NexportService : INexportService
 {
     public async Task InsertNexportProductMapping(NexportProductMapping nexportProductMapping)
     {
-            if (nexportProductMapping == null)
-                throw new ArgumentNullException(nameof(nexportProductMapping));
+        if (nexportProductMapping == null)
+            throw new ArgumentNullException(nameof(nexportProductMapping));
 
-            if (_nexportProductMappingRepository.Table.Any(m =>
-                m.NopProductId == nexportProductMapping.NopProductId &&
-                m.StoreId == nexportProductMapping.StoreId))
-                return;
+        if (_nexportProductMappingRepository.Table.Any(m =>
+            m.NopProductId == nexportProductMapping.NopProductId &&
+            m.StoreId == nexportProductMapping.StoreId))
+            return;
 
-            await _nexportProductMappingRepository.InsertAsync(nexportProductMapping);
-        }
+        await _nexportProductMappingRepository.InsertAsync(nexportProductMapping);
+    }
 
     public async Task InsertNexportProductGroupMembershipMapping(
         NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping)
     {
-            if (nexportProductGroupMembershipMapping == null)
-                throw new ArgumentNullException(nameof(nexportProductGroupMembershipMapping));
+        if (nexportProductGroupMembershipMapping == null)
+            throw new ArgumentNullException(nameof(nexportProductGroupMembershipMapping));
 
-            if (_nexportProductGroupMembershipMappingRepository.Table.Any(
-                m => m.NexportProductMappingId == nexportProductGroupMembershipMapping.NexportProductMappingId &&
-                m.NexportGroupId == nexportProductGroupMembershipMapping.NexportGroupId))
-                return;
+        if (_nexportProductGroupMembershipMappingRepository.Table.Any(
+            m => m.NexportProductMappingId == nexportProductGroupMembershipMapping.NexportProductMappingId &&
+            m.NexportGroupId == nexportProductGroupMembershipMapping.NexportGroupId))
+            return;
 
-            await _nexportProductGroupMembershipMappingRepository.InsertAsync(nexportProductGroupMembershipMapping);
-        }
+        await _nexportProductGroupMembershipMappingRepository.InsertAsync(nexportProductGroupMembershipMapping);
+    }
 
     public async Task<IPagedList<NexportProductMapping>> GetProductCatalogsByCatalogId(Guid catalogId,
         int pageIndex = 0, int pageSize = int.MaxValue,
         bool showHidden = false)
     {
-            if (catalogId == Guid.Empty)
+        if (catalogId == Guid.Empty)
+        {
+            return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
+        }
+
+        var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingCatalogAllByCatalogIdCacheKey,
+            showHidden, catalogId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
+        return await _cacheManager.GetAsync(cacheKey, async () =>
+        {
+            //var query = from np in _nexportProductMappingRepository.Table
+            //    join p in _productRepository.Table on np.NopProductId equals p.Id
+            //    where np.NexportCatalogId == catalogId && !p.Deleted && (showHidden || p.Published)
+            //    select np;
+
+            var productQuery = _productRepository.Table
+                .Where(p => !p.Deleted && (showHidden || p.Published))
+                .Select(p => p.Id).ToList();
+
+            var query = _nexportProductMappingRepository.Table
+                .Where(np => np.NexportCatalogId == catalogId && productQuery.Contains(np.NopProductId));
+            //var query = from pc in _productCategoryRepository.Table
+            //            join p in _productRepository.Table on pc.ProductId equals p.Id
+            //            where pc.CategoryId == categoryId &&
+            //                  !p.Deleted &&
+            //                  (showHidden || p.Published)
+            //            orderby pc.DisplayOrder, pc.Id
+            //            select pc;
+            if (!showHidden && (!_nexportSettings.IgnoreAcl || !_nexportSettings.IgnoreStoreLimitations))
             {
-                return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
+                //if (!_nexportSettings.IgnoreAcl)
+                //{
+                //    //ACL (access control list)
+                //    var allowedCustomerRolesIds = _workContext.CurrentCustomer.GetCustomerRoleIds();
+                //    query = from pc in query
+                //            join c in _categoryRepository.Table on pc.CategoryId equals c.Id
+                //            join acl in _aclRepository.Table
+                //            on new { c1 = c.Id, c2 = _entityName } equals new { c1 = acl.EntityId, c2 = acl.EntityName } into c_acl
+                //            from acl in c_acl.DefaultIfEmpty()
+                //            where !c.SubjectToAcl || allowedCustomerRolesIds.Contains(acl.CustomerRoleId)
+                //            select pc;
+                //}
+
+                //if (!_nexportSettings.IgnoreStoreLimitations)
+                //{
+                //    //Store mapping
+                //    var currentStoreId = _storeContext.CurrentStore.Id;
+                //    query = from pc in query
+                //            join c in _categoryRepository.Table on pc.CategoryId equals c.Id
+                //            join sm in _storeMappingRepository.Table
+                //            on new { c1 = c.Id, c2 = _entityName } equals new { c1 = sm.EntityId, c2 = sm.EntityName } into c_sm
+                //            from sm in c_sm.DefaultIfEmpty()
+                //            where !c.LimitedToStores || currentStoreId == sm.StoreId
+                //            select pc;
+                //}
+
+                //query = query.Distinct().OrderBy(pc => pc.DisplayOrder).ThenBy(pc => pc.Id);
+                //query = query.Distinct();
             }
 
-            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingCatalogAllByCatalogIdCacheKey,
-                showHidden, catalogId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
-            return await _cacheManager.GetAsync(cacheKey, async () =>
-            {
-                //var query = from np in _nexportProductMappingRepository.Table
-                //    join p in _productRepository.Table on np.NopProductId equals p.Id
-                //    where np.NexportCatalogId == catalogId && !p.Deleted && (showHidden || p.Published)
-                //    select np;
-
-                var productQuery = _productRepository.Table
-                    .Where(p => !p.Deleted && (showHidden || p.Published))
-                    .Select(p => p.Id).ToList();
-
-                var query = _nexportProductMappingRepository.Table
-                    .Where(np => np.NexportCatalogId == catalogId && productQuery.Contains(np.NopProductId));
-                //var query = from pc in _productCategoryRepository.Table
-                //            join p in _productRepository.Table on pc.ProductId equals p.Id
-                //            where pc.CategoryId == categoryId &&
-                //                  !p.Deleted &&
-                //                  (showHidden || p.Published)
-                //            orderby pc.DisplayOrder, pc.Id
-                //            select pc;
-
-                if (!showHidden && (!_nexportSettings.IgnoreAcl || !_nexportSettings.IgnoreStoreLimitations))
-                {
-                    //if (!_nexportSettings.IgnoreAcl)
-                    //{
-                    //    //ACL (access control list)
-                    //    var allowedCustomerRolesIds = _workContext.CurrentCustomer.GetCustomerRoleIds();
-                    //    query = from pc in query
-                    //            join c in _categoryRepository.Table on pc.CategoryId equals c.Id
-                    //            join acl in _aclRepository.Table
-                    //            on new { c1 = c.Id, c2 = _entityName } equals new { c1 = acl.EntityId, c2 = acl.EntityName } into c_acl
-                    //            from acl in c_acl.DefaultIfEmpty()
-                    //            where !c.SubjectToAcl || allowedCustomerRolesIds.Contains(acl.CustomerRoleId)
-                    //            select pc;
-                    //}
-
-                    //if (!_nexportSettings.IgnoreStoreLimitations)
-                    //{
-                    //    //Store mapping
-                    //    var currentStoreId = _storeContext.CurrentStore.Id;
-                    //    query = from pc in query
-                    //            join c in _categoryRepository.Table on pc.CategoryId equals c.Id
-                    //            join sm in _storeMappingRepository.Table
-                    //            on new { c1 = c.Id, c2 = _entityName } equals new { c1 = sm.EntityId, c2 = sm.EntityName } into c_sm
-                    //            from sm in c_sm.DefaultIfEmpty()
-                    //            where !c.LimitedToStores || currentStoreId == sm.StoreId
-                    //            select pc;
-                    //}
-
-                    //query = query.Distinct().OrderBy(pc => pc.DisplayOrder).ThenBy(pc => pc.Id);
-                    //query = query.Distinct();
-                }
-
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
-        }
+            return await query.ToPagedListAsync(pageIndex, pageSize);
+        });
+    }
 
     public async Task<IPagedList<NexportProductMapping>> GetProductSectionsBySectionId(Guid sectionId, int pageIndex = 0,
         int pageSize = int.MaxValue,
         bool showHidden = false)
     {
-            if (sectionId == Guid.Empty)
+        if (sectionId == Guid.Empty)
+        {
+            return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
+        }
+
+        var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingSectionAllBySectionIdCacheKey,
+            showHidden, sectionId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
+        return await _cacheManager.GetAsync(cacheKey, async () =>
+        {
+            var productQuery = (from p in _productRepository.Table
+                                where !p.Deleted && (showHidden || p.Published)
+                                select p.Id).ToList();
+
+            var query = from np in _nexportProductMappingRepository.Table
+                        where np.NexportSyllabusId == sectionId &&
+                              np.Type == NexportProductTypeEnum.Section &&
+                              productQuery.Contains(np.NopProductId)
+                        select np;
+
+            if (!showHidden && (!_nexportSettings.IgnoreAcl || !_nexportSettings.IgnoreStoreLimitations))
             {
-                return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
+                //if (!_nexportSettings.IgnoreAcl)
+                //{
+                //    //ACL (access control list)
+                //    var allowedCustomerRolesIds = _workContext.CurrentCustomer.GetCustomerRoleIds();
+                //    query = from pc in query
+                //            join c in _categoryRepository.Table on pc.CategoryId equals c.Id
+                //            join acl in _aclRepository.Table
+                //            on new { c1 = c.Id, c2 = _entityName } equals new { c1 = acl.EntityId, c2 = acl.EntityName } into c_acl
+                //            from acl in c_acl.DefaultIfEmpty()
+                //            where !c.SubjectToAcl || allowedCustomerRolesIds.Contains(acl.CustomerRoleId)
+                //            select pc;
+                //}
+
+                //if (!_nexportSettings.IgnoreStoreLimitations)
+                //{
+                //    //Store mapping
+                //    var currentStoreId = _storeContext.CurrentStore.Id;
+                //    query = from pc in query
+                //            join c in _categoryRepository.Table on pc.CategoryId equals c.Id
+                //            join sm in _storeMappingRepository.Table
+                //            on new { c1 = c.Id, c2 = _entityName } equals new { c1 = sm.EntityId, c2 = sm.EntityName } into c_sm
+                //            from sm in c_sm.DefaultIfEmpty()
+                //            where !c.LimitedToStores || currentStoreId == sm.StoreId
+                //            select pc;
+                //}
+
+                //query = query.Distinct().OrderBy(pc => pc.DisplayOrder).ThenBy(pc => pc.Id);
+                //query = query.Distinct();
             }
 
-            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingSectionAllBySectionIdCacheKey,
-                showHidden, sectionId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
-            return await _cacheManager.GetAsync(cacheKey, async () =>
-            {
-                var productQuery = (from p in _productRepository.Table
-                                    where !p.Deleted && (showHidden || p.Published)
-                                    select p.Id).ToList();
-
-                var query = from np in _nexportProductMappingRepository.Table
-                            where np.NexportSyllabusId == sectionId &&
-                                  np.Type == NexportProductTypeEnum.Section &&
-                                  productQuery.Contains(np.NopProductId)
-                            select np;
-
-                if (!showHidden && (!_nexportSettings.IgnoreAcl || !_nexportSettings.IgnoreStoreLimitations))
-                {
-                    //if (!_nexportSettings.IgnoreAcl)
-                    //{
-                    //    //ACL (access control list)
-                    //    var allowedCustomerRolesIds = _workContext.CurrentCustomer.GetCustomerRoleIds();
-                    //    query = from pc in query
-                    //            join c in _categoryRepository.Table on pc.CategoryId equals c.Id
-                    //            join acl in _aclRepository.Table
-                    //            on new { c1 = c.Id, c2 = _entityName } equals new { c1 = acl.EntityId, c2 = acl.EntityName } into c_acl
-                    //            from acl in c_acl.DefaultIfEmpty()
-                    //            where !c.SubjectToAcl || allowedCustomerRolesIds.Contains(acl.CustomerRoleId)
-                    //            select pc;
-                    //}
-
-                    //if (!_nexportSettings.IgnoreStoreLimitations)
-                    //{
-                    //    //Store mapping
-                    //    var currentStoreId = _storeContext.CurrentStore.Id;
-                    //    query = from pc in query
-                    //            join c in _categoryRepository.Table on pc.CategoryId equals c.Id
-                    //            join sm in _storeMappingRepository.Table
-                    //            on new { c1 = c.Id, c2 = _entityName } equals new { c1 = sm.EntityId, c2 = sm.EntityName } into c_sm
-                    //            from sm in c_sm.DefaultIfEmpty()
-                    //            where !c.LimitedToStores || currentStoreId == sm.StoreId
-                    //            select pc;
-                    //}
-
-                    //query = query.Distinct().OrderBy(pc => pc.DisplayOrder).ThenBy(pc => pc.Id);
-                    //query = query.Distinct();
-                }
-
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
-        }
+            return await query.ToPagedListAsync(pageIndex, pageSize);
+        });
+    }
 
     public async Task<IPagedList<NexportProductMapping>> GetProductTrainingPlansByTrainingPlanId(Guid trainingPlanId,
         int pageIndex = 0, int pageSize = int.MaxValue,
         bool showHidden = false)
     {
-            if (trainingPlanId == Guid.Empty)
+        if (trainingPlanId == Guid.Empty)
+        {
+            return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
+        }
+
+        var key = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingTrainingPlanAllByTrainingPlanIdCacheKey,
+            showHidden, trainingPlanId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
+        return await _cacheManager.GetAsync(key, async () =>
+        {
+            var productQuery =
+                (_productRepository.Table.Where(p => !p.Deleted && (showHidden || p.Published))
+                    .Select(p => p.Id)).ToList();
+
+            var query = _nexportProductMappingRepository.Table
+                .Where(np =>
+                    np.NexportSyllabusId == trainingPlanId &&
+                    np.Type == NexportProductTypeEnum.TrainingPlan &&
+                    productQuery.Contains(np.NopProductId));
+
+            if (!showHidden && (!_nexportSettings.IgnoreAcl || !_nexportSettings.IgnoreStoreLimitations))
             {
-                return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
+                //if (!_nexportSettings.IgnoreAcl)
+                //{
+                //    //ACL (access control list)
+                //    var allowedCustomerRolesIds = _workContext.CurrentCustomer.GetCustomerRoleIds();
+                //    query = from pc in query
+                //            join c in _categoryRepository.Table on pc.CategoryId equals c.Id
+                //            join acl in _aclRepository.Table
+                //            on new { c1 = c.Id, c2 = _entityName } equals new { c1 = acl.EntityId, c2 = acl.EntityName } into c_acl
+                //            from acl in c_acl.DefaultIfEmpty()
+                //            where !c.SubjectToAcl || allowedCustomerRolesIds.Contains(acl.CustomerRoleId)
+                //            select pc;
+                //}
+
+                //if (!_nexportSettings.IgnoreStoreLimitations)
+                //{
+                //    //Store mapping
+                //    var currentStoreId = _storeContext.CurrentStore.Id;
+                //    query = from pc in query
+                //            join c in _categoryRepository.Table on pc.CategoryId equals c.Id
+                //            join sm in _storeMappingRepository.Table
+                //            on new { c1 = c.Id, c2 = _entityName } equals new { c1 = sm.EntityId, c2 = sm.EntityName } into c_sm
+                //            from sm in c_sm.DefaultIfEmpty()
+                //            where !c.LimitedToStores || currentStoreId == sm.StoreId
+                //            select pc;
+                //}
+
+                //query = query.Distinct().OrderBy(pc => pc.DisplayOrder).ThenBy(pc => pc.Id);
+                //query = query.Distinct();
             }
 
-            var key = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingTrainingPlanAllByTrainingPlanIdCacheKey,
-                showHidden, trainingPlanId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
-            return await _cacheManager.GetAsync(key, async () =>
-            {
-                var productQuery =
-                    (_productRepository.Table.Where(p => !p.Deleted && (showHidden || p.Published))
-                        .Select(p => p.Id)).ToList();
-
-                var query = _nexportProductMappingRepository.Table
-                    .Where(np =>
-                        np.NexportSyllabusId == trainingPlanId &&
-                        np.Type == NexportProductTypeEnum.TrainingPlan &&
-                        productQuery.Contains(np.NopProductId));
-
-                if (!showHidden && (!_nexportSettings.IgnoreAcl || !_nexportSettings.IgnoreStoreLimitations))
-                {
-                    //if (!_nexportSettings.IgnoreAcl)
-                    //{
-                    //    //ACL (access control list)
-                    //    var allowedCustomerRolesIds = _workContext.CurrentCustomer.GetCustomerRoleIds();
-                    //    query = from pc in query
-                    //            join c in _categoryRepository.Table on pc.CategoryId equals c.Id
-                    //            join acl in _aclRepository.Table
-                    //            on new { c1 = c.Id, c2 = _entityName } equals new { c1 = acl.EntityId, c2 = acl.EntityName } into c_acl
-                    //            from acl in c_acl.DefaultIfEmpty()
-                    //            where !c.SubjectToAcl || allowedCustomerRolesIds.Contains(acl.CustomerRoleId)
-                    //            select pc;
-                    //}
-
-                    //if (!_nexportSettings.IgnoreStoreLimitations)
-                    //{
-                    //    //Store mapping
-                    //    var currentStoreId = _storeContext.CurrentStore.Id;
-                    //    query = from pc in query
-                    //            join c in _categoryRepository.Table on pc.CategoryId equals c.Id
-                    //            join sm in _storeMappingRepository.Table
-                    //            on new { c1 = c.Id, c2 = _entityName } equals new { c1 = sm.EntityId, c2 = sm.EntityName } into c_sm
-                    //            from sm in c_sm.DefaultIfEmpty()
-                    //            where !c.LimitedToStores || currentStoreId == sm.StoreId
-                    //            select pc;
-                    //}
-
-                    //query = query.Distinct().OrderBy(pc => pc.DisplayOrder).ThenBy(pc => pc.Id);
-                    //query = query.Distinct();
-                }
-
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
-        }
+            return await query.ToPagedListAsync(pageIndex, pageSize);
+        });
+    }
 
     public NexportProductMapping FindProductCatalog(IList<NexportProductMapping> source, int productId,
         Guid catalogId, int? storeId = null)
     {
-            return source.FirstOrDefault(productCatalog => productCatalog.NopProductId == productId &&
-                                                           productCatalog.NexportCatalogId == catalogId &&
-                                                           productCatalog.StoreId == storeId);
-        }
+        return source.FirstOrDefault(productCatalog => productCatalog.NopProductId == productId &&
+                                                       productCatalog.NexportCatalogId == catalogId &&
+                                                       productCatalog.StoreId == storeId);
+    }
 
     public NexportProductMapping FindProductSection(IList<NexportProductMapping> source, int productId,
         Guid sectionId, int? storeId = null)
     {
-            return source.FirstOrDefault(productSectionMapping => productSectionMapping.NopProductId == productId &&
-                                                           productSectionMapping.NexportSyllabusId == sectionId &&
-                                                           productSectionMapping.Type == NexportProductTypeEnum.Section &&
-                                                           productSectionMapping.StoreId == storeId);
-        }
+        return source.FirstOrDefault(productSectionMapping => productSectionMapping.NopProductId == productId &&
+                                                       productSectionMapping.NexportSyllabusId == sectionId &&
+                                                       productSectionMapping.Type == NexportProductTypeEnum.Section &&
+                                                       productSectionMapping.StoreId == storeId);
+    }
 
     public NexportProductMapping FindProductTrainingPlan(IList<NexportProductMapping> source,
         int productId, Guid trainingPlanId, int? storeId = null)
     {
-            return source.FirstOrDefault(productTrainingPlanMapping => productTrainingPlanMapping.NopProductId == productId &&
-                                                           productTrainingPlanMapping.NexportSyllabusId == trainingPlanId &&
-                                                           productTrainingPlanMapping.Type == NexportProductTypeEnum.TrainingPlan &&
-                                                           productTrainingPlanMapping.StoreId == storeId);
-        }
+        return source.FirstOrDefault(productTrainingPlanMapping => productTrainingPlanMapping.NopProductId == productId &&
+                                                       productTrainingPlanMapping.NexportSyllabusId == trainingPlanId &&
+                                                       productTrainingPlanMapping.Type == NexportProductTypeEnum.TrainingPlan &&
+                                                       productTrainingPlanMapping.StoreId == storeId);
+    }
 
     public async Task<IList<NexportProductMapping>> GetProductMappingsByStoreId(int storeId)
     {
-            return storeId < 1
-                ? new List<NexportProductMapping>()
-                : await _nexportProductMappingRepository.Table.Where(np => np.StoreId == storeId).ToListAsync();
-        }
+        return storeId < 1
+            ? new List<NexportProductMapping>()
+            : await _nexportProductMappingRepository.Table.Where(np => np.StoreId == storeId).ToListAsync();
+    }
 
     public async Task<NexportProductMapping> GetProductMappingByNopProductId(int nopProductId, int? storeId = null)
     {
-            return nopProductId < 1
-                ? null
-                : await _nexportProductMappingRepository
-                    .Table.SingleOrDefaultAsync(np =>
-                        np.NopProductId == nopProductId &&
-                        np.StoreId == storeId);
-        }
+        return nopProductId < 1
+            ? null
+            : await _nexportProductMappingRepository
+                .Table.SingleOrDefaultAsync(np =>
+                    np.NopProductId == nopProductId &&
+                    np.StoreId == storeId);
+    }
 
     public async Task<IList<NexportProductMapping>> GetProductMappings(int? nopProductId = null, int? storeId = null)
     {
-            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
-                (await _storeContext.GetCurrentStoreAsync()).Id,
-                string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
-                false, "", true);
+        var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
+            (await _storeContext.GetCurrentStoreAsync()).Id,
+            string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
+            false, "", true);
 
-            return _cacheManager.Get(cacheKey, () =>
-            {
-                var query = _nexportProductMappingRepository.Table;
+        return _cacheManager.Get(cacheKey, () =>
+        {
+            var query = _nexportProductMappingRepository.Table;
 
-                if (nopProductId != null)
-                    query = query.Where(np => np.NopProductId == nopProductId);
+            if (nopProductId != null)
+                query = query.Where(np => np.NopProductId == nopProductId);
 
-                if (storeId != null)
-                    query = query.Where(np => np.StoreId == storeId);
+            if (storeId != null)
+                query = query.Where(np => np.StoreId == storeId);
 
-                return query.ToList();
-            });
-        }
+            return query.ToList();
+        });
+    }
 
     public async Task<IList<NexportProductGroupMembershipMapping>> GetProductGroupMembershipMappings(
         int nexportProductMappingId)
     {
-            if (nexportProductMappingId < 1)
-                return new List<NexportProductGroupMembershipMapping>();
+        if (nexportProductMappingId < 1)
+            return new List<NexportProductGroupMembershipMapping>();
 
-            var key = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductGroupMembershipMappingsAllCacheKey,
-                (await _storeContext.GetCurrentStoreAsync()).Id,
-                string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
-                false, "", false);
+        var key = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductGroupMembershipMappingsAllCacheKey,
+            (await _storeContext.GetCurrentStoreAsync()).Id,
+            string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
+            false, "", false);
 
-            return await _cacheManager.GetAsync(key, async () =>
-            {
-                return await _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
-                    np.NexportProductMappingId == nexportProductMappingId).ToListAsync();
-            });
-        }
+        return await _cacheManager.GetAsync(key, async () =>
+        {
+            return await _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
+                np.NexportProductMappingId == nexportProductMappingId).ToListAsync();
+        });
+    }
 
     public async Task<IPagedList<NexportProductGroupMembershipMapping>> GetProductGroupMembershipMappingsPagination(
         int nexportProductMappingId, int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
     {
-            if (nexportProductMappingId < 1)
-                return new PagedList<NexportProductGroupMembershipMapping>(new List<NexportProductGroupMembershipMapping>(), pageIndex, pageSize);
+        if (nexportProductMappingId < 1)
+            return new PagedList<NexportProductGroupMembershipMapping>(new List<NexportProductGroupMembershipMapping>(), pageIndex, pageSize);
 
-            var query = _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
-                np.NexportProductMappingId == nexportProductMappingId);
+        var query = _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
+            np.NexportProductMappingId == nexportProductMappingId);
 
-            return await query.ToPagedListAsync(pageIndex, pageSize);
-        }
+        return await query.ToPagedListAsync(pageIndex, pageSize);
+    }
 
     public async Task<IList<Guid>> GetProductGroupMembershipIds(int nexportProductMappingId)
     {
-            return nexportProductMappingId < 1
-                ? new List<Guid>()
-                : await _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
-                        np.NexportProductMappingId == nexportProductMappingId)
-                    .Select(g => g.NexportGroupId).ToListAsync();
-        }
+        return nexportProductMappingId < 1
+            ? new List<Guid>()
+            : await _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
+                    np.NexportProductMappingId == nexportProductMappingId)
+                .Select(g => g.NexportGroupId).ToListAsync();
+    }
 
     public async Task<Dictionary<Guid, int>> FindMappingCountPerSyllabus(IList<GetSyllabiResponseItem> syllabusList)
     {
-            var result = new Dictionary<Guid, int>();
-            foreach (var item in syllabusList)
-            {
-                var count = await FindMappingCountPerSyllabi(item.SyllabusId);
-                result.Add(item.SyllabusId, count);
-            }
-
-            return result;
+        var result = new Dictionary<Guid, int>();
+        foreach (var item in syllabusList)
+        {
+            var count = await FindMappingCountPerSyllabi(item.SyllabusId);
+            result.Add(item.SyllabusId, count);
         }
+
+        return result;
+    }
 
     public async Task<int> FindMappingCountPerSyllabi(Guid syllabusId)
     {
-            return await (from np in _nexportProductMappingRepository.Table
-                    where np.NexportSyllabusId == syllabusId
-                    select np.Id).CountAsync();
-        }
+        return await (from np in _nexportProductMappingRepository.Table
+                      where np.NexportSyllabusId == syllabusId
+                      select np.Id).CountAsync();
+    }
 
     public async Task<bool> HasDefaultMapping(int nopProductId)
     {
-            return nopProductId > 0 &&
-                   await _nexportProductMappingRepository.Table.AnyAsync(np =>
-                       np.NopProductId == nopProductId &&
-                       np.StoreId == null);
-        }
+        return nopProductId > 0 &&
+               await _nexportProductMappingRepository.Table.AnyAsync(np =>
+                   np.NopProductId == nopProductId &&
+                   np.StoreId == null);
+    }
 
     public async Task<bool> HasProductMappingForStore(int nopProductId, int storeId)
     {
-            if (nopProductId <= 0 || storeId <= 0)
-                return false;
+        if (nopProductId <= 0 || storeId <= 0)
+            return false;
 
-            return await _nexportProductMappingRepository.Table.AnyAsync(np =>
-                np.NopProductId == nopProductId && np.StoreId == storeId);
-        }
+        return await _nexportProductMappingRepository.Table.AnyAsync(np =>
+            np.NopProductId == nopProductId && np.StoreId == storeId);
+    }
 
     public async Task<bool> HasProductMappingForNopProduct(int nopProductId, Guid catalogId, Guid? syllabusId)
     {
-            return await _nexportProductMappingRepository.Table.AnyAsync(np =>
-                np.NopProductId == nopProductId && np.NexportCatalogId == catalogId && np.NexportSyllabusId == syllabusId);
-        }
+        return await _nexportProductMappingRepository.Table.AnyAsync(np =>
+            np.NopProductId == nopProductId && np.NexportCatalogId == catalogId && np.NexportSyllabusId == syllabusId);
+    }
 
     public async Task<NexportProductMapping> GetProductMappingById(int mappingId)
     {
-            return mappingId == 0 ? null : await _nexportProductMappingRepository.GetByIdAsync(mappingId);
-        }
+        return mappingId == 0 ? null : await _nexportProductMappingRepository.GetByIdAsync(mappingId);
+    }
 
     public async Task DeleteNexportProductMapping(NexportProductMapping mapping)
     {
-            if (mapping == null)
-                throw new ArgumentNullException(nameof(mapping));
+        if (mapping == null)
+            throw new ArgumentNullException(nameof(mapping));
 
-            await _nexportProductMappingRepository.DeleteAsync(mapping);
-        }
+        await _nexportProductMappingRepository.DeleteAsync(mapping);
+    }
 
     public async Task UpdateNexportProductMapping(NexportProductMapping mapping)
     {
-            if (mapping == null)
-                throw new ArgumentNullException(nameof(mapping));
+        if (mapping == null)
+            throw new ArgumentNullException(nameof(mapping));
 
-            await _nexportProductMappingRepository.UpdateAsync(mapping);
-        }
+        await _nexportProductMappingRepository.UpdateAsync(mapping);
+    }
 
     public async Task<NexportProductGroupMembershipMapping> GetProductGroupMembershipMappingById(int mappingId)
     {
-            return mappingId == 0
-                ? null
-                : await _nexportProductGroupMembershipMappingRepository.GetByIdAsync(mappingId);
-        }
+        return mappingId == 0
+            ? null
+            : await _nexportProductGroupMembershipMappingRepository.GetByIdAsync(mappingId);
+    }
 
     public async Task DeleteGroupMembershipMapping(NexportProductGroupMembershipMapping mapping)
     {
-            if (mapping == null)
-                throw new ArgumentNullException(nameof(mapping));
+        if (mapping == null)
+            throw new ArgumentNullException(nameof(mapping));
 
-            await _nexportProductGroupMembershipMappingRepository.DeleteAsync(mapping);
-        }
+        await _nexportProductGroupMembershipMappingRepository.DeleteAsync(mapping);
+    }
 
     public async Task InsertNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem)
     {
-            if (queueItem == null)
-                throw new ArgumentNullException(nameof(queueItem));
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
 
-            if (await _nexportOrderProcessingQueueRepository.Table.AnyAsync(q => q.OrderId == queueItem.OrderId))
-                return;
+        if (await _nexportOrderProcessingQueueRepository.Table.AnyAsync(q => q.OrderId == queueItem.OrderId))
+            return;
 
-            await _logger.InformationAsync($"Order {queueItem.OrderId} has been added to the processing queue and awaiting to be processed.");
-            await _nexportOrderProcessingQueueRepository.InsertAsync(queueItem);
-        }
+        await _logger.InformationAsync($"Order {queueItem.OrderId} has been added to the processing queue and awaiting to be processed.");
+        await _nexportOrderProcessingQueueRepository.InsertAsync(queueItem);
+    }
 
     public async Task DeleteNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem)
     {
-            if (queueItem == null)
-                throw new ArgumentNullException(nameof(queueItem));
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
 
-            await _nexportOrderProcessingQueueRepository.DeleteAsync(queueItem);
-        }
+        await _nexportOrderProcessingQueueRepository.DeleteAsync(queueItem);
+    }
 
-    public async Task InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item)
+    public async Task<bool> InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item)
     {
-            if (item == null)
-                throw new ArgumentNullException(nameof(item));
+        if (item == null)
+            throw new ArgumentNullException(nameof(item));
 
-            if (await _nexportOrderInvoiceItemRepository.Table.AnyAsync(q => q.OrderId == item.OrderId &&
-                                                                             q.OrderItemId == item.OrderItemId))
+        if (await _nexportOrderInvoiceItemRepository.Table.AnyAsync(q => q.OrderId == item.OrderId &&
+                                                                         q.OrderItemId == item.OrderItemId && q.InvoiceItemId == item.InvoiceItemId))
+        {
+            try
             {
-                try
+                var currentInvoiceItems = await FindNexportOrderInvoiceItems(item.OrderId, item.OrderItemId);
+                NexportOrderInvoiceItem invoiceToUpdate = null;
+                if (currentInvoiceItems != null)
                 {
-                    var currentInvoiceItem = await FindNexportOrderInvoiceItem(item.OrderId, item.OrderItemId);
-                    currentInvoiceItem.InvoiceItemId = item.InvoiceItemId;
+                    foreach (var invoiceItem in currentInvoiceItems)
+                    {
+                        if (invoiceItem.UtcDateRedemption != null)
+                        {
+                            invoiceToUpdate = invoiceItem;
+                            break;
+                        }
+                    }
+                }
 
-                    await _nexportOrderInvoiceItemRepository.UpdateAsync(currentInvoiceItem);
-                }
-                catch (Exception ex)
+                if (invoiceToUpdate != null)
                 {
-                    await _logger.ErrorAsync($"Cannot update new invoice item for the order item {item.OrderItemId} in order {item.OrderId}", ex);
+                    invoiceToUpdate.InvoiceItemId = item.InvoiceItemId;
+                    await _nexportOrderInvoiceItemRepository.UpdateAsync(invoiceToUpdate);
+                    return true;
+
                 }
-            }
-            else
-            {
-                try
+                else
                 {
                     await _nexportOrderInvoiceItemRepository.InsertAsync(item);
-                }
-                catch (Exception ex)
-                {
-                    await _logger.ErrorAsync($"Cannot add new Nexport order invoice item for the order item {item.OrderItemId} in order {item.OrderId}", ex);
+                    return true;
                 }
             }
+            catch (Exception ex)
+            {
+                await _logger.ErrorAsync($"Cannot update new invoice item for the order item {item.OrderItemId} in order {item.OrderId}", ex);
+            }
         }
+        else
+        {
+            try
+            {
+                await _nexportOrderInvoiceItemRepository.InsertAsync(item);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await _logger.ErrorAsync($"Cannot add new Nexport order invoice item for the order item {item.OrderItemId} in order {item.OrderId}", ex);
+            }
+        }
+
+        return false;
+    }
 
     public async Task InsertNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem)
     {
-            if (queueItem == null)
-                throw new ArgumentNullException(nameof(queueItem));
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
 
-            if (_nexportOrderInvoiceRedemptionQueueRepository.Table.Any(q => q.OrderInvoiceItemId == queueItem.OrderInvoiceItemId))
-                return;
+        if (_nexportOrderInvoiceRedemptionQueueRepository.Table.Any(q => q.OrderInvoiceItemId == queueItem.OrderInvoiceItemId))
+            return;
 
-            await _nexportOrderInvoiceRedemptionQueueRepository.InsertAsync(queueItem);
-            await _logger.InformationAsync($"Invoice redemption {queueItem.OrderInvoiceItemId} for user {queueItem.RedeemingUserId} has been scheduled.");
-        }
+        await _nexportOrderInvoiceRedemptionQueueRepository.InsertAsync(queueItem);
+        await _logger.InformationAsync($"Invoice redemption {queueItem.OrderInvoiceItemId} for user {queueItem.RedeemingUserId} has been scheduled.");
+    }
+
+    public async Task InsertNexportOrderInvoiceResetRedemptionQueueItem(NexportOrderInvoiceResetRedemptionQueueItem queueItem)
+    {
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
+
+        if (_nexportOrderInvoiceResetRedemptionQueueRepository.Table.Any(q => q.OrderInvoiceItemId == queueItem.OrderInvoiceItemId))
+            return;
+
+        await _nexportOrderInvoiceResetRedemptionQueueRepository.InsertAsync(queueItem);
+        await _logger.InformationAsync($"Invoice redemption reset for invoice item with id: {queueItem.OrderInvoiceItemId} has been scheduled.");
+    }
 
     public async Task DeleteNexportOrderInvoiceItem(NexportOrderInvoiceItem item)
     {
-            if (item == null)
-                throw new ArgumentNullException(nameof(item));
+        if (item == null)
+            throw new ArgumentNullException(nameof(item));
 
-            await _nexportOrderInvoiceItemRepository.DeleteAsync(item);
-        }
+        await _nexportOrderInvoiceItemRepository.DeleteAsync(item);
+    }
 
     public async Task UpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item)
     {
-            if (item == null)
-                throw new ArgumentNullException(nameof(item));
+        if (item == null)
+            throw new ArgumentNullException(nameof(item));
 
-            await _nexportOrderInvoiceItemRepository.UpdateAsync(item);
-        }
+        await _nexportOrderInvoiceItemRepository.UpdateAsync(item);
+    }
 
     public async Task DeleteNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem)
     {
-            if (queueItem == null)
-                throw new ArgumentNullException(nameof(queueItem));
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
 
-            await _nexportOrderInvoiceRedemptionQueueRepository.DeleteAsync(queueItem);
-        }
+        await _nexportOrderInvoiceRedemptionQueueRepository.DeleteAsync(queueItem);
+    }
+
+    public async Task DeleteNexportOrderInvoiceResetRedemptionQueueItem(NexportOrderInvoiceResetRedemptionQueueItem queueItem)
+    {
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
+
+        await _nexportOrderInvoiceResetRedemptionQueueRepository.DeleteAsync(queueItem);
+    }
 
     public async Task UpdateNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem)
     {
-            if (queueItem == null)
-                throw new ArgumentNullException(nameof(queueItem));
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
 
-            await _nexportOrderInvoiceRedemptionQueueRepository.UpdateAsync(queueItem);
-        }
+        await _nexportOrderInvoiceRedemptionQueueRepository.UpdateAsync(queueItem);
+    }
 
+    public async Task UpdateNexportOrderInvoiceResetRedemptionQueueItem(NexportOrderInvoiceResetRedemptionQueueItem queueItem)
+    {
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
+
+        await _nexportOrderInvoiceResetRedemptionQueueRepository.UpdateAsync(queueItem);
+    }
+
+    //TODO @js - this function needs to be fixed or go away. does not work for wholesale because more than one invoice can have the same order id and orderitem id
     public async Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItem(int orderId, int orderItemId)
     {
-            if (orderId < 1)
-                return null;
+        if (orderId < 1)
+            return null;
 
-            return orderItemId < 1
-                ? null
-                : await _nexportOrderInvoiceItemRepository
-                    .Table.SingleOrDefaultAsync(o => o.OrderId == orderId && o.OrderItemId == orderItemId);
-        }
+        return orderItemId < 1
+            ? null
+            : await _nexportOrderInvoiceItemRepository
+                .Table.SingleOrDefaultAsync(o => o.OrderId == orderId && o.OrderItemId == orderItemId);
+    }
+
+
+    public async Task<IList<NexportOrderInvoiceItem>> FindNexportOrderInvoiceItems(int orderId, int orderItemId)
+    {
+        if (orderId < 1)
+            return null;
+
+        return orderItemId < 1
+            ? null
+            : await _nexportOrderInvoiceItemRepository
+                .Table.Where(o => o.OrderId == orderId && o.OrderItemId == orderItemId).ToListAsync();
+    }
 
     public async Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemById(int orderInvoiceItemId)
     {
-            return orderInvoiceItemId < 1
-                ? null
-                : await _nexportOrderInvoiceItemRepository.GetByIdAsync(orderInvoiceItemId);
-        }
+        return orderInvoiceItemId < 1
+            ? null
+            : await _nexportOrderInvoiceItemRepository.GetByIdAsync(orderInvoiceItemId);
+    }
 
     public async Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId)
     {
-            return userId == Guid.Empty
-                ? new List<NexportOrderInvoiceItem>()
-                : await _nexportOrderInvoiceItemRepository.Table
-                    .Where(o => o.RedeemingUserId == userId)
-                    .ToListAsync();
-        }
+        return userId == Guid.Empty
+            ? new List<NexportOrderInvoiceItem>()
+            : await _nexportOrderInvoiceItemRepository.Table
+                .Where(o => o.RedeemingUserId == userId)
+                .ToListAsync();
+    }
 
     public async Task<IPagedList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(int orderId,
         bool excludeNonApproval = false,
         int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
     {
-            if (orderId < 1)
-                return new PagedList<NexportOrderInvoiceItem>(new List<NexportOrderInvoiceItem>(), pageIndex, pageSize);
+        if (orderId < 1)
+            return new PagedList<NexportOrderInvoiceItem>(new List<NexportOrderInvoiceItem>(), pageIndex, pageSize);
 
-            var redemptionQueueQuery = _nexportOrderInvoiceRedemptionQueueRepository.Table
-                .Select(q => q.OrderItemId).ToList();
+        var redemptionQueueQuery = _nexportOrderInvoiceRedemptionQueueRepository.Table
+            .Select(q => q.OrderItemId).ToList();
 
-            var query = _nexportOrderInvoiceItemRepository.Table
-                .Where(o => o.OrderId == orderId);
+        var query = _nexportOrderInvoiceItemRepository.Table
+            .Where(o => o.OrderId == orderId);
 
-            if (excludeNonApproval)
-                query = query.Where(x =>
-                    x.RequireManualApproval.HasValue &&
-                    x.RequireManualApproval.Value &&
-                    !redemptionQueueQuery.Contains(x.OrderItemId));
+        if (excludeNonApproval)
+            query = query.Where(x =>
+                x.RequireManualApproval.HasValue &&
+                x.RequireManualApproval.Value &&
+                !redemptionQueueQuery.Contains(x.OrderItemId));
 
-            return await query.ToPagedListAsync(pageIndex, pageSize);
-        }
+        return await query.ToPagedListAsync(pageIndex, pageSize);
+    }
 
     public async Task MapNexportProduct(MapNexportProductModel model)
     {
-            //get selected products
-            var product = await _productService.GetProductByIdAsync(model.NopProductId);
-            if (product != null)
+        //get selected products
+        var product = await _productService.GetProductByIdAsync(model.NopProductId);
+        if (product != null)
+        {
+            var updateProductMapping = false;
+
+            var productMapping = await GetProductMappingByNopProductId(product.Id, model.StoreId);
+            if (productMapping != null)
             {
-                var updateProductMapping = false;
-
-                var productMapping = await GetProductMappingByNopProductId(product.Id, model.StoreId);
-                if (productMapping != null)
+                productMapping.Type = model.NexportProductType;
+                updateProductMapping = true;
+            }
+            else
+            {
+                productMapping = new NexportProductMapping
                 {
-                    productMapping.Type = model.NexportProductType;
-                    updateProductMapping = true;
-                }
-                else
-                {
-                    productMapping = new NexportProductMapping
-                    {
-                        NopProductId = product.Id,
-                        DisplayName = product.Name,
-                        Type = model.NexportProductType
-                    };
-                }
+                    NopProductId = product.Id,
+                    DisplayName = product.Name,
+                    Type = model.NexportProductType
+                };
+            }
 
-                switch (model.NexportProductType)
-                {
-                    case NexportProductTypeEnum.Catalog:
-                        var catalogDetails = await GetCatalogDetailsAsync(model.NexportProductId);
-                        var catalogCreditHours = await GetCatalogCreditHoursAsync(model.NexportProductId);
+            productMapping.AssignWhenRedeemed = false;
 
-                        productMapping.NexportProductName = catalogDetails?.Name;
-                        productMapping.NexportCatalogId = model.NexportCatalogId;
-                        productMapping.PricingModel = catalogDetails?.PricingModel;
-                        productMapping.PublishingModel = catalogDetails?.PublishingModel;
-                        productMapping.CreditHours = catalogCreditHours?.CreditHours;
+            switch (model.NexportProductType)
+            {
+                case NexportProductTypeEnum.OpenEnded:
+                    var openCatalogDetails = await GetCatalogDetailsAsync(model.NexportProductId);
+                    var openCatalogCreditHours = await GetCatalogCreditHoursAsync(model.NexportProductId);
 
-                        break;
+                    productMapping.NexportProductName = openCatalogDetails?.Name;
+                    productMapping.NexportCatalogId = model.NexportCatalogId;
+                    productMapping.PricingModel = openCatalogDetails?.PricingModel;
+                    productMapping.PublishingModel = openCatalogDetails?.PublishingModel;
+                    productMapping.CreditHours = openCatalogCreditHours?.CreditHours;
+                    if (model.AssignWhenRedeemed.HasValue && model.AssignWhenRedeemed.Value)
+                        productMapping.AssignWhenRedeemed = model.AssignWhenRedeemed.Value;
 
-                    case NexportProductTypeEnum.Section:
-                        if (model.NexportSyllabusId == null)
-                            throw new ArgumentNullException(nameof(model.NexportSyllabusId), "Syllabus Id cannot be null");
+                    break;
 
-                        var sectionDetails = await GetSectionDetailsAsync(model.NexportSyllabusId.Value);
+                case NexportProductTypeEnum.Catalog:
+                    var catalogDetails = await GetCatalogDetailsAsync(model.NexportProductId);
+                    var catalogCreditHours = await GetCatalogCreditHoursAsync(model.NexportProductId);
 
-                        productMapping.NexportProductName = sectionDetails?.Title;
-                        productMapping.NexportCatalogId = model.NexportCatalogId;
-                        productMapping.NexportSyllabusId = model.NexportSyllabusId;
-                        productMapping.NexportCatalogSyllabusLinkId = model.NexportProductId;
-                        productMapping.UtcAvailableDate = sectionDetails?.EnrollmentStart;
-                        productMapping.UtcEndDate = sectionDetails?.EnrollmentEnd;
-                        productMapping.UtcLastModifiedDate = sectionDetails?.UtcDateLastModified;
-                        productMapping.CreditHours = sectionDetails?.CreditHours;
-                        productMapping.SectionCeus = sectionDetails?.SectionCeus;
+                    productMapping.NexportProductName = catalogDetails?.Name;
+                    productMapping.NexportCatalogId = model.NexportCatalogId;
+                    productMapping.PricingModel = catalogDetails?.PricingModel;
+                    productMapping.PublishingModel = catalogDetails?.PublishingModel;
+                    productMapping.CreditHours = catalogCreditHours?.CreditHours;
 
-                        break;
+                    break;
 
-                    case NexportProductTypeEnum.TrainingPlan:
-                        if (model.NexportSyllabusId == null)
-                            throw new ArgumentNullException(nameof(model.NexportSyllabusId), "Syllabus Id cannot be null");
+                case NexportProductTypeEnum.Section:
+                    if (model.NexportSyllabusId == null)
+                        throw new ArgumentNullException(nameof(model.NexportSyllabusId), "Syllabus Id cannot be null");
 
-                        var trainingPlanDetails = await GetTrainingPlanDetailsAsync(model.NexportSyllabusId.Value);
+                    var sectionDetails = await GetSectionDetailsAsync(model.NexportSyllabusId.Value);
 
-                        productMapping.NexportProductName = trainingPlanDetails?.Name;
-                        productMapping.NexportCatalogId = model.NexportCatalogId;
-                        productMapping.NexportSyllabusId = model.NexportSyllabusId;
-                        productMapping.NexportCatalogSyllabusLinkId = model.NexportProductId;
-                        productMapping.UtcAvailableDate = trainingPlanDetails?.EnrollmentStart;
-                        productMapping.UtcEndDate = trainingPlanDetails?.EnrollmentEnd;
-                        productMapping.UtcLastModifiedDate = trainingPlanDetails?.UtcDateLastModified;
-                        productMapping.CreditHours = trainingPlanDetails?.CreditHours;
+                    productMapping.NexportProductName = sectionDetails?.Title;
+                    productMapping.NexportCatalogId = model.NexportCatalogId;
+                    productMapping.NexportSyllabusId = model.NexportSyllabusId;
+                    productMapping.NexportCatalogSyllabusLinkId = model.NexportProductId;
+                    productMapping.UtcAvailableDate = sectionDetails?.EnrollmentStart;
+                    productMapping.UtcEndDate = sectionDetails?.EnrollmentEnd;
+                    productMapping.UtcLastModifiedDate = sectionDetails?.UtcDateLastModified;
+                    productMapping.CreditHours = sectionDetails?.CreditHours;
+                    productMapping.SectionCeus = sectionDetails?.SectionCeus;
 
-                        break;
+                    break;
 
-                    default:
-                        goto case NexportProductTypeEnum.Catalog;
-                }
+                case NexportProductTypeEnum.TrainingPlan:
+                    if (model.NexportSyllabusId == null)
+                        throw new ArgumentNullException(nameof(model.NexportSyllabusId), "Syllabus Id cannot be null");
 
-                if (model.StoreId.HasValue)
-                {
-                    productMapping.StoreId = model.StoreId.Value;
-                }
+                    var trainingPlanDetails = await GetTrainingPlanDetailsAsync(model.NexportSyllabusId.Value);
 
-                if (updateProductMapping)
-                {
-                    await UpdateNexportProductMapping(productMapping);
-                }
-                else
-                {
-                    await InsertNexportProductMapping(productMapping);
-                }
+                    productMapping.NexportProductName = trainingPlanDetails?.Name;
+                    productMapping.NexportCatalogId = model.NexportCatalogId;
+                    productMapping.NexportSyllabusId = model.NexportSyllabusId;
+                    productMapping.NexportCatalogSyllabusLinkId = model.NexportProductId;
+                    productMapping.UtcAvailableDate = trainingPlanDetails?.EnrollmentStart;
+                    productMapping.UtcEndDate = trainingPlanDetails?.EnrollmentEnd;
+                    productMapping.UtcLastModifiedDate = trainingPlanDetails?.UtcDateLastModified;
+                    productMapping.CreditHours = trainingPlanDetails?.CreditHours;
+
+                    break;
+
+                default:
+                    goto case NexportProductTypeEnum.Catalog;
+            }
+
+            if (model.StoreId.HasValue)
+            {
+                productMapping.StoreId = model.StoreId.Value;
+            }
+
+            if (updateProductMapping)
+            {
+                await UpdateNexportProductMapping(productMapping);
+            }
+            else
+            {
+                await InsertNexportProductMapping(productMapping);
             }
         }
+    }
 
     public async Task InsertUserMapping(NexportUserMapping nexportUserMapping)
     {
-            if (nexportUserMapping == null)
-                throw new ArgumentNullException(nameof(nexportUserMapping));
+        if (nexportUserMapping == null)
+            throw new ArgumentNullException(nameof(nexportUserMapping));
 
-            var existingMapping = _nexportUserMappingRepository
-                .Table
-                .FirstOrDefault(user => user.NexportUserId == nexportUserMapping.NexportUserId);
+        var existingMapping = _nexportUserMappingRepository
+            .Table
+            .FirstOrDefault(user => user.NexportUserId == nexportUserMapping.NexportUserId);
 
-            if (existingMapping != null)
-                throw new NexportUserMappingException(
-                    $"The Nexport user Id {nexportUserMapping.NexportUserId} has been mapped with another users!",
-                    existingMapping);
-            if (await _nexportUserMappingRepository.Table.AnyAsync(user => user.NopUserId == nexportUserMapping.NopUserId))
-                return;
+        if (existingMapping != null)
+            throw new NexportUserMappingException(
+                $"The Nexport user Id {nexportUserMapping.NexportUserId} has been mapped with another users!",
+                existingMapping);
+        if (await _nexportUserMappingRepository.Table.AnyAsync(user => user.NopUserId == nexportUserMapping.NopUserId))
+            return;
 
-            await _nexportUserMappingRepository.InsertAsync(nexportUserMapping);
-        }
+        await _nexportUserMappingRepository.InsertAsync(nexportUserMapping);
+    }
 
     public async Task DeleteUserMapping(NexportUserMapping nexportUserMapping)
     {
-            if (nexportUserMapping == null)
-                throw new ArgumentNullException(nameof(nexportUserMapping));
+        if (nexportUserMapping == null)
+            throw new ArgumentNullException(nameof(nexportUserMapping));
 
-            await _nexportUserMappingRepository.DeleteAsync(nexportUserMapping);
-        }
+        await _nexportUserMappingRepository.DeleteAsync(nexportUserMapping);
+    }
 
     public async Task UpdateUserMapping(NexportUserMapping nexportUserMapping)
     {
-            if (nexportUserMapping == null)
-                throw new ArgumentNullException(nameof(nexportUserMapping));
+        if (nexportUserMapping == null)
+            throw new ArgumentNullException(nameof(nexportUserMapping));
 
-            await _nexportUserMappingRepository.UpdateAsync(nexportUserMapping);
-        }
+        await _nexportUserMappingRepository.UpdateAsync(nexportUserMapping);
+    }
 
     public async Task<NexportUserMapping> FindUserMappingByCustomerId(int nopCustomerId)
     {
-            return nopCustomerId < 1
-                ? null
-                : await _nexportUserMappingRepository.Table.SingleOrDefaultAsync(np => np.NopUserId == nopCustomerId);
-        }
+        return nopCustomerId < 1
+            ? null
+            : await _nexportUserMappingRepository.Table.SingleOrDefaultAsync(np => np.NopUserId == nopCustomerId);
+    }
 
     public async Task<NexportUserMapping> FindUserMappingByNexportUserId(Guid userId)
     {
-            return userId == Guid.Empty
-                ? null
-                : await _nexportUserMappingRepository.Table.SingleOrDefaultAsync(np => np.NexportUserId == userId);
-        }
+        return userId == Guid.Empty
+            ? null
+            : await _nexportUserMappingRepository.Table.SingleOrDefaultAsync(np => np.NexportUserId == userId);
+    }
 
     public async Task<Guid?> FindExistingInvoiceForOrder(int orderId)
     {
-            return orderId < 1
-                ? null
-                : (await _nexportOrderInvoiceItemRepository.Table
-                    .FirstOrDefaultAsync(i => i.OrderId == orderId))?.InvoiceId;
-        }
+        return orderId < 1
+            ? null
+            : (await _nexportOrderInvoiceItemRepository.Table
+                .FirstOrDefaultAsync(i => i.OrderId == orderId))?.InvoiceId;
+    }
 
     public async Task<Guid?> FindExistingInvoiceItemForOrderItem(int orderId, int orderItemId)
     {
-            if (orderId < 1)
-                return null;
+        if (orderId < 1)
+            return null;
 
-            return orderItemId <= 0
-                ? null
-                : (await _nexportOrderInvoiceItemRepository.Table.FirstOrDefaultAsync(i =>
-                    i.OrderId == orderId && i.OrderItemId == orderItemId))?.InvoiceItemId;
+        return orderItemId <= 0
+            ? null
+            : (await _nexportOrderInvoiceItemRepository.Table.FirstOrDefaultAsync(i =>
+                i.OrderId == orderId && i.OrderItemId == orderItemId))?.InvoiceItemId;
 
-        }
+    }
 
     public async Task<bool> HasNexportOrderProcessingQueueItem(int orderId)
     {
-            return orderId > 0 &&
-                   await _nexportOrderProcessingQueueRepository.Table.AnyAsync(q => q.OrderId == orderId);
-        }
+        return orderId > 0 &&
+               await _nexportOrderProcessingQueueRepository.Table.AnyAsync(q => q.OrderId == orderId);
+    }
 
     public async Task<bool> HasNexportProductMapping(Order order)
     {
-            if (order == null)
-                return false;
+        if (order == null)
+            return false;
 
-            var items = (await _orderService.GetOrderItemsAsync(order.Id));
+        var items = (await _orderService.GetOrderItemsAsync(order.Id));
 
-            return await items.WhereAwait(async t =>
-                await _nexportProductMappingRepository
-                    .Table.AnyAsync(p => p.NopProductId == t.ProductId))
-                .AnyAsync();
-        }
+        return await items.WhereAwait(async t =>
+            await _nexportProductMappingRepository
+                .Table.AnyAsync(p => p.NopProductId == t.ProductId))
+            .AnyAsync();
+    }
 
     public async Task<bool> HasNexportProductMapping(int productId)
     {
-            return productId > 0 && await _nexportProductMappingRepository.Table.AnyAsync(p => p.NopProductId == productId);
-        }
+        return productId > 0 && await _nexportProductMappingRepository.Table.AnyAsync(p => p.NopProductId == productId);
+    }
 
     public async Task<IList<int?>> GetStoreIdsPerProductMapping(int productId)
     {
-            return productId < 1
-                ? new List<int?>()
-                : await _nexportProductMappingRepository.Table
-                    .Where(np => np.NopProductId == productId)
-                    .Select(np => np.StoreId)
-                    .ToListAsync();
-        }
+        return productId < 1
+            ? new List<int?>()
+            : await _nexportProductMappingRepository.Table
+                .Where(np => np.NopProductId == productId)
+                .Select(np => np.StoreId)
+                .ToListAsync();
+    }
 
     public async Task CopyProductMappingsAsync(Product originalProduct, Product copyingProduct)
     {
-            if (originalProduct == null)
-                throw new ArgumentNullException(nameof(originalProduct));
+        if (originalProduct == null)
+            throw new ArgumentNullException(nameof(originalProduct));
 
-            if (copyingProduct == null)
-                throw new ArgumentNullException(nameof(copyingProduct));
+        if (copyingProduct == null)
+            throw new ArgumentNullException(nameof(copyingProduct));
 
-            var mappings = await GetProductMappings(originalProduct.Id);
-            foreach (var mapping in mappings)
+        var mappings = await GetProductMappings(originalProduct.Id);
+        foreach (var mapping in mappings)
+        {
+            var newMapping = new NexportProductMapping
             {
-                var newMapping = new NexportProductMapping
-                {
-                    NopProductId = copyingProduct.Id,
-                    NexportProductName = mapping.NexportProductName,
-                    DisplayName = mapping.DisplayName,
-                    NexportCatalogId = mapping.NexportCatalogId,
-                    NexportSyllabusId = mapping.NexportSyllabusId,
-                    NexportCatalogSyllabusLinkId = mapping.NexportCatalogSyllabusLinkId,
-                    NexportSubscriptionOrgId = mapping.NexportSubscriptionOrgId,
-                    Type = mapping.Type,
-                    PublishingModel = mapping.PublishingModel,
-                    PricingModel = mapping.PricingModel,
-                    AccessTimeLimit = mapping.AccessTimeLimit,
-                    UtcAvailableDate = mapping.UtcAvailableDate,
-                    UtcEndDate = mapping.UtcEndDate,
-                    //UtcLastModifiedDate = DateTime.UtcNow,
-                    CreditHours = mapping.CreditHours,
-                    SectionCeus = mapping.SectionCeus,
-                    NexportSubscriptionOrgName = mapping.NexportSubscriptionOrgName,
-                    NexportSubscriptionOrgShortName = mapping.NexportSubscriptionOrgShortName,
-                    AutoRedeem = mapping.AutoRedeem,
-                    UtcAccessExpirationDate = mapping.UtcAccessExpirationDate,
-                    StoreId = mapping.StoreId,
-                    AllowExtension = mapping.AllowExtension,
-                    IsExtensionProduct = mapping.IsExtensionProduct,
-                    RenewalWindow = mapping.RenewalWindow
-                };
-
-                await InsertNexportProductMapping(newMapping);
-
-                var groupMembershipMappings = await GetProductGroupMembershipMappings(mapping.Id);
-                foreach (var groupMembershipMapping in groupMembershipMappings)
-                {
-                    var newGroupMembershipMapping = new NexportProductGroupMembershipMapping
-                    {
-                        NexportGroupId = groupMembershipMapping.NexportGroupId,
-                        NexportGroupName = groupMembershipMapping.NexportGroupName,
-                        NexportGroupShortName = groupMembershipMapping.NexportGroupShortName,
-                        NexportProductMappingId = newMapping.Id
-                    };
-
-                    await InsertNexportProductGroupMembershipMapping(newGroupMembershipMapping);
-                }
-            }
-        }
-
-    public async Task DuplicateProductMappingAsync(NexportProductMapping productMapping, int storeId)
-    {
-            var newMapping = AutoMapperConfiguration.Mapper.Map<NexportProductMapping>(productMapping);
-            newMapping.StoreId = storeId;
+                NopProductId = copyingProduct.Id,
+                NexportProductName = mapping.NexportProductName,
+                DisplayName = mapping.DisplayName,
+                NexportCatalogId = mapping.NexportCatalogId,
+                NexportSyllabusId = mapping.NexportSyllabusId,
+                NexportCatalogSyllabusLinkId = mapping.NexportCatalogSyllabusLinkId,
+                NexportSubscriptionOrgId = mapping.NexportSubscriptionOrgId,
+                Type = mapping.Type,
+                PublishingModel = mapping.PublishingModel,
+                PricingModel = mapping.PricingModel,
+                AccessTimeLimit = mapping.AccessTimeLimit,
+                UtcAvailableDate = mapping.UtcAvailableDate,
+                UtcEndDate = mapping.UtcEndDate,
+                //UtcLastModifiedDate = DateTime.UtcNow,
+                CreditHours = mapping.CreditHours,
+                SectionCeus = mapping.SectionCeus,
+                NexportSubscriptionOrgName = mapping.NexportSubscriptionOrgName,
+                NexportSubscriptionOrgShortName = mapping.NexportSubscriptionOrgShortName,
+                AutoRedeem = mapping.AutoRedeem,
+                UtcAccessExpirationDate = mapping.UtcAccessExpirationDate,
+                StoreId = mapping.StoreId,
+                AllowExtension = mapping.AllowExtension,
+                IsExtensionProduct = mapping.IsExtensionProduct,
+                RenewalWindow = mapping.RenewalWindow
+            };
 
             await InsertNexportProductMapping(newMapping);
 
-            var groupMembershipMappings = await GetProductGroupMembershipMappings(productMapping.Id);
+            var groupMembershipMappings = await GetProductGroupMembershipMappings(mapping.Id);
             foreach (var groupMembershipMapping in groupMembershipMappings)
             {
                 var newGroupMembershipMapping = new NexportProductGroupMembershipMapping
@@ -831,1038 +895,1606 @@ public partial class NexportService : INexportService
                 await InsertNexportProductGroupMembershipMapping(newGroupMembershipMapping);
             }
         }
+    }
+
+    public async Task DuplicateProductMappingAsync(NexportProductMapping productMapping, int storeId)
+    {
+        var newMapping = AutoMapperConfiguration.Mapper.Map<NexportProductMapping>(productMapping);
+        newMapping.StoreId = storeId;
+
+        await InsertNexportProductMapping(newMapping);
+
+        var groupMembershipMappings = await GetProductGroupMembershipMappings(productMapping.Id);
+        foreach (var groupMembershipMapping in groupMembershipMappings)
+        {
+            var newGroupMembershipMapping = new NexportProductGroupMembershipMapping
+            {
+                NexportGroupId = groupMembershipMapping.NexportGroupId,
+                NexportGroupName = groupMembershipMapping.NexportGroupName,
+                NexportGroupShortName = groupMembershipMapping.NexportGroupShortName,
+                NexportProductMappingId = newMapping.Id
+            };
+
+            await InsertNexportProductGroupMembershipMapping(newGroupMembershipMapping);
+        }
+    }
 
     public async Task<IPagedList<NexportSupplementalInfoQuestion>> GetAllNexportSupplementalInfoQuestionsPagination(
         int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
     {
-            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoQuestionAllCacheKey, pageIndex, pageSize);
-            return await _cacheManager.GetAsync(cacheKey, async () =>
-            {
-                var query = _nexportSupplementalInfoQuestionRepository.Table.Select(question => question);
+        var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoQuestionAllCacheKey, pageIndex, pageSize);
+        return await _cacheManager.GetAsync(cacheKey, async () =>
+        {
+            var query = _nexportSupplementalInfoQuestionRepository.Table.Select(question => question);
 
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
-        }
+            return await query.ToPagedListAsync(pageIndex, pageSize);
+        });
+    }
 
     public async Task<IList<NexportSupplementalInfoQuestion>> GetAllNexportSupplementalInfoQuestions()
     {
-            return (await GetAllNexportSupplementalInfoQuestionsPagination()).ToList();
-        }
+        return (await GetAllNexportSupplementalInfoQuestionsPagination()).ToList();
+    }
 
     public async Task<NexportSupplementalInfoQuestion> GetNexportSupplementalInfoQuestionById(int questionId)
     {
-            return questionId > 0 ? await _nexportSupplementalInfoQuestionRepository.GetByIdAsync(questionId) : null;
-        }
+        return questionId > 0 ? await _nexportSupplementalInfoQuestionRepository.GetByIdAsync(questionId) : null;
+    }
 
     public async Task<IList<NexportSupplementalInfoQuestion>> GetNexportSupplementalInfoQuestionsByIds(int[] questionIds)
     {
-            if (questionIds == null || questionIds.Length == 0)
-                return new List<NexportSupplementalInfoQuestion>();
+        if (questionIds == null || questionIds.Length == 0)
+            return new List<NexportSupplementalInfoQuestion>();
 
-            var questions = await _nexportSupplementalInfoQuestionRepository
-                .Table
-                .Where(question => questionIds.Contains(question.Id))
-                .ToListAsync();
+        var questions = await _nexportSupplementalInfoQuestionRepository
+            .Table
+            .Where(question => questionIds.Contains(question.Id))
+            .ToListAsync();
 
-            return await questionIds
-                .Select(id => questions.Find(x => x.Id == id))
-                .Where(question => question != null)
-                .ToListAsync();
-        }
+        return await questionIds
+            .Select(id => questions.Find(x => x.Id == id))
+            .Where(question => question != null)
+            .ToListAsync();
+    }
 
     public async Task InsertNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question)
     {
-            if (question == null)
-                throw new ArgumentNullException(nameof(question));
+        if (question == null)
+            throw new ArgumentNullException(nameof(question));
 
-            await _nexportSupplementalInfoQuestionRepository.InsertAsync(question);
-        }
+        await _nexportSupplementalInfoQuestionRepository.InsertAsync(question);
+    }
 
     public async Task DeleteNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question)
     {
-            if (question == null)
-                throw new ArgumentNullException(nameof(question));
+        if (question == null)
+            throw new ArgumentNullException(nameof(question));
 
-            await _nexportSupplementalInfoQuestionRepository.DeleteAsync(question);
-        }
+        await _nexportSupplementalInfoQuestionRepository.DeleteAsync(question);
+    }
 
     public async Task DeleteNexportSupplementalInfoQuestions(IList<NexportSupplementalInfoQuestion> questions)
     {
-            if (questions == null)
-                throw new ArgumentNullException(nameof(questions));
+        if (questions == null)
+            throw new ArgumentNullException(nameof(questions));
 
-            foreach (var question in questions)
-            {
-                await DeleteNexportSupplementalInfoQuestion(question);
-            }
+        foreach (var question in questions)
+        {
+            await DeleteNexportSupplementalInfoQuestion(question);
         }
+    }
 
     public async Task UpdateNexportSupplementalInfoQuestion(NexportSupplementalInfoQuestion question)
     {
-            if (question == null)
-                throw new ArgumentNullException(nameof(question));
+        if (question == null)
+            throw new ArgumentNullException(nameof(question));
 
-            question.UtcDateModified = DateTime.UtcNow;
+        question.UtcDateModified = DateTime.UtcNow;
 
-            await _nexportSupplementalInfoQuestionRepository.UpdateAsync(question);
-        }
+        await _nexportSupplementalInfoQuestionRepository.UpdateAsync(question);
+    }
 
     public async Task<NexportSupplementalInfoOption> GetNexportSupplementalInfoOptionById(int optionId)
     {
-            return optionId > 0 ? await _nexportSupplementalInfoOptionRepository.GetByIdAsync(optionId) : null;
-        }
+        return optionId > 0 ? await _nexportSupplementalInfoOptionRepository.GetByIdAsync(optionId) : null;
+    }
 
     public async Task<IList<NexportSupplementalInfoOption>> GetNexportSupplementalInfoOptionsByQuestionId(int questionId,
         bool showHidden = false)
     {
-            if (questionId <= 0)
-                return new List<NexportSupplementalInfoOption>();
+        if (questionId <= 0)
+            return new List<NexportSupplementalInfoOption>();
 
-            var query = _nexportSupplementalInfoOptionRepository.Table
-                .Where(opt => opt.QuestionId == questionId);
+        var query = _nexportSupplementalInfoOptionRepository.Table
+            .Where(opt => opt.QuestionId == questionId);
 
-            return showHidden
-                ? await query.ToListAsync()
-                : await query.Where(opt => !opt.Deleted).ToListAsync();
-        }
+        return showHidden
+            ? await query.ToListAsync()
+            : await query.Where(opt => !opt.Deleted).ToListAsync();
+    }
 
     public async Task InsertNexportSupplementalInfoOption(NexportSupplementalInfoOption option)
     {
-            if (option == null)
-                throw new ArgumentNullException(nameof(option));
+        if (option == null)
+            throw new ArgumentNullException(nameof(option));
 
-            await _nexportSupplementalInfoOptionRepository.InsertAsync(option);
-        }
+        await _nexportSupplementalInfoOptionRepository.InsertAsync(option);
+    }
 
     public async Task DeleteNexportSupplementalInfoOption(NexportSupplementalInfoOption option)
     {
-            if (option == null)
-                throw new ArgumentNullException(nameof(option));
+        if (option == null)
+            throw new ArgumentNullException(nameof(option));
 
-            option.Deleted = true;
+        option.Deleted = true;
 
-            await UpdateNexportSupplementalInfoOption(option);
-        }
+        await UpdateNexportSupplementalInfoOption(option);
+    }
 
     public async Task UpdateNexportSupplementalInfoOption(NexportSupplementalInfoOption option)
     {
-            if (option == null)
-                throw new ArgumentNullException(nameof(option));
+        if (option == null)
+            throw new ArgumentNullException(nameof(option));
 
-            option.UtcDateModified = DateTime.UtcNow;
+        option.UtcDateModified = DateTime.UtcNow;
 
-            await _nexportSupplementalInfoOptionRepository.UpdateAsync(option);
-        }
+        await _nexportSupplementalInfoOptionRepository.UpdateAsync(option);
+    }
 
     public async Task<NexportSupplementalInfoQuestionMapping> GetNexportSupplementalInfoQuestionMappingById(int questionMappingId)
     {
-            return questionMappingId > 0
-                ? await _nexportSupplementalInfoQuestionMappingRepository.GetByIdAsync(questionMappingId)
-                : null;
-        }
+        return questionMappingId > 0
+            ? await _nexportSupplementalInfoQuestionMappingRepository.GetByIdAsync(questionMappingId)
+            : null;
+    }
 
     public async Task<IList<NexportSupplementalInfoQuestionMapping>>
         GetNexportSupplementalInfoQuestionMappingsByProductMappingId(int nexportProductMappingId)
     {
-            return nexportProductMappingId > 0
-                ? await _nexportSupplementalInfoQuestionMappingRepository
-                    .Table
-                    .Where(qm => qm.ProductMappingId == nexportProductMappingId)
-                    .ToListAsync()
-                : new List<NexportSupplementalInfoQuestionMapping>();
-        }
+        return nexportProductMappingId > 0
+            ? await _nexportSupplementalInfoQuestionMappingRepository
+                .Table
+                .Where(qm => qm.ProductMappingId == nexportProductMappingId)
+                .ToListAsync()
+            : new List<NexportSupplementalInfoQuestionMapping>();
+    }
 
     public async Task<NexportSupplementalInfoQuestionMapping> GetNexportSupplementalInfoQuestionMapping(int nexportProductMappingId,
         int questionId)
     {
-            if (nexportProductMappingId < 1 || questionId < 1)
-                return null;
+        if (nexportProductMappingId < 1 || questionId < 1)
+            return null;
 
-            return await _nexportSupplementalInfoQuestionMappingRepository
-                .Table
-                .FirstOrDefaultAsync(qm =>
-                    qm.ProductMappingId == nexportProductMappingId &&
-                    qm.QuestionId == questionId);
-        }
+        return await _nexportSupplementalInfoQuestionMappingRepository
+            .Table
+            .FirstOrDefaultAsync(qm =>
+                qm.ProductMappingId == nexportProductMappingId &&
+                qm.QuestionId == questionId);
+    }
 
     public async Task InsertNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping)
     {
-            if (questionMapping == null)
-                throw new ArgumentNullException(nameof(questionMapping));
+        if (questionMapping == null)
+            throw new ArgumentNullException(nameof(questionMapping));
 
-            if (await _nexportSupplementalInfoQuestionMappingRepository.Table.AnyAsync(qm =>
-                qm.QuestionId == questionMapping.QuestionId &&
-                qm.ProductMappingId == questionMapping.ProductMappingId))
-                return;
+        if (await _nexportSupplementalInfoQuestionMappingRepository.Table.AnyAsync(qm =>
+            qm.QuestionId == questionMapping.QuestionId &&
+            qm.ProductMappingId == questionMapping.ProductMappingId))
+            return;
 
-            await _nexportSupplementalInfoQuestionMappingRepository.InsertAsync(questionMapping);
-        }
+        await _nexportSupplementalInfoQuestionMappingRepository.InsertAsync(questionMapping);
+    }
 
     public async Task DeleteNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping)
     {
-            if (questionMapping == null)
-                throw new ArgumentNullException(nameof(questionMapping));
+        if (questionMapping == null)
+            throw new ArgumentNullException(nameof(questionMapping));
 
-            await _nexportSupplementalInfoQuestionMappingRepository.DeleteAsync(questionMapping);
-        }
+        await _nexportSupplementalInfoQuestionMappingRepository.DeleteAsync(questionMapping);
+    }
 
     public async Task UpdateNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping)
     {
-            if (questionMapping == null)
-                throw new ArgumentNullException(nameof(questionMapping));
+        if (questionMapping == null)
+            throw new ArgumentNullException(nameof(questionMapping));
 
-            await _nexportSupplementalInfoQuestionMappingRepository.UpdateAsync(questionMapping);
-        }
+        await _nexportSupplementalInfoQuestionMappingRepository.UpdateAsync(questionMapping);
+    }
 
     public async Task<IPagedList<NexportSupplementalInfoOptionGroupAssociation>>
         GetNexportSupplementalInfoOptionGroupAssociationsPagination(int optionId, int pageIndex = 0,
             int pageSize = int.MaxValue)
     {
-            if (optionId < 1)
-                return new PagedList<NexportSupplementalInfoOptionGroupAssociation>(
-                    new List<NexportSupplementalInfoOptionGroupAssociation>(), pageIndex, pageSize);
+        if (optionId < 1)
+            return new PagedList<NexportSupplementalInfoOptionGroupAssociation>(
+                new List<NexportSupplementalInfoOptionGroupAssociation>(), pageIndex, pageSize);
 
-            var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoOptionGroupAssociationsAllCacheKey,
-                (await _storeContext.GetCurrentStoreAsync()).Id);
+        var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoOptionGroupAssociationsAllCacheKey,
+            (await _storeContext.GetCurrentStoreAsync()).Id);
 
-            return await _cacheManager.GetAsync(cacheKey, async () =>
-            {
-                var query =
-                    _nexportSupplementalInfoOptionGroupAssociationRepository
-                        .Table.Where(ga => ga.OptionId == optionId);
+        return await _cacheManager.GetAsync(cacheKey, async () =>
+        {
+            var query =
+                _nexportSupplementalInfoOptionGroupAssociationRepository
+                    .Table.Where(ga => ga.OptionId == optionId);
 
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
-        }
+            return await query.ToPagedListAsync(pageIndex, pageSize);
+        });
+    }
 
     public async Task<IList<NexportSupplementalInfoOptionGroupAssociation>>
         GetNexportSupplementalInfoOptionGroupAssociations(int optionId, bool excludeInactive = false)
     {
-            if (optionId < 1)
-                return new List<NexportSupplementalInfoOptionGroupAssociation>();
+        if (optionId < 1)
+            return new List<NexportSupplementalInfoOptionGroupAssociation>();
 
-            var query = _nexportSupplementalInfoOptionGroupAssociationRepository.Table
-                .Where(a => a.OptionId == optionId);
+        var query = _nexportSupplementalInfoOptionGroupAssociationRepository.Table
+            .Where(a => a.OptionId == optionId);
 
-            if (excludeInactive)
-                query = query.Where(a => a.IsActive);
+        if (excludeInactive)
+            query = query.Where(a => a.IsActive);
 
-            return await query.ToListAsync();
-        }
+        return await query.ToListAsync();
+    }
 
     public async Task<NexportSupplementalInfoOptionGroupAssociation> GetNexportSupplementalInfoOptionGroupAssociationById(int groupAssociationId)
     {
-            return groupAssociationId < 1
-                ? null
-                : await _nexportSupplementalInfoOptionGroupAssociationRepository.GetByIdAsync(groupAssociationId);
-        }
+        return groupAssociationId < 1
+            ? null
+            : await _nexportSupplementalInfoOptionGroupAssociationRepository.GetByIdAsync(groupAssociationId);
+    }
 
     public async Task InsertNexportSupplementalInfoOptionGroupAssociation(NexportSupplementalInfoOptionGroupAssociation groupAssociation)
     {
-            if (groupAssociation == null)
-                throw new ArgumentNullException(nameof(groupAssociation));
+        if (groupAssociation == null)
+            throw new ArgumentNullException(nameof(groupAssociation));
 
-            if (await _nexportSupplementalInfoOptionGroupAssociationRepository.Table.AnyAsync(ga =>
-                ga.OptionId == groupAssociation.OptionId &&
-                ga.NexportGroupId == groupAssociation.NexportGroupId))
-                return;
+        if (await _nexportSupplementalInfoOptionGroupAssociationRepository.Table.AnyAsync(ga =>
+            ga.OptionId == groupAssociation.OptionId &&
+            ga.NexportGroupId == groupAssociation.NexportGroupId))
+            return;
 
-            await _nexportSupplementalInfoOptionGroupAssociationRepository.InsertAsync(groupAssociation);
-        }
+        await _nexportSupplementalInfoOptionGroupAssociationRepository.InsertAsync(groupAssociation);
+    }
 
     public async Task DeleteNexportSupplementalInfoOptionGroupAssociation(NexportSupplementalInfoOptionGroupAssociation groupAssociation)
     {
-            if (groupAssociation == null)
-                throw new ArgumentNullException(nameof(groupAssociation));
+        if (groupAssociation == null)
+            throw new ArgumentNullException(nameof(groupAssociation));
 
-            await _nexportSupplementalInfoOptionGroupAssociationRepository.DeleteAsync(groupAssociation);
-        }
+        await _nexportSupplementalInfoOptionGroupAssociationRepository.DeleteAsync(groupAssociation);
+    }
 
     public async Task UpdateNexportSupplementalInfoOptionGroupAssociation(NexportSupplementalInfoOptionGroupAssociation groupAssociation)
     {
-            if (groupAssociation == null)
-                throw new ArgumentNullException(nameof(groupAssociation));
+        if (groupAssociation == null)
+            throw new ArgumentNullException(nameof(groupAssociation));
 
-            await _nexportSupplementalInfoOptionGroupAssociationRepository.UpdateAsync(groupAssociation);
-        }
+        await _nexportSupplementalInfoOptionGroupAssociationRepository.UpdateAsync(groupAssociation);
+    }
 
     public async Task InsertNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer)
     {
-            if (answer == null)
-                throw new ArgumentNullException(nameof(answer));
+        if (answer == null)
+            throw new ArgumentNullException(nameof(answer));
 
-            if (await _nexportSupplementalInfoAnswerRepository.Table.AnyAsync(a =>
-                a.CustomerId == answer.CustomerId &&
-                a.OptionId == answer.OptionId &&
-                a.QuestionId == answer.QuestionId &&
-                a.StoreId == answer.StoreId))
-                return;
+        if (await _nexportSupplementalInfoAnswerRepository.Table.AnyAsync(a =>
+            a.CustomerId == answer.CustomerId &&
+            a.OptionId == answer.OptionId &&
+            a.QuestionId == answer.QuestionId &&
+            a.StoreId == answer.StoreId))
+            return;
 
-            await _nexportSupplementalInfoAnswerRepository.InsertAsync(answer);
-        }
+        await _nexportSupplementalInfoAnswerRepository.InsertAsync(answer);
+    }
 
     public async Task DeleteNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer)
     {
-            if (answer == null)
-                throw new ArgumentNullException(nameof(answer));
+        if (answer == null)
+            throw new ArgumentNullException(nameof(answer));
 
-            await _nexportSupplementalInfoAnswerRepository.DeleteAsync(answer);
-        }
+        await _nexportSupplementalInfoAnswerRepository.DeleteAsync(answer);
+    }
 
     public async Task UpdateNexportSupplementalInfoAnswer(NexportSupplementalInfoAnswer answer)
     {
-            if (answer == null)
-                throw new ArgumentNullException(nameof(answer));
+        if (answer == null)
+            throw new ArgumentNullException(nameof(answer));
 
-            await _nexportSupplementalInfoAnswerRepository.UpdateAsync(answer);
-        }
+        await _nexportSupplementalInfoAnswerRepository.UpdateAsync(answer);
+    }
 
     public async Task<IList<NexportSupplementalInfoAnswer>> GetNexportSupplementalInfoAnswers(int customerId, int storeId,
         int? questionId = null)
     {
-            if (customerId < 1 || storeId < 1)
-                return new List<NexportSupplementalInfoAnswer>();
+        if (customerId < 1 || storeId < 1)
+            return new List<NexportSupplementalInfoAnswer>();
 
-            var query = _nexportSupplementalInfoAnswerRepository.Table
-                .Where(a => a.CustomerId == customerId && a.StoreId == storeId);
+        var query = _nexportSupplementalInfoAnswerRepository.Table
+            .Where(a => a.CustomerId == customerId && a.StoreId == storeId);
 
-            if (questionId != null)
-            {
-                query = query.Where(a => a.QuestionId == questionId);
-            }
-
-            return await query.ToListAsync();
+        if (questionId != null)
+        {
+            query = query.Where(a => a.QuestionId == questionId);
         }
+
+        return await query.ToListAsync();
+    }
 
     public async Task<IPagedList<NexportSupplementalInfoAnswer>> GetNexportSupplementalInfoAnswersPagination(
         int customerId, int? questionId = null,
         int pageIndex = 0, int pageSize = int.MaxValue)
     {
-            if (customerId < 1)
-                return new PagedList<NexportSupplementalInfoAnswer>(
-                    new List<NexportSupplementalInfoAnswer>(), pageIndex, pageSize);
+        if (customerId < 1)
+            return new PagedList<NexportSupplementalInfoAnswer>(
+                new List<NexportSupplementalInfoAnswer>(), pageIndex, pageSize);
 
-            return await _cacheManager.GetAsync(NexportIntegrationDefaults.SupplementalInfoAnswerAllCacheKey, async () =>
-            {
-                var query =
-                    _nexportSupplementalInfoAnswerRepository
-                        .Table.Where(a => a.CustomerId == customerId);
+        return await _cacheManager.GetAsync(NexportIntegrationDefaults.SupplementalInfoAnswerAllCacheKey, async () =>
+        {
+            var query =
+                _nexportSupplementalInfoAnswerRepository
+                    .Table.Where(a => a.CustomerId == customerId);
 
-                if (questionId != null)
-                    query = query.Where(a => a.QuestionId == questionId);
+            if (questionId != null)
+                query = query.Where(a => a.QuestionId == questionId);
 
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
-        }
+            return await query.ToPagedListAsync(pageIndex, pageSize);
+        });
+    }
 
     public async Task<NexportSupplementalInfoAnswer> GetNexportSupplementalInfoAnswerById(int answerId)
     {
-            return answerId < 1
-                ? null
-                : await _nexportSupplementalInfoAnswerRepository.GetByIdAsync(answerId);
-        }
+        return answerId < 1
+            ? null
+            : await _nexportSupplementalInfoAnswerRepository.GetByIdAsync(answerId);
+    }
 
     public async Task<IPagedList<NexportSupplementalInfoQuestion>> GetNexportSupplementalInfoAnsweredQuestionsPagination(
         int customerId, int pageIndex = 0,
         int pageSize = int.MaxValue)
     {
-            if (customerId < 1)
-                return new PagedList<NexportSupplementalInfoQuestion>(
-                    new List<NexportSupplementalInfoQuestion>(), pageIndex, pageSize);
+        if (customerId < 1)
+            return new PagedList<NexportSupplementalInfoQuestion>(
+                new List<NexportSupplementalInfoQuestion>(), pageIndex, pageSize);
 
-            var questionIdsQuery =
-                _nexportSupplementalInfoAnswerRepository.Table
-                    .Where(a => a.CustomerId == customerId)
-                    .Select(x => x.QuestionId);
-            var query = _nexportSupplementalInfoQuestionRepository.Table
-                .Where(q => questionIdsQuery.Contains(q.Id));
+        var questionIdsQuery =
+            _nexportSupplementalInfoAnswerRepository.Table
+                .Where(a => a.CustomerId == customerId)
+                .Select(x => x.QuestionId);
+        var query = _nexportSupplementalInfoQuestionRepository.Table
+            .Where(q => questionIdsQuery.Contains(q.Id));
 
-            return await query.ToPagedListAsync(pageIndex, pageSize);
-        }
+        return await query.ToPagedListAsync(pageIndex, pageSize);
+    }
 
     public async Task InsertNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership)
     {
-            if (answerMembership == null)
-                throw new ArgumentNullException(nameof(answerMembership));
+        if (answerMembership == null)
+            throw new ArgumentNullException(nameof(answerMembership));
 
-            if (await _nexportSupplementalInfoAnswerMembershipRepository.Table.AnyAsync(am =>
-                am.AnswerId == answerMembership.AnswerId &&
-                am.NexportMembershipId == answerMembership.NexportMembershipId))
-                return;
+        if (await _nexportSupplementalInfoAnswerMembershipRepository.Table.AnyAsync(am =>
+            am.AnswerId == answerMembership.AnswerId &&
+            am.NexportMembershipId == answerMembership.NexportMembershipId))
+            return;
 
-            await _nexportSupplementalInfoAnswerMembershipRepository.InsertAsync(answerMembership);
-        }
+        await _nexportSupplementalInfoAnswerMembershipRepository.InsertAsync(answerMembership);
+    }
 
     public async Task DeleteNexportSupplementalInfoAnswerMembership(NexportSupplementalInfoAnswerMembership answerMembership)
     {
-            if (answerMembership == null)
-                throw new ArgumentNullException(nameof(answerMembership));
+        if (answerMembership == null)
+            throw new ArgumentNullException(nameof(answerMembership));
 
-            await _nexportSupplementalInfoAnswerMembershipRepository.DeleteAsync(answerMembership);
-        }
+        await _nexportSupplementalInfoAnswerMembershipRepository.DeleteAsync(answerMembership);
+    }
 
     public async Task<IList<NexportSupplementalInfoAnswerMembership>>
         GetNexportSupplementalInfoAnswerMembershipsByAnswerId(int answerId)
     {
-            return answerId < 1
-                ? new List<NexportSupplementalInfoAnswerMembership>()
-                : await _nexportSupplementalInfoAnswerMembershipRepository.Table
-                    .Where(am => am.AnswerId == answerId)
-                    .ToListAsync();
-        }
+        return answerId < 1
+            ? new List<NexportSupplementalInfoAnswerMembership>()
+            : await _nexportSupplementalInfoAnswerMembershipRepository.Table
+                .Where(am => am.AnswerId == answerId)
+                .ToListAsync();
+    }
 
     public async Task<NexportSupplementalInfoAnswerMembership> GetNexportSupplementalInfoAnswerMembership(Guid nexportMembershipId)
     {
-            return await _nexportSupplementalInfoAnswerMembershipRepository.Table
-                    .FirstOrDefaultAsync(am => am.NexportMembershipId == nexportMembershipId);
-        }
+        return await _nexportSupplementalInfoAnswerMembershipRepository.Table
+                .FirstOrDefaultAsync(am => am.NexportMembershipId == nexportMembershipId);
+    }
 
     public async Task InsertNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement)
     {
-            if (requirement == null)
-                throw new ArgumentNullException(nameof(requirement));
+        if (requirement == null)
+            throw new ArgumentNullException(nameof(requirement));
 
-            if (await _nexportRequiredSupplementalInfoRepository.Table.AnyAsync(r =>
-                r.CustomerId == requirement.CustomerId &&
-                r.StoreId == requirement.StoreId &&
-                r.QuestionId == requirement.QuestionId))
-                return;
+        if (await _nexportRequiredSupplementalInfoRepository.Table.AnyAsync(r =>
+            r.CustomerId == requirement.CustomerId &&
+            r.StoreId == requirement.StoreId &&
+            r.QuestionId == requirement.QuestionId))
+            return;
 
-            await _nexportRequiredSupplementalInfoRepository.InsertAsync(requirement);
-        }
+        await _nexportRequiredSupplementalInfoRepository.InsertAsync(requirement);
+    }
 
     public async Task DeleteNexportRequiredSupplementalInfo(NexportRequiredSupplementalInfo requirement)
     {
-            if (requirement == null)
-                throw new ArgumentNullException(nameof(requirement));
+        if (requirement == null)
+            throw new ArgumentNullException(nameof(requirement));
 
-            await _nexportRequiredSupplementalInfoRepository.DeleteAsync(requirement);
-        }
+        await _nexportRequiredSupplementalInfoRepository.DeleteAsync(requirement);
+    }
 
     public async Task<IList<NexportRequiredSupplementalInfo>> GetNexportRequiredSupplementalInfos(int customerId,
         int storeId, int? questionId = null)
     {
-            if (customerId < 1 || storeId < 1)
-                return new List<NexportRequiredSupplementalInfo>();
+        if (customerId < 1 || storeId < 1)
+            return new List<NexportRequiredSupplementalInfo>();
 
-            var query = _nexportRequiredSupplementalInfoRepository.Table
-                .Where(r => r.CustomerId == customerId && r.StoreId == storeId);
+        var query = _nexportRequiredSupplementalInfoRepository.Table
+            .Where(r => r.CustomerId == customerId && r.StoreId == storeId);
 
-            if (questionId != null)
-                query = query.Where(r => r.QuestionId == questionId);
+        if (questionId != null)
+            query = query.Where(r => r.QuestionId == questionId);
 
-            return await query.ToListAsync();
-        }
+        return await query.ToListAsync();
+    }
 
     public async Task<NexportRequiredSupplementalInfo> GetNexportRequiredSupplementalInfoByNopProductId(int customerId,
         int storeId, int questionId)
     {
-            if (customerId < 1 || storeId < 1 || questionId < 1)
-                return null;
+        if (customerId < 1 || storeId < 1 || questionId < 1)
+            return null;
 
-            return await _nexportRequiredSupplementalInfoRepository.Table
-                .FirstOrDefaultAsync(r =>
-                    r.CustomerId == customerId &&
-                    r.StoreId == storeId &&
-                    r.QuestionId == questionId);
-        }
+        return await _nexportRequiredSupplementalInfoRepository.Table
+            .FirstOrDefaultAsync(r =>
+                r.CustomerId == customerId &&
+                r.StoreId == storeId &&
+                r.QuestionId == questionId);
+    }
 
     public async Task<bool> HasRequiredSupplementalInfo(int customerId, int storeId)
     {
-            if (customerId < 1 || storeId < 1)
-                return false;
+        if (customerId < 1 || storeId < 1)
+            return false;
 
-            return await _nexportRequiredSupplementalInfoRepository.Table
-                .AnyAsync(r =>
-                    r.CustomerId == customerId &&
-                    r.StoreId == storeId);
-        }
+        return await _nexportRequiredSupplementalInfoRepository.Table
+            .AnyAsync(r =>
+                r.CustomerId == customerId &&
+                r.StoreId == storeId);
+    }
 
     public async Task<bool> HasUnprocessedAnswer(int orderId)
     {
-            if (orderId < 1)
-                return false;
+        if (orderId < 1)
+            return false;
 
-            var order = await _orderService.GetOrderByIdAsync(orderId);
+        var order = await _orderService.GetOrderByIdAsync(orderId);
 
-            if (order == null || order.Deleted || order.OrderStatus != OrderStatus.Complete)
-                return false;
+        if (order == null || order.Deleted || order.OrderStatus != OrderStatus.Complete)
+            return false;
 
-            var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
+        var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
 
-            var nexportProductMappings = await orderItems
-                .SelectAwait(async item =>
-                    await GetProductMappingByNopProductId(item.ProductId, order.StoreId) ??
-                    await GetProductMappingByNopProductId(item.ProductId))
-                .Where(mapping => mapping != null).ToListAsync();
+        var nexportProductMappings = await orderItems
+            .SelectAwait(async item =>
+                await GetProductMappingByNopProductId(item.ProductId, order.StoreId) ??
+                await GetProductMappingByNopProductId(item.ProductId))
+            .Where(mapping => mapping != null).ToListAsync();
 
-            return await nexportProductMappings.SelectAwait(async t =>
-                    await (await GetNexportSupplementalInfoQuestionMappingsByProductMappingId(t.Id))
-                        .Select(x => x.QuestionId)
-                        .ToListAsync())
-                        .SelectAwait(async questions =>
-                            (await GetNexportSupplementalInfoAnswers(order.CustomerId, order.StoreId))
-                                .Where(x =>
-                                    questions.Contains(x.QuestionId))
-                                .Any(x => x.Status == NexportSupplementalInfoAnswerStatus.NotProcessed))
-                                    .FirstOrDefaultAsync();
-        }
+        return await nexportProductMappings.SelectAwait(async t =>
+                await (await GetNexportSupplementalInfoQuestionMappingsByProductMappingId(t.Id))
+                    .Select(x => x.QuestionId)
+                    .ToListAsync())
+                    .SelectAwait(async questions =>
+                        (await GetNexportSupplementalInfoAnswers(order.CustomerId, order.StoreId))
+                            .Where(x =>
+                                questions.Contains(x.QuestionId))
+                            .Any(x => x.Status == NexportSupplementalInfoAnswerStatus.NotProcessed))
+                                .FirstOrDefaultAsync();
+    }
 
     public async Task InsertNexportSupplementalInfoAnswerProcessingQueueItem(NexportSupplementalInfoAnswerProcessingQueueItem queueItem)
     {
-            if (queueItem == null)
-                throw new ArgumentNullException(nameof(queueItem));
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
 
-            await _nexportSupplementalInfoAnswerProcessingQueueRepository.InsertAsync(queueItem);
-        }
+        await _nexportSupplementalInfoAnswerProcessingQueueRepository.InsertAsync(queueItem);
+    }
 
     public async Task DeleteNexportSupplementalInfoAnswerProcessingQueueItem(NexportSupplementalInfoAnswerProcessingQueueItem queueItem)
     {
-            if (queueItem == null)
-                throw new ArgumentNullException(nameof(queueItem));
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
 
-            await _nexportSupplementalInfoAnswerProcessingQueueRepository.DeleteAsync(queueItem);
-        }
+        await _nexportSupplementalInfoAnswerProcessingQueueRepository.DeleteAsync(queueItem);
+    }
 
     public async Task InsertNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem)
     {
-            if (queueItem == null)
-                throw new ArgumentNullException(nameof(queueItem));
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
 
-            await _nexportGroupMembershipRemovalQueueRepository.InsertAsync(queueItem);
-        }
+        await _nexportGroupMembershipRemovalQueueRepository.InsertAsync(queueItem);
+    }
 
     public async Task DeleteNexportGroupMembershipRemovalQueueItem(NexportGroupMembershipRemovalQueueItem queueItem)
     {
-            if (queueItem == null)
-                throw new ArgumentNullException(nameof(queueItem));
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
 
-            await _nexportGroupMembershipRemovalQueueRepository.DeleteAsync(queueItem);
-        }
+        await _nexportGroupMembershipRemovalQueueRepository.DeleteAsync(queueItem);
+    }
 
     public async Task<NexportRegistrationField> GetNexportRegistrationFieldById(int fieldId, int? categoryId = null)
     {
-            if (fieldId < 1)
-                return null;
+        if (fieldId < 1)
+            return null;
 
-            var query = _nexportRegistrationFieldRepository.Table.Where(rf => rf.Id == fieldId);
+        var query = _nexportRegistrationFieldRepository.Table.Where(rf => rf.Id == fieldId);
 
-            if (categoryId != null)
-                query = query.Where(rf => rf.FieldCategoryId == categoryId);
+        if (categoryId != null)
+            query = query.Where(rf => rf.FieldCategoryId == categoryId);
 
-            return await query.FirstOrDefaultAsync();
-        }
+        return await query.FirstOrDefaultAsync();
+    }
 
     public async Task<IList<NexportRegistrationField>> GetNexportRegistrationFields(int storeId)
     {
-            if (storeId < 1)
-                return new List<NexportRegistrationField>();
+        if (storeId < 1)
+            return new List<NexportRegistrationField>();
 
-            var fieldStoreMappingsForCurrentStore = await _nexportRegistrationFieldStoreMappingRepository.Table
-                .Where(rfs => rfs.StoreId == storeId)
-                .Select(rfs => rfs.FieldId).ToListAsync();
+        var fieldStoreMappingsForCurrentStore = await _nexportRegistrationFieldStoreMappingRepository.Table
+            .Where(rfs => rfs.StoreId == storeId)
+            .Select(rfs => rfs.FieldId).ToListAsync();
 
-            var fieldOStoreMappingsForOtherStores = await _nexportRegistrationFieldStoreMappingRepository.Table
-                .Where(rfs => rfs.StoreId != storeId)
-                .Select(rfs => rfs.FieldId).ToListAsync();
+        var fieldOStoreMappingsForOtherStores = await _nexportRegistrationFieldStoreMappingRepository.Table
+            .Where(rfs => rfs.StoreId != storeId)
+            .Select(rfs => rfs.FieldId).ToListAsync();
 
-            var fields = _nexportRegistrationFieldRepository.Table
-                .Where(f => f.IsActive &&
-                            (fieldStoreMappingsForCurrentStore.Contains(f.Id) ||
-                             !fieldOStoreMappingsForOtherStores.Contains(f.Id)));
+        var fields = _nexportRegistrationFieldRepository.Table
+            .Where(f => f.IsActive &&
+                        (fieldStoreMappingsForCurrentStore.Contains(f.Id) ||
+                         !fieldOStoreMappingsForOtherStores.Contains(f.Id)));
 
-            return await fields.ToListAsync();
-        }
+        return await fields.ToListAsync();
+    }
 
     public async Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsByCategoryId(int categoryId)
     {
-            return categoryId < 1
-                ? new List<NexportRegistrationField>()
-                : await _nexportRegistrationFieldRepository.Table
-                    .Where(f => f.FieldCategoryId == categoryId).ToListAsync();
-        }
+        return categoryId < 1
+            ? new List<NexportRegistrationField>()
+            : await _nexportRegistrationFieldRepository.Table
+                .Where(f => f.FieldCategoryId == categoryId).ToListAsync();
+    }
 
     public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(IList<int> storeIds, int pageIndex = 0, int pageSize = int.MaxValue)
     {
-            var query = _nexportRegistrationFieldRepository.Table;
-            
-            //check if contains 0 because nopselect puts 0 in list of ids if "all" is selected
-            if (storeIds==null || storeIds.Contains(0))
-                return await query.ToPagedListAsync(pageIndex, pageSize);
+        var query = _nexportRegistrationFieldRepository.Table;
 
-            var storeQuery = _storeRepository.Table
-                .Where(s => storeIds.Contains(s.Id)).Select(s => s.Id).ToList();
-
-            var storeMappingQuery = _nexportRegistrationFieldStoreMappingRepository.Table.Where(sm => storeQuery.Contains(sm.StoreId)).Select(sm => sm.FieldId).ToList();
-
-            query = query.Where(f => storeMappingQuery.Contains(f.Id));
-
+        //check if contains 0 because nopselect puts 0 in list of ids if "all" is selected
+        if (storeIds == null || storeIds.Contains(0))
             return await query.ToPagedListAsync(pageIndex, pageSize);
-        }
+
+        var storeQuery = _storeRepository.Table
+            .Where(s => storeIds.Contains(s.Id)).Select(s => s.Id).ToList();
+
+        var storeMappingQuery = _nexportRegistrationFieldStoreMappingRepository.Table.Where(sm => storeQuery.Contains(sm.StoreId)).Select(sm => sm.FieldId).ToList();
+
+        query = query.Where(f => storeMappingQuery.Contains(f.Id));
+
+        return await query.ToPagedListAsync(pageIndex, pageSize);
+    }
 
     public async Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswersPagination(
         int customerId, int? storeId = null,
         int pageIndex = 0, int pageSize = int.MaxValue)
     {
-            var registrationFieldWithAnswerIds = await
-                _nexportRegistrationFieldAnswerRepository
-                    .Table
-                    .Where(fa => fa.CustomerId == customerId)
-                    .GroupBy(fa => fa.FieldId)
-                    .Select(x => x.FirstOrDefault().FieldId)
-                    .ToListAsync();
-
-            if (storeId != null)
-            {
-                registrationFieldWithAnswerIds = await registrationFieldWithAnswerIds.Where(id =>
-                    _nexportRegistrationFieldStoreMappingRepository.Table
-                        .Where(mapping => mapping.StoreId == storeId)
-                        .Select(mapping => mapping.FieldId).Contains(id) ||
-                    !(_nexportRegistrationFieldStoreMappingRepository.Table
-                        .Where(mapping => mapping.FieldId == id)
-                        .Select(mapping => mapping.FieldId)).Contains(id)).ToListAsync();
-            }
-
-            var query = _nexportRegistrationFieldRepository
+        var registrationFieldWithAnswerIds = await
+            _nexportRegistrationFieldAnswerRepository
                 .Table
-                .Where(f => registrationFieldWithAnswerIds.Contains(f.Id));
+                .Where(fa => fa.CustomerId == customerId)
+                .GroupBy(fa => fa.FieldId)
+                .Select(x => x.FirstOrDefault().FieldId)
+                .ToListAsync();
 
-            return await query.ToPagedListAsync(pageIndex, pageSize);
+        if (storeId != null)
+        {
+            registrationFieldWithAnswerIds = await registrationFieldWithAnswerIds.Where(id =>
+                _nexportRegistrationFieldStoreMappingRepository.Table
+                    .Where(mapping => mapping.StoreId == storeId)
+                    .Select(mapping => mapping.FieldId).Contains(id) ||
+                !(_nexportRegistrationFieldStoreMappingRepository.Table
+                    .Where(mapping => mapping.FieldId == id)
+                    .Select(mapping => mapping.FieldId)).Contains(id)).ToListAsync();
         }
+
+        var query = _nexportRegistrationFieldRepository
+            .Table
+            .Where(f => registrationFieldWithAnswerIds.Contains(f.Id));
+
+        return await query.ToPagedListAsync(pageIndex, pageSize);
+    }
 
     public async Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsWithAnswers(int customerId,
         int? storeId = null)
     {
-            var registrationFieldWithAnswerIds = await
-                _nexportRegistrationFieldAnswerRepository
-                    .Table
-                    .Where(fa => fa.CustomerId == customerId)
-                    .GroupBy(fa => fa.FieldId)
-                    .Select(x => x.FirstOrDefault().FieldId)
-                    .ToListAsync();
-
-            if (storeId != null)
-            {
-                var registrationFieldIdsByStore = await _nexportRegistrationFieldStoreMappingRepository
-                    .Table
-                    .Where(x => x.StoreId == storeId)
-                    .Select(x => x.FieldId)
-                    .ToListAsync();
-
-                registrationFieldWithAnswerIds = registrationFieldWithAnswerIds.Intersect(registrationFieldIdsByStore).ToList();
-            }
-
-            var query = _nexportRegistrationFieldRepository
+        var registrationFieldWithAnswerIds = await
+            _nexportRegistrationFieldAnswerRepository
                 .Table
-                .Where(f => registrationFieldWithAnswerIds.Contains(f.Id));
+                .Where(fa => fa.CustomerId == customerId)
+                .GroupBy(fa => fa.FieldId)
+                .Select(x => x.FirstOrDefault().FieldId)
+                .ToListAsync();
 
-            return await query.ToListAsync();
+        if (storeId != null)
+        {
+            var registrationFieldIdsByStore = await _nexportRegistrationFieldStoreMappingRepository
+                .Table
+                .Where(x => x.StoreId == storeId)
+                .Select(x => x.FieldId)
+                .ToListAsync();
+
+            registrationFieldWithAnswerIds = registrationFieldWithAnswerIds.Intersect(registrationFieldIdsByStore).ToList();
         }
+
+        var query = _nexportRegistrationFieldRepository
+            .Table
+            .Where(f => registrationFieldWithAnswerIds.Contains(f.Id));
+
+        return await query.ToListAsync();
+    }
 
     public async Task InsertNexportRegistrationField(NexportRegistrationField registrationField)
     {
-            if (registrationField == null)
-                throw new ArgumentNullException(nameof(registrationField));
+        if (registrationField == null)
+            throw new ArgumentNullException(nameof(registrationField));
 
-            await _nexportRegistrationFieldRepository.InsertAsync(registrationField);
-        }
+        await _nexportRegistrationFieldRepository.InsertAsync(registrationField);
+    }
 
     public async Task DeleteNexportRegistrationField(NexportRegistrationField registrationField)
     {
-            if (registrationField == null)
-                throw new ArgumentNullException(nameof(registrationField));
+        if (registrationField == null)
+            throw new ArgumentNullException(nameof(registrationField));
 
-            await _nexportRegistrationFieldRepository.DeleteAsync(registrationField);
-        }
+        await _nexportRegistrationFieldRepository.DeleteAsync(registrationField);
+    }
 
     public async Task UpdateNexportRegistrationField(NexportRegistrationField registrationField)
     {
-            if (registrationField == null)
-                throw new ArgumentNullException(nameof(registrationField));
+        if (registrationField == null)
+            throw new ArgumentNullException(nameof(registrationField));
 
-            await _nexportRegistrationFieldRepository.UpdateAsync(registrationField);
-        }
+        await _nexportRegistrationFieldRepository.UpdateAsync(registrationField);
+    }
 
     public async Task<NexportRegistrationFieldOption> GetNexportRegistrationFieldOptionById(int fieldOptionId, int? fieldId = null)
     {
-            if (fieldOptionId < 1)
-                return null;
+        if (fieldOptionId < 1)
+            return null;
 
-            if (fieldId != null)
-                return await _nexportRegistrationFieldOptionRepository.Table.SingleOrDefaultAsync(rfo =>
-                    rfo.Id == fieldOptionId && rfo.FieldId == fieldId);
+        if (fieldId != null)
+            return await _nexportRegistrationFieldOptionRepository.Table.SingleOrDefaultAsync(rfo =>
+                rfo.Id == fieldOptionId && rfo.FieldId == fieldId);
 
-            return await _nexportRegistrationFieldOptionRepository.GetByIdAsync(fieldOptionId);
-        }
+        return await _nexportRegistrationFieldOptionRepository.GetByIdAsync(fieldOptionId);
+    }
 
     public async Task<IList<NexportRegistrationFieldOption>> GetNexportRegistrationFieldOptions(int? fieldId = null)
     {
-            var query = _nexportRegistrationFieldOptionRepository.Table;
+        var query = _nexportRegistrationFieldOptionRepository.Table;
 
-            if (fieldId != null)
-                query = query.Where(rfo => rfo.FieldId == fieldId);
+        if (fieldId != null)
+            query = query.Where(rfo => rfo.FieldId == fieldId);
 
-            return await query.ToListAsync();
-        }
+        return await query.ToListAsync();
+    }
 
     public async Task<IPagedList<NexportRegistrationFieldOption>> GetNexportRegistrationFieldOptionsPagination(
         int fieldId, int pageIndex = 0, int pageSize = int.MaxValue)
     {
-            if (fieldId < 1)
-                return new PagedList<NexportRegistrationFieldOption>(new List<NexportRegistrationFieldOption>(), pageIndex, pageSize);
+        if (fieldId < 1)
+            return new PagedList<NexportRegistrationFieldOption>(new List<NexportRegistrationFieldOption>(), pageIndex, pageSize);
 
-            return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldOptionAllCacheKey, async () =>
-            {
-                var query = _nexportRegistrationFieldOptionRepository.Table
-                    .Where(rfo => rfo.FieldId == fieldId);
+        return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldOptionAllCacheKey, async () =>
+        {
+            var query = _nexportRegistrationFieldOptionRepository.Table
+                .Where(rfo => rfo.FieldId == fieldId);
 
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
-        }
+            return await query.ToPagedListAsync(pageIndex, pageSize);
+        });
+    }
 
     public async Task InsertNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
     {
-            if (registrationFieldOption == null)
-                throw new ArgumentNullException(nameof(registrationFieldOption));
+        if (registrationFieldOption == null)
+            throw new ArgumentNullException(nameof(registrationFieldOption));
 
-            await _nexportRegistrationFieldOptionRepository.InsertAsync(registrationFieldOption);
-        }
+        await _nexportRegistrationFieldOptionRepository.InsertAsync(registrationFieldOption);
+    }
 
     public async Task DeleteNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
     {
-            if (registrationFieldOption == null)
-                throw new ArgumentNullException(nameof(registrationFieldOption));
+        if (registrationFieldOption == null)
+            throw new ArgumentNullException(nameof(registrationFieldOption));
 
-            await _nexportRegistrationFieldOptionRepository.DeleteAsync(registrationFieldOption);
-        }
+        await _nexportRegistrationFieldOptionRepository.DeleteAsync(registrationFieldOption);
+    }
 
     public async Task UpdateNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
     {
-            if (registrationFieldOption == null)
-                throw new ArgumentNullException(nameof(registrationFieldOption));
+        if (registrationFieldOption == null)
+            throw new ArgumentNullException(nameof(registrationFieldOption));
 
-            await _nexportRegistrationFieldOptionRepository.UpdateAsync(registrationFieldOption);
-        }
+        await _nexportRegistrationFieldOptionRepository.UpdateAsync(registrationFieldOption);
+    }
 
     public async Task<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategoryById(int fieldCategoryId)
     {
-            return fieldCategoryId < 1
-                ? null
-                : await _nexportRegistrationFieldCategoryRepository.GetByIdAsync(fieldCategoryId);
-        }
+        return fieldCategoryId < 1
+            ? null
+            : await _nexportRegistrationFieldCategoryRepository.GetByIdAsync(fieldCategoryId);
+    }
 
     public async Task<IList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategories()
     {
-            var query =
-                _nexportRegistrationFieldCategoryRepository.Table
-                    .OrderBy(s => s.DisplayOrder)
-                    .ThenBy(s => s.Id);
+        var query =
+            _nexportRegistrationFieldCategoryRepository.Table
+                .OrderBy(s => s.DisplayOrder)
+                .ThenBy(s => s.Id);
 
-            return await query.ToListAsync();
-        }
+        return await query.ToListAsync();
+    }
 
     public async Task<IList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategories(IList<int> fieldCategoryIds)
     {
-            return await fieldCategoryIds
-                .SelectAwait(async fieldCategoryId =>
-                    await GetNexportRegistrationFieldCategoryById(fieldCategoryId))
-                .ToListAsync();
-        }
+        return await fieldCategoryIds
+            .SelectAwait(async fieldCategoryId =>
+                await GetNexportRegistrationFieldCategoryById(fieldCategoryId))
+            .ToListAsync();
+    }
 
     public async Task<IPagedList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategoriesPagination(
         int pageIndex = 0, int pageSize = int.MaxValue)
     {
-            return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldCategoryAllCacheKey, async () =>
-            {
-                var query = _nexportRegistrationFieldCategoryRepository.Table;
+        return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldCategoryAllCacheKey, async () =>
+        {
+            var query = _nexportRegistrationFieldCategoryRepository.Table;
 
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
-        }
+            return await query.ToPagedListAsync(pageIndex, pageSize);
+        });
+    }
 
     public async Task InsertNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
     {
-            if (registrationFieldCategory == null)
-                throw new ArgumentNullException(nameof(registrationFieldCategory));
+        if (registrationFieldCategory == null)
+            throw new ArgumentNullException(nameof(registrationFieldCategory));
 
-            await _nexportRegistrationFieldCategoryRepository.InsertAsync(registrationFieldCategory);
-        }
+        await _nexportRegistrationFieldCategoryRepository.InsertAsync(registrationFieldCategory);
+    }
 
     public async Task DeleteNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
     {
-            if (registrationFieldCategory == null)
-                throw new ArgumentNullException(nameof(registrationFieldCategory));
+        if (registrationFieldCategory == null)
+            throw new ArgumentNullException(nameof(registrationFieldCategory));
 
-            await _nexportRegistrationFieldCategoryRepository.DeleteAsync(registrationFieldCategory);
-        }
+        await _nexportRegistrationFieldCategoryRepository.DeleteAsync(registrationFieldCategory);
+    }
 
     public async Task UpdateNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
     {
-            if (registrationFieldCategory == null)
-                throw new ArgumentNullException(nameof(registrationFieldCategory));
+        if (registrationFieldCategory == null)
+            throw new ArgumentNullException(nameof(registrationFieldCategory));
 
-            await _nexportRegistrationFieldCategoryRepository.UpdateAsync(registrationFieldCategory);
-        }
+        await _nexportRegistrationFieldCategoryRepository.UpdateAsync(registrationFieldCategory);
+    }
 
     public async Task<NexportRegistrationFieldStoreMapping> GetNexportRegistrationFieldStoreMappingById(int fieldStoreMappingId)
     {
-            return fieldStoreMappingId < 1
-                ? null
-                : await _nexportRegistrationFieldStoreMappingRepository.GetByIdAsync(fieldStoreMappingId);
-        }
+        return fieldStoreMappingId < 1
+            ? null
+            : await _nexportRegistrationFieldStoreMappingRepository.GetByIdAsync(fieldStoreMappingId);
+    }
 
     public async Task<IList<NexportRegistrationFieldStoreMapping>> GetNexportRegistrationFieldStoreMappings(int fieldId)
     {
-            if (fieldId < 1)
-                return new List<NexportRegistrationFieldStoreMapping>();
+        if (fieldId < 1)
+            return new List<NexportRegistrationFieldStoreMapping>();
 
-            return await _nexportRegistrationFieldStoreMappingRepository.Table
-                .Where(rf => rf.FieldId == fieldId)
-                .ToListAsync();
-        }
+        return await _nexportRegistrationFieldStoreMappingRepository.Table
+            .Where(rf => rf.FieldId == fieldId)
+            .ToListAsync();
+    }
 
     public async Task InsertNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping)
     {
-            if (registrationFieldStoreMapping == null)
-                throw new ArgumentNullException(nameof(registrationFieldStoreMapping));
+        if (registrationFieldStoreMapping == null)
+            throw new ArgumentNullException(nameof(registrationFieldStoreMapping));
 
-            if (await _nexportRegistrationFieldStoreMappingRepository.Table.AnyAsync(sm =>
-                sm.FieldId == registrationFieldStoreMapping.FieldId && sm.StoreId == registrationFieldStoreMapping.StoreId))
-                return;
+        if (await _nexportRegistrationFieldStoreMappingRepository.Table.AnyAsync(sm =>
+            sm.FieldId == registrationFieldStoreMapping.FieldId && sm.StoreId == registrationFieldStoreMapping.StoreId))
+            return;
 
-            await _nexportRegistrationFieldStoreMappingRepository.InsertAsync(registrationFieldStoreMapping);
-        }
+        await _nexportRegistrationFieldStoreMappingRepository.InsertAsync(registrationFieldStoreMapping);
+    }
 
     public async Task DeleteNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping)
     {
-            if (registrationFieldStoreMapping == null)
-                throw new ArgumentNullException(nameof(registrationFieldStoreMapping));
+        if (registrationFieldStoreMapping == null)
+            throw new ArgumentNullException(nameof(registrationFieldStoreMapping));
 
-            await _nexportRegistrationFieldStoreMappingRepository.DeleteAsync(registrationFieldStoreMapping);
-        }
+        await _nexportRegistrationFieldStoreMappingRepository.DeleteAsync(registrationFieldStoreMapping);
+    }
 
     public async Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerById(int fieldAnswerId)
     {
-            return fieldAnswerId < 1
-                ? null
-                : await _nexportRegistrationFieldAnswerRepository.GetByIdAsync(fieldAnswerId);
-        }
+        return fieldAnswerId < 1
+            ? null
+            : await _nexportRegistrationFieldAnswerRepository.GetByIdAsync(fieldAnswerId);
+    }
 
     public async Task<IList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswers(int customerId,
         int? fieldId = null)
     {
-            if (customerId < 1)
-                return new List<NexportRegistrationFieldAnswer>();
+        if (customerId < 1)
+            return new List<NexportRegistrationFieldAnswer>();
 
-            var query = _nexportRegistrationFieldAnswerRepository.Table
-                .Where(fa => fa.CustomerId == customerId);
+        var query = _nexportRegistrationFieldAnswerRepository.Table
+            .Where(fa => fa.CustomerId == customerId);
 
-            if (fieldId != null)
-            {
-                query = query.Where(x => x.FieldId == fieldId);
-            }
-
-            return await query.ToListAsync();
+        if (fieldId != null)
+        {
+            query = query.Where(x => x.FieldId == fieldId);
         }
+
+        return await query.ToListAsync();
+    }
 
     public async Task<IPagedList<NexportRegistrationFieldAnswer>> GetNexportRegistrationFieldAnswersPagination(
         int customerId,
         int? fieldId = null,
         int pageIndex = 0, int pageSize = int.MaxValue)
     {
-            return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldAnswerAllCacheKey, async () =>
+        return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldAnswerAllCacheKey, async () =>
+        {
+            var query = _nexportRegistrationFieldAnswerRepository
+                .Table.Where(fa => fa.CustomerId == customerId);
+
+            if (fieldId != null)
             {
-                var query = _nexportRegistrationFieldAnswerRepository
-                    .Table.Where(fa => fa.CustomerId == customerId);
+                query = query.Where(x => x.FieldId == fieldId);
+            }
 
-                if (fieldId != null)
-                {
-                    query = query.Where(x => x.FieldId == fieldId);
-                }
-
-                return await query.ToPagedListAsync(pageIndex, pageSize);
-            });
-        }
+            return await query.ToPagedListAsync(pageIndex, pageSize);
+        });
+    }
 
     public async Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerByFieldOption(int customerId,
         int fieldId, int fieldOptionId)
     {
-            if (customerId < 1 || fieldId < 1)
-                return null;
+        if (customerId < 1 || fieldId < 1)
+            return null;
 
-            return await _nexportRegistrationFieldAnswerRepository.Table
-                .FirstOrDefaultAsync(fa =>
-                fa.CustomerId == customerId &&
-                fa.FieldId == fieldId &&
-                fa.FieldOptionId == fieldOptionId);
-        }
+        return await _nexportRegistrationFieldAnswerRepository.Table
+            .FirstOrDefaultAsync(fa =>
+            fa.CustomerId == customerId &&
+            fa.FieldId == fieldId &&
+            fa.FieldOptionId == fieldOptionId);
+    }
 
     public async Task InsertNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)
     {
-            if (registrationFieldAnswer == null)
-                throw new ArgumentNullException(nameof(registrationFieldAnswer));
+        if (registrationFieldAnswer == null)
+            throw new ArgumentNullException(nameof(registrationFieldAnswer));
 
-            if (registrationFieldAnswer.FieldOptionId.HasValue)
-            {
-                if (await _nexportRegistrationFieldAnswerRepository.Table.AnyAsync(fa =>
-                    fa.CustomerId == registrationFieldAnswer.CustomerId &&
-                    fa.FieldId == registrationFieldAnswer.FieldOptionId &&
-                    fa.FieldOptionId == registrationFieldAnswer.FieldOptionId))
-                    return;
-            }
-            else
-            {
-                if (await _nexportRegistrationFieldAnswerRepository.Table.AnyAsync(fa =>
-                    fa.CustomerId == registrationFieldAnswer.CustomerId &&
-                    fa.FieldId == registrationFieldAnswer.FieldOptionId))
-                    return;
-            }
-
-            await _nexportRegistrationFieldAnswerRepository.InsertAsync(registrationFieldAnswer);
+        if (registrationFieldAnswer.FieldOptionId.HasValue)
+        {
+            if (await _nexportRegistrationFieldAnswerRepository.Table.AnyAsync(fa =>
+                fa.CustomerId == registrationFieldAnswer.CustomerId &&
+                fa.FieldId == registrationFieldAnswer.FieldOptionId &&
+                fa.FieldOptionId == registrationFieldAnswer.FieldOptionId))
+                return;
         }
+        else
+        {
+            if (await _nexportRegistrationFieldAnswerRepository.Table.AnyAsync(fa =>
+                fa.CustomerId == registrationFieldAnswer.CustomerId &&
+                fa.FieldId == registrationFieldAnswer.FieldOptionId))
+                return;
+        }
+
+        await _nexportRegistrationFieldAnswerRepository.InsertAsync(registrationFieldAnswer);
+    }
 
     public async Task DeleteNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)
     {
-            if (registrationFieldAnswer == null)
-                throw new ArgumentNullException(nameof(registrationFieldAnswer));
+        if (registrationFieldAnswer == null)
+            throw new ArgumentNullException(nameof(registrationFieldAnswer));
 
-            await _nexportRegistrationFieldAnswerRepository.DeleteAsync(registrationFieldAnswer);
-        }
+        await _nexportRegistrationFieldAnswerRepository.DeleteAsync(registrationFieldAnswer);
+    }
 
     public async Task UpdateNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer)
     {
-            if (registrationFieldAnswer == null)
-                throw new ArgumentNullException(nameof(registrationFieldAnswer));
+        if (registrationFieldAnswer == null)
+            throw new ArgumentNullException(nameof(registrationFieldAnswer));
 
-            await _nexportRegistrationFieldAnswerRepository.UpdateAsync(registrationFieldAnswer);
-        }
+        await _nexportRegistrationFieldAnswerRepository.UpdateAsync(registrationFieldAnswer);
+    }
 
     public async Task InsertNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem)
     {
-            if (queueItem == null)
-                throw new ArgumentNullException(nameof(queueItem));
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
 
-            await _nexportRegistrationFieldSynchronizationQueueRepository.InsertAsync(queueItem);
-        }
+        await _nexportRegistrationFieldSynchronizationQueueRepository.InsertAsync(queueItem);
+    }
 
     public async Task DeleteNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem)
     {
-            if (queueItem == null)
-                throw new ArgumentNullException(nameof(queueItem));
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
 
-            await _nexportRegistrationFieldSynchronizationQueueRepository.DeleteAsync(queueItem);
-        }
+        await _nexportRegistrationFieldSynchronizationQueueRepository.DeleteAsync(queueItem);
+    }
 
     public async Task UpdateNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem)
     {
-            if (queueItem == null)
-                throw new ArgumentNullException(nameof(queueItem));
+        if (queueItem == null)
+            throw new ArgumentNullException(nameof(queueItem));
 
-            await _nexportRegistrationFieldSynchronizationQueueRepository.UpdateAsync(queueItem);
-        }
+        await _nexportRegistrationFieldSynchronizationQueueRepository.UpdateAsync(queueItem);
+    }
 
     public async Task<bool> HasCustomRegistrationFieldRenderForStores(int fieldId, IList<int> storeIds, string customFieldRender)
     {
-            var fieldWithCustomFieldRenders = _nexportRegistrationFieldRepository.Table
-                .Where(x => x.CustomFieldRender == customFieldRender);
+        var fieldWithCustomFieldRenders = _nexportRegistrationFieldRepository.Table
+            .Where(x => x.CustomFieldRender == customFieldRender);
 
-            if (storeIds.Count > 0)
+        if (storeIds.Count > 0)
+        {
+            // Find fields that have same custom field render
+            var fieldWithCustomFieldRenderIds = fieldWithCustomFieldRenders
+                .Where(x => x.Id != fieldId).Select(x => x.Id);
+
+            foreach (var id in fieldWithCustomFieldRenderIds)
             {
-                // Find fields that have same custom field render
-                var fieldWithCustomFieldRenderIds = fieldWithCustomFieldRenders
-                    .Where(x => x.Id != fieldId).Select(x => x.Id);
-
-                foreach (var id in fieldWithCustomFieldRenderIds)
-                {
-                    if (storeIds.Any(storeId =>
-                        _nexportRegistrationFieldStoreMappingRepository.Table
-                            .Any(x => x.FieldId == id && x.StoreId == storeId)))
-                        return true;
-                }
+                if (storeIds.Any(storeId =>
+                    _nexportRegistrationFieldStoreMappingRepository.Table
+                        .Any(x => x.FieldId == id && x.StoreId == storeId)))
+                    return true;
             }
-            else
-            {
-                var availableStoreIds = await (await _storeService.GetAllStoresAsync()).Select(x => x.Id).ToListAsync();
-
-                var fieldWithCustomFieldRenderIds = fieldWithCustomFieldRenders
-                    .Select(x => x.Id);
-
-                foreach (var id in fieldWithCustomFieldRenderIds)
-                {
-                    if (availableStoreIds.Any(storeId =>
-                        _nexportRegistrationFieldStoreMappingRepository.Table
-                            .Any(x => x.FieldId == id && x.StoreId == storeId)))
-                        return true;
-                }
-            }
-
-            return false;
         }
+        else
+        {
+            var availableStoreIds = await (await _storeService.GetAllStoresAsync()).Select(x => x.Id).ToListAsync();
+
+            var fieldWithCustomFieldRenderIds = fieldWithCustomFieldRenders
+                .Select(x => x.Id);
+
+            foreach (var id in fieldWithCustomFieldRenderIds)
+            {
+                if (availableStoreIds.Any(storeId =>
+                    _nexportRegistrationFieldStoreMappingRepository.Table
+                        .Any(x => x.FieldId == id && x.StoreId == storeId)))
+                    return true;
+            }
+        }
+
+        return false;
+    }
 
     public virtual async Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchProductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue)
     {
-            //get product mappings for the product
-            var productMappings = _nexportProductMappingRepository.Table.Where(x => x.NopProductId == productId);
+        //get product mappings for the product
+        var productMappings = _nexportProductMappingRepository.Table.Where(x => x.NopProductId == productId);
 
-            //this checks if a default mapping exists for the product. if it does not then set insert empty default to true and if
-            //it doesnt get filtered out we insert it at the end
-            var insertEmptyDefault = await _nexportProductMappingRepository.Table.FirstOrDefaultAsync(x => x.NopProductId == productId && x.StoreId == null) == null;
+        //this checks if a default mapping exists for the product. if it does not then set insert empty default to true and if
+        //it doesnt get filtered out we insert it at the end
+        var insertEmptyDefault = await _nexportProductMappingRepository.Table.FirstOrDefaultAsync(x => x.NopProductId == productId && x.StoreId == null) == null;
 
-            var left = _storeRepository.Table.Where(s=>!s.Deleted)
-                .GroupJoin(productMappings,
-                    s => s.Id,
-                    pm => pm.StoreId,
-                    (s, pm) => new { s, pm })
-                .SelectMany(joined => joined.pm.DefaultIfEmpty(),
-                    (joined, pm) => new { joined.s, pm });
+        var left = _storeRepository.Table.Where(s => !s.Deleted)
+            .GroupJoin(productMappings,
+                s => s.Id,
+                pm => pm.StoreId,
+                (s, pm) => new { s, pm })
+            .SelectMany(joined => joined.pm.DefaultIfEmpty(),
+                (joined, pm) => new { joined.s, pm });
 
-            var right = productMappings
-                .GroupJoin(_storeRepository.Table,
-                    pm => pm.StoreId,
-                    s => s.Id,
-                    (pm, s) => new { s, pm })
-                .SelectMany(joined => joined.s.DefaultIfEmpty(),
-                    (joined, s) => new { s = s, joined.pm });
+        var right = productMappings
+            .GroupJoin(_storeRepository.Table,
+                pm => pm.StoreId,
+                s => s.Id,
+                (pm, s) => new { s, pm })
+            .SelectMany(joined => joined.s.DefaultIfEmpty(),
+                (joined, s) => new { s = s, joined.pm });
 
-            var productMappingsQuery = left.Union(right);
+        var productMappingsQuery = left.Union(right);
 
-            if (!string.IsNullOrEmpty(searchStoreName))
-            {
-                if ("Default".Contains(searchStoreName, StringComparison.OrdinalIgnoreCase))
-                {
-                    productMappingsQuery = productMappingsQuery.Where(x =>
-                        x.s.Name.Contains(searchStoreName, StringComparison.OrdinalIgnoreCase) || x.s.Name==null);
-                }
-                else
-                {
-                    productMappingsQuery = productMappingsQuery.Where(x =>
-                        x.s.Name.Contains(searchStoreName, StringComparison.OrdinalIgnoreCase));
-                    insertEmptyDefault = false;
-                }
-                
-            }
-
-            if (!string.IsNullOrEmpty(searchProductName))
+        if (!string.IsNullOrEmpty(searchStoreName))
+        {
+            if ("Default".Contains(searchStoreName, StringComparison.OrdinalIgnoreCase))
             {
                 productMappingsQuery = productMappingsQuery.Where(x =>
-                    x.pm.NexportProductName.Contains(searchProductName, StringComparison.OrdinalIgnoreCase));
-                insertEmptyDefault = false;
+                    x.s.Name.Contains(searchStoreName, StringComparison.OrdinalIgnoreCase) || x.s.Name == null);
             }
-
-            if (searchProductType != null)
+            else
             {
-                productMappingsQuery = productMappingsQuery.Where(x => x.pm.Type == searchProductType);
+                productMappingsQuery = productMappingsQuery.Where(x =>
+                    x.s.Name.Contains(searchStoreName, StringComparison.OrdinalIgnoreCase));
                 insertEmptyDefault = false;
             }
-
-            var productMappingsList = await productMappingsQuery.Select(x => x.pm ?? new NexportProductMapping() { StoreId = x.s.Id, NexportCatalogId = Guid.Empty }).ToListAsync();
-
-            // insert an empty value for default if there is no default for the product and it wasnt filtered out by the search
-            if (insertEmptyDefault)
-                productMappingsList.Insert(0, new NexportProductMapping {NexportCatalogId = Guid.Empty});
-            
-
-            return new PagedList<NexportProductMapping>(productMappingsList, pageIndex, pageSize);
 
         }
+
+        if (!string.IsNullOrEmpty(searchProductName))
+        {
+            productMappingsQuery = productMappingsQuery.Where(x =>
+                x.pm.NexportProductName.Contains(searchProductName, StringComparison.OrdinalIgnoreCase));
+            insertEmptyDefault = false;
+        }
+
+        if (searchProductType != null)
+        {
+            productMappingsQuery = productMappingsQuery.Where(x => x.pm.Type == searchProductType);
+            insertEmptyDefault = false;
+        }
+
+        var productMappingsList = await productMappingsQuery.Select(x => x.pm ?? new NexportProductMapping() { StoreId = x.s.Id, NexportCatalogId = Guid.Empty }).ToListAsync();
+
+        // insert an empty value for default if there is no default for the product and it wasnt filtered out by the search
+        if (insertEmptyDefault)
+            productMappingsList.Insert(0, new NexportProductMapping { NexportCatalogId = Guid.Empty });
+
+
+        return new PagedList<NexportProductMapping>(productMappingsList, pageIndex, pageSize);
+
+    }
+
+    public async Task<int> GetWholesalePurchaseGroupNumberOfProductsAsync(Guid? groupId = null)
+    {
+        if (groupId == Guid.Empty)
+            throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
+
+        var total = 0;
+
+        total += await _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId).SumAsync(x => x.Available);
+        total += await _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId).SumAsync(x => x.Awaiting);
+        total += await _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId).SumAsync(x => x.Redeemed);
+
+        return total;
+    }
+
+    public async Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemByGuidAsync(Guid? orderInvoiceItemId)
+    {
+        if (orderInvoiceItemId == null)
+            throw new ArgumentNullException(nameof(orderInvoiceItemId));
+        if (orderInvoiceItemId == Guid.Empty)
+            throw new ArgumentException("invoice item Id cannot be empty Guid", nameof(orderInvoiceItemId));
+
+        return await _nexportOrderInvoiceItemRepository.Table.SingleOrDefaultAsync(x =>
+            x.InvoiceItemId == orderInvoiceItemId);
+    }
+
+    public async Task<Customer> FindCustomerByIdAsync(int customerId)
+    {
+        if (customerId < 0)
+            throw new ArgumentOutOfRangeException(nameof(customerId));
+
+        return await _customerService.GetCustomerByIdAsync(customerId);
+    }
+
+    public async Task<int> GetAvailableNexportGroupProductRedemptionsCountAsync(Guid? groupId, int productId, int? orderId = null, Customer customer = null)
+    {
+        if (groupId == Guid.Empty)
+            throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
+        if (productId < 0)
+            throw new ArgumentOutOfRangeException(nameof(productId));
+
+        var orderQuery = _orderRepository.Table;
+        if (customer != null)
+        {
+            orderQuery = orderQuery.Where(x => x.CustomerId == customer.Id);
+        }
+
+        var orderIdList = await orderQuery.Select(x => x.Id).ToListAsync();
+
+        var query = _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId && x.ProductId == productId && orderIdList.Contains(x.OrderId));
+        if (orderId != null)
+        {
+            query = query.Where(x => x.OrderId == orderId);
+        }
+
+        var available = await query
+            .GroupBy(x => x.ProductId)
+            .SumAsync(x => x.Sum(x => x.Available));
+
+
+        return available;
+    }
+
+    public async Task InsertOrUpdateWholesalePurchaseGroupAsync(WholesalePurchasingGroup wholesalePurchasingGroup)
+    {
+        if (wholesalePurchasingGroup == null)
+            throw new ArgumentNullException(nameof(wholesalePurchasingGroup));
+
+        var existingGroup =
+            await _wholesalePurchasingGroupRepository.Table.FirstOrDefaultAsync(x => x.NexportGroupId == wholesalePurchasingGroup.NexportGroupId);
+
+        if (existingGroup != null)
+        {
+            //update the group
+            existingGroup.NexportGroupName = wholesalePurchasingGroup.NexportGroupName;
+            existingGroup.NexportGroupShortName = wholesalePurchasingGroup.NexportGroupShortName;
+            await _wholesalePurchasingGroupRepository.UpdateAsync(existingGroup);
+        }
+        else
+        {
+            //insert new group into table
+            await _wholesalePurchasingGroupRepository.InsertAsync(wholesalePurchasingGroup);
+        }
+    }
+
+    public async Task InsertWholesaleOrderInfoAsync(WholesaleOrderInfo wholesaleOrderInfo)
+    {
+        if (wholesaleOrderInfo == null)
+            throw new ArgumentNullException(nameof(wholesaleOrderInfo));
+
+        await _wholesaleOrderInfoRepository.InsertAsync(wholesaleOrderInfo);
+    }
+
+    public async Task UpdateWholesaleOrderInfoAsync(WholesaleOrderInfo wholesaleOrderInfo)
+    {
+        if (wholesaleOrderInfo == null)
+            throw new ArgumentNullException(nameof(wholesaleOrderInfo));
+
+        await _wholesaleOrderInfoRepository.UpdateAsync(wholesaleOrderInfo);
+    }
+
+    public async Task<WholesalePurchasingGroup> GetWholesalePurchaseGroupAsync(Guid groupId)
+    {
+        if (groupId == Guid.Empty)
+            throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
+
+        var group = await _wholesalePurchasingGroupRepository.Table.FirstOrDefaultAsync(x =>
+            x.NexportGroupId == groupId);
+        return group;
+
+    }
+
+    public async Task<WholesalePurchasingGroup> GetWholesalePurchaseGroupForOrderAsync(Order order)
+    {
+
+        if (order == null)
+            throw new ArgumentNullException(nameof(order));
+
+        if (order.Id < 0)
+            throw new ArgumentOutOfRangeException(nameof(order.Id));
+
+        var orderInfo = await GetWholesaleOrderInfoForOrderAsync(order.Id);
+
+        if (orderInfo == null)
+            return null;
+
+        if (orderInfo.NexportGroupId == null)
+            return null;
+
+
+        var group = await GetWholesalePurchaseGroupAsync(orderInfo.NexportGroupId.Value);
+
+        return group;
+    }
+
+    public async Task<WholesaleOrderInfo> GetWholesaleOrderInfoForOrderItemAsync(int orderId, int orderItemId)
+    {
+        if (orderId < 0)
+            throw new ArgumentOutOfRangeException(nameof(orderId));
+        if (orderItemId < 0)
+            throw new ArgumentOutOfRangeException(nameof(orderItemId));
+
+        var info = await _wholesaleOrderInfoRepository.Table.FirstOrDefaultAsync(x => x.OrderId == orderId && x.OrderItemId == orderItemId);
+
+        return info;
+    }
+
+    public async Task<WholesaleOrderInfo> GetWholesaleOrderInfoForOrderAsync(int orderId)
+    {
+        if (orderId < 0)
+            throw new ArgumentOutOfRangeException(nameof(orderId));
+
+        var info = await _wholesaleOrderInfoRepository.Table.FirstOrDefaultAsync(x => x.OrderId == orderId);
+
+        return info;
+    }
+
+    public async Task<IList<Order>> GetOrdersForCustomer(Customer customer, Store store = null)
+    {
+        if (store == null)
+            store = await _storeContext.GetCurrentStoreAsync();
+
+        if (customer == null)
+            throw new ArgumentNullException(nameof(customer));
+
+        var orders = await _orderRepository.Table.Where(x => x.CustomerId == customer.Id && x.StoreId == store.Id).ToListAsync();
+
+        return orders;
+    }
+
+    public virtual async Task<IList<Customer>> SearchCustomersAsync(string searchNameAndEmail)
+    {
+        var query = _customerRepository.Table.Where(c => !c.Deleted && !c.IsSystemAccount && !string.IsNullOrWhiteSpace(c.Email));
+
+        query = query.Where(c => (c.FirstName + " " + c.LastName).Contains(searchNameAndEmail) || c.Email.Contains(searchNameAndEmail));
+
+        var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync(NopCustomerDefaults.RegisteredRoleName);
+        if (registeredRole != null)
+        {
+            query = query.Join(_customerCustomerRoleMappingRepository.Table, x => x.Id, y => y.CustomerId,
+                    (x, y) => new { Customer = x, Mapping = y })
+                .Where(z => z.Mapping.CustomerRoleId == registeredRole.Id)
+                .Select(z => z.Customer)
+                .Distinct();
+        }
+
+        query = query.OrderBy(c => c.Email);
+
+        return await query.ToListAsync();
+    }
+
+    public async Task<IList<NexportProductMapping>> GetAllProductMappingsByCatalogIdAsync(Guid catalogId)
+    {
+        return await _nexportProductMappingRepository.Table.Where(x => x.NexportCatalogId == catalogId).ToListAsync();
+    }
+
+    public async Task<IList<WholesaleOrderInfo>> SearchGroupProductsAsync(Guid? groupId, string productName, Customer customer = null)
+    {
+        if (groupId == Guid.Empty)
+            throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
+
+        var productQuery = _productRepository.Table;
+        if (!productName.IsNullOrWhiteSpace())
+            productQuery = productQuery.Where(x => x.Name.Contains(productName));
+
+        var productIdList = await productQuery.Select(x => x.Id).ToListAsync();
+
+        var orderQuery = _orderRepository.Table;
+        if (customer != null)
+        {
+            orderQuery = orderQuery.Where(x => x.CustomerId == customer.Id);
+        }
+
+        var orderIdList = await orderQuery.Select(x => x.Id).ToListAsync();
+
+        var wholesaleOrderInfoQuery =
+            _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId && productIdList.Contains(x.ProductId) && orderIdList.Contains(x.OrderId))
+                .GroupBy(x => x.ProductId)
+                .Select(x =>
+                    new WholesaleOrderInfo
+                    {
+                        NexportGroupId = x.FirstOrDefault().NexportGroupId,
+                        OrderId = x.FirstOrDefault().OrderId,
+                        OrderItemId = x.FirstOrDefault().OrderItemId,
+                        ProductId = x.FirstOrDefault().ProductId,
+                        Available = x.Sum(x => x.Available),
+                        Awaiting = x.Sum(x => x.Awaiting),
+                        Redeemed = x.Sum(x => x.Redeemed)
+                    });
+
+
+        return await wholesaleOrderInfoQuery.ToListAsync();
+    }
+
+    public async Task<IList<NexportOrderInvoiceItem>> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId, string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Customer currentCustomer = null)
+    {
+        if (groupId == Guid.Empty)
+            throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
+
+        if (productId < 0)
+            throw new ArgumentOutOfRangeException(nameof(productId));
+
+        var invoiceItemQuery = _nexportOrderInvoiceItemRepository.Table;
+
+        var orderQuery = _orderRepository.Table;
+        if (currentCustomer != null)
+        {
+            orderQuery = orderQuery.Where(x => x.CustomerId == currentCustomer.Id);
+        }
+
+        var orderIdList = await orderQuery.Select(x => x.Id).ToListAsync();
+
+        invoiceItemQuery = invoiceItemQuery.Where(x => orderIdList.Contains(x.OrderId));
+
+        if (orderId != null)
+        {
+            invoiceItemQuery = invoiceItemQuery.Where(x => x.OrderId == orderId);
+        }
+
+        if (fromUtc.HasValue)
+            invoiceItemQuery = invoiceItemQuery.Where(x => fromUtc.Value <= x.UtcDateRedemption);
+        if (toUtc.HasValue)
+            invoiceItemQuery = invoiceItemQuery.Where(x => toUtc.Value >= x.UtcDateRedemption);
+
+        if (!customerEmail.IsNullOrWhiteSpace() || !customerName.IsNullOrWhiteSpace())
+        {
+            var customerQuery = _customerRepository.Table;
+
+            if (!customerEmail.IsNullOrWhiteSpace())
+                customerQuery = customerQuery.Where(x => x.Email.Contains(customerEmail));
+
+            if (!customerName.IsNullOrWhiteSpace())
+                customerQuery = customerQuery.Where(x => x.FirstName.Contains(customerName) || x.LastName.Contains(customerName));
+
+
+            var customerIdList = await customerQuery.Select(x => x.Id).ToListAsync();
+
+            if (customerIdList.Any())
+            {
+                var nexportUserQuery =
+                    _nexportUserMappingRepository.Table.Where(x => customerIdList.Contains(x.NopUserId));
+
+                var nexportUserIdList = await nexportUserQuery.Select(x => x.NexportUserId).ToListAsync();
+
+                invoiceItemQuery = invoiceItemQuery.Where(x =>
+                    x.RedeemingUserId != null && nexportUserIdList.Contains(x.RedeemingUserId.Value));
+            }
+
+        }
+
+        var orderInfoQuery = _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId && x.ProductId == productId);
+
+        var orderInfoQueryIdList = await orderInfoQuery
+            .Select(x => new { orderId = x.OrderId, orderItemId = x.OrderItemId }).ToListAsync();
+
+
+        invoiceItemQuery = invoiceItemQuery.Where(x => orderInfoQueryIdList.Contains(new { orderId = x.OrderId, orderItemId = x.OrderItemId }));
+
+
+
+        if (redemptionStatus != null)
+            invoiceItemQuery = invoiceItemQuery.Where(x => x.RedemptionStatusId == (int)redemptionStatus);
+
+        return await invoiceItemQuery.ToListAsync();
+    }
+
+    public async Task<bool> RedeemProductForCustomer(RedeemProductModel model)
+    {
+        var invoiceItem = await FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
+
+        if (model.SelectedProductMappingId == null)
+            throw new Exception("Selected product mapping id cannot be null.");
+
+        if (invoiceItem == null)
+            throw new Exception("Invoice item id cannot be null.");
+
+
+        var orderInfo = await GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
+            invoiceItem.OrderItemId);
+
+        var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+
+        if (orderInfo is not { Available: > 0 } || order == null)
+            throw new Exception("Order cannot be null");
+
+        //attributes set so that processing and awaiting redemptions can display an email and name
+        await _genericAttributeService.SaveAttributeAsync(invoiceItem,
+            $"redeeming-user-email-for-invoice-{invoiceItem.Id}", model.Email, order.StoreId);
+        await _genericAttributeService.SaveAttributeAsync(invoiceItem,
+            $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}", model.FirstName, order.StoreId);
+        await _genericAttributeService.SaveAttributeAsync(invoiceItem,
+            $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}", model.LastName, order.StoreId);
+
+        //set generic attribute for open ended product
+        if (model.ProductMappingIdForOpenEndedProduct != null)
+        {
+            var productMapping =
+                await GetProductMappingById(model
+                    .SelectedProductMappingId.Value);
+
+            await _genericAttributeService.SaveAttributeAsync(invoiceItem,
+                $"SelectedMappingForOpenEndedProduct-{invoiceItem.Id}",
+                JsonConvert.SerializeObject(productMapping), order.StoreId);
+        }
+
+        if (model.AssignmentType == "Instant")
+        {
+            if (model.UserId == null)
+                throw new Exception("User id of redeeming user cannot be null.");
+
+            invoiceItem.RedemptionStatus =
+                NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
+            invoiceItem.RedeemingUserId = model.UserId;
+            await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+
+            orderInfo.Available--;
+            await UpdateWholesaleOrderInfoAsync(orderInfo);
+
+
+            if (model.ProductMappingIdForOpenEndedProduct != null)
+            {
+
+                await InsertNexportOrderInvoiceRedemptionQueueItem(
+                    new NexportOrderInvoiceRedemptionQueueItem
+                    {
+                        OrderInvoiceItemId = invoiceItem.Id,
+                        RedeemingUserId = model.UserId.Value,
+                        ProductMappingId =
+                            model.ProductMappingIdForOpenEndedProduct.Value,
+                        OrderItemId = invoiceItem.OrderItemId,
+                        UtcDateCreated = DateTime.UtcNow
+                    });
+            }
+            else
+            {
+                await InsertNexportOrderInvoiceRedemptionQueueItem(
+                    new NexportOrderInvoiceRedemptionQueueItem
+                    {
+                        OrderInvoiceItemId = invoiceItem.Id,
+                        RedeemingUserId = model.UserId.Value,
+                        ProductMappingId = model.SelectedProductMappingId.Value,
+                        OrderItemId = invoiceItem.OrderItemId,
+                        UtcDateCreated = DateTime.UtcNow
+                    });
+            }
+        }
+        else
+        {
+            if (model.Email == null)
+                throw new Exception("Sending email, email address cannot be null.");
+
+            await SendNewNexportManualRedemptionCustomerNotificationAsync(order, invoiceItem.Id, model.ProductMappingIdForOpenEndedProduct ?? model.SelectedProductMappingId.Value,
+                _localizationSettings.DefaultAdminLanguageId, model.Email, model.FirstName, model.LastName);
+
+            invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
+
+            await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+            orderInfo.Available--;
+            orderInfo.Awaiting++;
+            await UpdateWholesaleOrderInfoAsync(orderInfo);
+        }
+
+        return true;
+    }
+
+    public async Task UnassignInvoiceItem(NexportOrderInvoiceItem invoiceItem)
+    {
+        try
+        {
+            var wholesaleOrderInfo =
+                await GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
+                    invoiceItem.OrderItemId);
+
+            if (wholesaleOrderInfo != null && wholesaleOrderInfo.Redeemed > 0)
+            {
+                var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+                if (order != null)
+                {
+                    // reset processing and awaiting redemptions attributes for name and email
+                    await _genericAttributeService.SaveAttributeAsync<string>(invoiceItem,
+                        $"redeeming-user-email-for-invoice-{invoiceItem.Id}", null, order.StoreId);
+                    await _genericAttributeService.SaveAttributeAsync<string>(invoiceItem,
+                        $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}", null, order.StoreId);
+                    await _genericAttributeService.SaveAttributeAsync<string>(invoiceItem,
+                        $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}", null, order.StoreId);
+                }
+
+                invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
+
+                await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+
+                wholesaleOrderInfo.Redeemed--;
+                await UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+
+                await InsertNexportOrderInvoiceResetRedemptionQueueItem(
+                    new NexportOrderInvoiceResetRedemptionQueueItem
+                    {
+                        OrderInvoiceItemId = invoiceItem.Id,
+                        UtcDateCreated = DateTime.UtcNow,
+                        RetryCount = 0
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync($"Failed to insert invoice item {invoiceItem.InvoiceItemId} into the reset redemption queue", ex);
+        }
+    }
+
+    public async Task RedeemAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem, Guid nexportUserId, int productMappingId)
+    {
+        var orderInfo = await GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
+            invoiceItem.OrderItemId);
+        if (orderInfo != null && orderInfo.Awaiting > 0)
+        {
+
+            var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+            if (order != null)
+            {
+                var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
+                if (orderItem != null)
+                {
+                    invoiceItem.RedemptionStatus =
+                        NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting;
+                    await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+                    orderInfo.Awaiting--;
+                    await UpdateWholesaleOrderInfoAsync(orderInfo);
+
+                    await InsertNexportOrderInvoiceRedemptionQueueItem(
+                        new NexportOrderInvoiceRedemptionQueueItem
+                        {
+                            OrderInvoiceItemId = invoiceItem.Id,
+                            RedeemingUserId = nexportUserId,
+                            ProductMappingId = productMappingId,
+                            OrderItemId = invoiceItem.OrderItemId,
+                            UtcDateCreated = DateTime.UtcNow
+                        });
+                }
+            }
+        }
+    }
+
+    public async Task CancelAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem)
+    {
+        try
+        {
+            var wholesaleOrderInfo =
+                await GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId,
+                    invoiceItem.OrderItemId);
+
+            if (wholesaleOrderInfo != null && wholesaleOrderInfo.Awaiting > 0)
+            {
+                var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+                if (order != null)
+                {
+                    // reset processing and awaiting redemptions attributes for name and email
+                    await _genericAttributeService.SaveAttributeAsync<string>(invoiceItem,
+                        $"redeeming-user-email-for-invoice-{invoiceItem.Id}", null, order.StoreId);
+                    await _genericAttributeService.SaveAttributeAsync<string>(invoiceItem,
+                        $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}", null, order.StoreId);
+                    await _genericAttributeService.SaveAttributeAsync<string>(invoiceItem,
+                        $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}", null, order.StoreId);
+                }
+
+                invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Available;
+                invoiceItem.RedeemingUserId = null;
+                await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+
+                wholesaleOrderInfo.Awaiting--;
+                wholesaleOrderInfo.Available++;
+                await UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+
+            }
+        }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync($"Failed to cancel awaiting status for invoice item {invoiceItem.InvoiceItemId}", ex);
+        }
+    }
+
+    public async Task<bool> HasWholesaleOrders(Customer customer, Store store = null)
+    {
+        if (customer == null)
+            throw new ArgumentNullException(nameof(customer));
+
+        var ordersForCustomer = await GetOrdersForCustomer(customer, store);
+        if (ordersForCustomer != null)
+        {
+            foreach (var order in ordersForCustomer)
+            {
+                var orderInfo = await GetWholesaleOrderInfoForOrderAsync(order.Id);
+                if (orderInfo != null)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }

@@ -27,26 +27,26 @@ public class WidgetsNexportProductMappingsInProductPage : NopViewComponent
         IPermissionService permissionService,
         INexportPluginModelFactory nexportPluginModelFactory)
     {
-            _nexportSettings = nexportSettings;
-            _nexportService = nexportService;
-            _cacheManager = cacheManager;
-            _permissionService = permissionService;
-            _nexportPluginModelFactory = nexportPluginModelFactory;
-        }
+        _nexportSettings = nexportSettings;
+        _nexportService = nexportService;
+        _cacheManager = cacheManager;
+        _permissionService = permissionService;
+        _nexportPluginModelFactory = nexportPluginModelFactory;
+    }
 
     public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
     {
-            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
-                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
-                return Content("");
+        if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
+            return Content("");
 
-            var productModel = (ProductModel)additionalData;
+        var productModel = (ProductModel)additionalData;
 
-            if (productModel == null || productModel.Id < 1)
-                return Content("");
+        if (productModel == null || productModel.Id < 1)
+            return Content("");
 
-            var model = await _nexportPluginModelFactory.PrepareNexportProductMappingListSearchModelAsync(new NexportProductMappingListSearchModel(), productModel);
+        var model = await _nexportPluginModelFactory.PrepareNexportProductMappingListSearchModelAsync(new NexportProductMappingListSearchModel(), productModel);
 
-            return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductMappingsInProductPage.cshtml", model);
-        }
+        return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductMappingsInProductPage.cshtml", model);
+    }
 }
