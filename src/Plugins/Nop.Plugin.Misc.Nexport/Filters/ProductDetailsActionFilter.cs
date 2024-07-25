@@ -10,7 +10,6 @@ using Nop.Services.Common;
 using Nop.Services.Orders;
 using Nop.Web.Controllers;
 using Nop.Web.Models.Catalog;
-using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Customers;
 

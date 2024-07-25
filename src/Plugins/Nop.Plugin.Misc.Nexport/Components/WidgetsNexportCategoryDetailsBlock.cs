@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
+using Nop.Services.Security;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Components;
@@ -17,6 +19,7 @@ public class WidgetsNexportCategoryDetailsBlock : NopViewComponent
     private readonly NexportSettings _nexportSettings;
     private readonly NexportService _nexportService;
     private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+    private readonly IPermissionService _permissionService;
     private readonly ICategoryService _categoryService;
     private readonly IGenericAttributeService _genericAttributeService;
 
@@ -24,12 +27,14 @@ public class WidgetsNexportCategoryDetailsBlock : NopViewComponent
         NexportSettings nexportSettings,
         NexportService nexportService,
         INexportPluginModelFactory nexportPluginModelFactory,
+        IPermissionService permissionService,
         ICategoryService categoryService,
         IGenericAttributeService genericAttributeService)
     {
         _nexportSettings = nexportSettings;
         _nexportService = nexportService;
         _nexportPluginModelFactory = nexportPluginModelFactory;
+        _permissionService = permissionService;
         _categoryService = categoryService;
         _genericAttributeService = genericAttributeService;
     }
@@ -56,6 +61,8 @@ public class WidgetsNexportCategoryDetailsBlock : NopViewComponent
 
         model.AllowProductPurchaseInCategoryDuringEnrollment = await _genericAttributeService.GetAttributeAsync<bool>(category,
             NexportDefaults.ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT);
+
+        ViewBag.ManageNexportProductMapping = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping);
 
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Category/NexportCategoryDetails.cshtml", model);
     }

@@ -1,7 +1,6 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Models.ProductMappings
 @using Nop.Services.Helpers
-@using Nop.Web.Areas.Admin.Models.Customers
 @inject IDateTimeHelper DateTimeHelper
 
 @model Nop.Plugin.Misc.Nexport.Models.ProductMappings.NexportProductMappingListSearchModel
@@ -211,26 +210,33 @@
 
     function renderNexportProductInfo(data, type, row, meta) {
         if (data !== null) {
-            var displayText = "<b>Name: </b>" + data + "<br>";
-            if (row.NexportCatalogId !== "00000000-0000-0000-0000-000000000000") {
-                displayText += "<br><b>Type: </b>";
-                if (row.Type === +"@((int)NexportProductTypeEnum.Catalog)") {
-                    displayText += "Catalog";
-                } else if (row.Type === +"@((int)NexportProductTypeEnum.Section)") {
-                    displayText += "Section";
-                } else if (row.Type === +"@((int)NexportProductTypeEnum.TrainingPlan)") {
-                    displayText += "Training Plain";
+            if(row.NopCategoryId==null)
+            {
+                var displayText = "<b>Name: </b>" + data + "<br>";
+                if (row.NexportCatalogId !== "00000000-0000-0000-0000-000000000000") {
+                    displayText += "<br><b>Type: </b>";
+                    if (row.Type === +"@((int)NexportProductTypeEnum.Catalog)") {
+                        displayText += "Catalog";
+                    } else if (row.Type === +"@((int)NexportProductTypeEnum.Section)") {
+                        displayText += "Section";
+                    } else if (row.Type === +"@((int)NexportProductTypeEnum.TrainingPlan)") {
+                        displayText += "Training Plain";
+                    }
+                    displayText += "<br>" + "<b>Nexport Catalog: </b>" + row.NexportCatalogName + " (" + row.NexportCatalogId + ")";
+                    if (row.NexportSyllabusId || row.NexportSyllabus !== "00000000-0000-0000-0000-000000000000") {
+                        displayText += "<br>" + "<b>Nexport Syllabus: </b>" + row.UniqueName + " (" + row.NexportSyllabusId + ")";
+                    }
+                    displayText += "<br>" + "<b>NexPort Product Id: </b>" + row.NexportCatalogSyllabusLinkId;
+                    if (row.UtcLastSynchronizationDate) {
+                        displayText += "<br>" + "<b>Last Synchronized Date: </b>" + renderLocalDateForTableEntry(row.UtcLastSynchronizationDate, null, null, null);
+                    }
                 }
-                displayText += "<br>" + "<b>Nexport Catalog: </b>" + row.NexportCatalogName + " (" + row.NexportCatalogId + ")";
-                if (row.NexportSyllabusId || row.NexportSyllabus !== "00000000-0000-0000-0000-000000000000") {
-                    displayText += "<br>" + "<b>Nexport Syllabus: </b>" + row.UniqueName + " (" + row.NexportSyllabusId + ")";
-                }
-                displayText += "<br>" + "<b>NexPort Product Id: </b>" + row.NexportCatalogSyllabusLinkId;
-                if (row.UtcLastSynchronizationDate) {
-                    displayText += "<br>" + "<b>Last Synchronized Date: </b>" + renderLocalDateForTableEntry(row.UtcLastSynchronizationDate, null, null, null);
-                }
+                return displayText;
             }
-            return displayText;
+            else{
+                var displayText = "<b>@T("Plugins.Misc.Nexport.DisplayName"): </b>" + row.DisplayName + "<br><b>@T("Plugins.Misc.Nexport.CategoryName"): </b>" + row.NopCategoryName;
+                return displayText;
+            }
         }
         return data;
     }
@@ -273,7 +279,7 @@
     function renderViewMappingDetails(data, type, row, meta) {
         var url;
 
-        var renderCreateMapping = row.NexportCatalogId === "00000000-0000-0000-0000-000000000000";
+        var renderCreateMapping = (row.NexportCatalogId === "00000000-0000-0000-0000-000000000000" && !row.NopCategoryId);
         var buttonName;
 
         if (renderCreateMapping) {
@@ -356,11 +362,11 @@
 
         return buttonElement;
     }
-    
+
     function renderLocalDateForTableEntry(data, type, row, meta) {
         return data ? moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss") : null;
     }
-    
+
 
     function renderNexportGroupId(data, type, row, meta) {
         return data;
@@ -424,7 +430,7 @@
         });
 
         $("#btnRefreshMappings").click(function () {
-            
+
             checkDefaultMappingExisted()
 
             // Refresh grid

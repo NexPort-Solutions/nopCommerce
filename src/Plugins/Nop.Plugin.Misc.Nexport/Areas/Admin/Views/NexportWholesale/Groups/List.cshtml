@@ -1,0 +1,34 @@
+﻿@{
+    var path = ViewData["PathForPartialView"] as string;
+    var model = ViewData["ModelForPartialView"];
+    var isAdminView = (bool)(ViewData["AdminView"] ?? false);
+
+    if(!isAdminView)
+    {
+        NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/uikit.min.css");
+
+        NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
+        NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net/js/jquery.dataTables.min.js");
+    }
+
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
+}
+<style>
+    ol#assign-steps {
+        list-style: none;
+        padding-inline-start: 0px;
+    }
+
+    .button-1 {
+        min-width: 140px;
+        border: none;
+        background-color: #4ab2f1;
+        padding: 10px 30px;
+        text-align: center;
+        font-size: 15px;
+        color: #fff;
+        text-transform: uppercase;
+    }
+</style>
+
+@await Html.PartialAsync(path, model)

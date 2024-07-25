@@ -5,24 +5,26 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
+using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Localization;
+using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Services;
-using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
+using Nop.Services.Localization;
+using Nop.Services.Logging;
 using Nop.Services.Security;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Models.Checkout;
-using Nop.Services.Logging;
-using Nop.Core.Domain.Customers;
-using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
-using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
-using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
-using Nop.Services.Localization;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers
 {
@@ -40,6 +42,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         private readonly NexportSettings _nexportSettings;
         private readonly IProductService _productService;
         private readonly ILogger _logger;
+        private readonly LocalizationSettings _localizationSettings;
         private readonly ILocalizationService _localizationService;
 
         #endregion
@@ -57,7 +60,8 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             NexportSettings nexportSettings,
             IProductService productService,
             ILocalizationService localizationService,
-            ILogger logger
+            ILogger logger,
+            LocalizationSettings localizationSettings
             )
         {
             _nexportPluginModelFactory = nexportPluginModelFactory;
@@ -71,78 +75,57 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             _productService = productService;
             _localizationService = localizationService;
             _logger = logger;
+            _localizationSettings = localizationSettings;
         }
 
         #endregion
 
         #region Actions
 
-
         [AutoValidateAntiforgeryToken]
         [HttpPost]
         public async Task<IActionResult> SetPurchaseGroupForCustomer(string groupSelected)
         {
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-                return Challenge();
-
             var customer = await _workContext.GetCurrentCustomerAsync();
             var store = await _storeContext.GetCurrentStoreAsync();
 
-            //save group for customer in generic attribute so it can be saved for the order later
-            await _genericAttributeService.SaveAttributeAsync(customer, $"GroupForCustomer",
-                groupSelected, store.Id);
+            await _genericAttributeService.SaveAttributeAsync(customer, "WholesaleOrder-PurchasingGroup", groupSelected, store.Id);
 
-            return Json(new
-            {
-                Result = true
-            });
+            return Json(new { Result = true });
+        }
+
+        [AutoValidateAntiforgeryToken]
+        [HttpPost]
+        public async Task<IActionResult> SetPurchaseFundingPoolForCustomer(string fundingPoolId)
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            var store = await _storeContext.GetCurrentStoreAsync();
+
+            await _genericAttributeService.SaveAttributeAsync(customer, "WholesaleOrder-FundingPoolId", fundingPoolId, store.Id);
+
+            return Json(new { Result = true });
+        }
+
+        [AutoValidateAntiforgeryToken]
+        [HttpPost]
+        public async Task<IActionResult> SetPurchaseRedeemByForCustomer(string utcRedeemByDate)
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            var store = await _storeContext.GetCurrentStoreAsync();
+
+            await _genericAttributeService.SaveAttributeAsync(customer, "WholesaleOrder-RedeemBy", utcRedeemByDate, store.Id);
+
+            return Json(new { Result = true });
         }
 
         [HttpsRequirement]
-        public async Task<IActionResult> CustomerNexportGroups(int? pageNumber)
+        public async Task<IActionResult> CustomerNexportGroupProducts(int? productId = null, int? statusId = null)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            if (await _nexportService.HasGroupPermissionAsync(customer))
-            {
-                var searchModel = new NexportGroupListSearchModel();
-                searchModel.AdminView = false;
-                ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroups.cshtml";
-                ViewData["ModelForPartialView"] = searchModel;
-
-                return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
-            }
-            else
-            {
-                var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(null);
-
-                // hide groups link in breadcrumbs
-                nexportGroupProductListSearchModel.HasGroupPermission = false;
-                ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
-                ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
-
-                return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
-            }
-        }
-
-        [HttpsRequirement]
-        public async Task<IActionResult> CustomerNexportGroupProducts(Guid? groupId)
-        {
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            if (!await _customerService.IsRegisteredAsync(customer))
-                return Challenge();
-
-            //customer must either have wholesale orders or be a purchasing agent to view this page
-            if(!await _nexportService.HasWholesaleOrders(customer) && !await _nexportService.HasGroupPermissionAsync(customer))
-                return Content("You are not authorized to view this page");
-
-            var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
-
-            //show groups link in breadcrumbs
-            if(await _nexportService.HasGroupPermissionAsync(customer))
-                nexportGroupProductListSearchModel.HasGroupPermission = true;
+            var nexportGroupProductListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(customer.Id, productId, statusId);
 
             ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
             ViewData["ModelForPartialView"] = nexportGroupProductListSearchModel;
@@ -151,43 +134,19 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [HttpsRequirement]
-        public async Task<IActionResult> CustomerNexportGroupProductRedemptions(Guid? groupId, int productId, int? orderId = null)
+        public async Task<IActionResult> CustomerNexportGroupProductRedemptions(int productId, Guid? groupId, int? orderId = null)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            //customer must either have wholesale orders or be a purchasing agent to view this page
-            if(!await _nexportService.HasWholesaleOrders(customer) && !await _nexportService.HasGroupPermissionAsync(customer))
-                return Content("You are not authorized to view this page");
-
-            //show groups link in breadcrumbs
-
             var nexportGroupProductRedemptionListSearchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId, orderId);
-
-            if(await _nexportService.HasGroupPermissionAsync(customer))
-                nexportGroupProductRedemptionListSearchModel.HasGroupPermission = true;
 
             ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProductRedemptions.cshtml";
             ViewData["ModelForPartialView"] = nexportGroupProductRedemptionListSearchModel;
 
             return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
         }
-
-
-        [HttpPost]
-        [AutoValidateAntiforgeryToken]
-        public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
-        {
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            if (!await _customerService.IsRegisteredAsync(customer))
-                return await AccessDeniedDataTablesJson();
-
-            var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel, customer);
-
-            return Json(model);
-        }
-
 
         [HttpPost]
         [AutoValidateAntiforgeryToken]
@@ -197,8 +156,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             if (!await _customerService.IsRegisteredAsync(customer))
                 return await AccessDeniedDataTablesJson();
 
-
-            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId, customer);
+            var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, customer);
 
             return Json(model);
         }
@@ -222,19 +180,42 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId, int? orderId = null)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
+            var store = await _storeContext.GetCurrentStoreAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
 
-            int? count = null;
-            if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-                count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, customer);
+            int? count;
+
+            if (groupId == null)
+            {
+                var isAdmin = await _customerService.IsAdminAsync(customer);
+                if (searchModel.AdminView && isAdmin)
+                {
+                    //show all items under group not assigned
+                    count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(null, productId, orderId);
+                }
+                else
+                {
+                    //show only items for group not assigned that belong to the current store and current customer
+                    count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(null, productId, orderId, customer, store);
+                }
+            }
             else
-                count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId);
+            {
+                var hasGroupPermission = await _nexportService.HasGroupPermissionAsync(customer, groupId.Value);
+                if (searchModel.AdminView && hasGroupPermission)
+                {
+                    //show all items for the group
+                    count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId);
+                }
+                else
+                {
+                    //show only items for the group that belong to the current store
+                    count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, store: store);
+                }
+            }
 
-
-            return Json(
-                new { result = count }
-            );
+            return Json(new { result = count });
         }
 
         [HttpPost]
@@ -370,7 +351,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [HttpsRequirement]
-        public async Task<IActionResult> RedeemProduct(Guid? groupId, Guid? invoiceItemId, int? productId)
+        public async Task<IActionResult> RedeemProduct(Guid groupId, Guid invoiceItemId, int productId)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
@@ -421,6 +402,60 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
         }
 
+        [HttpsRequirement]
+        public async Task<IActionResult> RequestUnassignment(Guid? groupId, Guid? invoiceItemId, int? productId, int? customerId)
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            if (!await _customerService.IsRegisteredAsync(customer))
+                return Challenge();
+            var model = await _nexportPluginModelFactory.PrepareSubmitUnassignmentRequestModel(groupId, invoiceItemId, productId, customerId);
+            return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestUnassignment.cshtml", model);
+        }
+
+        [HttpPost, ActionName("RequestUnassignment")]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> UnassignmentRequestSubmit(SubmitRedemptionUnassignmentRequestModel model, IFormCollection form)
+        {
+            if (!ModelState.IsValid)
+                return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestUnassignment.cshtml", model);
+
+            model.Result = await _localizationService.GetResourceAsync("RedemptionUnassignmentRequests.Submitted");
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+
+            var requestReason =
+                await _nexportService.GetNexportRedemptionUnassignmentRequestReasonByIdAsync(model.RedemptionUnassignmentRequestReasonId);
+            var currentStore = await _storeContext.GetCurrentStoreAsync();
+
+            var unassignmentRequest = new NexportRedemptionUnassignmentRequest
+            {
+                InvoiceItemId = model.InvoiceItemId,
+                RequestedByCustomerId = currentCustomer.Id,
+                CustomerComments = model.Comments,
+                RequestStatus = NexportRedemptionUnassignmentRequestStatus.Received,
+                ReasonForUnassignment = requestReason != null
+                    ? await _localizationService.GetLocalizedAsync(requestReason, x => x.Name)
+                    : "not available",
+                StaffNotes = string.Empty,
+                UtcCreatedDate = DateTime.UtcNow,
+                UtcLastModifiedDate = DateTime.UtcNow
+            };
+
+            await _nexportService.InsertRedemptionUnassignmentRequestAsync(unassignmentRequest);
+
+            var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
+
+            await _nexportService.SendNewRedemptionUnassignmentRequestStoreOwnerNotificationAsync(
+                unassignmentRequest, invoiceItem, _localizationSettings.DefaultAdminLanguageId);
+
+            await _nexportService.SendNewRedemptionUnassignmentRequestCustomerNotificationAsync(
+                unassignmentRequest, invoiceItem);
+
+            model = await _nexportPluginModelFactory.PrepareSubmitRedemptionUnassignmentRequestModelAsync(model);
+            model.Result = await _localizationService.GetResourceAsync("RedemptionUnassignmentRequests.Submitted");
+
+            return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestUnassignment.cshtml", model);
+        }
+
         [HttpPost]
         public virtual async Task<IActionResult> AsnSaveCustomer(CustomerStepModel model, IFormCollection form)
         {
@@ -445,7 +480,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                         {
                             update_section = new UpdateSectionJsonModel
                             {
-                                name = "email",
+                                name = "customer",
                                 html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_CustomerStep.cshtml", model)
                             }
                         });
@@ -458,7 +493,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                     await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_LastName", model.LastName);
                 }
 
-                return await GoToTrainingStep(customer);
+                return await GoToProductStep(customer);
             }
             catch (Exception exc)
             {
@@ -467,13 +502,11 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             }
         }
 
-        public async Task<IActionResult> GoToTrainingStep(Customer customer)
+        public async Task<IActionResult> GoToProductStep(Customer customer)
         {
-            var productId =
-                await _genericAttributeService.GetAttributeAsync<int?>(customer, "RedeemProductModel_productId");
+            var productId = await _genericAttributeService.GetAttributeAsync<int>(customer, "RedeemProductModel_productId");
 
-            var invoiceItemId =
-                await _genericAttributeService.GetAttributeAsync<Guid?>(customer, "RedeemProductModel_InvoiceItemId");
+            var invoiceItemId = await _genericAttributeService.GetAttributeAsync<Guid>(customer, "RedeemProductModel_InvoiceItemId");
 
             var productStepModel = await _nexportPluginModelFactory.PrepareProductStepModel(productId, invoiceItemId);
 
@@ -489,10 +522,10 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             {
                 update_section = new UpdateSectionJsonModel
                 {
-                    name = "training",
+                    name = "product",
                     html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ProductStep.cshtml", productStepModel)
                 },
-                goto_section = "training"
+                goto_section = "product"
             });
         }
 

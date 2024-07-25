@@ -237,7 +237,7 @@
                 <nop-label asp-for="UtcLastSynchronizationDate" />
             </div>
             <div class="col-sm-7 col-md-8">
-                <div class="form-text-row">@(await dateTimeHelper.ConvertToUserTimeAsync(Model.UtcLastSynchronizationDate.Value)).ToString("f")</div>
+                <div class="form-text-row">@((await dateTimeHelper.ConvertToUserTimeAsync(Model.UtcLastSynchronizationDate.Value)).ToString("f"))</div>
             </div>
         </div>
     }

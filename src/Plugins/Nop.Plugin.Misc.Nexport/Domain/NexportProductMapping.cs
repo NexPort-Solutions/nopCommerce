@@ -70,4 +70,6 @@ public class NexportProductMapping : BaseEntity, INexportProductMapping
     public int? StoreId { get; set; }
 
     public bool? AssignWhenRedeemed { get; set; }
+
+    public int? NopCategoryId { get; set; }
 }

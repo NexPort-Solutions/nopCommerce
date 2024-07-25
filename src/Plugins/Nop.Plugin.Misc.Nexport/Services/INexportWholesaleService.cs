@@ -4,7 +4,6 @@ using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
-using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Services.Orders;
 using Nop.Services.Payments;

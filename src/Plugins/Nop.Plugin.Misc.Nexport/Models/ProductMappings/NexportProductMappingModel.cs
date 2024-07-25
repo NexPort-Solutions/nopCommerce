@@ -131,4 +131,9 @@ public record NexportProductMappingModel : BaseNopEntityModel, INexportProductMa
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.AssignWhenRedeemed")]
     public bool? AssignWhenRedeemed { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.CategoryName")]
+    public string NopCategoryName { get; set; }
+
+    public int? NopCategoryId { get; set; }
 }

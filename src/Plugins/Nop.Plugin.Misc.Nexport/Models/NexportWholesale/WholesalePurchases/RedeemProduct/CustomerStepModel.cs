@@ -1,7 +1,5 @@
 ﻿
 using System;
-using System.ComponentModel;
-using Nop.Core.Domain.Catalog;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 

@@ -1,17 +1,20 @@
-﻿@inject IWebHelper webHelper
+﻿@using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+
+@inject IWebHelper webHelper
 @inject IThemeContext themeContext
 
-
-@using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct
-@using Microsoft.AspNetCore.Mvc.TagHelpers
 @model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProductModel
+
 @{
-    var groupsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Groups") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Groups");
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
-    var redeemOrModifyText = T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem") + " - " + Model.CurrentProduct.Name;
 
-    var currentGroupId = @Model.CurrentGroup.Id?.ToString() ?? "null";
+    var groupText = Model.CurrentGroup.OrganizationId != null ? Model.CurrentGroup.Name : (Model.AdminView ? @T("Plugins.Misc.Nexport.Group.NoGroup").Text : T("Plugins.Misc.Nexport.Group.Products").Text);
+
+    var redeemOrModifyText = T("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem") + " - " + groupText + " - " + Model.CurrentProduct.Name;
+
+    var currentGroupId = @Model.CurrentGroup.OrganizationId?.ToString() ?? "null";
 
     NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/redeem-product.css", "", true);
 
@@ -19,9 +22,6 @@
 
     var themeName = await themeContext.GetWorkingThemeNameAsync();
     var backIconLink = $"{storeLocation}Themes/{themeName}/Content/images/back-button.png";
-
-    var groupText = Model.CurrentGroup.Id != null ? Model.CurrentGroup.Name : (Model.AdminView ? @T("Plugins.Misc.Nexport.Group.NoGroup").Text : T("Plugins.Misc.Nexport.Group.Products").Text);
-
 }
 
 <style>
@@ -31,31 +31,13 @@
 </style>
 
 <div class="content-header clearfix nex-plugin">
-    <nav aria-label="Breadcrumb">
-        <ul class="uk-breadcrumb">
-            <li>
-                <a href="@groupsRouteUrl" title="@T("Plugins.Misc.Nexport.Groups")">
-                    <span>@T("Plugins.Misc.Nexport.Groups")</span>
-                </a>
-            </li>
-            <li>
-                <a href="@(groupProductsRouteUrl+"?groupId="+currentGroupId)" title="@T("Plugins.Misc.Nexport.Group.Products")">
-                    <span>@groupText</span>
-                </a>
-            </li>
-            <li>
-                <a href="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)" title="Redemptions">
-                    <span>@Model.CurrentProduct.Name</span>
-                </a>
-            </li>
-            <li>
-                @redeemOrModifyText
-                <span id="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)">
-                </span>
-            </li>
-        </ul>
-    </nav>
-    <h1>@redeemOrModifyText</h1>
+    <h1>
+        @redeemOrModifyText
+        <small>
+            <i class="fas fa-arrow-circle-left"></i>
+            <a href="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)" >Back to assignments list</a>
+        </small>
+    </h1>
 </div>
 
 <section class="content">
@@ -83,7 +65,7 @@
                                         Customer.init('#as-customer-form', "@Url.Action("AsnSaveCustomer", "NexportWholesale")");
                                     </script>
                                     <div class="buttons" id="customer-buttons-container" style="margin-top: 40px;display: flex;justify-content: flex-end">
-                                        <button id="CustomerContinue" style="display:none" type="button" name="save" class="button-1" onclick="Customer.continue()">@T("Common.Continue")</button>
+                                        <button id="CustomerContinue" type="button" name="save" class="button-1" onclick="Customer.continue()">@T("Common.Continue")</button>
                                         <span class="please-wait" id="customer-please-wait" style="display: none;">@T("Common.LoadingNextStep")</span>
                                     </div>
                                 </div>
@@ -146,4 +128,3 @@
     Accordion.openSection('#assign-customer');
     Assign.init('@(storeLocation)');
 </script>
-

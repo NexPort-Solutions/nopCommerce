@@ -1,6 +1,5 @@
 ﻿using System;
 using Nop.Core;
-using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 
 namespace Nop.Plugin.Misc.Nexport.Domain;

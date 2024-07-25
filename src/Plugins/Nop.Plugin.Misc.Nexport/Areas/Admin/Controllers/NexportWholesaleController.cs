@@ -10,7 +10,9 @@ using Nop.Core.Caching;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
+using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Factories;
@@ -30,8 +32,8 @@ using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Controllers;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Payments;
-using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Models.Checkout;
@@ -50,10 +52,12 @@ public class NexportWholesaleController : BaseAdminController
     private readonly IProductService _productService;
     private readonly IGenericAttributeService _genericAttributeService;
     private readonly ILogger _logger;
+    private readonly ILocalizationService _localizationService;
+    private readonly ILocalizedEntityService _localizedEntityService;
+    private readonly INotificationService _notificationService;
+    private readonly ICustomerActivityService _customerActivityService;
     private readonly NexportSettings _nexportSettings;
     private readonly IStaticCacheManager _staticCacheManager;
-    private readonly INotificationService _notificationService;
-    private readonly ILocalizationService _localizationService;
 
     public NexportWholesaleController(
         NexportSettings nexportSettings,
@@ -68,7 +72,9 @@ public class NexportWholesaleController : BaseAdminController
         IStaticCacheManager staticCacheManager,
         INotificationService notificationService,
         ILocalizationService localizationService,
-        ILogger logger)
+        ILogger logger,
+        ILocalizedEntityService localizedEntityService,
+        ICustomerActivityService customerActivityService)
     {
         _nexportSettings = nexportSettings;
         _nexportPluginModelFactory = nexportPluginModelFactory;
@@ -86,6 +92,8 @@ public class NexportWholesaleController : BaseAdminController
         _logger = logger;
     }
 
+    #region Misc Helpers
+
     private async Task<bool> CheckWholesaleViewPermission()
     {
         if (await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
@@ -100,16 +108,23 @@ public class NexportWholesaleController : BaseAdminController
             return false;
 
         var groupPermissionSearchCacheKey = new CacheKey("Misc.Nexport.SearchGroupForPermission.{0}-{1}",
-            nexportUserMapping.NexportUserId.ToString(), _nexportSettings.RootOrganizationId.Value.ToString())
+            nexportUserMapping.NexportUserId.ToString(), _nexportSettings.RootOrganizationId?.ToString())
         {
             CacheTime = 30
         };
 
-        var hasPermission = await _staticCacheManager.GetAsync(groupPermissionSearchCacheKey,
-            async () => (await _nexportService.SearchGroupsForPermissionAsync(nexportUserMapping.NexportUserId, _nexportSettings.RootOrganizationId.Value)).Any());
+        var groupSearchResult = await _staticCacheManager.GetAsync(groupPermissionSearchCacheKey,
+            async () => (await _nexportService.SearchGroupsForPermissionAsync(nexportUserMapping.NexportUserId,
+                // ReSharper disable once PossibleInvalidOperationException
+                _nexportSettings.RootOrganizationId.Value)));
 
+        var hasPermission = groupSearchResult.Any();
         return hasPermission;
     }
+
+    #endregion
+
+    #region Bulk Purchase Operations
 
     [Route("Admin/Wholesale/Create")]
     public virtual async Task<IActionResult> CreateWholesaleOrder()
@@ -188,7 +203,7 @@ public class NexportWholesaleController : BaseAdminController
             .Select(plugin => plugin.ToPluginModel<PaymentMethodModel>())
             .FirstOrDefault(p => p.SystemName == model.PaymentMethod);
 
-        if (paymentMethod is not { IsActive: true })
+        if (paymentMethod == null)
         {
             ModelState.AddModelError(string.Empty, "Selected payment method is invalid.");
         }
@@ -235,19 +250,31 @@ public class NexportWholesaleController : BaseAdminController
                 PaymentMethodSystemName = model.PaymentMethod
             };
 
-            //var placedOrderResult = await _nexportWholesaleService.PlaceWholesaleOrderAsync(processingPaymentRequest, shoppingCartItems);
-            //if (!placedOrderResult.Success)
-            //{
-            //    throw new InvalidOperationException("Failed to place order");
-            //}
+            var groupModel = new NexportGroupModel
+            {
+                OrganizationId = model.OrganizationId,
+                Name = model.OrganizationName,
+                ShortName = model.OrganizationShortName
+            };
 
-            //var successStr = $"New bulk purchase has been placed. Click <a href=\"{Url.Action("Edit", "Order", new { id = placedOrderResult.PlacedOrder.Id })}\">here</a> to view the order details.";
-            //_notificationService.SuccessNotification(successStr, false);
+            var serializedGroupModelValue = JsonSerializer.Serialize(groupModel);
+            await _genericAttributeService.SaveAttributeAsync(customer, "WholesaleOrder-PurchasingGroup", serializedGroupModelValue, model.StoreId);
+            await _genericAttributeService.SaveAttributeAsync(customer, "WholesaleOrder-FundingPoolId", model.FundingPoolId, model.StoreId);
+            await _genericAttributeService.SaveAttributeAsync(customer, "WholesaleOrder-RedeemByUtc", model.RedeemByUtc, model.StoreId);
 
-            //if (!continueEditing)
-            //    return RedirectToAction("Edit", "Order", new { id = placedOrderResult.PlacedOrder.Id });
+            var placedOrderResult = await _nexportWholesaleService.PlaceWholesaleOrderAsync(processingPaymentRequest, shoppingCartItems);
+            if (!placedOrderResult.Success)
+                throw new InvalidOperationException("Failed to place order!");
 
-            return RedirectToAction("List", "Order");
+            if (!continueEditing)
+            {
+                var successStr = $"New bulk purchase has been placed. Click <a href=\"{Url.Action("Edit", "Order", new { id = placedOrderResult.PlacedOrder.Id })}\">here</a> to view the order details.";
+                _notificationService.SuccessNotification(successStr, false);
+
+                return RedirectToAction("List", "Order");
+            }
+
+            return RedirectToAction("Edit", "Order", new { id = placedOrderResult.PlacedOrder.Id });
         }
 
         model = await _nexportPluginModelFactory.PrepareWholesaleOrderModelAsync(model);
@@ -255,130 +282,49 @@ public class NexportWholesaleController : BaseAdminController
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/CreateWholesaleOrder.cshtml", model);
     }
 
-    //private async Task<WholesaleOrderValidationResult> ValidateWholesaleOrderAsync(WholesaleOrderModel model)
-    //{
-    //    var customer = await _workContext.GetCurrentCustomerAsync();
-    //    var currentCustomerIsNotActive = customer is not { Active: true };
-    //    var currentCustomerIsNotInNexport = await _nexportService.FindUserMappingByCustomerId(customer.Id) is null;
-    //    if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders)
-    //        || currentCustomerIsNotActive
-    //        || currentCustomerIsNotInNexport)
-    //    {
-    //        ModelState.AddModelError("", "Current customer does not have permission for this resource.");
-    //        return WholesaleOrderValidationResult.AccessDenied;
-    //    }
-    //    if (await _storeService.GetStoreByIdAsync(model.StoreId) is not { } store)
-    //    {
-    //        ModelState.AddModelError(nameof(model.StoreId), "Invalid store.");
-    //    }
-    //    else if (await GetPaymentMethodNameForStoreAndCustomerAsync(model.PaymentMethod, store, customer) is not { } paymentMethod)
-    //    {
-    //        ModelState.AddModelError(nameof(model.PaymentMethod), $"{nameof(model.PaymentMethod)} {model.PaymentMethod} is not valid for {nameof(model.StoreId)} {store.Name}.");
-    //    }
-    //    else if (await _nexportService.GetOrganizationDetailsAsync(model.OrganizationId) is null)
-    //    {
-    //        ModelState.AddModelError(nameof(model.OrganizationId), "Invalid organization.");
-    //    }
-    //    else if (!model.IsRedemptionPeriodUnlimited && (model.RedeemByUtc is null || model.RedeemByUtc.Value <= DateTime.UtcNow))
-    //    {
-    //        ModelState.AddModelError(nameof(model.RedeemByUtc), $"{nameof(model.RedeemByUtc)} must be a date in the future or {nameof(model.IsRedemptionPeriodUnlimited)} must be true.");
-    //    }
-    //    else if (model.Quantity is > 100_000 or < 1)
-    //    {
-    //        ModelState.AddModelError(nameof(model.Quantity), $"{nameof(model.Quantity)} {model.Quantity} is invalid.");
-    //    }
-    //    else if (await _productService.GetProductByIdAsync(model.ProductId) is not { } product)
-    //    {
-    //        ModelState.AddModelError(nameof(model.Quantity), $"{nameof(model.Quantity)} {model.Quantity} is invalid.");
-    //    }
-    //    else if (ModelState.IsValid)
-    //    {
-    //        return WholesaleOrderValidationResult.Good(customer, store, paymentMethod, model.Quantity, product);
-    //    }
-    //    return WholesaleOrderValidationResult.Bad("Order parameters have invalid value: " + ModelState.ErrorCount + " errors.");
-    //}
+    #endregion
 
-    [HttpsRequirement]
-    public virtual async Task<IActionResult> AdminNexportGroups()
+    [Route("Admin/Wholesale/NexportGroups/Products")]
+    public async Task<IActionResult> AdminNexportGroupProducts()
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return AccessDeniedView();
-
-        var searchModel = new NexportGroupListSearchModel();
+        var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync();
         searchModel.AdminView = true;
-        ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroups.cshtml";
-        ViewData["ModelForPartialView"] = searchModel;
-        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/WholesalePurchases/NexportGroups/List.cshtml");
-    }
 
-    [HttpsRequirement]
-    public async Task<IActionResult> AdminNexportGroupProducts(Guid groupId)
-    {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return AccessDeniedView();
-
-        var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductListSearchModelAsync(groupId);
-        searchModel.HasGroupPermission = true;
-        searchModel.AdminView = true;
         ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProducts.cshtml";
         ViewData["ModelForPartialView"] = searchModel;
+        ViewData["AdminView"] = true;
 
-        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/WholesalePurchases/NexportGroups/List.cshtml");
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/Groups/List.cshtml");
     }
 
-    [HttpsRequirement]
-    public async Task<IActionResult> AdminNexportGroupProductRedemptions(Guid? groupId, int productId)
+    //[Route("Admin/Wholesale/NexportGroups/Products/Redemptions/{groupId?}/{productId:min(0)}")]
+    public async Task<IActionResult> AdminNexportGroupProductRedemptions(int productId, Guid? groupId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return AccessDeniedView();
-
         var searchModel = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListSearchModelAsync(groupId, productId);
-
-        searchModel.HasGroupPermission = true;
         searchModel.AdminView = true;
+
         ViewData["PathForPartialView"] = "~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/NexportGroupProductRedemptions.cshtml";
         ViewData["ModelForPartialView"] = searchModel;
+        ViewData["AdminView"] = true;
 
-        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/WholesalePurchases/NexportGroups/List.cshtml");
-    }
-
-
-    [HttpPost]
-    [AutoValidateAntiforgeryToken]
-    public async Task<IActionResult> GetNexportGroups(NexportGroupListSearchModel searchModel)
-    {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return await AccessDeniedDataTablesJson();
-
-        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
-
-        var model = await _nexportPluginModelFactory.PrepareNexportGroupListModelAsync(searchModel, currentCustomer);
-
-        return Json(model);
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/Groups/List.cshtml");
     }
 
     [HttpPost]
     [AutoValidateAntiforgeryToken]
-    public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel, Guid? groupId)
+    public async Task<IActionResult> GetNexportGroupProducts(NexportGroupProductListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return await AccessDeniedDataTablesJson();
-
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
-        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, groupId, currentCustomer);
+        var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, currentCustomer);
 
         return Json(model);
     }
-
 
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportGroupProductRedemptions(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return await AccessDeniedDataTablesJson();
-
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListModelAsync(searchModel, groupId, productId, currentCustomer);
@@ -390,20 +336,12 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return await AccessDeniedDataTablesJson();
-
         var count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId);
-        return Json(
-            new { result = count }
-        );
+        return Json(new { result = count });
     }
 
     public virtual async Task<IActionResult> GetMatchingUsers(CustomerStepModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return Challenge();
-
         var paged = new List<NexportUserModel>().ToPagedList(searchModel);
 
         if (searchModel.TableFirstDraw)
@@ -441,7 +379,6 @@ public class NexportWholesaleController : BaseAdminController
                 {
                     await _logger.ErrorAsync(ex.Message, ex);
                 }
-
             }
         }
 
@@ -457,14 +394,10 @@ public class NexportWholesaleController : BaseAdminController
         return Json(dtlist);
     }
 
-
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> InvoiceItemUnassign(Guid invoiceItemId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return AccessDeniedView();
-
         var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
 
         if (invoiceItem != null)
@@ -477,9 +410,6 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> InvoiceItemCancelAwaiting(Guid invoiceItemId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return AccessDeniedView();
-
         var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
 
         if (invoiceItem != null)
@@ -489,11 +419,8 @@ public class NexportWholesaleController : BaseAdminController
     }
 
     [HttpsRequirement]
-    public async Task<IActionResult> RedeemProduct(Guid? groupId, Guid? invoiceItemId, int? productId)
+    public async Task<IActionResult> RedeemProduct(Guid groupId, Guid invoiceItemId, int productId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return Challenge();
-
         var customer = await _workContext.GetCurrentCustomerAsync();
 
         var model = await _nexportPluginModelFactory.PrepareRedeemProductModel(groupId, invoiceItemId, productId);
@@ -522,7 +449,7 @@ public class NexportWholesaleController : BaseAdminController
         if (lastName != null)
             await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_LastName", null);
 
-        await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_ReturnUrl",
+        await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_ReturnUrl",
             Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions") + "?groupId=" + groupId +
             "&productId=" + productId);
 
@@ -532,14 +459,12 @@ public class NexportWholesaleController : BaseAdminController
         await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_ProductId",
             productId);
 
-        await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_OpenEndedProductMappingId",
+        await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_OpenEndedProductMappingId",
             model.ProductMappingIdForOpenEndedProduct);
 
-        await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
+        await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
 
-
-
-        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/WholesalePurchases/NexportGroups/List.cshtml");
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/Groups/List.cshtml");
     }
 
     [HttpPost]
@@ -553,9 +478,9 @@ public class NexportWholesaleController : BaseAdminController
             {
                 await _genericAttributeService.SaveAttributeAsync<bool?>(customer, "RedeemProductModel_SendViaEmail", false);
                 await _genericAttributeService.SaveAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId", model.SelectedUserId.Value);
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_EmailAddress", model.SelectedUserEmailAddress);
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_FirstName", model.SelectedUserFirstName);
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_LastName", model.SelectedUserLastName);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_EmailAddress", model.SelectedUserEmailAddress);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_FirstName", model.SelectedUserFirstName);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_LastName", model.SelectedUserLastName);
             }
             else
             {
@@ -566,20 +491,20 @@ public class NexportWholesaleController : BaseAdminController
                     {
                         update_section = new UpdateSectionJsonModel
                         {
-                            name = "email",
+                            name = "customer",
                             html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_CustomerStep.cshtml", model)
                         }
                     });
                 }
 
-                await _genericAttributeService.SaveAttributeAsync<bool?>(customer, "RedeemProductModel_SendViaEmail", true);
+                await _genericAttributeService.SaveAttributeAsync<bool>(customer, "RedeemProductModel_SendViaEmail", true);
                 await _genericAttributeService.SaveAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId", null);
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_EmailAddress", model.Email);
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_FirstName", model.FirstName);
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_LastName", model.LastName);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_EmailAddress", model.Email);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_FirstName", model.FirstName);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_LastName", model.LastName);
             }
 
-            return await GoToTrainingStep(customer);
+            return await GoToProductStep(customer);
         }
         catch (Exception exc)
         {
@@ -588,13 +513,11 @@ public class NexportWholesaleController : BaseAdminController
         }
     }
 
-    public async Task<IActionResult> GoToTrainingStep(Customer customer)
+    public async Task<IActionResult> GoToProductStep(Customer customer)
     {
-        var productId =
-            await _genericAttributeService.GetAttributeAsync<int?>(customer, "RedeemProductModel_productId");
+        var productId = await _genericAttributeService.GetAttributeAsync<int>(customer, "RedeemProductModel_productId");
 
-        var invoiceItemId =
-            await _genericAttributeService.GetAttributeAsync<Guid?>(customer, "RedeemProductModel_InvoiceItemId");
+        var invoiceItemId = await _genericAttributeService.GetAttributeAsync<Guid>(customer, "RedeemProductModel_InvoiceItemId");
 
         var productStepModel = await _nexportPluginModelFactory.PrepareProductStepModel(productId, invoiceItemId);
 
@@ -610,10 +533,10 @@ public class NexportWholesaleController : BaseAdminController
         {
             update_section = new UpdateSectionJsonModel
             {
-                name = "training",
+                name = "product",
                 html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ProductStep.cshtml", productStepModel)
             },
-            goto_section = "training"
+            goto_section = "product"
         });
     }
 
@@ -655,7 +578,6 @@ public class NexportWholesaleController : BaseAdminController
         });
     }
 
-
     [HttpPost]
     public virtual async Task<IActionResult> AsnSaveProduct(ProductStepModel model, IFormCollection form)
     {
@@ -666,7 +588,7 @@ public class NexportWholesaleController : BaseAdminController
             if (model.SelectedProductMappingId == null)
                 throw new Exception("There was an error retreiving the product information from the previous steps");
 
-            await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
+            await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
 
             var productMapping = await _nexportService.GetProductMappingById(model.SelectedProductMappingId.Value);
 
@@ -750,6 +672,306 @@ public class NexportWholesaleController : BaseAdminController
             return Json(new { error = 1, message = exc.Message });
         }
     }
+
+    [HttpsRequirement]
+    [Route("Admin/NexportWholesale/UnassignmentRequests/List")]
+    public async Task<IActionResult> UnassignmentRequestsList()
+    {
+        var model = await _nexportPluginModelFactory
+            .PrepareRedemptionUnassignmentRequestSearchModelAsync(new NexportRedemptionUnassignmentRequestListSearchModel());
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/List.cshtml", model);
+    }
+
+    [HttpsRequirement]
+    [HttpPost]
+    [Route("Admin/NexportWholesale/UnassignmentRequests/List")]
+    public async Task<IActionResult> UnassignmentRequestsList(NexportRedemptionUnassignmentRequestListSearchModel searchModel)
+    {
+        var model = await _nexportPluginModelFactory.PrepareNexportRedemptionUnassignmentRequestListModel(searchModel);
+
+        return Json(model);
+    }
+
+    [HttpsRequirement]
+    [Route("Admin/NexportWholesale/UnassignmentRequests/Edit/{requestId}")]
+    public async Task<IActionResult> EditUnassignmentRequest(int requestId)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+            return AccessDeniedView();
+
+        var returnRequest = await _nexportService.GetNexportRedemptionUnassignmentRequestByIdAsync(requestId);
+        if (returnRequest == null)
+            return RedirectToAction("UnassignmentRequestsList");
+
+        var model =
+            await _nexportPluginModelFactory.PrepareRedemptionUnassignmentRequestModelAsync(null, returnRequest);
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/Edit.cshtml", model);
+    }
+
+    [HttpsRequirement]
+    [Route("Admin/NexportWholesale/UnassignmentRequests/Edit/{requestId}")]
+    [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [FormValueRequired("save", "save-continue")]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> Edit(NexportRedemptionUnassignmentRequestModel model, bool continueEditing)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+            return AccessDeniedView();
+
+        var unassignmentRequest = await _nexportService.GetNexportRedemptionUnassignmentRequestByIdAsync(model.Id);
+        if (unassignmentRequest == null)
+            return RedirectToAction("UnassignmentRequestsList");
+
+        if (ModelState.IsValid)
+        {
+            if (unassignmentRequest.RequestStatus == NexportRedemptionUnassignmentRequestStatus.Received)
+            {
+                unassignmentRequest = model.ToEntity(unassignmentRequest);
+                unassignmentRequest.UtcLastModifiedDate = DateTime.UtcNow;
+
+                await _nexportService.UpdateNexportRedemptionUnassignmentRequestAsync(unassignmentRequest);
+
+                var invoiceItem =
+                    await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(unassignmentRequest.InvoiceItemId);
+                if (invoiceItem != null)
+                {
+                    if (unassignmentRequest.RequestStatus == NexportRedemptionUnassignmentRequestStatus.Accepted)
+                    {
+                        //notify accepted
+                        await _nexportService.SendRedemptionUnassignmentRequestCustomerNotificationAsync(
+                            unassignmentRequest, invoiceItem,
+                            NexportDefaults.REDEMPTION_UNASSIGNMENT_REQUEST_ACCEPTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE);
+
+                        try
+                        {
+                            await _nexportService.UnassignInvoiceItem(invoiceItem);
+
+                        }
+                        catch (Exception ex)
+                        {
+                            await _notificationService.ErrorNotificationAsync(ex);
+
+                            model = await _nexportPluginModelFactory
+                                .PrepareRedemptionUnassignmentRequestModelAsync(model, unassignmentRequest, true);
+
+                            return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/Edit.cshtml", model);
+                        }
+                    }
+                    else if (unassignmentRequest.RequestStatus == NexportRedemptionUnassignmentRequestStatus.Rejected)
+                    {
+                        //notify rejected
+                        await _nexportService.SendRedemptionUnassignmentRequestCustomerNotificationAsync(
+                            unassignmentRequest, invoiceItem,
+                            NexportDefaults.REDEMPTION_UNASSIGNMENT_REQUEST_REJECTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE);
+                    }
+                }
+
+                await _customerActivityService.InsertActivityAsync(NexportDefaults.EDIT_UNASSIGNMENT_REQUEST_ACTIVITY_LOG_TYPE,
+                        string.Format(await _localizationService.GetResourceAsync("ActivityLog.EditUnassignmentRequest"), unassignmentRequest.Id),
+                        unassignmentRequest);
+
+                _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("RedemptionUnassignmentRequests.Updated"));
+
+                return continueEditing ? RedirectToAction("Edit", new { id = unassignmentRequest.Id }) : RedirectToAction("UnassignmentRequestsList");
+            }
+
+            _notificationService.WarningNotification(await _localizationService.GetResourceAsync("Admin.CancellationRequests.CannotModified"));
+
+            return RedirectToAction("UnassignmentRequestsList");
+        }
+
+        model = await _nexportPluginModelFactory
+            .PrepareRedemptionUnassignmentRequestModelAsync(model, unassignmentRequest, true);
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/Edit.cshtml", model);
+    }
+
+    [HttpsRequirement]
+    [Route("Admin/NexportWholesale/UnassignmentRequestReasons/List")]
+    public async Task<IActionResult> UnassignmentRequestReasonsList()
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+            return AccessDeniedView();
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/_RedemptionUnassignmentRequestReasons.cshtml", new NexportRedemptionUnassignmentRequestReasonSearchModel());
+
+    }
+
+    [HttpsRequirement]
+    [Route("Admin/NexportWholesale/UnassignmentRequestReasons/List")]
+    [HttpPost]
+    public async Task<IActionResult> UnassignmentRequestReasonsList(NexportRedemptionUnassignmentRequestReasonSearchModel searchModel)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+            return await AccessDeniedDataTablesJson();
+
+        var model = await _nexportPluginModelFactory.PrepareRedemptionUnassignmentRequestReasonListModelAsync(searchModel);
+
+        return Json(model);
+    }
+
+    [HttpsRequirement]
+    [Route("Admin/NexportWholesale/UnassignmentRequestReasons/Create")]
+    public async Task<IActionResult> UnassignmentRequestReasonCreate()
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+            return AccessDeniedView();
+
+        var model = await _nexportPluginModelFactory.
+            PrepareRedemptionUnassignmentRequestReasonModelAsync(new NexportRedemptionUnassignmentRequestReasonModel(), null);
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/RedemptionUnassignmentRequestReasonCreate.cshtml", model);
+    }
+
+    [HttpsRequirement]
+    [AutoValidateAntiforgeryToken]
+    [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [Route("Admin/NexportWholesale/UnassignmentRequestReasons/Create")]
+    public async Task<IActionResult> UnassignmentRequestReasonCreate(NexportRedemptionUnassignmentRequestReasonModel model, bool continueEditing)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+            return AccessDeniedView();
+
+        if (ModelState.IsValid)
+        {
+            var unassignmentRequestReasonModel = model.ToEntity<NexportRedemptionUnassignmentRequestReason>();
+            await _nexportService.InsertNexportRedemptionUnassignmentRequestReasonAsync(unassignmentRequestReasonModel);
+
+            await UpdateLocalesAsync(unassignmentRequestReasonModel, model);
+
+            _notificationService.SuccessNotification(
+                await _localizationService.GetResourceAsync("Admin.Configuration.Settings.Order.CancellationRequestReasons.Added"));
+
+            return continueEditing
+                ? RedirectToAction("unassignmentRequestReasonEdit", new { id = unassignmentRequestReasonModel.Id })
+                : RedirectToAction("unassignmentRequestReasonsList");
+        }
+
+        model = await _nexportPluginModelFactory
+            .PrepareRedemptionUnassignmentRequestReasonModelAsync(model, null);
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/RedemptionUnassignmentRequestReasonCreate.cshtml", model);
+    }
+
+    [HttpsRequirement]
+    [Route("Admin/NexportWholesale/UnassignmentRequestReasons/Edit/{reasonId}")]
+    public async Task<IActionResult> UnassignmentRequestReasonEdit(int reasonId)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+            return AccessDeniedView();
+
+        var unassignmentRequestReason =
+            await _nexportService.GetNexportRedemptionUnassignmentRequestReasonByIdAsync(reasonId);
+        if (unassignmentRequestReason == null)
+            return RedirectToAction("UnassignmentRequestReasonsList");
+
+        var model = await _nexportPluginModelFactory
+                    .PrepareRedemptionUnassignmentRequestReasonModelAsync(null, unassignmentRequestReason);
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/RedemptionUnassignmentRequestReasonEdit.cshtml", model);
+    }
+
+    protected async Task UpdateLocalesAsync(NexportRedemptionUnassignmentRequestReason reason, NexportRedemptionUnassignmentRequestReasonModel model)
+    {
+        foreach (var localized in model.Locales)
+        {
+            await _localizedEntityService.SaveLocalizedValueAsync(reason,
+                x => x.Name,
+                localized.Name,
+                localized.LanguageId);
+        }
+    }
+    [HttpsRequirement]
+    [AutoValidateAntiforgeryToken]
+    [Route("Admin/NexportWholesale/UnassignmentRequestReasons/Edit/{reasonId}")]
+    [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    public async Task<IActionResult> UnassignmentRequestReasonEdit(NexportRedemptionUnassignmentRequestReasonModel model, bool continueEditing)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+            return AccessDeniedView();
+
+        var unassignmentRequestReason =
+            await _nexportService.GetNexportRedemptionUnassignmentRequestReasonByIdAsync(model.Id);
+        if (unassignmentRequestReason == null)
+            return RedirectToAction("UnassignmentRequestReasonsList");
+
+        if (ModelState.IsValid)
+        {
+            unassignmentRequestReason = model.ToEntity(unassignmentRequestReason);
+            await _nexportService.UpdateNexportRedemptionUnassignmentRequestReasonAsync(unassignmentRequestReason);
+
+            await UpdateLocalesAsync(unassignmentRequestReason, model);
+
+            _notificationService.SuccessNotification(
+                await _localizationService.GetResourceAsync("RedemptionUnassignmentRequestReasons.Updated"));
+
+            if (!continueEditing)
+                return RedirectToAction("UnassignmentRequestReasonsList");
+
+            return RedirectToAction("UnassignmentRequestReasonEdit", new { id = unassignmentRequestReason.Id });
+        }
+
+        model = await _nexportPluginModelFactory
+            .PrepareRedemptionUnassignmentRequestReasonModelAsync(model, unassignmentRequestReason);
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/RedemptionUnassignmentRequestReasonEdit.cshtml", model);
+    }
+
+    [HttpsRequirement]
+    [AutoValidateAntiforgeryToken]
+    [HttpPost]
+    public async Task<IActionResult> UnassignmentRequestReasonDelete(int id)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+            return AccessDeniedView();
+
+        var unassignmentRequestReason =
+            await _nexportService.GetNexportRedemptionUnassignmentRequestReasonByIdAsync(id)
+            ?? throw new ArgumentException("No cancellation request reason found with the specified id", nameof(id));
+
+        try
+        {
+            await _nexportService.DeleteUnassignmentRequestReasonAsync(unassignmentRequestReason);
+
+            _notificationService.SuccessNotification(
+                await _localizationService.GetResourceAsync("RedemptionUnassignmentRequestReasons.Deleted"));
+
+            return RedirectToAction("UnassignmentRequestReasonsList");
+
+        }
+        catch (Exception ex)
+        {
+            await _notificationService.ErrorNotificationAsync(ex);
+
+            return RedirectToAction("UnassignmentRequestReasonEdit", new { id = unassignmentRequestReason.Id });
+        }
+    }
+
+    [HttpsRequirement]
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+            return AccessDeniedView();
+
+        var unassignmentRequest = await _nexportService.GetNexportRedemptionUnassignmentRequestByIdAsync(id);
+        if (unassignmentRequest == null)
+            return RedirectToAction("UnassignmentRequestsList");
+
+        await _nexportService.DeleteNexportRedemptionUnassignmentRequestAsync(unassignmentRequest);
+
+        await _customerActivityService.InsertActivityAsync(NexportDefaults.DELETE_UNASSIGNMENT_REQUEST_ACTIVITY_LOG_TYPE,
+            string.Format(await _localizationService.GetResourceAsync("ActivityLog.DeleteUnassignmentRequest"), unassignmentRequest.Id),
+            unassignmentRequest);
+
+        _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("RedemptionUnassignmentRequests.Deleted"));
+
+        return RedirectToAction("UnassignmentRequestsList");
+    }
+
 
     [HttpGet]
     [Route("Admin/Wholesale/FundingPool/List")]

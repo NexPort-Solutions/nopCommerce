@@ -1,0 +1,87 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.ProductMappings.MapProductToCategoryModel
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_AdminPopupLayout.cshtml";
+
+    //page title
+    ViewBag.PageTitle = "Map product to marketplace category";
+
+    var containerId = Context.Request.Query["containerId"];
+    var refreshMappingBtnId = Context.Request.Query["btnId"];
+}
+
+<form asp-controller="NexportIntegration" asp-action="MapProductToCategory" id="map-product-to-category-form">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            Map product to marketplace category
+            <small>
+                <i class="fas fa-arrow-circle-left"></i>
+                <a href="#" onclick="history.back()">Back</a>
+            </small>
+        </h1>
+        <div class="float-right">
+        </div>
+    </div>
+    <div class="content">
+        <div class="form-horizontal">
+            <div class="card-group">
+                <div class="card card-default">
+                    <div class="card-body">
+                        <nop-select asp-for="SelectedCategoryId" asp-items="Model.AvailableCategories" />    
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" name="save" class="btn btn-primary">
+                            <i class="far fa-save"></i>
+                            <text>Create mapping</text>
+                        </button>
+                        <div id="error-msg-container" style="padding-top: 10px; color: red; display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<script>
+    $(document).ready(function () {
+        $("#map-product-to-category-form").on("submit", function (e) {
+            e.preventDefault();
+
+            $("#error-msg-container").hide();
+
+            var serializedData = $(this).serializeArray();
+            serializedData.push({ name: "save", value: "" });
+            serializedData.push({ name: "ProductId", value: "@(Context.Request.Query["nopProductId"])" })
+            serializedData.push({ name: "StoreId", value: "@(Context.Request.Query["storeId"])" })
+
+            $.ajax({
+                url: "@Url.Action("MapProductToCategory", "NexportIntegration")",
+                type: "POST",
+                data: serializedData,
+                success: function (result) {
+                    if (result && result.MappingId) {
+                        try {
+                            window.opener.$("#@(containerId) #@(refreshMappingBtnId)").click();
+                        }
+                        catch (e) { }
+
+                        var url = "@Url.Action("ProductMappingDetailsPopup", "NexportIntegration")";
+                        url += "?mappingId=" + result.MappingId + "&containerId=@(containerId)&btnId=@(refreshMappingBtnId)";
+
+                        window.location.replace(url);
+                    }
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    var response = xhr.responseJSON;
+                    if (response && response.Error) {
+                        var innerContainer = $("<div />");
+                        innerContainer.append($("<p />").html(response.Error));
+                        if (response.InnerError) {
+                            innerContainer.append($("<p />").html(response.InnerError));
+                        }
+                        $("#error-msg-container").html(innerContainer.html()).show();
+                    }
+                }
+            });
+        });
+    })
+    //# sourceURL=MapProductToCategory.js
+</script>

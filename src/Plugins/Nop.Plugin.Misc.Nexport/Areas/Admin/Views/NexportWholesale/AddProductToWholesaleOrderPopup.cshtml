@@ -4,7 +4,7 @@
 @{
     Layout = "_AdminPopupLayout";
 
-    ViewBag.PageTitle = T("Admin.Customers.Nexport.Order.Wholesale.Create").Text;
+    ViewBag.PageTitle = T("Plugins.Misc.Nexport.Wholesale.AddProducts").Text;
     NopHtml.SetActiveMenuItemSystemName("Orders");
 }
 
@@ -16,12 +16,12 @@
 <form asp-route-formId="@Context.Request.Query["formId"]" asp-route-btnId="@Context.Request.Query["btnId"]" asp-route-storeId="@Context.Request.Query["storeId"]" method="post">
     <div class="content-header clearfix">
         <h1 class="float-left">
-            @T("Admin.Customers.Nexport.Order.Wholesale.Create")
+            @T("Plugins.Misc.Nexport.Wholesale.AddProducts")
         </h1>
         <div class="float-right">
             <button type="submit" name="add" class="btn btn-primary" id="add-products">
                 <i class="far fa-save"></i>
-                @T("Admin.Common.Add")
+                @T("Plugins.Misc.Nexport.Wholesale.AddProducts.Add")
             </button>
         </div>
     </div>

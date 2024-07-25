@@ -1,0 +1,83 @@
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+
+@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.Products.NexportProductRedemptionStatusesModel
+
+@{
+    var groupProductsRouteUrl = Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
+}
+
+<style>
+    .redemption-statuses {
+        margin-bottom: 1em;
+    }
+
+        .redemption-statuses a {
+            color: #4ab2f1;
+            margin-left: 0.3em;
+        }
+
+        .redemption-statuses span {
+            margin-left: 0.3em;
+        }
+
+        .redemption-statuses a:hover {
+            color: #248ece;
+        }
+
+        .redemption-statuses a:focus {
+            color: #248ece;
+        }
+</style>
+
+@if (Model.Assigned > 0 || Model.Available > 0 || Model.Awaiting > 0)
+{
+    <div class="redemption-statuses">
+        <label>
+            @Model.Available
+            @if (Model.Available > 0)
+            {
+                <a href="@(groupProductsRouteUrl)?productId=@(Model.ProductId)&statusId=@((int) NexportOrderInvoiceItemRedemptionStatus.Available)">
+                    @(nameof(Model.Available))
+                </a>
+            }
+            else
+            {
+                <span>
+                    @(nameof(Model.Available))
+                </span>
+            }
+        </label>
+        <label>|</label>
+        <label>
+            @Model.Awaiting
+            @if (Model.Awaiting > 0)
+            {
+                <a href="@(groupProductsRouteUrl)?productId=@(Model.ProductId)&statusId=@((int) NexportOrderInvoiceItemRedemptionStatus.Awaiting)">
+                    @(nameof(Model.Awaiting))
+                </a>
+            }
+            else
+            {
+                <span>
+                    @(nameof(Model.Awaiting))
+                </span>
+            }
+        </label>
+        <label>|</label>
+        <label>
+            @Model.Assigned
+            @if (Model.Assigned > 0)
+            {
+                <a href="@(groupProductsRouteUrl)?productId=@(Model.ProductId)&statusId=@((int) NexportOrderInvoiceItemRedemptionStatus.Assigned)">
+                    @(nameof(Model.Assigned))
+                </a>
+            }
+            else
+            {
+                <span>
+                    @(nameof(Model.Assigned))
+                </span>
+            }
+        </label>
+    </div>
+}

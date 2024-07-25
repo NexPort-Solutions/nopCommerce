@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using NexportApi.Model;
 using Nop.Core;
@@ -20,7 +21,8 @@ public interface INexportService
 {
     Task InsertNexportProductMapping(NexportProductMapping nexportProductMapping);
 
-    Task InsertNexportProductGroupMembershipMapping(NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping);
+    Task InsertNexportProductGroupMembershipMapping(
+        NexportProductGroupMembershipMapping nexportProductGroupMembershipMapping);
 
     Task<IPagedList<NexportProductMapping>> GetProductCatalogsByCatalogId(Guid catalogId,
         int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);
@@ -56,6 +58,14 @@ public interface INexportService
 
     Task<Dictionary<Guid, int>> FindMappingCountPerSyllabus(IList<GetSyllabiResponseItem> syllabusList);
 
+    Task<int> FindMappingCountPerSyllabi(Guid syllabusId);
+
+    Task<bool> HasDefaultMapping(int nopProductId);
+
+    Task<bool> HasProductMappingForStore(int nopProductId, int storeId);
+
+    Task<bool> HasProductMappingForNopProduct(int nopProductId, Guid catalogId, Guid? syllabusId);
+
     Task<NexportProductMapping> GetProductMappingById(int mappingId);
 
     Task DeleteNexportProductMapping(NexportProductMapping mapping);
@@ -71,6 +81,8 @@ public interface INexportService
     Task DeleteNexportOrderProcessingQueueItem(NexportOrderProcessingQueueItem queueItem);
 
     Task<bool> InsertOrUpdateNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
+
+    Task InsertNexportOrderInvoiceResetRedemptionQueueItem(NexportOrderInvoiceResetRedemptionQueueItem queueItem);
 
     Task DeleteNexportOrderInvoiceItem(NexportOrderInvoiceItem item);
 
@@ -173,8 +185,9 @@ public interface INexportService
 
     Task UpdateNexportSupplementalInfoQuestionMapping(NexportSupplementalInfoQuestionMapping questionMapping);
 
-    Task<IPagedList<NexportSupplementalInfoOptionGroupAssociation>> GetNexportSupplementalInfoOptionGroupAssociationsPagination(
-        int optionId, int pageIndex = 0, int pageSize = int.MaxValue);
+    Task<IPagedList<NexportSupplementalInfoOptionGroupAssociation>>
+        GetNexportSupplementalInfoOptionGroupAssociationsPagination(
+            int optionId, int pageIndex = 0, int pageSize = int.MaxValue);
 
     Task<IList<NexportSupplementalInfoOptionGroupAssociation>> GetNexportSupplementalInfoOptionGroupAssociations(
         int optionId, bool excludeInactive = false);
@@ -319,11 +332,14 @@ public interface INexportService
 
     Task UpdateNexportRegistrationFieldAnswer(NexportRegistrationFieldAnswer registrationFieldAnswer);
 
-    Task InsertNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
+    Task InsertNexportRegistrationFieldSynchronizationQueueItem(
+        NexportRegistrationFieldSynchronizationQueueItem queueItem);
 
-    Task DeleteNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
+    Task DeleteNexportRegistrationFieldSynchronizationQueueItem(
+        NexportRegistrationFieldSynchronizationQueueItem queueItem);
 
-    Task UpdateNexportRegistrationFieldSynchronizationQueueItem(NexportRegistrationFieldSynchronizationQueueItem queueItem);
+    Task UpdateNexportRegistrationFieldSynchronizationQueueItem(
+        NexportRegistrationFieldSynchronizationQueueItem queueItem);
 
     Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerByFieldOption(int customerId, int fieldId,
         int fieldOptionId);
@@ -332,14 +348,42 @@ public interface INexportService
 
     #endregion
 
-    Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchproductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue);
+    Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName,
+        NexportProductTypeEnum? searchproductType, string searchStoreName, int productId, int pageIndex = 0,
+        int pageSize = int.MaxValue);
 
-    Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemByGuidAsync(Guid? orderInvoiceItemId);
+    Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemByGuidAsync(Guid orderInvoiceItemId);
+
+    Task<Customer> FindCustomerByIdAsync(int customerId);
+
+    Task<int> GetAvailableNexportGroupProductRedemptionsCountAsync(Guid? groupId, int productId,
+        int? orderId = null, Customer customer = null, Store store = null);
+
+    Task InsertOrUpdateWholesalePurchaseGroupAsync(WholesalePurchasingGroup wholesalePurchasingGroup);
+
+    Task InsertWholesaleOrderInfoAsync(WholesaleOrderInfo wholesaleOrderInfo);
+
+    Task UpdateWholesaleOrderInfoAsync(WholesaleOrderInfo wholesaleOrderInfo);
+
+    Task<WholesalePurchasingGroup> GetWholesalePurchaseGroupAsync(Guid groupId);
+
+    Task<WholesalePurchasingGroup> GetWholesalePurchaseGroupForOrderAsync(Order order);
+
+    Task<WholesaleOrderInfo> GetWholesaleOrderInfoForOrderItemAsync(int orderId, int orderItemId);
+
+    Task<WholesaleOrderInfo> GetWholesaleOrderInfoForOrderAsync(int orderId);
+
+    Task<IList<Order>> FindOrdersForCustomerAsync(Customer customer, Store store = null);
+
+    Task<IList<Customer>> SearchCustomersAsync(string searchNameAndEmail);
+
+    Task<IList<NexportProductMapping>> GetAllProductMappingsByCatalogIdAsync(Guid catalogId);
 
     Task<IList<WholesaleOrderInfo>> SearchGroupProductsAsync(Guid? groupId, string productName, Customer customer);
 
     Task<IList<NexportOrderInvoiceItem>> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
-        string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Customer customer = null);
+        string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus,
+        DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Store store = null, Customer customer = null);
 
     Task<bool> RedeemProductForCustomer(RedeemProductModel model);
 
@@ -349,7 +393,68 @@ public interface INexportService
 
     Task CancelAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem);
 
+    Task<bool> HasWholesaleOrderInfo(Guid? groupId = null, Store store = null, Customer customer = null);
+
+    Task<int> CountWholesaleOrderInfo(Guid? groupId = null, Store store = null, Customer customer = null);
+
+    Task<IQueryable<WholesaleOrderInfo>> FindWholesaleOrderInfoQuery(Guid? groupId = null, Store store = null,
+        Customer customer = null);
+
+    Task MapProductToCategory(MapProductToCategoryModel model);
+
+    Task<IList<Product>> GetAllProductsByCategoryId(int? nopCategoryId);
+
+    Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsByCategoryIdAsync(int nopCategoryId,
+        int pageIndex = 0, int pageSize = int.MaxValue);
+
     Task<IList<Order>> GetOrdersForCustomer(Customer customer, Store store = null);
+
+    Task<IPagedList<Category>> GetAllCategoriesAsync(string categoryName, int storeId = 0,
+        int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false, bool? overridePublished = null,
+        bool? hasProductMapping = null);
+
+    Task<IPagedList<WholesaleOrderInfo>> GetAllWholesaleOrderInfosAsync(string groupName, string shortName,
+        string productName, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, int? customerId, int? storeId,
+        int pageIndex = 0, int pageSize = int.MaxValue);
+
+    Task InsertRedemptionUnassignmentRequestAsync(NexportRedemptionUnassignmentRequest unassignmentRequest);
+
+    Task<IList<int>> SendNewRedemptionUnassignmentRequestStoreOwnerNotificationAsync(
+        NexportRedemptionUnassignmentRequest unassignmentRequest,
+        NexportOrderInvoiceItem invoiceItem, int languageId);
+
+    Task<IList<int>> SendNewRedemptionUnassignmentRequestCustomerNotificationAsync(
+        NexportRedemptionUnassignmentRequest unassignmentRequest,
+        NexportOrderInvoiceItem invoiceItem);
+
+    Task<IPagedList<NexportRedemptionUnassignmentRequest>> GetAllNexportRedemptionUnassignmentRequests(
+        int pageIndex = 0, int pageSize = int.MaxValue);
+
+    Task<NexportRedemptionUnassignmentRequest> GetNexportRedemptionUnassignmentRequestByIdAsync(int? requestId);
+
+    Task<IList<NexportRedemptionUnassignmentRequestReason>> GetAllRedemptionUnassignmentRequestReasonsAsync();
+
+    Task<NexportRedemptionUnassignmentRequestReason> GetNexportRedemptionUnassignmentRequestReasonByIdAsync(int? reasonId);
+
+    Task UpdateNexportRedemptionUnassignmentRequestReasonAsync(NexportRedemptionUnassignmentRequestReason unassignmentRequestReason);
+
+    Task DeleteUnassignmentRequestReasonAsync(NexportRedemptionUnassignmentRequestReason unassignmentRequestReason);
+
+    Task InsertNexportRedemptionUnassignmentRequestReasonAsync(NexportRedemptionUnassignmentRequestReason unassignmentRequestReason);
+
+    Task DeleteNexportRedemptionUnassignmentRequestAsync(NexportRedemptionUnassignmentRequest unassignmentRequest);
+
+    Task UpdateNexportRedemptionUnassignmentRequestAsync(NexportRedemptionUnassignmentRequest unassignmentRequest);
+
+    Task<IList<int>> SendRedemptionUnassignmentRequestCustomerNotificationAsync(
+        NexportRedemptionUnassignmentRequest unassignmentRequest,
+        NexportOrderInvoiceItem invoiceItem, string template);
+
+    Task<IPagedList<NexportRedemptionUnassignmentRequest>> SearchUnassignmentRequestsAsync(int storeId = 0,
+        int customerId = 0,
+        NexportRedemptionUnassignmentRequestStatus? requestStatus = null,
+        DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
+        int pageIndex = 0, int pageSize = int.MaxValue);
 
     Task<bool> HasWholesaleOrders(Customer customer, Store store = null);
 }

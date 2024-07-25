@@ -18,6 +18,7 @@ using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Vendors;
 using Nop.Core.Events;
 using Nop.Data;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Category;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
@@ -67,6 +68,7 @@ using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Localization;
 using Nop.Plugin.Misc.Nexport.Models.Plugins;
 using Nop.Core.Domain.Configuration;
+using static SkiaSharp.HarfBuzz.SKShaper;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers;
 
@@ -877,8 +879,24 @@ public class NexportIntegrationController : BasePluginController,
         if (nopProductId.HasValue)
             model = await _nexportPluginModelFactory.PrepareNexportProductMappingListModelAsync(searchModel, nopProductId.Value);
 
-        return Json(model);
-    }
+            return Json(model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> GetProductMappingsForCategoryId(NexportCategoryProductMappingListSearchModel searchModel, int nopCategoryId)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
+                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+                return await AccessDeniedDataTablesJson();
+            searchModel.NopCategoryId = nopCategoryId;
+            var model = await _nexportPluginModelFactory.PrepareNexportCategoryProductMappingListModelAsync(searchModel);
+
+            return Json(model);
+        }
 
     [AuthorizeAdmin]
     [Area(AreaNames.Admin)]
@@ -1251,15 +1269,69 @@ public class NexportIntegrationController : BasePluginController,
                     }
                 }
 
+                    HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                }
+            }
+            else
+            {
+                result.Error = $"Cannot map the product [{model.NopProductId}] with the Nexport product [{model.NexportProductId}]";
+
                 HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
-        }
-        else
-        {
-            result.Error = $"Cannot map the product [{model.NopProductId}] with the Nexport product [{model.NexportProductId}]";
 
-            HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            return Json(result);
         }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public async Task<IActionResult> MapProductToCategory()
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
+                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+                return AccessDeniedView();
+
+            var model = await _nexportPluginModelFactory.PrepareMapProductToCategoryModel();
+
+            return View("~/Plugins/Misc.Nexport/Views/MapProductToCategory.cshtml",model);
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost]
+        [FormValueRequired("save")]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> MapProductToCategory(MapProductToCategoryModel model)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
+                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+                return AccessDeniedView();
+
+            dynamic result = new ExpandoObject();
+
+            try
+            {
+                await _nexportService.MapProductToCategory(model);
+
+                ViewBag.RefreshPage = true;
+
+                ViewBag.ClosePage = false;
+
+                var newMapping = await _nexportService.GetProductMappingByNopProductId(model.ProductId, model.StoreId);
+
+                result.MappingId = newMapping.Id;
+            }
+            catch(Exception ex)
+            {
+                await _logger.ErrorAsync(
+                    $"Error occurred while mapping the product [{model.ProductId}] with the Category [{model.SelectedCategoryId}]",
+                    ex, await _workContext.GetCurrentCustomerAsync());
+
+                result.Error = $"Cannot map the product [{model.ProductId}] with the Category [{model.SelectedCategoryId}].";
+
+                HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            }
 
         return Json(result);
     }
@@ -3069,35 +3141,11 @@ public class NexportIntegrationController : BasePluginController,
 
             if (orderItems != null)
             {
+                // Current customer and store to get generic attribute for group
+                var customer = await _customerService.GetCustomerByIdAsync(order.CustomerId);
+                var store = await _storeService.GetStoreByIdAsync(order.StoreId);
+
                 var isWholesale = true;
-
-                //current customer and store to get generic attribute for group
-                var customer = await _workContext.GetCurrentCustomerAsync();
-                var orderStore = await _storeContext.GetCurrentStoreAsync();
-
-                var groupInfo =
-                    await _genericAttributeService.GetAttributeAsync<string>(customer, $"GroupForCustomer", orderStore.Id);
-
-                NexportGroupModel group = null;
-
-                if (groupInfo != null)
-                {
-                    group = JsonConvert.DeserializeObject<NexportGroupModel>(groupInfo);
-
-                    if (group != null && group.Id != null)
-                    {
-                        await _nexportService.InsertOrUpdateWholesalePurchaseGroupAsync(new WholesalePurchasingGroup
-                        {
-                            NexportGroupId = group.Id.Value,
-                            NexportGroupName = group.Name,
-                            NexportGroupShortName = group.ShortName
-                        });
-                    }
-
-                }
-
-                // delete generic attribute group for customer for future purchases
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, $"GroupForCustomer", null, orderStore.Id);
 
                 foreach (var item in orderItems)
                 {
@@ -3122,10 +3170,36 @@ public class NexportIntegrationController : BasePluginController,
                         }
                     }
                 }
+
                 if (isWholesale)
                 {
                     try
                     {
+                        var groupInfo = await _genericAttributeService.GetAttributeAsync<string>(customer, "WholesaleOrder-PurchasingGroup", store.Id);
+
+                        NexportGroupModel group = null;
+
+                        if (groupInfo != null)
+                        {
+                            group = JsonConvert.DeserializeObject<NexportGroupModel>(groupInfo);
+
+                            if (group is { OrganizationId: not null })
+                            {
+                                await _nexportService.InsertOrUpdateWholesalePurchaseGroupAsync(
+                                    new WholesalePurchasingGroup
+                                    {
+                                        NexportGroupId = group.OrganizationId.Value,
+                                        NexportGroupName = group.Name,
+                                        NexportGroupShortName = group.ShortName
+                                    });
+                            }
+                        }
+
+                        await _genericAttributeService.SaveAttributeAsync<string>(customer, "WholesaleOrder-PurchasingGroup", null, store.Id);
+
+                        var fundingPoolId = await _genericAttributeService.GetAttributeAsync<int?>(customer, "WholesaleOrder-FundingPoolId", store.Id);
+                        var utcRedeemByDate = await _genericAttributeService.GetAttributeAsync<DateTime?>(customer, "WholesaleOrder-RedeemByUtc", store.Id);
+
                         foreach (var item in orderItems)
                         {
                             var product = await _orderService.GetProductByOrderItemIdAsync(item.Id);
@@ -3133,16 +3207,21 @@ public class NexportIntegrationController : BasePluginController,
                             {
                                 await _nexportService.InsertWholesaleOrderInfoAsync(new WholesaleOrderInfo
                                 {
-                                    NexportGroupId = group?.Id,
+                                    NexportGroupId = group?.OrganizationId,
                                     OrderId = order.Id,
                                     OrderItemId = item.Id,
                                     ProductId = product.Id,
                                     Available = item.Quantity,
                                     Awaiting = 0,
-                                    Redeemed = 0
+                                    Redeemed = 0,
+                                    FundingPoolId = fundingPoolId,
+                                    UtcRedeemByDate = utcRedeemByDate
                                 });
                             }
                         }
+
+                        await _genericAttributeService.SaveAttributeAsync<int?>(customer, "Wholesale-FundingPoolId", null, store.Id);
+                        await _genericAttributeService.SaveAttributeAsync<DateTime?>(customer, "Wholesale-RedeemByUtc", null, store.Id);
                     }
                     catch (Exception ex)
                     {
@@ -3150,7 +3229,7 @@ public class NexportIntegrationController : BasePluginController,
                     }
                 }
 
-                await _genericAttributeService.SaveAttributeAsync<bool>(order, "IsWholesaleOrder", isWholesale, orderStore.Id);
+                await _genericAttributeService.SaveAttributeAsync<bool>(order, "IsWholesaleOrder", isWholesale, store.Id);
             }
         }
     }
@@ -3177,17 +3256,18 @@ public class NexportIntegrationController : BasePluginController,
         var order = eventMessage.Entity;
         if (order.OrderStatus == OrderStatus.Processing && order.PaymentStatus == PaymentStatus.Paid)
         {
-            await ProcessNewRedemption(order);
+            await ProcessNewRedemptionAsync(order);
         }
     }
 
-    public async Task ProcessNewRedemption(Order order)
+    public async Task ProcessNewRedemptionAsync(Order order)
     {
-        await _nexportService.InsertNexportOrderProcessingQueueItem(new NexportOrderProcessingQueueItem
-        {
-            OrderId = order.Id,
-            UtcDateCreated = DateTime.UtcNow
-        });
+        await _nexportService.InsertNexportOrderProcessingQueueItem(
+            new NexportOrderProcessingQueueItem
+            {
+                OrderId = order.Id,
+                UtcDateCreated = DateTime.UtcNow
+            });
     }
 
     public async Task HandleEventAsync(EntityDeletedEvent<Customer> eventMessage)
@@ -3481,9 +3561,31 @@ public class NexportIntegrationController : BasePluginController,
 
             var order = await _orderService.GetOrderByIdAsync(nexportOrderInvoiceItem.OrderId);
 
-            try
-            {
-                await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem, redeemingUserId.Value);
+                try
+                {
+                    var isWholesale = await _genericAttributeService.GetAttributeAsync<bool>(order, "isWholesaleOrder", order.StoreId);
+
+                    if (isWholesale)
+                    {
+                       var redeemed =  await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem,
+                            redeemingUserId.Value);
+                       if (redeemed)
+                       {
+                           var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(order.Id, nexportOrderInvoiceItem.OrderItemId);
+                           if (wholesaleOrderInfo != null)
+                           {
+                               if (wholesaleOrderInfo.Available > 0)
+                                   wholesaleOrderInfo.Available--;
+                               wholesaleOrderInfo.Redeemed++;
+                               await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+                           }
+                       }
+                    }
+                    else
+                    {
+                        await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem,
+                            redeemingUserId.Value);
+                    }
 
                 await _nexportService.AddOrderNoteAsync(order,
                     $"Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} has been redeemed for user {redeemingUserId}");

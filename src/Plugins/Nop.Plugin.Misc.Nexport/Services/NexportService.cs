@@ -22,6 +22,7 @@ using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
+using Nop.Core.Events;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -36,11 +37,13 @@ using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Helpers;
+using Nop.Services.Html;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
 using Nop.Services.Plugins;
+using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Web.Framework;
 
@@ -58,8 +61,12 @@ public partial class NexportService
     private readonly IAddressService _addressService;
     private readonly IStaticCacheManager _cacheManager;
     private readonly ILocalizationService _localizationService;
+    private readonly IStoreMappingService _storeMappingService;
+    private readonly IAclService _aclService;
     private readonly IProductService _productService;
     private readonly IRepository<Product> _productRepository;
+    private readonly IRepository<GenericAttribute> _genericAttributeRepository;
+    private readonly IRepository<OrderItem> _orderItemRepository;
     private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
     private readonly IRepository<NexportProductGroupMembershipMapping> _nexportProductGroupMembershipMappingRepository;
     private readonly IRepository<NexportOrderProcessingQueueItem> _nexportOrderProcessingQueueRepository;
@@ -83,6 +90,7 @@ public partial class NexportService
     private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
     private readonly IRepository<WholesalePurchasingGroup> _wholesalePurchasingGroupRepository;
     private readonly IRepository<WholesaleOrderInfo> _wholesaleOrderInfoRepository;
+    private readonly IRepository<Category> _categoryRepository;
     private readonly IRepository<Order> _orderRepository;
     private readonly ICustomerService _customerService;
     private readonly IOrderService _orderService;
@@ -112,6 +120,11 @@ public partial class NexportService
     private readonly IRepository<Customer> _customerRepository;
     private readonly IRepository<CustomerCustomerRoleMapping> _customerCustomerRoleMappingRepository;
     private readonly LocalizationSettings _localizationSettings;
+    private readonly IRepository<ProductCategory> _productCategoryMappingRepository;
+    private readonly IRepository<NexportRedemptionUnassignmentRequest> _nexportRedemptionUnassignmentRequestRepository;
+    private readonly IRepository<NexportRedemptionUnassignmentRequestReason> _nexportRedemptionUnassignmentRequestReasonRepository;
+    private readonly IHtmlFormatter _htmlFormatter;
+    private readonly IEventPublisher _eventPublisher;
 
     #endregion
 
@@ -125,6 +138,8 @@ public partial class NexportService
         IStaticCacheManager cacheManager,
         IProductService productService,
         IRepository<Product> productRepository,
+        IRepository<GenericAttribute> genericAttributeRepository,
+        IRepository<OrderItem> orderItemRepository,
         IRepository<NexportProductMapping> nexportProductMappingRepository,
         IRepository<NexportProductGroupMembershipMapping> nexportProductGroupMembershipMappingRepository,
         IRepository<NexportOrderProcessingQueueItem> nexportOrderProcessingQueueRepository,
@@ -148,6 +163,7 @@ public partial class NexportService
         IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
         IRepository<WholesalePurchasingGroup> wholesalePurchasingGroupRepository,
         IRepository<WholesaleOrderInfo> wholesaleOrderInfoRepository,
+        IRepository<Category> categoryRepository,
         IRepository<Order> orderRepository,
         ICustomerService customerService,
         IOrderService orderService,
@@ -165,6 +181,8 @@ public partial class NexportService
         IMessageTokenProvider messageTokenProvider,
         IWorkflowMessageService workflowMessageService,
         ILocalizationService localizationService,
+        IStoreMappingService storeMappingService,
+        IAclService aclService,
         IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
         IDateTimeHelper dateTimeHelper,
         IUrlHelperFactory urlHelperFactory,
@@ -176,7 +194,12 @@ public partial class NexportService
         IRepository<NexportOrderInvoiceResetRedemptionQueueItem> nexportOrderInvoiceResetRedemptionQueueRepository,
         IRepository<Customer> customerRepository,
         IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMapping,
-        LocalizationSettings localizationSettings)
+        LocalizationSettings localizationSettings,
+        IRepository<ProductCategory> productCategoryMappingRepository,
+        IRepository<NexportRedemptionUnassignmentRequest> nexportRedemptionUnassignmentRequestRepository,
+        IRepository<NexportRedemptionUnassignmentRequestReason> nexportRedemptionUnassignmentRequestReasonRepository,
+        IHtmlFormatter htmlFormatter,
+        IEventPublisher eventPublisher)
     {
         _nexportApiService = nexportApiService;
         _emailAccountSettings = emailAccountSettings;
@@ -184,8 +207,12 @@ public partial class NexportService
         _addressService = addressService;
         _cacheManager = cacheManager;
         _localizationService = localizationService;
+        _storeMappingService = storeMappingService;
+        _aclService = aclService;
         _productService = productService;
         _productRepository = productRepository;
+        _genericAttributeRepository = genericAttributeRepository;
+        _orderItemRepository = orderItemRepository;
         _nexportProductMappingRepository = nexportProductMappingRepository;
         _nexportProductGroupMembershipMappingRepository = nexportProductGroupMembershipMappingRepository;
         _nexportOrderProcessingQueueRepository = nexportOrderProcessingQueueRepository;
@@ -209,6 +236,7 @@ public partial class NexportService
         _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
         _wholesalePurchasingGroupRepository = wholesalePurchasingGroupRepository;
         _wholesaleOrderInfoRepository = wholesaleOrderInfoRepository;
+        _categoryRepository = categoryRepository;
         _orderRepository = orderRepository;
         _customerService = customerService;
         _orderService = orderService;
@@ -238,6 +266,12 @@ public partial class NexportService
         _customerRepository = customerRepository;
         _customerCustomerRoleMappingRepository = customerCustomerRoleMapping;
         _localizationSettings = localizationSettings;
+        _productCategoryMappingRepository = productCategoryMappingRepository;
+        _nexportRedemptionUnassignmentRequestRepository = nexportRedemptionUnassignmentRequestRepository;
+        _nexportRedemptionUnassignmentRequestReasonRepository =
+            nexportRedemptionUnassignmentRequestReasonRepository;
+        _htmlFormatter = htmlFormatter;
+        _eventPublisher = eventPublisher;
     }
 
     #endregion
@@ -960,7 +994,9 @@ public partial class NexportService
             {
                 var result = _nexportApiService.GetNexportSubscriptions(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, userId, page);
-                items.AddRange(result.Subscriptions);
+
+                if(result.Subscriptions != null)
+                    items.AddRange(result.Subscriptions);
 
                 remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
                 page++;
@@ -2941,22 +2977,13 @@ public partial class NexportService
         }
     }
 
-    public async Task<bool> HasGroupPermissionAsync(Customer customer)
+    public async Task<bool> HasGroupPermissionAsync(Customer customer, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION)
     {
         var userMapping = await FindUserMappingByCustomerId(customer.Id);
 
         if (userMapping != null)
         {
-            var store = await _storeContext.GetCurrentStoreAsync();
-            var orgId = await _genericAttributeService.GetAttributeAsync<Guid>(store,
-                "NexportSubscriptionOrganizationId", store.Id);
-
-            if (orgId == Guid.Empty)
-            {
-                orgId = _nexportSettings.RootOrganizationId.Value;
-            }
-
-            return await HasGroupPermissionAsync(userMapping.NexportUserId, orgId,
+            return await HasGroupPermissionAsync(userMapping.NexportUserId, groupId,
                 NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION);
         }
         return false;

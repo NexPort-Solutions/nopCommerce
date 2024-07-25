@@ -7,11 +7,11 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct
 {
-    public record ProductStepModel : BaseNopEntityModel
+    public record ProductStepModel() : BaseNopEntityModel
     {
-        public IList<SelectListItem> AvailableMappings { get; set; }
+        public IList<SelectListItem> AvailableMappings { get; set; } = new List<SelectListItem>();
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining")]
+        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectProduct")]
         public int? SelectedProductMappingId { get; set; }
 
         public Guid InvoiceItemId { get; set; }

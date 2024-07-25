@@ -5,15 +5,14 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
 {
     public record NexportGroupModel : BaseNopEntityModel
     {
-        public new Guid? Id { get; set; }
+        public new Guid? OrganizationId { get; set; }
 
         public Guid ParentId { get; set; }
 
         public string Name { get; set; }
 
         public string ShortName { get; set; }
-        public int Type { get; set; }
 
-        public int NumberOfProducts { get; set; }
+        public int Type { get; set; }
     }
 }

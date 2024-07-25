@@ -2,28 +2,28 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Routing;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Exceptions;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core;
 using Nop.Core.Domain.Cms;
-using Nop.Services.Common;
-using Nop.Services.Configuration;
-using Nop.Services.Localization;
-using Nop.Services.Logging;
-using Nop.Services.Cms;
-using Nop.Services.Plugins;
-using Nop.Services.Discounts;
-using Nop.Web.Framework.Menu;
-using Nop.Web.Framework.Infrastructure;
+using Nop.Plugin.Misc.Nexport.Components;
 using Nop.Plugin.Misc.Nexport.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
+using Nop.Services.Cms;
+using Nop.Services.Common;
+using Nop.Services.Configuration;
+using Nop.Services.Discounts;
+using Nop.Services.Localization;
+using Nop.Services.Logging;
+using Nop.Services.Plugins;
 using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
-using Nop.Plugin.Misc.Nexport.Components;
+using Nop.Web.Framework.Infrastructure;
+using Nop.Web.Framework.Menu;
 
 namespace Nop.Plugin.Misc.Nexport;
 
@@ -78,10 +78,10 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
         if (pluginNode != null)
             return;
 
-        if (_nexportSettings == null || string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+        if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
             return;
 
-        var node = new SiteMapNode()
+        var node = new SiteMapNode
         {
             SystemName = "Nexport",
             Visible = true,
@@ -89,7 +89,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
             IconClass = "fas fa-plug",
         };
 
-        node.ChildNodes.Add(new SiteMapNode()
+        node.ChildNodes.Add(new SiteMapNode
         {
             Visible = await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins),
             Title = "Configuration",
@@ -99,7 +99,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
             IconClass = "far fa-dot-circle"
         });
 
-        node.ChildNodes.Add(new SiteMapNode()
+        node.ChildNodes.Add(new SiteMapNode
         {
             Visible = await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores),
             Title = "Store Configuration",
@@ -109,7 +109,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
             IconClass = "far fa-dot-circle"
         });
 
-        node.ChildNodes.Add(new SiteMapNode()
+        node.ChildNodes.Add(new SiteMapNode
         {
             Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo),
             Title = "Supplemental Info",
@@ -119,7 +119,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
             IconClass = "far fa-dot-circle"
         });
 
-        var wholesaleNode = new SiteMapNode()
+        var wholesaleNode = new SiteMapNode
         {
             SystemName = "Nexport",
             Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
@@ -127,16 +127,17 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
             IconClass = "fas fa-shopping-basket",
         };
 
-        wholesaleNode.ChildNodes.Add(new SiteMapNode()
+        wholesaleNode.ChildNodes.Add(new SiteMapNode
         {
             Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            Title = "Wholesale Purchases",
+            Title = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
             SystemName = "Wholesale Purchases",
             ControllerName = "NexportWholesale",
-            ActionName = "AdminNexportGroups",
+            ActionName = "AdminNexportGroupProducts",
             IconClass = "far fa-dot-circle"
         });
-        wholesaleNode.ChildNodes.Add(new SiteMapNode()
+
+        wholesaleNode.ChildNodes.Add(new SiteMapNode
         {
             Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
             Title = "New Wholesale Order",
@@ -146,13 +147,31 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
             IconClass = "far fa-dot-circle"
         });
 
-        wholesaleNode.ChildNodes.Add(new SiteMapNode()
+        wholesaleNode.ChildNodes.Add(new SiteMapNode
         {
             Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools),
             Title = "Funding Pools",
             SystemName = "Nexport Funding Pools",
             ControllerName = "NexportWholesale",
             ActionName = "ListFundingPools",
+            IconClass = "far fa-dot-circle"
+        });
+        wholesaleNode.ChildNodes.Add(new SiteMapNode
+        {
+            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+            Title = "Unassignment Requests",
+            SystemName = "UnassignmentRequests",
+            ControllerName = "NexportWholesale",
+            ActionName = "UnassignmentRequestsList",
+            IconClass = "far fa-dot-circle"
+        });
+        wholesaleNode.ChildNodes.Add(new SiteMapNode
+        {
+            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+            Title = "Unassignment Request Reasons",
+            SystemName = "UnassignmentRequestReasons",
+            ControllerName = "NexportWholesale",
+            ActionName = "UnassignmentRequestReasonsList",
             IconClass = "far fa-dot-circle"
         });
 
@@ -274,7 +293,9 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
                 PublicWidgetZones.ProductDetailsOverviewTop,
                 NexportDefaults.NexportRegistrationFieldsZone,
                 AdminWidgetZones.OrderListButtons,
-                PublicWidgetZones.OrderDetailsPageAfterproducts
+                PublicWidgetZones.OrderDetailsPageAfterproducts,
+                PublicWidgetZones.ProductDetailsAfterPictures,
+                PublicWidgetZones.ProductBoxAddinfoBefore
             });
     }
 
@@ -333,6 +354,12 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
 
         if (widgetZone == PublicWidgetZones.OrderDetailsPageAfterproducts)
             return typeof(WidgetsNexportOrderDetailsPageAfterproducts);
+
+        if (widgetZone == PublicWidgetZones.ProductDetailsAfterPictures)
+            return typeof(WidgetsNexportProductDetailsAfterPictures);
+
+        if (widgetZone == PublicWidgetZones.ProductBoxAddinfoBefore)
+            return typeof(WidgetsNexportProductBoxAddInfoBefore);
 
         return null;
     }

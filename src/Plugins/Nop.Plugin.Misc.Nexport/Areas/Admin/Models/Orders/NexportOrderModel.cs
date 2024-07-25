@@ -1,5 +1,4 @@
-﻿using System;
-using Nop.Web.Areas.Admin.Models.Orders;
+﻿using Nop.Web.Areas.Admin.Models.Orders;
 
 namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 

@@ -6,6 +6,8 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Category;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
@@ -13,6 +15,7 @@ using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.Products;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Models.Order;
@@ -23,7 +26,6 @@ using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
-using Nop.Services.Payments;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Web.Areas.Admin.Models.Stores;
@@ -171,24 +173,62 @@ public partial interface INexportPluginModelFactory
     Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(
         OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer customer, Store store, IList<ShoppingCartItem> cart);
 
-    Task<NexportGroupListModel> PrepareNexportGroupListModelAsync(
-        NexportGroupListSearchModel searchModel, Customer currentCustomer);
+    //Task<NexportGroupListModel> PrepareNexportGroupListModelAsync(
+    //    NexportGroupListSearchModel searchModel, Customer currentCustomer);
 
     Task<NexportGroupProductListModel> PrepareNexportGroupProductListModelAsync(
-        NexportGroupProductListSearchModel searchModel, Guid? groupId, Customer currentCustomer);
+        NexportGroupProductListSearchModel searchModel, Customer currentCustomer);
 
     Task<NexportGroupProductRedemptionListModel> PrepareNexportGroupProductRedemptionListModelAsync(
         NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId, Customer currentCustomer, int? orderId = null);
 
-    Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(Guid? groupId = null);
+    Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(Guid groupId);
 
-    Task<NexportGroupProductRedemptionListSearchModel> PrepareNexportGroupProductRedemptionListSearchModelAsync(Guid? groupId, int productId, int? orderId = null);
+    Task<NexportGroupProductListSearchModel> PrepareNexportGroupProductListSearchModelAsync(int? customerId = null,
+        int? productId = null, int? statusId = null);
 
-    Task<RedeemProductModel> PrepareRedeemProductModel(Guid? groupId, Guid? invoiceItemId, int? productId);
+    Task<NexportGroupProductRedemptionListSearchModel> PrepareNexportGroupProductRedemptionListSearchModelAsync(
+        Guid? groupId, int productId, int? orderId = null);
+
+    Task<RedeemProductModel> PrepareRedeemProductModel(Guid groupId, Guid invoiceItemId, int productId);
 
     Task<RedeemByEmailModel> PrepareRedeemByEmailModel(int? invoiceItemId, string email, int? productMappingId);
 
-    Task<ProductStepModel> PrepareProductStepModel(int? productId, Guid? invoiceItemId);
+    Task<ProductStepModel> PrepareProductStepModel(int productId, Guid invoiceItemId);
+
+    Task<MapProductToCategoryModel> PrepareMapProductToCategoryModel();
+
+    Task<NexportProductMappingListModel> PrepareNexportCategoryProductMappingListModelAsync(
+        NexportCategoryProductMappingListSearchModel searchModel);
+
+    Task<NexportCategorySearchModel> PrepareCategorySearchModelAsync(NexportCategorySearchModel searchModel);
+
+    Task<NexportCategoryListModel> PrepareCategoryListModelAsync(NexportCategorySearchModel searchModel);
+
+    Task<NexportProductRedemptionStatusesModel> PrepareNexportProductRedemptionStatusesModel(Customer customer, int productId, int storeId);
+
+    Task<SubmitRedemptionUnassignmentRequestModel> PrepareSubmitUnassignmentRequestModel(Guid? groupId, Guid? invoiceItemId, int? productId, int? customerId);
+
+    Task<NexportRedemptionRequestUnassignmentListModel> PrepareNexportRedemptionUnassignmentRequestListModel(NexportRedemptionUnassignmentRequestListSearchModel searchModel);
+
+    Task<NexportRedemptionUnassignmentRequestReasonListModel>
+        PrepareRedemptionUnassignmentRequestReasonListModelAsync(
+            NexportRedemptionUnassignmentRequestReasonSearchModel searchModel);
+
+    Task<NexportRedemptionUnassignmentRequestReasonModel> PrepareRedemptionUnassignmentRequestReasonModelAsync(
+        NexportRedemptionUnassignmentRequestReasonModel model,
+        NexportRedemptionUnassignmentRequestReason cancellationRequestReason, bool excludeProperties = false);
+
+    Task<NexportRedemptionUnassignmentRequestModel> PrepareRedemptionUnassignmentRequestModelAsync(
+        NexportRedemptionUnassignmentRequestModel model, NexportRedemptionUnassignmentRequest unassignmentRequest,
+        bool excludeProperties = false);
+
+    Task<SubmitRedemptionUnassignmentRequestModel>
+        PrepareSubmitRedemptionUnassignmentRequestModelAsync(SubmitRedemptionUnassignmentRequestModel model);
+
+    Task<NexportRedemptionUnassignmentRequestListSearchModel>
+        PrepareRedemptionUnassignmentRequestSearchModelAsync(
+            NexportRedemptionUnassignmentRequestListSearchModel searchModel);
 
     Task<NexportFundingPoolSearchModel> PrepareNexportFundingPoolSearchModelAsync(NexportFundingPoolSearchModel searchModel);
 

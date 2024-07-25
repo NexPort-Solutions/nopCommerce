@@ -3,7 +3,7 @@
 @model WholesaleOrderModel
 
 @{
-    ViewBag.PageTitle = T("Admin.Customers.Nexport.Order.Wholesale.Create").Text;
+    ViewBag.PageTitle = T("Plugins.Misc.Nexport.Wholesale.AddNew").Text;
     NopHtml.SetActiveMenuItemSystemName("Orders");
 }
 
@@ -46,7 +46,12 @@
         }
 </style>
 
-<!script async src="https://kit.fontawesome.com/e4adf0b7ea.js" crossorigin="anonymous" asp-location="Footer"></!script>
+@* <!script async src="https://kit.fontawesome.com/e4adf0b7ea.js" crossorigin="anonymous" asp-location="Footer"></!script> *@
+<script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/fontawesome.min.js"></script>
+<script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/regular.min.js"></script>
+<script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/solid.min.js"></script>
+<script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/light.min.js"></script>
+
 <form asp-controller="NexportWholesale" asp-action="PlaceWholesaleOrder" method="post" id="wholesale-order-form">
     <input type="submit" id="btnRefreshWholesaleOrderProducts" style="display: none">
     <input type="submit" id="btnShowPayment" style="display: none">
@@ -54,11 +59,11 @@
 
     <div class="content-header clearfix">
         <h1 class="float-left">
-            @T("Admin.Customers.Nexport.Order.Wholesale.Create")
+            @T("Plugins.Misc.Nexport.Wholesale.AddNew")
             <small>
                 <i class="fas fa-arrow-circle-left"></i>
                 <a asp-action="List" asp-controller="Order">
-                    @T("Admin.Customers.Nexport.Order.Wholesale.BackToList")
+                    @T("Plugins.Misc.Nexport.Wholesale.BackToOrderList")
                 </a>
             </small>
         </h1>
@@ -93,7 +98,7 @@
                                 <div class="col-md-10">
                                     <button type="submit" id="addProductsToWholesale" class="btn btn-success" name="addproductstowholesale">
                                         <i class="far fa-plus"></i>
-                                        @T("Admin.Common.Add")
+                                        @T("Plugins.Misc.Nexport.Wholesale.AddProductsToPurchase")
                                     </button>
                                 </div>
                             </div>
@@ -122,6 +127,8 @@
                                     <div class="col-md-10">
                                         <nop-select asp-for="OrganizationId" asp-items="Model.AvailableOrganizations" />
                                     </div>
+                                    <input type="hidden" id="OrganizationName" name="OrganizationName" />
+                                    <input type="hidden" id="OrganizationShortName" name="OrganizationShortName" />
                                 </div>
                                 <div class="form-group row" id="redeem-by-container">
                                     <div class="col-md-2">
@@ -212,6 +219,23 @@
             }
         });
 
+        $("#@Html.IdFor(model => model.OrganizationId)").on("change", function(e) {
+            var orgNameDetails = $("#@Html.IdFor(model => model.OrganizationId) option:selected").text();
+            var regex = /\(([^()]*)\)/g;
+            var regexText = orgNameDetails.split(regex);
+
+            if (regexText.length > 0) {
+                var orgName = regexText[0].trim();
+                var orgShortName = regexText[1].trim();
+
+                $("#OrganizationName").val(orgName);
+                $("#OrganizationShortName").val(orgShortName);
+            } else {
+                $("#OrganizationName").val("");
+                $("#OrganizationShortName").val("");
+            }
+        });
+
         $("#btnRefreshWholesaleOrderProducts").on("click", function (e) {
             $.ajax({
                 cache: false,
@@ -230,12 +254,3 @@
         });
     </script>
 </form>
-
-@*
-    Model:
-        - RedeemByUtc
-        - IsRedemptionPeriodUnlimited
-        - FundingPoolId
-        - PurchasingAgentId
-        - PaymentId
-*@

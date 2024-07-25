@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using Nop.Data;
 using Nop.Services.Localization;
 using Nop.Web.Framework.Validators;
 using Nop.Plugin.Misc.Nexport.Domain;

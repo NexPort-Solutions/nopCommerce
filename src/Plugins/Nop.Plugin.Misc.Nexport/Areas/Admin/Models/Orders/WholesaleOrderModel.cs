@@ -12,7 +12,12 @@ public class WholesaleOrderModel
     public int StoreId { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Organization")]
-    public Guid OrganizationId { get; set; }
+    [UIHint("GuidNullable")]
+    public Guid? OrganizationId { get; set; }
+
+    public string OrganizationName { get; set; }
+
+    public string OrganizationShortName { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.RedeemBy")]
     [UIHint("DateNullable")]
@@ -24,13 +29,15 @@ public class WholesaleOrderModel
     [NopResourceDisplayName("Admin.Orders.Fields.PaymentMethod")]
     public string PaymentMethod { get; set; }
 
-
-    public Guid? FundingPoolId { get; set; }
+    [UIHint("Int32Nullable")]
+    public int? FundingPoolId { get; set; }
 
     public List<SelectListItem> AvailableStores { get; set; } = new();
+
     public List<SelectListItem> AvailablePaymentMethods { get; set; } = new();
 
     public List<SelectListItem> AvailableOrganizations { get; set; } = new();
+
     public List<SelectListItem> AvailableFundingPools { get; set; } = new();
 
     public string Error { get; set; }

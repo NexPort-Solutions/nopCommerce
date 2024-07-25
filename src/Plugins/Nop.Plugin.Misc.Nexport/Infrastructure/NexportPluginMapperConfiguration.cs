@@ -5,7 +5,6 @@ using System.Reflection;
 using AutoMapper;
 using AutoMapper.Internal;
 using AutoMapper.Configuration;
-using NexportApi.Model;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Infrastructure.Mapper;
@@ -171,10 +170,9 @@ public class NexportPluginMapperConfiguration : Profile, IOrderedMapperProfile
 
         //TODO @js - determine if we still need this
         CreateMap<WholesalePurchasingGroup, NexportGroupModel>()
-            .ForMember(model => model.Id, opts => opts.MapFrom(entity => entity.NexportGroupId))
+            .ForMember(model => model.OrganizationId, opts => opts.MapFrom(entity => entity.NexportGroupId))
             .ForMember(model => model.Name, opts => opts.MapFrom(entity => entity.NexportGroupName))
             .ForMember(model => model.ShortName, opts => opts.MapFrom(entity => entity.NexportGroupShortName))
-            .ForMember(model => model.NumberOfProducts, opts => opts.Ignore())
             .ForMember(model => model.ParentId, opts => opts.Ignore())
             .ForMember(model => model.Type, opts => opts.Ignore());
 
@@ -183,6 +181,33 @@ public class NexportPluginMapperConfiguration : Profile, IOrderedMapperProfile
 
         CreateMap<Product, WholesaleOrderProductModel>()
             .ForMember(model => model.NexportProductMappingId, opts => opts.Ignore());
+
+        CreateMap<NexportRedemptionUnassignmentRequestModel, NexportRedemptionUnassignmentRequest>()
+            .ForMember(model => model.Id, opts => opts.MapFrom(entity => entity.Id))
+            .ForMember(model => model.InvoiceItemId, opts => opts.MapFrom(entity => entity.InvoiceItemId))
+            .ForMember(model => model.CustomerComments, opts => opts.MapFrom(entity => entity.CustomerComments))
+            .ForMember(model => model.RequestedByCustomerId,
+                opts => opts.MapFrom(entity => entity.RequestedByCustomerId))
+            .ForMember(model => model.RequestStatus, opts => opts.MapFrom(entity => entity.RequestStatus))
+            .ForMember(model => model.StaffNotes, opts => opts.MapFrom(entity => entity.StaffNotes))
+            .ForMember(model => model.UtcCreatedDate, opts => opts.MapFrom(entity => entity.UtcCreatedDate))
+            .ForMember(model => model.UtcLastModifiedDate,
+                opts => opts.MapFrom(entity => entity.UtcLastModifiedDate));
+
+        CreateMap<NexportRedemptionUnassignmentRequest, NexportRedemptionUnassignmentRequestModel>()
+            .ForMember(entity => entity.Id, opts => opts.MapFrom(model => model.Id))
+            .ForMember(entity => entity.InvoiceItemId, opts => opts.MapFrom(model => model.InvoiceItemId))
+            .ForMember(entity => entity.CustomerComments, opts => opts.MapFrom(model => model.CustomerComments))
+            .ForMember(entity => entity.RequestedByCustomerId,
+                opts => opts.MapFrom(model => model.RequestedByCustomerId))
+            .ForMember(entity => entity.RequestStatus, opts => opts.MapFrom(model => model.RequestStatus))
+            .ForMember(entity => entity.StaffNotes, opts => opts.MapFrom(model => model.StaffNotes))
+            .ForMember(entity => entity.UtcCreatedDate, opts => opts.MapFrom(model => model.UtcCreatedDate))
+            .ForMember(entity => entity.UtcLastModifiedDate,
+                opts => opts.MapFrom(model => model.UtcLastModifiedDate));
+
+        CreateMap<NexportRedemptionUnassignmentRequestReason, NexportRedemptionUnassignmentRequestReasonModel>();
+        CreateMap<NexportRedemptionUnassignmentRequestReasonModel, NexportRedemptionUnassignmentRequestReason>();
     }
 
     public int Order => 0;

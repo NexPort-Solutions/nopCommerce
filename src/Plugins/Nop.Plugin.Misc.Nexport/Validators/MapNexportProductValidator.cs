@@ -8,9 +8,9 @@ public class MapNexportProductValidator : BaseNopValidator<MapNexportProductMode
 {
     public MapNexportProductValidator()
     {
-            RuleFor(x => x.NexportProductId)
-                .NotEmpty();
-            RuleFor(x => x.NexportCatalogId)
-                .NotEmpty();
-        }
+        RuleFor(x => x.NexportProductId)
+            .NotEmpty();
+        RuleFor(x => x.NexportCatalogId)
+            .NotEmpty();
+    }
 }

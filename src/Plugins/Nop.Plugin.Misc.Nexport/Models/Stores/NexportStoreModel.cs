@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Web.Areas.Admin.Models.Stores;
 using Nop.Web.Framework.Mvc.ModelBinding;
 

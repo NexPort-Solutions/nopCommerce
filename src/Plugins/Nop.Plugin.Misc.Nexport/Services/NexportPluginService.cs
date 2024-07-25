@@ -294,20 +294,15 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName", "Name" },
         { "Plugins.Misc.Nexport.RegistrationFields.SearchRegistrationFieldName.Hint", "Filter registration fields list by name." },
 
-
-        { "Plugins.Misc.Nexport.Wholesale.Go", "Go to created order" },
-        { "Plugins.Misc.Nexport.Wholesale.RedeemBy", "Redeem-By Date" },
-        { "Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited", "Unlimited redemption" },
-
-        //{ "Plugins.Misc.Nexport.Wholesale.Create", "Create new wholesale order" },
-
-        //{ "Plugins.Misc.Nexport.FundingPool", "Funding Pool" },
-        //{ "Plugins.Misc.Nexport.FundingPools", "Funding pools" },
-        //{ "Plugins.Misc.Nexport.FundingPool.Create", "Create new funding pool" },
-        //{ "Plugins.Misc.Nexport.FundingPool.Edit", "Edit funding pool" },
-        //{ "Plugins.Misc.Nexport.FundingPool.Fields.Name", "Name" },
-        //{ "Plugins.Misc.Nexport.FundingPool.Fields.Code", "Code" },
-        //{ "Plugins.Misc.Nexport.FundingPool.Fields.Description", "Description" },
+        { "Plugins.Misc.Nexport.FundingPool", "Funding Pool" },
+        { "Plugins.Misc.Nexport.FundingPools", "Funding pools" },
+        { "Plugins.Misc.Nexport.FundingPool.AddNew", "Add a new funding pool" },
+        { "Plugins.Misc.Nexport.FundingPool.Edit", "Edit funding pool" },
+        { "Plugins.Misc.Nexport.FundingPool.Fields.Name", "Name" },
+        { "Plugins.Misc.Nexport.FundingPool.Fields.Code", "Code" },
+        { "Plugins.Misc.Nexport.FundingPool.Fields.Description", "Description" },
+        { "Plugins.Misc.Nexport.FundingPool.Fields.CreatedOn", "Date created" },
+        { "Plugins.Misc.Nexport.FundingPool.Fields.BackToList", "back to funding pool list" },
 
         { "Plugins.Misc.Nexport.Organization", "Organization" },
         { "Plugins.Misc.Nexport.Order.GroupId", "Purchasing For Group/Org:" },
@@ -355,6 +350,7 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.Group.Product.Redemption.DateAssigned", "Date Assigned" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign", "Assign" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign", "Unassign" },
+        { "Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestUnassignment", "Unassign Request" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting", "Cancel" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.CancelAwaiting.Confirm","Are you sure you want to make cancel this assignment that is awaiting redemption and make it available again?" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.Unassign.Failed", "Failed to unassign" },
@@ -393,6 +389,65 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.SelectCustomer","Select customer" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.SelectProduct", "Select product" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm", "Confirm" },
+
+        { "Plugins.Misc.Nexport.Admin.Navigation.Groups", "Wholesale Purchases" },
+        { "Plugins.Misc.Nexport.Wholesale.AddNew", "Place new bulk purchase" },
+        { "Plugins.Misc.Nexport.Wholesale.BackToOrderList", "back to order list" },
+        { "Plugins.Misc.Nexport.Wholesale.AddProductsToPurchase", "Add product(s)" },
+        { "Plugins.Misc.Nexport.Wholesale.AddProducts", "Add products" },
+        { "Plugins.Misc.Nexport.Wholesale.AddProducts.Add", "Add" },
+        { "Plugins.Misc.Nexport.Wholesale.AddProducts.SearchOnlyNexportProduct", "Nexport Product only" },
+        { "Plugins.Misc.Nexport.Wholesale.RedeemBy", "Redeem-By Date" },
+        { "Plugins.Misc.Nexport.Wholesale.IsRedemptionPeriodUnlimited", "Unlimited redemption" },
+
+        { "RedemptionUnassignmentRequests", "Unassignment requests" },
+        { "RedemptionUnassignmentRequests.WhyUnassigning", "Why do you want to unassign this?" },
+        { "RedemptionUnassignmentRequests.UnassignReason", "Reason for unassignment" },
+        { "RedemptionUnassignmentRequests.Comments", "Comments" },
+        { "RedemptionUnassignmentRequests.Submit", "Submit unassignment Request" },
+        { "RedemptionUnassignmentRequests.Submitted", "Your unassignment request has been submitted successfully." },
+        { "RedemptionUnassignmentRequests.Description", "List of customer requests to unassign redemptions" },
+        { "RedemptionUnassignmentRequests.EditUnassignmentRequestDetails", "Edit unassignment request details" },
+        { "RedemptionUnassignmentRequests.EditUnassignmentRequest.BackToList", "back to unassignment request list" },
+        { "RedemptionUnassignmentRequests.Deleted", "The unassignment request has been deleted successfully." },
+        { "RedemptionUnassignmentRequests.Updated", "The unassignment request has been updated successfully." },
+        { "RedemptionUnassignmentRequests.Fields.InvoiceItemId", "Invoice Item Id" },
+        { "RedemptionUnassignmentRequests.Fields.InvoiceItemId.Hint", "The Id of the invoice item" },
+        { "RedemptionUnassignmentRequests.Fields.Customer", "Customer" },
+        { "RedemptionUnassignmentRequests.Fields.Customer.Hint", "The customer that requested the unassignment" },
+        { "RedemptionUnassignmentRequests.Fields.CustomerComments", "Customer comments" },
+        { "RedemptionUnassignmentRequests.Fields.CustomerComments.Hint", "The comments of the customer when requesting the unassignment" },
+        { "RedemptionUnassignmentRequests.Fields.RequestStatus", "Request status" },
+        { "RedemptionUnassignmentRequests.Fields.RequestStatus.Hint", "The status of the request" },
+        { "RedemptionUnassignmentRequests.Fields.ReasonForUnassignment", "Unassignment reason" },
+        { "RedemptionUnassignmentRequests.Fields.ReasonForUnassignment.Hint", "The reason for unassignment" },
+        { "RedemptionUnassignmentRequests.Fields.StaffNotes", "Staff notes" },
+        { "RedemptionUnassignmentRequests.Fields.StaffNotes.Hint", "The notes from staff member" },
+        { "RedemptionUnassignmentRequests.Fields.UtcCreatedDate", "Created on" },
+        { "RedemptionUnassignmentRequests.Fields.UtcCreatedDate.Hint", "The date/time the request was made" },
+        { "RedemptionUnassignmentRequests.Fields.OrderId", "Order Id" },
+        { "RedemptionUnassignmentRequests.Fields.OrderId.Hint", "The Id of the order" },
+        { "RedemptionUnassignmentRequests.SearchUnassignmentRequestStatus.All", "All" },
+        { "RedemptionUnassignmentRequests.SearchStartDate", "Start date" },
+        { "RedemptionUnassignmentRequests.SearchStartDate.Hint", "The start date for the search" },
+        { "RedemptionUnassignmentRequests.SearchEndDate", "End date" },
+        { "RedemptionUnassignmentRequests.SearchEndDate.Hint", "The end date for the search" },
+        { "RedemptionUnassignmentRequests.RequestStatus", "Request status" },
+        { "RedemptionUnassignmentRequests.RequestStatus.Hint", "Search by a specific unassignment request status e.g. Received." },
+
+        { "RedemptionUnassignmentRequestReasons.CardHeader", "Unassignment request reasons" },
+        { "RedemptionUnassignmentRequestReasons.CardBody.Hint", "List of reasons a customer will be able to choose when submitting an unassignment request." },
+        { "RedemptionUnassignmentRequestReasons.Name", "Name" },
+        { "RedemptionUnassignmentRequestReasons.DisplayOrder", "Display Order" },
+        { "RedemptionUnassignmentRequestReasons.AddNew", "Add new unassignment request reason" },
+        { "RedemptionUnassignmentRequestReasons.BackToList", "back to unassignment request reason list" },
+        { "RedemptionUnassignmentRequestReasons.EditDetails", "Edit unassignment request reason details" },
+        { "RedemptionUnassignmentRequestReasons.Added", "The new unassignment request reason has been added successfully." },
+        { "RedemptionUnassignmentRequestReasons.Deleted", "The unassignment request reason has been deleted successfully." },
+        { "RedemptionUnassignmentRequestReasons.Updated", "The unassignment request reason has been updated successfully." },
+
+        { "ActivityLog.EditUnassignmentRequest", "Edited an unassignment request (ID = {0})" },
+        { "ActivityLog.DeleteUnassignmentRequest", "Deleted an unassignment request (ID = {0})" },
 
         { "Plugins.Misc.Nexport.Errors.ModifiedLocaleResources", "There are modified resource values within the <b>Nexport plugin</b> that conflicts with the default value. Review them <a href=\"javascript:OpenWindow(\'{0}\', 800, 500, true)\">here</a>." }
     };
@@ -753,11 +808,65 @@ public class NexportPluginService
             await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
             {
                 Name = NexportDefaults.REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE,
-                Subject = "Redemption assigned",
+                Subject = "Product assigned",
                 Body = $"<p>{Environment.NewLine}"
-                       + $"An item has been redeemed to your account.<br />{Environment.NewLine}"
+                       + $"An item has been assigned to your account.<br />{Environment.NewLine}"
                        + $"<br />{Environment.NewLine}"
                        + $"Please click <a href=\"%Redemption.AcceptRedemptionUrl%\">here</a> to accept it.</p>{Environment.NewLine}",
+                IsActive = true,
+                EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
+            });
+        }
+
+        if (!messageTemplates.Any(x =>
+            x.Name.Equals(NexportDefaults.NEW_REDEMPTION_UNASSIGNMENT_REQUEST_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE)))
+        {
+            await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
+            {
+                Name = NexportDefaults.NEW_REDEMPTION_UNASSIGNMENT_REQUEST_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE,
+                Subject = "%Store.Name%. New unassignment request.",
+                Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}%Customer.FullName% has just submitted a redemption unassignment request. Details are below:{Environment.NewLine}<br />{Environment.NewLine}Request ID: %UnassignmentRequest.Id%{Environment.NewLine}<br />{Environment.NewLine}Invoice Item ID: %UnassignmentRequest.InvoiceItemId%{Environment.NewLine}<br /{Environment.NewLine}>Reason for unassignment: %CancellationRequest.Reason%{Environment.NewLine}<br />{Environment.NewLine}Customer comments:{Environment.NewLine}<br />{Environment.NewLine}%UnassignmentRequest.CustomerComment%</p>{Environment.NewLine}",
+                IsActive = true,
+                EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
+            });
+
+        }
+
+        if (!messageTemplates.Any(x =>
+            x.Name.Equals(NexportDefaults.NEW_REDEMPTION_UNASSIGNMENT_REQUEST_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE)))
+        {
+            await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
+            {
+                Name = NexportDefaults.NEW_REDEMPTION_UNASSIGNMENT_REQUEST_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE,
+                Subject = "%Store.Name%. New unassignment request.",
+                Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Customer.FullName%!{Environment.NewLine}<br />{Environment.NewLine}You have just submitted a new unassignment request. Details are below:{Environment.NewLine}<br />{Environment.NewLine}Request ID: %UnassignmentRequest.Id%{Environment.NewLine}<br />{Environment.NewLine}Invoice Item ID: %UnassignmentRequest.InvoiceItemId%{Environment.NewLine}<br />{Environment.NewLine}Reason for return: %UnassignmentnRequest.Reason%{Environment.NewLine}<br />{Environment.NewLine}Customer comments:{Environment.NewLine}<br />{Environment.NewLine}%UnassignmentRequest.CustomerComment%{Environment.NewLine}</p>{Environment.NewLine}",
+                IsActive = true,
+                EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
+            });
+
+        }
+
+        if (!messageTemplates.Any(x =>
+                x.Name.Equals(NexportDefaults.REDEMPTION_UNASSIGNMENT_REQUEST_ACCEPTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE)))
+        {
+            await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
+            {
+                Name = NexportDefaults.REDEMPTION_UNASSIGNMENT_REQUEST_ACCEPTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE,
+                Subject = "%Store.Name%.Unassignment request status.",
+                Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Customer.FullName%,{Environment.NewLine}<br />{Environment.NewLine}Your unassignment request #%UnassignmentRequest.Id% for invoiceitem #%UnassignmentRequest.InvoiceItemId% has been accepted. The invoice item will be unassigned shortly and you will receive additional email regarding the unassignment.{Environment.NewLine}</p>{Environment.NewLine}",
+                IsActive = true,
+                EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
+            });
+        }
+
+        if (!messageTemplates.Any(x =>
+                x.Name.Equals(NexportDefaults.REDEMPTION_UNASSIGNMENT_REQUEST_REJECTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE)))
+        {
+            await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
+            {
+                Name = NexportDefaults.REDEMPTION_UNASSIGNMENT_REQUEST_REJECTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE,
+                Subject = "%Store.Name%. Unassignment request status.",
+                Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Customer.FullName%,{Environment.NewLine}<br />{Environment.NewLine}Your unassignment request #%UnassignmentRequest.Id% for invoice item #%UnassignmentRequest.InvoiceItemId% has been rejected. Please contact Customer Service for further details.{Environment.NewLine}</p>{Environment.NewLine}",
                 IsActive = true,
                 EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
             });

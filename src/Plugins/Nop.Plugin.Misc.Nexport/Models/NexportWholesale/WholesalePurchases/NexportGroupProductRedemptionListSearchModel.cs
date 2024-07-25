@@ -11,14 +11,14 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
 {
     public record NexportGroupProductRedemptionListSearchModel : BaseSearchModel
     {
-        public bool HasGroupPermission { get; set; } = false;
-        public NexportGroupModel CurrentGroup { get; set; } = new NexportGroupModel { Id = null, Name = "No Group" };
+
+        public NexportGroupModel CurrentGroup { get; set; } = new NexportGroupModel { OrganizationId = null, Name = "No Group" };
 
         public Product CurrentProduct { get; set; }
 
         public int? OrderId {get; set; }
 
-        public bool AdminView = false;
+        public bool AdminView { get; set; }= false;
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchName")]
         public string SearchName { get; set; }

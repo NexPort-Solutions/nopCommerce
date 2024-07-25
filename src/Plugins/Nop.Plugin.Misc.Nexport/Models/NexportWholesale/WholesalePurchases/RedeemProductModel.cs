@@ -11,7 +11,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
     {
         public bool AdminView { get; set; } = false;
 
-        public NexportGroupModel CurrentGroup { get; set; } = new NexportGroupModel { Id = null, Name = "No Group" };
+        public NexportGroupModel CurrentGroup { get; set; } = new NexportGroupModel { OrganizationId = null, Name = "No Group" };
 
         public Product CurrentProduct { get; set; }
 
@@ -29,7 +29,7 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
 
         public IList<SelectListItem> AvailableMappings { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectTraining")]
+        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectProduct")]
         public int? SelectedProductMappingId { get; set; }
 
         public int? ProductMappingIdForOpenEndedProduct { get; set; }
