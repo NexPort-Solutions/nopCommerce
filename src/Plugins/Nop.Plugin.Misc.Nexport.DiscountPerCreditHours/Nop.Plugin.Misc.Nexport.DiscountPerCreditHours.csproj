@@ -16,7 +16,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nop.Plugin.Misc.Nexport\Nop.Plugin.Misc.Nexport.csproj">
-      <Private>False</Private>
+      <Private>false</Private>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
     </ProjectReference>
     <ProjectReference Include="..\..\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />
     <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj" />
@@ -24,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Areas\Admin\Views\Plugin\DiscountPerCreditHoursModifiedLocaleResources.cshtml" />
     <None Remove="logo.jpg" />
     <None Remove="plugin.json" />
     <None Remove="Views\Configure.cshtml" />
@@ -31,6 +33,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Areas\Admin\Views\Plugin\DiscountPerCreditHoursModifiedLocaleResources.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="logo.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

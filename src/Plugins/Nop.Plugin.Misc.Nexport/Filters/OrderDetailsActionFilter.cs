@@ -8,23 +8,23 @@ using Nop.Services.Orders;
 using Nop.Web.Controllers;
 using Nop.Plugin.Misc.Nexport.Services;
 
-namespace Nop.Plugin.Misc.Nexport.Filters
-{
-    public class OrderDetailsActionFilter : ActionFilterAttribute
-    {
-        private readonly ICustomerService _customerService;
-        private readonly IOrderService _orderService;
-        private readonly IStoreContext _storeContext;
-        private readonly IWorkContext _workContext;
-        private readonly NexportService _nexportService;
+namespace Nop.Plugin.Misc.Nexport.Filters;
 
-        public OrderDetailsActionFilter(
-            ICustomerService customerService,
-            IOrderService orderService,
-            IStoreContext storeContext,
-            IWorkContext workContext,
-            NexportService nexportService)
-        {
+public class OrderDetailsActionFilter : ActionFilterAttribute
+{
+    private readonly ICustomerService _customerService;
+    private readonly IOrderService _orderService;
+    private readonly IStoreContext _storeContext;
+    private readonly IWorkContext _workContext;
+    private readonly NexportService _nexportService;
+
+    public OrderDetailsActionFilter(
+        ICustomerService customerService,
+        IOrderService orderService,
+        IStoreContext storeContext,
+        IWorkContext workContext,
+        NexportService nexportService)
+    {
             _customerService = customerService;
             _orderService = orderService;
             _storeContext = storeContext;
@@ -32,8 +32,8 @@ namespace Nop.Plugin.Misc.Nexport.Filters
             _nexportService = nexportService;
         }
 
-        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
-        {
+    public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    {
             if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
                 return;
 
@@ -68,5 +68,4 @@ namespace Nop.Plugin.Misc.Nexport.Filters
 
             await base.OnActionExecutionAsync(context, next);
         }
-    }
 }

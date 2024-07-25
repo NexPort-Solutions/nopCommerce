@@ -2,21 +2,20 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer
+namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
+
+public record NexportCustomerRegistrationFieldWithAnswersListSearchModel : BaseSearchModel
 {
-    public record NexportCustomerRegistrationFieldWithAnswersListSearchModel : BaseSearchModel
+    public NexportCustomerRegistrationFieldWithAnswersListSearchModel()
     {
-        public NexportCustomerRegistrationFieldWithAnswersListSearchModel()
-        {
             SetGridPageSize();
 
             AvailableStores = new List<SelectListItem>();
         }
 
-        public int CustomerId { get; set; }
+    public int CustomerId { get; set; }
 
-        public int StoreId { get; set; }
+    public int StoreId { get; set; }
 
-        public IList<SelectListItem> AvailableStores { get; set; }
-    }
+    public IList<SelectListItem> AvailableStores { get; set; }
 }

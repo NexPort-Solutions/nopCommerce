@@ -1,9 +1,8 @@
-﻿namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums
+﻿namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
+
+public enum PendingOrderCancellationRequestStatus
 {
-    public enum PendingOrderCancellationRequestStatus
-    {
-        Received = 10,
-        Accepted = 20,
-        Rejected = 30
-    }
+    Received = 10,
+    Accepted = 20,
+    Rejected = 30
 }

@@ -1,0 +1,103 @@
+﻿@using Nop.Services
+@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.NexportRedemptionUnassignmentRequestModel
+
+<div asp-validation-summary="All"></div>
+
+<div class="content">
+    <div class="form-horizontal">
+        <div class="card-group">
+            <div class="card card-default">
+                <div class="card-body">
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="Id" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.Id</div>
+                            <input asp-for="Id" type="hidden" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="InvoiceItemId" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.InvoiceItemId</div>
+                            <input asp-for="InvoiceItemId" type="hidden" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="OrderId" />
+                        </div>
+                        <div class="col-md-9">
+                            @if (Model.OrderId > 0)
+                            {
+                                <a asp-controller="Order" asp-action="Edit" asp-route-id="@Model.OrderId">@Model.OrderId</a>
+                                <input asp-for="OrderId" type="hidden" />
+                            }
+                            else
+                            {
+                                <text>Order has been deleted</text>
+                            }
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="RequestedByCustomerId" />
+                        </div>
+                        <div class="col-md-9">
+                            <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.RequestedByCustomerId">@Model.CustomerInfo</a>
+                            <input asp-for="RequestedByCustomerId" type="hidden" />
+                        </div>
+                    </div>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <nop-label asp-for="RequestStatus" />
+                    </div>
+                    <div class="col-md-9">
+                        <nop-select asp-for="RequestStatus" asp-items="@(await Model.RequestStatus.ToSelectListAsync())" />
+                        <span asp-validation-for="RequestStatus"></span>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <nop-label asp-for="ReasonForUnassignment" />
+                    </div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="ReasonForUnassignment" asp-required="true" />
+                        <span asp-validation-for="ReasonForUnassignment"></span>
+                    </div>
+                </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="CustomerComments" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-textarea asp-for="CustomerComments" />
+                            <span asp-validation-for="CustomerComments"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="StaffNotes" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-textarea asp-for="StaffNotes" />
+                            <span asp-validation-for="StaffNotes"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="UtcCreatedDate" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.UtcCreatedDate</div>
+                            <input asp-for="UtcCreatedDate" type="hidden" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

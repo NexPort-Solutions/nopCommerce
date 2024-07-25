@@ -1,19 +1,18 @@
 ﻿using System;
 using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.Syllabus
+namespace Nop.Plugin.Misc.Nexport.Models.Syllabus;
+
+public record NexportSyllabusListSearchModel : BaseSearchModel
 {
-    public record NexportSyllabusListSearchModel : BaseSearchModel
+    public NexportSyllabusListSearchModel()
     {
-        public NexportSyllabusListSearchModel()
-        {
             SetGridPageSize();
         }
 
-        public Guid CatalogId { get; set; }
+    public Guid CatalogId { get; set; }
 
-        public Guid ProductId { get; set; }
+    public Guid ProductId { get; set; }
 
-        public int NopProductId { get; set; }
-    }
+    public int NopProductId { get; set; }
 }

@@ -1,0 +1,56 @@
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool
+
+@model NexportFundingPoolModel
+
+@{
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
+
+    const string hideFundingPoolInfoBlockAttributeName = "NexportWholesale.HideFundingPoolInfoBlock";
+    var hideCustomBlock = await genericAttributeService.GetAttributeAsync(currentCustomer, hideFundingPoolInfoBlockAttributeName, defaultValue: false);
+}
+
+<div asp-validation-summary="All"></div>
+@if(Model.Id > 0)
+{
+    <input asp-for="Id" type="hidden" />
+}
+
+<div class="content">
+    <div class="form-horizontal">
+        <div id="funding-pool-edit">
+            <nop-cards>
+                <nop-card asp-name="funding-pool-info" asp-icon="fas fa-info" asp-title="Info" asp-advanced="false" asp-hide="false" asp-hide-block-attribute-name="@hideFundingPoolInfoBlockAttributeName">
+                    <div class="card-body">
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="Name"></nop-label>
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="Name" />
+                                <span asp-validation-for="Name"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="Code"></nop-label>
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="Code" />
+                                <span asp-validation-for="Code"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="Description"></nop-label>
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="Description" />
+                                <span asp-validation-for="Description"></span>
+                            </div>
+                        </div>
+                    </div>
+                </nop-card>
+            </nop-cards>
+        </div>
+    </div>
+</div>

@@ -1,14 +1,13 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
+namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+
+public record NexportProductGroupMembershipMappingListSearchModel : BaseSearchModel
 {
-    public record NexportProductGroupMembershipMappingListSearchModel : BaseSearchModel
+    public NexportProductGroupMembershipMappingListSearchModel()
     {
-        public NexportProductGroupMembershipMappingListSearchModel()
-        {
             SetGridPageSize();
         }
 
-        public int NexportProductMappingId { get; set; }
-    }
+    public int NexportProductMappingId { get; set; }
 }

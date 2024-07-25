@@ -1,3 +1,18 @@
-﻿<li>
+﻿@{
+    bool showNexportWholesalePurchases = (bool)(ViewData["ShowNexportWholesalePurchases"]??false);
+    string? customerName = ViewData["CustomerName"] as string;
+}
+<li>
+    <span>@(customerName)</span>
+</li>
+<li>
     <a href="@Url.RouteUrl("Plugin.Misc.Nexport.MyTraining")" class="ico-nexport-training">@T("Plugins.Misc.Nexport.Navigation.MyTrainings")</a>
 </li>
+@if (showNexportWholesalePurchases)
+{
+    <li>
+        <a href="@Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products")" class="ico-nexport-groups">
+            @T("Plugins.Misc.Nexport.Navigation.Groups")
+        </a>
+    </li>
+}

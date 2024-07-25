@@ -32,6 +32,7 @@
     <None Remove="Areas\Admin\Views\CancellationRequest\_CancellationRequestReasons.cshtml" />
     <None Remove="Areas\Admin\Views\CancellationRequest\_CreateOrUpdate.CancellationRequestReason.cshtml" />
     <None Remove="Areas\Admin\Views\Setting\_Order.CancellationRequestSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\Widget\Plugin\CancelPendingOrderRequestsModifiedLocaleResources.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Setting\WidgetsOrderSettingsDetailsBlock.cshtml" />
     <None Remove="Content\cancel_pending_order_plugin.css" />
     <None Remove="logo.jpg" />
@@ -52,6 +53,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Setting\_Order.CancellationRequestSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Widget\Plugin\CancelPendingOrderRequestsModifiedLocaleResources.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Widget\Setting\WidgetsOrderSettingsDetailsBlock.cshtml">
@@ -91,6 +95,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Pack>$(IncludeRazorContentInPack)</Pack>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\Plugins\" />
   </ItemGroup>
 
   <!-- This target execute after "Build" target -->

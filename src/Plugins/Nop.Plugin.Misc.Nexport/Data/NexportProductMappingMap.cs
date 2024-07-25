@@ -2,12 +2,12 @@
 using Nop.Data.Mapping.Builders;
 using Nop.Plugin.Misc.Nexport.Domain;
 
-namespace Nop.Plugin.Misc.Nexport.Data
+namespace Nop.Plugin.Misc.Nexport.Data;
+
+public class NexportProductMappingMap : NopEntityBuilder<NexportProductMapping>
 {
-    public class NexportProductMappingMap : NopEntityBuilder<NexportProductMapping>
+    public override void MapEntity(CreateTableExpressionBuilder table)
     {
-        public override void MapEntity(CreateTableExpressionBuilder table)
-        {
             table.WithColumn(nameof(NexportProductMapping.NexportProductName)).AsFixedLengthString(255)
                 .WithColumn(nameof(NexportProductMapping.DisplayName)).AsFixedLengthString(255)
                 .WithColumn(nameof(NexportProductMapping.Type)).AsInt32()
@@ -19,5 +19,4 @@ namespace Nop.Plugin.Misc.Nexport.Data
                 .WithColumn(nameof(NexportProductMapping.RenewalWindow)).AsFixedLengthString(255)
                 .WithColumn(nameof(NexportProductMapping.RenewalDuration)).AsFixedLengthString(255);
         }
-    }
 }

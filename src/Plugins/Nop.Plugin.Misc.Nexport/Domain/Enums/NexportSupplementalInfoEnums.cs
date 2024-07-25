@@ -1,25 +1,24 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Nop.Plugin.Misc.Nexport.Domain.Enums
+namespace Nop.Plugin.Misc.Nexport.Domain.Enums;
+
+public enum NexportSupplementalInfoQuestionType
 {
-    public enum NexportSupplementalInfoQuestionType
-    {
-        [Display(Name = "Single option")]
-        SingleOption = 0,
+    [Display(Name = "Single option")]
+    SingleOption = 0,
 
-        [Display(Name = "Multiple options")]
-        MultipleOptions = 1
-    }
+    [Display(Name = "Multiple options")]
+    MultipleOptions = 1
+}
 
-    public enum NexportSupplementalInfoAnswerStatus
-    {
-        [Display(Name = "Not processed")]
-        NotProcessed = 0,
+public enum NexportSupplementalInfoAnswerStatus
+{
+    [Display(Name = "Not processed")]
+    NotProcessed = 0,
 
-        [Display(Name = "Processed")]
-        Processed = 1,
+    [Display(Name = "Processed")]
+    Processed = 1,
 
-        [Display(Name = "Modified")]
-        Modified = 2,
-    }
+    [Display(Name = "Modified")]
+    Modified = 2,
 }

@@ -1,224 +1,282 @@
-﻿using Nop.Plugin.Misc.Nexport.Services.Tasks;
+﻿using Nop.Core.Caching;
+using Nop.Plugin.Misc.Nexport.Services.Tasks;
 
-namespace Nop.Plugin.Misc.Nexport
+namespace Nop.Plugin.Misc.Nexport;
+
+public class NexportDefaults
 {
-    public class NexportDefaults
-    {
-        public const string SystemName = "Misc.Nexport";
+    public const string SystemName = "Misc.Nexport";
 
-        public const string PluginMigrationTag = "NexportPluginMigration";
+    public const string PluginMigrationTag = "NexportPluginMigration";
 
-        public const string SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME = "Nexport Integration - Supplemental Info";
+    public const string SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME = "Nexport Integration - Supplemental Info";
 
-        public static string NexportPluginViewBasePath = "~/Plugins/Misc.Nexport/Views/";
+    public static string NexportPluginViewBasePath = "~/Plugins/Misc.Nexport/Views/";
 
-        public static string NexportPluginAdminViewBasePath = "~/Plugins/Misc.Nexport/Areas/Admin/Views/";
+    public static string NexportPluginAdminViewBasePath = "~/Plugins/Misc.Nexport/Areas/Admin/Views/";
 
-        /// <summary>
-        /// Name of the Nexport redemption processing schedule task
-        /// </summary>
-        public static string NexportOrderProcessingTaskName => "Processing Nexport orders";
+    /// <summary>
+    /// Name of the Nexport redemption processing schedule task
+    /// </summary>
+    public static string NexportOrderProcessingTaskName => "Processing Nexport orders";
 
-        /// <summary>
-        /// Type of the Nexport redemption processing schedule task
-        /// </summary>
-        public static string NexportOrderProcessingTaskType => $"{typeof(NexportOrderProcessingTask).Namespace}.{nameof(NexportOrderProcessingTask)}";
+    /// <summary>
+    /// Type of the Nexport redemption processing schedule task
+    /// </summary>
+    public static string NexportOrderProcessingTaskType => $"{typeof(NexportOrderProcessingTask).Namespace}.{nameof(NexportOrderProcessingTask)}";
 
-        /// <summary>
-        /// Nexport redemption processing interval (in seconds)
-        /// </summary>
-        public static int NexportOrderProcessingTaskInterval => 5;
+    /// <summary>
+    /// Nexport redemption processing interval (in seconds)
+    /// </summary>
+    public static int NexportOrderProcessingTaskInterval => 5;
 
-        /// <summary>
-        /// Nexport redemption processing default batch size
-        /// </summary>
-        public static int NexportOrderProcessingTaskBatchSize => 100;
+    /// <summary>
+    /// Nexport redemption processing default batch size
+    /// </summary>
+    public static int NexportOrderProcessingTaskBatchSize => 100;
 
-        /// <summary>
-        /// Nexport redemption processing batch size setting key
-        /// </summary>
-        public static string NexportOrderProcessingTaskBatchSizeSettingKey => "nexportsettings.tasks.orderprocessing.batchsize";
+    /// <summary>
+    /// Nexport redemption processing batch size setting key
+    /// </summary>
+    public static string NexportOrderProcessingTaskBatchSizeSettingKey => "nexportsettings.tasks.orderprocessing.batchsize";
 
-        /// <summary>
-        /// Name of the Nexport synchronization schedule task
-        /// </summary>
-        public static string NexportSynchronizationTaskName => "Synchronize with Nexport";
+    /// <summary>
+    /// Name of the Nexport synchronization schedule task
+    /// </summary>
+    public static string NexportSynchronizationTaskName => "Synchronize with Nexport";
 
-        /// <summary>
-        /// Type of the Nexport synchronization schedule task
-        /// </summary>
-        public static string NexportSynchronizationTaskType => $"{typeof(NexportSynchronizationTask).Namespace}.{nameof(NexportSynchronizationTask)}";
+    /// <summary>
+    /// Type of the Nexport synchronization schedule task
+    /// </summary>
+    public static string NexportSynchronizationTaskType => $"{typeof(NexportSynchronizationTask).Namespace}.{nameof(NexportSynchronizationTask)}";
 
-        /// <summary>
-        /// Nexport synchronization task interval (in seconds)
-        /// </summary>
-        public static int NexportSynchronizationTaskInterval => 20 * 60;
+    /// <summary>
+    /// Nexport synchronization task interval (in seconds)
+    /// </summary>
+    public static int NexportSynchronizationTaskInterval => 20 * 60;
 
-        /// <summary>
-        /// Nexport synchronization default batch size
-        /// </summary>
-        public static int NexportSynchronizationTaskBatchSize => 100;
+    /// <summary>
+    /// Nexport synchronization default batch size
+    /// </summary>
+    public static int NexportSynchronizationTaskBatchSize => 100;
 
-        /// <summary>
-        /// Nexport synchronization batch size setting key
-        /// </summary>
-        public static string NexportSynchronizationTaskBatchSizeSettingKey => "nexportsettings.tasks.productsynchronization.batchsize";
+    /// <summary>
+    /// Nexport synchronization batch size setting key
+    /// </summary>
+    public static string NexportSynchronizationTaskBatchSizeSettingKey => "nexportsettings.tasks.productsynchronization.batchsize";
 
-        /// <summary>
-        /// Name of the Nexport order invoice redemption schedule task
-        /// </summary>
-        public static string NexportOrderInvoiceRedemptionTaskName => "Redeem Nexport invoice item";
+    /// <summary>
+    /// Name of the Nexport order invoice redemption schedule task
+    /// </summary>
+    public static string NexportOrderInvoiceRedemptionTaskName => "Redeem Nexport invoice item";
 
-        /// <summary>
-        /// Type of the Nexport order invoice redemption schedule task
-        /// </summary>
-        public static string NexportOrderInvoiceRedemptionTaskType => $"{typeof(NexportInvoiceRedemptionTask).Namespace}.{nameof(NexportInvoiceRedemptionTask)}";
+    /// <summary>
+    /// Type of the Nexport order invoice redemption schedule task
+    /// </summary>
+    public static string NexportOrderInvoiceRedemptionTaskType => $"{typeof(NexportInvoiceRedemptionTask).Namespace}.{nameof(NexportInvoiceRedemptionTask)}";
 
-        /// <summary>
-        /// Nexport order invoice redemption task interval (in seconds)
-        /// </summary>
-        public static int NexportOrderInvoiceRedemptionTaskInterval => 5;
+    /// <summary>
+    /// Nexport order invoice redemption task interval (in seconds)
+    /// </summary>
+    public static int NexportOrderInvoiceRedemptionTaskInterval => 5;
 
-        /// <summary>
-        /// Nexport order invoice redemption default batch size
-        /// </summary>
-        public static int NexportOrderInvoiceRedemptionTaskBatchSize => 100;
+    /// <summary>
+    /// Nexport order invoice redemption default batch size
+    /// </summary>
+    public static int NexportOrderInvoiceRedemptionTaskBatchSize => 100;
 
-        /// <summary>
-        /// Nexport order invoice redemption batch size setting key
-        /// </summary>
-        public static string NexportOrderInvoiceRedemptionTaskBatchSizeSettingKey => "nexportsettings.tasks.orderinvoiceredemption.batchsize";
+    /// <summary>
+    /// Nexport order invoice redemption batch size setting key
+    /// </summary>
+    public static string NexportOrderInvoiceRedemptionTaskBatchSizeSettingKey => "nexportsettings.tasks.orderinvoiceredemption.batchsize";
 
-        /// <summary>
-        /// Name of the Nexport supplemental info answer processing schedule task
-        /// </summary>
-        public static string NexportSupplementalInfoAnswerProcessingTaskName => "Processing Nexport supplemental info answers";
 
-        /// <summary>
-        /// Type of the Nexport supplemental info answer processing schedule task
-        /// </summary>
-        public static string NexportSupplementalInfoAnswerProcessingTaskType => $"{typeof(NexportSupplementalInfoAnswerProcessingTask).Namespace}.{nameof(NexportSupplementalInfoAnswerProcessingTask)}";
+    /// <summary>
+    /// Name of the Nexport order invoice reset redemption schedule task
+    /// </summary>
+    public static string NexportOrderInvoiceResetRedemptionTaskName => "Reset Nexport invoice item redemption";
 
-        /// <summary>
-        /// Nexport supplemental info answer processing interval (in seconds)
-        /// </summary>
-        public static int NexportSupplementalInfoAnswerProcessingTaskInterval => 5;
+    /// <summary>
+    /// Type of the Nexport order invoice reset redemption schedule task
+    /// </summary>
+    public static string NexportOrderInvoiceResetRedemptionTaskType => $"{typeof(NexportInvoiceResetRedemptionTask).Namespace}.{nameof(NexportInvoiceResetRedemptionTask)}";
 
-        /// <summary>
-        /// Nexport supplemental info answer processing default task batch size
-        /// </summary>
-        public static int NexportSupplementalInfoAnswerProcessingTaskBatchSize => 100;
+    /// <summary>
+    /// Nexport order invoice reset redemption task interval (in seconds)
+    /// </summary>
+    public static int NexportOrderInvoiceResetRedemptionTaskInterval => 5;
 
-        /// <summary>
-        /// Nexport supplemental info answer processing batch size setting key
-        /// </summary>
-        public static string NexportSupplementalInfoAnswerProcessingTaskBatchSizeSettingKey => "nexportsettings.tasks.supplementalinfoanswerprocessing.batchsize";
+    /// <summary>
+    /// Nexport order invoice reset redemption default batch size
+    /// </summary>
+    public static int NexportOrderInvoiceResetRedemptionTaskBatchSize => 100;
 
-        /// <summary>
-        /// Name of the Nexport group membership removal schedule task
-        /// </summary>
-        public static string NexportGroupMembershipRemovalTaskName => "Processing the removal of Nexport group membership";
+    /// <summary>
+    /// Nexport order invoice reset redemption batch size setting key
+    /// </summary>
+    public static string NexportOrderInvoiceResetRedemptionTaskBatchSizeSettingKey => "nexportsettings.tasks.orderinvoiceresetredemption.batchsize";
 
-        /// <summary>
-        /// Type of the Nexport group membership removal schedule task
-        /// </summary>
-        public static string NexportGroupMembershipRemovalTaskType => $"{typeof(NexportGroupMembershipRemovalTask).Namespace}.{nameof(NexportGroupMembershipRemovalTask)}";
+    /// <summary>
+    /// Name of the Nexport supplemental info answer processing schedule task
+    /// </summary>
+    public static string NexportSupplementalInfoAnswerProcessingTaskName => "Processing Nexport supplemental info answers";
 
-        /// <summary>
-        /// Nexport group membership removal interval (in seconds)
-        /// </summary>
-        public static int NexportGroupMembershipRemovalTaskInterval => 5;
+    /// <summary>
+    /// Type of the Nexport supplemental info answer processing schedule task
+    /// </summary>
+    public static string NexportSupplementalInfoAnswerProcessingTaskType => $"{typeof(NexportSupplementalInfoAnswerProcessingTask).Namespace}.{nameof(NexportSupplementalInfoAnswerProcessingTask)}";
 
-        /// <summary>
-        /// Nexport group membership removal default task batch size
-        /// </summary>
-        public static int NexportGroupMembershipRemovalTaskBatchSize => 100;
+    /// <summary>
+    /// Nexport supplemental info answer processing interval (in seconds)
+    /// </summary>
+    public static int NexportSupplementalInfoAnswerProcessingTaskInterval => 5;
 
-        /// <summary>
-        /// Nexport group membership removal batch size setting key
-        /// </summary>
-        public static string NexportGroupMembershipRemovalTaskBatchSizeSettingKey => "nexportsettings.tasks.groupmembershipremoval.batchsize";
+    /// <summary>
+    /// Nexport supplemental info answer processing default task batch size
+    /// </summary>
+    public static int NexportSupplementalInfoAnswerProcessingTaskBatchSize => 100;
 
-        /// <summary>
-        /// Name of the Nexport registration field synchronization schedule task
-        /// </summary>
-        public static string NexportRegistrationFieldSynchronizationTaskName => "Synchronize registration fields with Nexport";
+    /// <summary>
+    /// Nexport supplemental info answer processing batch size setting key
+    /// </summary>
+    public static string NexportSupplementalInfoAnswerProcessingTaskBatchSizeSettingKey => "nexportsettings.tasks.supplementalinfoanswerprocessing.batchsize";
 
-        /// <summary>
-        /// Type of the Nexport registration field synchronization schedule task
-        /// </summary>
-        public static string NexportRegistrationFieldSynchronizationTaskType => $"{typeof(NexportRegistrationFieldSynchronizationTask).Namespace}.{nameof(NexportRegistrationFieldSynchronizationTask)}";
+    /// <summary>
+    /// Name of the Nexport group membership removal schedule task
+    /// </summary>
+    public static string NexportGroupMembershipRemovalTaskName => "Processing the removal of Nexport group membership";
 
-        /// <summary>
-        /// Nexport registration field synchronization task interval (in seconds)
-        /// </summary>
-        public static int NexportRegistrationFieldSynchronizationTaskInterval => 5;
+    /// <summary>
+    /// Type of the Nexport group membership removal schedule task
+    /// </summary>
+    public static string NexportGroupMembershipRemovalTaskType => $"{typeof(NexportGroupMembershipRemovalTask).Namespace}.{nameof(NexportGroupMembershipRemovalTask)}";
 
-        /// <summary>
-        /// Nexport registration field  synchronization default batch size
-        /// </summary>
-        public static int NexportRegistrationFieldSynchronizationTaskBatchSize => 100;
+    /// <summary>
+    /// Nexport group membership removal interval (in seconds)
+    /// </summary>
+    public static int NexportGroupMembershipRemovalTaskInterval => 5;
 
-        /// <summary>
-        /// Nexport registration field synchronization batch size setting key
-        /// </summary>
-        public static string NexportRegistrationFieldSynchronizationTaskBatchSizeSettingKey => "nexportsettings.tasks.registrationfieldsynchronization.batchsize";
+    /// <summary>
+    /// Nexport group membership removal default task batch size
+    /// </summary>
+    public static int NexportGroupMembershipRemovalTaskBatchSize => 100;
 
-        /// <summary>
-        /// Assembly version key for provisioning
-        /// </summary>
-        public const string ASSEMBLY_VERSION_KEY = "nexportsettings.plugins.nexport.version";
+    /// <summary>
+    /// Nexport group membership removal batch size setting key
+    /// </summary>
+    public static string NexportGroupMembershipRemovalTaskBatchSizeSettingKey => "nexportsettings.tasks.groupmembershipremoval.batchsize";
 
-        public const string NEXPORT_SUBSCRIPTION_ORGANIZATION_ID_SETTING_KEY = "NexportSubscriptionOrganizationId";
+    /// <summary>
+    /// Name of the Nexport registration field synchronization schedule task
+    /// </summary>
+    public static string NexportRegistrationFieldSynchronizationTaskName => "Synchronize registration fields with Nexport";
 
-        public const string NEXPORT_STORE_SALE_MODEL_SETTING_KEY = "NexportStoreSaleModel";
+    /// <summary>
+    /// Type of the Nexport registration field synchronization schedule task
+    /// </summary>
+    public static string NexportRegistrationFieldSynchronizationTaskType => $"{typeof(NexportRegistrationFieldSynchronizationTask).Namespace}.{nameof(NexportRegistrationFieldSynchronizationTask)}";
 
-        public const string HIDE_SECTION_CEUS_IN_PRODUCT_PAGE_SETTING_KEY = "HideSectionCEUsInProductPage";
+    /// <summary>
+    /// Nexport registration field synchronization task interval (in seconds)
+    /// </summary>
+    public static int NexportRegistrationFieldSynchronizationTaskInterval => 5;
 
-        public const string HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY = "HideAddToCartForIneligibleProducts";
+    /// <summary>
+    /// Nexport registration field  synchronization default batch size
+    /// </summary>
+    public static int NexportRegistrationFieldSynchronizationTaskBatchSize => 100;
 
-        public const string ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY = "AllowRepurchaseFailedCoursesFromNexport";
+    /// <summary>
+    /// Nexport registration field synchronization batch size setting key
+    /// </summary>
+    public static string NexportRegistrationFieldSynchronizationTaskBatchSizeSettingKey => "nexportsettings.tasks.registrationfieldsynchronization.batchsize";
 
-        public const string ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY = "AllowRepurchasePassedCoursesFromNexport";
+    /// <summary>
+    /// Assembly version key for provisioning
+    /// </summary>
+    public const string ASSEMBLY_VERSION_KEY = "nexportsettings.plugins.nexport.version";
 
-        public const string LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY = "LimitSingleProductPurchaseInCategory";
+    public const string NEXPORT_SUBSCRIPTION_ORGANIZATION_ID_SETTING_KEY = "NexportSubscriptionOrganizationId";
 
-        public const string AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY = "AutoSwapProductPurchaseInCategory";
+    public const string NEXPORT_STORE_SALE_MODEL_SETTING_KEY = "NexportStoreSaleModel";
 
-        public const string ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT = "AllowProductPurchaseInCategoryDuringEnrollment";
+    public const string HIDE_SECTION_CEUS_IN_PRODUCT_PAGE_SETTING_KEY = "HideSectionCEUsInProductPage";
 
-        public const string EDIT_CUSTOMER_NEXPORT_SUPPLEMENTAL_INFO_ANSWER_ACTIVITY_LOG_TYPE = "Nexport.EditCustomerSupplementalInfoAnswer";
+    public const string HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY = "HideAddToCartForIneligibleProducts";
 
-        public const string DELETE_CUSTOMER_NEXPORT_SUPPLEMENTAL_INFO_ANSWER_ACTIVITY_LOG_TYPE = "Nexport.DeleteCustomerSupplementalInfoAnswer";
+    public const string ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY = "AllowRepurchaseFailedCoursesFromNexport";
 
-        public const string NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE =
-            "Nexport.ProcessingSupplementalInfoGroupAssociations";
+    public const string ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY = "AllowRepurchasePassedCoursesFromNexport";
 
-        public const string NEXPORT_ORDER_MANUAL_APPROVAL_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE =
-            "Nexport.OrderManualApproval.StoreOwnerNotification";
+    public const string LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY = "LimitSingleProductPurchaseInCategory";
 
-        public static string NexportRegistrationFieldsZone = "nexport_registration_fields";
+    public const string AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY = "AutoSwapProductPurchaseInCategory";
 
-        public static string NexportCustomRegistrationFieldZone = "admin_nexport_custom_registration_field";
+    public const string ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT = "AllowProductPurchaseInCategoryDuringEnrollment";
 
-        public static string NexportRegistrationFieldPrefix = "NexportCustomProfile";
+    public const string EDIT_CUSTOMER_NEXPORT_SUPPLEMENTAL_INFO_ANSWER_ACTIVITY_LOG_TYPE = "Nexport.EditCustomerSupplementalInfoAnswer";
 
-        public const string DELETE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.DeleteProductMapping";
+    public const string DELETE_CUSTOMER_NEXPORT_SUPPLEMENTAL_INFO_ANSWER_ACTIVITY_LOG_TYPE = "Nexport.DeleteCustomerSupplementalInfoAnswer";
 
-        public const string EDIT_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.EditProductMapping";
+    public const string NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE =
+        "Nexport.ProcessingSupplementalInfoGroupAssociations";
 
-        public const string MODIFY_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.ModifyProductMapping";
+    public const string NEXPORT_ORDER_MANUAL_APPROVAL_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE =
+        "Nexport.OrderManualApproval.StoreOwnerNotification";
 
-        public const string DUPLICATE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.DuplicateProductMapping";
+    public static string NexportRegistrationFieldsZone = "nexport_registration_fields";
 
-        public const string DELETE_NEXPORT_GROUP_MEMBERSHIP_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.DeleteGroupMembershipMapping";
+    public static string NexportCustomRegistrationFieldZone = "admin_nexport_custom_registration_field";
 
-        public const string INSERT_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE =
-            "Nexport.InsertSupplementalInfoQuestion";
+    public static string NexportRegistrationFieldPrefix = "NexportCustomProfile";
 
-        public const string DELETE_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE =
-            "Nexport.DeleteSupplementalInfoQuestion";
+    public const string DELETE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.DeleteProductMapping";
 
-        public const string NEXPORT_PURCHASE_PRODUCT_FOR_CUSTOMER = "Nexport.PurchaseForCustomer";
-    }
+    public const string EDIT_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.EditProductMapping";
+
+    public const string MODIFY_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.ModifyProductMapping";
+
+    public const string DUPLICATE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.DuplicateProductMapping";
+
+    public const string DELETE_NEXPORT_GROUP_MEMBERSHIP_MAPPING_ACTIVITY_LOG_TYPE = "Nexport.DeleteGroupMembershipMapping";
+
+    public const string INSERT_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE =
+        "Nexport.InsertSupplementalInfoQuestion";
+
+    public const string DELETE_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE =
+        "Nexport.DeleteSupplementalInfoQuestion";
+
+    public const string NEXPORT_PURCHASE_PRODUCT_FOR_CUSTOMER = "Nexport.PurchaseForCustomer";
+
+    public const string NEXPORT_PURCHASING_AGENT_PERMISSION = "ActAsPurchasingAgent";
+
+    public const string REMOTE_SYS_NAME_FOR_API = "Marketplace";
+
+    public const string MANAGE_NEXPORT_WHOLESALE_PERMISSION_NAME = "Manage Nexport wholesale";
+
+    public const string MANAGE_NEXPORT_WHOLESALE_PERMISSION_SYSTEM_NAME = "ManageNexportWholesale";
+
+    public const string MANAGE_NEXPORT_FUNDING_POOLS_PERMISSION_NAME = "Manage Nexport funding pools";
+
+    public const string MANAGE_NEXPORT_FUNDING_POOLS_PERMISSION_SYSTEM_NAME = "ManageNexportFundingPools";
+
+    public const string REDEMPTION_STUDENT_NOTIFICATION_MESSAGE_TEMPLATE = "Nexport.Redemption.StudentNotification";
+
+    public const string NEW_REDEMPTION_UNASSIGNMENT_REQUEST_STORE_OWNER_NOTIFICATION_MESSAGE_TEMPLATE =
+        "NewRedemptionUnassignmentRequest.StoreOwnerNotification";
+
+    public const string NEW_REDEMPTION_UNASSIGNMENT_REQUEST_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE =
+        "NewRedemptionUnassignmentRequest.CustomerNotification";
+
+    public const string REDEMPTION_UNASSIGNMENT_REQUEST_ACCEPTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE =
+        "RedemptionUnassignmentRequestAccepted.CustomerNotification";
+
+    public const string REDEMPTION_UNASSIGNMENT_REQUEST_REJECTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE =
+        "RedemptionUnassignmentRequestRejected.CustomerNotification";
+
+    public static CacheKey RedemptionUnassignmentRequestReasonsCacheKey => new CacheKey("Nop.plugin.misc.nexport.redemptionunassignmentrequestreasons-{0}");
+
+    public const string EDIT_UNASSIGNMENT_REQUEST_ACTIVITY_LOG_TYPE = "EditUnassignmentRequest";
+
+    public const string DELETE_UNASSIGNMENT_REQUEST_ACTIVITY_LOG_TYPE = "DeleteUnassignmentRequest";
 }

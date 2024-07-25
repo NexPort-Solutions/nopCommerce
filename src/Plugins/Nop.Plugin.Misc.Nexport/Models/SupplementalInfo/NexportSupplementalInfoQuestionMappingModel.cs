@@ -1,11 +1,10 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
-{
-    public record NexportSupplementalInfoQuestionMappingModel : BaseNopEntityModel
-    {
-        public int NexportProductMappingId { get; set; }
+namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 
-        public int SupplementalInfoQuestionId { get; set; }
-    }
+public record NexportSupplementalInfoQuestionMappingModel : BaseNopEntityModel
+{
+    public int NexportProductMappingId { get; set; }
+
+    public int SupplementalInfoQuestionId { get; set; }
 }

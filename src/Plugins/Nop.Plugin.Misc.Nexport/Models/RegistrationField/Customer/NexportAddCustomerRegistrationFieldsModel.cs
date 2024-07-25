@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer
+namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
+
+public class NexportAddCustomerRegistrationFieldsModel
 {
-    public class NexportAddCustomerRegistrationFieldsModel
-    {
-        public IList<NexportRegistrationFieldModel> RegistrationFields { get; set; }
-    }
+    public IList<NexportRegistrationFieldModel> RegistrationFields { get; set; }
 }

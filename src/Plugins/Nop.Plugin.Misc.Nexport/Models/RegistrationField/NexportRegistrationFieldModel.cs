@@ -4,76 +4,75 @@ using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 
-namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField
+namespace Nop.Plugin.Misc.Nexport.Models.RegistrationField;
+
+public record NexportRegistrationFieldModel : BaseNopEntityModel, ILocalizedModel<NexportRegistrationFieldLocalizedModel>
 {
-    public record NexportRegistrationFieldModel : BaseNopEntityModel, ILocalizedModel<NexportRegistrationFieldLocalizedModel>
-    {
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Name")]
-        public string Name { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Name")]
+    public string Name { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Type")]
-        public NexportRegistrationFieldType Type { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Type")]
+    public NexportRegistrationFieldType Type { get; set; }
 
-        public IList<SelectListItem> AvailableFieldTypes { get; set; } = new List<SelectListItem>();
+    public IList<SelectListItem> AvailableFieldTypes { get; set; } = new List<SelectListItem>();
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.AllowMultipleSelection")]
-        public bool AllowMultipleSelection { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.AllowMultipleSelection")]
+    public bool AllowMultipleSelection { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOptionValueByAscendingOrder")]
-        public bool DisplayOptionByAscendingOrder { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOptionValueByAscendingOrder")]
+    public bool DisplayOptionByAscendingOrder { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.CustomProfileFieldKey")]
-        public string NexportCustomProfileFieldKey { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.CustomProfileFieldKey")]
+    public string NexportCustomProfileFieldKey { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Required")]
-        public bool IsRequired { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Required")]
+    public bool IsRequired { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Active")]
-        public bool IsActive { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Active")]
+    public bool IsActive { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Category")]
-        public int? FieldCategoryId { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Category")]
+    public int? FieldCategoryId { get; set; }
 
-        public string FieldCategoryName { get; set; }
+    public string FieldCategoryName { get; set; }
 
-        public IList<SelectListItem> AvailableFieldCategory { get; set; } = new List<SelectListItem>();
+    public IList<SelectListItem> AvailableFieldCategory { get; set; } = new List<SelectListItem>();
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Validation")]
-        public bool Validation { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Validation")]
+    public bool Validation { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex")]
-        public string ValidationRegex { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.ValidationRegex")]
+    public string ValidationRegex { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.ValidationMessage")]
-        public string ValidationMessage { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.ValidationMessage")]
+    public string ValidationMessage { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.StoreMappings")]
-        public string StoreMappings { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.StoreMappings")]
+    public string StoreMappings { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Stores")]
-        public IList<int> StoreMappingIds { get; set; } = new List<int>();
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.Stores")]
+    public IList<int> StoreMappingIds { get; set; } = new List<int>();
 
-        public IList<SelectListItem> AvailableStores { get; set; } = new List<SelectListItem>();
+    public IList<SelectListItem> AvailableStores { get; set; } = new List<SelectListItem>();
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder")]
-        public int DisplayOrder { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOrder")]
+    public int DisplayOrder { get; set; }
 
-        public IList<SelectListItem> AvailableCustomFieldRenders { get; set; }
+    public IList<SelectListItem> AvailableCustomFieldRenders { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.CustomRender")]
-        public string CustomFieldRender { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.CustomRender")]
+    public string CustomFieldRender { get; set; }
 
-        public string CustomFieldRenderDescription { get; set; }
+    public string CustomFieldRenderDescription { get; set; }
 
-        public IList<NexportRegistrationFieldLocalizedModel> Locales { get; set; } = new List<NexportRegistrationFieldLocalizedModel>();
+    public IList<NexportRegistrationFieldLocalizedModel> Locales { get; set; } = new List<NexportRegistrationFieldLocalizedModel>();
 
-        public NexportRegistrationFieldOptionSearchModel RegistrationFieldOptionSearchModel { get; set; } = new();
-    }
+    public NexportRegistrationFieldOptionSearchModel RegistrationFieldOptionSearchModel { get; set; } = new();
+}
 
-    public record NexportRegistrationFieldLocalizedModel : ILocalizedLocaleModel
-    {
-        public int LanguageId { get; set; }
+public record NexportRegistrationFieldLocalizedModel : ILocalizedLocaleModel
+{
+    public int LanguageId { get; set; }
 
-        public string Name { get; set; }
-    }
+    public string Name { get; set; }
 }

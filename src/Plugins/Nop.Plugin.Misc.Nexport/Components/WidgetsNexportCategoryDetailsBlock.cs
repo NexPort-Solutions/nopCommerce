@@ -3,61 +3,67 @@ using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
+using Nop.Services.Security;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Components;
 
-namespace Nop.Plugin.Misc.Nexport.Components
+namespace Nop.Plugin.Misc.Nexport.Components;
+
+[ViewComponent(Name = "WidgetsNexportCategoryDetailsBlock")]
+public class WidgetsNexportCategoryDetailsBlock : NopViewComponent
 {
-    [ViewComponent(Name = "WidgetsNexportCategoryDetailsBlock")]
-    public class WidgetsNexportCategoryDetailsBlock : NopViewComponent
+    private readonly NexportSettings _nexportSettings;
+    private readonly NexportService _nexportService;
+    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+    private readonly IPermissionService _permissionService;
+    private readonly ICategoryService _categoryService;
+    private readonly IGenericAttributeService _genericAttributeService;
+
+    public WidgetsNexportCategoryDetailsBlock(
+        NexportSettings nexportSettings,
+        NexportService nexportService,
+        INexportPluginModelFactory nexportPluginModelFactory,
+        IPermissionService permissionService,
+        ICategoryService categoryService,
+        IGenericAttributeService genericAttributeService)
     {
-        private readonly NexportSettings _nexportSettings;
-        private readonly NexportService _nexportService;
-        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
-        private readonly ICategoryService _categoryService;
-        private readonly IGenericAttributeService _genericAttributeService;
+        _nexportSettings = nexportSettings;
+        _nexportService = nexportService;
+        _nexportPluginModelFactory = nexportPluginModelFactory;
+        _permissionService = permissionService;
+        _categoryService = categoryService;
+        _genericAttributeService = genericAttributeService;
+    }
 
-        public WidgetsNexportCategoryDetailsBlock(
-            NexportSettings nexportSettings,
-            NexportService nexportService,
-            INexportPluginModelFactory nexportPluginModelFactory,
-            ICategoryService categoryService,
-            IGenericAttributeService genericAttributeService)
-        {
-            _nexportSettings = nexportSettings;
-            _nexportService = nexportService;
-            _nexportPluginModelFactory = nexportPluginModelFactory;
-            _categoryService = categoryService;
-            _genericAttributeService = genericAttributeService;
-        }
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
+        if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+            return Content("");
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
-            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-                return Content("");
+        var categoryModel = (CategoryModel)additionalData;
 
-            var categoryModel = (CategoryModel) additionalData;
+        var category = await _categoryService.GetCategoryByIdAsync(categoryModel.Id);
 
-            var category = await _categoryService.GetCategoryByIdAsync(categoryModel.Id);
+        if (category == null)
+            return Content("");
 
-            if (category == null)
-                return Content("");
+        var model = category.ToModel<NexportCategoryModel>();
 
-            var model = category.ToModel<NexportCategoryModel>();
+        model.LimitSingleProductPurchase = await _genericAttributeService.GetAttributeAsync<bool>(category,
+            NexportDefaults.LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY);
 
-            model.LimitSingleProductPurchase = await _genericAttributeService.GetAttributeAsync<bool>(category,
-                NexportDefaults.LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY);
+        model.AutoSwapProductPurchase = await _genericAttributeService.GetAttributeAsync(category,
+            NexportDefaults.AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY, defaultValue: true);
 
-            model.AutoSwapProductPurchase = await _genericAttributeService.GetAttributeAsync(category,
-                NexportDefaults.AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY, defaultValue: true);
+        model.AllowProductPurchaseInCategoryDuringEnrollment = await _genericAttributeService.GetAttributeAsync<bool>(category,
+            NexportDefaults.ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT);
 
-            model.AllowProductPurchaseInCategoryDuringEnrollment = await _genericAttributeService.GetAttributeAsync<bool>(category,
-                NexportDefaults.ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT);
+        ViewBag.ManageNexportProductMapping = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping);
 
-            return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Category/NexportCategoryDetails.cshtml", model);
-        }
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Category/NexportCategoryDetails.cshtml", model);
     }
 }

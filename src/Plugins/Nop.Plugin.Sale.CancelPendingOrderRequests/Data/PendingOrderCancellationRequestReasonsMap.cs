@@ -2,13 +2,12 @@
 using Nop.Data.Mapping.Builders;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 
-namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Data
+namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Data;
+
+public class PendingOrderCancellationRequestReasonsMap : NopEntityBuilder<PendingOrderCancellationRequestReason>
 {
-    public class PendingOrderCancellationRequestReasonsMap : NopEntityBuilder<PendingOrderCancellationRequestReason>
+    public override void MapEntity(CreateTableExpressionBuilder table)
     {
-        public override void MapEntity(CreateTableExpressionBuilder table)
-        {
-            table.WithColumn(nameof(PendingOrderCancellationRequestReason.Name)).AsFixedLengthString(400);
-        }
+        table.WithColumn(nameof(PendingOrderCancellationRequestReason.Name)).AsFixedLengthString(400);
     }
 }

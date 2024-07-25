@@ -2,24 +2,23 @@
 using Nop.Core;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 
-namespace Nop.Plugin.Misc.Nexport.Domain
+namespace Nop.Plugin.Misc.Nexport.Domain;
+
+public class NexportSupplementalInfoAnswer : BaseEntity
 {
-    public class NexportSupplementalInfoAnswer : BaseEntity
-    {
-        public int CustomerId { get; set; }
+    public int CustomerId { get; set; }
 
-        public int StoreId { get; set; }
+    public int StoreId { get; set; }
 
-        public int QuestionId { get; set; }
+    public int QuestionId { get; set; }
 
-        public int OptionId { get; set; }
+    public int OptionId { get; set; }
 
-        public NexportSupplementalInfoAnswerStatus Status { get; set; }
+    public NexportSupplementalInfoAnswerStatus Status { get; set; }
 
-        public DateTime? UtcDateProcessed { get; set; }
+    public DateTime? UtcDateProcessed { get; set; }
 
-        public DateTime UtcDateCreated { get; set; }
+    public DateTime UtcDateCreated { get; set; }
 
-        public DateTime? UtcDateModified { get; set; }
-    }
+    public DateTime? UtcDateModified { get; set; }
 }

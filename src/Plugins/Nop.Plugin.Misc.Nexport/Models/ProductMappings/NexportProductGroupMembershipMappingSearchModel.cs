@@ -1,8 +1,7 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
+namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+
+public record NexportProductGroupMembershipMappingSearchModel : BaseSearchModel
 {
-    public record NexportProductGroupMembershipMappingSearchModel : BaseSearchModel
-    {
-    }
 }

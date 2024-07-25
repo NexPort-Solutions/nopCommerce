@@ -1,0 +1,256 @@
+﻿@using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders
+
+@model WholesaleOrderModel
+
+@{
+    ViewBag.PageTitle = T("Plugins.Misc.Nexport.Wholesale.AddNew").Text;
+    NopHtml.SetActiveMenuItemSystemName("Orders");
+}
+
+@{
+    const string hideSearchBlockAttributeName = "ProductListPage.HideSearchBlock";
+    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
+}
+
+<style>
+    .payment-info .info tr {
+        display: block;
+        margin: 0 0 15px;
+        font-size: 0;
+    }
+
+    .payment-info .info td {
+        display: inline-block;
+        width: 100% !important;
+        max-width: 400px !important;
+        font-size: 16px; /*reset zeroing*/
+    }
+
+        .payment-info .info td:only-child {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .payment-info .info td input[type="text"] {
+            width: 100% !important;
+        }
+
+        .payment-info .info td input[name="CardCode"] {
+            width: 65px !important;
+        }
+
+        .payment-info .info td select {
+            min-width: 70px;
+            width: min-content;
+            display: initial;
+        }
+</style>
+
+@* <!script async src="https://kit.fontawesome.com/e4adf0b7ea.js" crossorigin="anonymous" asp-location="Footer"></!script> *@
+<script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/fontawesome.min.js"></script>
+<script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/regular.min.js"></script>
+<script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/solid.min.js"></script>
+<script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/light.min.js"></script>
+
+<form asp-controller="NexportWholesale" asp-action="PlaceWholesaleOrder" method="post" id="wholesale-order-form">
+    <input type="submit" id="btnRefreshWholesaleOrderProducts" style="display: none">
+    <input type="submit" id="btnShowPayment" style="display: none">
+    @* <input type="hidden" id="wholesaleOrderProducts" /> *@
+
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Plugins.Misc.Nexport.Wholesale.AddNew")
+            <small>
+                <i class="fas fa-arrow-circle-left"></i>
+                <a asp-action="List" asp-controller="Order">
+                    @T("Plugins.Misc.Nexport.Wholesale.BackToOrderList")
+                </a>
+            </small>
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="placewholesaleorder" class="btn btn-info">
+                <i class="far fa-shopping-cart"></i>
+                Place order
+            </button>
+            <button type="submit" name="placewholesaleorder-continue" class="btn btn-info">
+                <i class="far fa-shopping-cart"></i>
+                Place and view order
+            </button>
+        </div>
+    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-horizontal">
+                <div class="cards-group">
+                    <div class="card card-default">
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <div class="col-md-2">
+                                    <nop-label asp-for="StoreId" />
+                                </div>
+                                <div class="col-md-10">
+                                    <nop-select asp-for="StoreId" asp-items="Model.AvailableStores" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-2">
+                                </div>
+                                <div class="col-md-10">
+                                    <button type="submit" id="addProductsToWholesale" class="btn btn-success" name="addproductstowholesale">
+                                        <i class="far fa-plus"></i>
+                                        @T("Plugins.Misc.Nexport.Wholesale.AddProductsToPurchase")
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-2">
+                                    <div class="label-wrapper">
+                                        <label class="col-form-label">
+                                            Purchasing products
+                                        </label>
+                                        <div title="" data-toggle="tooltip" class="ico-help" data-original-title="Purchasing product list">
+                                            <i class="fas fa-question-circle" aria-hidden="true"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-10">
+                                    <div id="wholesale-purchasing-product-list" class="mt-2">
+                                        Select Add to add new product
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="nexport-purchasing-details-container" style="display: none;">
+                                <div class="form-group row" id="group-purchasing-selection-container">
+                                    <div class="col-md-2">
+                                        <nop-label asp-for="OrganizationId" />
+                                    </div>
+                                    <div class="col-md-10">
+                                        <nop-select asp-for="OrganizationId" asp-items="Model.AvailableOrganizations" />
+                                    </div>
+                                    <input type="hidden" id="OrganizationName" name="OrganizationName" />
+                                    <input type="hidden" id="OrganizationShortName" name="OrganizationShortName" />
+                                </div>
+                                <div class="form-group row" id="redeem-by-container">
+                                    <div class="col-md-2">
+                                        <nop-label asp-for="RedeemByUtc" />
+                                    </div>
+                                    <div class="col-md-10">
+                                        <nop-editor asp-for="RedeemByUtc" />
+                                    </div>
+                                </div>
+                                <div class="form-group row" id="fundingpool-container">
+                                    <div class="col-md-2">
+                                        <nop-label asp-for="FundingPoolId" />
+                                    </div>
+                                    <div class="col-md-10">
+                                        <nop-select asp-for="FundingPoolId" asp-items="Model.AvailableFundingPools" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group row" id="payment-method-container" style="display: none;">
+                                <div class="col-md-2">
+                                    <nop-label asp-for="PaymentMethod" />
+                                </div>
+                                <div class="col-md-10">
+                                    <nop-select asp-for="PaymentMethod" asp-items="Model.AvailablePaymentMethods" />
+                                </div>
+                            </div>
+                            <div class="form-group row" id="payment-method-details-container" style="display: none;">
+                                <div class="col-md-2">
+                                </div>
+                                <div class="col-md-10">
+                                    <div class="card card-default">
+                                        <div class="card-body">
+                                            <div id="payment-method-view-details">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        var wholesaleOrderProductsList = null;
+
+        $("#addProductsToWholesale").on("click", function (e) {
+            var currentStoreId = $("#@Html.IdFor(model => model.StoreId)").val();
+            var url = "@Url.Action("AddProductToWholesaleOrder", "NexportWholesale")";
+            url += "?storeId=" + currentStoreId + "&formId=wholesale-order-form&btnId=wholesale-order-form";
+
+            OpenWindow(url, 1200, 800, true);
+
+            return false;
+        });
+
+        $("#btnShowPayment").on("click", function (e) {
+            $("#nexport-purchasing-details-container").show();
+            // $("#redeem-by-container").show();
+
+            $("#payment-method-container").show();
+
+            return false;
+        });
+
+        $("#@Html.IdFor(model => model.PaymentMethod)").on("change", function (e) {
+            var paymentSystemName = $(e.target).val();
+            if (paymentSystemName !== null) {
+                $.ajax({
+                    cache: false,
+                    url: "@(Url.Action("WholesaleOrderPaymentInfo", "NexportWholesale"))",
+                    traditional: true,
+                    data: {
+                        "paymentSystemName": paymentSystemName
+                    },
+                    success: function (data, textStatus, jqXHR) {
+                        $("#payment-method-view-details").html(data);
+                        $("#payment-method-view-details").find("input").addClass("form-control");
+                        $("#payment-method-view-details").find("select").addClass("form-control");
+                        $("#payment-method-details-container").show();
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.log("Error while getting payment detail view!");
+                    }
+                });
+            }
+        });
+
+        $("#@Html.IdFor(model => model.OrganizationId)").on("change", function(e) {
+            var orgNameDetails = $("#@Html.IdFor(model => model.OrganizationId) option:selected").text();
+            var regex = /\(([^()]*)\)/g;
+            var regexText = orgNameDetails.split(regex);
+
+            if (regexText.length > 0) {
+                var orgName = regexText[0].trim();
+                var orgShortName = regexText[1].trim();
+
+                $("#OrganizationName").val(orgName);
+                $("#OrganizationShortName").val(orgShortName);
+            } else {
+                $("#OrganizationName").val("");
+                $("#OrganizationShortName").val("");
+            }
+        });
+
+        $("#btnRefreshWholesaleOrderProducts").on("click", function (e) {
+            $.ajax({
+                cache: false,
+                url: "@(Url.Action("WholesaleOrderPurchasingProductsList", "NexportWholesale"))",
+                traditional: true,
+                data: wholesaleOrderProductsList,
+                success: function (data, textStatus, jqXHR) {
+                    $("#wholesale-purchasing-product-list").html(data);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log("Error while getting product list!");
+                }
+            });
+
+            return false;
+        });
+    </script>
+</form>

@@ -4,17 +4,17 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Nop.Plugin.Misc.Nexport.Infrastructure.ModelState
+namespace Nop.Plugin.Misc.Nexport.Infrastructure.ModelState;
+
+public class ModelStateHelpers
 {
-    public class ModelStateHelpers
+    /// <summary>
+    /// Serialize model state
+    /// </summary>
+    /// <param name="modelState">The model state</param>
+    /// <returns>Serialized object of the model state</returns>
+    public static string SerializeModelState(ModelStateDictionary modelState)
     {
-        /// <summary>
-        /// Serialize model state
-        /// </summary>
-        /// <param name="modelState">The model state</param>
-        /// <returns>Serialized object of the model state</returns>
-        public static string SerializeModelState(ModelStateDictionary modelState)
-        {
             var errorList = modelState
                 .Select(kvp => new ModelStateTransferValue
                 {
@@ -27,13 +27,13 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure.ModelState
             return JsonConvert.SerializeObject(errorList);
         }
 
-        /// <summary>
-        /// Deserialize model state
-        /// </summary>
-        /// <param name="serializedErrorList">The serialized error list</param>
-        /// <returns>Model state dictionary that contains keys and values the previous serialized model state</returns>
-        public static ModelStateDictionary DeserializeModelState(string serializedErrorList)
-        {
+    /// <summary>
+    /// Deserialize model state
+    /// </summary>
+    /// <param name="serializedErrorList">The serialized error list</param>
+    /// <returns>Model state dictionary that contains keys and values the previous serialized model state</returns>
+    public static ModelStateDictionary DeserializeModelState(string serializedErrorList)
+    {
             var errorList = JsonConvert.DeserializeObject<List<ModelStateTransferValue>>(serializedErrorList);
             var modelState = new ModelStateDictionary();
 
@@ -57,5 +57,4 @@ namespace Nop.Plugin.Misc.Nexport.Infrastructure.ModelState
 
             return modelState;
         }
-    }
 }

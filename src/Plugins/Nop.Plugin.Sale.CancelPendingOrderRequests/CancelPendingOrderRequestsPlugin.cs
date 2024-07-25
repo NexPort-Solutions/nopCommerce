@@ -16,146 +16,151 @@ using Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Components;
 
-namespace Nop.Plugin.Sale.CancelPendingOrderRequests
+namespace Nop.Plugin.Sale.CancelPendingOrderRequests;
+
+public class CancelPendingOrderRequestsPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
 {
-    public class CancelPendingOrderRequestsPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
+    private readonly CancelPendingOrderRequestsPluginService _cancelCancelPendingOrderRequestsPluginService;
+    private readonly WidgetSettings _widgetSettings;
+    private readonly ISettingService _settingService;
+
+    public CancelPendingOrderRequestsPlugin(
+        CancelPendingOrderRequestsPluginService cancelCancelPendingOrderRequestsPluginService,
+        WidgetSettings widgetSetting,
+        ISettingService settingService)
     {
-        private readonly CancelPendingOrderRequestsPluginService _cancelCancelPendingOrderRequestsPluginService;
-        private readonly WidgetSettings _widgetSettings;
-        private readonly ISettingService _settingService;
+        _cancelCancelPendingOrderRequestsPluginService = cancelCancelPendingOrderRequestsPluginService;
+        _widgetSettings = widgetSetting;
+        _settingService = settingService;
+    }
 
-        public CancelPendingOrderRequestsPlugin(
-            CancelPendingOrderRequestsPluginService cancelCancelPendingOrderRequestsPluginService,
-            WidgetSettings widgetSetting,
-            ISettingService settingService)
+    public async Task ManageSiteMapAsync(SiteMapNode rootNode)
+    {
+        var salesNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Sales");
+        if (salesNode == null)
+            return;
+
+        var cancelOrderRequestNode = new SiteMapNode()
         {
-            _cancelCancelPendingOrderRequestsPluginService = cancelCancelPendingOrderRequestsPluginService;
-            _widgetSettings = widgetSetting;
-            _settingService = settingService;
-        }
+            SystemName = "Cancellation requests",
+            Title = "Cancellation requests",
+            ControllerName = "CancelPendingOrderRequests",
+            ActionName = "List",
+            IconClass = "fa fa-dot-circle-o",
+            Visible = true
+        };
 
-        public async Task ManageSiteMapAsync(SiteMapNode rootNode)
+        salesNode.ChildNodes.Add(cancelOrderRequestNode);
+    }
+
+    public override async Task InstallAsync()
+    {
+        try
         {
-            var salesNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Sales");
-            if (salesNode == null)
-                return;
-
-            var cancelOrderRequestNode = new SiteMapNode()
-            {
-                SystemName = "Cancellation requests",
-                Title = "Cancellation requests",
-                ControllerName = "CancelPendingOrderRequests",
-                ActionName = "List",
-                IconClass = "fa fa-dot-circle-o",
-                Visible = true
-            };
-
-            salesNode.ChildNodes.Add(cancelOrderRequestNode);
-        }
-
-        public override async Task InstallAsync()
-        {
+            var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
+            using var serviceScope = migrationServiceProvider.CreateScope();
+            var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
             try
             {
-                var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
-                using var serviceScope = migrationServiceProvider.CreateScope();
-                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-                try
-                {
-                    ((MigrationRunner)runner).MigrateUp();
-                }
-                catch (MissingMigrationsException)
-                {
-                    // ignored
-                }
+                ((MigrationRunner)runner).MigrateUp();
             }
-            catch (Exception)
+            catch (MissingMigrationsException)
             {
-                // Ignore
+                // ignored
             }
-
-            if (!_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
-            {
-                _widgetSettings.ActiveWidgetSystemNames.Add(PluginDefaults.SystemName);
-                await _settingService.SaveSettingAsync(_widgetSettings);
-            }
-
-            await _cancelCancelPendingOrderRequestsPluginService.AddActivityLogTypesAsync();
-            await _cancelCancelPendingOrderRequestsPluginService.AddMessageTemplatesAsync();
-            await _cancelCancelPendingOrderRequestsPluginService.AddOrUpdateResourcesAsync();
-
-            await base.InstallAsync();
+        }
+        catch (Exception)
+        {
+            // Ignore
         }
 
-        public override async Task UninstallAsync()
+        if (!_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
         {
-            if (_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
-            {
-                _widgetSettings.ActiveWidgetSystemNames.Remove(PluginDefaults.SystemName);
-                await _settingService.SaveSettingAsync(_widgetSettings);
-            }
+            _widgetSettings.ActiveWidgetSystemNames.Add(PluginDefaults.SystemName);
+            await _settingService.SaveSettingAsync(_widgetSettings);
+        }
 
-            await _cancelCancelPendingOrderRequestsPluginService.DeleteMessageTemplatesAsync();
-            await _cancelCancelPendingOrderRequestsPluginService.DeleteActivityLogTypesAsync();
-            await _cancelCancelPendingOrderRequestsPluginService.DeleteResourcesAsync();
+        await _cancelCancelPendingOrderRequestsPluginService.AddActivityLogTypesAsync();
+        await _cancelCancelPendingOrderRequestsPluginService.AddMessageTemplatesAsync();
+        await _cancelCancelPendingOrderRequestsPluginService.AddOrUpdateResourcesAsync();
 
+        await base.InstallAsync();
+    }
+
+    public override async Task UninstallAsync()
+    {
+        if (_widgetSettings.ActiveWidgetSystemNames.Contains(PluginDefaults.SystemName))
+        {
+            _widgetSettings.ActiveWidgetSystemNames.Remove(PluginDefaults.SystemName);
+            await _settingService.SaveSettingAsync(_widgetSettings);
+        }
+
+        await _cancelCancelPendingOrderRequestsPluginService.DeleteMessageTemplatesAsync();
+        await _cancelCancelPendingOrderRequestsPluginService.DeleteActivityLogTypesAsync();
+        await _cancelCancelPendingOrderRequestsPluginService.DeleteResourcesAsync();
+
+        try
+        {
+            var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
+            using var serviceScope = migrationServiceProvider.CreateScope();
+            var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
             try
             {
-                var migrationServiceProvider = PluginStartup.CreateFluentMigratorRunnerService();
-                using var serviceScope = migrationServiceProvider.CreateScope();
-                var runner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-                try
-                {
-                    runner.MigrateDown(0);
-                    ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
-                }
-                catch (MissingMigrationsException)
-                {
-                    // ignored
-                }
+                runner.MigrateDown(0);
+                ((MigrationRunner)runner).VersionLoader.RemoveVersionTable();
             }
-            catch (Exception)
+            catch (MissingMigrationsException)
             {
-                // Ignore
+                // ignored
             }
-
-            var versionSetting = await _settingService.GetSettingAsync(PluginDefaults.ASSEMBLY_VERSION_KEY);
-            if (versionSetting != null)
-            {
-                await _settingService.DeleteSettingAsync(versionSetting);
-            }
-
-            await base.UninstallAsync();
         }
-
-        public bool HideInWidgetList => true;
-
-        public Task<IList<string>> GetWidgetZonesAsync()
+        catch (Exception)
         {
-            return Task.FromResult<IList<string>>(
-                new List<string>
-                {
-                    PublicWidgetZones.OrderDetailsPageOverview,
-                    AdminWidgetZones.OrderSettingsDetailsBlock
-                });
+            // Ignore
         }
 
-        public Type GetWidgetViewComponent(string widgetZone)
+        var versionSetting = await _settingService.GetSettingAsync(PluginDefaults.ASSEMBLY_VERSION_KEY);
+        if (versionSetting != null)
         {
-            if (widgetZone == null)
-                throw new ArgumentNullException(nameof(widgetZone));
-
-            if (widgetZone == PublicWidgetZones.OrderDetailsPageOverview)
-            {
-                return typeof(WidgetsOrderDetailsPageOverview);
-            }
-
-            if (widgetZone == AdminWidgetZones.OrderSettingsDetailsBlock)
-            {
-                return typeof(WidgetsOrderSettingsDetailsBlock);
-            }
-
-            return null;
+            await _settingService.DeleteSettingAsync(versionSetting);
         }
+
+        await base.UninstallAsync();
+    }
+
+    public bool HideInWidgetList => true;
+
+    public Task<IList<string>> GetWidgetZonesAsync()
+    {
+        return Task.FromResult<IList<string>>(
+            new List<string>
+            {
+                PublicWidgetZones.OrderDetailsPageOverview,
+                AdminWidgetZones.OrderSettingsDetailsBlock,
+                AdminWidgetZones.PluginDetailsBottom
+            });
+    }
+
+    public Type GetWidgetViewComponent(string widgetZone)
+    {
+        if (widgetZone == null)
+            throw new ArgumentNullException(nameof(widgetZone));
+
+        if (widgetZone == PublicWidgetZones.OrderDetailsPageOverview)
+        {
+            return typeof(WidgetsOrderDetailsPageOverview);
+        }
+
+        if (widgetZone == AdminWidgetZones.OrderSettingsDetailsBlock)
+        {
+            return typeof(WidgetsOrderSettingsDetailsBlock);
+        }
+
+        if (widgetZone == AdminWidgetZones.PluginDetailsBottom)
+        {
+            return typeof(WidgetsCancelPendingOrderRequestsModifiedLocaleResourcesDataTableBlock);
+        }
+
+        return null;
     }
 }

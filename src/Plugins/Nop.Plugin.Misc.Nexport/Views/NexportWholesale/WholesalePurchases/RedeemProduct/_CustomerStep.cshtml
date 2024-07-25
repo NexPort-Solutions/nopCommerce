@@ -1,0 +1,176 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using Nop.Plugin.Misc.Nexport.Models.NexportWholesale
+@inject NexportSettings NexportSettings
+@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct.CustomerStepModel
+@{
+    Uri.TryCreate(new Uri(NexportSettings.Url.TrimEnd('/')), $"Account/Info.nex?user=",
+        out var userInfoUrl);
+
+    string? userLinkUri = userInfoUrl != null ? userInfoUrl.AbsoluteUri : "";
+}
+<div class="section">
+    <label>@T("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.SearchHeader")</label>
+</div>
+<div class="form-group row section">
+    <div class="col-sm-4">
+        <nop-label asp-for="SearchEmail" />
+    </div>
+    <div class="col-sm-4">
+        <nop-editor asp-for="SearchEmail" />
+
+    </div>
+    <div class="col-sm-2">
+        <button id="search-nexport-users" class="button-1" type="button" onclick="SearchClicked()">search</button>
+    </div>
+</div>
+<div class="section" id="search-table-div" style="display: none">
+    <div id="matching-users-grid_processing" class="dataTables_processing" style="display: none;">Loading...</div>
+    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new DataTablesModel
+    {
+        Name = "matching-users-grid",
+        UrlRead = new DataUrl(Url.Action("GetMatchingUsers", "NexportWholesale")),
+        Length = Model.PageSize,
+        LengthMenu = Model.AvailablePageSizes,
+        SearchButtonId = "search-nexport-users",
+        HeaderCallback = "headerCallback",
+        Filters = new List<FilterParameter>
+        {
+            new FilterParameter(nameof(Model.SearchEmail)),
+            new FilterParameter(nameof(Model.TableFirstDraw))
+        },
+        ColumnCollection = new List<ColumnProperty>
+        {
+            new ColumnProperty(nameof(NexportUserModel.UserId))
+            {
+                Encode = false,
+                Render = new RenderCustom("RenderRadio")
+            },
+            new ColumnProperty(nameof(NexportUserModel.FirstName))
+            {
+                Title = "Name",
+                Encode = false,
+                Render = new RenderCustom("RenderName")
+            },
+            new ColumnProperty(nameof(NexportUserModel.Email))
+            {
+                Title = "Email",
+                Encode = false
+            },
+            new ColumnProperty(nameof(NexportUserModel.OwnerOrg))
+            {
+                Title = "Owner Org",
+                Encode = false,
+                Render = new RenderCustom("RenderOrgName")
+            }
+        }
+    })
+    <input asp-for="TableFirstDraw" type="hidden"/>
+    <input type="hidden" asp-for="SelectedUserId"/>
+    <input type="hidden" asp-for="SelectedUserEmailAddress"/>
+    <input type="hidden" asp-for="SelectedUserFirstName"/>
+    <input type="hidden" asp-for="SelectedUserLastName"/>
+</div>
+<div class="section">
+    <span asp-validation-for="SelectedUserId"></span>
+    <label>Or</label>
+</div>
+<div id="via-email-div">
+    <div class="section">
+        <label>@T("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.EnterNewHeader")</label>
+    </div>
+    <div class="form-group row section">
+        <div class="col-sm-4">
+            <nop-label asp-for="Email" />
+        </div>
+        <div class="col-sm-4">
+            <nop-editor asp-for="Email"/>
+            <span asp-validation-for="Email"></span>
+        </div>
+    </div>
+    <div class="form-group row section">
+        <div class="col-sm-4">
+            <nop-label asp-for="FirstName" />
+        </div>
+        <div class="col-sm-4">
+            <nop-editor asp-for="FirstName" />
+            <span asp-validation-for="FirstName"></span>
+        </div>
+    </div>
+    <div class="form-group row section">
+        <div class="col-sm-4">
+            <nop-label asp-for="LastName" />
+        </div>
+        <div class="col-sm-4">
+            <nop-editor asp-for="LastName" />
+            <span asp-validation-for="LastName"></span>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+            $("#Email").on("blur",function(){
+                if($("#Email").val().length>0)
+                {
+                    $("input[name=select-nexport-user]:checked").prop("checked",false);
+                    SetInputValsForSelectedRadio(null, null, null, null);
+                }
+                $('#Email').valid()
+            })
+            $("#FirstName").on("blur",function(){
+            $('#FirstName').valid()
+            })
+            $("#LastName").on("blur", function () {
+                $('#LastName').valid()
+            })
+        });
+    function SearchClicked(){
+
+        if ($("#TableFirstDraw").val() == "True") {
+            $("#TableFirstDraw").val("False");
+        }
+
+        if ($("#search-table-div").css("display") == "none") {
+            $("#search-table-div").css("display", "initial")
+        }
+    }
+    function SelectedUserClicked(radio) {
+        if (radio.checked) {
+            SetInputValsForSelectedRadio(radio.dataset.userId, radio.dataset.firstName, radio.dataset.lastName, radio.dataset.emailAddress);
+            $(".field-validation-error").empty();
+            $("#Email").val("");
+            $("#FirstName").val("");
+            $("#LastName").val("");
+        }
+    }
+    function SetInputValsForSelectedRadio(userId,firstName,lastName,emailAddress)
+    {
+        $("#SelectedUserId").val(userId);
+        $("#SelectedUserFirstName").val(firstName);
+        $("#SelectedUserLastName").val(lastName);
+        $("#SelectedUserEmailAddress").val(emailAddress);
+    }
+    function RenderName(data, type, row, meta) {
+        if ("@userLinkUri".includes("Account/Info.nex?user=")) {
+            return "<a title=\"Nexport user id:" + row.UserId + "\" target=\"_blank\" href=\"" + "@(userLinkUri)" + row.UserId + "\">" + row.FirstName + " " + row.LastName + "</a>";
+        }
+
+        return "<a title=\"Nexport user id:" + row.UserId + "\" >" + row.FirstName + " " + row.LastName + "</a>";
+    }
+    function RenderOrgName(data, type, row, meta){
+        return "<span title=\""+row.OwnerOrgShortName+"\" style=\"cursor:pointer\">"+row.OwnerOrg+"</span>"
+    }
+    function RenderRadio(data, type, row, meta) {
+        return "<input type=\"radio\" name=\"select-nexport-user\" onclick=\"SelectedUserClicked(this)\" data-control=\"nexport-user-selection\" data-user-id=\"" + row.UserId + "\" data-first-name=\"" + row.FirstName + "\" data-last-name=\"" + row.LastName + "\" data-email-address=\"" + row.Email + "\">";
+    }
+    function headerCallback(tfoot, data, start, end, display){
+        if($("#TableFirstDraw").val()=="False")
+        {
+            SetInputValsForSelectedRadio(null, null, null, null);
+
+            if ($("#search-table-div").css("display") == "none") {
+                $("#search-table-div").css("display", "initial")
+            }
+        }
+    }
+
+</script>

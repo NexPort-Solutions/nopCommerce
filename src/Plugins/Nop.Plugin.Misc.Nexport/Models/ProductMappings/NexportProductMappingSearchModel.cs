@@ -3,16 +3,15 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
-namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings
+namespace Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+
+public record NexportProductMappingSearchModel : BaseSearchModel
 {
-    public record NexportProductMappingSearchModel : BaseSearchModel
-    {
-        [NopResourceDisplayName("Admin.Catalog.Products.List.SearchProductName")]
-        public string SearchProductName { get; set; }
+    [NopResourceDisplayName("Admin.Catalog.Products.List.SearchProductName")]
+    public string SearchProductName { get; set; }
 
-        [NopResourceDisplayName("Admin.Catalog.Products.List.SearchStore")]
-        public int SearchStoreId { get; set; }
+    [NopResourceDisplayName("Admin.Catalog.Products.List.SearchStore")]
+    public int SearchStoreId { get; set; }
 
-        public IList<SelectListItem> AvailableStores { get; set; } = new List<SelectListItem>();
-    }
+    public IList<SelectListItem> AvailableStores { get; set; } = new List<SelectListItem>();
 }

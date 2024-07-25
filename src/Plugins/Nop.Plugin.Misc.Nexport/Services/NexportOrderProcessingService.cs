@@ -27,165 +27,164 @@ using Nop.Services.Stores;
 using Nop.Services.Tax;
 using Nop.Services.Vendors;
 
-namespace Nop.Plugin.Misc.Nexport.Services
+namespace Nop.Plugin.Misc.Nexport.Services;
+
+public class NexportOrderProcessingService : OrderProcessingService
 {
-    public class NexportOrderProcessingService : OrderProcessingService
+    private readonly IOrderService _orderService;
+    private readonly OrderSettings _orderSettings;
+    private readonly NexportService _nexportService;
+
+    #region Constructor
+
+    public NexportOrderProcessingService(CurrencySettings currencySettings,
+        IAddressService addressService,
+        IAffiliateService affiliateService,
+        ICheckoutAttributeFormatter checkoutAttributeFormatter,
+        ICountryService countryService,
+        ICurrencyService currencyService,
+        ICustomerActivityService customerActivityService,
+        ICustomerService customerService,
+        ICustomNumberFormatter customNumberFormatter,
+        IDiscountService discountService,
+        IEncryptionService encryptionService,
+        IEventPublisher eventPublisher,
+        IGenericAttributeService genericAttributeService,
+        IGiftCardService giftCardService,
+        ILanguageService languageService,
+        ILocalizationService localizationService,
+        ILogger logger,
+        IOrderService orderService,
+        IOrderTotalCalculationService orderTotalCalculationService,
+        IPaymentPluginManager paymentPluginManager,
+        IPaymentService paymentService,
+        IPdfService pdfService,
+        IPriceCalculationService priceCalculationService,
+        IPriceFormatter priceFormatter,
+        IProductAttributeFormatter productAttributeFormatter,
+        IProductAttributeParser productAttributeParser,
+        IProductService productService,
+        IReturnRequestService returnRequestService,
+        IRewardPointService rewardPointService,
+        IShipmentService shipmentService,
+        IShippingService shippingService,
+        IShoppingCartService shoppingCartService,
+        IStateProvinceService stateProvinceService,
+        IStoreService storeService,
+        ITaxService taxService,
+        IVendorService vendorService,
+        IWebHelper webHelper,
+        IWorkContext workContext,
+        IWorkflowMessageService workflowMessageService,
+        LocalizationSettings localizationSettings,
+        OrderSettings orderSettings,
+        PaymentSettings paymentSettings,
+        RewardPointsSettings rewardPointsSettings,
+        ShippingSettings shippingSettings,
+        TaxSettings taxSettings,
+        NexportService nexportService) :
+        base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter,
+            countryService, currencyService, customerActivityService, customerService,
+            customNumberFormatter, discountService, encryptionService, eventPublisher,
+            genericAttributeService, giftCardService, languageService, localizationService,
+            logger, orderService, orderTotalCalculationService, paymentPluginManager, paymentService,
+            pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser, productService,
+            returnRequestService, rewardPointService, shipmentService, shippingService, shoppingCartService,
+            stateProvinceService, storeService, taxService, vendorService, webHelper, workContext, workflowMessageService,
+            localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
     {
-        private readonly IOrderService _orderService;
-        private readonly OrderSettings _orderSettings;
-        private readonly NexportService _nexportService;
+        _orderService = orderService;
+        _orderSettings = orderSettings;
+        _nexportService = nexportService;
+    }
 
-        #region Constructor
+    #endregion
 
-        public NexportOrderProcessingService(CurrencySettings currencySettings,
-            IAddressService addressService,
-            IAffiliateService affiliateService,
-            ICheckoutAttributeFormatter checkoutAttributeFormatter,
-            ICountryService countryService,
-            ICurrencyService currencyService,
-            ICustomerActivityService customerActivityService,
-            ICustomerService customerService,
-            ICustomNumberFormatter customNumberFormatter,
-            IDiscountService discountService,
-            IEncryptionService encryptionService,
-            IEventPublisher eventPublisher,
-            IGenericAttributeService genericAttributeService,
-            IGiftCardService giftCardService,
-            ILanguageService languageService,
-            ILocalizationService localizationService,
-            ILogger logger,
-            IOrderService orderService,
-            IOrderTotalCalculationService orderTotalCalculationService,
-            IPaymentPluginManager paymentPluginManager,
-            IPaymentService paymentService,
-            IPdfService pdfService,
-            IPriceCalculationService priceCalculationService,
-            IPriceFormatter priceFormatter,
-            IProductAttributeFormatter productAttributeFormatter,
-            IProductAttributeParser productAttributeParser,
-            IProductService productService,
-            IReturnRequestService returnRequestService,
-            IRewardPointService rewardPointService,
-            IShipmentService shipmentService,
-            IShippingService shippingService,
-            IShoppingCartService shoppingCartService,
-            IStateProvinceService stateProvinceService,
-            IStoreService storeService,
-            ITaxService taxService,
-            IVendorService vendorService,
-            IWebHelper webHelper,
-            IWorkContext workContext,
-            IWorkflowMessageService workflowMessageService,
-            LocalizationSettings localizationSettings,
-            OrderSettings orderSettings,
-            PaymentSettings paymentSettings,
-            RewardPointsSettings rewardPointsSettings,
-            ShippingSettings shippingSettings,
-            TaxSettings taxSettings,
-            NexportService nexportService) :
-            base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter,
-                countryService, currencyService, customerActivityService, customerService,
-                customNumberFormatter, discountService, encryptionService, eventPublisher,
-                genericAttributeService, giftCardService, languageService, localizationService,
-                logger, orderService, orderTotalCalculationService, paymentPluginManager, paymentService,
-                pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser, productService,
-                returnRequestService, rewardPointService, shipmentService, shippingService, shoppingCartService,
-                stateProvinceService, storeService, taxService, vendorService, webHelper, workContext, workflowMessageService,
-                localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
+    /// <summary>
+    /// Check and set the order status.
+    /// This will validate the order status based on the payment and shipping status of the order, then it will set the status according to the algorithm.
+    /// If the order has any item that has Nexport mapping and is being processed by the scheduled task, then the status will not be set to complete.
+    /// </summary>
+    /// <param name="order">The order</param>
+    public override async Task CheckOrderStatusAsync(Order order)
+    {
+        if (order == null)
+            throw new ArgumentNullException(nameof(order));
+
+        if (order.PaymentStatus == PaymentStatus.Paid && !order.PaidDateUtc.HasValue)
         {
-            _orderService = orderService;
-            _orderSettings = orderSettings;
-            _nexportService = nexportService;
+            // Ensure that paid date is set
+            order.PaidDateUtc = DateTime.UtcNow;
+            await _orderService.UpdateOrderAsync(order);
         }
 
-        #endregion
-
-        /// <summary>
-        /// Check and set the order status.
-        /// This will validate the order status based on the payment and shipping status of the order, then it will set the status according to the algorithm.
-        /// If the order has any item that has Nexport mapping and is being processed by the scheduled task, then the status will not be set to complete.
-        /// </summary>
-        /// <param name="order">The order</param>
-        public override async Task CheckOrderStatusAsync(Order order)
+        switch (order.OrderStatus)
         {
-            if (order == null)
-                throw new ArgumentNullException(nameof(order));
+            case OrderStatus.Pending:
+                if (order.PaymentStatus == PaymentStatus.Authorized ||
+                    order.PaymentStatus == PaymentStatus.Paid)
+                {
+                    await SetOrderStatusAsync(order, OrderStatus.Processing, false);
+                }
 
-            if (order.PaymentStatus == PaymentStatus.Paid && !order.PaidDateUtc.HasValue)
-            {
-                // Ensure that paid date is set
-                order.PaidDateUtc = DateTime.UtcNow;
-                await _orderService.UpdateOrderAsync(order);
-            }
+                if (order.ShippingStatus == ShippingStatus.PartiallyShipped ||
+                    order.ShippingStatus == ShippingStatus.Shipped ||
+                    order.ShippingStatus == ShippingStatus.Delivered)
+                {
+                    await SetOrderStatusAsync(order, OrderStatus.Processing, false);
+                }
 
-            switch (order.OrderStatus)
-            {
-                case OrderStatus.Pending:
-                    if (order.PaymentStatus == PaymentStatus.Authorized ||
-                        order.PaymentStatus == PaymentStatus.Paid)
-                    {
-                        await SetOrderStatusAsync(order, OrderStatus.Processing, false);
-                    }
-
-                    if (order.ShippingStatus == ShippingStatus.PartiallyShipped ||
-                        order.ShippingStatus == ShippingStatus.Shipped ||
-                        order.ShippingStatus == ShippingStatus.Delivered)
-                    {
-                        await SetOrderStatusAsync(order, OrderStatus.Processing, false);
-                    }
-
-                    break;
-                // Is order complete?
-                case OrderStatus.Cancelled:
-                case OrderStatus.Complete:
-                    return;
-            }
-
-            if (order.PaymentStatus != PaymentStatus.Paid)
+                break;
+            // Is order complete?
+            case OrderStatus.Cancelled:
+            case OrderStatus.Complete:
                 return;
+        }
 
-            bool completed;
+        if (order.PaymentStatus != PaymentStatus.Paid)
+            return;
 
-            if (order.ShippingStatus == ShippingStatus.ShippingNotRequired)
+        bool completed;
+
+        if (order.ShippingStatus == ShippingStatus.ShippingNotRequired)
+        {
+            // Shipping is not required
+            completed = true;
+        }
+        else
+        {
+            // Shipping is required
+            if (_orderSettings.CompleteOrderWhenDelivered)
             {
-                // Shipping is not required
-                completed = true;
+                completed = order.ShippingStatus == ShippingStatus.Delivered;
             }
             else
             {
-                // Shipping is required
-                if (_orderSettings.CompleteOrderWhenDelivered)
-                {
-                    completed = order.ShippingStatus == ShippingStatus.Delivered;
-                }
-                else
-                {
-                    completed = order.ShippingStatus == ShippingStatus.Shipped ||
-                                order.ShippingStatus == ShippingStatus.Delivered;
-                }
+                completed = order.ShippingStatus == ShippingStatus.Shipped ||
+                            order.ShippingStatus == ShippingStatus.Delivered;
             }
+        }
 
-            var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
+        var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
 
-            // Check if the order has any item that has Nexport mapping
-            var hasAnyNexportProduct = await orderItems
-                .SelectAwait(async item => await _nexportService.GetProductMappingByNopProductId(item.ProductId))
-                .AnyAsync(productMapping => productMapping != null);
+        // Check if the order has any item that has Nexport mapping
+        var hasAnyNexportProduct = await orderItems
+            .SelectAwait(async item => await _nexportService.GetProductMappingByNopProductId(item.ProductId))
+            .AnyAsync(productMapping => productMapping != null);
 
-            // If the order contains Nexport product and is being processed, then do not set the status to complete
-            if (hasAnyNexportProduct)
+        // If the order contains Nexport product and is being processed, then do not set the status to complete
+        if (hasAnyNexportProduct)
+        {
+            if (await _nexportService.HasNexportOrderProcessingQueueItem(order.Id) ||
+                (await _nexportService.GetNexportOrderInvoiceItems(order.Id, true)).Any())
             {
-                if (await _nexportService.HasNexportOrderProcessingQueueItem(order.Id) ||
-                    (await _nexportService.GetNexportOrderInvoiceItems(order.Id, true)).Any())
-                {
-                    completed = false;
-                }
+                completed = false;
             }
+        }
 
-            if (completed)
-            {
-                await SetOrderStatusAsync(order, OrderStatus.Complete, true);
-            }
+        if (completed)
+        {
+            await SetOrderStatusAsync(order, OrderStatus.Complete, true);
         }
     }
 }

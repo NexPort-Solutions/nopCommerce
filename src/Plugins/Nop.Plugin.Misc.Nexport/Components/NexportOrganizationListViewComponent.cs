@@ -8,25 +8,25 @@ using Nop.Plugin.Misc.Nexport.Models.Organization;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Messages;
 
-namespace Nop.Plugin.Misc.Nexport.Components
-{
-    public class NexportOrganizationListViewComponent : NopViewComponent
-    {
-        private readonly NexportService _nexportService;
-        private readonly INotificationService _notificationService;
-        private readonly ILogger _logger;
+namespace Nop.Plugin.Misc.Nexport.Components;
 
-        public NexportOrganizationListViewComponent(NexportService nexportService,
-            INotificationService notificationService,
-            ILogger logger)
-        {
+public class NexportOrganizationListViewComponent : NopViewComponent
+{
+    private readonly NexportService _nexportService;
+    private readonly INotificationService _notificationService;
+    private readonly ILogger _logger;
+
+    public NexportOrganizationListViewComponent(NexportService nexportService,
+        INotificationService notificationService,
+        ILogger logger)
+    {
             _nexportService = nexportService;
             _notificationService = notificationService;
             _logger = logger;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync()
-        {
+    public async Task<IViewComponentResult> InvokeAsync()
+    {
             try
             {
                 var model = new NexportOrganizationListModel
@@ -54,5 +54,4 @@ namespace Nop.Plugin.Misc.Nexport.Components
                 return Content("");
             }
         }
-    }
 }

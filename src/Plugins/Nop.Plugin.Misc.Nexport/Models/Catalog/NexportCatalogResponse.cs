@@ -2,10 +2,9 @@
 using NexportApi.Model;
 using Nop.Plugin.Misc.Nexport.Models.Api;
 
-namespace Nop.Plugin.Misc.Nexport.Models.Catalog
+namespace Nop.Plugin.Misc.Nexport.Models.Catalog;
+
+public class NexportCatalogResponse : NexportApiResponseBase
 {
-    public class NexportCatalogResponse : NexportApiResponseBase
-    {
-        public List<CatalogResponseItem> CatalogList { get; set; }
-    }
+    public List<CatalogResponseItem> CatalogList { get; set; }
 }

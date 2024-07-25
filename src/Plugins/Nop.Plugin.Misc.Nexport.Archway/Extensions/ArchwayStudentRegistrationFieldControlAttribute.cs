@@ -1,15 +1,14 @@
 ﻿using System;
 
-namespace Nop.Plugin.Misc.Nexport.Archway.Extensions
-{
-    [AttributeUsage(AttributeTargets.Property, Inherited = false)]
-    public class ArchwayStudentRegistrationFieldControlAttribute : Attribute
-    {
-        public ArchwayStudentRegistrationFieldControlAttribute(string controlName)
-        {
-            ControlName = controlName;
-        }
+namespace Nop.Plugin.Misc.Nexport.Archway.Extensions;
 
-        public string ControlName { get; set; }
+[AttributeUsage(AttributeTargets.Property, Inherited = false)]
+public class ArchwayStudentRegistrationFieldControlAttribute : Attribute
+{
+    public ArchwayStudentRegistrationFieldControlAttribute(string controlName)
+    {
+        ControlName = controlName;
     }
+
+    public string ControlName { get; set; }
 }

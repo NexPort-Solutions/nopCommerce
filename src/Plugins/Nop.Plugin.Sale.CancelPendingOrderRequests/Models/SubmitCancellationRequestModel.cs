@@ -2,20 +2,19 @@
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
-namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Models
+namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
+
+public record SubmitCancellationRequestModel : BaseNopModel
 {
-    public record SubmitCancellationRequestModel : BaseNopModel
-    {
-        public int OrderId { get; set; }
+    public int OrderId { get; set; }
 
-        [NopResourceDisplayName("CancellationRequests.CancelReason")]
-        public int CancellationRequestReasonId { get; set; }
+    [NopResourceDisplayName("CancellationRequests.CancelReason")]
+    public int CancellationRequestReasonId { get; set; }
 
-        public IList<PendingOrderCancellationRequestReasonModel> AvailableCancelReasons { get; set; } = new List<PendingOrderCancellationRequestReasonModel>();
+    public IList<PendingOrderCancellationRequestReasonModel> AvailableCancelReasons { get; set; } = new List<PendingOrderCancellationRequestReasonModel>();
 
-        [NopResourceDisplayName("CancellationRequests.Comments")]
-        public string Comments { get; set; }
+    [NopResourceDisplayName("CancellationRequests.Comments")]
+    public string Comments { get; set; }
 
-        public string Result { get; set; }
-    }
+    public string Result { get; set; }
 }

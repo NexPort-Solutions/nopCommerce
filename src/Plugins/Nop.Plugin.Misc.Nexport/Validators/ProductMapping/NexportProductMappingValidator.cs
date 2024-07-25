@@ -2,12 +2,12 @@
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Web.Framework.Validators;
 
-namespace Nop.Plugin.Misc.Nexport.Validators.ProductMapping
+namespace Nop.Plugin.Misc.Nexport.Validators.ProductMapping;
+
+public class NexportProductMappingValidator : BaseNopValidator<NexportProductMappingModel>
 {
-    public class NexportProductMappingValidator : BaseNopValidator<NexportProductMappingModel>
+    public NexportProductMappingValidator()
     {
-        public NexportProductMappingValidator()
-        {
             RuleFor(x => x.RenewalDuration)
                 .NotEmpty()
                 .When(x => x.AllowExtension)
@@ -21,5 +21,4 @@ namespace Nop.Plugin.Misc.Nexport.Validators.ProductMapping
                 .When(x => x.AllowExtension && x.ExtensionPurchaseLimit.HasValue)
                 .WithMessage("Extension purchase limit value must be greater than 0.");
         }
-    }
 }

@@ -10,51 +10,50 @@ using Nop.Web.Framework.Components;
 using Nop.Web.Models.Order;
 using Nop.Plugin.Misc.Nexport.Services;
 
-namespace Nop.Plugin.Misc.Nexport.Components
+namespace Nop.Plugin.Misc.Nexport.Components;
+
+[ViewComponent(Name = "WidgetsNexportOrderDetailsProductLine")]
+public class WidgetsNexportOrderDetailsProductLine : NopViewComponent
 {
-    [ViewComponent(Name = "WidgetsNexportOrderDetailsProductLine")]
-    public class WidgetsNexportOrderDetailsProductLine : NopViewComponent
+    private readonly IStoreContext _storeContext;
+    private readonly IStaticCacheManager _cacheManager;
+    private readonly ISettingService _settingService;
+    private readonly IStoreModelFactory _storeModelFactory;
+    private readonly IProductModelFactory _productModelFactory;
+    private readonly IOrderService _orderService;
+    private readonly NexportService _nexportService;
+
+    public WidgetsNexportOrderDetailsProductLine(
+        NexportService nexportService,
+        IProductModelFactory productModelFactory,
+        IStoreModelFactory storeModelFactory,
+        IStoreContext storeContext,
+        IStaticCacheManager cacheManager,
+        ISettingService settingService,
+        IOrderService orderService)
     {
-        private readonly IStoreContext _storeContext;
-        private readonly IStaticCacheManager _cacheManager;
-        private readonly ISettingService _settingService;
-        private readonly IStoreModelFactory _storeModelFactory;
-        private readonly IProductModelFactory _productModelFactory;
-        private readonly IOrderService _orderService;
-        private readonly NexportService _nexportService;
+        _nexportService = nexportService;
+        _productModelFactory = productModelFactory;
+        _storeModelFactory = storeModelFactory;
+        _storeContext = storeContext;
+        _cacheManager = cacheManager;
+        _settingService = settingService;
+        _orderService = orderService;
+    }
 
-        public WidgetsNexportOrderDetailsProductLine(
-            NexportService nexportService,
-            IProductModelFactory productModelFactory,
-            IStoreModelFactory storeModelFactory,
-            IStoreContext storeContext,
-            IStaticCacheManager cacheManager,
-            ISettingService settingService,
-            IOrderService orderService)
-        {
-            _nexportService = nexportService;
-            _productModelFactory = productModelFactory;
-            _storeModelFactory = storeModelFactory;
-            _storeContext = storeContext;
-            _cacheManager = cacheManager;
-            _settingService = settingService;
-            _orderService = orderService;
-        }
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
+        var model = (OrderDetailsModel.OrderItemModel)additionalData;
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
-            var model = (OrderDetailsModel.OrderItemModel)additionalData;
+        var orderItem = await _orderService.GetOrderItemByGuidAsync(model.OrderItemGuid);
+        if (orderItem == null)
+            return Content("");
 
-            var orderItem = await _orderService.GetOrderItemByGuidAsync(model.OrderItemGuid);
-            if (orderItem == null)
-                return Content("");
+        var order = await _orderService.GetOrderByIdAsync(orderItem.OrderId);
 
-            var order = await _orderService.GetOrderByIdAsync(orderItem.OrderId);
+        if (order is not { OrderStatus: OrderStatus.Complete })
+            return Content("");
 
-            if (order == null || order.OrderStatus != OrderStatus.Complete)
-                return Content("");
-
-            return View("~/Plugins/Misc.Nexport/Views/Widget/Order/NexportOrderDetailsProductLine.cshtml", model);
-        }
+        return View("~/Plugins/Misc.Nexport/Views/Widget/Order/NexportOrderDetailsProductLine.cshtml", model);
     }
 }

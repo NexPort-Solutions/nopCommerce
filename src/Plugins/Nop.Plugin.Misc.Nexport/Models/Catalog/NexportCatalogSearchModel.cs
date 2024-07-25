@@ -2,20 +2,19 @@
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.Catalog
+namespace Nop.Plugin.Misc.Nexport.Models.Catalog;
+
+public record NexportCatalogSearchModel : BaseSearchModel
 {
-    public record NexportCatalogSearchModel : BaseSearchModel
+    public NexportCatalogSearchModel()
     {
-        public NexportCatalogSearchModel()
-        {
             NexportSyllabusListSearch = new NexportSyllabusListSearchModel();
             SetGridPageSize();
         }
 
-        public Guid? OrgId { get; set; }
+    public Guid? OrgId { get; set; }
 
-        public int NopProductId { get; set; }
+    public int NopProductId { get; set; }
 
-        public NexportSyllabusListSearchModel NexportSyllabusListSearch { get; set; }
-    }
+    public NexportSyllabusListSearchModel NexportSyllabusListSearch { get; set; }
 }

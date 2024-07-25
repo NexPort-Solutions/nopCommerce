@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <None Remove="Areas\Admin\Views\Customer\CustomRegistrationFieldDetails.cshtml" />
+    <None Remove="Areas\Admin\Views\Widget\Plugin\ArchwayModifiedLocaleResources.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewImports.cshtml" />
     <None Remove="logo.jpg" />
     <None Remove="plugin.json" />
@@ -28,7 +29,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nop.Plugin.Misc.Nexport\Nop.Plugin.Misc.Nexport.csproj">
-      <Private>False</Private>
+      <Private>false</Private>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
     </ProjectReference>
     <ProjectReference Include="..\..\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />
     <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj" />
@@ -37,6 +39,9 @@
 
   <ItemGroup>
     <Content Include="Areas\Admin\Views\Customer\CustomRegistrationFieldDetails.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Widget\Plugin\ArchwayModifiedLocaleResources.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\_ViewImports.cshtml">

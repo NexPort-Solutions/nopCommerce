@@ -1,0 +1,35 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.NexportRedemptionUnassignmentRequestReasonModel
+
+@{
+    ViewBag.Title = T("RedemptionUnassignmentRequestReasons.AddNew").Text;
+    NopHtml.SetActiveMenuItemSystemName("UnassignmentRequestReasons");
+}
+
+<form asp-controller="NexportWholesale" asp-action="UnassignmentRequestReasonCreate" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("RedemptionUnassignmentRequestReasons.AddNew")
+            <small>
+                <i class="fas fa-arrow-circle-left"></i>
+                <a asp-controller="NexportWholesale" asp-action="UnassignmentRequestReasonsList">
+                    @T("RedemptionUnassignmentRequestReasons.BackToList")
+                </a>
+            </small>
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.Save")
+            </button>
+            <button type="submit" name="save-continue" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.SaveContinue")
+            </button>
+        </div>
+    </div>
+    <div class="content">
+        <div class="form-horizontal">
+            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/_CreateOrUpdate.RedemptionUnassignmentRequestReason.cshtml", Model)
+        </div>
+    </div>
+</form>

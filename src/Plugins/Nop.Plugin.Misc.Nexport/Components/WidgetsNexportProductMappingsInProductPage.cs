@@ -9,45 +9,44 @@ using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Security;
 
-namespace Nop.Plugin.Misc.Nexport.Components
+namespace Nop.Plugin.Misc.Nexport.Components;
+
+[ViewComponent(Name = "WidgetsNexportProductMappingsInProductPage")]
+public class WidgetsNexportProductMappingsInProductPage : NopViewComponent
 {
-    [ViewComponent(Name = "WidgetsNexportProductMappingsInProductPage")]
-    public class WidgetsNexportProductMappingsInProductPage : NopViewComponent
-    {
-        private readonly NexportSettings _nexportSettings;
-        private readonly IStaticCacheManager _cacheManager;
-        private readonly NexportService _nexportService;
-        private readonly IPermissionService _permissionService;
-        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+    private readonly NexportSettings _nexportSettings;
+    private readonly IStaticCacheManager _cacheManager;
+    private readonly NexportService _nexportService;
+    private readonly IPermissionService _permissionService;
+    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
 
-        public WidgetsNexportProductMappingsInProductPage(
-            NexportSettings nexportSettings,
-            NexportService nexportService,
-            IStaticCacheManager cacheManager,
-            IPermissionService permissionService,
+    public WidgetsNexportProductMappingsInProductPage(
+        NexportSettings nexportSettings,
+        NexportService nexportService,
+        IStaticCacheManager cacheManager,
+        IPermissionService permissionService,
         INexportPluginModelFactory nexportPluginModelFactory)
-        {
-            _nexportSettings = nexportSettings;
-            _nexportService = nexportService;
-            _cacheManager = cacheManager;
-            _permissionService = permissionService;
-            _nexportPluginModelFactory = nexportPluginModelFactory;
-        }
+    {
+        _nexportSettings = nexportSettings;
+        _nexportService = nexportService;
+        _cacheManager = cacheManager;
+        _permissionService = permissionService;
+        _nexportPluginModelFactory = nexportPluginModelFactory;
+    }
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
-            if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
-                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
-                return Content("");
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
+        if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
+            return Content("");
 
-            var productModel = (ProductModel)additionalData;
+        var productModel = (ProductModel)additionalData;
 
-            if (productModel == null || productModel.Id < 1)
-                return Content("");
+        if (productModel == null || productModel.Id < 1)
+            return Content("");
 
-            var model = await _nexportPluginModelFactory.PrepareNexportProductMappingListSearchModelAsync(new NexportProductMappingListSearchModel(), productModel);
+        var model = await _nexportPluginModelFactory.PrepareNexportProductMappingListSearchModelAsync(new NexportProductMappingListSearchModel(), productModel);
 
-            return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductMappingsInProductPage.cshtml", model);
-        }
+        return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductMappingsInProductPage.cshtml", model);
     }
 }

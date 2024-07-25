@@ -1,11 +1,10 @@
 ﻿using Nop.Core;
 
-namespace Nop.Plugin.Misc.Nexport.Archway.Domains
-{
-    public class ArchwayStudentRegistrationFieldKeyMapping : BaseEntity
-    {
-        public string FieldControlName { get; set; }
+namespace Nop.Plugin.Misc.Nexport.Archway.Domains;
 
-        public string FieldKey { get; set; }
-    }
+public class ArchwayStudentRegistrationFieldKeyMapping : BaseEntity
+{
+    public string FieldControlName { get; set; }
+
+    public string FieldKey { get; set; }
 }

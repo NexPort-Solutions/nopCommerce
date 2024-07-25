@@ -1,27 +1,28 @@
 ﻿using AutoMapper;
+using Nop.Core.Domain.Localization;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
+using Nop.Web.Areas.Admin.Models.Localization;
 
-namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure
+namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure;
+
+public class PluginMapperConfiguration : Profile, IOrderedMapperProfile
 {
-    public class PluginMapperConfiguration : Profile, IOrderedMapperProfile
+    public PluginMapperConfiguration()
     {
-        public PluginMapperConfiguration()
-        {
-            CreatePluginAdminMaps();
-        }
-
-        protected void CreatePluginAdminMaps()
-        {
-            CreateMap<PendingOrderCancellationRequest, PendingOrderCancellationRequestModel>()
-                .ForMember(model => model.CustomerInfo, opts => opts.Ignore());
-            CreateMap<PendingOrderCancellationRequestModel, PendingOrderCancellationRequest>();
-
-            CreateMap<PendingOrderCancellationRequestReason, PendingOrderCancellationRequestReasonModel>();
-            CreateMap<PendingOrderCancellationRequestReasonModel, PendingOrderCancellationRequestReason>();
-        }
-
-        public int Order => 1;
+        CreatePluginAdminMaps();
     }
+
+    protected void CreatePluginAdminMaps()
+    {
+        CreateMap<PendingOrderCancellationRequest, PendingOrderCancellationRequestModel>()
+            .ForMember(model => model.CustomerInfo, opts => opts.Ignore());
+        CreateMap<PendingOrderCancellationRequestModel, PendingOrderCancellationRequest>();
+
+        CreateMap<PendingOrderCancellationRequestReason, PendingOrderCancellationRequestReasonModel>();
+        CreateMap<PendingOrderCancellationRequestReasonModel, PendingOrderCancellationRequestReason>();
+    }
+
+    public int Order => 1;
 }

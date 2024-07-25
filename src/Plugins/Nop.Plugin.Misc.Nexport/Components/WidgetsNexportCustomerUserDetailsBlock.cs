@@ -5,32 +5,31 @@ using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Web.Areas.Admin.Models.Settings;
 using Nop.Web.Framework.Components;
 
-namespace Nop.Plugin.Misc.Nexport.Components
+namespace Nop.Plugin.Misc.Nexport.Components;
+
+[ViewComponent(Name = "WidgetsNexportCustomerUserDetailsBlock")]
+public class WidgetsNexportCustomerUserDetailsBlock : NopViewComponent
 {
-    [ViewComponent(Name = "WidgetsNexportCustomerUserDetailsBlock")]
-    public class WidgetsNexportCustomerUserDetailsBlock: NopViewComponent
+    private readonly NexportService _nexportService;
+    private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+
+    public WidgetsNexportCustomerUserDetailsBlock(
+        NexportService nexportService,
+        INexportPluginModelFactory nexportPluginModelFactory)
     {
-        private readonly NexportService _nexportService;
-        private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+        _nexportService = nexportService;
+        _nexportPluginModelFactory = nexportPluginModelFactory;
+    }
 
-        public WidgetsNexportCustomerUserDetailsBlock(
-            NexportService nexportService,
-            INexportPluginModelFactory nexportPluginModelFactory)
-        {
-            _nexportService = nexportService;
-            _nexportPluginModelFactory = nexportPluginModelFactory;
-        }
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
+        var customerUserSettingsModel = (CustomerUserSettingsModel)additionalData;
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
-            var customerUserSettingsModel = (CustomerUserSettingsModel) additionalData;
+        if (customerUserSettingsModel == null)
+            return Content("");
 
-            if (customerUserSettingsModel == null)
-                return Content("");
+        var model = await _nexportPluginModelFactory.PrepareNexportCustomerAdditionalSettingsModelAsync();
 
-            var model = await _nexportPluginModelFactory.PrepareNexportCustomerAdditionalSettingsModelAsync();
-
-            return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Setting/NexportCustomerUserSettings.cshtml", model);
-        }
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Setting/NexportCustomerUserSettings.cshtml", model);
     }
 }

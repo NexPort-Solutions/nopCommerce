@@ -3,24 +3,22 @@ using Nop.Web.Framework.Components;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using System.Threading.Tasks;
 
-namespace Nop.Plugin.Sale.PurchaseForCustomer.Components
+namespace Nop.Plugin.Sale.PurchaseForCustomer.Components;
+
+[ViewComponent(Name = "ProductDetailsButtonWidget")]
+public class ProductDetailsButtonWidget : NopViewComponent
 {
-    [ViewComponent(Name = "ProductDetailsButtonWidget")]
-    public class ProductDetailsButtonWidget : NopViewComponent
+    public ProductDetailsButtonWidget()
     {
-        public ProductDetailsButtonWidget()
-        {
+    }
 
-        }
+    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    {
+        var model = (ProductModel)additionalData;
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
-        {
-            var model = (ProductModel)additionalData;
+        if (model == null)
+            return Content("");
 
-            if (model == null)
-                return Content("");
-
-            return View("~/Plugins/Sale.PurchaseForCustomer/Areas/Admin/Views/Widget/ProductDetailsButtonWidget.cshtml", model);
-        }
+        return View("~/Plugins/Sale.PurchaseForCustomer/Areas/Admin/Views/Widget/ProductDetailsButtonWidget.cshtml", model);
     }
 }
