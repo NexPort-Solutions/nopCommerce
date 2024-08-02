@@ -8,7 +8,7 @@ using Nop.Web.Framework.Extensions;
 
 namespace Nop.Web.Framework.Migrations.UpgradeTo460
 {
-    [NopMigration("2022-02-07 00:00:00", "4.60.0", UpdateMigrationType.Localization, MigrationProcessType.Update)]
+    [NopMigration("2023-07-26 14:00:10", "4.60", UpdateMigrationType.Localization, MigrationProcessType.Update)]
     public class LocalizationMigration : MigrationBase
     {
         /// <summary>Collect the UP migration expressions</summary>
@@ -83,6 +83,9 @@ namespace Nop.Web.Framework.Migrations.UpgradeTo460
                 "PDFProductCatalog.Price",
                 "PDFProductCatalog.SKU",
 
+                //#6814
+                "Admin.ConfigurationSteps.ShippingProviders.ShipStation.Title",
+                "Admin.ConfigurationSteps.ShippingProviders.ShipStation.Text"
             });
 
             #endregion
@@ -322,11 +325,17 @@ namespace Nop.Web.Framework.Migrations.UpgradeTo460
                 ["Pdf.Tax"] = "Tax",
 
                 //#43
-                ["admin.configuration.stores.info"] = "Info",
+                ["Admin.Configuration.Stores.Info"] = "Info",
 
                 //5701
                 ["Admin.Configuration.AppSettings.Common.UseAutofac"] = "Use Autofac IoC",
                 ["Admin.Configuration.AppSettings.Common.UseAutofac.Hint"] = "The value indicating whether to use Autofac IoC container. If disabled, then the default .Net IoC container will be used.",
+
+                //6669
+                ["Admin.Catalog.Products.SpecificationAttributes.NameFormat"] = "{0} >> {1}",
+
+                //#6676
+                ["RewardPoints.Expired"] = "Unused reward points from {0} have expired",
             }, languageId);
 
             #endregion

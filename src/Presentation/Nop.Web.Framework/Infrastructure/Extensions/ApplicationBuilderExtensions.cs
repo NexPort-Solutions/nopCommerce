@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
-using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
@@ -19,6 +18,7 @@ using Microsoft.Net.Http.Headers;
 using Nop.Core;
 using Nop.Core.Configuration;
 using Nop.Core.Domain.Common;
+using Nop.Core.Domain.Localization;
 using Nop.Core.Http;
 using Nop.Core.Infrastructure;
 using Nop.Data;
@@ -426,10 +426,15 @@ namespace Nop.Web.Framework.Infrastructure.Extensions
                 if (!DataSettingsManager.IsDatabaseInstalled())
                     return;
 
+                var languageService = EngineContext.Current.Resolve<ILanguageService>();
+                var localizationSettings = EngineContext.Current.Resolve<LocalizationSettings>();
+
                 //prepare supported cultures
-                var cultures = (await EngineContext.Current.Resolve<ILanguageService>().GetAllLanguagesAsync())
+                var cultures = languageService
+                    .GetAllLanguages()
                     .OrderBy(language => language.DisplayOrder)
-                    .Select(language => new CultureInfo(language.LanguageCulture)).ToList();
+                    .Select(language => new CultureInfo(language.LanguageCulture))
+                    .ToList();
                 options.SupportedCultures = cultures;
                 options.SupportedUICultures = cultures;
                 options.DefaultRequestCulture = new RequestCulture(cultures.FirstOrDefault());
@@ -440,6 +445,15 @@ namespace Nop.Web.Framework.Infrastructure.Extensions
                 var cookieRequestCultureProvider = options.RequestCultureProviders.OfType<CookieRequestCultureProvider>().FirstOrDefault();
                 if (cookieRequestCultureProvider is not null)
                     cookieRequestCultureProvider.CookieName = $"{NopCookieDefaults.Prefix}{NopCookieDefaults.CultureCookie}";
+                if (!localizationSettings.AutomaticallyDetectLanguage)
+                {
+                    var headerRequestCultureProvider = options
+                        .RequestCultureProviders
+                        .OfType<AcceptLanguageHeaderRequestCultureProvider>()
+                        .FirstOrDefault();
+                    if (headerRequestCultureProvider is not null)
+                        options.RequestCultureProviders.Remove(headerRequestCultureProvider);
+                }
             });
         }
 
@@ -464,26 +478,30 @@ namespace Nop.Web.Framework.Infrastructure.Extensions
         public static void UseNopProxy(this IApplicationBuilder application)
         {
             var appSettings = EngineContext.Current.Resolve<AppSettings>();
+            var hostingConfig = appSettings.Get<HostingConfig>();
 
-            if (appSettings.Get<HostingConfig>().UseProxy)
+            if (hostingConfig.UseProxy)
             {
                 var options = new ForwardedHeadersOptions
                 {
-                    ForwardedHeaders = ForwardedHeaders.All,
+                    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
                     // IIS already serves as a reverse proxy and will add X-Forwarded headers to all requests,
                     // so we need to increase this limit, otherwise, passed forwarding headers will be ignored.
                     ForwardLimit = 2
                 };
 
-                if (!string.IsNullOrEmpty(appSettings.Get<HostingConfig>().ForwardedForHeaderName))
-                    options.ForwardedForHeaderName = appSettings.Get<HostingConfig>().ForwardedForHeaderName;
+                if (!string.IsNullOrEmpty(hostingConfig.ForwardedForHeaderName))
+                    options.ForwardedForHeaderName = hostingConfig.ForwardedForHeaderName;
 
-                if (!string.IsNullOrEmpty(appSettings.Get<HostingConfig>().ForwardedProtoHeaderName))
-                    options.ForwardedProtoHeaderName = appSettings.Get<HostingConfig>().ForwardedProtoHeaderName;
+                if (!string.IsNullOrEmpty(hostingConfig.ForwardedProtoHeaderName))
+                    options.ForwardedProtoHeaderName = hostingConfig.ForwardedProtoHeaderName;
 
-                if (!string.IsNullOrEmpty(appSettings.Get<HostingConfig>().KnownProxies))
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
+
+                if (!string.IsNullOrEmpty(hostingConfig.KnownProxies))
                 {
-                    foreach (var strIp in appSettings.Get<HostingConfig>().KnownProxies.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
+                    foreach (var strIp in hostingConfig.KnownProxies.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
                     {
                         if (IPAddress.TryParse(strIp, out var ip))
                             options.KnownProxies.Add(ip);
