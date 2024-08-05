@@ -351,7 +351,7 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
         }
 
         [HttpsRequirement]
-        public async Task<IActionResult> RedeemProduct(Guid groupId, Guid invoiceItemId, int productId)
+        public async Task<IActionResult> RedeemProduct(Guid? groupId, Guid invoiceItemId, int productId)
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
@@ -396,8 +396,6 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
                 model.ProductMappingIdForOpenEndedProduct);
 
             await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
-
-
 
             return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
         }

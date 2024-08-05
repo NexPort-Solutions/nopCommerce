@@ -192,34 +192,50 @@
             if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Assigned.GetDisplayName())") {
                 if (@((Model.AdminView && await CustomerService.IsAdminAsync(currentCustomer)).ToString().ToLower())) {
                     buttonFunction = "unassignRedemption('" + row.InvoiceItemId + "')";
-                    return renderCustomButton(buttonFunction, "far fa-delete", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")");
+                    return renderCustomButton(buttonFunction, "fa-regular fa-minus", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")");
                 }
                 else {
                     buttonFunction = "unassignRedemption('" + row.InvoiceItemId + "', " + row.CustomerId + ")";
-                    return renderCustomButton(buttonFunction, "far fa-delete", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestUnassignment")");
+                    return renderCustomButton(buttonFunction, "fa-regular fa-exclamation", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestUnassignment")");
                 }
             }
             else if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Available.GetDisplayName())") {
                 buttonFunction = "assignRedemption('" + row.InvoiceItemId + "')";
-                return renderCustomButton(buttonFunction, "far fa-delete", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign")");
+                return renderCustomButton(buttonFunction, "fa-regular fa-plus", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign")");
             }
             else if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Awaiting.GetDisplayName())") {
                 if (@((Model.AdminView && await CustomerService.IsAdminAsync(currentCustomer)).ToString().ToLower())) {
                     buttonFunction = "cancelAwaitingRedemption('" + row.InvoiceItemId + "')";
-                    return renderCustomButton(buttonFunction, "far fa-delete", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting")");
+                    return renderCustomButton(buttonFunction, "fa-regular fa-ban", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting")");
                 }
             }
         }
 
-        return '';
+        return "";
     }
 
     function requestUnassignment(invoiceItemId, customerId) {
-        window.location.href = "@Url.Action("RequestUnassignment", "NexportWholesale")" + "?GroupId=" + "@currentGroupId" + "&InvoiceItemId=" + invoiceItemId + "&ProductId=" + "@Model.CurrentProduct.Id" + "&CustomerId=" + customerId;
+        var url = "@Url.Action("RequestUnassignment", "NexportWholesale")";
+        var groupId = "@currentGroupId";
+        if(groupId) {
+            url += "?GroupId=" + groupId + "&InvoiceItemId=" + invoiceItemId + "&ProductId=" + "@Model.CurrentProduct.Id" + "&CustomerId=" + customerId;
+        } else {
+            url += "?InvoiceItemId=" + invoiceItemId + "&ProductId=" + "@Model.CurrentProduct.Id" + "&CustomerId=" + customerId;
+        }
+
+        window.location.href = url;
     }
 
     function assignRedemption(invoiceItemId) {
-        window.location.href = "@Url.Action("RedeemProduct", "NexportWholesale")" + "?GroupId=" + "@currentGroupId" + "&InvoiceItemId=" + invoiceItemId + "&ProductId=" + "@Model.CurrentProduct.Id";
+        var url = "@Url.Action("RedeemProduct", "NexportWholesale")";
+        var groupId = "@currentGroupId";
+        if (groupId) {
+            url += "?GroupId=" + groupId + "&InvoiceItemId=" + invoiceItemId + "&ProductId=" + "@Model.CurrentProduct.Id";
+        } else {
+            url += "?InvoiceItemId=" + invoiceItemId + "&ProductId=" + "@Model.CurrentProduct.Id";
+        }
+
+        window.location.href = url;
     }
 
     function unassignRedemption(invoiceItemId) {
@@ -232,7 +248,7 @@
             $.ajax({
                 cache: false,
                 type: "POST",
-                url: "@Url.Action("invoiceItemUnassign", "NexportWholesale")",
+                url: "@Url.Action("InvoiceItemUnassign", "NexportWholesale")",
                 data: postData,
                 dataType: "json",
                 success: function (data, textStatus, jqXHR) {
@@ -257,7 +273,7 @@
             $.ajax({
                 cache: false,
                 type: "POST",
-                url: "@Url.Action("invoiceItemCancelAwaiting", "NexportWholesale")",
+                url: "@Url.Action("InvoiceItemCancelAwaiting", "NexportWholesale")",
                 data: postData,
                 dataType: "json",
                 success: function (data, textStatus, jqXHR) {
@@ -278,10 +294,10 @@
             productId: "@Model.CurrentProduct.Id",
             orderId: "@Model.OrderId"
         };
+
         addAntiForgeryToken(redemptionData);
 
         $.ajax({
-
             url: "@Url.Action("GetAvailableNexportGroupProductRedemptionsCount", "NexportWholesale")",
             type: "POST",
             data: redemptionData,
