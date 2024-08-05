@@ -2473,7 +2473,8 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         return availableMappings;
     }
 
-    public virtual async Task<RedeemProductModel> PrepareRedeemProductModel(Guid groupId, Guid invoiceItemId, int productId)
+    public virtual async Task<RedeemProductModel> PrepareRedeemProductModel(Guid? groupId, Guid invoiceItemId,
+        int productId)
     {
         if (groupId == Guid.Empty)
             throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
@@ -2543,11 +2544,14 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
             }
         }
 
-        var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId);
+        if (groupId != null)
+        {
+            var group = await _nexportService.GetWholesalePurchaseGroupAsync(groupId.Value);
 
-        var groupModel = group.ToModel<NexportGroupModel>();
-        if (groupModel != null)
-            model.CurrentGroup = groupModel;
+            var groupModel = group.ToModel<NexportGroupModel>();
+            if (groupModel != null)
+                model.CurrentGroup = groupModel;
+        }
 
         return model;
     }

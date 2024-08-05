@@ -190,7 +190,7 @@ public partial interface INexportPluginModelFactory
     Task<NexportGroupProductRedemptionListSearchModel> PrepareNexportGroupProductRedemptionListSearchModelAsync(
         Guid? groupId, int productId, int? orderId = null);
 
-    Task<RedeemProductModel> PrepareRedeemProductModel(Guid groupId, Guid invoiceItemId, int productId);
+    Task<RedeemProductModel> PrepareRedeemProductModel(Guid? groupId, Guid invoiceItemId, int productId);
 
     Task<RedeemByEmailModel> PrepareRedeemByEmailModel(int? invoiceItemId, string email, int? productMappingId);
 

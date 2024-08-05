@@ -419,7 +419,7 @@ public class NexportWholesaleController : BaseAdminController
     }
 
     [HttpsRequirement]
-    public async Task<IActionResult> RedeemProduct(Guid groupId, Guid invoiceItemId, int productId)
+    public async Task<IActionResult> RedeemProduct(Guid? groupId, Guid invoiceItemId, int productId)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
 

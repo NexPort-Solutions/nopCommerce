@@ -82,6 +82,47 @@
     <None Remove="Areas\Admin\Views\_ViewImports.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewStart.cshtml" />
     <None Remove="Content\buttons.dataTables.min.css" />
+    <None Remove="Content\fontawesome\css\all.min.css" />
+    <None Remove="Content\fontawesome\css\brands.min.css" />
+    <None Remove="Content\fontawesome\css\duotone.min.css" />
+    <None Remove="Content\fontawesome\css\fontawesome.min.css" />
+    <None Remove="Content\fontawesome\css\light.min.css" />
+    <None Remove="Content\fontawesome\css\regular.min.css" />
+    <None Remove="Content\fontawesome\css\sharp-duotone-solid.min.css" />
+    <None Remove="Content\fontawesome\css\sharp-light.min.css" />
+    <None Remove="Content\fontawesome\css\sharp-regular.min.css" />
+    <None Remove="Content\fontawesome\css\sharp-solid.min.css" />
+    <None Remove="Content\fontawesome\css\sharp-thin.min.css" />
+    <None Remove="Content\fontawesome\css\solid.min.css" />
+    <None Remove="Content\fontawesome\css\svg-with-js.min.css" />
+    <None Remove="Content\fontawesome\css\thin.min.css" />
+    <None Remove="Content\fontawesome\css\v4-font-face.min.css" />
+    <None Remove="Content\fontawesome\css\v4-shims.min.css" />
+    <None Remove="Content\fontawesome\css\v5-font-face.min.css" />
+    <None Remove="Content\fontawesome\webfonts\fa-brands-400.ttf" />
+    <None Remove="Content\fontawesome\webfonts\fa-brands-400.woff2" />
+    <None Remove="Content\fontawesome\webfonts\fa-duotone-900.ttf" />
+    <None Remove="Content\fontawesome\webfonts\fa-duotone-900.woff2" />
+    <None Remove="Content\fontawesome\webfonts\fa-light-300.ttf" />
+    <None Remove="Content\fontawesome\webfonts\fa-light-300.woff2" />
+    <None Remove="Content\fontawesome\webfonts\fa-regular-400.ttf" />
+    <None Remove="Content\fontawesome\webfonts\fa-regular-400.woff2" />
+    <None Remove="Content\fontawesome\webfonts\fa-sharp-duotone-solid-900.ttf" />
+    <None Remove="Content\fontawesome\webfonts\fa-sharp-duotone-solid-900.woff2" />
+    <None Remove="Content\fontawesome\webfonts\fa-sharp-light-300.ttf" />
+    <None Remove="Content\fontawesome\webfonts\fa-sharp-light-300.woff2" />
+    <None Remove="Content\fontawesome\webfonts\fa-sharp-regular-400.ttf" />
+    <None Remove="Content\fontawesome\webfonts\fa-sharp-regular-400.woff2" />
+    <None Remove="Content\fontawesome\webfonts\fa-sharp-solid-900.ttf" />
+    <None Remove="Content\fontawesome\webfonts\fa-sharp-solid-900.woff2" />
+    <None Remove="Content\fontawesome\webfonts\fa-sharp-thin-100.ttf" />
+    <None Remove="Content\fontawesome\webfonts\fa-sharp-thin-100.woff2" />
+    <None Remove="Content\fontawesome\webfonts\fa-solid-900.ttf" />
+    <None Remove="Content\fontawesome\webfonts\fa-solid-900.woff2" />
+    <None Remove="Content\fontawesome\webfonts\fa-thin-100.ttf" />
+    <None Remove="Content\fontawesome\webfonts\fa-thin-100.woff2" />
+    <None Remove="Content\fontawesome\webfonts\fa-v4compatibility.ttf" />
+    <None Remove="Content\fontawesome\webfonts\fa-v4compatibility.woff2" />
     <None Remove="Content\jquery-ui-timepicker-addon.min.css" />
     <None Remove="Content\jquery.dataTables.min.css" />
     <None Remove="Content\nexport-admin.css" />
@@ -333,6 +374,129 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\buttons.dataTables.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\all.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\brands.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\duotone.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\fontawesome.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\light.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\regular.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\sharp-duotone-solid.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\sharp-light.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\sharp-regular.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\sharp-solid.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\sharp-thin.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\solid.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\svg-with-js.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\thin.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\v4-font-face.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\v4-shims.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\css\v5-font-face.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-brands-400.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-brands-400.woff2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-duotone-900.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-duotone-900.woff2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-light-300.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-light-300.woff2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-regular-400.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-regular-400.woff2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-sharp-duotone-solid-900.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-sharp-duotone-solid-900.woff2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-sharp-light-300.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-sharp-light-300.woff2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-sharp-regular-400.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-sharp-regular-400.woff2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-sharp-solid-900.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-sharp-solid-900.woff2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-sharp-thin-100.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-sharp-thin-100.woff2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-solid-900.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-solid-900.woff2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-thin-100.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-thin-100.woff2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-v4compatibility.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\fontawesome\webfonts\fa-v4compatibility.woff2">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\jquery-ui-timepicker-addon.min.css">
