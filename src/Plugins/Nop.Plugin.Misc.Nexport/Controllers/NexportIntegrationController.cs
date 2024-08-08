@@ -111,6 +111,7 @@ public class NexportIntegrationController : BasePluginController,
     private readonly ICopyProductService _copyProductService;
     private readonly IShoppingCartService _shoppingCartService;
     private readonly ICategoryService _categoryService;
+    private readonly IAddressService _addressService;
 
     private readonly ISettingService _settingService;
     private readonly IPermissionService _permissionService;
@@ -152,6 +153,7 @@ public class NexportIntegrationController : BasePluginController,
         IOrderService orderService,
         ICategoryService categoryService,
         ICustomerService customerService,
+        IAddressService addressService,
         IDiscountService discountService,
         ICopyProductService copyProductService,
         IShoppingCartService shoppingCartService,
@@ -187,6 +189,7 @@ public class NexportIntegrationController : BasePluginController,
         _orderService = orderService;
         _categoryService = categoryService;
         _customerService = customerService;
+        _addressService = addressService;
         _discountService = discountService;
         _copyProductService = copyProductService;
         _shoppingCartService = shoppingCartService;
@@ -761,6 +764,49 @@ public class NexportIntegrationController : BasePluginController,
         _notificationService.SuccessNotification("The customer registration fields has been scheduled to be synchronize with Nexport.");
 
         return RedirectToAction("Edit", "Customer", new { id = model.Id });
+    }
+
+    [Area(AreaNames.Admin)]
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> SetPrimaryBillingAddress(int customerId, int addressId)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+            return ErrorJson(await _localizationService.GetResourceAsync("Admin.AccessDenied.Description"));
+
+        var customer = await _customerService.GetCustomerByIdAsync(customerId);
+        if (customer == null)
+        {
+            return Json(new
+            {
+                redirectUrl = Url.Action("List", "Customer")
+            });
+        }
+
+        var address = await _addressService.GetAddressByIdAsync(addressId);
+        if (address != null)
+        {
+            try
+            {
+                customer.BillingAddressId = addressId;
+                await _customerService.UpdateCustomerAsync(customer);
+
+                await _customerActivityService.InsertActivityAsync(customer, "EditCustomer", $"Primary billing address has been updated by administrator user #{(await _workContext.GetCurrentCustomerAsync()).Id}");
+                await _customerActivityService.InsertActivityAsync("EditCustomer", $"Updated primary billing address for customer #{customer.Id}");
+
+                _notificationService.SuccessNotification("Successfully setting primary billing address");
+            }
+            catch (Exception ex)
+            {
+                await _logger.ErrorAsync($"Cannot set primary billing address using address #{addressId} for customer #{customer.Id}", ex);
+                _notificationService.ErrorNotification("Cannot set primary billing address", false);
+            }
+        }
+
+        return Json(new
+        {
+            redirectUrl = Url.Action("Edit", "Customer", new { id = customer.Id })
+        });
     }
 
     #endregion
