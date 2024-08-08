@@ -829,7 +829,6 @@ public class NexportPluginService
                 IsActive = true,
                 EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
             });
-
         }
 
         if (!messageTemplates.Any(x =>
@@ -839,11 +838,10 @@ public class NexportPluginService
             {
                 Name = NexportDefaults.NEW_REDEMPTION_UNASSIGNMENT_REQUEST_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE,
                 Subject = "%Store.Name%. New unassignment request.",
-                Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Customer.FullName%!{Environment.NewLine}<br />{Environment.NewLine}You have just submitted a new unassignment request. Details are below:{Environment.NewLine}<br />{Environment.NewLine}Request ID: %UnassignmentRequest.Id%{Environment.NewLine}<br />{Environment.NewLine}Invoice Item ID: %UnassignmentRequest.InvoiceItemId%{Environment.NewLine}<br />{Environment.NewLine}Reason for return: %UnassignmentnRequest.Reason%{Environment.NewLine}<br />{Environment.NewLine}Customer comments:{Environment.NewLine}<br />{Environment.NewLine}%UnassignmentRequest.CustomerComment%{Environment.NewLine}</p>{Environment.NewLine}",
+                Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Customer.FullName%!{Environment.NewLine}<br />{Environment.NewLine}You have just submitted a new unassignment request. Details are below:{Environment.NewLine}<br />{Environment.NewLine}Request ID: %UnassignmentRequest.Id%{Environment.NewLine}<br />{Environment.NewLine}Invoice Item ID: %UnassignmentRequest.InvoiceItemId%{Environment.NewLine}<br />{Environment.NewLine}Reason for return: %UnassignmentRequest.Reason%{Environment.NewLine}<br />{Environment.NewLine}Customer comments:{Environment.NewLine}<br />{Environment.NewLine}%UnassignmentRequest.CustomerComment%{Environment.NewLine}</p>{Environment.NewLine}",
                 IsActive = true,
                 EmailAccountId = _emailAccountSettings.DefaultEmailAccountId
             });
-
         }
 
         if (!messageTemplates.Any(x =>
