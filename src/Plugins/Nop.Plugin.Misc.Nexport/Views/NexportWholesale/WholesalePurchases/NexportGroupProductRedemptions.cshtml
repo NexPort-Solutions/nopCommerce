@@ -195,8 +195,8 @@
                     return renderCustomButton(buttonFunction, "fa-regular fa-minus", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")");
                 }
                 else {
-                    buttonFunction = "unassignRedemption('" + row.InvoiceItemId + "', " + row.CustomerId + ")";
-                    return renderCustomButton(buttonFunction, "fa-regular fa-exclamation", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestUnassignment")");
+                    buttonFunction = "requestUnassignment('" + row.InvoiceItemId + "', " + row.CustomerId + ")";
+                    return renderCustomButton(buttonFunction, "fa-solid fa-square-info", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestUnassignment")");
                 }
             }
             else if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Available.GetDisplayName())") {
