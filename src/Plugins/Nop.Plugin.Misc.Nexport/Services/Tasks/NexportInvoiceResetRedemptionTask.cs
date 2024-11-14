@@ -95,9 +95,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                         await _logger.DebugAsync($"Begin resetting order invoice redemption with invoice item id: {queueItem.OrderInvoiceItemId}");
 
-
-                        var invoiceItem =
-                            await _nexportService.FindNexportOrderInvoiceItemById(queueItem.OrderInvoiceItemId);
+                        var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemById(queueItem.OrderInvoiceItemId);
                         if (invoiceItem != null)
                         {
                             var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
@@ -107,7 +105,6 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
 
                             if (order != null)
                             {
-
                                 if (queueItem.RetryCount > MAX_RETRY_COUNT)
                                 {
                                     await DeleteResetRedemptionQueueItemAndAddFinalOrderNote(order, queueItem, invoiceItem);
@@ -116,36 +113,27 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                 {
                                     try
                                     {
-                                        var orderItem =
-                                            await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
+                                        var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
                                         if (orderItem != null)
                                         {
                                             // Get the invoice details from Nexport (if existed)
-                                            var invoiceDetails =
-                                                await _nexportService.GetNexportInvoiceAsync(invoiceItem
-                                                    .InvoiceId);
+                                            var invoiceDetails = await _nexportService.GetNexportInvoiceAsync(invoiceItem.InvoiceId);
 
                                             // Continue to process only if the invoice is committed
-                                            if (invoiceDetails?.State ==
-                                                GetInvoiceResponse.StateEnum.Committed)
+                                            if (invoiceDetails?.State == GetInvoiceResponse.StateEnum.Committed)
                                             {
-
                                                 var oldUserId = invoiceItem.RedeemingUserId;
 
-                                                invoiceItem =
-                                                    await _nexportService.ResetInvoiceRedemptionAsync(invoiceItem);
-
+                                                invoiceItem = await _nexportService.ResetInvoiceRedemptionAsync(invoiceItem);
 
                                                 // if something fails and redemption code comes back null
                                                 // then try to get the invoice redemption from api one more time
                                                 if (invoiceItem.InvoiceItemRedemptionCode == null)
                                                 {
-                                                    var invoiceRedemptionResponse = await _nexportService.GetNexportInvoiceRedemptionAsync(
-                                                        invoiceItem.InvoiceItemId);
+                                                    var invoiceRedemptionResponse = await _nexportService.GetNexportInvoiceRedemptionAsync(invoiceItem.InvoiceItemId);
                                                     if (invoiceRedemptionResponse != null)
                                                     {
-                                                        invoiceItem.InvoiceItemRedemptionCode =
-                                                            invoiceRedemptionResponse.RedemptionCode;
+                                                        invoiceItem.InvoiceItemRedemptionCode = invoiceRedemptionResponse.RedemptionCode;
                                                     }
                                                 }
 
@@ -157,26 +145,24 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                                 }
                                                 else
                                                 {
-                                                    if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable)
+                                                    invoiceItem.RedemptionStatus = invoiceItem.RedemptionStatus switch
                                                     {
-                                                        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Available;
-                                                    }
-                                                    else if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting)
-                                                    {
-                                                        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
-                                                    }
+                                                        NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable =>
+                                                            NexportOrderInvoiceItemRedemptionStatus.Available,
+                                                        NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting =>
+                                                            NexportOrderInvoiceItemRedemptionStatus.Awaiting,
+                                                        _ => invoiceItem.RedemptionStatus
+                                                    };
 
                                                     //update invoice item with new redemption code so it can be reassigned later
-                                                    await _nexportService.UpdateNexportOrderInvoiceItem(
-                                                        invoiceItem);
+                                                    await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
 
                                                     var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(order.Id, orderItem.Id);
                                                     if (wholesaleOrderInfo != null)
                                                     {
                                                         wholesaleOrderInfo.Available++;
 
-                                                        await _nexportService.UpdateWholesaleOrderInfoAsync(
-                                                            wholesaleOrderInfo);
+                                                        await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
                                                     }
 
                                                     await _nexportService.DeleteNexportOrderInvoiceResetRedemptionQueueItem(queueItem);
@@ -191,9 +177,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                                     }
                                     catch (Exception ex)
                                     {
-                                        await _logger.ErrorAsync(
-                                            $"Failed to reset redemption of Nexport invoice item {invoiceItem.InvoiceItemId}",
-                                            ex);
+                                        await _logger.ErrorAsync($"Failed to reset redemption of Nexport invoice item {invoiceItem.InvoiceItemId}", ex);
 
                                         await RetryResetRedemptionTask(queueItem, order, invoiceItem);
                                     }
@@ -221,8 +205,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
                 await _nexportService.AddOrderNoteAsync(order,
                     $"Nexport invoice item {invoiceItem.InvoiceItemId} cannot be reset and will be retry again for {MAX_RETRY_COUNT - queueItem.RetryCount} time(s)");
 
-                await _nexportService.UpdateNexportOrderInvoiceResetRedemptionQueueItem(
-                    queueItem);
+                await _nexportService.UpdateNexportOrderInvoiceResetRedemptionQueueItem(queueItem);
             }
             else
             {
@@ -233,8 +216,7 @@ namespace Nop.Plugin.Misc.Nexport.Services.Tasks
         private async Task DeleteResetRedemptionQueueItemAndAddFinalOrderNote(Order order,
             NexportOrderInvoiceResetRedemptionQueueItem queueItem, NexportOrderInvoiceItem invoiceItem)
         {
-            await _nexportService.AddOrderNoteAsync(order,
-                $"Nexport invoice item with id:{invoiceItem.InvoiceItemId} redemption cannot be reset");
+            await _nexportService.AddOrderNoteAsync(order, $"Nexport invoice item with id:{invoiceItem.InvoiceItemId} redemption cannot be reset");
 
             await _nexportService.DeleteNexportOrderInvoiceResetRedemptionQueueItem(queueItem);
         }

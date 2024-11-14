@@ -29,6 +29,7 @@ using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Plugin.Misc.Nexport.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
 using Nop.Services.Catalog;
@@ -963,7 +964,7 @@ public partial class NexportService
 
             if (ex is ApiException exception)
             {
-                var errorResponse = JsonConvert.DeserializeObject<SubscriptionResponse>(exception.ErrorContent.ToString());
+                var errorResponse = JsonConvert.DeserializeObject<SubscriptionResponse>(exception.ErrorContent.ToString()!);
                 if (errorResponse != null)
                 {
                     if (errorResponse.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.SubscriptionNotFound ||
@@ -990,6 +991,7 @@ public partial class NexportService
         {
             var page = 1;
             int remainderItemsCount;
+
             do
             {
                 var result = _nexportApiService.GetNexportSubscriptions(_nexportSettings.Url,
@@ -1039,7 +1041,7 @@ public partial class NexportService
 
             if (ex is ApiException exception)
             {
-                var errorResponse = JsonConvert.DeserializeObject<SetCustomEnrollmentFieldValuesResponse>(exception.ErrorContent.ToString());
+                var errorResponse = JsonConvert.DeserializeObject<SetCustomEnrollmentFieldValuesResponse>(exception.ErrorContent.ToString()!);
                 if (errorResponse != null)
                 {
                     throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
@@ -1050,6 +1052,156 @@ public partial class NexportService
         }
 
         return result;
+    }
+
+    public async Task<IList<NexportOrganizationModel>> FindAllOrganizationsForUserAsync(Guid userId)
+    {
+        var items = new List<NexportOrganizationModel>();
+
+        try
+        {
+            var subscriptions = await FindAllSubscriptionsAsync(userId);
+
+            foreach (var subscription in subscriptions)
+            {
+                try
+                {
+                    var result = _nexportApiService.GetNexportOrganizations(
+                        _nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                        subscription.OrgId);
+
+                    var currentOrg = result?.OrganizationList.FirstOrDefault(x => x.OrgId == subscription.OrgId);
+                    if (currentOrg != null)
+                    {
+                        items.Add(new NexportOrganizationModel
+                        {
+                            OrgId = currentOrg.OrgId,
+                            OrgName = currentOrg.Name,
+                            OrgShortName = currentOrg.ShortName,
+                            Subscription = subscription
+                        });
+                    }
+                    //items.AddRange(result.OrganizationList);
+                }
+                catch (Exception ex)
+                {
+                    var errMsg = "Error occurred during Web API call GetNexportOrganizations";
+                    await _logger.ErrorAsync($"{errMsg}", ex);
+
+                    if (ex is ApiException exception)
+                    {
+                        var errorResponse = JsonConvert.DeserializeObject<ApiResponseBase>(exception.ErrorContent.ToString()!);
+                        if (errorResponse != null)
+                        {
+                            throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            var errMsg = $"Error occurred while getting Nexport subscriptions for user #{userId}";
+            await _logger.ErrorAsync($"{errMsg}", ex);
+
+            if (ex is ApiException exception)
+            {
+                var errorResponse = JsonConvert.DeserializeObject<OrganizationResponseItem>(exception.ErrorContent.ToString()!);
+                if (errorResponse != null)
+                {
+                    throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                }
+            }
+
+            throw;
+        }
+
+        return items;
+    }
+
+    public async Task<IPagedList<ApiEnrollmentItem>> FindEnrollmentsAsync(EnrollmentSearchFilter searchFilter, int pageIndex = 0, int pageSize = int.MaxValue)
+    {
+        var items = new List<ApiEnrollmentItem>();
+
+        if (searchFilter != null)
+        {
+            try
+            {
+                var page = 1;
+                int remainderItemsCount;
+                do
+                {
+                    var result = _nexportApiService.GetNexportEnrollments(_nexportSettings.Url,
+                        _nexportSettings.AuthenticationToken, searchFilter, page);
+
+                    items.AddRange(result.EnrollmentList);
+
+                    remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+                    page++;
+                } while (remainderItemsCount > 0);
+            }
+            catch (Exception ex)
+            {
+                var errMsg = $"Error occurred during Web API call GetNexportEnrollments";
+                await _logger.ErrorAsync($"{errMsg}", ex);
+
+                if (ex is ApiException exception)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<ApiResponseBase>(exception.ErrorContent.ToString()!);
+                    if (errorResponse != null)
+                    {
+                        throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                    }
+                }
+
+                throw;
+            }
+        }
+
+        var pagedItems = new PagedList<ApiEnrollmentItem>(items, pageIndex, pageSize);
+
+        return pagedItems;
+    }
+
+    public async Task<IPagedList<SectionEnrollmentsResponse>> FindSectionEnrollmentsAsync(Guid userId, Guid organizationId, int pageIndex = 0, int pageSize = int.MaxValue)
+    {
+        var items = new List<SectionEnrollmentsResponse>();
+
+        try
+        {
+            var page = 1;
+            int remainderItemsCount;
+            do
+            {
+                var result = _nexportApiService.GetNexportSectionEnrollments(_nexportSettings.Url,
+                    _nexportSettings.AuthenticationToken, organizationId, userId);
+
+                items.AddRange(result.SectionEnrollments);
+
+                remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+                page++;
+            } while (remainderItemsCount > 0);
+        }
+        catch (Exception ex)
+        {
+            var errMsg = "Error occurred during Web API call GetNexportSectionEnrollments";
+            await _logger.ErrorAsync($"{errMsg}", ex);
+
+            if (ex is ApiException exception)
+            {
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponseBase>(exception.ErrorContent.ToString()!);
+                if (errorResponse != null)
+                {
+                    throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                }
+            }
+
+            throw;
+        }
+
+        var pagedItems = new PagedList<SectionEnrollmentsResponse>(items, pageIndex, pageSize);
+
+        return pagedItems;
     }
 
     public async Task<IPagedList<CatalogResponseItem>> FindAllCatalogsAsync(Guid? orgId, int pageIndex = 0, int pageSize = int.MaxValue)
@@ -1080,7 +1232,7 @@ public partial class NexportService
 
                 if (ex is ApiException exception)
                 {
-                    var errorResponse = JsonConvert.DeserializeObject<ApiResponseBase>(exception.ErrorContent.ToString());
+                    var errorResponse = JsonConvert.DeserializeObject<ApiResponseBase>(exception.ErrorContent.ToString()!);
                     if (errorResponse != null)
                     {
                         throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
@@ -1441,6 +1593,36 @@ public partial class NexportService
     }
 
     [CanBeNull]
+    public async Task<CertificateUrlResponse> GetNexportEnrollmentCertificateUrl(Guid enrollmentId)
+    {
+        CertificateUrlResponse result;
+
+        try
+        {
+            result = _nexportApiService.GetNexportEnrollmentCertificateUrl(_nexportSettings.Url, _nexportSettings.AuthenticationToken, enrollmentId);
+        }
+        catch (Exception ex)
+        {
+            var errMsg = $"Error occurred during Web API call GetCertificateUrl for enrollment {enrollmentId}";
+            await _logger.ErrorAsync($"{errMsg}", ex);
+
+            if (ex is ApiException exception)
+            {
+                var errorResponse = JsonConvert.DeserializeObject<CertificateUrlResponse>(exception.ErrorContent.ToString()!,
+                    new JsonSerializerSettings { ContractResolver = new CustomRequiredContractResolver() });
+                if (errorResponse != null)
+                {
+                    throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                }
+            }
+            throw;
+
+        }
+
+        return result;
+    }
+
+    [CanBeNull]
     public async Task<GetInvoiceResponse> GetNexportInvoiceAsync(Guid invoiceId)
     {
         try
@@ -1521,7 +1703,9 @@ public partial class NexportService
     public async Task<Guid?> AddItemToNexportOrderInvoiceAsync(Guid invoiceId, Guid nexportProductId,
         Enums.ProductTypeEnum productType, decimal productCost,
         Guid subscriptionOrgId, IList<Guid> groupMembershipIds = null,
-        DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null, string note = null)
+        DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null,
+        Guid? purchasingGroupId = null, string fundingPool = null, DateTime? redemptionAvailableDate = null,
+        string note = null)
     {
         AddInvoiceItemResponse addInvoiceItemResult;
 
@@ -1530,7 +1714,8 @@ public partial class NexportService
             addInvoiceItemResult = _nexportApiService.AddNexportInvoiceItem(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, invoiceId, nexportProductId,
                 productType, subscriptionOrgId, groupMembershipIds,
-                productCost, note, accessExpirationDate, accessExpirationTimeLimit);
+                productCost, note, accessExpirationDate, accessExpirationTimeLimit,
+                purchasingGroupId, fundingPool, redemptionAvailableDate);
         }
         catch (Exception ex)
         {
@@ -2040,8 +2225,7 @@ public partial class NexportService
 
                                         if (checkSubscription && userMapping != null)
                                         {
-                                            model.Subscription =
-                                                await FindSubscription(userMapping.NexportUserId, org.OrgId);
+                                            model.Subscription = await FindSubscription(userMapping.NexportUserId, org.OrgId);
                                         }
 
                                         organizationModelList.Add(model);
@@ -2924,14 +3108,16 @@ public partial class NexportService
         {
             if (excludeDeleted)
                 query = query.Where(s => !s.Deleted);
+
             if (!string.IsNullOrEmpty(storeName))
                 query = query.Where(x => x.Name.Contains(storeName));
+
             if (!string.IsNullOrEmpty(storeUrl))
                 query = query.Where(x => x.Url.Contains(storeUrl));
+
             return query;
         });
 
-        //paging
         return new PagedList<Store>(stores, pageIndex, pageSize);
     }
 
@@ -2966,7 +3152,7 @@ public partial class NexportService
 
             if (ex is ApiException exception)
             {
-                var errorResponse = JsonConvert.DeserializeObject<ResetInvoiceRedemptionResponse>(exception.ErrorContent.ToString());
+                var errorResponse = JsonConvert.DeserializeObject<ResetInvoiceRedemptionResponse>(exception.ErrorContent.ToString()!);
                 if (errorResponse != null)
                 {
                     throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
@@ -3015,7 +3201,7 @@ public partial class NexportService
 
             if (ex is ApiException exception)
             {
-                var errorResponse = JsonConvert.DeserializeObject<HasGroupPermissionResponse>(exception.ErrorContent.ToString());
+                var errorResponse = JsonConvert.DeserializeObject<HasGroupPermissionResponse>(exception.ErrorContent.ToString()!);
                 if (errorResponse != null)
                 {
                     throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);

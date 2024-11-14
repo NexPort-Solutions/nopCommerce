@@ -324,3 +324,149 @@ svg[data-prefix="fa"], svg[data-prefix="far"], svg[data-prefix="fas"] {
     padding-right: 5px;
     font-size: 0.9em;
 }
+
+
+
+div.dt-container {
+    position: relative;
+}
+
+    div.dt-container div.dataTables_processing {
+        border: none;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        margin-left: auto;
+        margin-top: auto;
+        z-index: 50;
+        background: rgba(255,255,255,0.7);
+        -ms-border-radius: 3px;
+        border-radius: 3px;
+    }
+
+        div.dt-container div.dataTables_processing .fa {
+            padding-right: 0 !important;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-left: -15px;
+            margin-top: -15px;
+            color: #000;
+            font-size: 30px;
+        }
+
+.dt-container.no-footer .dataTables_scrollBody {
+    border-bottom: 1px solid #f4f4f4;
+}
+
+.dt-container thead {
+    background-color: #f4f4f4;
+}
+
+.dt-container tbody td {
+    vertical-align: middle !important;
+}
+
+.button-column {
+    text-align: center;
+}
+
+.table > tbody > tr > td.button-column {
+    padding: 2px;
+}
+
+    .table > tbody > tr > td.button-column .btn {
+        margin-top: 1px;
+        margin-bottom: 1px;
+        padding: 5px 12px;
+        white-space: nowrap;
+    }
+
+div.dt-container div.dt-length {
+    margin: 5px 5px 0 5px;
+}
+
+div.dt-container div.dataTables_info {
+    padding-top: 0;
+    margin-top: 10px;
+}
+
+div.dt-container .data-tables-refresh > div {
+    float: none;
+    margin-top: 2px;
+    width: auto;
+}
+
+div.dt-container > div.row.margin-t-5 > div.col-lg-1.col-xs-12 > div > div > button {
+    background-color: #f4f4f4;
+    color: #444;
+    border-color: #ddd;
+}
+
+/* .table-bordered {
+    border: 1px solid #e3e3e3;
+}
+
+    .table-bordered > thead > tr > th,
+    .table-bordered > tbody > tr > th,
+    .table-bordered > tfoot > tr > th {
+        border: 1px solid #e3e3e3;
+    }
+
+        .table-bordered > thead > tr > th label,
+        .table-bordered > tbody > tr > th label,
+        .table-bordered > tfoot > tr > th label {
+            font-weight: bold !important;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+
+            .table-bordered > thead > tr > th label input[type=checkbox],
+            .table-bordered > tbody > tr > th label input[type=checkbox],
+            .table-bordered > tfoot > tr > th label input[type=checkbox] {
+                margin-right: 5px;
+            }
+
+    .table-bordered > thead > tr > td,
+    .table-bordered > tbody > tr > td,
+    .table-bordered > tfoot > tr > td {
+        border-top: 1px solid #f3f3f3;
+        border-right: 1px solid #e3e3e3;
+    }
+
+.table-striped tbody tr.odd {
+    background-color: white;
+} */
+
+tr.even, div.dt-scroll-head > div > table > thead > tr {
+    background-color: #f4f4f4;
+}
+
+.dt-scroll-body .dt-container {
+    width: 95%;
+    margin-left: 3%;
+}
+
+.dt-scroll > .dt-scroll-body > .table,
+.dt-scroll > .dt-scroll-head > .dt-scroll-headInner > .table {
+    padding-left: 0 !important;
+}
+
+div.dt-container div.dt-paging {
+    text-align: center;
+}
+
+.pagination span.current,
+.pagination a, .pagination span {
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+    box-shadow: none !important;
+    border: 1px solid #eaeaea;
+}
+
+.nex-market .accordion-button:focus {
+    outline: none;
+    box-shadow: none;
+}

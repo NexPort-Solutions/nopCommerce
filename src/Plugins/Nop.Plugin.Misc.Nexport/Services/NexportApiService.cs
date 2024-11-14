@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Azure;
 using JetBrains.Annotations;
 using NexportApi.Api;
 using NexportApi.Client;
@@ -9,6 +10,7 @@ using Nop.Core.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Models.Api;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.Enrollment;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
 using Nop.Plugin.Misc.Nexport.Models.Subscription;
@@ -394,21 +396,57 @@ public class NexportApiService
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
         };
 
-        var response = nexportApi.AdminApiGetSubscriptionsWithHttpInfo(accessToken, userId, page: page, perPage: 30);
+        var response = nexportApi.AdminApiGetSubscriptionsWithHttpInfo(accessToken, userId: userId, page: page, perPage: 30);
 
         var result = new NexportSubscriptionsResponse
         {
             Subscriptions = response.Data
         };
 
-        if (response.Headers.ContainsKey("X-Total-Count"))
-            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+        if (response.Headers.TryGetValue("X-Total-Count", out var totalCounteHeader))
+            result.TotalRecord = int.Parse(totalCounteHeader.FirstOrDefault() ?? "0");
 
-        if (response.Headers.ContainsKey("X-Per-Page"))
-            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.TryGetValue("X-Per-Page", out var perPageHeader))
+            result.RecordPerPage = int.Parse(perPageHeader.FirstOrDefault() ?? "0");
 
-        if (response.Headers.ContainsKey("X-Page"))
-            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.TryGetValue("X-Page", out var pageHeader))
+            result.CurrentPage = int.Parse(pageHeader.FirstOrDefault() ?? "0");
+
+        return result;
+    }
+
+    public NexportEnrollmentsResponse GetNexportEnrollments([NotNull] string url, [NotNull] string accessToken, EnrollmentSearchFilter searchFilter, int? page = null)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
+
+        _apiConfiguration.BasePath = url;
+
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var response = nexportApi.LearningApiSearchEnrollmentsWithHttpInfo(accessToken, searchFilter, page, perPage: 30);
+
+        var result = new NexportEnrollmentsResponse();
+        if (response.Data != null)
+        {
+            result.EnrollmentList = response.Data.Enrollments;
+        }
+
+        if (response.Headers.TryGetValue("X-Total-Count", out var totalCounteHeader))
+            result.TotalRecord = int.Parse(totalCounteHeader.FirstOrDefault() ?? "0");
+
+        if (response.Headers.TryGetValue("X-Per-Page", out var perPageHeader))
+            result.RecordPerPage = int.Parse(perPageHeader.FirstOrDefault() ?? "0");
+
+        if (response.Headers.TryGetValue("X-Page", out var pageHeader))
+            result.CurrentPage = int.Parse(pageHeader.FirstOrDefault() ?? "0");
 
         return result;
     }
@@ -705,8 +743,8 @@ public class NexportApiService
     public AddInvoiceItemResponse AddNexportInvoiceItem([NotNull] string url, [NotNull] string accessToken,
         Guid invoiceId, Guid productId, Enums.ProductTypeEnum productType,
         Guid subscriptionOrgId, IList<Guid> groupMembershipIds,
-        decimal cost, string note = null, DateTime? accessExpirationDate = null,
-        string accessExpirationTimeLimit = null)
+        decimal cost, string note = null, DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null,
+        Guid? purchasingGroupId = null, string fundingPool = null, DateTime? redemptionAvailableDate = null)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
@@ -731,7 +769,10 @@ public class NexportApiService
                 Note = note,
                 Cost = cost,
                 UtcAccessExpirationDate = accessExpirationDate,
-                AccessExpirationTimeLimit = accessExpirationTimeLimit
+                AccessExpirationTimeLimit = accessExpirationTimeLimit,
+                PurchasingGroupId = purchasingGroupId,
+                FundingPool = fundingPool,
+                UtcRedemptionAvailableDate = redemptionAvailableDate
             });
 
         return result;
@@ -942,6 +983,42 @@ public class NexportApiService
         return result;
     }
 
+    public NexportGetSectionEnrollmentsResponse GetNexportSectionEnrollments([NotNull] string url, [NotNull] string accessToken, Guid orgId, Guid userId)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
+
+        _apiConfiguration.BasePath = url;
+
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var response = nexportApi.LearningApiGetSectionEnrollmentsWithHttpInfo(accessToken, orgId, null, userId);
+
+        var result = new NexportGetSectionEnrollmentsResponse();
+        if (response != null)
+        {
+            result.SectionEnrollments = response.Data;
+
+            if (response.Headers.TryGetValue("X-Total-Count", out var totalCountHeader))
+                result.TotalRecord = int.Parse(totalCountHeader.FirstOrDefault() ?? "0");
+
+            if (response.Headers.TryGetValue("X-Per-Page", out var perPageHeader))
+                result.RecordPerPage = int.Parse(perPageHeader.FirstOrDefault() ?? "0");
+
+            if (response.Headers.TryGetValue("X-Page", out var pageHeader))
+                result.CurrentPage = int.Parse(pageHeader.FirstOrDefault() ?? "0");
+        }
+
+        return result;
+    }
+
     public SectionEnrollmentsResponse GetNexportSectionEnrollment([NotNull] string url, [NotNull] string accessToken, Guid orgId, Guid userId, Guid syllabusId)
     {
         if (string.IsNullOrWhiteSpace(url))
@@ -958,15 +1035,14 @@ public class NexportApiService
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
         };
 
-        var apiResult = nexportApi.LearningApiGetSectionEnrollments(accessToken, orgId, null, userId, syllabusId);
-
-        var result = apiResult.FirstOrDefault();
+        var result = nexportApi
+            .LearningApiGetSectionEnrollments(accessToken, orgId, null, userId, syllabusId)
+            .FirstOrDefault();
 
         return result;
     }
 
-    public TrainingPlanEnrollmentsResponse GetNexportTrainingPlanEnrollment([NotNull] string url,
-        [NotNull] string accessToken, Guid orgId, Guid userId, Guid syllabusId)
+    public List<TrainingPlanEnrollmentsResponse> GetNexportTrainingPlanEnrollments([NotNull] string url, [NotNull] string accessToken, Guid orgId, Guid userId)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
@@ -982,8 +1058,53 @@ public class NexportApiService
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
         };
 
-        var result = nexportApi.LearningApiGetTrainingPlanEnrollments(accessToken, orgId, userId: userId, syllabusId: syllabusId)
+        var result = nexportApi.LearningApiGetTrainingPlanEnrollments(accessToken, orgId, null, userId);
+
+        return result;
+    }
+
+    public TrainingPlanEnrollmentsResponse GetNexportTrainingPlanEnrollment([NotNull] string url, [NotNull] string accessToken,
+        Guid orgId, Guid userId, Guid syllabusId)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
+
+        _apiConfiguration.BasePath = url;
+
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var result = nexportApi
+            .LearningApiGetTrainingPlanEnrollments(accessToken, orgId, userId: userId, syllabusId: syllabusId)
             .FirstOrDefault();
+
+        return result;
+    }
+
+    public CertificateUrlResponse GetNexportEnrollmentCertificateUrl([NotNull] string url, [NotNull] string accessToken, Guid enrollmentId)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
+
+        _apiConfiguration.BasePath = url;
+
+        var nexportApi = new LearningApi(_apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var result = nexportApi
+            .LearningApiGetCertificateUrl(enrollmentId, accessToken);
 
         return result;
     }
@@ -1055,7 +1176,8 @@ public class NexportApiService
         return result;
     }
 
-    public HasGroupPermissionResponse HasGroupPermission([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION)
+    public HasGroupPermissionResponse HasGroupPermission([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid groupId,
+        string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
@@ -1077,9 +1199,10 @@ public class NexportApiService
         return result;
     }
 
-    public NexportSearchGroupsForPermissionResponse SearchGroupsForPermission([NotNull] string url, [NotNull] string accessToken, Guid userId, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION, int? page = null)
+    public NexportSearchGroupsForPermissionResponse SearchGroupsForPermission([NotNull] string url, [NotNull] string accessToken,
+        Guid userId, Guid groupId,
+        string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION, int? page = null)
     {
-
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
 
@@ -1094,27 +1217,28 @@ public class NexportApiService
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
         };
 
-        var response = nexportApi.AdminApiSearchGroupsForPermissionWithHttpInfo(accessToken, new SearchGroupsForPermissionRequest(userId: userId, orgId: groupId, permission: permission, page: page, perPage: 30));
-
+        var response = nexportApi.AdminApiSearchGroupsForPermissionWithHttpInfo(accessToken,
+            new SearchGroupsForPermissionRequest(userId: userId, orgId: groupId, permission: permission, page: page, perPage: 30));
 
         var result = new NexportSearchGroupsForPermissionResponse
         {
             SearchGroupsForPermissionList = response.Data.Groups
         };
 
-        if (response.Headers.ContainsKey("X-Total-Count"))
-            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
+        if (response.Headers.TryGetValue("X-Total-Count", out var totalCountHeader))
+            result.TotalRecord = int.Parse(totalCountHeader.FirstOrDefault() ?? "0");
 
-        if (response.Headers.ContainsKey("X-Per-Page"))
-            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.TryGetValue("X-Per-Page", out var perPageHeader))
+            result.RecordPerPage = int.Parse(perPageHeader.FirstOrDefault() ?? "0");
 
-        if (response.Headers.ContainsKey("X-Page"))
-            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        if (response.Headers.TryGetValue("X-Page", out var pageHeader))
+            result.CurrentPage = int.Parse(pageHeader.FirstOrDefault() ?? "0");
 
         return result;
     }
 
-    public ResetInvoiceRedemptionResponse ResetInvoiceRedemption([NotNull] string url, [NotNull] string accessToken, Guid invoiceItemId)
+    public ResetInvoiceRedemptionResponse ResetInvoiceRedemption([NotNull] string url, [NotNull] string accessToken,
+        Guid invoiceItemId, Guid? resetAdminId = null)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
@@ -1132,7 +1256,7 @@ public class NexportApiService
 
         var result =
             nexportApi.PointOfSaleApiResetInvoiceRedemption(accessToken,
-                new ResetInvoiceRedemptionRequest(invoiceItemId, $"reset redemption for invoice item with id:{invoiceItemId} on {DateTime.UtcNow}", NexportDefaults.REMOTE_SYS_NAME_FOR_API));
+                new ResetInvoiceRedemptionRequest(invoiceItemId, $"Reset redemption for invoice item with id: {invoiceItemId} on {DateTime.UtcNow}", NexportDefaults.REMOTE_SYS_NAME_FOR_API));
 
         return result;
     }

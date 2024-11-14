@@ -68,7 +68,11 @@ using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Localization;
 using Nop.Plugin.Misc.Nexport.Models.Plugins;
 using Nop.Core.Domain.Configuration;
+using Nop.Plugin.Misc.Nexport.Models.Enrollment;
 using static SkiaSharp.HarfBuzz.SKShaper;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
+using Nop.Web.Framework.Models.Extensions;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers;
 
@@ -111,6 +115,7 @@ public class NexportIntegrationController : BasePluginController,
     private readonly ICopyProductService _copyProductService;
     private readonly IShoppingCartService _shoppingCartService;
     private readonly ICategoryService _categoryService;
+    private readonly IAddressService _addressService;
 
     private readonly ISettingService _settingService;
     private readonly IPermissionService _permissionService;
@@ -152,6 +157,7 @@ public class NexportIntegrationController : BasePluginController,
         IOrderService orderService,
         ICategoryService categoryService,
         ICustomerService customerService,
+        IAddressService addressService,
         IDiscountService discountService,
         ICopyProductService copyProductService,
         IShoppingCartService shoppingCartService,
@@ -187,6 +193,7 @@ public class NexportIntegrationController : BasePluginController,
         _orderService = orderService;
         _categoryService = categoryService;
         _customerService = customerService;
+        _addressService = addressService;
         _discountService = discountService;
         _copyProductService = copyProductService;
         _shoppingCartService = shoppingCartService;
@@ -763,6 +770,49 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToAction("Edit", "Customer", new { id = model.Id });
     }
 
+    [Area(AreaNames.Admin)]
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> SetPrimaryBillingAddress(int customerId, int addressId)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+            return ErrorJson(await _localizationService.GetResourceAsync("Admin.AccessDenied.Description"));
+
+        var customer = await _customerService.GetCustomerByIdAsync(customerId);
+        if (customer == null)
+        {
+            return Json(new
+            {
+                redirectUrl = Url.Action("List", "Customer")
+            });
+        }
+
+        var address = await _addressService.GetAddressByIdAsync(addressId);
+        if (address != null)
+        {
+            try
+            {
+                customer.BillingAddressId = addressId;
+                await _customerService.UpdateCustomerAsync(customer);
+
+                await _customerActivityService.InsertActivityAsync(customer, "EditCustomer", $"Primary billing address has been updated by administrator user #{(await _workContext.GetCurrentCustomerAsync()).Id}");
+                await _customerActivityService.InsertActivityAsync("EditCustomer", $"Updated primary billing address for customer #{customer.Id}");
+
+                _notificationService.SuccessNotification("Successfully setting primary billing address");
+            }
+            catch (Exception ex)
+            {
+                await _logger.ErrorAsync($"Cannot set primary billing address using address #{addressId} for customer #{customer.Id}", ex);
+                _notificationService.ErrorNotification("Cannot set primary billing address", false);
+            }
+        }
+
+        return Json(new
+        {
+            redirectUrl = Url.Action("Edit", "Customer", new { id = customer.Id })
+        });
+    }
+
     #endregion
 
     #region Product Mapping Actions
@@ -879,24 +929,24 @@ public class NexportIntegrationController : BasePluginController,
         if (nopProductId.HasValue)
             model = await _nexportPluginModelFactory.PrepareNexportProductMappingListModelAsync(searchModel, nopProductId.Value);
 
-            return Json(model);
-        }
+        return Json(model);
+    }
 
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        [HttpPost]
-        [AutoValidateAntiforgeryToken]
-        public async Task<IActionResult> GetProductMappingsForCategoryId(NexportCategoryProductMappingListSearchModel searchModel, int nopCategoryId)
-        {
-            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
-                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-                return await AccessDeniedDataTablesJson();
-            searchModel.NopCategoryId = nopCategoryId;
-            var model = await _nexportPluginModelFactory.PrepareNexportCategoryProductMappingListModelAsync(searchModel);
+    [AuthorizeAdmin]
+    [Area(AreaNames.Admin)]
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> GetProductMappingsForCategoryId(NexportCategoryProductMappingListSearchModel searchModel, int nopCategoryId)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+            string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+            return await AccessDeniedDataTablesJson();
+        searchModel.NopCategoryId = nopCategoryId;
+        var model = await _nexportPluginModelFactory.PrepareNexportCategoryProductMappingListModelAsync(searchModel);
 
-            return Json(model);
-        }
+        return Json(model);
+    }
 
     [AuthorizeAdmin]
     [Area(AreaNames.Admin)]
@@ -956,7 +1006,6 @@ public class NexportIntegrationController : BasePluginController,
                     {
                         storeText = $"Store ID: {currStore.Id}, Name: {currStore.Name}";
                     }
-
                 }
 
                 //activity log
@@ -973,17 +1022,16 @@ public class NexportIntegrationController : BasePluginController,
                 foreach (var questionId in additionalQuestionIds)
                 {
                     await _nexportService.InsertNexportSupplementalInfoQuestionMapping(
-                                new NexportSupplementalInfoQuestionMapping
-                                {
-                                    ProductMappingId = productMapping.Id,
-                                    QuestionId = questionId,
-                                    UtcDateCreated = DateTime.UtcNow
-                                });
+                        new NexportSupplementalInfoQuestionMapping
+                        {
+                            ProductMappingId = productMapping.Id,
+                            QuestionId = questionId,
+                            UtcDateCreated = DateTime.UtcNow
+                        });
 
                     //activity log
                     await _customerActivityService.InsertActivityAsync(
                         NexportDefaults.INSERT_SUPPLEMENTAL_INFO_QUESTION_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE, $"Inserted question (ID:{questionId}) for product mapping ({storeText}, Nexport product ID: {productMapping.NexportCatalogSyllabusLinkId}, Name: {productMapping.NexportProductName}) in  product (ID: {nopProduct.Id}, Name: {nopProduct.Name})", productMapping);
-
                 }
 
                 foreach (var questionId in removalQuestionIds)
@@ -1081,7 +1129,7 @@ public class NexportIntegrationController : BasePluginController,
 
                     var nopProduct = await _productService.GetProductByIdAsync(mapping.NopProductId);
 
-                    string storeText = "";
+                    var storeText = "";
 
                     if (mapping.StoreId.HasValue)
                     {
@@ -1089,7 +1137,6 @@ public class NexportIntegrationController : BasePluginController,
                         if (store != null)
                             storeText = $"Store ID: {store.Id}, Name: {store.Name}";
                     }
-
 
                     //activity log
                     await _customerActivityService.InsertActivityAsync(NexportDefaults.DELETE_NEXPORT_PRODUCT_MAPPING_ACTIVITY_LOG_TYPE,
@@ -1153,10 +1200,7 @@ public class NexportIntegrationController : BasePluginController,
             NexportProductMappingId = productMapping.Id
         });
 
-        return Json(new
-        {
-            Result = true
-        });
+        return Json(new { Result = true });
     }
 
     [Area(AreaNames.Admin)]
@@ -1233,7 +1277,6 @@ public class NexportIntegrationController : BasePluginController,
                     {
                         storeText = $"Store ID: {currStore.Id}, Name: {currStore.Name}";
                     }
-
                 }
 
                 if (oldMapping != null)
@@ -1261,77 +1304,74 @@ public class NexportIntegrationController : BasePluginController,
 
                 result.Error = $"Cannot map the product [{model.NopProductId}] with the Nexport product [{model.NexportProductId}].";
 
-                if (ex is ApiException exception)
+                if (ex is ApiException { ErrorCode: (int)ApiErrorEntity.ErrorCodeEnum.UnknownError })
                 {
-                    if (exception.ErrorCode == (int)ApiErrorEntity.ErrorCodeEnum.UnknownError)
-                    {
-                        result.InnerError = $"Product [{model.NexportProductId}] is missing in Nexport.";
-                    }
+                    result.InnerError = $"Product [{model.NexportProductId}] is missing in Nexport.";
                 }
-
-                    HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                }
-            }
-            else
-            {
-                result.Error = $"Cannot map the product [{model.NopProductId}] with the Nexport product [{model.NexportProductId}]";
 
                 HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
+        }
+        else
+        {
+            result.Error = $"Cannot map the product [{model.NopProductId}] with the Nexport product [{model.NexportProductId}]";
 
-            return Json(result);
+            HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
         }
 
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        public async Task<IActionResult> MapProductToCategory()
+        return Json(result);
+    }
+
+    [AuthorizeAdmin]
+    [Area(AreaNames.Admin)]
+    public async Task<IActionResult> MapProductToCategory()
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+            string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+            return AccessDeniedView();
+
+        var model = await _nexportPluginModelFactory.PrepareMapProductToCategoryModel();
+
+        return View("~/Plugins/Misc.Nexport/Views/MapProductToCategory.cshtml", model);
+    }
+
+    [AuthorizeAdmin]
+    [Area(AreaNames.Admin)]
+    [HttpPost]
+    [FormValueRequired("save")]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> MapProductToCategory(MapProductToCategoryModel model)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+            string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+            return AccessDeniedView();
+
+        dynamic result = new ExpandoObject();
+
+        try
         {
-            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
-                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-                return AccessDeniedView();
+            await _nexportService.MapProductToCategory(model);
 
-            var model = await _nexportPluginModelFactory.PrepareMapProductToCategoryModel();
+            ViewBag.RefreshPage = true;
 
-            return View("~/Plugins/Misc.Nexport/Views/MapProductToCategory.cshtml",model);
+            ViewBag.ClosePage = false;
+
+            var newMapping = await _nexportService.GetProductMappingByNopProductId(model.ProductId, model.StoreId);
+
+            result.MappingId = newMapping.Id;
         }
-
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        [HttpPost]
-        [FormValueRequired("save")]
-        [AutoValidateAntiforgeryToken]
-        public async Task<IActionResult> MapProductToCategory(MapProductToCategoryModel model)
+        catch (Exception ex)
         {
-            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-                !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
-                string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-                return AccessDeniedView();
+            await _logger.ErrorAsync(
+                $"Error occurred while mapping the product [{model.ProductId}] with the Category [{model.SelectedCategoryId}]",
+                ex, await _workContext.GetCurrentCustomerAsync());
 
-            dynamic result = new ExpandoObject();
+            result.Error = $"Cannot map the product [{model.ProductId}] with the Category [{model.SelectedCategoryId}].";
 
-            try
-            {
-                await _nexportService.MapProductToCategory(model);
-
-                ViewBag.RefreshPage = true;
-
-                ViewBag.ClosePage = false;
-
-                var newMapping = await _nexportService.GetProductMappingByNopProductId(model.ProductId, model.StoreId);
-
-                result.MappingId = newMapping.Id;
-            }
-            catch(Exception ex)
-            {
-                await _logger.ErrorAsync(
-                    $"Error occurred while mapping the product [{model.ProductId}] with the Category [{model.SelectedCategoryId}]",
-                    ex, await _workContext.GetCurrentCustomerAsync());
-
-                result.Error = $"Cannot map the product [{model.ProductId}] with the Category [{model.SelectedCategoryId}].";
-
-                HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            }
+            HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+        }
 
         return Json(result);
     }
@@ -3369,6 +3409,28 @@ public class NexportIntegrationController : BasePluginController,
         return new EmptyResult();
     }
 
+    public async Task<IActionResult> ListNexportUserEnrollments(Guid organizationId)
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        if (!await _customerService.IsRegisteredAsync(customer))
+            return Challenge();
+
+        var model = await _nexportPluginModelFactory.PrepareListNexportUserEnrollments(customer, organizationId);
+
+        return PartialView("~/Plugins/Misc.Nexport/Views/EnrollmentListingTable.cshtml", model);
+    }
+
+    public async Task<IActionResult> GetNexportUserEnrollments(NexportEnrollmentListSearchModel searchModel)
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        if (!await _customerService.IsRegisteredAsync(customer))
+            return Challenge();
+
+        var model = await _nexportPluginModelFactory.PrepareNexportEnrollmentListModelAsync(searchModel);
+
+        return Json(model);
+    }
+
     [HttpsRequirement]
     public async Task<IActionResult> ViewSupplementalInfoAnswers()
     {
@@ -3561,31 +3623,31 @@ public class NexportIntegrationController : BasePluginController,
 
             var order = await _orderService.GetOrderByIdAsync(nexportOrderInvoiceItem.OrderId);
 
-                try
-                {
-                    var isWholesale = await _genericAttributeService.GetAttributeAsync<bool>(order, "isWholesaleOrder", order.StoreId);
+            try
+            {
+                var isWholesale = await _genericAttributeService.GetAttributeAsync<bool>(order, "isWholesaleOrder", order.StoreId);
 
-                    if (isWholesale)
+                if (isWholesale)
+                {
+                    var redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem,
+                         redeemingUserId.Value);
+                    if (redeemed)
                     {
-                       var redeemed =  await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem,
-                            redeemingUserId.Value);
-                       if (redeemed)
-                       {
-                           var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(order.Id, nexportOrderInvoiceItem.OrderItemId);
-                           if (wholesaleOrderInfo != null)
-                           {
-                               if (wholesaleOrderInfo.Available > 0)
-                                   wholesaleOrderInfo.Available--;
-                               wholesaleOrderInfo.Redeemed++;
-                               await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
-                           }
-                       }
+                        var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(order.Id, nexportOrderInvoiceItem.OrderItemId);
+                        if (wholesaleOrderInfo != null)
+                        {
+                            if (wholesaleOrderInfo.Available > 0)
+                                wholesaleOrderInfo.Available--;
+                            wholesaleOrderInfo.Redeemed++;
+                            await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+                        }
                     }
-                    else
-                    {
-                        await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem,
-                            redeemingUserId.Value);
-                    }
+                }
+                else
+                {
+                    await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem,
+                        redeemingUserId.Value);
+                }
 
                 await _nexportService.AddOrderNoteAsync(order,
                     $"Nexport invoice item {nexportOrderInvoiceItem.InvoiceItemId} has been redeemed for user {redeemingUserId}");

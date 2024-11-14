@@ -34,10 +34,10 @@
         infoPanel = "<'col-lg-3 col-xs-12'<'float-lg-right text-center'i>>";
     }
 
-    
+
 
     var dom = "<'row'<'col-md-12'tr>>" +
-              "<'row margin-t-5'" +
+              "<'row margin-t-5 mt-2'" +
                 "<'col-lg-5 col-xs-12'<'float-lg-left'p>>" +
                 "<'col-lg-3 col-xs-12'<'text-center'l>>" +
                 infoPanel +
@@ -185,7 +185,7 @@ scrollX: true,
 info: @Model.Info.ToString().ToLowerInvariant(),
 paging: @Model.Paging.ToString().ToLowerInvariant(),
 pagingType: '@Model.PagingType',
-language: @await Html.PartialAsync("~/Areas/Admin/Views/Shared/_GridLocalization.cshtml"),
+language: @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/_GridLocalization.cshtml"),
 pageLength: @Model.Length,
 @if (!string.IsNullOrEmpty(Model.LengthMenu))
 {
@@ -224,12 +224,12 @@ ordering: @Model.Ordering.ToString().ToLowerInvariant(),
     </text>
 }
 dom: '@JavaScriptEncoder.Default.Encode(dom)',
-columns: [    
+columns: [
     @for (int i = 0; i < Model.ColumnCollection.Count; i++)
     {
         var column = Model.ColumnCollection[i];
         <text>
-        {            
+        {
             @if (!string.IsNullOrEmpty(column.Title) && !column.IsMasterCheckBox)
             {
                 <text>
@@ -331,7 +331,7 @@ columns: [
                         return '<a href="#" class="@button.ClassName" id="buttonEdit_@(model_name)'+ modData + '" onclick="editData_@(model_name)($(this).parent().parent(), \'' + origData + '\');return false;"><i class="fas fa-pencil-alt"></i>@T("Admin.Common.Edit")</a>' +
                         '<a href="#" class="@button.ClassName" id="buttonConfirm_@(model_name)'+ modData + '" style="display:none" onclick="confirmEditData_@(model_name)($(this).parent().parent(), \'' + origData + '\', \'@column.Data\');return false;"><i class="fas fa-check"></i>@T("Admin.Common.Update")</a>' +
                         '<a href="#" class="@button.ClassName" id="buttonCancel_@(model_name)'+ modData + '" style="display:none" onclick="cancelEditData_@(model_name)(\'' + row + '\', \'' + origData + '\');updateTableWidth(\'' + '#@Model.Name' + '\');return false;"><i class="fas fa-ban"></i>@T("Admin.Common.Cancel")</a>';
-                    },                         
+                    },
                     </text>
                     break;
                 case RenderButtonEdit buttonEdit:
@@ -422,9 +422,9 @@ columns: [
                     </text>
                     break;
             }
-            data: '@column.Data'            
+            data: '@column.Data'
         }
         @if (i != Model.ColumnCollection.Count - 1) {<text>,</text>}
         </text>
     }
-]           
+]

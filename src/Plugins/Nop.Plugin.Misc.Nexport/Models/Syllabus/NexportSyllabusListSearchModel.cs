@@ -7,8 +7,8 @@ public record NexportSyllabusListSearchModel : BaseSearchModel
 {
     public NexportSyllabusListSearchModel()
     {
-            SetGridPageSize();
-        }
+        SetGridPageSize();
+    }
 
     public Guid CatalogId { get; set; }
 

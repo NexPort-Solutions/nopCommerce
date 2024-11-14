@@ -64,6 +64,7 @@ using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Tax;
 using Nop.Core.Domain.Vendors;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
+using Nop.Plugin.Misc.Nexport.Models.Enrollment;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
 using Nop.Services.Discounts;
@@ -71,6 +72,12 @@ using Nop.Services.Media;
 using Nop.Services.Shipping;
 using Nop.Web.Areas.Admin.Models.Localization;
 using Nop.Services;
+using Nop.Web.Areas.Admin.Models.Logging;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Routing;
+using Nop.Web.Framework.Mvc.Routing;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace Nop.Plugin.Misc.Nexport.Factories;
 
@@ -134,6 +141,8 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
     private readonly NexportPluginService _pluginService;
     private readonly IPermissionService _permissionService;
     private readonly IStaticCacheManager _staticCacheManager;
+    private readonly IUrlHelperFactory _urlHelperFactory;
+    private readonly IActionContextAccessor _actionContextAccessor;
 
     #endregion
 
@@ -195,6 +204,8 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         IAddressService addressService,
         IPermissionService permissionService,
         IPriceFormatter priceFormatter,
+        IUrlHelperFactory urlHelperFactory,
+        IActionContextAccessor actionContextAccessor,
         IStaticCacheManager staticCacheManager)
     {
         _nexportSettings = nexportSettings;
@@ -252,6 +263,8 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         _priceFormatter = priceFormatter;
         _pluginService = pluginService;
         _permissionService = permissionService;
+        _urlHelperFactory = urlHelperFactory;
+        _actionContextAccessor = actionContextAccessor;
         _staticCacheManager = staticCacheManager;
     }
 
@@ -691,8 +704,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
             throw new ArgumentNullException(nameof(customer));
 
         var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
-        var redemptionOrganizations =
-            await _nexportService.FindNexportRedemptionOrganizationsByCustomerId(customer.Id);
+        var redemptionOrganizations = await _nexportService.FindNexportRedemptionOrganizationsByCustomerId(customer.Id);
 
         var model = new NexportTrainingListModel();
 
@@ -707,6 +719,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 .Select(x => x.OrderByDescending(invoice => invoice.UtcDateRedemption).First())
                 .OrderByDescending(x => x.UtcDateRedemption)
                 .ToList();
+
             var trainingList = new List<NexportTrainingItemModel>();
             foreach (var orderInvoice in customerOrderInvoices)
             {
@@ -727,7 +740,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                             {
                                 if (nexportInvoiceDetails.SyllabusId.HasValue)
                                 {
-                                    if (nexportInvoiceDetails.RedemptionType == null || nexportInvoiceDetails.RedemptionType == InvoiceRedemptionResponse.RedemptionTypeEnum.Section)
+                                    if (nexportInvoiceDetails.RedemptionType is null or InvoiceRedemptionResponse.RedemptionTypeEnum.Section)
                                     {
                                         var enrollmentDetails = await _nexportService.GetSectionEnrollmentDetailsAsync(
                                             nexportInvoiceDetails.OrganizationId,
@@ -740,8 +753,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                                             enrollmentStatus = enrollmentDetails.Phase;
                                         }
                                     }
-                                    else if (nexportInvoiceDetails.RedemptionType ==
-                                             InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
+                                    else if (nexportInvoiceDetails.RedemptionType == InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
                                     {
                                         var enrollmentDetails = await _nexportService.GetTrainingPlanEnrollmentDetailsAsync(
                                             nexportInvoiceDetails.OrganizationId,
@@ -796,10 +808,89 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 .ToDictionary(
                     x => x.Key,
                     x => x.ToList());
+
+            var nexportOrgs = await _nexportService.FindAllOrganizationsForUserAsync(userMapping.NexportUserId);
+            model.Organizations = nexportOrgs.ToList();
         }
 
         return model;
     }
+
+    public virtual async Task<NexportEnrollmentListModel> PrepareNexportEnrollmentListModelAsync(NexportEnrollmentListSearchModel searchModel)
+    {
+        var sectionEnrollments = await _nexportService.FindSectionEnrollmentsAsync(
+            searchModel.UserId, searchModel.OrganizationId, searchModel.Page - 1, searchModel.PageSize);
+
+        var model = await new NexportEnrollmentListModel().PrepareToGridAsync(searchModel,
+            sectionEnrollments, () =>
+            {
+                var enrollments = sectionEnrollments.SelectAwait(async item =>
+                {
+                    var enrollmentModel = new NexportEnrollmentResponseItemModel
+                    {
+                        Id = item.EnrollmentId,
+                        Name = item.Title,
+                        EnrollmentDate = item.EnrollmentDate,
+                        ExpirationDate = item.ExpirationDate,
+                        HasExpired = item.ExpirationDate != null && item.ExpirationDate < DateTime.UtcNow,
+                        IsExpiringSoon = item.ExpirationDate != null && (item.ExpirationDate.Value - DateTime.UtcNow).TotalDays < 30,
+                        StartDate = item.StartDate,
+                        SyllabusId = item.SyllabusId,
+                        LastActivityDate = item.LastActivityDate,
+                        Status = item.Phase,
+                    };
+
+                    if (item.Phase == Enums.PhaseEnum.Finished)
+                    {
+                        var certResult = await _nexportService.GetNexportEnrollmentCertificateUrl(item.EnrollmentId)!;
+                        if (certResult is { CertificateReady: true })
+                        {
+                            enrollmentModel.HasCertificate = true;
+                            enrollmentModel.CertificateUrl = certResult.CertificateUrl;
+                        }
+                    }
+
+                    var nexportOrderInvoice = await _nexportService.GetNexportOrderInvoiceItem(searchModel.UserId, item.EnrollmentId);
+
+                    if (nexportOrderInvoice != null)
+                    {
+                        enrollmentModel.IsMarketplacePurchase = true;
+                        var orderItem = await _orderService.GetOrderItemByIdAsync(nexportOrderInvoice.OrderItemId);
+                        if (orderItem != null)
+                        {
+                            var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
+                            if (product != null)
+                            {
+                                var seName = await _urlRecordService.GetSeNameAsync(product);
+                                var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext!);
+                                enrollmentModel.ProductUrl = urlHelper.RouteUrl<Product>(new { SeName = seName });
+                            }
+                        }
+                    }
+
+                    return enrollmentModel;
+                });
+
+                return enrollments.OrderByDescending(x => x.LastActivityDate);
+            });
+
+        return model;
+    }
+
+    public async Task<NexportEnrollmentListSearchModel> PrepareListNexportUserEnrollments(Customer customer, Guid organizationId)
+    {
+        var searchModel = new NexportEnrollmentListSearchModel();
+
+        var nexportUserMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+        if (nexportUserMapping != null)
+        {
+            searchModel.UserId = nexportUserMapping.NexportUserId;
+            searchModel.OrganizationId = organizationId;
+        }
+
+        return searchModel;
+    }
+
 
     public async Task<NexportCustomerSupplementalInfoAnswersModel>
         PrepareNexportCustomerSupplementalInfoAnswersModelAsync(Customer customer, Store store)
@@ -2134,7 +2225,9 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
 
                     var redemptionItem = new NexportGroupProductRedemptionModel
                     {
+                        Id = invoiceItem.Id,
                         InvoiceItemId = invoiceItem.InvoiceItemId,
+                        OrderId = invoiceItem.OrderId,
                         Status = invoiceItem.RedemptionStatus.GetDisplayName(),
                         DateRedeemed = invoiceItem.UtcDateRedemption.HasValue
                             ? (await _dateTimeHelper.ConvertToUserTimeAsync(invoiceItem.UtcDateRedemption.Value, DateTimeKind.Utc)).ToString("MM/dd/yyyy h:mm tt")
