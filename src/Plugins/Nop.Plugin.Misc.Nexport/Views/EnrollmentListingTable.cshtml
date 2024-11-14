@@ -1,0 +1,126 @@
+﻿@using NexportApi.Model
+@using Nop.Core.Domain.Catalog
+@using Nop.Plugin.Misc.Nexport.Models.Enrollment
+
+@model Nop.Plugin.Misc.Nexport.Models.Enrollment.NexportEnrollmentListSearchModel
+
+@{
+    var tableName = $"enrollment-listing-{Model.OrganizationId}";
+}
+
+@await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new DataTablesModel
+{
+    Name = tableName,
+    UrlRead = new DataUrl("GetNexportUserEnrollments", "NexportIntegration", new RouteValueDictionary { [nameof(Model.UserId)] = Model.UserId, [nameof(Model.OrganizationId)] = Model.OrganizationId }),
+    Length = Model.PageSize,
+    LengthMenu = Model.AvailablePageSizes,
+    ColumnCollection = new List<ColumnProperty>
+    {
+        new(nameof(NexportEnrollmentResponseItemModel.Name))
+        {
+            Title = "Name",
+            Width = "300",
+            Render = new RenderCustom("renderProductName")
+        },
+        new(nameof(NexportEnrollmentResponseItemModel.ExpirationDate))
+        {
+            Title = "Expiration Date",
+            Width = "200",
+            Render = new RenderCustom("renderEnrollmentExpirationDate")
+        },
+        new(nameof(NexportEnrollmentResponseItemModel.LastActivityDate))
+        {
+            Title = "Last Activity",
+            Width = "200",
+            Render = new RenderCustom("renderEnrollmentLastActivity")
+        },
+        new(nameof(NexportEnrollmentResponseItemModel.Status))
+        {
+            Title = "Status",
+            Width = "100",
+            Render = new RenderCustom("renderEnrollmentStatus")
+        },
+        new(nameof(NexportEnrollmentResponseItemModel.CertificateUrl))
+        {
+            Title = "Certificate",
+            Width = "200",
+            Render = new RenderCustom("renderDownloadCertificate")
+        },
+        new(nameof(NexportEnrollmentResponseItemModel.Id))
+        {
+            Render = new RenderCustom("renderLaunchTraining"),
+            ClassName = NopColumnClassDefaults.Button,
+            Width = "200"
+        }
+    }
+})
+
+<script>
+    function renderProductName(data, type, row, meta) {
+        if (row.IsMarketplacePurchase){
+            if (row.ProductUrl) {
+                return "<a href=\"" + row.ProductUrl + "\">" + data +"</a>"
+            }
+        }
+
+        if (row.IsExpiringSoon) {
+            return data + "<i class=\"ms-2 fas fa-circle-info\" title=\"Enrollment is expiring soon!\"></i>";
+        }
+
+        return data;
+    }
+
+    function renderEnrollmentExpirationDate(data, type, row, meta) {
+        if (data === null) {
+            return "N/A";
+        }
+
+        return moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss");
+    }
+
+    function renderEnrollmentLastActivity(data, type, row, meta) {
+        if (data === null) {
+            return "N/A";
+        }
+
+        return moment.utc(data).local().format("MM/DD/YYYY HH:mm:ss");
+    }
+
+    function renderEnrollmentStatus(data, type, row, meta) {
+        var displayText = "";
+
+        if (row.Status === +"@((int)Enums.PhaseEnum.NotStarted)") {
+            displayText = "Not started";
+        } else if (row.Status === +"@((int)Enums.PhaseEnum.InProgress)") {
+            displayText = "In progress";
+        } else if (row.Status === +"@((int)Enums.PhaseEnum.Finished)") {
+            displayText = "Finished";
+        }
+
+        return displayText
+    }
+
+    function renderDownloadCertificate(data, type, row, meta) {
+        if (!row.Id)
+            return "";
+
+        if (!row.HasCertificate)
+            return "";
+
+        var buttonFunction = "downloadNexportCertificate('" + data + "'); return false;";
+
+        return renderCustomButton(buttonFunction, "fas fa-file-certificate", "Download");
+    }
+
+    function renderLaunchTraining(data, type, row, meta) {
+        if (!row.Id)
+            return "";
+
+        if(row.HasExpired)
+            return "";
+
+        var buttonFunction = "launchNexportClassroom('" + data + "'); return false;";
+
+        return renderCustomButton(buttonFunction, "fas fa-chalkboard-user", "Launch");
+    }
+</script>

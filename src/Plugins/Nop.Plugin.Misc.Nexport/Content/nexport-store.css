@@ -10,3 +10,7 @@
 .nex-plugin .uk-button-link:disabled {
   cursor: not-allowed;
 }
+
+svg[data-prefix="fa"], svg[data-prefix="far"], svg[data-prefix="fas"] {
+  height: 1em;
+}

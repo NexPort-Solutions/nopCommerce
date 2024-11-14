@@ -11,7 +11,6 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
 {
     public record NexportGroupProductRedemptionListSearchModel : BaseSearchModel
     {
-
         public NexportGroupModel CurrentGroup { get; set; } = new NexportGroupModel { OrganizationId = null, Name = "No Group" };
 
         public Product CurrentProduct { get; set; }
@@ -28,7 +27,6 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
 
         [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchStatus")]
         public NexportOrderInvoiceItemRedemptionStatus? SearchStatusId { get; set; }
-
 
         public IList<SelectListItem> AvailableStatuses { get; set; }
 

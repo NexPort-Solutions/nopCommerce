@@ -107,6 +107,8 @@ public interface INexportService
 
     Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId);
 
+    Task<NexportOrderInvoiceItem> GetNexportOrderInvoiceItem(Guid userId, Guid enrollmentId);
+
     Task<IPagedList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(int orderId,
         bool excludeNonApproval = false,
         int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false);

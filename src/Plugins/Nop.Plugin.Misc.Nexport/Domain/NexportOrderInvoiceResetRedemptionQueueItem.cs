@@ -1,16 +1,15 @@
 ﻿using System;
 using Nop.Core;
 
-namespace Nop.Plugin.Misc.Nexport.Domain
+namespace Nop.Plugin.Misc.Nexport.Domain;
+
+public class NexportOrderInvoiceResetRedemptionQueueItem : BaseEntity
 {
-    public class NexportOrderInvoiceResetRedemptionQueueItem : BaseEntity
-    {
-        public int OrderInvoiceItemId { get; set; }
+    public int OrderInvoiceItemId { get; set; }
 
-        public DateTime UtcDateCreated { get; set; }
+    public DateTime UtcDateCreated { get; set; }
 
-        public DateTime? UtcLastFailedDate { get; set; }
+    public DateTime? UtcLastFailedDate { get; set; }
 
-        public int RetryCount { get; set; }
-    }
+    public int RetryCount { get; set; }
 }

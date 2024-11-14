@@ -25,8 +25,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" />
-    <PackageReference Include="NexportApi" Version="1.0.33" />
+    <PackageReference Include="JetBrains.Annotations" Version="2024.2.0" />
+    <PackageReference Include="NexportApi" Version="1.0.34" />
   </ItemGroup>
 
   <ItemGroup>
@@ -82,7 +82,13 @@
     <None Remove="Areas\Admin\Views\Widget\Order\Wholesale.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewImports.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewStart.cshtml" />
+    <None Remove="Content\bootstrap\bootstrap-custom.min.css" />
+    <None Remove="Content\bootstrap\bootstrap.min.css" />
     <None Remove="Content\buttons.dataTables.min.css" />
+    <None Remove="Content\datatables-custom.min.css" />
+    <None Remove="Content\dataTables.bootstrap5.min.css" />
+    <None Remove="Content\dataTables.buttons.bootstrap5.min.css" />
+    <None Remove="Content\dataTables.dataTables.css" />
     <None Remove="Content\fontawesome\css\all.min.css" />
     <None Remove="Content\fontawesome\css\brands.min.css" />
     <None Remove="Content\fontawesome\css\duotone.min.css" />
@@ -136,7 +142,11 @@
     <None Remove="Content\unassign_redemption_request.css" />
     <None Remove="logo.jpg" />
     <None Remove="plugin.json" />
+    <None Remove="Scripts\bootstrap.bundle.min.js" />
     <None Remove="Scripts\bootstrap3-typeahead.js" />
+    <None Remove="Scripts\datatables-custom.min.js" />
+    <None Remove="Scripts\dataTables.bootstrap5.min.js" />
+    <None Remove="Scripts\dataTables.buttons.bootstrap5.min.js" />
     <None Remove="Scripts\dataTables.rowGroup.min.js" />
     <None Remove="Scripts\fontawesome\all.min.js" />
     <None Remove="Scripts\fontawesome\brands.min.js" />
@@ -158,6 +168,7 @@
     <None Remove="Scripts\uikit.min.js" />
     <None Remove="Scripts\xregexp-all.min.js" />
     <None Remove="Views\Configure.cshtml" />
+    <None Remove="Views\EnrollmentListingTable.cshtml" />
     <None Remove="Views\MapProductToCategory.cshtml" />
     <None Remove="Views\MyNexportGroups.cshtml" />
     <None Remove="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml" />
@@ -187,6 +198,7 @@
     <None Remove="Views\Shared\GuidNullable.cshtml" />
     <None Remove="Views\Shared\Table.cshtml" />
     <None Remove="Views\Shared\_ColumnsOne_groups.cshtml" />
+    <None Remove="Views\Shared\_GridLocalization.cshtml" />
     <None Remove="Views\Shared\_Root.Head_Groups.cshtml" />
     <None Remove="Views\Shared\_Root_Groups.cshtml" />
     <None Remove="Views\Shared\_Table.Definition.cshtml" />
@@ -377,7 +389,25 @@
     <Content Include="Areas\Admin\Views\_ViewStart.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\bootstrap\bootstrap-custom.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\bootstrap\bootstrap.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\datatables-custom.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\dataTables.buttons.bootstrap5.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Content\buttons.dataTables.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\dataTables.bootstrap5.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\dataTables.dataTables.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\fontawesome\css\all.min.css">
@@ -524,6 +554,18 @@
     <Content Include="Content\unassign_redemption_request.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Scripts\bootstrap.bundle.min.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\datatables-custom.min.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\dataTables.buttons.bootstrap5.min.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\dataTables.bootstrap5.min.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Scripts\fontawesome\all.min.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -602,6 +644,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Scripts\xregexp-all.min.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\EnrollmentListingTable.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\MapProductToCategory.cshtml">
@@ -687,6 +732,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Shared\Table.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\_GridLocalization.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Shared\_Table.Definition.cshtml">

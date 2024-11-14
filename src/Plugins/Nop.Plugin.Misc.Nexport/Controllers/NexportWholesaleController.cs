@@ -406,7 +406,9 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
             var customer = await _workContext.GetCurrentCustomerAsync();
             if (!await _customerService.IsRegisteredAsync(customer))
                 return Challenge();
+
             var model = await _nexportPluginModelFactory.PrepareSubmitUnassignmentRequestModel(groupId, invoiceItemId, productId, customerId);
+
             return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestUnassignment.cshtml", model);
         }
 
@@ -664,5 +666,4 @@ namespace Nop.Plugin.Misc.Nexport.Controllers
 
         #endregion
     }
-
 }

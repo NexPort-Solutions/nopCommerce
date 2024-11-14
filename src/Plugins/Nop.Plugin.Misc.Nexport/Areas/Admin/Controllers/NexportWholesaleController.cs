@@ -543,7 +543,7 @@ public class NexportWholesaleController : BaseAdminController
     public async Task<ActionResult> GoToConfirmStep(ProductStepModel model, Customer customer)
     {
         if (model.SelectedProductMappingId == null)
-            throw new Exception("There was an error retreiving the product information from the previous steps");
+            throw new Exception("There was an error retrieving the product information from the previous steps");
 
         var productMapping = await _nexportService.GetProductMappingById(model.SelectedProductMappingId.Value);
 
@@ -586,7 +586,7 @@ public class NexportWholesaleController : BaseAdminController
             var customer = await _workContext.GetCurrentCustomerAsync();
 
             if (model.SelectedProductMappingId == null)
-                throw new Exception("There was an error retreiving the product information from the previous steps");
+                throw new Exception("There was an error retrieving the product information from the previous steps");
 
             await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
 
@@ -648,7 +648,7 @@ public class NexportWholesaleController : BaseAdminController
             var selectedUserId = await _genericAttributeService.GetAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId");
 
             if (invoiceItemId == null)
-                throw new Exception("error retreiving invoice item id for transaction.");
+                throw new Exception("error retrieving invoice item id for transaction.");
 
 
             bool success = await _nexportService.RedeemProductForCustomer(new RedeemProductModel

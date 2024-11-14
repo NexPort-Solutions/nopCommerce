@@ -8,9 +8,9 @@ public record NexportCatalogSearchModel : BaseSearchModel
 {
     public NexportCatalogSearchModel()
     {
-            NexportSyllabusListSearch = new NexportSyllabusListSearchModel();
-            SetGridPageSize();
-        }
+        NexportSyllabusListSearch = new NexportSyllabusListSearchModel();
+        SetGridPageSize();
+    }
 
     public Guid? OrgId { get; set; }
 

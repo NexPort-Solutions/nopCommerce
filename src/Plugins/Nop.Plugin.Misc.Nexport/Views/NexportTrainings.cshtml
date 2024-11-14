@@ -1,5 +1,4 @@
 ﻿@using Nop.Services.Helpers
-@using NexportApi.Model
 
 @inject IDateTimeHelper dateTimeHelper
 
@@ -8,28 +7,39 @@
 @{
     Layout = "_ColumnsOne";
 
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
-    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/uikit.min.css");
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/js/admin.table.js", excludeFromBundle: true);
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/moment/min/moment-with-locales.min.js", "", true);
+
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/bootstrap/bootstrap-custom.min.css");
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/datatables-custom.min.css");
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/nexport.css");
 
     NopHtml.AddTitleParts("Nexport Trainings");
     NopHtml.AppendPageCssClassParts("html-account-page");
+
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap.bundle.min.js", "", true);
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/datatables-custom.min.js");
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js", "", true);
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/js/admin.common.js", "", true);
 }
 
-<link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport-store.css" />
+<script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/fontawesome.min.js"></script>
+<script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/regular.min.js"></script>
+<script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/solid.min.js"></script>
+<script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/light.min.js"></script>
 
-<div class="page account-page order-list-page">
+<div class="page account-page order-list-page nex-market">
     <div class="page-title">
         <h1>@T("Account.MyAccount") - @T("Plugins.Misc.Nexport.Training")</h1>
     </div>
     <div class="page-body">
-        @if (Model?.RedemptionOrganizations != null && Model.RedemptionOrganizations.Count > 0)
+        @if (Model?.Organizations is { Count: > 0 })
         {
             <div class="nexport-training-list nex-plugin">
                 <input id="userId" type="hidden" value="@Model.UserId" />
-                @foreach (var trainingList in Model.Trainings)
-                {
-                    var org = Model.RedemptionOrganizations.FirstOrDefault(x => x.OrgId == trainingList.Key);
-                    if (org != null)
+
+                <div class="accordion accordion-flush" id="organization-list-selection">
+                    @foreach (var org in Model.Organizations)
                     {
                         var subscriptionDisabled = false;
                         var subscriptionStatusText = "Active";
@@ -49,80 +59,35 @@
                                     subscriptionStatusText = "Expired";
                                 }
                             }
-                        }
-                        <div class="nexport-training-item uk-panel uk-margin-small-bottom">
-                            <div class="uk-card uk-card-default uk-full-width">
-                                <div class="uk-card-header" style="padding: 20px;">
-                                    <h3 class="uk-card-title uk-margin-small-bottom uk-flex">
-                                        <span><i class="far fa-school" aria-hidden="true"></i></span>
-                                        <button class="uk-button uk-button-link uk-text-large" data-org-id="@org.OrgId"
-                                                onclick="navigateToNexportOrganization(this);return false;"
-                                                disabled="@(subscriptionDisabled)" style="margin-left: 8px;">
+                            var headingId = $"organization-heading-{org.OrgId}";
+                            var collapseId = $"enrollment-listing-container-{org.OrgId}";
+                            <div class="accordion-item" data-org-id="@org.OrgId">
+                                <div class="accordion-header d-flex align-items-center" id="@headingId">
+                                    <div class="accordion-button collapsed" role="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
+                                        <h3 class="w-100">
                                             @org.OrgName (@org.OrgShortName)
-                                        </button>
-                                    </h3>
-                                    <div>
-                                        <strong>Status: </strong>
-                                        @subscriptionStatusText
+                                        </h3>
+                                        <a href="javascript:void(0);" class="text-nowrap mx-2" data-org-id="@org.OrgId" data-function="viewTrainingLink">View Training</a>
                                     </div>
                                 </div>
-                                <div class="uk-card-body" style="padding: 20px;">
-                                    @foreach (var training in trainingList.Value)
-                                    {
-                                        var iconClass = "fas fa-chalkboard-teacher";
-                                        if (training.Type == InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
-                                        {
-                                            iconClass = "fas fa-sitemap";
-                                        }
-                                        var enrollmentDisabled = training.UtcExpirationDate != null && DateTime.UtcNow > training.UtcExpirationDate.Value;
-                                        <div class="uk-card uk-card-default uk-margin-small-bottom">
-                                            <div class="uk-card-header uk-flex" style="font-size: 1rem; padding: 20px; align-items: center;">
-                                                <span>
-                                                    <i class="@iconClass"></i>
-                                                </span>
-                                                <button class="uk-button uk-button-link" data-enrollment-id="@training.EnrollmentId"
-                                                        onclick="navigateToNexportClassroom(this);return false;" style="font-size: 1em; text-transform: initial; margin-left: 8px;"
-                                                        disabled="@(enrollmentDisabled)">
-                                                    @training.Name
-                                                </button>
-                                            </div>
-                                            <div class="uk-card-body uk-padding-small">
-                                                @if (training.UtcExpirationDate != null)
-                                                {
-                                                    <div class="uk-margin-small-bottom">
-                                                        <strong>End date: </strong>@(await dateTimeHelper.ConvertToUserTimeAsync(training.UtcExpirationDate.Value)).ToString() (@(await dateTimeHelper.GetCurrentTimeZoneAsync()).StandardName)
-                                                    </div>
-                                                }
-                                                <div>
-                                                    <strong>Status: </strong>
-                                                    @if (training.Status == Enums.PhaseEnum.NotStarted)
-                                                    {
-                                                        <text>Not started</text>
-                                                    } else if (training.Status == Enums.PhaseEnum.InProgress)
-                                                    {
-                                                        <text>In progress</text>
-                                                    } else if (training.Status == Enums.PhaseEnum.Finished)
-                                                    {
-                                                        <text>Finished</text>
-                                                    }
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
+                                <div id="@collapseId" class="accordion-collapse collapse" aria-labelledby="@headingId" data-bs-parent="#organization-list-selection" data-org-id="@org.OrgId">
+                                    <div class="accordion-body w-100" data-id="enrollment-listing">
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        }
                     }
-                }
+                </div>
             </div>
         }
     </div>
 </div>
-@* <!script async src="https://kit.fontawesome.com/e4adf0b7ea.js" crossorigin="anonymous" asp-location="Footer"></!script> *@
+
 <script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/fontawesome.min.js"></script>
 <script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/regular.min.js"></script>
 <script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/solid.min.js"></script>
 <script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/light.min.js"></script>
+
 <script asp-location="Footer">
     function navigateToNexportOrganization(element) {
         var orgId = $(element).data("org-id");
@@ -133,6 +98,17 @@
 
             navigateToNexport(url);
         }
+    }
+
+    function launchNexportClassroom(enrollmentId) {
+        if (enrollmentId) {
+            var url = "@Url.Action("GoToNexportClassroom", "NexportIntegration")";
+            url += "?enrollmentId=" + enrollmentId;
+
+            navigateToNexport(url);
+        }
+
+        return false;
     }
 
     function navigateToNexportClassroom(element) {
@@ -151,12 +127,12 @@
         $.ajax({
             url: url,
             type: "GET",
-            success: function(result) {
+            success: function (result) {
                 if (result && result.RedirectUrl) {
                     nexportWindow.location.href = result.RedirectUrl;
                 }
             },
-            error: function(xhr, textStatus, errorThrown) {
+            error: function (xhr, textStatus, errorThrown) {
                 var response = xhr.responseJSON;
                 if (response && response.Error) {
                     nexportWindow.close();
@@ -165,4 +141,42 @@
             }
         });
     }
+
+    function downloadNexportCertificate(url) {
+        window.open(url);
+    }
+
+    $(document).ready(function() {
+        $("[data-function='viewTrainingLink'").on("click", function(e) {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            e.preventDefault();
+
+            navigateToNexportOrganization(e.target);
+
+            return false;
+        })
+
+        const orgListSelection = document.getElementById("organization-list-selection");
+        orgListSelection.addEventListener("show.bs.collapse", function(e) {
+            console.log("Loading table from show event");
+            var currentElement = $(e.target);
+            var orgId = currentElement.attr("data-org-id");
+            if (orgId) {
+                $.ajax({
+                    url: "@(Url.Action("ListNexportUserEnrollments", "NexportIntegration"))",
+                    data: {
+                        "organizationId": orgId
+                    },
+                    success: function(data, textStatus, jqXHR) {
+                        e.stopImmediatePropagation();
+                        currentElement.find("[data-id='enrollment-listing']").html(data);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.log("Error while getting enrollment listing!");
+                    }
+                });
+            }
+        });
+    });
 </script>
