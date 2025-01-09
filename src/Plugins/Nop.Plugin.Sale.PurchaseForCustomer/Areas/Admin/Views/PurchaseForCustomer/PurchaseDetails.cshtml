@@ -36,7 +36,7 @@
         ServerSide = false,
         Paging = true,
         Length = 5,
-        Data = JsonConvert.SerializeObject(new List<CustomerModel>()),
+        Data = "local_available_customers",
         ColumnCollection = purchaseForCustomersColumns
     };
 }
@@ -81,7 +81,9 @@ else
                                     </div>
                                     <div class="col-sm-9 col-md-9">
                                         <input type="text" id="search-customer-name-email" autocomplete="off" class="form-control" />
-                                        @await Html.PartialAsync("Table", purchaseForCustomersTable)
+                                        <div id="purchasing_customer_list_container">
+                                            @await Html.PartialAsync("Table", purchaseForCustomersTable)
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="form-group row">
@@ -107,6 +109,15 @@ else
                                 }
                                 <div class="form-group row">
                                     <div class="col-sm-3">
+                                        <nop-label asp-for="StartDate" />
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <nop-editor asp-for="StartDate" />
+                                        <span asp-validation-for="StartDate"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-sm-3">
                                         <nop-label asp-for="NotifyCustomer" />
                                     </div>
                                     <div class="col-sm-9">
@@ -122,28 +133,34 @@ else
         </div>
     </form>
     <script>
+        var local_available_customers = [];
+
         function nameAndEmail(data, type, row, meta) {
+            if (!data)
+                return "";
+
             return data + " (" + row.Email + ")" + '<input name="CustomerIds" value="' + row.Id + '" hidden/>';
         }
 
         function customerDelBtn(data, type, row, meta) {
+            if (!data)
+                return "";
+
             var delBtn = '<button id="customer_del_' + row.Id + '" data-customer-id="' + row.Id + '" class="btn btn-default del-btn" type="button"><i style="padding-right:0px;color:red" class="fas fa-trash"></i></button>';
             return delBtn;
         }
 
         $(document).ready(function () {
+            $("#purchasing_customer_list_container").hide();
 
-            $('#purchase-for-customers-grid_wrapper').hide();
-
-            var purchaseForCustomersDataTable = $('#purchase-for-customers-grid').DataTable();
-
-            $('#purchase-for-customers-grid tbody').on('click', ".del-btn", function () {
-                var purchaseForCustomersRow = purchaseForCustomersDataTable.row($(this).parents('tr'));
+            $("#purchase-for-customers-grid").on("click", ".del-btn", function () {
+                var purchaseForCustomersDataTable = $("#purchase-for-customers-grid").DataTable();
+                var purchaseForCustomersRow = purchaseForCustomersDataTable.row($(this).parents("tr"));
 
                 purchaseForCustomersDataTable.row(purchaseForCustomersRow).remove().draw();
 
-                if ($('#purchase-for-customers-grid td.dataTables_empty').length) {
-                    $('#purchase-for-customers-grid_wrapper').hide();
+                if ($("#purchase-for-customers-grid td.dataTables_empty").length) {
+                    $("#purchasing_customer_list_container").hide();
                 }
             });
 
@@ -153,12 +170,15 @@ else
                 source: '@Url.Action("SearchCustomers", "PurchaseForCustomer")',
                 select: function (event, ui) {
                     if (!$("#customer_del_" + ui.item.customer.Id).length) {
-                        if ($('#purchase-for-customers-grid_wrapper').is(':hidden'))
-                            $('#purchase-for-customers-grid_wrapper').show();
+                        //local_available_customers.push(ui.item.customer);
 
-                        purchaseForCustomersDataTable.row.add(ui.item.customer).draw();
+                        if ($("#purchasing_customer_list_container").is(":hidden"))
+                            $("#purchasing_customer_list_container").show();
+
+                        var purchaseForCustomersDataTable = $("#purchase-for-customers-grid").DataTable();
+                        purchaseForCustomersDataTable.row.add(ui.item.customer).columns.adjust().draw();
                     }
-                    $('#search-customer-name-email').val('');
+                    $("#search-customer-name-email").val("");
                     event.preventDefault();
                 }
             });

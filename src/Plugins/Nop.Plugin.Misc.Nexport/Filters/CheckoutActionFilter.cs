@@ -77,7 +77,7 @@ public class CheckoutActionFilter : ActionFilterAttribute
             foreach (var productMapping in nexportProductMappings)
             {
                 var product = await _productService.GetProductByIdAsync(productMapping.NopProductId);
-                var canPurchaseProduct = await _nexportService.CanPurchaseNexportProductAsync(product, currentCustomer);
+                var (canPurchaseProduct, _) = await _nexportService.CanPurchaseNexportProductAsync(product, currentCustomer);
                 if (!canPurchaseProduct)
                 {
                     var shoppingCartItem = cart.FirstOrDefault(i => i.ProductId == productMapping.NopProductId);

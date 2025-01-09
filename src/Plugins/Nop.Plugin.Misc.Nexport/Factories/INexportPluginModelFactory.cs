@@ -9,6 +9,7 @@ using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Category;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.ReturnRequest;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
@@ -174,6 +175,18 @@ public partial interface INexportPluginModelFactory
     Task<NexportGroupProductRedemptionListSearchModel> PrepareNexportGroupProductRedemptionListSearchModelAsync(
         Guid? groupId, int productId, int? orderId = null);
 
+    Task<NexportPurchasesByFundingPoolListSearchModel> PrepareNexportPurchasesByFundingPoolListSearchModelAsync(int? customerId = null,
+        int? productId = null, int? statusId = null);
+
+    Task<NexportPurchasesByFundingPoolListModel> PrepareNexportPurchasesByFundingPoolListModelAsync(NexportPurchasesByFundingPoolListSearchModel searchModel);
+
+    Task<NexportProductRedemptionListSearchModel> PrepareNexportPurchasesByFundingPoolsRedemptionListSearchModelAsync(int? fundingPoolId);
+
+    Task<NexportGroupProductRedemptionListModel> PrepareNexportWholesalePurchasesByFundingPoolsRedemptionListModelAsync(
+        NexportProductRedemptionListSearchModel searchModel, int? orderId = null);
+
+
+
     Task<RedeemProductModel> PrepareRedeemProductModel(Guid? groupId, Guid invoiceItemId, int productId);
 
     Task<RedeemByEmailModel> PrepareRedeemByEmailModel(int? invoiceItemId, string email, int? productMappingId);
@@ -216,4 +229,10 @@ public partial interface INexportPluginModelFactory
     Task<NexportFundingPoolModel> PrepareNexportFundingPoolModelAsync(NexportFundingPoolModel model, NexportFundingPool fundingPool);
 
     Task<NexportEnrollmentListSearchModel> PrepareListNexportUserEnrollments(Customer customer, Guid organizationId);
+
+    Task<NexportReturnRequestSearchModel> PrepareNexportReturnRequestSearchModelAsync(NexportReturnRequestSearchModel searchModel);
+
+    Task<NexportReturnRequestListModel> PrepareNexportReturnRequestListModelAsync(NexportReturnRequestSearchModel searchModel);
+
+    Task<NexportReturnRequestModel> PrepareNexportReturnRequestModelAsync(NexportReturnRequestModel model, ReturnRequest returnRequest, bool excludeProperties = false);
 }

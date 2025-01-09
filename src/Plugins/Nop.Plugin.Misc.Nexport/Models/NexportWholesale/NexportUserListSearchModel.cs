@@ -1,14 +1,13 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale
-{
-    public record NexportUserListSearchModel : BaseSearchModel
-    {
-        public string SearchEmail { get; set; }
+namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
 
-        public NexportUserListSearchModel()
-        {
-            SetGridPageSize();
-        }
+public record NexportUserListSearchModel : BaseSearchModel
+{
+    public string SearchEmail { get; set; }
+
+    public NexportUserListSearchModel()
+    {
+        SetGridPageSize();
     }
 }

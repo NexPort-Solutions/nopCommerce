@@ -68,6 +68,7 @@ public partial class NexportService
     private readonly IRepository<Product> _productRepository;
     private readonly IRepository<GenericAttribute> _genericAttributeRepository;
     private readonly IRepository<OrderItem> _orderItemRepository;
+    private readonly IRepository<ReturnRequest> _returnRequestRepository;
     private readonly IRepository<NexportProductMapping> _nexportProductMappingRepository;
     private readonly IRepository<NexportProductGroupMembershipMapping> _nexportProductGroupMembershipMappingRepository;
     private readonly IRepository<NexportOrderProcessingQueueItem> _nexportOrderProcessingQueueRepository;
@@ -91,6 +92,7 @@ public partial class NexportService
     private readonly IRepository<NexportRegistrationFieldSynchronizationQueueItem> _nexportRegistrationFieldSynchronizationQueueRepository;
     private readonly IRepository<WholesalePurchasingGroup> _wholesalePurchasingGroupRepository;
     private readonly IRepository<WholesaleOrderInfo> _wholesaleOrderInfoRepository;
+    private readonly IRepository<NexportFundingPool> _nexportFundingPoolRepository;
     private readonly IRepository<Category> _categoryRepository;
     private readonly IRepository<Order> _orderRepository;
     private readonly ICustomerService _customerService;
@@ -124,6 +126,7 @@ public partial class NexportService
     private readonly IRepository<ProductCategory> _productCategoryMappingRepository;
     private readonly IRepository<NexportRedemptionUnassignmentRequest> _nexportRedemptionUnassignmentRequestRepository;
     private readonly IRepository<NexportRedemptionUnassignmentRequestReason> _nexportRedemptionUnassignmentRequestReasonRepository;
+    private readonly IRepository<NexportRedemptionAssignmentLog> _nexportRedemptionAssignmentLogRepository;
     private readonly IHtmlFormatter _htmlFormatter;
     private readonly IEventPublisher _eventPublisher;
 
@@ -141,6 +144,7 @@ public partial class NexportService
         IRepository<Product> productRepository,
         IRepository<GenericAttribute> genericAttributeRepository,
         IRepository<OrderItem> orderItemRepository,
+        IRepository<ReturnRequest> returnRequestRepository,
         IRepository<NexportProductMapping> nexportProductMappingRepository,
         IRepository<NexportProductGroupMembershipMapping> nexportProductGroupMembershipMappingRepository,
         IRepository<NexportOrderProcessingQueueItem> nexportOrderProcessingQueueRepository,
@@ -164,6 +168,7 @@ public partial class NexportService
         IRepository<NexportRegistrationFieldSynchronizationQueueItem> nexportRegistrationFieldSynchronizationQueueRepository,
         IRepository<WholesalePurchasingGroup> wholesalePurchasingGroupRepository,
         IRepository<WholesaleOrderInfo> wholesaleOrderInfoRepository,
+        IRepository<NexportFundingPool> nexportFundingPoolRepository,
         IRepository<Category> categoryRepository,
         IRepository<Order> orderRepository,
         ICustomerService customerService,
@@ -199,6 +204,7 @@ public partial class NexportService
         IRepository<ProductCategory> productCategoryMappingRepository,
         IRepository<NexportRedemptionUnassignmentRequest> nexportRedemptionUnassignmentRequestRepository,
         IRepository<NexportRedemptionUnassignmentRequestReason> nexportRedemptionUnassignmentRequestReasonRepository,
+        IRepository<NexportRedemptionAssignmentLog> nexportRedemptionAssignmentLogRepository,
         IHtmlFormatter htmlFormatter,
         IEventPublisher eventPublisher)
     {
@@ -214,6 +220,7 @@ public partial class NexportService
         _productRepository = productRepository;
         _genericAttributeRepository = genericAttributeRepository;
         _orderItemRepository = orderItemRepository;
+        _returnRequestRepository = returnRequestRepository;
         _nexportProductMappingRepository = nexportProductMappingRepository;
         _nexportProductGroupMembershipMappingRepository = nexportProductGroupMembershipMappingRepository;
         _nexportOrderProcessingQueueRepository = nexportOrderProcessingQueueRepository;
@@ -237,6 +244,7 @@ public partial class NexportService
         _nexportRegistrationFieldSynchronizationQueueRepository = nexportRegistrationFieldSynchronizationQueueRepository;
         _wholesalePurchasingGroupRepository = wholesalePurchasingGroupRepository;
         _wholesaleOrderInfoRepository = wholesaleOrderInfoRepository;
+        _nexportFundingPoolRepository = nexportFundingPoolRepository;
         _categoryRepository = categoryRepository;
         _orderRepository = orderRepository;
         _customerService = customerService;
@@ -269,8 +277,8 @@ public partial class NexportService
         _localizationSettings = localizationSettings;
         _productCategoryMappingRepository = productCategoryMappingRepository;
         _nexportRedemptionUnassignmentRequestRepository = nexportRedemptionUnassignmentRequestRepository;
-        _nexportRedemptionUnassignmentRequestReasonRepository =
-            nexportRedemptionUnassignmentRequestReasonRepository;
+        _nexportRedemptionUnassignmentRequestReasonRepository = nexportRedemptionUnassignmentRequestReasonRepository;
+        _nexportRedemptionAssignmentLogRepository = nexportRedemptionAssignmentLogRepository;
         _htmlFormatter = htmlFormatter;
         _eventPublisher = eventPublisher;
     }
@@ -1799,8 +1807,7 @@ public partial class NexportService
     }
 
     public async Task<bool> RedeemNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, NexportProductMapping mapping = null,
-        RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction =
-            RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
+        RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction = RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
     {
         if (invoiceItem == null)
             throw new ArgumentNullException(nameof(invoiceItem));
@@ -2530,7 +2537,7 @@ public partial class NexportService
         return null;
     }
 
-    public async Task<bool> CanPurchaseNexportProductAsync(Product product, Customer customer)
+    public async Task<(bool, string)> CanPurchaseNexportProductAsync(Product product, Customer customer)
     {
         if (product == null)
             throw new ArgumentNullException(nameof(product));
@@ -2548,29 +2555,25 @@ public partial class NexportService
             if (existingEnrollmentStatus == null)
             {
                 if (mapping.IsExtensionProduct)
-                    return false;
+                    return (false, "There is no existing enrollment within this product!");
 
                 return await CanPurchaseDifferentProductInNexportCategoryAsync(product, customer, store.Id);
             }
 
             switch (existingEnrollmentStatus)
             {
-                case var status
-                    when status.Value.Phase == Enums.PhaseEnum.Finished &&
-                         status.Value.Result == Enums.ResultEnum.Failing:
+                case { Phase: Enums.PhaseEnum.Finished, Result: Enums.ResultEnum.Failing }:
                     {
                         var allowRepurchaseFailedCourses = await _genericAttributeService.GetAttributeAsync<bool>(store,
                             NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
-                        return allowRepurchaseFailedCourses;
+                        return (allowRepurchaseFailedCourses, null);
                     }
 
-                case var status
-                    when status.Value.Phase == Enums.PhaseEnum.Finished &&
-                         status.Value.Result == Enums.ResultEnum.Passing:
+                case { Phase: Enums.PhaseEnum.Finished, Result: Enums.ResultEnum.Passing }:
                     {
                         var allowRepurchasePassedCourses = await _genericAttributeService.GetAttributeAsync<bool>(store,
                             NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
-                        return allowRepurchasePassedCourses;
+                        return (allowRepurchasePassedCourses, null);
                     }
 
                 case var status
@@ -2592,30 +2595,30 @@ public partial class NexportService
                                         if (!string.IsNullOrWhiteSpace(mapping.RenewalWindow))
                                         {
                                             var renewalWindowTimeSpan = TimeSpan.Parse(mapping.RenewalWindow);
-                                            return DateTime.UtcNow >= currentEnrollmentExpirationDate - renewalWindowTimeSpan;
+                                            return (DateTime.UtcNow >= currentEnrollmentExpirationDate - renewalWindowTimeSpan, null);
                                         }
 
                                         // Customer is not allowed to purchase since this is an active enrollment that has no renewal window
-                                        return false;
+                                        return (false, "You currently have an active enrollment that does not have any renewal window!");
                                     }
 
                                     // Allow customer to purchase since the enrollment has been expired
-                                    return true;
+                                    return (true, null);
                                 }
 
                                 // Customer is not allowed to purchase since there is still an active enrollment that has no expiration date
-                                return false;
+                                return (false, "You currently have an active enrollment that does not have any expiration date!");
                             }
                         }
 
                         // Customer is not allowed to purchase since the extension purchase limit has been met
-                        return false;
+                        return (false, "The extension purchase limit has been reached!");
                     }
             }
         }
 
         // Customer is allowed to purchase this product since no product mapping is available to determine the purchase eligibility
-        return true;
+        return (true, null);
     }
 
     public async Task<(ShoppingCartItem, Category)> CanPurchaseProductInNexportCategoryAsync(Product product,
@@ -2657,8 +2660,7 @@ public partial class NexportService
         return (null, null);
     }
 
-    public async Task<bool> CanPurchaseDifferentProductInNexportCategoryAsync(Product product, Customer customer,
-        int storeId)
+    public async Task<(bool, string)> CanPurchaseDifferentProductInNexportCategoryAsync(Product product, Customer customer, int storeId)
     {
         if (product == null)
             throw new ArgumentNullException(nameof(product));
@@ -2706,7 +2708,7 @@ public partial class NexportService
                                 // Customer is not allowed to purchase this product
                                 // since there is an existing enrollment from a different product within this category
                                 // that has not been expired and that enrollment is currently either in the Not Started or In Progress phase.
-                                return false;
+                                return (false, "There is an existing active enrollment from a different product!");
                             }
                         }
                     }
@@ -2714,7 +2716,7 @@ public partial class NexportService
             }
         }
 
-        return true;
+        return (true, null);
     }
 
     public async Task<bool> ExceedExtensionPurchaseLimitAsync(Customer customer, NexportProductMapping productMapping,

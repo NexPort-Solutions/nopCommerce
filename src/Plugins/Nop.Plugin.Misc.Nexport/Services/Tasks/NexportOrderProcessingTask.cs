@@ -270,11 +270,13 @@ public class NexportOrderProcessingTask : IScheduleTask
                             if (existingInvoiceItemId == null ||
                                 !invoiceDetails.InvoiceItems.Any(i => i.Id == existingInvoiceItemId))
                             {
+                                var redemptionAvailableDate = await _genericAttributeService.GetAttributeAsync<DateTime?>(order, "NexportEnrollmentStartDate", order.StoreId);
+
                                 for (var q = 0; q < orderItem.Quantity; q++)
                                 {
                                     var addItemResult = await AddItemToNexportInvoiceAsync(mapping, userMapping,
                                         orderInvoiceId, productCost, subscriptionOrgId,
-                                        groupMembershipIds);
+                                        groupMembershipIds, redemptionAvailableDate: redemptionAvailableDate);
 
                                     var invoiceItemId = addItemResult.InvoiceItemId;
 

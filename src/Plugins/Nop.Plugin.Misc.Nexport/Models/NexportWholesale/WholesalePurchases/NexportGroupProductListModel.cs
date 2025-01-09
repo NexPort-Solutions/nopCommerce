@@ -1,9 +1,8 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
-{
-    public record NexportGroupProductListModel : BasePagedListModel<NexportGroupProductModel>
-    {
+namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 
-    }
+public record NexportGroupProductListModel : BasePagedListModel<NexportGroupProductModel>
+{
+
 }

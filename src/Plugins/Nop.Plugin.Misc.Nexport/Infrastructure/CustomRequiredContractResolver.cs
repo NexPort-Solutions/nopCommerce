@@ -7,15 +7,14 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace Nop.Plugin.Misc.Nexport.Infrastructure
+namespace Nop.Plugin.Misc.Nexport.Infrastructure;
+
+public class CustomRequiredContractResolver : DefaultContractResolver
 {
-    public class CustomRequiredContractResolver : DefaultContractResolver
+    protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
     {
-        protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
-        {
-            var prop = base.CreateProperty(member, memberSerialization);
-            prop.Required = Required.Default;
-            return prop;
-        }
+        var prop = base.CreateProperty(member, memberSerialization);
+        prop.Required = Required.Default;
+        return prop;
     }
 }

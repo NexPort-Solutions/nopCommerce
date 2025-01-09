@@ -6,6 +6,8 @@
     var discounts = ViewData["DiscountList"] as List<Discount>;
 }
 
+<link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport.css" />
+
 @if (Model.ShowPurchasingGroupArea)
 {
     if (!Model.TogglePurchasingGroupText)
@@ -15,15 +17,26 @@
                 <div class="coupon-box">
                     <div class="title">
                         <strong>
-                            Group
+                            Purchasing group
                         </strong>
                     </div>
-                    <div class="hint">
-                        Select the group you would like to purchase for
-                    </div>
                     <div>
-                        <input id="search-customer-groups" type="text" autocomplete="on" class="form-control" />
-                        @Html.TextBoxFor(model => model.PurchasingGroupId, new { style = "display:none" })
+                        @{
+                            var currentPurchasingGroupDisplay = Model.PurchasingGroup == null ? "display: none;" : "";
+                        }
+                        <div id="current-purchasing-group-container" style="@currentPurchasingGroupDisplay">
+                            <text>Current group: <span data-id="current-purchasing-group-name">@Model.PurchasingGroup?.Name</span></text>
+                            <span style="margin-left: 5px;">
+                                <button type="button" class="delete-btn" onclick="removePurchasingGroupSelection();"></button>
+                            </span>
+                        </div>
+                        <div class="hint">
+                            Select the group you would like to purchase for
+                        </div>
+                        <div>
+                            <input id="search-customer-groups" type="text" autocomplete="on" class="form-control" />
+                            @Html.TextBoxFor(model => model.PurchasingGroupId, new { style = "display:none" })
+                        </div>
                     </div>
                 </div>
                 <div class="coupon-box">
@@ -32,13 +45,23 @@
                             Funding pool
                         </strong>
                     </div>
-                    <div class="hint">
-                        Select the funding pool that will be associated with the purchase
-                    </div>
                     <div>
-                        <input id="search-funding-pools" type="text" autocomplete="on" class="form-control" />
-                        @* <input type="text" name="FundingPoolId" id="FundingPoolId" style="display:none" /> *@
-                        @Html.TextBoxFor(model => model.FundingPoolId, new { style = "display:none" })
+                        @{
+                            var currentFundingPoolDisplay = Model.FundingPool == null ? "display: none;" : "";
+                        }
+                        <div id="current-funding-pool-container" style="@currentFundingPoolDisplay">
+                            <text>Current funding pool: <span data-id="current-funding-pool-name">@Model.FundingPool?.Name</span></text>
+                            <span style="margin-left: 5px;">
+                                <button type="button" class="delete-btn" onclick="removeFundingPoolSelection();"></button>
+                            </span>
+                        </div>
+                        <div class="hint">
+                            Select the funding pool that will be associated with the purchase
+                        </div>
+                        <div>
+                            <input id="search-funding-pools" type="text" autocomplete="on" class="form-control" />
+                            @Html.TextBoxFor(model => model.FundingPoolId, new { style = "display:none" })
+                        </div>
                     </div>
                 </div>
             </div>
@@ -46,17 +69,64 @@
     }
     else
     {
-        <div id="selected-purchasing-group" style="display: flex; flex-direction: column; font-weight: bold; color:#444">
-        </div>
+        <div style="margin: 1em;">
+            <div id="selected-purchasing-group" style="display: flex; flex-direction: column; font-weight: bold; color:#444">
+            </div>
 
-        <div id="selected-funding-pool" style="display: flex; flex-direction: column; font-weight: bold; color:#444">
+            <div id="selected-funding-pool" style="display: flex; flex-direction: column; font-weight: bold; color:#444">
+            </div>
         </div>
     }
 
     <script asp-location="Footer">
+        function removePurchasingGroupSelection() {
+            var postData = { };
+
+            addAntiForgeryToken(postData);
+
+            $.ajax({
+                cache: false,
+                type: "POST",
+                url: "@Url.Action("RemovePurchaseGroupForCustomer", "NexportWholesale")",
+                data: postData,
+                success: function (data, textStatus, jqXHR) {
+                    var container = $("#current-purchasing-group-container");
+                    container.fadeOut(600, function() {
+                        container.hide();
+                    });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                }
+            });
+        }
+
+        function removeFundingPoolSelection() {
+            var postData = { };
+
+            addAntiForgeryToken(postData);
+
+            $.ajax({
+                cache: false,
+                type: "POST",
+                url: "@Url.Action("RemovePurchaseFundingPoolForCustomer", "NexportWholesale")",
+                data: postData,
+                success: function (data, textStatus, jqXHR) {
+                    var container = $("#current-funding-pool-container");
+                    container.fadeOut(600, function() {
+                        container.hide();
+                    });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                }
+            });
+        }
+
         $(document).ready(function () {
-            $("#selected-purchasing-group").html("@(Model.TogglePurchasingGroupText && Model.PurchasingGroup != null ? "Purchasing for group: " + HttpUtility.JavaScriptStringEncode(Model.PurchasingGroup?.Name) : "")");
-            $("#selected-funding-pool").html("@(Model.TogglePurchasingGroupText && Model.FundingPool != null ? "Funding pool: " + HttpUtility.JavaScriptStringEncode(Model.FundingPool?.Name) : "")");
+            var purchasingGroupText = "@(Model.TogglePurchasingGroupText && Model.PurchasingGroup != null ? "Purchasing for group: " + HttpUtility.JavaScriptStringEncode(Model.PurchasingGroup?.Name) : "")";
+            $("#selected-purchasing-group").html(purchasingGroupText);
+
+            var fundingPoolText = "@(Model.TogglePurchasingGroupText && Model.FundingPool != null ? "Funding pool: " + HttpUtility.JavaScriptStringEncode(Model.FundingPool?.Name) : "")";
+            $("#selected-funding-pool").html(fundingPoolText);
 
             var source = @Html.Raw(Json.Serialize(Model.AvailableGroups.Select(group => new { label = group.Name, value = group })));
             $("#search-customer-groups").autocomplete({
@@ -72,12 +142,40 @@
                 },
                 select: function (event, ui) {
                     if (ui.item) {
-                        $("#search-customer-groups").val(ui.item.label);
+                        //$("#search-customer-groups").val(ui.item.label);
                         $("#@Html.IdFor(model => model.PurchasingGroup)").val(ui.item.value);
+
+                        var postData = {
+                            groupSelected: JSON.stringify(ui.item.value)
+                        };
+
+                        addAntiForgeryToken(postData);
+
+                        $.ajax({
+                            cache: false,
+                            type: "POST",
+                            url: "@Url.Action("SetPurchaseGroupForCustomer", "NexportWholesale")",
+                            data: postData,
+                            success: function (data, textStatus, jqXHR) {
+                                var container = $("#current-purchasing-group-container");
+                                if (container.is(":visible")) {
+                                    $("[data-id='current-purchasing-group-name']").html(ui.item.label);
+                                    $("#search-customer-groups").val("").blur();
+                                } else {
+                                    $("[data-id='current-purchasing-group-name']").html(ui.item.label);
+                                    container.fadeIn(600, function() {
+                                        $("#search-customer-groups").val("").blur();
+                                    });
+                                }
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                            }
+                        });
+
                         return false;
                     }
                 },
-                change: function (event, ui) {
+                @* change: function (event, ui) {
                     if (ui.item) {
                         var postData = {
                             groupSelected: JSON.stringify(ui.item.value)
@@ -101,7 +199,7 @@
                     }
 
                     return false;
-                }
+                } *@
             });
 
             var fundingPoolData = @Html.Raw(Json.Serialize(Model.AvailableFundingPools.Select(x => new { label = x.Name, value = x })));
@@ -118,12 +216,40 @@
                 },
                 select: function (event, ui) {
                     if (ui.item) {
-                        $("#search-funding-pools").val(ui.item.label);
+                        //$("#search-funding-pools").val(ui.item.label);
                         $("#@Html.IdFor(model => model.FundingPool)").val(ui.item.value);
+
+                        var postData = {
+                            fundingPoolId: JSON.stringify(ui.item.value.Id)
+                        };
+
+                        addAntiForgeryToken(postData);
+
+                        $.ajax({
+                            cache: false,
+                            type: "POST",
+                            url: "@Url.Action("SetPurchaseFundingPoolForCustomer", "NexportWholesale")",
+                            data: postData,
+                            success: function (data, textStatus, jqXHR) {
+                                var container = $("#current-funding-pool-container");
+                                if (container.is(":visible")) {
+                                    $("[data-id='current-funding-pool-name']").html(ui.item.label);
+                                    $("#search-funding-pools").val("").blur();
+                                } else {
+                                    $("[data-id='current-funding-pool-name']").html(ui.item.label);
+                                    container.fadeIn(600, function() {
+                                        $("#search-funding-pools").val("").blur();
+                                    });
+                                }
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                            }
+                        });
+
                         return false;
                     }
                 },
-                change: function (event, ui) {
+                @* change: function (event, ui) {
                     if (ui.item) {
                         var postData = {
                             fundingPoolId: JSON.stringify(ui.item.value.Id)
@@ -147,7 +273,7 @@
                     }
 
                     return false;
-                }
+                } *@
             });
         });
     </script>

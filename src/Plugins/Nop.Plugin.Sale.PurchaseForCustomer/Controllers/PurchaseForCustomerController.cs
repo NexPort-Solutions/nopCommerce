@@ -20,6 +20,7 @@ using Nop.Plugin.Sale.PurchaseForCustomer.Models;
 using Nop.Plugin.Sale.PurchaseForCustomer.Services;
 using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Services.Configuration;
+using Nop.Services.Helpers;
 
 namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers;
 
@@ -39,6 +40,7 @@ public class PurchaseForCustomerController : BasePluginController
     private readonly INotificationService _notificationService;
     private readonly ILocalizationService _localizationService;
     private readonly ILogger _logger;
+    private readonly IDateTimeHelper _dateTimeHelper;
     private readonly ICustomerActivityService _customerActivityService;
 
     public PurchaseForCustomerController(
@@ -53,6 +55,7 @@ public class PurchaseForCustomerController : BasePluginController
         INotificationService notificationService,
         ILocalizationService localizationService,
         ILogger logger,
+        IDateTimeHelper dateTimeHelper,
         ICustomerActivityService customerActivityService)
     {
         _purchaseForCustomerPluginService = purchaseForCustomerPluginService;
@@ -66,6 +69,7 @@ public class PurchaseForCustomerController : BasePluginController
         _notificationService = notificationService;
         _localizationService = localizationService;
         _logger = logger;
+        _dateTimeHelper = dateTimeHelper;
         _customerActivityService = customerActivityService;
     }
 
@@ -164,14 +168,14 @@ public class PurchaseForCustomerController : BasePluginController
                         var customer = await _customerService.GetCustomerByIdAsync(customerId);
                         if (customer != null)
                         {
+                            var utcStartDate = model.StartDate.HasValue ? (DateTime?)_dateTimeHelper.ConvertToUtcTime(model.StartDate.Value) : null;
                             result = await _purchaseForCustomerService
-                                .PurchaseProductForCustomerAsync(product, customer, store, model.NotifyCustomer);
+                                .PurchaseProductForCustomerAsync(product, customer, store, utcStartDate, model.NotifyCustomer);
 
-                            if (result != null && result.Success)
+                            if (result is { Success: true })
                             {
-                                //activity log
                                 await _customerActivityService.InsertActivityAsync(PluginDefaults.NEXPORT_PURCHASE_PRODUCT_FOR_CUSTOMER,
-                                    $"Purchased product (ID:{product.Id}, Name:{product.Name}) for customer (ID:{customer.Id}, First Name:{customer.FirstName}, Last Name:{customer.LastName}, Email: {customer.Email}",product);
+                                    $"Purchased product [{product.Name} ({product.Id})] for customer #{customer.Id}", product);
                             }
                         }
                     }

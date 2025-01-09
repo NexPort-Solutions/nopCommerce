@@ -111,7 +111,7 @@
     function setMappingInfoRequirement() {
         if (selectedNexportProduct) {
             if (selectedNexportProduct.attr('id') != $("[data-control=nexport-product-selection]:checked").attr('id'))
-            {                
+            {
                 $("input.assign-when-redeem").each(function (i) {
                     $(this).prop('checked', false)
                 });
@@ -126,7 +126,7 @@
         $("#nexport-product-container").find("[name=NexportCatalogId]").val(selectedNexportProduct.data("catalog-id"));
         $("#nexport-product-container").find("[name=NexportSyllabusId]").val(selectedNexportProduct.data("syllabus-id"));
         $("#nexport-product-container").find("[name=NexportProductId]").val(selectedNexportProduct.data("product-id"));
-        
+
         if (selectedNexportProduct.data("assign-when-redeemed"))
         {
             $("#nexport-product-container").find("[name=NexportProductType]").val("@(NexportProductTypeEnum.OpenEnded)");
@@ -154,7 +154,7 @@
 
         return renderControl;
     }
-    
+
     function renderSyllabusSelection(data, type, row, meta) {
         var nexportProductType = +row.Type + 1;
 
@@ -166,7 +166,7 @@
 
         return renderControl;
     }
-    
+
     function renderAssignWhenRedeemed(data, type, row, meta) {
         var renderControl = "<input class=\"assign-when-redeem\" type=\"checkbox\" >";
 

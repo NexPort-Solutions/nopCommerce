@@ -6,7 +6,7 @@
     Uri.TryCreate(new Uri(NexportSettings.Url.TrimEnd('/')), $"Account/Info.nex?user=",
         out var userInfoUrl);
 
-    string? userLinkUri = userInfoUrl != null ? userInfoUrl.AbsoluteUri : "";
+    var userLinkUri = userInfoUrl != null ? userInfoUrl.AbsoluteUri : "";
 }
 <div class="section">
     <label>@T("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.SearchHeader")</label>

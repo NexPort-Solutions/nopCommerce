@@ -5,19 +5,18 @@ using Nop.Core.Domain.Catalog;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
-namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct
+namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
+
+public record ProductStepModel() : BaseNopEntityModel
 {
-    public record ProductStepModel() : BaseNopEntityModel
-    {
-        public IList<SelectListItem> AvailableMappings { get; set; } = new List<SelectListItem>();
+    public IList<SelectListItem> AvailableMappings { get; set; } = new List<SelectListItem>();
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectProduct")]
-        public int? SelectedProductMappingId { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectProduct")]
+    public int? SelectedProductMappingId { get; set; }
 
-        public Guid InvoiceItemId { get; set; }
+    public Guid InvoiceItemId { get; set; }
 
-        public Product CurrentProduct { get; set; }
+    public Product CurrentProduct { get; set; }
 
-        public int? ProductMappingIdForOpenEndedProduct { get; set; }
-    }
+    public int? ProductMappingIdForOpenEndedProduct { get; set; }
 }
