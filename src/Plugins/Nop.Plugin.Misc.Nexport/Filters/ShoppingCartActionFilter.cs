@@ -72,8 +72,7 @@ public class ShoppingCartActionFilter : ActionFilterAttribute
                     foreach (var item in shoppingCartModel.Items)
                     {
                         var product = await _productService.GetProductByIdAsync(item.ProductId);
-                        var canPurchaseProduct =
-                            await _nexportService.CanPurchaseNexportProductAsync(product, currentCustomer);
+                        var (canPurchaseProduct, _) = await _nexportService.CanPurchaseNexportProductAsync(product, currentCustomer);
 
                         if (!canPurchaseProduct)
                         {
@@ -211,16 +210,23 @@ public class ShoppingCartActionFilter : ActionFilterAttribute
                         if (await _customerService.IsRegisteredAsync(customer))
                         {
                             //TODO @JS - check if user is purchasing agent. if they are, skip the canpurchasenexportproduct check
-                            var canPurchaseProduct =
+                            var (canPurchaseProduct, errMsg) =
                                 await _nexportService.CanPurchaseNexportProductAsync(product, customer);
 
                             if (!canPurchaseProduct)
                             {
+                                var resultMsg = await _localizationService.GetResourceAsync(
+                                    "Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase");
+
+                                if (!string.IsNullOrEmpty(errMsg))
+                                {
+                                    resultMsg += $" {errMsg}";
+                                }
+
                                 context.Result = new JsonResult(new
                                 {
                                     success = false,
-                                    message = await _localizationService.GetResourceAsync(
-                                        "Plugins.Misc.Nexport.Errors.ProductNotEligibleForPurchase")
+                                    message = resultMsg
                                 });
                             }
                             else

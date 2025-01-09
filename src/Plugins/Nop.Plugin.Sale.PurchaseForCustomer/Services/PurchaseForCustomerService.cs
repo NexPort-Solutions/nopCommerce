@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.ServiceModel.Channels;
 using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Localization;
+using Nop.Core.Domain.Media;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Shipping;
@@ -196,7 +198,7 @@ public class PurchaseForCustomerService : OrderProcessingService, IPurchaseForCu
     #endregion
 
     public async Task<PlaceOrderResult> PurchaseProductForCustomerAsync(Product product, Customer customer, Store store,
-        bool notifyCustomer = false)
+        DateTime? utcStartDate = null, bool notifyCustomer = false)
     {
         ArgumentNullException.ThrowIfNull(nameof(product));
         ArgumentNullException.ThrowIfNull(nameof(customer));
@@ -227,7 +229,7 @@ public class PurchaseForCustomerService : OrderProcessingService, IPurchaseForCu
             PaymentMethodSystemName = "Payments.Manual"
         };
 
-        var orderResult = await PlaceOrderForCustomerAsync(processingPaymentRequest, shoppingCartItems, notifyCustomer);
+        var orderResult = await PlaceOrderForCustomerAsync(processingPaymentRequest, shoppingCartItems, utcStartDate, notifyCustomer);
 
         return orderResult;
     }
@@ -343,7 +345,7 @@ public class PurchaseForCustomerService : OrderProcessingService, IPurchaseForCu
     }
 
     public async Task<PlaceOrderResult> PlaceOrderForCustomerAsync(ProcessPaymentRequest processPaymentRequest,
-        IList<ShoppingCartItem> shoppingCartItems, bool notifyCustomer = false)
+        IList<ShoppingCartItem> shoppingCartItems, DateTime? utcStartDate = null, bool notifyCustomer = false)
     {
         if (processPaymentRequest == null)
             throw new ArgumentNullException(nameof(processPaymentRequest));
@@ -370,8 +372,24 @@ public class PurchaseForCustomerService : OrderProcessingService, IPurchaseForCu
                 var order = await SaveOrderDetailsAsync(processPaymentRequest, processPaymentResult, details);
                 result.PlacedOrder = order;
 
+                var currentUser = await _workContext.GetCurrentCustomerAsync();
+
+                var orderNote = new OrderNote
+                {
+                    OrderId = order.Id,
+                    Note = $"This order has been placed by user #{currentUser.Id} ({currentUser.FirstName} {currentUser.LastName} - {currentUser.Email})",
+                    CreatedOnUtc = DateTime.UtcNow
+                };
+
+                await _orderService.InsertOrderNoteAsync(orderNote);
+
                 // Move temporarily shopping cart items to order items
                 await MoveTempShoppingCartItemToOrderItemsAsync(details, order);
+
+                if (utcStartDate.HasValue)
+                {
+                    await _genericAttributeService.SaveAttributeAsync(order, "NexportEnrollmentStartDate", utcStartDate, order.StoreId);
+                }
 
                 if (notifyCustomer)
                     await SendNotificationsToCustomerAndSaveNotesAsync(order);

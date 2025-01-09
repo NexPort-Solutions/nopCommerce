@@ -53,6 +53,12 @@ public class RouteProvider : IRouteProvider
         endpointRouteBuilder.MapControllerRoute("CategoryList",
             "admin/category/list",
             new { area = "Admin", controller = "NexportCategory", action = "List" });
+        endpointRouteBuilder.MapControllerRoute("ReturnRequestList",
+            "admin/returnrequest/list",
+            new { area = "Admin", controller = "NexportReturnRequest", action = "List" });
+        endpointRouteBuilder.MapControllerRoute("ReturnRequestEdit",
+            "admin/returnrequest/nexport/edit/{id:min(0)}",
+            new { area = "Admin", controller = "NexportReturnRequest", action = "Edit" });
 
         //endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Groups",
         //    "Admin/NexportIntegration/NexportGroups",
@@ -72,6 +78,23 @@ public class RouteProvider : IRouteProvider
 
         endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions.Redeem",
             "Admin/Wholesale/NexportGroups/Products/Redemptions/Redeem",
+            new { area = "Admin", controller = "NexportWholesale", action = "RedeemProduct" });
+
+
+        endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Wholesale.Purchase.ByFundingPools.List",
+            "Admin/Wholesale/Purchases/ByFundingPools/List",
+            new { area = "Admin", controller = "NexportWholesale", action = "AdminNexportWholesalePurchasesByFundingPoolsList" });
+
+        endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Wholesale.Purchase.ByFundingPools.Redemptions",
+            "Admin/Wholesale/Purchases/ByFundingPools/Redemptions/",
+            new { area = "Admin", controller = "NexportWholesale", action = "AdminNexportWholesalePurchasesByFundingPoolsRedemptionList" });
+
+        endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Wholesale.Purchase.ByFundingPools.Redemptions.WithParameters",
+            "Admin/Wholesale/Purchases/ByFundingPools/Redemptions/{fundingPoolId:int?}",
+            new { area = "Admin", controller = "NexportWholesale", action = "AdminNexportWholesalePurchasesByFundingPoolsRedemptionList" });
+
+        endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Wholesale.Purchase.ByFundingPools.Redemptions.Redeem",
+            "Admin/Wholesale/Purchases/ByFundingPools/Redemptions/Redeem",
             new { area = "Admin", controller = "NexportWholesale", action = "RedeemProduct" });
 
         //endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Groups",

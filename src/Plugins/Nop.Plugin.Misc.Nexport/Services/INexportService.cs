@@ -387,6 +387,10 @@ public interface INexportService
         string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus,
         DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Store store = null, Customer customer = null);
 
+    Task<IList<NexportOrderInvoiceItem>> SearchProductRedemptionsAsync(int? fundingPoolId,
+        string customerName, string customerEmail, string productName, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus,
+        DateTime? fromUtc, DateTime? toUtc, Store store = null);
+
     Task<bool> RedeemProductForCustomer(RedeemProductModel model);
 
     Task UnassignInvoiceItem(NexportOrderInvoiceItem invoiceItem);
@@ -394,6 +398,10 @@ public interface INexportService
     Task RedeemAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem, Guid nexportUserId, int productMappingId);
 
     Task CancelAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem);
+
+    Task<bool> RefundInvoiceItem(NexportOrderInvoiceItem invoiceItem);
+
+    Task RefundOrderItem(int quantity, int orderId, int orderItemId);
 
     Task<bool> HasWholesaleOrderInfo(Guid? groupId = null, Store store = null, Customer customer = null);
 
@@ -415,8 +423,13 @@ public interface INexportService
         int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false, bool? overridePublished = null,
         bool? hasProductMapping = null);
 
-    Task<IPagedList<WholesaleOrderInfo>> GetAllWholesaleOrderInfosAsync(string groupName, string shortName,
-        string productName, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, int? customerId, int? storeId,
+    Task<IPagedList<WholesaleOrderInfo>> GetAllWholesaleOrderInfosAsync(string groupName, string shortName, string productName,
+        NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, int? customerId, int? storeId,
+        int pageIndex = 0, int pageSize = int.MaxValue);
+
+    Task<IPagedList<WholesaleOrderInfo>> GetAllWholesaleOrderInfosByFundingPoolsAsync(
+        string fundingPoolName,
+        NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, int? customerId, int? storeId,
         int pageIndex = 0, int pageSize = int.MaxValue);
 
     Task InsertRedemptionUnassignmentRequestAsync(NexportRedemptionUnassignmentRequest unassignmentRequest);
@@ -458,5 +471,14 @@ public interface INexportService
         DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
         int pageIndex = 0, int pageSize = int.MaxValue);
 
-    Task<bool> HasWholesaleOrders(Customer customer, Store store = null);
+    //Task<bool> HasWholesaleOrders(Customer customer, Store store = null);
+
+    Task InsertNexportRedemptionAssignmentLogAsync(NexportRedemptionAssignmentLog assignmentRedemptionLog);
+
+    Task DeleteNexportRedemptionAssignmentLogAsync(NexportRedemptionAssignmentLog assignmentRedemptionLog);
+
+    Task<IPagedList<ReturnRequest>> SearchReturnRequestsAsync(int storeId = 0, int customerId = 0,
+        int orderItemId = 0, string customNumber = "", ReturnRequestStatus? rs = null, DateTime? createdFromUtc = null,
+        DateTime? createdToUtc = null, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, bool includeOnlyNexportPurchases = false);
+
 }

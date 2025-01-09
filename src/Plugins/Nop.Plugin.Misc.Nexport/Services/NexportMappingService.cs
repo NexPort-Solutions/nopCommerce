@@ -2357,6 +2357,69 @@ public partial class NexportService : INexportService
         return await invoiceItemQuery.ToListAsync();
     }
 
+    public async Task<IList<NexportOrderInvoiceItem>> SearchProductRedemptionsAsync(int? fundingPoolId,
+        string customerName, string customerEmail, string productName, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus,
+        DateTime? fromUtc, DateTime? toUtc, Store store = null)
+    {
+        var invoiceItemQuery = _nexportOrderInvoiceItemRepository.Table;
+
+        var orderQuery = _orderRepository.Table;
+        var orderIdList = await orderQuery.Select(x => x.Id).ToListAsync();
+
+        invoiceItemQuery = invoiceItemQuery.Where(x => orderIdList.Contains(x.OrderId));
+
+        if (fromUtc.HasValue)
+            invoiceItemQuery = invoiceItemQuery.Where(x => fromUtc.Value <= x.UtcDateRedemption);
+        if (toUtc.HasValue)
+            invoiceItemQuery = invoiceItemQuery.Where(x => toUtc.Value >= x.UtcDateRedemption);
+
+        if (!customerEmail.IsNullOrWhiteSpace() || !customerName.IsNullOrWhiteSpace())
+        {
+            var customerQuery = _customerRepository.Table;
+
+            if (!customerEmail.IsNullOrWhiteSpace())
+                customerQuery = customerQuery.Where(x => x.Email.Contains(customerEmail));
+
+            if (!customerName.IsNullOrWhiteSpace())
+                customerQuery = customerQuery.Where(x => x.FirstName.Contains(customerName) || x.LastName.Contains(customerName));
+
+            var customerIdList = await customerQuery.Select(x => x.Id).ToListAsync();
+
+            if (customerIdList.Any())
+            {
+                var nexportUserQuery =
+                    _nexportUserMappingRepository.Table.Where(x => customerIdList.Contains(x.NopUserId));
+
+                var nexportUserIdList = await nexportUserQuery.Select(x => x.NexportUserId).ToListAsync();
+
+                invoiceItemQuery = invoiceItemQuery.Where(x =>
+                    x.RedeemingUserId != null && nexportUserIdList.Contains(x.RedeemingUserId.Value));
+            }
+        }
+
+        var orderInfoQuery = _wholesaleOrderInfoRepository.Table.Where(x => x.FundingPoolId == fundingPoolId);
+
+        if (!productName.IsNullOrWhiteSpace())
+        {
+            var productQuery = _productRepository.Table;
+            if (!productName.IsNullOrWhiteSpace())
+                productQuery = productQuery.Where(x => x.Name.Contains(productName));
+
+            var productIdList = await productQuery.Select(x => x.Id).ToListAsync();
+            orderInfoQuery = orderInfoQuery.Where(x => productIdList.Contains(x.ProductId));
+        }
+
+        var orderInfoQueryIdList = await orderInfoQuery
+            .Select(x => new { orderId = x.OrderId, orderItemId = x.OrderItemId }).ToListAsync();
+
+        invoiceItemQuery = invoiceItemQuery.Where(x => orderInfoQueryIdList.Contains(new { orderId = x.OrderId, orderItemId = x.OrderItemId }));
+
+        if (redemptionStatus != null)
+            invoiceItemQuery = invoiceItemQuery.Where(x => x.RedemptionStatusId == (int)redemptionStatus);
+
+        return await invoiceItemQuery.ToListAsync();
+    }
+
     public async Task<bool> RedeemProductForCustomer(RedeemProductModel model)
     {
         var invoiceItem = await FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
@@ -2570,6 +2633,14 @@ public partial class NexportService : INexportService
 
                 await DeleteNexportOrderInvoiceItem(invoiceItem);
 
+                await _orderService.InsertOrderNoteAsync(new OrderNote
+                {
+                    OrderId = invoiceItem.OrderId,
+                    Note = $"Invoice item #{invoiceItem.InvoiceItemId} for order item #{invoiceItem.OrderItemId} has been refunded.",
+                    DisplayToCustomer = false,
+                    CreatedOnUtc = DateTime.UtcNow
+                });
+
                 return true;
             }
         }
@@ -2579,6 +2650,42 @@ public partial class NexportService : INexportService
         }
 
         return false;
+    }
+
+    public async Task RefundOrderItem(int quantity, int orderId, int orderItemId)
+    {
+        if (quantity < 0)
+            throw new ArgumentException("Quantity cannot be negative", nameof(quantity));
+
+        try
+        {
+            var wholesaleOrderInfo = await GetWholesaleOrderInfoForOrderItemAsync(orderId, orderItemId);
+            if (wholesaleOrderInfo != null)
+            {
+                var quantityToRefund = quantity <= wholesaleOrderInfo.Available ? quantity : wholesaleOrderInfo.Available;
+                var orderInvoiceItems = await FindNexportOrderInvoiceItems(orderId, orderItemId);
+                var discardOrderInvoiceItems = orderInvoiceItems.Take(quantityToRefund);
+                foreach (var invoiceItem in discardOrderInvoiceItems)
+                {
+                    await DeleteNexportOrderInvoiceItem(invoiceItem);
+                }
+
+                wholesaleOrderInfo.Available -= quantityToRefund;
+                await UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+
+                await _orderService.InsertOrderNoteAsync(new OrderNote
+                {
+                    OrderId = orderId,
+                    Note = $"Order item #{orderItemId} has been refunded. Total refund items: {quantity}.",
+                    DisplayToCustomer = false,
+                    CreatedOnUtc = DateTime.UtcNow
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync($"Failed to refund order item #{orderItemId} in order #{orderId}", ex);
+        }
     }
 
     public async Task<bool> HasWholesaleOrderInfo(Guid? groupId = null, Store store = null, Customer customer = null)
@@ -2706,6 +2813,7 @@ public partial class NexportService : INexportService
     /// true - load only "Published" products
     /// false - load only "Unpublished" products
     /// </param>
+    /// <param name="hasProductMapping"></param>
     /// <returns>
     /// A task that represents the asynchronous operation
     /// The task result contains the categories
@@ -2862,6 +2970,68 @@ public partial class NexportService : INexportService
             .Select(x => x.wholesaleOrder)
             .Distinct()
             .GroupBy(x => new { x.NexportGroupId, x.ProductId })
+            .Select(x =>
+                new WholesaleOrderInfo
+                {
+                    NexportGroupId = x.FirstOrDefault().NexportGroupId,
+                    OrderId = x.FirstOrDefault()!.OrderId,
+                    OrderItemId = x.FirstOrDefault()!.OrderItemId,
+                    ProductId = x.FirstOrDefault()!.ProductId,
+                    Available = x.Sum(y => y.Available),
+                    Awaiting = x.Sum(y => y.Awaiting),
+                    Redeemed = x.Sum(y => y.Redeemed),
+                    FundingPoolId = x.FirstOrDefault()!.FundingPoolId,
+                    UtcRedeemByDate = x.FirstOrDefault()!.UtcRedeemByDate,
+                });
+
+        if (redemptionStatus != null)
+        {
+            orderInfoQuery = redemptionStatus switch
+            {
+                NexportOrderInvoiceItemRedemptionStatus.Available => orderInfoQuery.Where(x => x.Available > 0),
+                NexportOrderInvoiceItemRedemptionStatus.Awaiting => orderInfoQuery.Where(x => x.Awaiting > 0),
+                NexportOrderInvoiceItemRedemptionStatus.Assigned => orderInfoQuery.Where(x => x.Redeemed > 0),
+                _ => orderInfoQuery
+            };
+        }
+
+        return new PagedList<WholesaleOrderInfo>(await orderInfoQuery.ToListAsync(), pageIndex, pageSize);
+    }
+
+    public async Task<IPagedList<WholesaleOrderInfo>> GetAllWholesaleOrderInfosByFundingPoolsAsync(
+        string fundingPoolName,
+        NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, int? customerId, int? storeId,
+        int pageIndex = 0, int pageSize = int.MaxValue)
+    {
+        var orderQuery = _orderRepository.Table;
+
+        if (storeId != null)
+            orderQuery = orderQuery.Where(x => x.StoreId == storeId);
+
+        if (customerId != null)
+            orderQuery = orderQuery.Where(x => x.CustomerId == customerId);
+
+        var wholesaleOrderQuery = _wholesaleOrderInfoRepository.Table;
+        if (fundingPoolName != null)
+        {
+            var fundingPoolQuery = _nexportFundingPoolRepository.Table.Where(x => x.Name.Contains(fundingPoolName));
+
+            var fundingPoolIds = await fundingPoolQuery.Select(x => x.Id).ToListAsync();
+            wholesaleOrderQuery = wholesaleOrderQuery.Where(x => x.FundingPoolId != null && fundingPoolIds.Contains(x.FundingPoolId.Value));
+        }
+
+        var orderInfoQuery = wholesaleOrderQuery
+            .Join(_nexportOrderInvoiceItemRepository.Table
+                    .Where(x =>
+                        x.RedemptionStatusId != (int)NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable &&
+                        x.RedemptionStatusId != (int)NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting),
+                x => x.OrderId, nexportInvoiceItem => nexportInvoiceItem.OrderId,
+                (wholesaleOrder, nexportInvoiceItem) => new { wholesaleOrder, nexportInvoiceItem })
+            .Join(orderQuery, x => x.wholesaleOrder.OrderId, order => order.Id,
+                (wholesaleOrderWithNexportInvoice, order) => new { wholesaleOrderWithNexportInvoice.wholesaleOrder, order })
+            .Select(x => x.wholesaleOrder)
+            .Distinct()
+            .GroupBy(x => new { x.FundingPoolId, x.ProductId })
             .Select(x =>
                 new WholesaleOrderInfo
                 {
@@ -3165,8 +3335,52 @@ public partial class NexportService : INexportService
         return await query.ToPagedListAsync(pageIndex, pageSize);
     }
 
-    public async Task<bool> HasWholesaleOrders(Customer customer, Store store = null)
+    public async Task InsertNexportRedemptionAssignmentLogAsync(NexportRedemptionAssignmentLog assignmentRedemptionLog)
     {
-        throw new NotImplementedException();
+        if (assignmentRedemptionLog == null)
+            throw new ArgumentNullException(nameof(assignmentRedemptionLog));
+
+        await _nexportRedemptionAssignmentLogRepository.InsertAsync(assignmentRedemptionLog);
+    }
+
+    public async Task DeleteNexportRedemptionAssignmentLogAsync(NexportRedemptionAssignmentLog assignmentRedemptionLog)
+    {
+        if (assignmentRedemptionLog == null)
+            throw new ArgumentNullException(nameof(assignmentRedemptionLog));
+
+        await _nexportRedemptionAssignmentLogRepository.DeleteAsync(assignmentRedemptionLog);
+    }
+
+    public virtual async Task<IPagedList<ReturnRequest>> SearchReturnRequestsAsync(int storeId = 0, int customerId = 0,
+        int orderItemId = 0, string customNumber = "", ReturnRequestStatus? rs = null, DateTime? createdFromUtc = null,
+        DateTime? createdToUtc = null, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, bool includeOnlyNexportPurchases = false)
+    {
+        var query = _returnRequestRepository.Table;
+        if (storeId > 0)
+            query = query.Where(rr => storeId == rr.StoreId);
+        if (customerId > 0)
+            query = query.Where(rr => customerId == rr.CustomerId);
+        if (rs.HasValue)
+        {
+            var returnStatusId = (int)rs.Value;
+            query = query.Where(rr => rr.ReturnRequestStatusId == returnStatusId);
+        }
+
+        if (orderItemId > 0)
+            query = query.Where(rr => rr.OrderItemId == orderItemId);
+
+        if (!string.IsNullOrEmpty(customNumber))
+            query = query.Where(rr => rr.CustomNumber == customNumber);
+
+        if (createdFromUtc.HasValue)
+            query = query.Where(rr => createdFromUtc.Value <= rr.CreatedOnUtc);
+        if (createdToUtc.HasValue)
+            query = query.Where(rr => createdToUtc.Value >= rr.CreatedOnUtc);
+
+        query = query.OrderByDescending(rr => rr.CreatedOnUtc).ThenByDescending(rr => rr.Id);
+
+        var returnRequests = await query.ToPagedListAsync(pageIndex, pageSize, getOnlyTotalCount);
+
+        return returnRequests;
     }
 }

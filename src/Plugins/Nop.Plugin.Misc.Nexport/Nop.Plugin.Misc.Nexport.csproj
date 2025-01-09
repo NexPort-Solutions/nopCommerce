@@ -19,6 +19,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Areas\Admin\Models\Wholesale\**" />
+    <EmbeddedResource Remove="Areas\Admin\Models\Wholesale\**" />
+    <None Remove="Areas\Admin\Models\Wholesale\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />
     <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj" />
     <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
@@ -50,7 +56,6 @@
     <None Remove="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\_CreateOrUpdate.RedemptionUnassignmentRequestReason.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\_RedemptionUnassignmentRequestReasons.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\Groups\List.cshtml" />
-    <None Remove="Areas\Admin\Views\NexportWholesale\WholesalePurchases\UnassignmentRequestsList.cshtml" />
     <None Remove="Areas\Admin\Views\Order\Create.cshtml" />
     <None Remove="Areas\Admin\Views\Order\List.cshtml" />
     <None Remove="Areas\Admin\Views\Order\_OrderDetails.Info.cshtml" />
@@ -75,6 +80,7 @@
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.CustomRender.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Info.cshtml" />
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Options.cshtml" />
+    <None Remove="Areas\Admin\Views\ReturnRequest\List.cshtml" />
     <None Remove="Areas\Admin\Views\Setting\_CustomerUser.NexportRegistrationFields.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Category\NexportCategoryDetails.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Order\NexportOrderDetails.cshtml" />
@@ -171,6 +177,7 @@
     <None Remove="Views\EnrollmentListingTable.cshtml" />
     <None Remove="Views\MapProductToCategory.cshtml" />
     <None Remove="Views\MyNexportGroups.cshtml" />
+    <None Remove="Views\NexportCustomer\EditMissingCustomerInfo.cshtml" />
     <None Remove="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml" />
     <None Remove="Views\NexportCustomer\Login.cshtml" />
     <None Remove="Views\NexportCustomer\NexportSupplementalInfoAnswers.cshtml" />
@@ -248,6 +255,15 @@
     <Content Include="Areas\Admin\Views\NexportCategory\NexportOptions.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\Purchases\ByFundingPools\List.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\Purchases\ByFundingPools\RedemptionList.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\Purchases\ByFundingPools\PurchaseListing.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\RedemptionUnassignmentRequestReasonEdit.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -267,6 +283,19 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\_CreateOrUpdate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\ReturnRequest\Edit.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\ReturnRequest\List.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\ReturnRequest\_CreateOrUpdate.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\Widget\Category\NexportCategoryProductMappings.cshtml">
@@ -652,6 +681,9 @@
     <Content Include="Views\MapProductToCategory.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\NexportCustomer\EditMissingCustomerInfo.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\NexportCustomer\EditNexportSupplementalInfoAnswer.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -858,8 +890,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Areas\Admin\Models\Wholesale\" />
-    <Folder Include="Areas\Admin\Views\NexportWholesale\WholesalePurchases\" />
     <Folder Include="Services\Caching\" />
   </ItemGroup>
 
@@ -884,6 +914,10 @@
   <Target Name="CleanUpExtra" AfterTargets="NopTarget">
     <RemoveDir Directories="$(MSBuildProjectDirectory)\$(OutDir)de-DE" />
     <Delete Files="$(MSBuildProjectDirectory)\$(OutDir)e_sqlite3.dll" />
+  </Target>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="taskkill /f /fi &quot;imagename eq w3wp.exe&quot; /fi &quot;username eq Nop&quot;" />
   </Target>
 
 </Project>

@@ -5,37 +5,36 @@ using Nop.Core.Domain.Catalog;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
-namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
+namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
+
+public record RedeemProductModel : BaseNopEntityModel
 {
-    public record RedeemProductModel : BaseNopEntityModel
-    {
-        public bool AdminView { get; set; } = false;
+    public bool AdminView { get; set; } = false;
 
-        public NexportGroupModel CurrentGroup { get; set; } = new NexportGroupModel { OrganizationId = null, Name = "No Group" };
+    public NexportGroupModel CurrentGroup { get; set; } = new NexportGroupModel { OrganizationId = null, Name = "No Group" };
 
-        public Product CurrentProduct { get; set; }
+    public Product CurrentProduct { get; set; }
 
-        public Guid InvoiceItemId { get; set; }
+    public Guid InvoiceItemId { get; set; }
 
-        public Guid? UserId { get; set; }
+    public Guid? UserId { get; set; }
 
-        public string FirstName { get; set; }
+    public string FirstName { get; set; }
 
-        public string LastName { get; set; }
+    public string LastName { get; set; }
 
-        public string ReturnUrl { get; set; } = "";
+    public string ReturnUrl { get; set; } = "";
 
-        public string AssignmentType { get; set; } = "Email";
+    public string AssignmentType { get; set; } = "Email";
 
-        public IList<SelectListItem> AvailableMappings { get; set; }
+    public IList<SelectListItem> AvailableMappings { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectProduct")]
-        public int? SelectedProductMappingId { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectProduct")]
+    public int? SelectedProductMappingId { get; set; }
 
-        public int? ProductMappingIdForOpenEndedProduct { get; set; }
+    public int? ProductMappingIdForOpenEndedProduct { get; set; }
 
-        public string Email { get; set; }
+    public string Email { get; set; }
 
-        public bool SendViaEmail { get; set; }
-    }
+    public bool SendViaEmail { get; set; }
 }

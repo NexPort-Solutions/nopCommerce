@@ -5,37 +5,36 @@ using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemP
 using Nop.Web.Framework.Validators;
 
 
-namespace Nop.Plugin.Misc.Nexport.Validators.RedeemProduct
+namespace Nop.Plugin.Misc.Nexport.Validators.RedeemProduct;
+
+public class CustomerStepValidator : BaseNopValidator<CustomerStepModel>
 {
-    public class CustomerStepValidator : BaseNopValidator<CustomerStepModel>
+    public CustomerStepValidator()
     {
-        public CustomerStepValidator()
-        {
 
-            RuleFor(x => x.Email)
-                .NotEmpty()
-                .Must(CommonHelper.IsValidEmail).WithMessage("Must be a valid email");
-            RuleFor(x => x.FirstName).NotEmpty();
-            RuleFor(x => x.LastName).NotEmpty();
-            RuleFor(x => x.SelectedUserId).Must(SelectedOrNewUser).WithMessage("Must either select a customer or enter new customer email info.");
-        }
+        RuleFor(x => x.Email)
+            .NotEmpty()
+            .Must(CommonHelper.IsValidEmail).WithMessage("Must be a valid email");
+        RuleFor(x => x.FirstName).NotEmpty();
+        RuleFor(x => x.LastName).NotEmpty();
+        RuleFor(x => x.SelectedUserId).Must(SelectedOrNewUser).WithMessage("Must either select a customer or enter new customer email info.");
+    }
         
-        private bool SelectedOrNewUser(CustomerStepModel model, Guid? selectedUserId)
+    private bool SelectedOrNewUser(CustomerStepModel model, Guid? selectedUserId)
+    {
+        try
         {
-            try
-            {
-                if(model.Email != null) 
-                    return true;
+            if(model.Email != null) 
+                return true;
 
-                if (selectedUserId != null)
-                    return true;
+            if (selectedUserId != null)
+                return true;
 
-                return false;
-            }
-            catch
-            {
-                return false;
-            }
+            return false;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

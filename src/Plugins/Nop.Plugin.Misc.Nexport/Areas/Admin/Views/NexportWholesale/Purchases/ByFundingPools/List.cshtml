@@ -1,0 +1,32 @@
+﻿@model Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases.NexportPurchasesByFundingPoolListSearchModel
+
+@{
+    ViewBag.PageTitle = "Wholesale Purchases By Funding Pools";
+
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/nexport-admin.css");
+    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/fontawesome/css/all.min.css");
+
+    NopHtml.SetActiveMenuItemSystemName("Wholesale Purchases - By Funding Pools");
+
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
+}
+
+<style>
+    ol#assign-steps {
+        list-style: none;
+        padding-inline-start: 0px;
+    }
+
+    .button-1 {
+        min-width: 140px;
+        border: none;
+        background-color: #4ab2f1;
+        padding: 10px 30px;
+        text-align: center;
+        font-size: 15px;
+        color: #fff;
+        text-transform: uppercase;
+    }
+</style>
+
+@await Html.PartialAsync("../ByFundingPools/PurchaseListing.cshtml", Model)

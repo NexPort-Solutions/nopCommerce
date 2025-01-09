@@ -6,10 +6,12 @@ using AutoMapper;
 using AutoMapper.Internal;
 using AutoMapper.Configuration;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.ReturnRequest;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
@@ -21,6 +23,7 @@ using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
+using Nop.Web.Areas.Admin.Models.Orders;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure;
 
@@ -208,6 +211,9 @@ public class NexportPluginMapperConfiguration : Profile, IOrderedMapperProfile
 
         CreateMap<NexportRedemptionUnassignmentRequestReason, NexportRedemptionUnassignmentRequestReasonModel>();
         CreateMap<NexportRedemptionUnassignmentRequestReasonModel, NexportRedemptionUnassignmentRequestReason>();
+
+        CreateMap<ReturnRequest, NexportReturnRequestModel>();
+        CreateMap<ReturnRequestModel, NexportReturnRequestModel>();
     }
 
     public int Order => 0;

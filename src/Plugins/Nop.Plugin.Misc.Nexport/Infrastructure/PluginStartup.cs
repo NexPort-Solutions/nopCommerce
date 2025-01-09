@@ -51,6 +51,7 @@ public class PluginStartup : INopStartup
             options.Filters.Add<OrderDetailsActionFilter>();
             options.Filters.Add<NexportWholesaleActionFilter>();
             options.Filters.Add<NexportDashboardNotificationActionFilter>();
+            options.Filters.Add<SignInActionFilter>();
         });
 
         var apiConfiguration = new Configuration();

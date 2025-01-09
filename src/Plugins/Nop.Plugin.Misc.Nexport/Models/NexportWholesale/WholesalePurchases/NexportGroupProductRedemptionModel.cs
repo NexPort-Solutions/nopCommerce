@@ -1,28 +1,33 @@
 ﻿using System;
 using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
+namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
+
+public record NexportGroupProductRedemptionModel : BaseNopEntityModel
 {
-    public record NexportGroupProductRedemptionModel : BaseNopEntityModel
-    {
-        public int? CustomerId { get; set; }
+    public int? CustomerId { get; set; }
 
-        public string Name { get; set; }
+    public string Name { get; set; }
 
-        public string Email { get; set; }
+    public string Email { get; set; }
 
-        public string ProductName { get; set; }
+    public int? ProductId { get; set; }
 
-        public int OrderId { get; set; }
+    public string ProductName { get; set; }
 
-        public string Status { get; set; } = "Available";
+    public int OrderId { get; set; }
 
-        public string DateRedeemed { get; set; }
+    public string Status { get; set; } = "Available";
 
-        public Guid InvoiceItemId { get; set; }
+    public DateTime DatePurchased { get; set; }
 
-        public string PurchasedBy { get; set; }
+    public DateTime? DateRedeemed { get; set; }
 
-        public string PurchasedIn { get; set; }
-    }
+    public Guid InvoiceItemId { get; set; }
+
+    public string PurchasedBy { get; set; }
+
+    public string PurchasedIn { get; set; }
+
+    public int? FundingPoolId { get; set; }
 }

@@ -3,46 +3,82 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core.Domain.Catalog;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
-namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
+namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
+
+public record NexportGroupProductRedemptionListSearchModel : BaseSearchModel
 {
-    public record NexportGroupProductRedemptionListSearchModel : BaseSearchModel
+    public NexportGroupModel CurrentGroup { get; set; } = new() { OrganizationId = null, Name = "No Group" };
+
+    public Product CurrentProduct { get; set; }
+
+    public int? OrderId {get; set; }
+
+    public bool AdminView { get; set; } = false;
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchCustomerName")]
+    public string SearchName { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchCustomerEmail")]
+    public string SearchEmail { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchStatus")]
+    public NexportOrderInvoiceItemRedemptionStatus? SearchStatusId { get; set; }
+
+    public IList<SelectListItem> AvailableStatuses { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedFrom")]
+    [UIHint("DateNullable")]
+    public DateTime? DateAssignedFrom { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedTo")]
+    [UIHint("DateNullable")]
+    public DateTime? DateAssignedTo { get; set; }
+
+    public NexportGroupProductRedemptionListSearchModel()
     {
-        public NexportGroupModel CurrentGroup { get; set; } = new NexportGroupModel { OrganizationId = null, Name = "No Group" };
+        AvailableStatuses = new List<SelectListItem>();
 
-        public Product CurrentProduct { get; set; }
+        SetGridPageSize();
+    }
+}
 
-        public int? OrderId {get; set; }
+public record NexportProductRedemptionListSearchModel : BaseSearchModel
+{
+    public int? FundingPoolId { get; set; }
 
-        public bool AdminView { get; set; }= false;
+    public NexportFundingPoolModel FundingPool { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchName")]
-        public string SearchName { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchCustomerName")]
+    public string SearchCustomerName { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchEmail")]
-        public string SearchEmail { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchCustomerEmail")]
+    public string SearchCustomerEmail { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchStatus")]
-        public NexportOrderInvoiceItemRedemptionStatus? SearchStatusId { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchProductName")]
+    public string SearchProductName { get; set; }
 
-        public IList<SelectListItem> AvailableStatuses { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchStatus")]
+    public NexportOrderInvoiceItemRedemptionStatus? SearchStatusId { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedFrom")]
-        [UIHint("DateNullable")]
-        public DateTime? DateAssignedFrom { get; set; }
+    public IList<SelectListItem> AvailableStatuses { get; set; }
 
-        [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedTo")]
-        [UIHint("DateNullable")]
-        public DateTime? DateAssignedTo { get; set; }
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedFrom")]
+    [UIHint("DateNullable")]
+    public DateTime? DateAssignedFrom { get; set; }
 
-        public NexportGroupProductRedemptionListSearchModel()
-        {
-            AvailableStatuses = new List<SelectListItem>();
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedTo")]
+    [UIHint("DateNullable")]
+    public DateTime? DateAssignedTo { get; set; }
 
-            SetGridPageSize();
-        }
+    public NexportProductRedemptionListSearchModel()
+    {
+        AvailableStatuses = new List<SelectListItem>();
+
+        SetGridPageSize();
     }
 }

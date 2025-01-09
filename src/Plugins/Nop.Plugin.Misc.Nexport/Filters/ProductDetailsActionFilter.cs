@@ -77,8 +77,7 @@ public class ProductDetailsActionFilter : ActionFilterAttribute
 
                             try
                             {
-                                var canPurchaseProduct =
-                                    await _nexportService.CanPurchaseNexportProductAsync(product, customer);
+                                var (canPurchaseProduct, _) = await _nexportService.CanPurchaseNexportProductAsync(product, customer);
 
                                 if (await _genericAttributeService.GetAttributeAsync<bool>(store,
                                     NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY, store.Id))

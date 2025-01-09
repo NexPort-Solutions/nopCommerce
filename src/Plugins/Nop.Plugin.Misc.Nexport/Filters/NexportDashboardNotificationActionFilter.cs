@@ -10,10 +10,6 @@ using Nop.Services.Localization;
 
 namespace Nop.Plugin.Misc.Nexport.Filters;
 
-/* Action Filters attributes can apply to a controller action or an entire controller
- * - It modifies the way in which the action is executed
- * - We would need to add the filters to our pluginstarup's configureservice method
- */
 public class NexportDashboardNotificationActionFilter : ActionFilterAttribute
 {
     private readonly INotificationService _notificationService;
@@ -27,39 +23,36 @@ public class NexportDashboardNotificationActionFilter : ActionFilterAttribute
         ILocalizationService localizationService,
         ISettingService settingService)
     {
-            _notificationService = notificationService;
-            _urlHelperFactory = urlHelperFactory;
-            _localizationService = localizationService;
-            _settingService = settingService;
-        }
+        _notificationService = notificationService;
+        _urlHelperFactory = urlHelperFactory;
+        _localizationService = localizationService;
+        _settingService = settingService;
+    }
 
-    // this is called before the index action of the home controller is executed
-    // we want to verify if there are any modified resources and if there are
-    // we need to show a message for the admin to resolve them
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-            if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
-                return;
+        if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
+            return;
 
-            if (actionDescriptor.ControllerTypeInfo == typeof(HomeController) &&
-                actionDescriptor.ActionName == "Index")
+        if (actionDescriptor.ControllerTypeInfo == typeof(HomeController) &&
+            actionDescriptor.ActionName == "Index")
+        {
+            var nexportSetting =
+               await _settingService.GetSettingAsync("Plugin.Misc.Nexport.HasModifiedLocaleResources");
+
+            if (nexportSetting != null)
             {
-                var nexportSetting =
-                   await _settingService.GetSettingAsync("Plugin.Misc.Nexport.HasModifiedLocaleResources");
+                var urlHelper = _urlHelperFactory.GetUrlHelper(context);
 
-                if (nexportSetting != null)
-                {
-                    var urlHelper = _urlHelperFactory.GetUrlHelper(context);
+                var action = urlHelper.Action("EditPopup", "Plugin",
+                    new { systemName = NexportDefaults.SystemName }) + "&btnId=btnRefreshList&formId=plugins-form-local";
 
-                    var action = urlHelper.Action("EditPopup", "Plugin", new { systemName = NexportDefaults.SystemName }) + "&btnId=btnRefreshList&formId=plugins-form-local";
-
-                    _notificationService.WarningNotification(
-                        string.Format(await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Errors.ModifiedLocaleResources"),
-                            action),
-                        //do not encode URLs
-                        false);
-                }
+                _notificationService.WarningNotification(
+                    string.Format(await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Errors.ModifiedLocaleResources"), action),
+                    false);
             }
-            await base.OnActionExecutionAsync(context, next);
         }
+
+        await base.OnActionExecutionAsync(context, next);
+    }
 }

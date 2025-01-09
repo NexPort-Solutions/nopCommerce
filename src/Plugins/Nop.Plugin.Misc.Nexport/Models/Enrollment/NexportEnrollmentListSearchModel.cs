@@ -5,17 +5,16 @@ using System.Text;
 using System.Threading.Tasks;
 using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Misc.Nexport.Models.Enrollment
+namespace Nop.Plugin.Misc.Nexport.Models.Enrollment;
+
+public record NexportEnrollmentListSearchModel : BaseSearchModel
 {
-    public record NexportEnrollmentListSearchModel : BaseSearchModel
+    public Guid UserId { get; set; }
+
+    public Guid OrganizationId { get; set; }
+
+    public NexportEnrollmentListSearchModel()
     {
-        public Guid UserId { get; set; }
-
-        public Guid OrganizationId { get; set; }
-
-        public NexportEnrollmentListSearchModel()
-        {
-            SetGridPageSize();
-        }
+        SetGridPageSize();
     }
 }

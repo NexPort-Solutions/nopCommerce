@@ -249,6 +249,17 @@ public class NexportNexportWholesaleService : INexportWholesaleService
                 var order = await SaveOrderDetailsAsync(processPaymentRequest, processPaymentResult, details);
                 result.PlacedOrder = order;
 
+                var currentUser = await _workContext.GetCurrentCustomerAsync();
+
+                var orderNote = new OrderNote
+                {
+                    OrderId = order.Id,
+                    Note = $"This order has been placed by user #{currentUser.Id} ({currentUser.FirstName} {currentUser.LastName} - {currentUser.Email})",
+                    CreatedOnUtc = DateTime.UtcNow
+                };
+
+                await _orderService.InsertOrderNoteAsync(orderNote);
+
                 //move shopping cart items to order items
                 await MoveTempShoppingCartItemToOrderItemsAsync(details, order);
 

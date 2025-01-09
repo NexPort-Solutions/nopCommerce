@@ -37,6 +37,8 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Models.Checkout;
+using Nop.Services.Events;
+using Nop.Web.Areas.Admin.Models.Orders;
 
 namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
 
@@ -340,6 +342,39 @@ public class NexportWholesaleController : BaseAdminController
         return Json(new { result = count });
     }
 
+    [Route("Admin/Wholesale/Purchases/ByFundingPools/List")]
+    public async Task<IActionResult> AdminNexportWholesalePurchasesByFundingPoolsList()
+    {
+        var searchModel = await _nexportPluginModelFactory.PrepareNexportPurchasesByFundingPoolListSearchModelAsync();
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/Purchases/ByFundingPools/List.cshtml", searchModel);
+    }
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> GetNexportWholesalePurchasesByFundingPools(NexportPurchasesByFundingPoolListSearchModel searchModel)
+    {
+        var model = await _nexportPluginModelFactory.PrepareNexportPurchasesByFundingPoolListModelAsync(searchModel);
+
+        return Json(model);
+    }
+
+    public async Task<IActionResult> AdminNexportWholesalePurchasesByFundingPoolsRedemptionList(int? fundingPoolId)
+    {
+        var searchModel = await _nexportPluginModelFactory.PrepareNexportPurchasesByFundingPoolsRedemptionListSearchModelAsync(fundingPoolId);
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/Purchases/ByFundingPools/RedemptionList.cshtml", searchModel);
+    }
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> GetNexportWholesalePurchasesByFundingPoolsRedemptions(NexportProductRedemptionListSearchModel searchModel)
+    {
+        var model = await _nexportPluginModelFactory.PrepareNexportWholesalePurchasesByFundingPoolsRedemptionListModelAsync(searchModel);
+
+        return Json(model);
+    }
+
     public virtual async Task<IActionResult> GetMatchingUsers(CustomerStepModel searchModel)
     {
         var paged = new List<NexportUserModel>().ToPagedList(searchModel);
@@ -416,6 +451,19 @@ public class NexportWholesaleController : BaseAdminController
             await _nexportService.CancelAwaitingInvoiceItem(invoiceItem);
 
         return Json(new { result = invoiceItem != null ? invoiceItem.RedemptionStatus.GetDisplayName() : "" });
+    }
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> RefundInvoiceItem(Guid invoiceItemId)
+    {
+        var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
+        var refundResult = false;
+
+        if (invoiceItem != null)
+            refundResult = await _nexportService.RefundInvoiceItem(invoiceItem);
+
+        return Json(new { result = refundResult });
     }
 
     [HttpsRequirement]

@@ -127,15 +127,38 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
             IconClass = "fas fa-shopping-basket",
         };
 
-        wholesaleNode.ChildNodes.Add(new SiteMapNode
+        var wholesaleListNode = new SiteMapNode
         {
             Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
             Title = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
             SystemName = "Wholesale Purchases",
             ControllerName = "NexportWholesale",
-            ActionName = "AdminNexportGroupProducts",
             IconClass = "far fa-dot-circle"
+        };
+
+        wholesaleListNode.ChildNodes.Add(new SiteMapNode
+        {
+            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+            //Title = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
+            Title = "By Group",
+            SystemName = "Wholesale Purchases - By Group",
+            ControllerName = "NexportWholesale",
+            ActionName = "AdminNexportGroupProducts",
+            IconClass = "far fa-circle"
         });
+
+        wholesaleListNode.ChildNodes.Add(new SiteMapNode
+        {
+            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+            //Title = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
+            Title = "By Funding Pools",
+            SystemName = "Wholesale Purchases - By Funding Pools",
+            ControllerName = "NexportWholesale",
+            ActionName = "AdminNexportWholesalePurchasesByFundingPoolsList",
+            IconClass = "far fa-circle"
+        });
+
+        wholesaleNode.ChildNodes.Add(wholesaleListNode);
 
         wholesaleNode.ChildNodes.Add(new SiteMapNode
         {

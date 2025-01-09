@@ -4,8 +4,10 @@ using System.Dynamic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.EMMA;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Newtonsoft.Json;
 using NexportApi.Client;
 using NexportApi.Model;
@@ -68,11 +70,9 @@ using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Localization;
 using Nop.Plugin.Misc.Nexport.Models.Plugins;
 using Nop.Core.Domain.Configuration;
+using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Enrollment;
-using static SkiaSharp.HarfBuzz.SKShaper;
-using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
-using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
-using Nop.Web.Framework.Models.Extensions;
+using Microsoft.AspNetCore.Mvc.Routing;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers;
 
@@ -130,6 +130,8 @@ public class NexportIntegrationController : BasePluginController,
 
     private readonly ILogger _logger;
     private readonly IWebHelper _webHelper;
+    private readonly IActionContextAccessor _actionContextAccessor;
+    private readonly IUrlHelperFactory _urlHelperFactory;
 
     private readonly VendorSettings _vendorSettings;
 
@@ -173,6 +175,8 @@ public class NexportIntegrationController : BasePluginController,
         IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
         ILogger logger,
         IWebHelper webHelper,
+        IActionContextAccessor actionContextAccessor,
+        IUrlHelperFactory urlHelperFactory,
         VendorSettings vendorSettings)
     {
         _productRepository = productRepository;
@@ -214,6 +218,9 @@ public class NexportIntegrationController : BasePluginController,
 
         _logger = logger;
         _webHelper = webHelper;
+
+        _actionContextAccessor = actionContextAccessor;
+        _urlHelperFactory = urlHelperFactory;
 
         _vendorSettings = vendorSettings;
     }
@@ -3769,4 +3776,48 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     #endregion
+
+    public async Task<IActionResult> EditMissingCustomerInfo(string returnUrl)
+    {
+        var model = new CustomerMissingInfoModel()
+        {
+            ReturnUrl = returnUrl
+        };
+
+        return View("~/Plugins/Misc.Nexport/Views/NexportCustomer/EditMissingCustomerInfo.cshtml", model);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateMissingCustomerInfo(CustomerMissingInfoModel model, IFormCollection form)
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        if (!await _customerService.IsRegisteredAsync(customer))
+            return Challenge();
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                customer.FirstName = model.FirstName;
+                customer.LastName = model.LastName;
+
+                await _customerService.UpdateCustomerAsync(customer);
+
+                var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+
+                _notificationService.SuccessNotification("Successfully updated your missing information!");
+
+                if (!string.IsNullOrEmpty(model.ReturnUrl) && urlHelper.IsLocalUrl(model.ReturnUrl))
+                    return new RedirectResult(model.ReturnUrl);
+            }
+            catch (Exception ex)
+            {
+                _notificationService.ErrorNotification("Failed to update your information!");
+                await _logger.ErrorAsync($"Failed to update customer #{customer.Id} missing information", ex);
+            }
+        }
+
+        return RedirectToRoute("Homepage");
+    }
+
 }
