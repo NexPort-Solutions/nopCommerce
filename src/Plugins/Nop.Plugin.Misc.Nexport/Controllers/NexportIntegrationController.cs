@@ -245,7 +245,7 @@ public class NexportIntegrationController : BasePluginController,
     #region General Actions
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpGet]
     public async Task<IActionResult> SearchNexportDirectory(string searchTerm, int? page = null)
     {
@@ -278,7 +278,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetModifiedLocaleResources(NexportPluginResourceListSearchModel searchModel, string friendlyName)
@@ -292,7 +292,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
@@ -345,7 +345,7 @@ public class NexportIntegrationController : BasePluginController,
     #region Plugin Configuration Actions
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [ImportModelState]
     public async Task<IActionResult> Configure()
     {
@@ -365,7 +365,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     [ExportModelState]
@@ -400,7 +400,7 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToAction("Configure");
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost, ActionName("Configure")]
@@ -436,7 +436,7 @@ public class NexportIntegrationController : BasePluginController,
 
     [HttpPost]
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AutoValidateAntiforgeryToken]
     [HttpPost, ActionName("Configure")]
     [FormValueRequired("setrootorganizationid")]
@@ -468,7 +468,7 @@ public class NexportIntegrationController : BasePluginController,
 
     [HttpPost]
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AutoValidateAntiforgeryToken]
     [HttpPost, ActionName("Configure")]
     [FormValueRequired("setmerchantaccountid")]
@@ -498,7 +498,7 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToAction("Configure");
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [Route("Admin/Store/Edit/{id}")]
@@ -520,7 +520,7 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToAction("Edit", "Store", new { id = store.Id });
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [Route("Admin/Store/Edit/{id}")]
@@ -553,7 +553,7 @@ public class NexportIntegrationController : BasePluginController,
 
     #region User Configuration Actions
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AutoValidateAntiforgeryToken]
     [Route("Admin/Customer/Edit/{id}")]
     [HttpPost, ActionName("Edit")]
@@ -601,7 +601,7 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToAction("Edit", "Customer", new { id = customer.Id });
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportUserDetails(Guid nexportUserId)
@@ -641,7 +641,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(null);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> SetNexportUser(int customerId, Guid nexportUserId)
@@ -727,7 +727,7 @@ public class NexportIntegrationController : BasePluginController,
         });
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> CanSetNexportUser(int customerId)
@@ -751,7 +751,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(true);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [Route("Admin/Customer/Edit/{id}")]
@@ -777,7 +777,7 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToAction("Edit", "Customer", new { id = model.Id });
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> SetPrimaryBillingAddress(int customerId, int addressId)
@@ -825,7 +825,7 @@ public class NexportIntegrationController : BasePluginController,
     #region Product Mapping Actions
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     //public async Task<IActionResult> GetCatalogList(Guid? orgId, int nopProductId)
     public async Task<IActionResult> GetCatalogList(NexportCatalogSearchModel searchModel)
     {
@@ -841,7 +841,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> CatalogList(NexportCatalogSearchModel searchModel)
@@ -857,7 +857,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     public async Task<IActionResult> SyllabusList(NexportSyllabusListSearchModel searchModel)
     {
@@ -873,7 +873,7 @@ public class NexportIntegrationController : BasePluginController,
 
     [HttpPost]
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetCatalogs(NexportCatalogSearchModel searchModel)
     {
@@ -889,7 +889,7 @@ public class NexportIntegrationController : BasePluginController,
 
     [HttpPost]
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetSyllabuses(NexportSyllabusListSearchModel searchModel)
     {
@@ -904,7 +904,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> ProductMappingDetailsPopup(int mappingId)
     {
@@ -921,7 +921,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetProductMappings(NexportProductMappingListSearchModel searchModel, int? nopProductId)
@@ -940,7 +940,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetProductMappingsForCategoryId(NexportCategoryProductMappingListSearchModel searchModel, int nopCategoryId)
@@ -956,7 +956,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [ParameterBasedOnFormName("save-continue", "continueEditing")]
     [FormValueRequired("save", "save-continue")]
@@ -1079,7 +1079,7 @@ public class NexportIntegrationController : BasePluginController,
         return View("~/Plugins/Misc.Nexport/Views/ProductMappingDetailsPopup.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1103,7 +1103,7 @@ public class NexportIntegrationController : BasePluginController,
         return new NullJsonResult();
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
@@ -1115,7 +1115,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(await _nexportService.HasDefaultMapping(productId));
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1167,7 +1167,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetProductGroupMembershipMappings(NexportProductGroupMembershipMappingListSearchModel searchModel)
@@ -1182,7 +1182,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1210,7 +1210,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(new { Result = true });
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1230,7 +1230,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> MapNexportProductPopup()
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
@@ -1242,7 +1242,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [FormValueRequired("save")]
     [AutoValidateAntiforgeryToken]
@@ -1330,7 +1330,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> MapProductToCategory()
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
@@ -1344,7 +1344,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [FormValueRequired("save")]
     [AutoValidateAntiforgeryToken]
@@ -1387,7 +1387,7 @@ public class NexportIntegrationController : BasePluginController,
 
     #region Product Management Actions
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [Route("Admin/Product/Edit/{id}")]
@@ -1420,7 +1420,7 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToAction("Edit", "Product", new { id = model.Id });
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1458,7 +1458,7 @@ public class NexportIntegrationController : BasePluginController,
         }
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> DuplicateProductMapping(int productId)
     {
@@ -1473,7 +1473,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}Product/ProductMapping/DuplicateProductMapping.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1542,7 +1542,7 @@ public class NexportIntegrationController : BasePluginController,
 
     #region Category Management Actions
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [Route("/Admin/Category/Edit/{id}")]
@@ -1576,7 +1576,7 @@ public class NexportIntegrationController : BasePluginController,
     #region Order Management Actions
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportOrderInvoiceItems(NexportOrderInvoiceItemSearchModel searchModel)
@@ -1590,7 +1590,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1648,7 +1648,7 @@ public class NexportIntegrationController : BasePluginController,
 
     #region Supplemental Question
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> ListSupplementalInfoQuestion()
     {
@@ -1662,7 +1662,7 @@ public class NexportIntegrationController : BasePluginController,
         return View("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Question/List.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1678,7 +1678,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> AddSupplementalInfoQuestion()
     {
@@ -1691,7 +1691,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [ParameterBasedOnFormName("save-continue", "continueEditing")]
     [AutoValidateAntiforgeryToken]
@@ -1719,7 +1719,7 @@ public class NexportIntegrationController : BasePluginController,
         return View("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Question/Add.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> EditSupplementalInfoQuestion(int id)
     {
@@ -1736,7 +1736,7 @@ public class NexportIntegrationController : BasePluginController,
         return View("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Question/Edit.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
@@ -1769,7 +1769,7 @@ public class NexportIntegrationController : BasePluginController,
         return View("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Question/Edit.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1789,7 +1789,7 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToAction("ListSupplementalInfoQuestion", "NexportIntegration");
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1807,7 +1807,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(new { Result = true });
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1824,7 +1824,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     public virtual async Task<IActionResult> SupplementalInfoOptionCreatePopup(int questionId)
@@ -1842,7 +1842,7 @@ public class NexportIntegrationController : BasePluginController,
         return View("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Option/Create.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1871,7 +1871,7 @@ public class NexportIntegrationController : BasePluginController,
         return View("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Option/Create.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     public virtual async Task<IActionResult> SupplementalInfoOptionEditPopup(int optionId)
@@ -1891,7 +1891,7 @@ public class NexportIntegrationController : BasePluginController,
         return View("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Option/Edit.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1922,7 +1922,7 @@ public class NexportIntegrationController : BasePluginController,
         return View("~/Plugins/Misc.Nexport/Views/SupplementalInfo/Option/Edit.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1987,7 +1987,7 @@ public class NexportIntegrationController : BasePluginController,
         return new NullJsonResult();
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -2096,7 +2096,7 @@ public class NexportIntegrationController : BasePluginController,
         });
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -2111,7 +2111,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -2126,7 +2126,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> EditCustomerSupplementalInfoAnsweredQuestion(int customerId, int storeId, int questionId)
     {
@@ -2148,7 +2148,7 @@ public class NexportIntegrationController : BasePluginController,
         return View("~/Plugins/Misc.Nexport/Views/SupplementalInfo/EditCustomerSupplementalInfoAnsweredQuestion.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -2288,7 +2288,7 @@ public class NexportIntegrationController : BasePluginController,
         return View("~/Plugins/Misc.Nexport/Views/SupplementalInfo/EditCustomerSupplementalInfoAnsweredQuestion.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -2342,7 +2342,7 @@ public class NexportIntegrationController : BasePluginController,
 
     #region Registration Field
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> ListRegistrationFieldCategory()
     {
@@ -2350,13 +2350,13 @@ public class NexportIntegrationController : BasePluginController,
             return AccessDeniedView();
 
         // Select an appropriate panel
-        SaveSelectedTabName("customersettings-nexportregistrationfields");
+        await SaveSelectedTabNameAsync("customersettings-nexportregistrationfields");
 
         // Redirect the user to the customer settings page
         return RedirectToAction("CustomerUser", "Setting");
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -2370,7 +2370,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> CreateRegistrationFieldCategory()
     {
@@ -2383,7 +2383,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Category/Create.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
@@ -2411,7 +2411,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Category/Create.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> EditRegistrationFieldCategory(int id)
     {
@@ -2427,7 +2427,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Category/Edit.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
@@ -2454,7 +2454,7 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToAction("EditRegistrationFieldCategory", new { id = registrationFieldCategory.Id });
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [HttpPost]
     public virtual async Task<IActionResult> DeleteRegistrationFieldCategory(int id)
@@ -2477,7 +2477,7 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToAction("ListRegistrationFieldCategory");
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> ListRegistrationField()
     {
@@ -2485,13 +2485,13 @@ public class NexportIntegrationController : BasePluginController,
             return AccessDeniedView();
 
         // Select an appropriate panel
-        SaveSelectedTabName("customersettings-nexportregistrationfields");
+        await SaveSelectedTabNameAsync("customersettings-nexportregistrationfields");
 
         // Redirect the user to the customer settings page
         return RedirectToAction("CustomerUser", "Setting");
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -2505,7 +2505,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> CreateRegistrationField()
     {
@@ -2517,7 +2517,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Create.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
@@ -2557,7 +2557,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Create.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> EditRegistrationField(int id)
     {
@@ -2573,7 +2573,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Edit.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
@@ -2651,7 +2651,7 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToAction("EditRegistrationField", new { id = registrationField.Id });
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [HttpPost]
     public async Task<IActionResult> DeleteRegistrationField(int id)
@@ -2687,7 +2687,7 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToAction("ListRegistrationField");
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -2704,7 +2704,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> CreateRegistrationFieldOption(int fieldId)
     {
@@ -2721,7 +2721,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Create.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
@@ -2752,7 +2752,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Create.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> EditRegistrationFieldOption(int id)
     {
@@ -2772,7 +2772,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Option/Edit.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -2795,7 +2795,7 @@ public class NexportIntegrationController : BasePluginController,
         return new NullJsonResult();
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [HttpPost]
     public async Task<IActionResult> DeleteRegistrationFieldOption(int id)
@@ -2814,7 +2814,7 @@ public class NexportIntegrationController : BasePluginController,
         return new NullJsonResult();
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> GetRegistrationFieldCustomRenderOptionUrl(string systemName, int fieldId)
     {
@@ -2847,14 +2847,14 @@ public class NexportIntegrationController : BasePluginController,
         return Json(new { url });
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> GetAdminRegistrationFieldCustomRenderUrl(string systemName, int fieldId)
     {
         return await GetRegistrationFieldCustomRenderUrl(systemName, fieldId, true);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> LoadRegistrationFieldAnswersByStore(int storeId)
@@ -2872,7 +2872,7 @@ public class NexportIntegrationController : BasePluginController,
         return PartialView($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/_Create.RegistrationFieldAnswer.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -2886,7 +2886,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -2900,7 +2900,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetEditCustomerRegistrationFieldAnswersViewUrl(string systemName, int customerId, int fieldId)
@@ -2916,7 +2916,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(new { url });
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> AddCustomerRegistrationFieldAnswers(int customerId, int storeId)
     {
@@ -2934,7 +2934,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/AddCustomerRegistrationFieldAnswers.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -2996,7 +2996,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/AddCustomerRegistrationFieldAnswers.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     public async Task<IActionResult> EditCustomerRegistrationFieldAnswers(int customerId, int fieldId)
     {
@@ -3014,7 +3014,7 @@ public class NexportIntegrationController : BasePluginController,
         return View($"{NexportDefaults.NexportPluginAdminViewBasePath}RegistrationField/Customer/EditCustomerRegistrationFieldAnswers.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]

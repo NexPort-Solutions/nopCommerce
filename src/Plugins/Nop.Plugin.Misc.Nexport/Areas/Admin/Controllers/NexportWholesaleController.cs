@@ -1033,7 +1033,7 @@ public class NexportWholesaleController : BaseAdminController
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/FundingPool/List.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1048,7 +1048,7 @@ public class NexportWholesaleController : BaseAdminController
         return Json(model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [Route("Admin/Wholesale/FundingPool/Create")]
     public async Task<IActionResult> CreateFundingPool()
@@ -1062,7 +1062,7 @@ public class NexportWholesaleController : BaseAdminController
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [ParameterBasedOnFormName("save-continue", "continueEditing")]
     [AutoValidateAntiforgeryToken]
@@ -1090,7 +1090,7 @@ public class NexportWholesaleController : BaseAdminController
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/FundingPool/Create.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [Route("Admin/Wholesale/FundingPool/Edit/{id}")]
     public async Task<IActionResult> EditFundingPool(int id)
@@ -1107,7 +1107,7 @@ public class NexportWholesaleController : BaseAdminController
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/FundingPool/Edit.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
@@ -1139,7 +1139,7 @@ public class NexportWholesaleController : BaseAdminController
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/FundingPool/Edit.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
@@ -1160,7 +1160,7 @@ public class NexportWholesaleController : BaseAdminController
         return RedirectToAction("ListFundingPools", "NexportWholesale");
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [HttpPost]

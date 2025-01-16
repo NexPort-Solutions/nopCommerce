@@ -97,9 +97,8 @@ public class CancelPendingOrderRequestsController : BasePluginController,
 
     #endregion
 
-
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetModifiedLocaleResources(CancelPendingOrderRequestsPluginResourceListSearchModel searchModel)
@@ -114,7 +113,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
@@ -164,7 +163,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
 
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> List()
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
@@ -177,7 +176,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> List(PendingOrderCancellationRequestSearchModel searchModel)
@@ -191,7 +190,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [Route("Admin/CancelPendingOrderRequests/Edit/{requestId}")]
     public async Task<IActionResult> Edit(int requestId)
     {
@@ -209,7 +208,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [Route("Admin/CancelPendingOrderRequests/Edit/{requestId}")]
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     [FormValueRequired("save", "save-continue")]
@@ -291,7 +290,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> Delete(int id)
@@ -379,20 +378,20 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> CancellationRequestReasonList()
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
             return AccessDeniedView();
 
         // Select an appropriate panel
-        SaveSelectedTabName("ordersettings-cancellation-request");
+        await SaveSelectedTabNameAsync("ordersettings-cancellation-request");
 
         return RedirectToAction("Order", "Setting");
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     public async Task<IActionResult> CancellationRequestReasonList(PendingOrderCancellationRequestReasonSearchModel searchModel)
     {
@@ -405,7 +404,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> CancellationRequestReasonCreate()
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
@@ -418,7 +417,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AutoValidateAntiforgeryToken]
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     public async Task<IActionResult> CancellationRequestReasonCreate(PendingOrderCancellationRequestReasonModel model, bool continueEditing)
@@ -448,7 +447,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> CancellationRequestReasonEdit(int id)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
@@ -466,7 +465,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AutoValidateAntiforgeryToken]
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     public async Task<IActionResult> CancellationRequestReasonEdit(PendingOrderCancellationRequestReasonModel model, bool continueEditing)
@@ -502,7 +501,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AutoValidateAntiforgeryToken]
     [HttpPost]
     public async Task<IActionResult> CancellationRequestReasonDelete(int id)

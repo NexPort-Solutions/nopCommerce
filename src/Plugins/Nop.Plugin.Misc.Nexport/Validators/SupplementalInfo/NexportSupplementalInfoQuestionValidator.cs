@@ -9,7 +9,7 @@ namespace Nop.Plugin.Misc.Nexport.Validators.SupplementalInfo;
 
 public class NexportSupplementalInfoQuestionValidator : BaseNopValidator<NexportSupplementalInfoQuestionModel>
 {
-    public NexportSupplementalInfoQuestionValidator(ILocalizationService localizationService, IMappingEntityAccessor mappingEntityAccessor)
+    public NexportSupplementalInfoQuestionValidator(ILocalizationService localizationService)
     {
             RuleFor(x => x.QuestionText)
                 .NotEmpty()
@@ -19,6 +19,6 @@ public class NexportSupplementalInfoQuestionValidator : BaseNopValidator<Nexport
                 .Length(0, 1000)
                 .WithMessage("Description text cannot exceed 1000 characters");
 
-            SetDatabaseValidationRules<NexportSupplementalInfoQuestion>(mappingEntityAccessor);
+            SetDatabaseValidationRules<NexportSupplementalInfoQuestion>();
         }
 }

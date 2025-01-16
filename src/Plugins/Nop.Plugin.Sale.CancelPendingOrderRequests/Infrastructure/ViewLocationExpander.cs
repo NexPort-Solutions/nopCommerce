@@ -13,7 +13,7 @@ public class ViewLocationExpander : IViewLocationExpander
 
     public void PopulateValues(ViewLocationExpanderContext context)
     {
-        if (context.AreaName?.Equals(AreaNames.Admin) ?? false)
+        if (context.AreaName?.Equals(AreaNames.ADMIN) ?? false)
             return;
 
         context.Values[THEME_KEY] = EngineContext.Current.Resolve<IThemeContext>().GetWorkingThemeNameAsync().Result;

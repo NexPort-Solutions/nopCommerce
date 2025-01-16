@@ -3,7 +3,7 @@
   "FriendlyName": "Based on credit hours from Nexport product",
   "SystemName": "Misc.Nexport.DiscountPerCreditHours",
   "Version": "1.0",
-  "SupportedVersions": [ "4.60" ],
+  "SupportedVersions": [ "4.70" ],
   "Author": "Nexport Solutions",
   "DisplayOrder": 1001,
   "FileName": "Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.dll",

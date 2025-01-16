@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ApplicationIcon />
     <Authors>Nexport Solutions</Authors>
     <Company>Nexport Solutions</Company>
@@ -14,8 +14,9 @@
     You need to set this parameter to true if your plugin has a nuget package
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>1.0.0.27</AssemblyVersion>
-    <FileVersion>1.0.0.27</FileVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyVersion>1.0.0.30</AssemblyVersion>
+    <FileVersion>1.0.0.30</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="JetBrains.Annotations" Version="2024.2.0" />
+    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
     <PackageReference Include="NexportApi" Version="1.0.34" />
   </ItemGroup>
 

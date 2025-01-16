@@ -382,7 +382,7 @@ public partial class NexportService
         url.StartsWithSegments(pathBase, out url);
 
         //compose the result
-        var orderUrl = Uri.EscapeDataString(WebUtility.UrlDecode($"{store.Url}{AreaNames.Admin}/{url}"));
+        var orderUrl = Uri.EscapeDataString(WebUtility.UrlDecode($"{store.Url}{AreaNames.ADMIN}/{url}"));
 
         tokens.Add(new Token("NexportOrderApproval.AdminViewOrderUrl", orderUrl, true));
     }
