@@ -1631,6 +1631,36 @@ public partial class NexportService
     }
 
     [CanBeNull]
+    public async Task<DropDeleteEnrollmentResponse> DropEnrollmentAsync(Guid enrollmentId)
+    {
+        DropDeleteEnrollmentResponse result;
+
+        try
+        {
+            result = _nexportApiService.DropNexportEnrollment(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, enrollmentId);
+        }
+        catch (Exception ex)
+        {
+            var errMsg = $"Error occurred during Web API call DropEnrollment for enrollment {enrollmentId}";
+            await _logger.ErrorAsync($"{errMsg}", ex);
+
+            if (ex is ApiException exception)
+            {
+                var errorResponse = JsonConvert.DeserializeObject<DropDeleteEnrollmentResponse>(exception.ErrorContent.ToString());
+                if (errorResponse != null)
+                {
+                    throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                }
+            }
+
+            throw;
+        }
+
+        return result;
+    }
+
+    [CanBeNull]
     public async Task<GetInvoiceResponse> GetNexportInvoiceAsync(Guid invoiceId)
     {
         try

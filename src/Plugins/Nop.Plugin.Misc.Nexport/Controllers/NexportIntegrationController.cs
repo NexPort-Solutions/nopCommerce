@@ -358,7 +358,8 @@ public class NexportIntegrationController : BasePluginController,
             NexportAuthenticationToken = _nexportSettings.AuthenticationToken,
             UtcExpirationDate = _nexportSettings.UtcExpirationDate,
             RootOrganizationId = _nexportSettings.RootOrganizationId,
-            MerchantAccountId = _nexportSettings.MerchantAccountId
+            MerchantAccountId = _nexportSettings.MerchantAccountId,
+            DocumentationUrl = _nexportSettings.DocumentationUrl
         };
 
         return View("~/Plugins/Misc.Nexport/Views/Configure.cshtml", model);
@@ -491,6 +492,40 @@ public class NexportIntegrationController : BasePluginController,
         catch (Exception ex)
         {
             var errMsg = "Cannot set the merchant account!";
+            await _logger.ErrorAsync(errMsg, ex);
+            _notificationService.ErrorNotification(errMsg);
+        }
+
+        return RedirectToAction("Configure");
+    }
+
+    [Area(AreaNames.ADMIN)]
+    [AuthorizeAdmin]
+    [AutoValidateAntiforgeryToken]
+    [HttpPost, ActionName("Configure")]
+    [FormValueRequired("savemisc")]
+    [ExportModelState]
+    public async Task<IActionResult> SaveMiscSettings(ConfigurationModel model)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+            return AccessDeniedView();
+
+        if (!ModelState.IsValid)
+            return RedirectToAction("Configure");
+
+        try
+        {
+            if (model.DocumentationUrl.IsValidUrl())
+            {
+                _nexportSettings.DocumentationUrl = model.DocumentationUrl;
+                await _settingService.SaveSettingAsync(_nexportSettings);
+
+                _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
+            }
+        }
+        catch (Exception ex)
+        {
+            var errMsg = "Cannot save miscellaneous settings!";
             await _logger.ErrorAsync(errMsg, ex);
             _notificationService.ErrorNotification(errMsg);
         }
@@ -3309,11 +3344,13 @@ public class NexportIntegrationController : BasePluginController,
 
     public async Task ProcessNewRedemptionAsync(Order order)
     {
+        var startDate = await _genericAttributeService.GetAttributeAsync<DateTime?>(order, "NexportEnrollmentStartDate", order.StoreId);
         await _nexportService.InsertNexportOrderProcessingQueueItem(
             new NexportOrderProcessingQueueItem
             {
                 OrderId = order.Id,
-                UtcDateCreated = DateTime.UtcNow
+                UtcDateCreated = DateTime.UtcNow,
+                UtcProcessingDate = startDate
             });
     }
 

@@ -32,11 +32,11 @@ public record NexportGroupProductRedemptionListSearchModel : BaseSearchModel
     public IList<SelectListItem> AvailableStatuses { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedFrom")]
-    [UIHint("DateNullable")]
+    [UIHint("~/Plugins/Misc.Nexport/Views/Shared/EditorTemplates/DateNullable.cshtml")]
     public DateTime? DateAssignedFrom { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.DateAssignedTo")]
-    [UIHint("DateNullable")]
+    [UIHint("~/Plugins/Misc.Nexport/Views/Shared/EditorTemplates/DateNullable.cshtml")]
     public DateTime? DateAssignedTo { get; set; }
 
     public NexportGroupProductRedemptionListSearchModel()

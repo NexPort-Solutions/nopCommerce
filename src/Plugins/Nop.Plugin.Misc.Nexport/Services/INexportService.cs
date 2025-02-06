@@ -384,8 +384,8 @@ public interface INexportService
     Task<IList<WholesaleOrderInfo>> SearchGroupProductsAsync(Guid? groupId, string productName, Customer customer);
 
     Task<IList<NexportOrderInvoiceItem>> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
-        string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus,
-        DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Store store = null, Customer customer = null);
+        NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, string customerName = null, string customerEmail= null,
+        DateTime? fromUtc = null, DateTime? toUtc = null, int? orderId = null, Store store = null, Customer customer = null);
 
     Task<IList<NexportOrderInvoiceItem>> SearchProductRedemptionsAsync(int? fundingPoolId,
         string customerName, string customerEmail, string productName, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus,

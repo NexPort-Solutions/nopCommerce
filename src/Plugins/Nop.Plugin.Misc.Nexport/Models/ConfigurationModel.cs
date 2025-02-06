@@ -9,7 +9,6 @@ namespace Nop.Plugin.Misc.Nexport.Models;
 [SuppressMessage("ReSharper", "Mvc.TemplateNotResolved")]
 public record ConfigurationModel : BaseNopModel
 {
-    //[DataType(DataType.Url)]
     [NopResourceDisplayName("Plugins.Misc.Nexport.Url")]
     public string Url { get; set; }
 
@@ -41,4 +40,7 @@ public record ConfigurationModel : BaseNopModel
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.MerchantAccountId")]
     public Guid? MerchantAccountId { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.DocumentationUrl")]
+    public string DocumentationUrl { get; set; }
 }

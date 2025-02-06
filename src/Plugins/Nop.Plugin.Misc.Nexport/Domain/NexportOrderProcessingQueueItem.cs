@@ -8,4 +8,6 @@ public class NexportOrderProcessingQueueItem : BaseEntity
     public int OrderId { get; set; }
 
     public DateTime UtcDateCreated { get; set; }
+
+    public DateTime? UtcProcessingDate { get; set; }
 }

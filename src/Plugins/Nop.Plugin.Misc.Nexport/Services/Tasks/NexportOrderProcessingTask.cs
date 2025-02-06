@@ -113,6 +113,7 @@ public class NexportOrderProcessingTask : IScheduleTask
 
             var orders = (from q in _nexportOrderProcessingQueueRepository.Table
                           orderby q.UtcDateCreated
+                          where q.UtcProcessingDate == null || (q.UtcProcessingDate != null && q.UtcProcessingDate <= DateTime.UtcNow)
                           select q.Id).Take(_batchSize).ToList();
 
             await ProcessNexportOrdersAsync(orders);

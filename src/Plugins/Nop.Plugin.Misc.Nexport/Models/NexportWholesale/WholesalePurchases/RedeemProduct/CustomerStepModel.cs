@@ -29,6 +29,10 @@ public record CustomerStepModel : BaseSearchModel
 
     public string SelectedUserEmailAddress { get; set; }
 
+    public int ProductId { get; set; }
+
+    public Guid? GroupId { get; set; }
+
     public bool TableFirstDraw { get; set; } = true;
 
     public CustomerStepModel()

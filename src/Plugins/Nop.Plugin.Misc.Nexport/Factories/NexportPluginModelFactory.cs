@@ -77,6 +77,7 @@ using Nop.Web.Framework.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.ReturnRequest;
 using Nop.Core.Infrastructure.Mapper;
+using Irony.Parsing;
 
 namespace Nop.Plugin.Misc.Nexport.Factories;
 
@@ -2180,7 +2181,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 {
                     //show all items under group not assigned
                     invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(null, productId,
-                        searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId,
+                        searchModel.SearchStatusId, searchModel.SearchName, searchModel.SearchEmail,
                         dateAssignedFromValue, dateAssignedToValue, orderId);
                 }
                 else
@@ -2188,7 +2189,8 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                     //show only items for group not assigned that belong to the current store and current customer
                     var store = await _storeContext.GetCurrentStoreAsync();
                     invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(null, productId,
-                                    searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue, orderId, store, currentCustomer);
+                        searchModel.SearchStatusId, searchModel.SearchName, searchModel.SearchEmail,
+                        dateAssignedFromValue, dateAssignedToValue, orderId, store, currentCustomer);
                 }
             }
             // check for wholesale purchases which the customer has purchasing agent permission on
@@ -2201,7 +2203,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 {
                     //show all items for the group
                     invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
-                        searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId,
+                        searchModel.SearchStatusId, searchModel.SearchName, searchModel.SearchEmail,
                         dateAssignedFromValue, dateAssignedToValue, orderId);
                 }
                 else
@@ -2209,7 +2211,8 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                     //show only items for the group that belong to the current store
                     var store = await _storeContext.GetCurrentStoreAsync();
                     invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
-                                    searchModel.SearchName, searchModel.SearchEmail, searchModel.SearchStatusId, dateAssignedFromValue, dateAssignedToValue, orderId, store);
+                                    searchModel.SearchStatusId, searchModel.SearchName, searchModel.SearchEmail,
+                                    dateAssignedFromValue, dateAssignedToValue, orderId, store);
                 }
             }
 
@@ -2526,14 +2529,15 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 if (x.Key != null)
                 {
                     var fundingPool = await _nexportWholesaleService.GetFundingPoolById(x.Key.Value);
-                    if (fundingPool != null) fundingPoolName = fundingPool.Name;
+                    if (fundingPool != null)
+                        fundingPoolName = fundingPool.Name;
                 }
 
                 return new NexportPurchasesByFundingPoolModel()
                 {
                     FundingPoolId = x.Key,
                     FundingPool = fundingPoolName,
-                    Available = x.Sum(y=>y.Available),
+                    Available = x.Sum(y => y.Available),
                     Awaiting = x.Sum(y => y.Awaiting),
                     Redeemed = x.Sum(y => y.Redeemed),
                 };
@@ -3162,7 +3166,6 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                     }).ToListAsync();
             });
 
-
         return model;
     }
 
@@ -3540,6 +3543,22 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         model.CustomerComments = returnRequest.CustomerComments;
         model.StaffNotes = returnRequest.StaffNotes;
         model.ReturnRequestStatusId = returnRequest.ReturnRequestStatusId;
+
+        return model;
+    }
+
+    public async Task<SubmitInvoiceItemRefundRequestModel> PrepareInvoiceItemRefundRequestModel(Guid invoiceItemId)
+    {
+        var model = new SubmitInvoiceItemRefundRequestModel { InvoiceItemId = invoiceItemId };
+
+        return model;
+    }
+
+    public async Task<SubmitInvoiceItemRefundRequestModel> PrepareSubmitInvoiceItemRefundRequestModelAsync(
+        SubmitInvoiceItemRefundRequestModel model)
+    {
+        if (model == null)
+            throw new ArgumentNullException(nameof(model));
 
         return model;
     }

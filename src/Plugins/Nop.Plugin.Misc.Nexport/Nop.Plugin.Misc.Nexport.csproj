@@ -203,6 +203,7 @@
     <None Remove="Views\RegistrationField\_CustomerFields.Control.cshtml" />
     <None Remove="Views\RegistrationField\_CustomerFields.cshtml" />
     <None Remove="Views\Shared\Components\TagHelpers\NexportDurationPicker\Default.cshtml" />
+    <None Remove="Views\Shared\EditorTemplates\DateNullable.cshtml" />
     <None Remove="Views\Shared\GuidNullable.cshtml" />
     <None Remove="Views\Shared\Table.cshtml" />
     <None Remove="Views\Shared\_ColumnsOne_groups.cshtml" />
@@ -710,6 +711,9 @@
     <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemByEmail.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RequestRefund.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\NexportWholesale\WholesalePurchases\RequestUnassignment.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -759,6 +763,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\RegistrationField\_CustomerFields.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\EditorTemplates\DateNullable.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Shared\EditorTemplates\GuidNullable.cshtml">

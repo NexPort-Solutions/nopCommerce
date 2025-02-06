@@ -27,50 +27,26 @@ using Nop.Web.Framework.Menu;
 
 namespace Nop.Plugin.Misc.Nexport;
 
-public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
+public class NexportPlugin(
+    NexportSettings nexportSettings,
+    NexportPluginService nexportPluginService,
+    IUrlHelperFactory urlHelperFactory,
+    IActionContextAccessor actionContextAccessor,
+    IDiscountService discountService,
+    WidgetSettings widgetSetting,
+    ILocalizationService localizationService,
+    IPermissionService permissionService,
+    ISettingService settingService,
+    IScheduleTaskService scheduleTaskService,
+    IWebHelper webHelper,
+    ILogger logger)
+    : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
 {
-    private readonly NexportSettings _nexportSettings;
-    private readonly NexportPluginService _nexportPluginService;
-
-    private readonly IUrlHelperFactory _urlHelperFactory;
-    private readonly IActionContextAccessor _actionContextAccessor;
-    private readonly IDiscountService _discountService;
-    private readonly ILocalizationService _localizationService;
-    private readonly IPermissionService _permissionService;
-    private readonly ISettingService _settingService;
-    private readonly IScheduleTaskService _scheduleTaskService;
-    private readonly WidgetSettings _widgetSettings;
-    private readonly IWebHelper _webHelper;
-    private readonly ILogger _logger;
-
-    public NexportPlugin(
-        NexportSettings nexportSettings,
-        NexportPluginService nexportPluginService,
-        IUrlHelperFactory urlHelperFactory,
-        IActionContextAccessor actionContextAccessor,
-        IDiscountService discountService,
-        WidgetSettings widgetSetting,
-        ILocalizationService localizationService,
-        IPermissionService permissionService,
-        ISettingService settingService,
-        IScheduleTaskService scheduleTaskService,
-        IWebHelper webHelper, ILogger logger)
-    {
-        _nexportSettings = nexportSettings;
-        _nexportPluginService = nexportPluginService;
-
-        _urlHelperFactory = urlHelperFactory;
-        _actionContextAccessor = actionContextAccessor;
-
-        _discountService = discountService;
-        _widgetSettings = widgetSetting;
-        _localizationService = localizationService;
-        _permissionService = permissionService;
-        _settingService = settingService;
-        _scheduleTaskService = scheduleTaskService;
-        _webHelper = webHelper;
-        _logger = logger;
-    }
+    private readonly IUrlHelperFactory _urlHelperFactory = urlHelperFactory;
+    private readonly IActionContextAccessor _actionContextAccessor = actionContextAccessor;
+    private readonly IDiscountService _discountService = discountService;
+    private readonly IScheduleTaskService _scheduleTaskService = scheduleTaskService;
+    private readonly ILogger _logger = logger;
 
     public async Task ManageSiteMapAsync(SiteMapNode rootNode)
     {
@@ -78,8 +54,29 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
         if (pluginNode != null)
             return;
 
-        if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
+        if (string.IsNullOrWhiteSpace(nexportSettings.AuthenticationToken))
             return;
+
+        var helpNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Help");
+        if (helpNode != null)
+        {
+            if (!string.IsNullOrWhiteSpace(nexportSettings.DocumentationUrl))
+            {
+                foreach (var helpNodeChildNode in helpNode.ChildNodes)
+                {
+                    helpNodeChildNode.Visible = false;
+                }
+
+                helpNode.ChildNodes.Add(new SiteMapNode
+                {
+                    Visible = true,
+                    Title = "Nexport Marketplace Documentation",
+                    SystemName = "Nexport Marketplace Documentation",
+                    Url = nexportSettings.DocumentationUrl,
+                    IconClass = "far fa-dot-circle"
+                });
+            }
+        }
 
         var node = new SiteMapNode
         {
@@ -91,7 +88,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
 
         node.ChildNodes.Add(new SiteMapNode
         {
-            Visible = await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins),
+            Visible = await permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins),
             Title = "Configuration",
             SystemName = "Nexport Integration - Configuration",
             ControllerName = "NexportIntegration",
@@ -101,7 +98,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
 
         node.ChildNodes.Add(new SiteMapNode
         {
-            Visible = await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores),
+            Visible = await permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores),
             Title = "Store Configuration",
             SystemName = "Nexport Integration - Store Configuration",
             ControllerName = "Store",
@@ -111,7 +108,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
 
         node.ChildNodes.Add(new SiteMapNode
         {
-            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo),
+            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo),
             Title = "Supplemental Info",
             SystemName = NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME,
             ControllerName = "NexportIntegration",
@@ -122,15 +119,15 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
         var wholesaleNode = new SiteMapNode
         {
             SystemName = "Nexport",
-            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
             Title = "Nexport Wholesale",
             IconClass = "fas fa-shopping-basket",
         };
 
         var wholesaleListNode = new SiteMapNode
         {
-            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            Title = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
+            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+            Title = await localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
             SystemName = "Wholesale Purchases",
             ControllerName = "NexportWholesale",
             IconClass = "far fa-dot-circle"
@@ -138,7 +135,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
 
         wholesaleListNode.ChildNodes.Add(new SiteMapNode
         {
-            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
             //Title = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
             Title = "By Group",
             SystemName = "Wholesale Purchases - By Group",
@@ -149,7 +146,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
 
         wholesaleListNode.ChildNodes.Add(new SiteMapNode
         {
-            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
             //Title = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
             Title = "By Funding Pools",
             SystemName = "Wholesale Purchases - By Funding Pools",
@@ -162,7 +159,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
 
         wholesaleNode.ChildNodes.Add(new SiteMapNode
         {
-            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
             Title = "New Wholesale Order",
             SystemName = "New Wholesale Order",
             ControllerName = "NexportWholesale",
@@ -172,7 +169,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
 
         wholesaleNode.ChildNodes.Add(new SiteMapNode
         {
-            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools),
+            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools),
             Title = "Funding Pools",
             SystemName = "Nexport Funding Pools",
             ControllerName = "NexportWholesale",
@@ -181,7 +178,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
         });
         wholesaleNode.ChildNodes.Add(new SiteMapNode
         {
-            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
             Title = "Unassignment Requests",
             SystemName = "UnassignmentRequests",
             ControllerName = "NexportWholesale",
@@ -190,7 +187,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
         });
         wholesaleNode.ChildNodes.Add(new SiteMapNode
         {
-            Visible = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
             Title = "Unassignment Request Reasons",
             SystemName = "UnassignmentRequestReasons",
             ControllerName = "NexportWholesale",
@@ -204,7 +201,7 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
 
     public override string GetConfigurationPageUrl()
     {
-        return $"{_webHelper.GetStoreLocation()}Admin/NexportIntegration/Configure";
+        return $"{webHelper.GetStoreLocation()}Admin/NexportIntegration/Configure";
     }
 
     public override async Task InstallAsync()
@@ -229,46 +226,46 @@ public class NexportPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetP
         }
 
         var settings = new NexportSettings();
-        await _settingService.SaveSettingAsync(settings);
+        await settingService.SaveSettingAsync(settings);
 
-        if (!_widgetSettings.ActiveWidgetSystemNames.Contains(NexportDefaults.SystemName))
+        if (!widgetSetting.ActiveWidgetSystemNames.Contains(NexportDefaults.SystemName))
         {
-            _widgetSettings.ActiveWidgetSystemNames.Add(NexportDefaults.SystemName);
-            await _settingService.SaveSettingAsync(_widgetSettings);
+            widgetSetting.ActiveWidgetSystemNames.Add(NexportDefaults.SystemName);
+            await settingService.SaveSettingAsync(widgetSetting);
         }
 
-        await _nexportPluginService.AddMessageTemplatesAsync();
+        await nexportPluginService.AddMessageTemplatesAsync();
 
-        await _nexportPluginService.InstallScheduledTaskAsync();
+        await nexportPluginService.InstallScheduledTaskAsync();
 
-        await _nexportPluginService.AddActivityLogTypesAsync();
+        await nexportPluginService.AddActivityLogTypesAsync();
 
-        await _nexportPluginService.AddOrUpdateResourcesAsync();
+        await nexportPluginService.AddOrUpdateResourcesAsync();
 
-        await _nexportPluginService.InstallPermissionProviderAsync();
+        await nexportPluginService.InstallPermissionProviderAsync();
 
         await base.InstallAsync();
     }
 
     public override async Task UninstallAsync()
     {
-        if (_widgetSettings.ActiveWidgetSystemNames.Contains(NexportDefaults.SystemName))
+        if (widgetSetting.ActiveWidgetSystemNames.Contains(NexportDefaults.SystemName))
         {
-            _widgetSettings.ActiveWidgetSystemNames.Remove(NexportDefaults.SystemName);
-            await _settingService.SaveSettingAsync(_widgetSettings);
+            widgetSetting.ActiveWidgetSystemNames.Remove(NexportDefaults.SystemName);
+            await settingService.SaveSettingAsync(widgetSetting);
         }
 
-        await _settingService.DeleteSettingAsync<NexportSettings>();
+        await settingService.DeleteSettingAsync<NexportSettings>();
 
-        await _nexportPluginService.DeleteMessageTemplatesAsync();
+        await nexportPluginService.DeleteMessageTemplatesAsync();
 
-        await _nexportPluginService.UninstallScheduledTaskAsync();
+        await nexportPluginService.UninstallScheduledTaskAsync();
 
-        await _nexportPluginService.DeleteActivityLogTypesAsync();
+        await nexportPluginService.DeleteActivityLogTypesAsync();
 
-        await _nexportPluginService.DeleteResourcesAsync();
+        await nexportPluginService.DeleteResourcesAsync();
 
-        await _nexportPluginService.UninstallPermissionProviderAsync();
+        await nexportPluginService.UninstallPermissionProviderAsync();
 
         try
         {

@@ -11,6 +11,7 @@
 
 @{
     var currentCustomer = await workContext.GetCurrentCustomerAsync();
+    var hasAdminRole = await CustomerService.IsAdminAsync(currentCustomer);
     const string hideSearchBlockAttributeName = "NexportGroupsPage.HideSearchBlock";
     var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(currentCustomer, hideSearchBlockAttributeName);
 
@@ -163,7 +164,7 @@
                                             <nop-label asp-for="DateAssignedFrom" />
                                         </div>
                                         <div class="col-md-8">
-                                            <nop-editor asp-for="DateAssignedFrom" />
+                                            <nop-editor asp-for="DateAssignedFrom" asp-render-form-control-class="true" />
                                         </div>
                                     </div>
                                     <div class="form-group row">
@@ -171,7 +172,7 @@
                                             <nop-label asp-for="DateAssignedTo" />
                                         </div>
                                         <div class="col-md-8">
-                                            <nop-editor asp-for="DateAssignedTo" />
+                                            <nop-editor asp-for="DateAssignedTo" asp-render-form-control-class="true" />
                                             <input type="hidden" asp-for="@Model.AdminView" />
                                         </div>
                                     </div>
@@ -203,7 +204,10 @@
 <script>
     function renderRefundRedemption(data, type, row, meta) {
         if (row.InvoiceItemId != null) {
-            if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Available.GetDisplayName())") {
+            if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Assigned.GetDisplayName())") {
+                var buttonFunction = "requestRefundRedemption('" + row.InvoiceItemId + "')";
+                return renderCustomButton(buttonFunction, "fa-solid fa-rotate-exclamation", "Request Refund");
+            } else {
                 var buttonFunction = "refundRedemption('" + row.InvoiceItemId + "')";
                 return renderCustomButton(buttonFunction, "fa-solid fa-rotate-left", "Refund");
             }
@@ -216,7 +220,7 @@
         if (row.InvoiceItemId != null) {
             var buttonFunction = "";
             if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Assigned.GetDisplayName())") {
-                if (@((Model.AdminView && await CustomerService.IsAdminAsync(currentCustomer)).ToString().ToLower())) {
+                if (@Json.Serialize(hasAdminRole)){
                     buttonFunction = "unassignRedemption('" + row.InvoiceItemId + "')";
                     return renderCustomButton(buttonFunction, "fa-solid fa-square-minus", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")");
                 }
@@ -230,10 +234,8 @@
                 return renderCustomButton(buttonFunction, "fa-solid fa-square-plus", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign")");
             }
             else if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Awaiting.GetDisplayName())") {
-                if (@((Model.AdminView && await CustomerService.IsAdminAsync(currentCustomer)).ToString().ToLower())) {
-                    buttonFunction = "cancelAwaitingRedemption('" + row.InvoiceItemId + "')";
-                    return renderCustomButton(buttonFunction, "fa-solid fa-square-xmark", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting")");
-                }
+                buttonFunction = "cancelAwaitingRedemption('" + row.InvoiceItemId + "')";
+                return renderCustomButton(buttonFunction, "fa-solid fa-square-xmark", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting")");
             }
         }
 
@@ -263,6 +265,13 @@
                 }
             });
         }
+    }
+
+    function requestRefundRedemption(invoiceItemId) {
+        var url = "@Url.Action("RequestRefund", "NexportWholesale")";
+        url += "?InvoiceItemId=" + invoiceItemId;
+
+        window.location.href = url;
     }
 
     function requestUnassignment(invoiceItemId, customerId) {

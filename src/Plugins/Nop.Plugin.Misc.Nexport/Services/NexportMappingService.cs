@@ -2281,8 +2281,8 @@ public partial class NexportService : INexportService
     }
 
     public async Task<IList<NexportOrderInvoiceItem>> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
-        string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus,
-        DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Store store = null, Customer customer = null)
+        NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, string customerName = null, string customerEmail = null,
+        DateTime? fromUtc = null, DateTime? toUtc = null, int? orderId = null, Store store = null, Customer customer = null)
     {
         if (groupId == Guid.Empty)
             throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));

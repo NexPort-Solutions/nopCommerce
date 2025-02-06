@@ -187,6 +187,29 @@
             </div>
         </div>
     }
+    <div class="card card-default">
+        <div class="card-header">
+            Miscellaneous
+        </div>
+        <div class="card-body">
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="DocumentationUrl" />
+                </div>
+                <div class="col-md-9">
+                    <div class="input-group">
+                        <nop-editor asp-for="DocumentationUrl" asp-render-form-control-class="true" />
+                    </div>
+                    <span asp-validation-for="DocumentationUrl"></span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-md-9 offset-md-3">
+                    <input type="submit" name="savemisc" class="btn btn-primary" value="@T("Admin.Common.Save")" />
+                </div>
+            </div>
+        </div>
+    </div>
 </form>
 
 <script>
@@ -196,16 +219,19 @@
             function(e) {
                 $("#AutoRenewToken").prop("disabled", this.checked);
                 $("#CustomTokenExpirationDate").data("kendoDateTimePicker").enable(!this.checked);
-            });
+            }
+        );
 
         $("#AutoRenewToken").on("change",
             function(e) {
                 $("#TokenNeverExpired").prop("disabled", this.checked);
-            });
+            }
+        );
 
         $("#CustomTokenExpirationDate").data("kendoDateTimePicker").bind("change",
             function() {
                 $("#TokenNeverExpired").prop("disabled", this.value() !== null);
-            });
+            }
+        );
     });
 </script>

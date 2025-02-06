@@ -377,7 +377,7 @@ public class NexportWholesaleController : BaseAdminController
 
     public virtual async Task<IActionResult> GetMatchingUsers(CustomerStepModel searchModel)
     {
-        var paged = new List<NexportUserModel>().ToPagedList(searchModel);
+        var paged = new List<NexportUserAssignmentModel>().ToPagedList(searchModel);
 
         if (searchModel.TableFirstDraw)
         {
@@ -385,12 +385,17 @@ public class NexportWholesaleController : BaseAdminController
         }
 
         var customers = await _nexportService.SearchCustomersAsync(searchModel.SearchEmail ?? "");
-        var nexportUsers = new List<NexportUserModel>();
+        var nexportUsers = new List<NexportUserAssignmentModel>();
         foreach (var customer in customers)
         {
             var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
             if (userMapping != null)
             {
+                var invoiceRedemptions = await _nexportService.SearchGroupProductRedemptionsAsync(
+                    searchModel.GroupId, searchModel.ProductId,
+                    customerEmail: customer.Email,
+                    redemptionStatus: NexportOrderInvoiceItemRedemptionStatus.Assigned);
+
                 try
                 {
                     var nexUser = await _nexportService.GetNexportUserAsync(userMapping.NexportUserId);
@@ -398,7 +403,7 @@ public class NexportWholesaleController : BaseAdminController
                     {
                         // populate name and email from nop customer so we don't get confused if the
                         // linked nexport account has a different name and email
-                        nexportUsers.Add(new NexportUserModel
+                        nexportUsers.Add(new NexportUserAssignmentModel
                         {
                             UserId = nexUser.UserId,
                             FirstName = customer.FirstName,
@@ -406,7 +411,8 @@ public class NexportWholesaleController : BaseAdminController
                             Email = customer.Email,
                             OwnerOrgId = nexUser.OwnerOrgId,
                             OwnerOrg = nexUser.OwnerOrgId != null ? (await _nexportService.GetOrganizationDetailsAsync(nexUser.OwnerOrgId.Value))?.Name : "",
-                            OwnerOrgShortName = nexUser.OwnerOrgShortName
+                            OwnerOrgShortName = nexUser.OwnerOrgShortName,
+                            IsAvailable = !invoiceRedemptions.Any()
                         });
                     }
                 }
@@ -419,7 +425,7 @@ public class NexportWholesaleController : BaseAdminController
 
         paged = await nexportUsers.SelectAwait(async x => x).ToPagedListAsync(searchModel);
 
-        var dtlist = new NexportUserListModel();
+        var dtlist = new NexportUserAssignmentListModel();
 
         dtlist = await dtlist.PrepareToGridAsync(searchModel, paged, () =>
         {
