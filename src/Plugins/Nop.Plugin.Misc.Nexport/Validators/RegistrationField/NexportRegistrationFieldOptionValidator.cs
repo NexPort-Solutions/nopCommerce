@@ -9,12 +9,12 @@ namespace Nop.Plugin.Misc.Nexport.Validators.RegistrationField;
 
 public class NexportRegistrationFieldOptionValidator : BaseNopValidator<NexportRegistrationFieldOptionModel>
 {
-    public NexportRegistrationFieldOptionValidator(ILocalizationService localizationService, IMappingEntityAccessor mappingEntityAccessor)
+    public NexportRegistrationFieldOptionValidator(ILocalizationService localizationService)
     {
             RuleFor(x => x.OptionValue)
                 .NotEmpty()
                 .WithMessageAwait(localizationService.GetResourceAsync("Plugins.Misc.Nexport.RegistrationField.Option.Value.Required"));
 
-            SetDatabaseValidationRules<NexportRegistrationFieldOption>(mappingEntityAccessor);
+            SetDatabaseValidationRules<NexportRegistrationFieldOption>();
         }
 }

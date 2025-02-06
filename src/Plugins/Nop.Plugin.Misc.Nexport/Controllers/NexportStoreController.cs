@@ -32,7 +32,7 @@ public class NexportStoreController : BasePluginController
     #region General Actions
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     public virtual async Task<IActionResult> List()
     {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
@@ -43,7 +43,7 @@ public class NexportStoreController : BasePluginController
 
     [HttpPost]
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AutoValidateAntiforgeryToken]
     public virtual async Task<IActionResult> List(NexportStoreSearchModel searchModel)
     {

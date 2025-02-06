@@ -9,18 +9,11 @@
 @{
     Layout = "_ColumnsOne";
 
-    var kendoVersion = "2020.1.406";
-
     var storeLocation = webHelper.GetStoreLocation();
 
     NopHtml.AddTitleParts("Answer supplemental info questions");
 }
-
-<link rel="stylesheet" href="~/lib/kendo/@kendoVersion/styles/web/kendo.common.min.css" />
-<link rel="stylesheet" href="~/lib/kendo/@kendoVersion/styles/web/kendo.default.min.css" />
-<link rel="stylesheet" href="~/lib/kendo/@kendoVersion/styles/web/kendo.rtl.min.css" />
 <link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport.css" />
-<script src="~/lib/kendo/@kendoVersion/js/kendo.ui.core.min.js"></script>
 <script src="~/js/public.accordion.js"></script>
 
 @if (Model != null)

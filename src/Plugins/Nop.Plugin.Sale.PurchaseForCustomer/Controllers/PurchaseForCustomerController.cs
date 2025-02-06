@@ -26,7 +26,7 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Controllers;
 
 [ResponseCache(Duration = 0, NoStore = true)]
 [AuthorizeAdmin]
-[Area(AreaNames.Admin)]
+[Area(AreaNames.ADMIN)]
 public class PurchaseForCustomerController : BasePluginController
 {
     private readonly PurchaseForCustomerPluginService _purchaseForCustomerPluginService;
@@ -74,7 +74,7 @@ public class PurchaseForCustomerController : BasePluginController
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetModifiedLocaleResources(PurchaseForCustomerPluginResourceListSearchModel searchModel)
@@ -88,7 +88,7 @@ public class PurchaseForCustomerController : BasePluginController
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)

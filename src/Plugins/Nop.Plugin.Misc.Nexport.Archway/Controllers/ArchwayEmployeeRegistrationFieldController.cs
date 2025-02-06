@@ -67,7 +67,7 @@ public class ArchwayEmployeeRegistrationFieldController : BasePluginController
     #region General Actions
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetModifiedLocaleResources(ArchwayPluginResourceListSearchModel searchModel)
@@ -82,7 +82,7 @@ public class ArchwayEmployeeRegistrationFieldController : BasePluginController
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
@@ -136,7 +136,7 @@ public class ArchwayEmployeeRegistrationFieldController : BasePluginController
     #region Configuration Actions
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> Configure(int fieldId)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
@@ -156,7 +156,7 @@ public class ArchwayEmployeeRegistrationFieldController : BasePluginController
         return PartialView("~/Plugins/Misc.Nexport.Archway/Views/RegistrationField/_CustomerFields.Control.CustomRender.cshtml", model);
     }
 
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [AuthorizeAdmin]
     [AutoValidateAntiforgeryToken]
     [Route("Admin/NexportIntegration/EditRegistrationField/{id}")]
@@ -203,7 +203,7 @@ public class ArchwayEmployeeRegistrationFieldController : BasePluginController
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpsRequirement]
     [HttpPost]
     public async Task<IActionResult> AsyncUploadStoreData()
@@ -241,7 +241,7 @@ public class ArchwayEmployeeRegistrationFieldController : BasePluginController
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> EditCustomerRegistrationFieldAnswers(int customerId, int fieldId)
     {
         var model = await _archwayStudentEmployeeRegistrationFieldModelFactory.PrepareEditArchwayStudentEmployeeRegistrationFieldModel(customerId, fieldId);

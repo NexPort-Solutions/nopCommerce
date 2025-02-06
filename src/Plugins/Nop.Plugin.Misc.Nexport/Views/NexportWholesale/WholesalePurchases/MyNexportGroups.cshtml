@@ -8,21 +8,19 @@
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net/js/jquery.dataTables.min.js", "", true);
 
     // NopHtml.AddCssFileParts("~/lib_npm/bootstrap/css/bootstrap.min.css", "", true);
-    //NopHtml.AddCssFileParts("~/lib_npm/datatables.net-bs4/css/dataTables.bootstrap4.min.css", "", true);
+    // NopHtml.AddCssFileParts("~/lib_npm/datatables.net-bs4/css/dataTables.bootstrap4.min.css", "", true);
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net-bs4/js/dataTables.bootstrap4.min.js", "", true);
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net-buttons/js/dataTables.buttons.min.js", "", true);
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net-buttons-bs4/js/buttons.bootstrap4.min.js", "", true);
     // NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net-buttons/js/buttons.html5.min.js", "", true);
 
-    //NopHtml.AddCssFileParts("~/lib_npm/datatables.net-buttons-bs4/css/buttons.bootstrap4.min.css", "", true);
+    // NopHtml.AddCssFileParts("~/lib_npm/datatables.net-buttons-bs4/css/buttons.bootstrap4.min.css", "", true);
 
     // NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/uikit.min.css", "", true);
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
+    // NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js", "", true);
 
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/js/admin.common.js", "", true);
-
-    var kendoVersion = "2020.1.406";
 
     Layout = "_ColumnsOne";
 }
@@ -33,11 +31,6 @@
 <link rel="stylesheet" href="~/lib_npm/datatables.net-buttons-bs4/css/buttons.bootstrap4.min.css" />
 <link rel="stylesheet" href="~/css/admin/styles.css" />
 <link rel="stylesheet" href="~/Plugins/Misc.Nexport/Content/nexport.css" />
-
-<link rel="stylesheet" href="~/lib/kendo/@kendoVersion/styles/web/kendo.common.min.css" />
-<link rel="stylesheet" href="~/lib/kendo/@kendoVersion/styles/web/kendo.default.min.css" />
-<link rel="stylesheet" href="~/lib/kendo/@kendoVersion/styles/web/kendo.rtl.min.css" />
-<link rel="stylesheet" href="~/lib/kendo/@kendoVersion/styles/web/kendo.rtl.min.css" />
 
 <style>
     .content-header h1 {
@@ -79,8 +72,6 @@
 <div class="page account-page nex-plugin">
     @await Html.PartialAsync(path, model)
 </div>
-<script src="~/lib/kendo/@kendoVersion/js/kendo.ui.core.min.js"></script>
-@* <!script async src="https://kit.fontawesome.com/e4adf0b7ea.js" crossorigin="anonymous" asp-location="Footer"></!script> *@
 <script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/fontawesome.min.js"></script>
 <script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/regular.min.js"></script>
 <script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/solid.min.js"></script>

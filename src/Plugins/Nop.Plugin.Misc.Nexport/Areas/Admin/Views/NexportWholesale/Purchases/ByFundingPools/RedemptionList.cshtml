@@ -205,10 +205,8 @@
 <script>
     function renderRefundRedemption(data, type, row, meta) {
         if (row.InvoiceItemId != null) {
-            if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Available.GetDisplayName())") {
-                var buttonFunction = "refundRedemption('" + row.InvoiceItemId + "')";
-                return renderCustomButton(buttonFunction, "fa-solid fa-rotate-left", "Refund");
-            }
+            var buttonFunction = "refundRedemption('" + row.InvoiceItemId + "')";
+            return renderCustomButton(buttonFunction, "fa-solid fa-rotate-left", "Refund");
         }
 
         return "";
@@ -222,7 +220,7 @@
                 return renderCustomButton(buttonFunction, "fa-solid fa-square-minus", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")");
             }
             else if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Available.GetDisplayName())") {
-                buttonFunction = "assignRedemption('" + row.InvoiceItemId + "', " + row.ProductId + ")";;
+                buttonFunction = "assignRedemption('" + row.InvoiceItemId + "', " + row.ProductId + ")";
                 return renderCustomButton(buttonFunction, "fa-solid fa-square-plus", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign")");
             }
             else if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Awaiting.GetDisplayName())") {
@@ -317,8 +315,6 @@
     }
 
     function updateAvailableRedemptions() {
-
-
         // addAntiForgeryToken(redemptionData);
 
         // $.ajax({

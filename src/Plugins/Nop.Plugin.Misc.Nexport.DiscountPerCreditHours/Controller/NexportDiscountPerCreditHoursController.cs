@@ -20,7 +20,7 @@ using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Services;
 namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Controller;
 
 [AuthorizeAdmin]
-[Area(AreaNames.Admin)]
+[Area(AreaNames.ADMIN)]
 public class NexportDiscountPerCreditHoursController : BasePluginController
 {
     private readonly NexportDiscountPerCreditHoursPluginService _pluginService;
@@ -53,7 +53,7 @@ public class NexportDiscountPerCreditHoursController : BasePluginController
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetModifiedLocaleResources(DiscountPerCreditHoursPluginResourceListSearchModel searchModel)
@@ -64,7 +64,7 @@ public class NexportDiscountPerCreditHoursController : BasePluginController
     }
 
     [AuthorizeAdmin]
-    [Area(AreaNames.Admin)]
+    [Area(AreaNames.ADMIN)]
     [HttpPost]
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)

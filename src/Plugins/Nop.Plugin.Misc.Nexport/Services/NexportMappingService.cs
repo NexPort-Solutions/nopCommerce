@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Linq.Dynamic.Core;
 using Newtonsoft.Json;
 using NexportApi.Model;
 using Nop.Core;
+using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
@@ -20,7 +18,6 @@ using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Services.Messages;
-using StackExchange.Profiling.Internal;
 
 namespace Nop.Plugin.Misc.Nexport.Services;
 
@@ -2248,7 +2245,7 @@ public partial class NexportService : INexportService
             throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
 
         var productQuery = _productRepository.Table;
-        if (!productName.IsNullOrWhiteSpace())
+        if (!string.IsNullOrWhiteSpace(productName))
             productQuery = productQuery.Where(x => x.Name.Contains(productName));
 
         var productIdList = await productQuery.Select(x => x.Id).ToListAsync();
@@ -2284,8 +2281,8 @@ public partial class NexportService : INexportService
     }
 
     public async Task<IList<NexportOrderInvoiceItem>> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
-        string customerName, string customerEmail, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus,
-        DateTime? fromUtc, DateTime? toUtc, int? orderId = null, Store store = null, Customer customer = null)
+        NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, string customerName = null, string customerEmail = null,
+        DateTime? fromUtc = null, DateTime? toUtc = null, int? orderId = null, Store store = null, Customer customer = null)
     {
         if (groupId == Guid.Empty)
             throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
@@ -2320,14 +2317,14 @@ public partial class NexportService : INexportService
         if (toUtc.HasValue)
             invoiceItemQuery = invoiceItemQuery.Where(x => toUtc.Value >= x.UtcDateRedemption);
 
-        if (!customerEmail.IsNullOrWhiteSpace() || !customerName.IsNullOrWhiteSpace())
+        if (!string.IsNullOrWhiteSpace(customerEmail) || !string.IsNullOrWhiteSpace(customerName))
         {
             var customerQuery = _customerRepository.Table;
 
-            if (!customerEmail.IsNullOrWhiteSpace())
+            if (!string.IsNullOrWhiteSpace(customerEmail))
                 customerQuery = customerQuery.Where(x => x.Email.Contains(customerEmail));
 
-            if (!customerName.IsNullOrWhiteSpace())
+            if (!string.IsNullOrWhiteSpace(customerName))
                 customerQuery = customerQuery.Where(x => x.FirstName.Contains(customerName) || x.LastName.Contains(customerName));
 
             var customerIdList = await customerQuery.Select(x => x.Id).ToListAsync();
@@ -2373,14 +2370,14 @@ public partial class NexportService : INexportService
         if (toUtc.HasValue)
             invoiceItemQuery = invoiceItemQuery.Where(x => toUtc.Value >= x.UtcDateRedemption);
 
-        if (!customerEmail.IsNullOrWhiteSpace() || !customerName.IsNullOrWhiteSpace())
+        if (!string.IsNullOrWhiteSpace(customerEmail) || !string.IsNullOrWhiteSpace(customerName))
         {
             var customerQuery = _customerRepository.Table;
 
-            if (!customerEmail.IsNullOrWhiteSpace())
+            if (!string.IsNullOrWhiteSpace(customerEmail))
                 customerQuery = customerQuery.Where(x => x.Email.Contains(customerEmail));
 
-            if (!customerName.IsNullOrWhiteSpace())
+            if (!string.IsNullOrWhiteSpace(customerName))
                 customerQuery = customerQuery.Where(x => x.FirstName.Contains(customerName) || x.LastName.Contains(customerName));
 
             var customerIdList = await customerQuery.Select(x => x.Id).ToListAsync();
@@ -2399,10 +2396,10 @@ public partial class NexportService : INexportService
 
         var orderInfoQuery = _wholesaleOrderInfoRepository.Table.Where(x => x.FundingPoolId == fundingPoolId);
 
-        if (!productName.IsNullOrWhiteSpace())
+        if (!string.IsNullOrWhiteSpace(productName))
         {
             var productQuery = _productRepository.Table;
-            if (!productName.IsNullOrWhiteSpace())
+            if (!string.IsNullOrWhiteSpace(productName))
                 productQuery = productQuery.Where(x => x.Name.Contains(productName));
 
             var productIdList = await productQuery.Select(x => x.Id).ToListAsync();

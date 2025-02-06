@@ -21,3 +21,8 @@ public record NexportUserModel : BaseNopEntityModel
 
     public string OwnerOrgShortName { get; set; }
 }
+
+public record NexportUserAssignmentModel : NexportUserModel
+{
+    public bool IsAvailable { get; set; }
+}

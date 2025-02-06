@@ -235,4 +235,8 @@ public partial interface INexportPluginModelFactory
     Task<NexportReturnRequestListModel> PrepareNexportReturnRequestListModelAsync(NexportReturnRequestSearchModel searchModel);
 
     Task<NexportReturnRequestModel> PrepareNexportReturnRequestModelAsync(NexportReturnRequestModel model, ReturnRequest returnRequest, bool excludeProperties = false);
+
+    Task<SubmitInvoiceItemRefundRequestModel> PrepareInvoiceItemRefundRequestModel(Guid invoiceItemId);
+
+    Task<SubmitInvoiceItemRefundRequestModel> PrepareSubmitInvoiceItemRefundRequestModelAsync(SubmitInvoiceItemRefundRequestModel model);
 }

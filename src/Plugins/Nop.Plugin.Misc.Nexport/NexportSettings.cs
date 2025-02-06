@@ -17,6 +17,9 @@ public class NexportSettings : ISettings
 
     public Guid? MerchantAccountId { get; set; }
 
+    [DataType(DataType.Url)]
+    public string DocumentationUrl { get; set; }
+
     public bool IgnoreAcl { get; set; }
 
     public bool IgnoreStoreLimitations { get; set; }

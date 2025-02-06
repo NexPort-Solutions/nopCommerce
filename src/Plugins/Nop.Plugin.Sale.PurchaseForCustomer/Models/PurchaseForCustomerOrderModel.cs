@@ -20,7 +20,7 @@ public record PurchaseForCustomerOrderModel
     public bool MarkOrderAsPaid { get; set; }
 
     [NopResourceDisplayName("Plugins.Sale.Nexport.PurchaseForCustomer.StartDate")]
-    [UIHint("DateNullable")]
+    [UIHint("DateTimeNullable")]
     public DateTime? StartDate { get; set; }
 
     [NopResourceDisplayName("Plugins.Sale.Nexport.PurchaseForCustomer.NotifyCustomer")]

@@ -6,6 +6,7 @@ using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.ReturnRequest;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Catalog;
+using Nop.Services.Common;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
@@ -24,6 +25,7 @@ public class NexportReturnRequestController : BaseAdminController
     #region Fields
 
     private readonly ICustomerActivityService _customerActivityService;
+    private readonly IGenericAttributeService _genericAttributeService;
     private readonly ILocalizationService _localizationService;
     private readonly ILocalizedEntityService _localizedEntityService;
     private readonly INotificationService _notificationService;
@@ -42,6 +44,7 @@ public class NexportReturnRequestController : BaseAdminController
     #region Ctor
 
     public NexportReturnRequestController(ICustomerActivityService customerActivityService,
+        IGenericAttributeService genericAttributeService,
         ILocalizationService localizationService,
         ILocalizedEntityService localizedEntityService,
         INotificationService notificationService,
@@ -56,6 +59,7 @@ public class NexportReturnRequestController : BaseAdminController
         INexportWholesaleService nexportWholesaleService)
     {
         _customerActivityService = customerActivityService;
+        _genericAttributeService = genericAttributeService;
         _localizationService = localizationService;
         _localizedEntityService = localizedEntityService;
         _notificationService = notificationService;
@@ -83,7 +87,9 @@ public class NexportReturnRequestController : BaseAdminController
             return AccessDeniedView();
 
         //prepare model
-        var model = await _nexportPluginModelFactory.PrepareNexportReturnRequestSearchModelAsync(new NexportReturnRequestSearchModel());
+        var model =
+            await _nexportPluginModelFactory.PrepareNexportReturnRequestSearchModelAsync(
+                new NexportReturnRequestSearchModel());
 
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/ReturnRequest/List.cshtml", model);
     }
@@ -130,13 +136,32 @@ public class NexportReturnRequestController : BaseAdminController
 
         if (ModelState.IsValid)
         {
-            var quantityToReturn = model.Quantity;
-            if (quantityToReturn > 0)
+            var invoiceItemId = await _genericAttributeService.GetAttributeAsync<Guid?>(returnRequest, "RefundRequestInvoiceItemId", returnRequest.StoreId);
+            if (invoiceItemId != null)
             {
-                var order = await _orderService.GetOrderByOrderItemAsync(returnRequest.OrderItemId);
-                if (order != null)
+                var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId.Value);
+                if (invoiceItem != null)
                 {
-                    await _nexportService.RefundOrderItem(quantityToReturn, order.Id, returnRequest.OrderItemId);
+                    // Refund the invoice item
+                    await _nexportService.RefundInvoiceItem(invoiceItem);
+
+                    // Drop the enrollment
+                    if (invoiceItem.RedemptionEnrollmentId != null)
+                    {
+                        await _nexportService.DropEnrollmentAsync(invoiceItem.RedemptionEnrollmentId.Value)!;
+                    }
+                }
+            }
+            else
+            {
+                var quantityToReturn = model.Quantity;
+                if (quantityToReturn > 0)
+                {
+                    var order = await _orderService.GetOrderByOrderItemAsync(returnRequest.OrderItemId);
+                    if (order != null)
+                    {
+                        await _nexportService.RefundOrderItem(quantityToReturn, order.Id, returnRequest.OrderItemId);
+                    }
                 }
             }
 
@@ -147,11 +172,15 @@ public class NexportReturnRequestController : BaseAdminController
 
             //activity log
             await _customerActivityService.InsertActivityAsync("EditReturnRequest",
-                string.Format(await _localizationService.GetResourceAsync("ActivityLog.EditReturnRequest"), returnRequest.Id), returnRequest);
+                string.Format(await _localizationService.GetResourceAsync("ActivityLog.EditReturnRequest"),
+                    returnRequest.Id), returnRequest);
 
-            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.ReturnRequests.Updated"));
+            _notificationService.SuccessNotification(
+                await _localizationService.GetResourceAsync("Admin.ReturnRequests.Updated"));
 
-            return continueEditing ? RedirectToAction("Edit", "NexportReturnRequest", new { id = returnRequest.Id }) : RedirectToAction("List", "NexportReturnRequest");
+            return continueEditing
+                ? RedirectToAction("Edit", "NexportReturnRequest", new { id = returnRequest.Id })
+                : RedirectToAction("List", "NexportReturnRequest");
         }
 
         //prepare model
@@ -159,5 +188,27 @@ public class NexportReturnRequestController : BaseAdminController
 
         //if we got this far, something failed, redisplay form
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/ReturnRequest/Edit.cshtml", model);
+    }
+
+    [HttpPost]
+    public virtual async Task<IActionResult> Delete(int id)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageReturnRequests))
+            return AccessDeniedView();
+
+        //try to get a return request with the specified id
+        var returnRequest = await _returnRequestService.GetReturnRequestByIdAsync(id);
+        if (returnRequest == null)
+            return RedirectToAction("List");
+
+        await _returnRequestService.DeleteReturnRequestAsync(returnRequest);
+
+        //activity log
+        await _customerActivityService.InsertActivityAsync("DeleteReturnRequest",
+            string.Format(await _localizationService.GetResourceAsync("ActivityLog.DeleteReturnRequest"), returnRequest.Id), returnRequest);
+
+        _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.ReturnRequests.Deleted"));
+
+        return RedirectToAction("List");
     }
 }

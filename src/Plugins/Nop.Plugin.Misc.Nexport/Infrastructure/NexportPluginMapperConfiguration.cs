@@ -45,7 +45,7 @@ public static class AutoMapperExtensions
 
         typeMapActions?.Add(typeMap =>
         {
-            var destinationTypeDetails = (TypeDetails)DestinationTypeDetailsProperty.GetValue(typeMap);
+            var destinationTypeDetails = typeMap.DestinationTypeDetails;
 
             if (destinationTypeDetails == null)
                 return;

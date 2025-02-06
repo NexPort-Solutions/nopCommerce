@@ -29,74 +29,68 @@ using Nop.Services.Vendors;
 
 namespace Nop.Plugin.Misc.Nexport.Services;
 
-public class NexportOrderProcessingService : OrderProcessingService
+public class NexportOrderProcessingService(
+    CurrencySettings currencySettings,
+    IAddressService addressService,
+    IAffiliateService affiliateService,
+    ICheckoutAttributeFormatter checkoutAttributeFormatter,
+    ICountryService countryService,
+    ICurrencyService currencyService,
+    ICustomerActivityService customerActivityService,
+    ICustomerService customerService,
+    ICustomNumberFormatter customNumberFormatter,
+    IDiscountService discountService,
+    IEncryptionService encryptionService,
+    IEventPublisher eventPublisher,
+    IGenericAttributeService genericAttributeService,
+    IGiftCardService giftCardService,
+    ILanguageService languageService,
+    ILocalizationService localizationService,
+    ILogger logger,
+    IOrderService orderService,
+    IOrderTotalCalculationService orderTotalCalculationService,
+    IPaymentPluginManager paymentPluginManager,
+    IPaymentService paymentService,
+    IPdfService pdfService,
+    IPriceCalculationService priceCalculationService,
+    IPriceFormatter priceFormatter,
+    IProductAttributeFormatter productAttributeFormatter,
+    IProductAttributeParser productAttributeParser,
+    IProductService productService,
+    IReturnRequestService returnRequestService,
+    IRewardPointService rewardPointService,
+    IShipmentService shipmentService,
+    IShippingService shippingService,
+    IShoppingCartService shoppingCartService,
+    IStateProvinceService stateProvinceService,
+    IStoreMappingService storeMappingService,
+    IStoreService storeService,
+    ITaxService taxService,
+    IVendorService vendorService,
+    IWebHelper webHelper,
+    IWorkContext workContext,
+    IWorkflowMessageService workflowMessageService,
+    LocalizationSettings localizationSettings,
+    OrderSettings orderSettings,
+    PaymentSettings paymentSettings,
+    RewardPointsSettings rewardPointsSettings,
+    ShippingSettings shippingSettings,
+    TaxSettings taxSettings,
+    NexportService nexportService)
+    : OrderProcessingService(currencySettings, addressService, affiliateService, checkoutAttributeFormatter,
+        countryService, currencyService, customerActivityService, customerService, customNumberFormatter,
+        discountService, encryptionService, eventPublisher, genericAttributeService, giftCardService, languageService,
+        localizationService, logger, orderService, orderTotalCalculationService, paymentPluginManager, paymentService,
+        pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser,
+        productService, returnRequestService, rewardPointService, shipmentService, shippingService, shoppingCartService,
+        stateProvinceService, storeMappingService, storeService, taxService, vendorService, webHelper, workContext,
+        workflowMessageService, localizationSettings, orderSettings, paymentSettings, rewardPointsSettings,
+        shippingSettings, taxSettings)
 {
-    private readonly IOrderService _orderService;
-    private readonly OrderSettings _orderSettings;
-    private readonly NexportService _nexportService;
+    private readonly IOrderService _orderService = orderService;
+    private readonly OrderSettings _orderSettings = orderSettings;
 
     #region Constructor
-
-    public NexportOrderProcessingService(CurrencySettings currencySettings,
-        IAddressService addressService,
-        IAffiliateService affiliateService,
-        ICheckoutAttributeFormatter checkoutAttributeFormatter,
-        ICountryService countryService,
-        ICurrencyService currencyService,
-        ICustomerActivityService customerActivityService,
-        ICustomerService customerService,
-        ICustomNumberFormatter customNumberFormatter,
-        IDiscountService discountService,
-        IEncryptionService encryptionService,
-        IEventPublisher eventPublisher,
-        IGenericAttributeService genericAttributeService,
-        IGiftCardService giftCardService,
-        ILanguageService languageService,
-        ILocalizationService localizationService,
-        ILogger logger,
-        IOrderService orderService,
-        IOrderTotalCalculationService orderTotalCalculationService,
-        IPaymentPluginManager paymentPluginManager,
-        IPaymentService paymentService,
-        IPdfService pdfService,
-        IPriceCalculationService priceCalculationService,
-        IPriceFormatter priceFormatter,
-        IProductAttributeFormatter productAttributeFormatter,
-        IProductAttributeParser productAttributeParser,
-        IProductService productService,
-        IReturnRequestService returnRequestService,
-        IRewardPointService rewardPointService,
-        IShipmentService shipmentService,
-        IShippingService shippingService,
-        IShoppingCartService shoppingCartService,
-        IStateProvinceService stateProvinceService,
-        IStoreService storeService,
-        ITaxService taxService,
-        IVendorService vendorService,
-        IWebHelper webHelper,
-        IWorkContext workContext,
-        IWorkflowMessageService workflowMessageService,
-        LocalizationSettings localizationSettings,
-        OrderSettings orderSettings,
-        PaymentSettings paymentSettings,
-        RewardPointsSettings rewardPointsSettings,
-        ShippingSettings shippingSettings,
-        TaxSettings taxSettings,
-        NexportService nexportService) :
-        base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter,
-            countryService, currencyService, customerActivityService, customerService,
-            customNumberFormatter, discountService, encryptionService, eventPublisher,
-            genericAttributeService, giftCardService, languageService, localizationService,
-            logger, orderService, orderTotalCalculationService, paymentPluginManager, paymentService,
-            pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser, productService,
-            returnRequestService, rewardPointService, shipmentService, shippingService, shoppingCartService,
-            stateProvinceService, storeService, taxService, vendorService, webHelper, workContext, workflowMessageService,
-            localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
-    {
-        _orderService = orderService;
-        _orderSettings = orderSettings;
-        _nexportService = nexportService;
-    }
 
     #endregion
 
@@ -169,14 +163,14 @@ public class NexportOrderProcessingService : OrderProcessingService
 
         // Check if the order has any item that has Nexport mapping
         var hasAnyNexportProduct = await orderItems
-            .SelectAwait(async item => await _nexportService.GetProductMappingByNopProductId(item.ProductId))
+            .SelectAwait(async item => await nexportService.GetProductMappingByNopProductId(item.ProductId))
             .AnyAsync(productMapping => productMapping != null);
 
         // If the order contains Nexport product and is being processed, then do not set the status to complete
         if (hasAnyNexportProduct)
         {
-            if (await _nexportService.HasNexportOrderProcessingQueueItem(order.Id) ||
-                (await _nexportService.GetNexportOrderInvoiceItems(order.Id, true)).Any())
+            if (await nexportService.HasNexportOrderProcessingQueueItem(order.Id) ||
+                (await nexportService.GetNexportOrderInvoiceItems(order.Id, true)).Any())
             {
                 completed = false;
             }

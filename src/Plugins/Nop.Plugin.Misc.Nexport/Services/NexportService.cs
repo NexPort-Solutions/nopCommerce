@@ -382,7 +382,7 @@ public partial class NexportService
         url.StartsWithSegments(pathBase, out url);
 
         //compose the result
-        var orderUrl = Uri.EscapeDataString(WebUtility.UrlDecode($"{store.Url}{AreaNames.Admin}/{url}"));
+        var orderUrl = Uri.EscapeDataString(WebUtility.UrlDecode($"{store.Url}{AreaNames.ADMIN}/{url}"));
 
         tokens.Add(new Token("NexportOrderApproval.AdminViewOrderUrl", orderUrl, true));
     }
@@ -1625,6 +1625,36 @@ public partial class NexportService
             }
             throw;
 
+        }
+
+        return result;
+    }
+
+    [CanBeNull]
+    public async Task<DropDeleteEnrollmentResponse> DropEnrollmentAsync(Guid enrollmentId)
+    {
+        DropDeleteEnrollmentResponse result;
+
+        try
+        {
+            result = _nexportApiService.DropNexportEnrollment(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, enrollmentId);
+        }
+        catch (Exception ex)
+        {
+            var errMsg = $"Error occurred during Web API call DropEnrollment for enrollment {enrollmentId}";
+            await _logger.ErrorAsync($"{errMsg}", ex);
+
+            if (ex is ApiException exception)
+            {
+                var errorResponse = JsonConvert.DeserializeObject<DropDeleteEnrollmentResponse>(exception.ErrorContent.ToString());
+                if (errorResponse != null)
+                {
+                    throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                }
+            }
+
+            throw;
         }
 
         return result;

@@ -35,7 +35,7 @@
         @redeemOrModifyText
         <small>
             <i class="fas fa-arrow-circle-left"></i>
-            <a href="@(groupProductRedemptionsRouteUrl+"?groupId="+currentGroupId+"&productId="+Model.CurrentProduct.Id)" >Back to assignments list</a>
+            <a href="@(groupProductRedemptionsRouteUrl + "?groupId=" + currentGroupId + "&productId=" + Model.CurrentProduct.Id)">Back to assignments list</a>
         </small>
     </h1>
 </div>
@@ -57,8 +57,9 @@
                                         <div id="assignment-customer-load">
                                             @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/NexportWHolesale/WholesalePurchases/RedeemProduct/_CustomerStep.cshtml", new CustomerStepModel
                                             {
+                                                ProductId = Model.CurrentProduct.Id,
+                                                GroupId = Model.CurrentGroup.OrganizationId
                                             })
-                                            @*customer content will be loaded here*@
                                         </div>
                                     </form>
                                     <script asp-location="Footer">

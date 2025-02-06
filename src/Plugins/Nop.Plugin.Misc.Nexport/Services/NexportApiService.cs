@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Azure;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using NexportApi.Api;
 using NexportApi.Client;
 using NexportApi.Model;
@@ -18,15 +14,8 @@ using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 
 namespace Nop.Plugin.Misc.Nexport.Services;
 
-public class NexportApiService
+public class NexportApiService(Configuration apiConfiguration)
 {
-    private readonly Configuration _apiConfiguration;
-
-    public NexportApiService(Configuration apiConfiguration)
-    {
-        _apiConfiguration = apiConfiguration;
-    }
-
     public NexportAuthenticationResponseDetails AuthenticateNexportApi([NotNull] string url, [NotNull] string username, [NotNull] string password, DateTime? tokenExp)
     {
         if (string.IsNullOrWhiteSpace(url))
@@ -38,9 +27,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(password))
             throw new NullReferenceException("Password cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -72,9 +61,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(password))
             throw new NullReferenceException("Password cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -102,9 +91,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(loginName))
             throw new NullReferenceException("Login name cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -129,9 +118,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -157,9 +146,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -184,9 +173,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -236,7 +225,7 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(email))
             throw new NullReferenceException("Email cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
         var nexportApi = new AdminApi(url)
         {
@@ -268,7 +257,7 @@ public class NexportApiService
         if (updatedInfo == null)
             throw new NullReferenceException("Updated information cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
         var nexportApi = new AdminApi(url)
         {
@@ -297,9 +286,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -332,9 +321,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -367,9 +356,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -388,9 +377,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -423,9 +412,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -459,9 +448,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -495,9 +484,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -516,9 +505,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -537,9 +526,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -558,9 +547,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -593,9 +582,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -614,9 +603,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -635,9 +624,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -656,9 +645,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -677,15 +666,36 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
         };
 
         var result = nexportApi.LearningApiGetTrainingPlanDescription(trainingPlanId, accessToken);
+
+        return result;
+    }
+
+    public DropDeleteEnrollmentResponse DropNexportEnrollment([NotNull] string url, [NotNull] string accessToken, Guid enrollmentId)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
+
+        apiConfiguration.BasePath = url;
+
+        var nexportApi = new LearningApi(apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var result = nexportApi.LearningApiDropEnrollment(enrollmentId, accessToken);
 
         return result;
     }
@@ -698,9 +708,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        var nexportApi = new PointOfSaleApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -726,9 +736,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        var nexportApi = new PointOfSaleApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -752,9 +762,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        var nexportApi = new PointOfSaleApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -787,9 +797,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        var nexportApi = new PointOfSaleApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -814,9 +824,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        var nexportApi = new PointOfSaleApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -847,9 +857,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        var nexportApi = new PointOfSaleApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -869,9 +879,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        var nexportApi = new PointOfSaleApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -895,9 +905,9 @@ public class NexportApiService
         if (!productId.HasValue)
             throw new NullReferenceException("Product Id cannot be null");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        var nexportApi = new PointOfSaleApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -918,9 +928,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        var nexportApi = new PointOfSaleApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -945,9 +955,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new SsoApi(_apiConfiguration)
+        var nexportApi = new SsoApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -968,9 +978,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new SsoApi(_apiConfiguration)
+        var nexportApi = new SsoApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -991,9 +1001,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -1027,9 +1037,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -1050,9 +1060,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -1072,9 +1082,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -1095,9 +1105,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new LearningApi(_apiConfiguration)
+        var nexportApi = new LearningApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -1117,9 +1127,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -1139,9 +1149,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -1162,9 +1172,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -1185,9 +1195,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -1209,9 +1219,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new AdminApi(_apiConfiguration)
+        var nexportApi = new AdminApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
@@ -1246,9 +1256,9 @@ public class NexportApiService
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
 
-        _apiConfiguration.BasePath = url;
+        apiConfiguration.BasePath = url;
 
-        var nexportApi = new PointOfSaleApi(_apiConfiguration)
+        var nexportApi = new PointOfSaleApi(apiConfiguration)
         {
             Client = EngineContext.Current.Resolve<ISynchronousClient>(),
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()

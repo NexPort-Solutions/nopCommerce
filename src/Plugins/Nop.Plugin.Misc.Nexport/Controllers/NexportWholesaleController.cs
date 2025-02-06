@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Localization;
+using Nop.Core.Domain.Media;
+using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
@@ -20,6 +22,8 @@ using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
+using Nop.Services.Messages;
+using Nop.Services.Orders;
 using Nop.Services.Security;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Models.Extensions;
@@ -41,9 +45,13 @@ public class NexportWholesaleController : BasePluginController
     private readonly IPermissionService _permissionService;
     private readonly NexportSettings _nexportSettings;
     private readonly IProductService _productService;
+    private readonly IOrderService _orderService;
     private readonly ILogger _logger;
     private readonly LocalizationSettings _localizationSettings;
     private readonly ILocalizationService _localizationService;
+    private readonly IReturnRequestService _returnRequestService;
+    protected readonly ICustomNumberFormatter _customNumberFormatter;
+    protected readonly IWorkflowMessageService _workflowMessageService;
 
     #endregion
 
@@ -59,9 +67,13 @@ public class NexportWholesaleController : BasePluginController
         IPermissionService permissionService,
         NexportSettings nexportSettings,
         IProductService productService,
+        IOrderService orderService,
         ILocalizationService localizationService,
         ILogger logger,
-        LocalizationSettings localizationSettings
+        LocalizationSettings localizationSettings,
+        IReturnRequestService returnRequestService,
+        ICustomNumberFormatter customNumberFormatter,
+        IWorkflowMessageService workflowMessageService
     )
     {
         _nexportPluginModelFactory = nexportPluginModelFactory;
@@ -73,9 +85,13 @@ public class NexportWholesaleController : BasePluginController
         _permissionService = permissionService;
         _nexportSettings = nexportSettings;
         _productService = productService;
+        _orderService = orderService;
         _localizationService = localizationService;
         _logger = logger;
         _localizationSettings = localizationSettings;
+        _returnRequestService = returnRequestService;
+        _customNumberFormatter = customNumberFormatter;
+        _workflowMessageService = workflowMessageService;
     }
 
     #endregion
@@ -271,7 +287,7 @@ public class NexportWholesaleController : BasePluginController
         if (!await _customerService.IsRegisteredAsync(currentCustomer))
             return Challenge();
 
-        var paged = new List<NexportUserModel>().ToPagedList(searchModel);
+        var paged = new List<NexportUserAssignmentModel>().ToPagedList(searchModel);
 
         if (searchModel.TableFirstDraw)
         {
@@ -279,12 +295,17 @@ public class NexportWholesaleController : BasePluginController
         }
 
         var customers = await _nexportService.SearchCustomersAsync(searchModel.SearchEmail ?? "");
-        var nexportUsers = new List<NexportUserModel>();
+        var nexportUsers = new List<NexportUserAssignmentModel>();
         foreach (var customer in customers)
         {
             var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
             if (userMapping != null)
             {
+                var invoiceRedemptions = await _nexportService.SearchGroupProductRedemptionsAsync(
+                    searchModel.GroupId, searchModel.ProductId,
+                    customerEmail: customer.Email,
+                    redemptionStatus: NexportOrderInvoiceItemRedemptionStatus.Assigned);
+
                 try
                 {
                     var nexUser = await _nexportService.GetNexportUserAsync(userMapping.NexportUserId);
@@ -293,7 +314,7 @@ public class NexportWholesaleController : BasePluginController
                     {
                         // populate name and email from nop customer so we don't get confused if the
                         // linked nexport account has a different name and email
-                        nexportUsers.Add(new NexportUserModel
+                        nexportUsers.Add(new NexportUserAssignmentModel
                         {
                             UserId = nexUser.UserId,
                             FirstName = customer.FirstName,
@@ -301,10 +322,10 @@ public class NexportWholesaleController : BasePluginController
                             Email = customer.Email,
                             OwnerOrgId = nexUser.OwnerOrgId,
                             OwnerOrg = nexUser.OwnerOrgId != null
-                                ? (await _nexportService.GetOrganizationDetailsAsync(nexUser.OwnerOrgId.Value))
-                                ?.Name
+                                ? (await _nexportService.GetOrganizationDetailsAsync(nexUser.OwnerOrgId.Value))?.Name
                                 : "",
-                            OwnerOrgShortName = nexUser.OwnerOrgShortName
+                            OwnerOrgShortName = nexUser.OwnerOrgShortName,
+                            IsAvailable = !invoiceRedemptions.Any()
                         });
                     }
                 }
@@ -317,8 +338,7 @@ public class NexportWholesaleController : BasePluginController
 
         paged = await nexportUsers.SelectAwait(async x => x).ToPagedListAsync(searchModel);
 
-
-        var dtlist = new NexportUserListModel();
+        var dtlist = new NexportUserAssignmentListModel();
 
         dtlist = await dtlist.PrepareToGridAsync(searchModel, paged, () =>
         {
@@ -408,7 +428,7 @@ public class NexportWholesaleController : BasePluginController
         if (lastName != null)
             await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_LastName", null);
 
-        await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_ReturnUrl",
+        await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_ReturnUrl",
             Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions") + "?groupId=" + groupId +
             "&productId=" + productId);
 
@@ -418,10 +438,10 @@ public class NexportWholesaleController : BasePluginController
         await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_ProductId",
             productId);
 
-        await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_OpenEndedProductMappingId",
+        await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_OpenEndedProductMappingId",
             model.ProductMappingIdForOpenEndedProduct);
 
-        await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
+        await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
 
         return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
     }
@@ -445,12 +465,9 @@ public class NexportWholesaleController : BasePluginController
         if (!ModelState.IsValid)
             return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestUnassignment.cshtml", model);
 
-        model.Result = await _localizationService.GetResourceAsync("RedemptionUnassignmentRequests.Submitted");
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
-        var requestReason =
-            await _nexportService.GetNexportRedemptionUnassignmentRequestReasonByIdAsync(model.RedemptionUnassignmentRequestReasonId);
-        var currentStore = await _storeContext.GetCurrentStoreAsync();
+        var requestReason = await _nexportService.GetNexportRedemptionUnassignmentRequestReasonByIdAsync(model.RedemptionUnassignmentRequestReasonId);
 
         var unassignmentRequest = new NexportRedemptionUnassignmentRequest
         {
@@ -473,13 +490,84 @@ public class NexportWholesaleController : BasePluginController
         await _nexportService.SendNewRedemptionUnassignmentRequestStoreOwnerNotificationAsync(
             unassignmentRequest, invoiceItem, _localizationSettings.DefaultAdminLanguageId);
 
-        await _nexportService.SendNewRedemptionUnassignmentRequestCustomerNotificationAsync(
-            unassignmentRequest, invoiceItem);
+        await _nexportService.SendNewRedemptionUnassignmentRequestCustomerNotificationAsync(unassignmentRequest, invoiceItem);
 
         model = await _nexportPluginModelFactory.PrepareSubmitRedemptionUnassignmentRequestModelAsync(model);
         model.Result = await _localizationService.GetResourceAsync("RedemptionUnassignmentRequests.Submitted");
 
         return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestUnassignment.cshtml", model);
+    }
+
+    [HttpsRequirement]
+    public async Task<IActionResult> RequestRefund(Guid invoiceItemId)
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        if (!await _customerService.IsRegisteredAsync(customer))
+            return Challenge();
+
+        var model = await _nexportPluginModelFactory.PrepareInvoiceItemRefundRequestModel(invoiceItemId);
+
+        return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestRefund.cshtml", model);
+    }
+
+    [HttpPost, ActionName("RequestRefund")]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> InvoiceItemRefundRequestSubmit(SubmitInvoiceItemRefundRequestModel model, IFormCollection form)
+    {
+        if (!ModelState.IsValid)
+            return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestRefund.cshtml", model);
+
+        var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
+
+        var order = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+        var orderItem = await _orderService.GetOrderItemByIdAsync(invoiceItem.OrderItemId);
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        if (order == null || order.Deleted || customer.Id != order.CustomerId)
+            return Challenge();
+
+        var requestActions = await _returnRequestService.GetAllReturnRequestActionsAsync();
+        var requestReasons = await _returnRequestService.GetAllReturnRequestReasonsAsync();
+
+        var rrr = requestReasons.FirstOrDefault(x => x.Name.Contains("No longer need"));
+        var rra = requestActions.FirstOrDefault(x => x.Name.Contains("Refund"));
+
+        var store = await _storeContext.GetCurrentStoreAsync();
+
+        var rr = new ReturnRequest
+        {
+            CustomNumber = "",
+            StoreId = store.Id,
+            OrderItemId = orderItem.Id,
+            Quantity = 1,
+            CustomerId = customer.Id,
+            ReasonForReturn = rrr != null ? await _localizationService.GetLocalizedAsync(rrr, x => x.Name) : "not available",
+            RequestedAction = rra != null ? await _localizationService.GetLocalizedAsync(rra, x => x.Name) : "not available",
+            CustomerComments = model.Comments,
+            StaffNotes = string.Empty,
+            ReturnRequestStatus = ReturnRequestStatus.Pending,
+            CreatedOnUtc = DateTime.UtcNow,
+            UpdatedOnUtc = DateTime.UtcNow
+        };
+
+        await _returnRequestService.InsertReturnRequestAsync(rr);
+
+        //set return request custom number
+        rr.CustomNumber = _customNumberFormatter.GenerateReturnRequestCustomNumber(rr);
+        await _customerService.UpdateCustomerAsync(customer);
+        await _returnRequestService.UpdateReturnRequestAsync(rr);
+
+        await _genericAttributeService.SaveAttributeAsync(rr, "RefundRequestInvoiceItemId", model.InvoiceItemId, rr.StoreId);
+
+        //notify store owner
+        await _workflowMessageService.SendNewReturnRequestStoreOwnerNotificationAsync(rr, orderItem, order, _localizationSettings.DefaultAdminLanguageId);
+        //notify customer
+        await _workflowMessageService.SendNewReturnRequestCustomerNotificationAsync(rr, orderItem, order);
+
+        model = await _nexportPluginModelFactory.PrepareSubmitInvoiceItemRefundRequestModelAsync(model);
+        model.Result = await _localizationService.GetResourceAsync("RedemptionUnassignmentRequests.Submitted");
+
+        return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestRefund.cshtml", model);
     }
 
     [HttpPost]
@@ -493,9 +581,9 @@ public class NexportWholesaleController : BasePluginController
             {
                 await _genericAttributeService.SaveAttributeAsync<bool?>(customer, "RedeemProductModel_SendViaEmail", false);
                 await _genericAttributeService.SaveAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId", model.SelectedUserId.Value);
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_EmailAddress", model.SelectedUserEmailAddress);
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_FirstName", model.SelectedUserFirstName);
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_LastName", model.SelectedUserLastName);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_EmailAddress", model.SelectedUserEmailAddress);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_FirstName", model.SelectedUserFirstName);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_LastName", model.SelectedUserLastName);
             }
             else
             {
@@ -514,9 +602,9 @@ public class NexportWholesaleController : BasePluginController
 
                 await _genericAttributeService.SaveAttributeAsync<bool?>(customer, "RedeemProductModel_SendViaEmail", true);
                 await _genericAttributeService.SaveAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId", null);
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_EmailAddress", model.Email);
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_FirstName", model.FirstName);
-                await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_LastName", model.LastName);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_EmailAddress", model.Email);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_FirstName", model.FirstName);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_LastName", model.LastName);
             }
 
             return await GoToProductStep(customer);
@@ -605,7 +693,7 @@ public class NexportWholesaleController : BasePluginController
             if (model.SelectedProductMappingId == null)
                 throw new Exception("There was an error retreiving the product information from the previous steps");
 
-            await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
+            await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
 
             var productMapping = await _nexportService.GetProductMappingById(model.SelectedProductMappingId.Value);
 
@@ -665,8 +753,7 @@ public class NexportWholesaleController : BasePluginController
             var selectedUserId = await _genericAttributeService.GetAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId");
 
             if (invoiceItemId == null)
-                throw new Exception("error retreiving invoice item id for transaction.");
-
+                throw new Exception("Error retrieving invoice item id for transaction.");
 
             bool success = await _nexportService.RedeemProductForCustomer(new RedeemProductModel
             {

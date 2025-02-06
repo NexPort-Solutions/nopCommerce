@@ -36,164 +36,115 @@ using Nop.Services.Vendors;
 
 namespace Nop.Plugin.Sale.PurchaseForCustomer.Services;
 
-public class PurchaseForCustomerService : OrderProcessingService, IPurchaseForCustomerService
+public class PurchaseForCustomerService(
+    CurrencySettings currencySettings,
+    IAddressService addressService,
+    IAffiliateService affiliateService,
+    ICheckoutAttributeFormatter checkoutAttributeFormatter,
+    ICountryService countryService,
+    ICurrencyService currencyService,
+    ICustomerActivityService customerActivityService,
+    ICustomerService customerService,
+    ICustomNumberFormatter customNumberFormatter,
+    IDiscountService discountService,
+    IEncryptionService encryptionService,
+    IEventPublisher eventPublisher,
+    IGenericAttributeService genericAttributeService,
+    IGiftCardService giftCardService,
+    ILanguageService languageService,
+    ILocalizationService localizationService,
+    ILogger logger,
+    IOrderService orderService,
+    IOrderTotalCalculationService orderTotalCalculationService,
+    IPaymentPluginManager paymentPluginManager,
+    IPaymentService paymentService,
+    IPdfService pdfService,
+    IPriceCalculationService priceCalculationService,
+    IPriceFormatter priceFormatter,
+    IProductAttributeFormatter productAttributeFormatter,
+    IProductAttributeParser productAttributeParser,
+    IProductService productService,
+    IReturnRequestService returnRequestService,
+    IRewardPointService rewardPointService,
+    IShipmentService shipmentService,
+    IShippingService shippingService,
+    IShoppingCartService shoppingCartService,
+    IStateProvinceService stateProvinceService,
+    IStoreMappingService storeMappingService,
+    IStoreService storeService,
+    ITaxService taxService,
+    IVendorService vendorService,
+    IWebHelper webHelper,
+    IWorkContext workContext,
+    IWorkflowMessageService workflowMessageService,
+    LocalizationSettings localizationSettings,
+    OrderSettings orderSettings,
+    PaymentSettings paymentSettings,
+    RewardPointsSettings rewardPointsSettings,
+    ShippingSettings shippingSettings,
+    TaxSettings taxSettings,
+    IRepository<Customer> customerRepository,
+    IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMappingRepository)
+    : OrderProcessingService(currencySettings, addressService, affiliateService, checkoutAttributeFormatter,
+        countryService, currencyService, customerActivityService, customerService, customNumberFormatter,
+        discountService, encryptionService, eventPublisher, genericAttributeService, giftCardService, languageService,
+        localizationService, logger, orderService, orderTotalCalculationService, paymentPluginManager, paymentService,
+        pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser,
+        productService, returnRequestService, rewardPointService, shipmentService, shippingService, shoppingCartService,
+        stateProvinceService, storeMappingService, storeService, taxService, vendorService, webHelper, workContext,
+        workflowMessageService, localizationSettings, orderSettings, paymentSettings, rewardPointsSettings,
+        shippingSettings, taxSettings), IPurchaseForCustomerService
 {
     #region Fields
 
-    private readonly CurrencySettings _currencySettings;
-    private readonly IAddressService _addressService;
-    private readonly IAffiliateService _affiliateService;
-    private readonly ICheckoutAttributeFormatter _checkoutAttributeFormatter;
-    private readonly ICountryService _countryService;
-    private readonly ICurrencyService _currencyService;
-    private readonly ICustomerActivityService _customerActivityService;
-    private readonly ICustomerService _customerService;
-    private readonly ICustomNumberFormatter _customNumberFormatter;
-    private readonly IDiscountService _discountService;
-    private readonly IEncryptionService _encryptionService;
-    private readonly IEventPublisher _eventPublisher;
-    private readonly IGenericAttributeService _genericAttributeService;
-    private readonly IGiftCardService _giftCardService;
-    private readonly ILanguageService _languageService;
-    private readonly ILocalizationService _localizationService;
-    private readonly ILogger _logger;
-    private readonly IOrderService _orderService;
-    private readonly IOrderTotalCalculationService _orderTotalCalculationService;
-    private readonly IPaymentPluginManager _paymentPluginManager;
-    private readonly IPaymentService _paymentService;
-    private readonly IPdfService _pdfService;
-    private readonly IPriceCalculationService _priceCalculationService;
-    private readonly IPriceFormatter _priceFormatter;
-    private readonly IProductAttributeFormatter _productAttributeFormatter;
-    private readonly IProductAttributeParser _productAttributeParser;
-    private readonly IProductService _productService;
-    private readonly IRewardPointService _rewardPointService;
-    private readonly IShipmentService _shipmentService;
-    private readonly IShippingService _shippingService;
-    private readonly IShoppingCartService _shoppingCartService;
-    private readonly IStateProvinceService _stateProvinceService;
-    private readonly IStoreService _storeService;
-    private readonly ITaxService _taxService;
-    private readonly IVendorService _vendorService;
-    private readonly IWebHelper _webHelper;
-    private readonly IWorkContext _workContext;
-    private readonly IWorkflowMessageService _workflowMessageService;
-    private readonly LocalizationSettings _localizationSettings;
-    private readonly OrderSettings _orderSettings;
-    private readonly PaymentSettings _paymentSettings;
-    private readonly RewardPointsSettings _rewardPointsSettings;
-    private readonly ShippingSettings _shippingSettings;
-    private readonly TaxSettings _taxSettings;
-    private readonly IRepository<Customer> _customerRepository;
-    private readonly IRepository<CustomerCustomerRoleMapping> _customerCustomerRoleMappingRepository;
+    private readonly CurrencySettings _currencySettings = currencySettings;
+    private readonly IAddressService _addressService = addressService;
+    private readonly IAffiliateService _affiliateService = affiliateService;
+    private readonly ICheckoutAttributeFormatter _checkoutAttributeFormatter = checkoutAttributeFormatter;
+    private readonly ICountryService _countryService = countryService;
+    private readonly ICurrencyService _currencyService = currencyService;
+    private readonly ICustomerActivityService _customerActivityService = customerActivityService;
+    private readonly ICustomerService _customerService = customerService;
+    private readonly ICustomNumberFormatter _customNumberFormatter = customNumberFormatter;
+    private readonly IDiscountService _discountService = discountService;
+    private readonly IEncryptionService _encryptionService = encryptionService;
+    private readonly IEventPublisher _eventPublisher = eventPublisher;
+    private readonly IGenericAttributeService _genericAttributeService = genericAttributeService;
+    private readonly IGiftCardService _giftCardService = giftCardService;
+    private readonly ILanguageService _languageService = languageService;
+    private readonly ILocalizationService _localizationService = localizationService;
+    private readonly ILogger _logger = logger;
+    private readonly IOrderService _orderService = orderService;
+    private readonly IOrderTotalCalculationService _orderTotalCalculationService = orderTotalCalculationService;
+    private readonly IPaymentPluginManager _paymentPluginManager = paymentPluginManager;
+    private readonly IPaymentService _paymentService = paymentService;
+    private readonly IPdfService _pdfService = pdfService;
+    private readonly IPriceCalculationService _priceCalculationService = priceCalculationService;
+    private readonly IPriceFormatter _priceFormatter = priceFormatter;
+    private readonly IProductAttributeFormatter _productAttributeFormatter = productAttributeFormatter;
+    private readonly IProductAttributeParser _productAttributeParser = productAttributeParser;
+    private readonly IProductService _productService = productService;
+    private readonly IRewardPointService _rewardPointService = rewardPointService;
+    private readonly IShipmentService _shipmentService = shipmentService;
+    private readonly IShippingService _shippingService = shippingService;
+    private readonly IShoppingCartService _shoppingCartService = shoppingCartService;
+    private readonly IStateProvinceService _stateProvinceService = stateProvinceService;
+    private readonly IStoreService _storeService = storeService;
+    private readonly ITaxService _taxService = taxService;
+    private readonly IVendorService _vendorService = vendorService;
+    private readonly IWebHelper _webHelper = webHelper;
+    private readonly IWorkContext _workContext = workContext;
+    private readonly IWorkflowMessageService _workflowMessageService = workflowMessageService;
+    private readonly LocalizationSettings _localizationSettings = localizationSettings;
+    private readonly OrderSettings _orderSettings = orderSettings;
+    private readonly PaymentSettings _paymentSettings = paymentSettings;
+    private readonly RewardPointsSettings _rewardPointsSettings = rewardPointsSettings;
+    private readonly ShippingSettings _shippingSettings = shippingSettings;
+    private readonly TaxSettings _taxSettings = taxSettings;
 
     #endregion
 
     #region Constructors
-
-    public PurchaseForCustomerService(
-        CurrencySettings currencySettings,
-        IAddressService addressService,
-        IAffiliateService affiliateService,
-        ICheckoutAttributeFormatter checkoutAttributeFormatter,
-        ICountryService countryService,
-        ICurrencyService currencyService,
-        ICustomerActivityService customerActivityService,
-        ICustomerService customerService,
-        ICustomNumberFormatter customNumberFormatter,
-        IDiscountService discountService,
-        IEncryptionService encryptionService,
-        IEventPublisher eventPublisher,
-        IGenericAttributeService genericAttributeService,
-        IGiftCardService giftCardService,
-        ILanguageService languageService,
-        ILocalizationService localizationService,
-        ILogger logger,
-        IOrderService orderService,
-        IOrderTotalCalculationService orderTotalCalculationService,
-        IPaymentPluginManager paymentPluginManager,
-        IPaymentService paymentService,
-        IPdfService pdfService,
-        IPriceCalculationService priceCalculationService,
-        IPriceFormatter priceFormatter,
-        IProductAttributeFormatter productAttributeFormatter,
-        IProductAttributeParser productAttributeParser,
-        IProductService productService,
-        IReturnRequestService returnRequestService,
-        IRewardPointService rewardPointService,
-        IShipmentService shipmentService,
-        IShippingService shippingService,
-        IShoppingCartService shoppingCartService,
-        IStateProvinceService stateProvinceService,
-        IStoreService storeService,
-        ITaxService taxService,
-        IVendorService vendorService,
-        IWebHelper webHelper,
-        IWorkContext workContext,
-        IWorkflowMessageService workflowMessageService,
-        LocalizationSettings localizationSettings,
-        OrderSettings orderSettings,
-        PaymentSettings paymentSettings,
-        RewardPointsSettings rewardPointsSettings,
-        ShippingSettings shippingSettings,
-        TaxSettings taxSettings,
-        IRepository<Customer> customerRepository,
-        IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMappingRepository) :
-        base(currencySettings, addressService, affiliateService, checkoutAttributeFormatter, countryService, currencyService,
-            customerActivityService, customerService, customNumberFormatter, discountService, encryptionService, eventPublisher, genericAttributeService,
-            giftCardService, languageService, localizationService, logger,
-            orderService, orderTotalCalculationService, paymentPluginManager, paymentService, pdfService, priceCalculationService, priceFormatter,
-            productAttributeFormatter, productAttributeParser, productService, returnRequestService, rewardPointService,
-            shipmentService, shippingService, shoppingCartService, stateProvinceService, storeService, taxService, vendorService,
-            webHelper, workContext, workflowMessageService, localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
-    {
-        _currencySettings = currencySettings;
-        _addressService = addressService;
-        _affiliateService = affiliateService;
-        _checkoutAttributeFormatter = checkoutAttributeFormatter;
-        _countryService = countryService;
-        _currencyService = currencyService;
-        _customerActivityService = customerActivityService;
-        _customerService = customerService;
-        _customNumberFormatter = customNumberFormatter;
-        _discountService = discountService;
-        _encryptionService = encryptionService;
-        _eventPublisher = eventPublisher;
-        _genericAttributeService = genericAttributeService;
-        _giftCardService = giftCardService;
-        _languageService = languageService;
-        _localizationService = localizationService;
-        _logger = logger;
-        _orderService = orderService;
-        _orderTotalCalculationService = orderTotalCalculationService;
-        _paymentPluginManager = paymentPluginManager;
-        _paymentService = paymentService;
-        _pdfService = pdfService;
-        _priceCalculationService = priceCalculationService;
-        _priceFormatter = priceFormatter;
-        _productAttributeFormatter = productAttributeFormatter;
-        _productAttributeParser = productAttributeParser;
-        _productService = productService;
-        _rewardPointService = rewardPointService;
-        _shipmentService = shipmentService;
-        _shippingService = shippingService;
-        _shoppingCartService = shoppingCartService;
-        _stateProvinceService = stateProvinceService;
-        _storeService = storeService;
-        _taxService = taxService;
-        _vendorService = vendorService;
-        _webHelper = webHelper;
-        _workContext = workContext;
-        _workflowMessageService = workflowMessageService;
-        _localizationSettings = localizationSettings;
-        _orderSettings = orderSettings;
-        _paymentSettings = paymentSettings;
-        _rewardPointsSettings = rewardPointsSettings;
-        _shippingSettings = shippingSettings;
-        _taxSettings = taxSettings;
-        _customerRepository = customerRepository;
-        _customerCustomerRoleMappingRepository = customerCustomerRoleMappingRepository;
-    }
 
     #endregion
 
@@ -526,14 +477,14 @@ public class PurchaseForCustomerService : OrderProcessingService, IPurchaseForCu
 
     public virtual async Task<IList<Customer>> SearchCustomersAsync(string searchNameAndEmail)
     {
-        var query = _customerRepository.Table.Where(c => !c.Deleted && !c.IsSystemAccount && !string.IsNullOrWhiteSpace(c.Email));
+        var query = customerRepository.Table.Where(c => !c.Deleted && !c.IsSystemAccount && !string.IsNullOrWhiteSpace(c.Email));
 
         query = query.Where(c => (c.FirstName +" "+ c.LastName).Contains(searchNameAndEmail) || c.Email.Contains(searchNameAndEmail));
 
         var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync(NopCustomerDefaults.RegisteredRoleName);
         if (registeredRole != null)
         {
-            query = query.Join(_customerCustomerRoleMappingRepository.Table, x => x.Id, y => y.CustomerId,
+            query = query.Join(customerCustomerRoleMappingRepository.Table, x => x.Id, y => y.CustomerId,
                     (x, y) => new { Customer = x, Mapping = y })
                 .Where(z => z.Mapping.CustomerRoleId == registeredRole.Id)
                 .Select(z => z.Customer)
