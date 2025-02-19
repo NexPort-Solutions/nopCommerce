@@ -287,7 +287,7 @@
     <Content Include="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\_CreateOrUpdate.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\ReturnRequest\Edit.cshtml">
+    <Content Include="Areas\Admin\Views\ReturnRequest\Edit.NexportReturn.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -295,7 +295,7 @@
     <Content Include="Areas\Admin\Views\ReturnRequest\List.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\ReturnRequest\_CreateOrUpdate.cshtml">
+    <Content Include="Areas\Admin\Views\ReturnRequest\_CreateOrUpdate.NexportReturn.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -2,6 +2,7 @@
 @using Nop.Plugin.Misc.Nexport.Extensions
 @using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo
 @using System.Net
+@using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.Refund
 @using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer
 @using Nop.Services.Stores
 
@@ -28,6 +29,9 @@
 
     const string hideNexportCustomerRegistrationFieldAnswersBlockAttributeName = "CustomerPage.HideNexportCustomerRegistrationFieldAnswersBlock";
     var hideNexportCustomerRegistrationFieldAnswersBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideNexportCustomerRegistrationFieldAnswersBlockAttributeName);
+
+    const string hideNexportRefundRequestsBlockAttributeName = "CustomerPage.HideNexportRefundRequestsBlock";
+    var hideNexportRefundRequestsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideNexportRefundRequestsBlockAttributeName);
 
     <nop-card asp-name="nexport-customer-details" asp-icon="fa fa-sticky-note-o" asp-title="Nexport Customer Info"
                asp-hide-block-attribute-name="@hideNexportCustomerDetailsBlockAttributeName" asp-hide="@hideNexportCustomerDetailsBlock" asp-advanced="false">
@@ -104,6 +108,7 @@
             }
         </div>
     </nop-card>
+
     <nop-card asp-name="nexport-customer-supplemental-info-answers" asp-icon="fa fa-sticky-note-o"
                asp-title="Nexport Supplemental Info Answers"
                asp-hide-block-attribute-name="@hideNexportSupplementalInfoAnswersBlockAttributeName"
@@ -198,6 +203,7 @@
             <input type="submit" id="btnRefreshAnswerList" style="display: none">
         </div>
     </nop-card>
+
     <nop-card asp-name="nexport-customer-registration-field-answers" asp-icon="fa fa-id-card-o"
               asp-title="Nexport Registration Field Answers"
               asp-hide-block-attribute-name="@hideNexportCustomerRegistrationFieldAnswersBlockAttributeName"
@@ -228,8 +234,7 @@
                 LengthMenu = Model.NexportCustomerRegistrationFieldWithAnswersListSearchModel.AvailablePageSizes,
                 Filters = new List<FilterParameter>
                 {
-                    new(
-                        nameof(Model.NexportCustomerRegistrationFieldWithAnswersListSearchModel.StoreId),
+                    new(nameof(Model.NexportCustomerRegistrationFieldWithAnswersListSearchModel.StoreId),
                         nameof(Model.NexportCustomerRegistrationFieldWithAnswersListSearchModel))
                 },
                 PrimaryKeyColumn = nameof(NexportCustomerRegistrationFieldWithAnswersModel.Id),
@@ -295,6 +300,79 @@
             <input type="submit" id="btnRefreshRegistrationAnswerList" style="display: none">
         </div>
     </nop-card>
+
+    <nop-card asp-name="nexport-customer-refund-requests-detail" asp-icon="fa fa-id-card-o"
+            asp-title="Nexport Refund Requests"
+            asp-hide-block-attribute-name="@hideNexportRefundRequestsBlockAttributeName"
+            asp-hide="@hideNexportRefundRequestsBlock" asp-advanced="false">
+        <div class="card-body">
+            <div style="display: flex;">
+                <div style="flex-grow: 1;">
+                    <nop-select asp-for="@Model.NexportRefundRequestListSearchModel.StoreId"
+                        asp-items="@Model.NexportRefundRequestListSearchModel.AvailableStores" asp-multiple="false" />
+                </div>
+            </div>
+
+        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
+            {
+                Name = "nexport-customer-refund-requests",
+                UrlRead = new DataUrl("GetNexportRefundRequestsForCustomer", "NexportIntegration",
+                new RouteValueDictionary { { "customerId", Model.CustomerId } }),
+                Length = Model.NexportRefundRequestListSearchModel.PageSize,
+                LengthMenu = Model.NexportRefundRequestListSearchModel.AvailablePageSizes,
+                Filters = new List<FilterParameter>
+                {
+                    new(nameof(Model.NexportRefundRequestListSearchModel.StoreId),
+                        nameof(Model.NexportRefundRequestListSearchModel))
+                },
+                ColumnCollection = new List<ColumnProperty>
+                {
+                    new(nameof(NexportRefundRequestModel.ProductName))
+                    {
+                        Title = "Product",
+                        Width = "200"
+                    },
+                    new(nameof(NexportRefundRequestModel.OrderId))
+                    {
+                        Title = "Order",
+                        Width = "50"
+                    },
+                    new(nameof(NexportRefundRequestModel.Quantity))
+                    {
+                        Title = "Quantity",
+                        Width = "50"
+                    },
+                    new(nameof(NexportRefundRequestModel.UtcCreatedDate))
+                    {
+                        Title = "Date",
+                        Width = "100",
+                        Render = new RenderDate()
+                    },
+                    new(nameof(NexportRefundRequestModel.Status))
+                    {
+                        Title = "Status",
+                        Width = "100"
+                    },
+                    new(nameof(NexportRefundRequestModel.LastModifiedUserId))
+                    {
+                        Title = "Processed By",
+                        Width = "100",
+                        Render = new RenderCustom("renderRefundRequestModifiedByUser"),
+                    },
+                    new(nameof(NexportRefundRequestModel.Id))
+                    {
+                        Width = "50",
+                        Render = new RenderCustom("renderViewRefundRequest"),
+                        ClassName = NopColumnClassDefaults.Button,
+                        AutoWidth = false
+                    }
+                }
+            })
+
+            <input type="submit" id="btnRefreshRefundRequestList" style="display: none">
+        </div>
+    </nop-card>
+
     <script>
         $(document).ready(function() {
             jQuery.validator.addMethod("dotnet-guid",
@@ -339,6 +417,20 @@
                 function(e) {
                     addRegistrationFieldAnswers($("#@Html.IdFor(model => model.NexportCustomerRegistrationFieldWithAnswersListSearchModel.StoreId)").val());
                 });
+
+            $("#@Html.IdFor(model => model.NexportRefundRequestListSearchModel.StoreId)").on("change",
+                function(e) {
+                    $("#nexport-customer-refund-requests").DataTable().draw(false);
+                }
+            );
+
+            $("#btnRefreshRefundRequestList").on("click", function(e) {
+                // Refresh child grid
+                $("table[id*=nexport-customer-refund-requests]").DataTable().draw(false);
+
+                // Return false to don't reload a page
+                return false;
+            });
         });
 
         function canSetNexportUserId(customerId) {
@@ -545,6 +637,26 @@
             url += "&containerId=nexport-customer-registration-field-answers&btnId=btnRefreshRegistrationAnswerList";
 
             OpenWindow(url, 800, 800, true);
+        }
+
+        function renderRefundRequestModifiedByUser(data, type, row, meta) {
+            if (row.ModifiedByUserId == 0)
+                return "";
+
+            var textRenderer = $.fn.dataTable.render.text().display;
+            return '<a href="@Url.Content("~/Admin/Customer/Edit/")' + row.ModifiedByUserId + '">' + textRenderer(row.ModifiedByUserInfo) + '</a>';
+        }
+
+        function renderViewRefundRequest(data, type, row, meta) {
+            if (!row.Id)
+                return "";
+
+            var textRenderer = $.fn.dataTable.render.text().display;
+            if (row.IsNexportPurchase) {
+                return '<a class="btn btn-default" href="@Url.Content("~/Admin/ReturnRequest/Nexport/Edit/")' + row.Id + '"><i class="far fa-eye"></i>@T("Admin.Common.View").Text</a>';
+            }
+
+            return '<a class="btn btn-default" href="@Url.Content("~/Admin/ReturnRequest/Edit/")' + row.Id + '"><i class="far fa-eye"></i>@T("Admin.Common.View").Text</a>';
         }
 
         //# sourceURL=nexport_customer_details.js
