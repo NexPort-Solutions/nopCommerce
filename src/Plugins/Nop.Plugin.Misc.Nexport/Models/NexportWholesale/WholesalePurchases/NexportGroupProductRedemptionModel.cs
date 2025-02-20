@@ -30,4 +30,6 @@ public record NexportGroupProductRedemptionModel : BaseNopEntityModel
     public string PurchasedIn { get; set; }
 
     public int? FundingPoolId { get; set; }
+
+    public bool HasRefundRequest { get; set; }
 }

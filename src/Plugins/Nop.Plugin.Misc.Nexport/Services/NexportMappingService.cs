@@ -2623,23 +2623,20 @@ public partial class NexportService : INexportService
         try
         {
             var wholesaleOrderInfo = await GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId, invoiceItem.OrderItemId);
-            if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Available)
+            wholesaleOrderInfo.Available--;
+            await UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+
+            await DeleteNexportOrderInvoiceItem(invoiceItem);
+
+            await _orderService.InsertOrderNoteAsync(new OrderNote
             {
-                wholesaleOrderInfo.Available--;
-                await UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+                OrderId = invoiceItem.OrderId,
+                Note = $"Invoice item #{invoiceItem.InvoiceItemId} for order item #{invoiceItem.OrderItemId} has been refunded.",
+                DisplayToCustomer = false,
+                CreatedOnUtc = DateTime.UtcNow
+            });
 
-                await DeleteNexportOrderInvoiceItem(invoiceItem);
-
-                await _orderService.InsertOrderNoteAsync(new OrderNote
-                {
-                    OrderId = invoiceItem.OrderId,
-                    Note = $"Invoice item #{invoiceItem.InvoiceItemId} for order item #{invoiceItem.OrderItemId} has been refunded.",
-                    DisplayToCustomer = false,
-                    CreatedOnUtc = DateTime.UtcNow
-                });
-
-                return true;
-            }
+            return true;
         }
         catch (Exception ex)
         {

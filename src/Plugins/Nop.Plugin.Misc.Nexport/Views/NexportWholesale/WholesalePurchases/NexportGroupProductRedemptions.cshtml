@@ -206,7 +206,7 @@
         if (row.InvoiceItemId != null) {
             if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Assigned.GetDisplayName())") {
                 var buttonFunction = "requestRefundRedemption('" + row.InvoiceItemId + "')";
-                return renderCustomButton(buttonFunction, "fa-solid fa-rotate-exclamation", "Request Refund");
+                return renderCustomButton(buttonFunction, "fa-solid fa-rotate-exclamation", "Request Refund", row.HasRefundRequest);
             } else {
                 var buttonFunction = "refundRedemption('" + row.InvoiceItemId + "')";
                 return renderCustomButton(buttonFunction, "fa-solid fa-rotate-left", "Refund");
@@ -220,7 +220,7 @@
         if (row.InvoiceItemId != null) {
             var buttonFunction = "";
             if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Assigned.GetDisplayName())") {
-                if (@Json.Serialize(hasAdminRole)){
+                if (@Json.Serialize(hasAdminRole)) {
                     buttonFunction = "unassignRedemption('" + row.InvoiceItemId + "')";
                     return renderCustomButton(buttonFunction, "fa-solid fa-square-minus", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")");
                 }

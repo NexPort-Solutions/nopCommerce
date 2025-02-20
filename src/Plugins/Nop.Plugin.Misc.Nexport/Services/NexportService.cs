@@ -1661,6 +1661,36 @@ public partial class NexportService
     }
 
     [CanBeNull]
+    public async Task<DropDeleteEnrollmentResponse> DestroyEnrollmentAsync(Guid enrollmentId)
+    {
+        DropDeleteEnrollmentResponse result;
+
+        try
+        {
+            result = _nexportApiService.DestroyNexportEnrollment(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, enrollmentId);
+        }
+        catch (Exception ex)
+        {
+            var errMsg = $"Error occurred during Web API call DeleteEnrollment for enrollment {enrollmentId}";
+            await _logger.ErrorAsync($"{errMsg}", ex);
+
+            if (ex is ApiException exception)
+            {
+                var errorResponse = JsonConvert.DeserializeObject<DropDeleteEnrollmentResponse>(exception.ErrorContent.ToString());
+                if (errorResponse != null)
+                {
+                    throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                }
+            }
+
+            throw;
+        }
+
+        return result;
+    }
+
+    [CanBeNull]
     public async Task<GetInvoiceResponse> GetNexportInvoiceAsync(Guid invoiceId)
     {
         try
@@ -3153,7 +3183,7 @@ public partial class NexportService
         return new PagedList<Store>(stores, pageIndex, pageSize);
     }
 
-    public async Task<NexportOrderInvoiceItem> ResetInvoiceRedemptionAsync(NexportOrderInvoiceItem invoiceItem)
+    public async Task<NexportOrderInvoiceItem> ResetInvoiceRedemptionAsync(NexportOrderInvoiceItem invoiceItem, string note = null)
     {
         if (invoiceItem == null)
             throw new ArgumentNullException(nameof(invoiceItem));
@@ -3161,7 +3191,7 @@ public partial class NexportService
         try
         {
             var resetInvoiceResult = _nexportApiService.ResetInvoiceRedemption(_nexportSettings.Url,
-                _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId);
+                _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId, note: note);
 
             if (resetInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
                 throw new ApiException((int)resetInvoiceResult.ApiErrorEntity.ErrorCode,

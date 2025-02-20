@@ -1,21 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Newtonsoft.Json;
 using NexportApi.Model;
 using Nop.Core;
+using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
-using Nop.Core.Domain.Orders;
+using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Localization;
+using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Stores;
-using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Category;
-using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
+using Nop.Core.Domain.Tax;
+using Nop.Core.Domain.Vendors;
+using Nop.Core.Infrastructure.Mapper;
 using Nop.Data;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Category;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.ReturnRequest;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
@@ -24,11 +30,12 @@ using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.Enrollment;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.Products;
-using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.Refund;
 using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.Plugins;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
@@ -38,46 +45,35 @@ using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
+using Nop.Services.Configuration;
 using Nop.Services.Customers;
+using Nop.Services.Directory;
+using Nop.Services.Discounts;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
+using Nop.Services.Media;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Plugins;
 using Nop.Services.Security;
 using Nop.Services.Seo;
+using Nop.Services.Shipping;
 using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Catalog;
+using Nop.Web.Areas.Admin.Models.Localization;
 using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Web.Areas.Admin.Models.Payments;
 using Nop.Web.Areas.Admin.Models.Stores;
 using Nop.Web.Framework.Extensions;
 using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Models.Extensions;
-using Nop.Core.Caching;
-using Nop.Core.Domain.Directory;
-using Nop.Core.Domain.Tax;
-using Nop.Core.Domain.Vendors;
-using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
-using Nop.Plugin.Misc.Nexport.Models.Enrollment;
-using Nop.Services.Configuration;
-using Nop.Services.Directory;
-using Nop.Services.Discounts;
-using Nop.Services.Media;
-using Nop.Services.Shipping;
-using Nop.Web.Areas.Admin.Models.Localization;
-using Nop.Services;
-using Microsoft.AspNetCore.Mvc.Routing;
 using Nop.Web.Framework.Mvc.Routing;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.ReturnRequest;
-using Nop.Core.Infrastructure.Mapper;
-using Irony.Parsing;
 
 namespace Nop.Plugin.Misc.Nexport.Factories;
 
@@ -585,6 +581,16 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         model.NexportCustomerRegistrationFieldAnswerListSearchModel = new NexportCustomerRegistrationFieldAnswerListSearchModel
         {
             CustomerId = customer.Id
+        };
+
+        model.NexportRefundRequestListSearchModel = new NexportRefundRequestListSearchModel
+        {
+            CustomerId = customer.Id,
+            AvailableStores = availableStores.Select(store => new SelectListItem
+            {
+                Text = store.Name,
+                Value = store.Id.ToString()
+            }).ToList()
         };
 
         return model;
@@ -1546,8 +1552,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         return model;
     }
 
-    public async Task<NexportCustomerRegistrationFieldAnswerListModel>
-        PrepareNexportCustomerRegistrationFieldAnswerListModel(
+    public async Task<NexportCustomerRegistrationFieldAnswerListModel> PrepareNexportCustomerRegistrationFieldAnswerListModel(
             NexportCustomerRegistrationFieldAnswerListSearchModel searchModel)
     {
         if (searchModel == null)
@@ -2321,6 +2326,12 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                                 $"{await _genericAttributeService.GetAttributeAsync<string>(invoiceItem, $"redeeming-user-first-name-for-invoice-{invoiceItem.Id}", order.StoreId)} " +
                                 $"{await _genericAttributeService.GetAttributeAsync<string>(invoiceItem, $"redeeming-user-last-name-for-invoice-{invoiceItem.Id}", order.StoreId)}";
                         }
+                    }
+
+                    var refundRequest = await _returnRequestService.SearchReturnRequestsAsync(order.StoreId, order.CustomerId, invoiceItem.OrderItemId);
+                    if (refundRequest.TotalCount > 0)
+                    {
+                        redemptionItem.HasRefundRequest = true;
                     }
 
                     redemptions.Add(redemptionItem);
@@ -3475,6 +3486,13 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
             newModel.OrderId = order.Id;
             newModel.AttributeInfo = orderItem.AttributeDescription;
             newModel.CustomOrderNumber = order.CustomOrderNumber;
+            var nexportUserMapping = await _nexportService.FindUserMappingByCustomerId(newModel.CustomerId);
+            if (nexportUserMapping != null)
+            {
+                Uri.TryCreate(new Uri(_nexportSettings.Url.TrimEnd('/')), $"Account/Info.nex?user={nexportUserMapping.NexportUserId}", out var link);
+                if (link != null)
+                    newModel.NexportUserProfileLink = link.AbsoluteUri;
+            }
 
             var productMapping = await _nexportService.GetProductMappingByNopProductId(product.Id);
             if (productMapping != null)
@@ -3482,6 +3500,9 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 newModel.IsNexportPurchase = true;
                 var isWholesalePurchase = await _genericAttributeService.GetAttributeAsync<bool>(order, "IsWholesaleOrder", order.StoreId);
                 newModel.IsNexportWholesalePurchase = isWholesalePurchase;
+
+                newModel.InvoiceItemId = await _genericAttributeService.GetAttributeAsync<Guid?>(returnRequest, "RefundRequestInvoiceItemId", order.StoreId);
+                newModel.RefundOption = await _genericAttributeService.GetAttributeAsync<int>(returnRequest, "RefundRequestOption", order.StoreId);
             }
         }
 
@@ -3526,12 +3547,23 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
             model.AttributeInfo = orderItem.AttributeDescription;
             model.CustomOrderNumber = order.CustomOrderNumber;
 
+            var nexportUserMapping = await _nexportService.FindUserMappingByCustomerId(model.CustomerId);
+            if (nexportUserMapping != null)
+            {
+                Uri.TryCreate(new Uri(_nexportSettings.Url.TrimEnd('/')), $"Account/Info.nex?user={nexportUserMapping.NexportUserId}", out var link);
+                if (link != null)
+                    model.NexportUserProfileLink = link.AbsoluteUri;
+            }
+
             var productMapping = await _nexportService.GetProductMappingByNopProductId(product.Id);
             if (productMapping != null)
             {
                 model.IsNexportPurchase = true;
                 var isWholesalePurchase = await _genericAttributeService.GetAttributeAsync<bool>(order, "IsWholesaleOrder", order.StoreId);
                 model.IsNexportWholesalePurchase = isWholesalePurchase;
+
+                model.InvoiceItemId = await _genericAttributeService.GetAttributeAsync<Guid?>(returnRequest, "RefundRequestInvoiceItemId", order.StoreId);
+                model.RefundOption = await _genericAttributeService.GetAttributeAsync<int>(returnRequest, "RefundRequestOption", order.StoreId);
             }
         }
 
@@ -3559,6 +3591,55 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
     {
         if (model == null)
             throw new ArgumentNullException(nameof(model));
+
+        return model;
+    }
+
+    public async Task<NexportRefundRequestListModel> PrepareNexportCustomerRegistrationFieldAnswerListModel(NexportRefundRequestListSearchModel searchModel)
+    {
+        if (searchModel == null)
+            throw new ArgumentNullException(nameof(searchModel));
+
+        var customerReturnRequests = await _returnRequestService.SearchReturnRequestsAsync(searchModel.StoreId, searchModel.CustomerId,
+            pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
+
+        var model = await new NexportRefundRequestListModel().PrepareToGridAsync(searchModel, customerReturnRequests, () =>
+        {
+            return customerReturnRequests.SelectAwait(async returnRequest =>
+            {
+                var nexportRefundRequestModel = new NexportRefundRequestModel();
+                var orderItem = await _orderService.GetOrderItemByIdAsync(returnRequest.OrderItemId);
+                var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
+
+                nexportRefundRequestModel.Id = returnRequest.Id;
+                nexportRefundRequestModel.OrderId = orderItem.OrderId;
+                nexportRefundRequestModel.ProductId = product.Id;
+                nexportRefundRequestModel.ProductName = product.Name;
+                nexportRefundRequestModel.UtcCreatedDate = returnRequest.CreatedOnUtc;
+                nexportRefundRequestModel.Quantity = returnRequest.Quantity;
+                nexportRefundRequestModel.CustomerId = searchModel.CustomerId;
+                nexportRefundRequestModel.Status = await _localizationService.GetLocalizedEnumAsync(returnRequest.ReturnRequestStatus);
+
+                var lastModifiedUserId = await _genericAttributeService.GetAttributeAsync<int>(returnRequest, "ModifiedByUser", returnRequest.StoreId);
+                if (lastModifiedUserId > 0)
+                {
+                    nexportRefundRequestModel.LastModifiedUserId = lastModifiedUserId;
+                    var lastModifiedUser = await _customerService.GetCustomerByIdAsync(lastModifiedUserId);
+                    if (lastModifiedUser != null)
+                    {
+                        nexportRefundRequestModel.LastModifiedUserInfo = lastModifiedUser.Email;
+                    }
+                }
+
+                var productMapping = await _nexportService.GetProductMappingByNopProductId(product.Id);
+                if (productMapping != null)
+                {
+                    nexportRefundRequestModel.IsNexportPurchase = true;
+                }
+
+                return nexportRefundRequestModel;
+            });
+        });
 
         return model;
     }

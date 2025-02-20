@@ -1,4 +1,5 @@
 ﻿using System;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.Refund;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
 using Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 using Nop.Web.Framework.Models;
@@ -35,6 +36,8 @@ public record NexportCustomerAdditionalInfoModel : BaseNopModel
     public NexportCustomerRegistrationFieldWithAnswersListSearchModel NexportCustomerRegistrationFieldWithAnswersListSearchModel { get; set; }
 
     public NexportCustomerRegistrationFieldAnswerListSearchModel NexportCustomerRegistrationFieldAnswerListSearchModel { get; set; }
+
+    public NexportRefundRequestListSearchModel NexportRefundRequestListSearchModel { get; set; }
 
     public bool Editable { get; set; }
 }

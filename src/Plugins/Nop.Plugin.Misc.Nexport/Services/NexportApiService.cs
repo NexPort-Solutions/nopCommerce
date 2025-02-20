@@ -700,6 +700,27 @@ public class NexportApiService(Configuration apiConfiguration)
         return result;
     }
 
+    public DropDeleteEnrollmentResponse DestroyNexportEnrollment([NotNull] string url, [NotNull] string accessToken, Guid enrollmentId)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
+
+        apiConfiguration.BasePath = url;
+
+        var nexportApi = new LearningApi(apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var result = nexportApi.LearningApiDeleteEnrollment(enrollmentId, accessToken);
+
+        return result;
+    }
+
     public NexportGetInvoiceResponseDetails GetNexportInvoice([NotNull] string url, [NotNull] string accessToken, Guid invoiceId)
     {
         if (string.IsNullOrWhiteSpace(url))
@@ -1248,13 +1269,15 @@ public class NexportApiService(Configuration apiConfiguration)
     }
 
     public ResetInvoiceRedemptionResponse ResetInvoiceRedemption([NotNull] string url, [NotNull] string accessToken,
-        Guid invoiceItemId, Guid? resetAdminId = null)
+        Guid invoiceItemId, Guid? resetAdminId = null, string note = null)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
 
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new NullReferenceException("Access token cannot be empty");
+
+        note = string.IsNullOrWhiteSpace(note) ? $"Reset redemption for invoice item with id: {invoiceItemId} on {DateTime.UtcNow}" : note;
 
         apiConfiguration.BasePath = url;
 
@@ -1264,9 +1287,8 @@ public class NexportApiService(Configuration apiConfiguration)
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
         };
 
-        var result =
-            nexportApi.PointOfSaleApiResetInvoiceRedemption(accessToken,
-                new ResetInvoiceRedemptionRequest(invoiceItemId, $"Reset redemption for invoice item with id: {invoiceItemId} on {DateTime.UtcNow}", NexportDefaults.REMOTE_SYS_NAME_FOR_API));
+        var result = nexportApi.PointOfSaleApiResetInvoiceRedemption(accessToken,
+                new ResetInvoiceRedemptionRequest(invoiceItemId, note, NexportDefaults.REMOTE_SYS_NAME_FOR_API));
 
         return result;
     }

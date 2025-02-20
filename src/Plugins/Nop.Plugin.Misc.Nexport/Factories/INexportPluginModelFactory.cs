@@ -20,6 +20,7 @@ using Nop.Plugin.Misc.Nexport.Models.NexportWholesale;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.Products;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.Refund;
 using Nop.Plugin.Misc.Nexport.Models.Order;
 using Nop.Plugin.Misc.Nexport.Models.Plugins;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
@@ -239,4 +240,6 @@ public partial interface INexportPluginModelFactory
     Task<SubmitInvoiceItemRefundRequestModel> PrepareInvoiceItemRefundRequestModel(Guid invoiceItemId);
 
     Task<SubmitInvoiceItemRefundRequestModel> PrepareSubmitInvoiceItemRefundRequestModelAsync(SubmitInvoiceItemRefundRequestModel model);
+
+    Task<NexportRefundRequestListModel> PrepareNexportCustomerRegistrationFieldAnswerListModel(NexportRefundRequestListSearchModel searchModel);
 }

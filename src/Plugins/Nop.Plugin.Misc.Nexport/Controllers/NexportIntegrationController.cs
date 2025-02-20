@@ -73,6 +73,7 @@ using Nop.Core.Domain.Configuration;
 using Nop.Plugin.Misc.Nexport.Models.Customer;
 using Nop.Plugin.Misc.Nexport.Models.Enrollment;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.Refund;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers;
 
@@ -515,7 +516,7 @@ public class NexportIntegrationController : BasePluginController,
 
         try
         {
-            if (model.DocumentationUrl.IsValidUrl())
+            if (string.IsNullOrWhiteSpace(model.DocumentationUrl) || model.DocumentationUrl.IsValidUrl())
             {
                 _nexportSettings.DocumentationUrl = model.DocumentationUrl;
                 await _settingService.SaveSettingAsync(_nexportSettings);
@@ -3857,4 +3858,17 @@ public class NexportIntegrationController : BasePluginController,
         return RedirectToRoute("Homepage");
     }
 
+    [Area(AreaNames.ADMIN)]
+    [AuthorizeAdmin]
+    [AutoValidateAntiforgeryToken]
+    [HttpPost]
+    public async Task<IActionResult> GetNexportRefundRequestsForCustomer(NexportRefundRequestListSearchModel searchModel)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+            return await AccessDeniedDataTablesJson();
+
+        var model = await _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldAnswerListModel(searchModel);
+
+        return Json(model);
+    }
 }
