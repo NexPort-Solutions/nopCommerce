@@ -211,11 +211,11 @@
                                                         break;
                                                     case NexportRegistrationFieldType.DateOnly:
                                                     {
-                                                        const string datePickerFormat = "MM/DD/YYYY";
+                                                        const string datePickerFormat = "yyyy-mm-dd";
                                                         var isMobileDevice = userAgentHelper.IsMobileDevice();
 
                                                         <input type="hidden" name="previousAnswers" value="@(Model.Answers.FirstOrDefault()?.Id)" />
-                                                        <input id="@(controlId)" name="answerValue" type="text" class="datepicker"
+                                                        <input id="@(controlId)" name="answerValue" type="date"
                                                                value="@Model.Answers.FirstOrDefault()?.DateTimeValue"
                                                                @if (isMobileDevice)
                                                                {
@@ -228,7 +228,6 @@
                                                         <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
                                                         <script>
                                                             $(document).ready(function() {
-                                                                $("#@(controlId)").kendoDatePicker({ format: "mm/dd/yy" });
                                                                 $("#@(controlId)").rules("add",
                                                                     {
                                                                         "validate-datetime": {
@@ -239,7 +238,7 @@
                                                                             format: "@datePickerFormat"
                                                                         },
                                                                         messages: {
-                                                                            "validate-datetime": "Please select the date value from the picker or input the valid format (MM/DD/YYYY)"
+                                                                            "validate-datetime": "Please select the date value from the picker or input the valid format!"
                                                                         }
                                                                     });
                                                             });
@@ -252,7 +251,7 @@
                                                         var isMobileDevice = userAgentHelper.IsMobileDevice();
 
                                                         <input type="hidden" name="previousAnswers" value="@(Model.Answers.FirstOrDefault()?.Id)" />
-                                                        <input id="@(controlId)" name="answerValue" type="text"
+                                                        <input id="@(controlId)" name="answerValue" type="datetime-local"
                                                                value="@Model.Answers.FirstOrDefault()?.DateTimeValue"
                                                                @if (isMobileDevice)
                                                                {
@@ -265,12 +264,6 @@
                                                         <span class="field-validation-error" data-valmsg-for="@(controlId)" data-valmsg-replace="true"></span>
                                                         <script>
                                                             $(document).ready(function() {
-                                                                $("#@(controlId)").kendoDateTimePicker({
-                                                                    popup: {
-                                                                        position: "bottom right",
-                                                                        origin: "top right"
-                                                                    }
-                                                                });
                                                                 $("#@(controlId)").rules("add",
                                                                     {
                                                                         "validate-datetime": {
@@ -278,10 +271,9 @@
                                                                             {
                                                                                 <text>required: true,</text>
                                                                             }
-                                                                            format: "@dateTimePickerFormat"
                                                                         },
                                                                         messages: {
-                                                                            "validate-datetime": "Please select the date time value from the picker or input the valid format (MM/DD/YYYY HH:mm)"
+                                                                            "validate-datetime": "Please select the date time value from the picker!"
                                                                         }
                                                                     });
                                                             });

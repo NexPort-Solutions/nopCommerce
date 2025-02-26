@@ -8,10 +8,10 @@ public record NexportCustomerRegistrationFieldWithAnswersListSearchModel : BaseS
 {
     public NexportCustomerRegistrationFieldWithAnswersListSearchModel()
     {
-            SetGridPageSize();
+        SetGridPageSize();
 
-            AvailableStores = new List<SelectListItem>();
-        }
+        AvailableStores = new List<SelectListItem>();
+    }
 
     public int CustomerId { get; set; }
 
