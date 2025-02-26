@@ -1,4 +1,6 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Models.ProductMappings
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using Nop.Plugin.Misc.Nexport.Components.TagHelpers
 @using Nop.Plugin.Misc.Nexport.Extensions
 @using Nop.Plugin.Misc.Nexport.Domain.Enums
 
@@ -291,23 +293,16 @@
                                     <script>
                                         $(document).ready(function() {
                                             var supplementalInfoQuestionIds = $("#@Html.IdFor(model => model.SupplementalInfoQuestionIds)")
-                                                .data("kendoMultiSelect");
-                                            supplementalInfoQuestionIds.setOptions({
-                                                autoClose: false,
-                                                filter: "contains"
-                                            });
-
-                                            @if (Model.AvailableSupplementalInfoQuestions.Count == 0)
-                                            {
-                                                <text>
-                                                    supplementalInfoQuestionIds.setOptions({
-                                                        enable: false,
-                                                        placeholder: "No supplemental info question is available"
-                                                    });
-                                                    supplementalInfoQuestionIds._placeholder();
-                                                    supplementalInfoQuestionIds._enable();
-                                                </text>
-                                            }
+                                                .select2({
+                                                    closeOnSelect: false,
+                                                    @if (Model.AvailableSupplementalInfoQuestions.Count == 0)
+                                                    {
+                                                        <text>
+                                                            disabled: true,
+                                                            placeholder: "No supplemental info question is available",
+                                                        </text>
+                                                    }
+                                                });
                                         });
                                     </script>
                                 </div>
@@ -423,7 +418,7 @@
 
             var hasExpirationDateValue = @Json.Serialize(Model.UtcAccessExpirationDate.HasValue);
             if (!hasExpirationDateValue) {
-                $("#UtcAccessExpirationDate").data("kendoDateTimePicker").enable(false);
+                $("#UtcAccessExpirationDate").prop("disabled", true);
             } else {
                 $("#trainingExpirationOption").val("accessExpirationDate");
                 $("#accessExpirationDateOption").removeClass("d-none");
@@ -444,18 +439,18 @@
                         $("#accessExpirationDateOption").addClass("d-none");
 
                         $("#AccessTimeLimit").prop("disabled", false);
-                        $("#UtcAccessExpirationDate").data("kendoDateTimePicker").enable(false);
+                        $("#UtcAccessExpirationDate").prop("disabled", true);
                     } else if ($(this).val() === "accessExpirationDate") {
                         $("#accessLimitOption").addClass("d-none");
                         $("#accessExpirationDateOption").removeClass("d-none");
 
-                        $("#UtcAccessExpirationDate").data("kendoDateTimePicker").enable(true);
+                        $("#UtcAccessExpirationDate").prop("disabled", false);
                         $("#AccessTimeLimit").prop("disabled", true);
                     } else if ($(this).val() === "noExpiration") {
                         $("#accessLimitOption").addClass("d-none");
                         $("#accessExpirationDateOption").addClass("d-none");
 
-                        $("#UtcAccessExpirationDate").data("kendoDateTimePicker").enable(false);
+                        $("#UtcAccessExpirationDate").prop("disabled", true);
                         $("#AccessTimeLimit").prop("disabled", true);
                     }
                 });

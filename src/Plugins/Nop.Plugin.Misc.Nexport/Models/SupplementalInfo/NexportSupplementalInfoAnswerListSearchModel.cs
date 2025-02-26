@@ -8,10 +8,10 @@ public record NexportSupplementalInfoAnswerListSearchModel : BaseSearchModel
 {
     public NexportSupplementalInfoAnswerListSearchModel()
     {
-            SetGridPageSize();
+        SetGridPageSize();
 
-            AvailableStores = new List<SelectListItem>();
-        }
+        AvailableStores = new List<SelectListItem>();
+    }
 
     public int CustomerId { get; set; }
 

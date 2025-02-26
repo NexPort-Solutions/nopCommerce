@@ -1,15 +1,27 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.Components.NexportDurationPickerModel
 
 <div class="row">
-    <div class="nex-duration-picker-element col-sm-4">
+    <div class="input-group col-sm-4">
         <input class="form-control input-sm" type="number" min="0" data-duration="days">
+        <div class="input-group-append">
+            <span class="input-group-text rounded-0">days</span>
+        </div>
     </div>
-    <div class="nex-duration-picker-element col-sm-4">
+
+    <div class="input-group col-sm-4">
         <input class="form-control input-sm" type="number" min="0" max="23" data-duration="hours">
+        <div class="input-group-append">
+            <span class="input-group-text rounded-0">hours</span>
+        </div>
     </div>
-    <div class="nex-duration-picker-element col-sm-4">
+
+    <div class="input-group col-sm-4">
         <input class="form-control input-sm" type="number" min="0" max="59" data-duration="minutes">
+        <div class="input-group-append">
+            <span class="input-group-text rounded-0">minutes</span>
+        </div>
     </div>
+
     <input type="hidden" id="@Model.Name" name="@Model.Name" value="@Model.Value" />
 </div>
 
@@ -52,35 +64,17 @@
         var submitInputElement = $("#@Model.Name");
 
         var durationPickerDaysElement = container.find("input[data-duration=days]");
-        durationPickerDaysElement.kendoNumericTextBox({
-            min: 0,
-            max: 10000,
-            decimals: 0,
-            restrictDecimals: true,
-            format: "# days"
-        }).change(function () {
+        durationPickerDaysElement.change(function () {
             durationPickerChanged(container, submitInputElement);
         });
 
         var durationPickerHoursElement = container.find("input[data-duration=hours]");
-        durationPickerHoursElement.kendoNumericTextBox({
-            min: 0,
-            max: 23,
-            decimals: 0,
-            restrictDecimals: true,
-            format: "# hours"
-        }).change(function () {
+        durationPickerHoursElement.change(function () {
             durationPickerChanged(container, submitInputElement);
         });
 
         var durationPickerMinutesElement = container.find("input[data-duration=minutes]");
-        durationPickerMinutesElement.kendoNumericTextBox({
-            min: 0,
-            max: 59,
-            decimals: 0,
-            restrictDecimals: true,
-            format: "# minutes"
-        }).change(function () {
+        durationPickerMinutesElement.change(function () {
             durationPickerChanged(container, submitInputElement);
         });
 

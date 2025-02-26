@@ -147,10 +147,8 @@
 
                                 case NexportRegistrationFieldType.DateOnly:
                                 {
-                                    const string datePickerFormat = "MM/DD/YYYY";
-
-                                    <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker"/>
-                                    <script>
+                                    <input id="@(controlId)" name="@(controlId)" type="date" />
+                                    @* <script>
                                         $(document).ready(function() {
                                             $("#@(controlId)").kendoDatePicker({
                                                 format: "MM/dd/yyyy"
@@ -165,17 +163,15 @@
                                                     }
                                                 });
                                         });
-                                    </script>
+                                    </script> *@
 
                                     break;
                                 }
 
                                 case NexportRegistrationFieldType.DateTime:
                                 {
-                                    const string dateTimePickerFormat = "MM/DD/YYYY hh:mm A";
-
-                                    <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker" />
-                                    <script>
+                                    <input id="@(controlId)" name="@(controlId)" type="datetime-local" />
+                                    @* <script>
                                         $(document).ready(function() {
                                             $("#@(controlId)").kendoDateTimePicker({
                                                 format: "MM/dd/yyyy hh:mm tt"
@@ -190,7 +186,7 @@
                                                     }
                                                 });
                                         });
-                                    </script>
+                                    </script> *@
 
                                     break;
                                 }
@@ -319,8 +315,8 @@
                             {
                                 const string datePickerFormat = "MM/DD/YYYY";
 
-                                <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker" />
-                                <script>
+                                <input id="@(controlId)" name="@(controlId)" type="date" />
+                                @* <script>
                                     $(document).ready(function() {
                                         $("#@(controlId)").kendoDatePicker({
                                             format: "MM/dd/yyyy"
@@ -335,7 +331,7 @@
                                                 }
                                             });
                                     });
-                                </script>
+                                </script> *@
 
                                 break;
                             }
@@ -344,8 +340,8 @@
                             {
                                 const string dateTimePickerFormat = "MM/DD/YYYY hh:mm A";
 
-                                <input id="@(controlId)" name="@(controlId)" type="text" class="datepicker" />
-                                <script>
+                                <input id="@(controlId)" name="@(controlId)" type="datetime-local" />
+                                @* <script>
                                     $(document).ready(function() {
                                         $("#@(controlId)").kendoDateTimePicker({
                                             format: "MM/dd/yyyy hh:mm tt"
@@ -360,7 +356,7 @@
                                                 }
                                             });
                                     });
-                                </script>
+                                </script> *@
 
                                 break;
                             }

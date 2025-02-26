@@ -6,8 +6,8 @@ public record NexportCustomerRegistrationFieldAnswerListSearchModel : BaseSearch
 {
     public NexportCustomerRegistrationFieldAnswerListSearchModel()
     {
-            SetGridPageSize();
-        }
+        SetGridPageSize();
+    }
 
     public int CustomerId { get; set; }
 

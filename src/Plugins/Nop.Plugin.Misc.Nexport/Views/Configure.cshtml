@@ -215,23 +215,17 @@
 <script>
     $(document).ready(function() {
         $.fn.bootstrapTypeahead = $.fn.typeahead.noConflict();
-        $("#TokenNeverExpired").on("change",
-            function(e) {
-                $("#AutoRenewToken").prop("disabled", this.checked);
-                $("#CustomTokenExpirationDate").data("kendoDateTimePicker").enable(!this.checked);
-            }
-        );
+        $("#TokenNeverExpired").on("change", function(e) {
+            $("#AutoRenewToken").prop("disabled", this.checked);
+            $("#CustomTokenExpirationDate").prop("disabled", !this.checked);
+        });
 
-        $("#AutoRenewToken").on("change",
-            function(e) {
+        $("#AutoRenewToken").on("change", function(e) {
                 $("#TokenNeverExpired").prop("disabled", this.checked);
-            }
-        );
+        });
 
-        $("#CustomTokenExpirationDate").data("kendoDateTimePicker").bind("change",
-            function() {
-                $("#TokenNeverExpired").prop("disabled", this.value() !== null);
-            }
-        );
+        $("#CustomTokenExpirationDate").on("change", function(e) {
+            $("#TokenNeverExpired").prop("disabled", this.value() !== null);
+        });
     });
 </script>

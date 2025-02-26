@@ -61,32 +61,32 @@ public class NexportDurationPickerTagHelper : TagHelper
 
     public NexportDurationPickerTagHelper(IHtmlGenerator generator, IHtmlHelper htmlHelper)
     {
-            Generator = generator;
-            _htmlHelper = htmlHelper;
-        }
+        Generator = generator;
+        _htmlHelper = htmlHelper;
+    }
 
     public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
     {
-            if (context == null)
-                throw new ArgumentNullException(nameof(context));
+        if (context == null)
+            throw new ArgumentNullException(nameof(context));
 
-            if (output == null)
-                throw new ArgumentNullException(nameof(output));
+        if (output == null)
+            throw new ArgumentNullException(nameof(output));
 
-            var viewContextAware = _htmlHelper as IViewContextAware;
-            viewContextAware?.Contextualize(ViewContext);
+        var viewContextAware = _htmlHelper as IViewContextAware;
+        viewContextAware?.Contextualize(ViewContext);
 
-            var elementId = string.IsNullOrWhiteSpace(Id) ? $"{For.Metadata.Name}-duration-picker" : Id;
+        var elementId = string.IsNullOrWhiteSpace(Id) ? $"{For.Metadata.Name}-duration-picker" : Id;
 
-            var viewModel = new NexportDurationPickerModel(elementId, For.Metadata.Name);
-            if (!string.IsNullOrWhiteSpace(Value))
-                viewModel.Value = Value;
+        var viewModel = new NexportDurationPickerModel(elementId, For.Metadata.Name);
+        if (!string.IsNullOrWhiteSpace(Value))
+            viewModel.Value = Value;
 
-            var content = await _htmlHelper.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Components/TagHelpers/NexportDurationPicker/Default.cshtml", viewModel);
-            output.TagName = "div";
-            output.TagMode = TagMode.StartTagAndEndTag;
-            output.Attributes.SetAttribute("class", "nex-duration-picker");
-            output.Attributes.SetAttribute("id", elementId);
-            output.Content.SetHtmlContent(content);
-        }
+        var content = await _htmlHelper.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Components/TagHelpers/NexportDurationPicker/Default.cshtml", viewModel);
+        output.TagName = "div";
+        output.TagMode = TagMode.StartTagAndEndTag;
+        output.Attributes.SetAttribute("class", "nex-duration-picker");
+        output.Attributes.SetAttribute("id", elementId);
+        output.Content.SetHtmlContent(content);
+    }
 }

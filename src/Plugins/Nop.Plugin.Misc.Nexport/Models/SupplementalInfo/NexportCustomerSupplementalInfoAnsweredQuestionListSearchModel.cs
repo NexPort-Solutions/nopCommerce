@@ -2,12 +2,12 @@
 
 namespace Nop.Plugin.Misc.Nexport.Models.SupplementalInfo;
 
-public record NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel: BaseSearchModel
+public record NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel : BaseSearchModel
 {
     public NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel()
     {
-            SetGridPageSize();
-        }
+        SetGridPageSize();
+    }
 
     public int CustomerId { get; set; }
 }
