@@ -17,6 +17,10 @@ public class NexportProductMappingMap : NopEntityBuilder<NexportProductMapping>
                 .WithColumn(nameof(NexportProductMapping.NexportSubscriptionOrgShortName)).AsFixedLengthString(50)
                 .WithColumn(nameof(NexportProductMapping.SectionCeus)).AsFixedLengthString(64)
                 .WithColumn(nameof(NexportProductMapping.RenewalWindow)).AsFixedLengthString(255)
-                .WithColumn(nameof(NexportProductMapping.RenewalDuration)).AsFixedLengthString(255);
-        }
+                .WithColumn(nameof(NexportProductMapping.RenewalDuration)).AsFixedLengthString(255)
+                .WithColumn(nameof(NexportProductMapping.RenewalApprovalMethod)).AsInt32().Nullable()
+                .WithColumn(nameof(NexportProductMapping.ExtensionPurchaseLimit)).AsInt32().Nullable()
+                .WithColumn(nameof(NexportProductMapping.AssignWhenRedeemed)).AsInt32().Nullable()
+                .WithColumn(nameof(NexportProductMapping.NopCategoryId)).AsInt32().Nullable();
+    }
 }
