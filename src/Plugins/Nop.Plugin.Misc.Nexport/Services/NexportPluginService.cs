@@ -175,6 +175,7 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.Order.ViewRedemption", "Launch this training" },
         { "Plugins.Misc.Nexport.Order.Redeem", "Redeem" },
 
+        { "Plugins.Misc.Nexport.SupplementalInfoQuestion", "Supplemental info questions" },
         { "Plugins.Misc.Nexport.SupplementalInfo.Question.Text", "Question text" },
         { "Plugins.Misc.Nexport.SupplementalInfo.Question.Text.Hint", "The question text" },
         { "Plugins.Misc.Nexport.SupplementalInfo.Question.Description", "Description" },

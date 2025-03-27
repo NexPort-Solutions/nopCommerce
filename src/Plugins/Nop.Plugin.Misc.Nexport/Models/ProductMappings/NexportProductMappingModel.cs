@@ -123,6 +123,7 @@ public record NexportProductMappingModel : BaseNopEntityModel, INexportProductMa
 
     public IList<NexportProductGroupMembershipMappingModel> GroupMembershipMappingModels { get; set; } = new List<NexportProductGroupMembershipMappingModel>();
 
+    [NopResourceDisplayName("Plugins.Misc.Nexport.SupplementalInfoQuestion")]
     public IList<int> SupplementalInfoQuestionIds { get; set; } = new List<int>();
 
     public IList<SelectListItem> AvailableSupplementalInfoQuestions { get; set; } = new List<SelectListItem>();

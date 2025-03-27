@@ -82,9 +82,9 @@
 
         if (value && value.indexOf(":") !== -1) {
             var duration = convertTimeSpan(value);
-            durationPickerDaysElement.value(duration.days);
-            durationPickerHoursElement.value(duration.hours);
-            durationPickerMinutesElement.value(duration.minutes);
+            durationPickerDaysElement.val(duration.days);
+            durationPickerHoursElement.val(duration.hours);
+            durationPickerMinutesElement.val(duration.minutes);
         }
     });
 </script>
