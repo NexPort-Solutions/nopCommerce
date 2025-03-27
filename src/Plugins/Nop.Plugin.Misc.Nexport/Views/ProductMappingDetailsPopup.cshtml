@@ -195,7 +195,7 @@
                                         <nop-label asp-for="RenewalCompletionThreshold" />
                                     </div>
                                     <div class="col-md-8 col-sm-7">
-                                        <nop-editor asp-for="RenewalCompletionThreshold" asp-postfix="%" />
+                                        <nop-editor asp-for="RenewalCompletionThreshold" asp-postfix="%" asp-required="false" />
                                         <span asp-validation-for="RenewalCompletionThreshold"></span>
                                     </div>
                                 </div>
@@ -218,7 +218,7 @@
                                         <nop-label asp-for="ExtensionPurchaseLimit" />
                                     </div>
                                     <div class="col-md-8 col-sm-7">
-                                        <nop-editor asp-for="ExtensionPurchaseLimit" />
+                                        <nop-editor asp-for="ExtensionPurchaseLimit" asp-required="false" />
                                         <span asp-validation-for="ExtensionPurchaseLimit"></span>
                                     </div>
                                 </div>
@@ -407,8 +407,8 @@
 
             window.query_cache = {};
 
-            var disableAutoRedeem = @(Model.AssignWhenRedeemed is true?"true":"false");
-            if(disableAutoRedeem){
+            var disableAutoRedeem = @(Model.AssignWhenRedeemed is true ? "true" : "false");
+            if (disableAutoRedeem) {
                 $("#AutoRedeem").prop("disabled","true");
                 $("#AutoRedeem").parent().prop("title", "Cannot auto redeem if assign when redeemed is selected");
                 $("[data-valmsg-for=AutoRedeem]").html("(Cannot auto redeem if assign when redeemed is selected)");
