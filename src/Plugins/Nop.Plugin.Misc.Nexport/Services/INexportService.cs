@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using NexportApi.Model;
+﻿using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
@@ -108,6 +104,8 @@ public interface INexportService
     Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId);
 
     Task<NexportOrderInvoiceItem> GetNexportOrderInvoiceItem(Guid userId, Guid enrollmentId);
+
+    //Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(int orderId);
 
     Task<IPagedList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(int orderId,
         bool excludeNonApproval = false,
@@ -351,15 +349,15 @@ public interface INexportService
     #endregion
 
     Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName,
-        NexportProductTypeEnum? searchproductType, string searchStoreName, int productId, int pageIndex = 0,
+        NexportProductTypeEnum? searchProductType, string searchStoreName, int productId, int pageIndex = 0,
         int pageSize = int.MaxValue);
 
     Task<NexportOrderInvoiceItem> FindNexportOrderInvoiceItemByGuidAsync(Guid orderInvoiceItemId);
 
-    Task<Customer> FindCustomerByIdAsync(int customerId);
-
     Task<int> GetAvailableNexportGroupProductRedemptionsCountAsync(Guid? groupId, int productId,
         int? orderId = null, Customer customer = null, Store store = null);
+
+    Task<int> GetAvailableNexportRedemptionsByFundingPoolCountAsync(int? fundingPoolId);
 
     Task InsertOrUpdateWholesalePurchaseGroupAsync(WholesalePurchasingGroup wholesalePurchasingGroup);
 
@@ -399,7 +397,7 @@ public interface INexportService
 
     Task CancelAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem);
 
-    Task<bool> RefundInvoiceItem(NexportOrderInvoiceItem invoiceItem);
+    Task<bool> ProcessRefundingInvoiceItem(NexportOrderInvoiceItem invoiceItem, bool accept);
 
     Task RefundOrderItem(int quantity, int orderId, int orderItemId);
 
@@ -423,11 +421,11 @@ public interface INexportService
         int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false, bool? overridePublished = null,
         bool? hasProductMapping = null);
 
-    Task<IPagedList<WholesaleOrderInfo>> GetAllWholesaleOrderInfosAsync(string groupName, string shortName, string productName,
+    Task<IPagedList<NexportGroupProduct>> GetWholesaleOrderInfosStatistics(string groupName, string shortName, string productName,
         NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, int? customerId, int? storeId,
         int pageIndex = 0, int pageSize = int.MaxValue);
 
-    Task<IPagedList<WholesaleOrderInfo>> GetAllWholesaleOrderInfosByFundingPoolsAsync(
+    Task<IPagedList<NexportGroupProduct>> GetAllWholesaleOrderInfosByFundingPoolsAsync(
         string fundingPoolName,
         NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, int? customerId, int? storeId,
         int pageIndex = 0, int pageSize = int.MaxValue);
@@ -473,12 +471,22 @@ public interface INexportService
 
     //Task<bool> HasWholesaleOrders(Customer customer, Store store = null);
 
-    Task InsertNexportRedemptionAssignmentLogAsync(NexportRedemptionAssignmentLog assignmentRedemptionLog);
+    Task InsertNexportRedemptionAuditLogAsync(NexportRedemptionAuditLog redemptionAuditLog);
 
-    Task DeleteNexportRedemptionAssignmentLogAsync(NexportRedemptionAssignmentLog assignmentRedemptionLog);
+    Task DeleteNexportRedemptionAuditLogAsync(NexportRedemptionAuditLog redemptionAuditLog);
 
-    Task<IPagedList<ReturnRequest>> SearchReturnRequestsAsync(int storeId = 0, int customerId = 0,
-        int orderItemId = 0, string customNumber = "", ReturnRequestStatus? rs = null, DateTime? createdFromUtc = null,
-        DateTime? createdToUtc = null, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, bool includeOnlyNexportPurchases = false);
+    Task<IPagedList<NexportRedemptionAuditLog>> SearchNexportRedemptionAuditLogs(
+        Guid? invoiceItemId = null, int? customerId = null,
+        NexportRedemptionAuditLogTypeEnum? logType = null,
+        string customerName = null, string targetCustomerName = null,
+        DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
+        int pageIndex = 0, int pageSize = int.MaxValue);
 
+    Task<IPagedList<ReturnRequest>> SearchReturnRequestsAsync(
+        int storeId = 0, int customerId = 0,
+        int orderItemId = 0, string customNumber = "",
+        ReturnRequestStatus? requestStatus = null,
+        DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
+        int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false,
+        bool includeOnlyNexportPurchases = false);
 }

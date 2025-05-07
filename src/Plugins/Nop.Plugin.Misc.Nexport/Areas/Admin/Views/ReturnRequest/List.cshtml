@@ -102,73 +102,73 @@
                            LengthMenu = Model.AvailablePageSizes,
                            Filters = new List<FilterParameter>
                            {
-                                new FilterParameter(nameof(Model.StartDate), typeof(DateTime?)),
-                                new FilterParameter(nameof(Model.EndDate), typeof(DateTime?)),
-                                new FilterParameter(nameof(Model.CustomNumber)),
-                                new FilterParameter(nameof(Model.ReturnRequestStatusId))
+                                new(nameof(Model.StartDate), typeof(DateTime?)),
+                                new(nameof(Model.EndDate), typeof(DateTime?)),
+                                new(nameof(Model.CustomNumber)),
+                                new(nameof(Model.ReturnRequestStatusId))
                            },
                            ColumnCollection = new List<ColumnProperty>
                            {
-                                new ColumnProperty(nameof(NexportReturnRequestModel.CustomNumber))
+                                new(nameof(NexportReturnRequestModel.CustomNumber))
                                 {
                                     Title = T("Admin.ReturnRequests.Fields.CustomNumber").Text,
                                     Width = "100"
                                 },
-                                new ColumnProperty(nameof(NexportReturnRequestModel.ProductName))
+                                new(nameof(NexportReturnRequestModel.ProductName))
                                 {
                                     Title = T("Admin.ReturnRequests.Fields.Product").Text,
                                     Width = "350",
                                     Render = new RenderCustom("renderColumnProductName")
                                 },
-                                new ColumnProperty(nameof(NexportReturnRequestModel.Quantity))
+                                new(nameof(NexportReturnRequestModel.Quantity))
                                 {
                                     Title = T("Admin.ReturnRequests.Fields.Quantity").Text,
                                     Width = "100"
                                 },
-                                new ColumnProperty(nameof(NexportReturnRequestModel.ReturnedQuantity))
+                                new(nameof(NexportReturnRequestModel.ReturnedQuantity))
                                 {
                                     Title = T("Admin.ReturnRequests.Fields.ReturnedQuantity").Text,
                                     Width = "100"
                                 },
-                                new ColumnProperty(nameof(NexportReturnRequestModel.CustomerId))
+                                new(nameof(NexportReturnRequestModel.CustomerId))
                                 {
                                     Title = T("Admin.ReturnRequests.Fields.Customer").Text,
                                     Width = "350",
                                     Render = new RenderCustom("renderColumnCustomerInfo")
                                 },
-                                new ColumnProperty(nameof(NexportReturnRequestModel.CustomOrderNumber))
+                                new(nameof(NexportReturnRequestModel.CustomOrderNumber))
                                 {
                                     Title = T("Admin.ReturnRequests.Fields.CustomOrderNumber").Text,
                                     ClassName =  NopColumnClassDefaults.Button,
                                     Width = "200",
                                     Render = new RenderCustom("renderColumnOrderInfo")
                                 },
-                                new ColumnProperty(nameof(NexportReturnRequestModel.ReturnRequestStatusStr))
+                                new(nameof(NexportReturnRequestModel.ReturnRequestStatusStr))
                                 {
                                     Title = T("Admin.ReturnRequests.Fields.Status").Text,
                                     Width = "200"
                                 },
-                                new ColumnProperty(nameof(NexportReturnRequestModel.CreatedOn))
+                                new(nameof(NexportReturnRequestModel.CreatedOn))
                                 {
                                     Title = T("Admin.ReturnRequests.Fields.CreatedOn").Text,
                                     Width = "100",
                                     Render = new RenderDate()
                                 },
-                                new ColumnProperty(nameof(NexportReturnRequestModel.IsNexportPurchase))
+                                new(nameof(NexportReturnRequestModel.IsNexportPurchase))
                                 {
                                     Title = "Nexport Purchase",
                                     Width = "50",
                                     Render = new RenderBoolean(),
                                     ClassName = NopColumnClassDefaults.CenterAll,
                                 },
-                                new ColumnProperty(nameof(NexportReturnRequestModel.IsNexportWholesalePurchase))
+                                new(nameof(NexportReturnRequestModel.IsNexportWholesalePurchase))
                                 {
                                     Title = "Wholesale Order",
                                     Width = "50",
                                     Render = new RenderBoolean(),
                                     ClassName = NopColumnClassDefaults.CenterAll,
                                 },
-                                new ColumnProperty(nameof(ReturnRequestModel.Id))
+                                new(nameof(ReturnRequestModel.Id))
                                 {
                                     Title = T("Admin.Common.Edit").Text,
                                     Width = "100",

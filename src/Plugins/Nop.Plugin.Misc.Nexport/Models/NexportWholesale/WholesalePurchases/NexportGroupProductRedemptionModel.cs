@@ -15,6 +15,10 @@ public record NexportGroupProductRedemptionModel : BaseNopEntityModel
 
     public string ProductName { get; set; }
 
+    public int? AssignedProductId { get; set; }
+
+    public string AssignedProductName { get; set; }
+
     public int OrderId { get; set; }
 
     public string Status { get; set; } = "Available";
@@ -25,11 +29,17 @@ public record NexportGroupProductRedemptionModel : BaseNopEntityModel
 
     public Guid InvoiceItemId { get; set; }
 
-    public string PurchasedBy { get; set; }
+    public int? PurchaseByCustomerId { get; set; }
 
-    public string PurchasedIn { get; set; }
+    public string PurchasedByCustomerName { get; set; }
 
-    public int? FundingPoolId { get; set; }
+    public string PurchasedByCustomerEmail { get; set; }
+
+    public string PurchasedInStore { get; set; }
+
+    public string AssignedInStore { get; set; }
 
     public bool HasRefundRequest { get; set; }
+
+    public int? RefundRequestId { get; set; }
 }

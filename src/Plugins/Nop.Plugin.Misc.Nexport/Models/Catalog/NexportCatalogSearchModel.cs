@@ -1,5 +1,4 @@
-﻿using System;
-using Nop.Plugin.Misc.Nexport.Models.Syllabus;
+﻿using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Catalog;

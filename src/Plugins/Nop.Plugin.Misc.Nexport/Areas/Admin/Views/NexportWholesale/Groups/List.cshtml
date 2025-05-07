@@ -5,9 +5,6 @@
 
     if (!isAdminView)
     {
-        NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/uikit.min.css");
-
-        NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/uikit.min.js", "", true);
         NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/datatables.net/js/jquery.dataTables.min.js");
     }
     else
@@ -17,6 +14,9 @@
 
         NopHtml.SetActiveMenuItemSystemName("Wholesale Purchases - By Group");
     }
+
+    var title = ViewData["Title"] as string;
+    ViewBag.PageTitle = string.IsNullOrWhiteSpace(title) ? "Wholesale Purchases By Group" : title;
 
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js");
 }

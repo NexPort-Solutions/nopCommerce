@@ -477,3 +477,13 @@ div.dt-container div.dt-paging {
     border: 0;
     background: #ffffffab url("../../../Themes/DefaultClean/Content/images/remove.png") center no-repeat;
 }
+
+.submit-refund-request-button {
+    height: 36px;
+    border: none;
+    background-color: #4ab2f1;
+    padding: 0 15px;
+    text-align: center;
+    color: #fff;
+    text-transform: uppercase;
+}

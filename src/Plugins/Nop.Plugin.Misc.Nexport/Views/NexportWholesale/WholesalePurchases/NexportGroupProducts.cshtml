@@ -5,44 +5,71 @@
     const string hideSearchBlockAttributeName = "NexportGroupsPage.HideSearchBlock";
     var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
 
-    //var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
-
     var columnCollection = new List<ColumnProperty>();
+
     if (Model.HasPurchasingAgentPermissions || Model.AdminView)
     {
         columnCollection.AddRange(new List<ColumnProperty>
         {
             new(nameof(NexportGroupProductModel.GroupName))
             {
-                Title = T("Plugins.Misc.Nexport.Group.Name").Text
-            },
-            new(nameof(NexportGroupProductModel.GroupShortName))
-            {
-                Title = T("Plugins.Misc.Nexport.Group.ShortName").Text
+                Title = T("Plugins.Misc.Nexport.Group.Name").Text,
+                Width = "250",
+                Render = new RenderCustom("renderGroupInfo"),
             }
         });
     }
+
     columnCollection.AddRange(new List<ColumnProperty>
     {
         new(nameof(NexportGroupProductModel.ProductName))
         {
-            Title = T("Admin.Catalog.Products.Fields.Name").Text
+            Title = T("Admin.Catalog.Products.Fields.Name").Text,
+            Width = "150"
         },
         new(nameof(NexportGroupProductModel.Available))
         {
-            Title = T("Plugins.Misc.Nexport.Group.Product.Available").Text
+            Title = T("Plugins.Misc.Nexport.Group.Product.Available").Text,
+            Width = "100"
+        },
+        new(nameof(NexportGroupProductModel.ProcessingAvailable))
+        {
+            Title = T("Plugins.Misc.Nexport.Group.Product.ProcessingAvailable").Text,
+            Width = "100"
         },
         new(nameof(NexportGroupProductModel.Awaiting))
         {
-            Title = T("Plugins.Misc.Nexport.Group.Product.Awaiting").Text
+            Title = T("Plugins.Misc.Nexport.Group.Product.Awaiting").Text,
+            Width = "100"
+        },
+        new(nameof(NexportGroupProductModel.ProcessingAwaiting))
+        {
+            Title = T("Plugins.Misc.Nexport.Group.Product.ProcessingAwaiting").Text,
+            Width = "100"
         },
         new(nameof(NexportGroupProductModel.Redeemed))
         {
-            Title = T("Plugins.Misc.Nexport.Group.Product.Assigned").Text
+            Title = T("Plugins.Misc.Nexport.Group.Product.Assigned").Text,
+            Width = "100"
+        },
+        new(nameof(NexportGroupProductModel.ProcessingRefund))
+        {
+            Title = T("Plugins.Misc.Nexport.Group.Product.ProcessingRefund").Text,
+            Width = "100"
+        },
+        new(nameof(NexportGroupProductModel.Refunded))
+        {
+            Title = T("Plugins.Misc.Nexport.Group.Product.Refunded").Text,
+            Width = "100"
+        },
+        new(nameof(NexportGroupProductModel.Total))
+        {
+            Title = T("Plugins.Misc.Nexport.Group.Product.Total").Text,
+            Width = "100"
         },
         new(nameof(NexportGroupModel.OrganizationId))
         {
-            Width = "100",
+            Width = "150",
             Render = new RenderCustom("renderViewGroupProductRedemptions"),
             ClassName = NopColumnClassDefaults.Button,
             AutoWidth = false
@@ -144,31 +171,29 @@
     </div>
 </section>
 <script>
-    function renderViewGroupProductRedemptions(data, type, row, meta) {
-        var buttonFunction = "";
-
-        if (row.GroupId !== null) {
-            buttonFunction = "goToGroupProductRedemptions(" + row.Id + ", '" + row.GroupId + "')";
-        } else {
-            buttonFunction = "goToGroupProductRedemptions(" + row.Id + ", null)";
+    function renderGroupInfo(data, type, row, meta) {
+        var textRenderer = $.fn.dataTable.render.text().display;
+        if (row.GroupId === null) {
+            return textRenderer(row.GroupName);
         }
 
-        return renderCustomButton(buttonFunction, "far fa-eye", "@T("Plugins.Misc.Nexport.Group.Product.Button.View")");
+        return textRenderer(row.GroupName) + " (" + textRenderer(row.GroupShortName) + ")";
     }
 
-    function goToGroupProductRedemptions(productId, groupId) {
+    function renderViewGroupProductRedemptions(data, type, row, meta) {
+        var buttonFunction = "";
         var isAdminView = @Json.Serialize(Model.AdminView);
 
         var url = "";
 
-        if (groupId) {
+        if (row.GroupId) {
             if (isAdminView) {
                 url = "@Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions")"
             } else {
                 url = "@Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions")";
             }
 
-            url += "/" + productId + "/" + groupId;
+            url += "/" + row.ProductId + "/" + row.GroupId;
         } else {
             if (isAdminView) {
                 url = "@Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions")";
@@ -176,10 +201,9 @@
                 url = "@Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions")";
             }
 
-            url += "/" + productId;
+            url += "/" + row.ProductId;
         }
 
-        //window.location.href = "groupProductRedemptionsRouteUrl?GroupId=" + groupId + "&ProductId=" + productId;
-        window.location.href = url;
+        return renderCustomLinkTag(url, null, "far fa-eye", "@T("Plugins.Misc.Nexport.Group.Product.Button.View")");
     }
 </script>

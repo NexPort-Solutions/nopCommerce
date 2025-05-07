@@ -1,5 +1,4 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct
-@using Microsoft.AspNetCore.Mvc.TagHelpers
 
 @inject IWebHelper webHelper
 @inject IThemeContext themeContext
@@ -7,7 +6,6 @@
 @model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProductModel
 
 @{
-    var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
     var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
 
     var groupText = Model.CurrentGroup.OrganizationId != null ? Model.CurrentGroup.Name : (Model.AdminView ? @T("Plugins.Misc.Nexport.Group.NoGroup").Text : T("Plugins.Misc.Nexport.Group.Products").Text);
@@ -22,6 +20,11 @@
 
     var themeName = await themeContext.GetWorkingThemeNameAsync();
     var backIconLink = $"{storeLocation}Themes/{themeName}/Content/images/back-button.png";
+
+    if (Model.AdminView)
+    {
+        ViewBag.PageTitle = "Product Assignment";
+    }
 }
 
 <style>
@@ -54,60 +57,91 @@
                                 </div>
                                 <div id="assign-step-customer" class="step a-item" style="display: none;">
                                     <form id="as-customer-form" action="" method="post">
-                                        <div id="assignment-customer-load">
-                                            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/NexportWHolesale/WholesalePurchases/RedeemProduct/_CustomerStep.cshtml", new CustomerStepModel
+                                        <div id="assignment-customer-load" class="container-fluid">
+                                            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/NexportWHolesale/WholesalePurchases/RedeemProduct/_CustomerStep.cshtml",
+                                            new CustomerStepModel
                                             {
                                                 ProductId = Model.CurrentProduct.Id,
-                                                GroupId = Model.CurrentGroup.OrganizationId
+                                                GroupId = Model.CurrentGroup.OrganizationId,
+                                                AdminView = Model.AdminView
                                             })
                                         </div>
                                     </form>
                                     <script asp-location="Footer">
                                         Customer.init('#as-customer-form', "@Url.Action("AsnSaveCustomer", "NexportWholesale")");
                                     </script>
-                                    <div class="buttons" id="customer-buttons-container" style="margin-top: 40px;display: flex;justify-content: flex-end">
+                                    <div class="buttons" id="customer-buttons-container">
                                         <button id="CustomerContinue" type="button" name="save" class="button-1" onclick="Customer.continue()">@T("Common.Continue")</button>
                                         <span class="please-wait" id="customer-please-wait" style="display: none;">@T("Common.LoadingNextStep")</span>
                                     </div>
                                 </div>
                             </li>
-                            <li id="assign-product" class="tab-section">
+                            @if (Model.AvailableMappings.Count > 1)
+                            {
+                                <li id="assign-product" class="tab-section">
+                                    <div class="step-title">
+                                        <span class="number">2</span>
+                                        <h2 class="title">@T("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.SelectProduct")</h2>
+                                    </div>
+                                    <div id="assign-step-product" class="step a-item" style="display: none;">
+                                        <form id="as-product-form" action="" method="post">
+                                            <div id="assignment-product-load" class="container-fluid">
+                                            </div>
+                                        </form>
+                                        <script asp-location="Footer">
+                                            Product.init('#as-product-form', "@Url.Action("AsnSaveProduct", "NexportWholesale")");
+                                        </script>
+                                        <div class="buttons" id="product-buttons-container">
+                                            <p class="back-link">
+                                                <a href="#" onclick="Assign.back(); return false; "><small>&laquo; </small>@T("Common.Back")</a>
+                                            </p>
+                                            <button type="button" name="save" class="button-1" onclick="Product.save()">@T("Common.Continue")</button>
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+                            <li id="assign-options" class="tab-section">
                                 <div class="step-title">
-                                    <span class="number">2</span>
-                                    <h2 class="title">@T("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.SelectProduct")</h2>
+                                    @{
+                                        var addtionalOptionStepNumber = Model.AvailableMappings.Count > 1 ? 3 : 2;
+                                    }
+                                    <span class="number">@addtionalOptionStepNumber</span>
+                                    <h2 class="title">Additional options</h2>
                                 </div>
-                                <div id="assign-step-product" class="step a-item" style="display: none;">
-                                    <form id="as-product-form" action="" method="post">
-                                        <div id="assignment-product-load">
-                                            @*product content will be loaded here*@
+                                <div id="assign-step-product-options" class="step a-item" style="display: none;">
+                                    <form id="as-options-form" action="" method="post">
+                                        <div id="assignment-options-load" class="container-fluid">
                                         </div>
                                     </form>
                                     <script asp-location="Footer">
-                                        Product.init('#as-product-form', "@Url.Action("AsnSaveProduct", "NexportWholesale")");
+                                        ProductOptions.init('#as-options-form', "@Url.Action("AsnProductOptions", "NexportWholesale")", "@groupProductRedemptionsRouteUrl" + "?groupId=" + "@currentGroupId" + "&productId=" + "@Model.CurrentProduct.Id");
                                     </script>
-                                    <div class="buttons" id="product-buttons-container" style="margin-top: 40px;display: flex;justify-content: space-between;">
+                                    <div class="buttons" id="product-options-buttons-container">
                                         <p class="back-link">
                                             <a href="#" onclick="Assign.back(); return false; "><small>&laquo; </small>@T("Common.Back")</a>
                                         </p>
-                                        <button type="button" name="save" class="button-1" onclick="Product.save()">@T("Common.Continue")</button>
+                                        <button type="button" name="save" class="button-1" onclick="ProductOptions.save()">@T("Common.Continue")</button>
                                     </div>
                                 </div>
                             </li>
                             <li id="assign-confirm" class="tab-section">
                                 <div class="step-title">
-                                    <span class="number">3</span>
+                                    @{
+                                        var finalStepNumber = Model.AvailableMappings.Count > 1 ? 4 : 3;
+                                    }
+                                    <span class="number">@finalStepNumber</span>
                                     <h2 class="title">@T("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Confirm")</h2>
                                 </div>
                                 <div id="assign-step-confirm" class="step a-item" style="display: none;">
                                     <form id="as-confirm-form" action="" method="post">
-                                        <div id="assignment-confirm-load">
+                                        <div id="assignment-confirm-load" class="container-fluid">
                                             @*confirm content will be loaded here*@
                                         </div>
                                     </form>
                                     <script asp-location="Footer">
                                         Confirm.init('#as-confirm-form', "@Url.Action("AsnSaveConfirm", "NexportWholesale")", "@groupProductRedemptionsRouteUrl" + "?groupId=" + "@currentGroupId" + "&productId=" + "@Model.CurrentProduct.Id");
                                     </script>
-                                    <div class="buttons" id="confirm-buttons-container" style="margin-top: 40px;display: flex;justify-content: space-between;">
+                                    <div class="buttons" id="confirm-buttons-container">
                                         <p class="back-link">
                                             <a href="#" onclick="Assign.back(); return false; "><small>&laquo; </small>@T("Common.Back")</a>
                                         </p>

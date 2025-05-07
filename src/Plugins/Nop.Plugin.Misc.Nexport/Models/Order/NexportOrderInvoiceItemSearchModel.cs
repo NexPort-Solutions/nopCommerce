@@ -6,8 +6,8 @@ public record NexportOrderInvoiceItemSearchModel : BaseSearchModel
 {
     public NexportOrderInvoiceItemSearchModel()
     {
-            SetGridPageSize();
-        }
+        SetGridPageSize();
+    }
 
     public int OrderId { get; set; }
 }

@@ -1,0 +1,22 @@
+@model Nop.Plugin.Misc.Nexport.Models.Widget.NexportProductDetailsAfterBreadcrumbWidgetModel
+
+@if (Model.TotalPurchases > 0)
+{
+    @if (Model.LastPurchaseOrderId != null && Model.LastPurchaseDate != null)
+    {
+        <div class="previous-purchase-info" style="background-color: #f6f6f6; padding: 16px; border-left: 6px solid #4ab2f1;">
+            @if (Model.TotalPurchases > 1)
+            {
+                <span style="font-size: 18px; font-weight: 700; color: #444; margin-bottom: 10px;">
+                    Purchased @Model.TotalPurchases times
+                </span>
+                <br />
+            }
+            <span style="font-size: 18px; font-weight: 500; margin-bottom: 10px;">
+                Last purchased @Model.LastPurchaseDate?.ToString("MMM d, yyyy")
+            </span>
+            <br />
+            <a href="@Url.RouteUrl("OrderDetails", new { orderId = Model.LastPurchaseOrderId })" style="text-decoration: none; color: #4ab2f1">View order</a>
+        </div>
+    }
+}

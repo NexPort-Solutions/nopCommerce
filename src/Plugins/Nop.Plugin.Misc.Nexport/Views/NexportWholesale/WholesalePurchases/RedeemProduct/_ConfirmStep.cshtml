@@ -1,42 +1,116 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct.ConfirmStepModel
+﻿@using Nop.Plugin.Misc.Nexport.Extensions
+@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct.ConfirmStepModel
+
+<input type="hidden" asp-for="@Model.PurchasingProductMappingId" />
 
 <div class="form-group row">
-    <div class="col-sm-4">
+    <div class="col-sm-5">
         <nop-label asp-for="Email"></nop-label>
     </div>
-    <div class="col-sm-8" style="text-align:left">
-        <div class="col-form-label"> @Model.Email</div>
+    <div class="col-sm-7 text-left">
+        <div class="col-form-label">@Model.Email</div>
     </div>
 </div>
 <div class="form-group row">
-    <div class="col-sm-4">
+    <div class="col-sm-5">
         <nop-label asp-for="FirstName"></nop-label>
     </div>
-    <div class="col-sm-8" style="text-align:left">
-        <div class="col-form-label"> @Model.FirstName</div>
+    <div class="col-sm-7 text-left">
+        <div class="col-form-label">@Model.FirstName</div>
     </div>
 </div>
 <div class="form-group row">
-    <div class="col-sm-4">
+    <div class="col-sm-5">
         <nop-label asp-for="LastName"></nop-label>
     </div>
-    <div class="col-sm-8" style="text-align:left">
-        <div class="col-form-label"> @Model.LastName</div>
+    <div class="col-sm-7 text-left">
+        <div class="col-form-label">@Model.LastName</div>
     </div>
 </div>
 <div class="form-group row">
-    <div class="col-sm-4">
+    <div class="col-sm-5">
         <nop-label asp-for="Product"></nop-label>
     </div>
-    <div class="col-sm-8" style="text-align:left">
-        <div class="col-form-label"> @Model.Product</div>
+    <div class="col-sm-7 text-left">
+        <div class="col-form-label">@Model.Product</div>
     </div>
 </div>
 <div class="form-group row">
-    <div class="col-sm-4">
+    <div class="col-sm-5">
+        <nop-label asp-for="RedeemingProduct"></nop-label>
+    </div>
+    <div class="col-sm-7 text-left">
+        <div class="col-form-label">@Model.RedeemingProduct</div>
+    </div>
+</div>
+<div class="form-group row">
+    <div class="col-sm-5">
         <nop-label asp-for="SendViaEmail"></nop-label>
     </div>
-    <div class="col-sm-8" style="text-align:left">
+    <div class="col-sm-7 text-left">
         <div class="col-form-label">@Model.SendViaEmail</div>
     </div>
 </div>
+@if (Model.UtcStartDate != null)
+{
+    <div class="form-group row">
+        <div class="col-sm-5">
+            <nop-label asp-for="UtcStartDate"></nop-label>
+        </div>
+        <div class="col-sm-7 text-left">
+            <div class="col-form-label">@Model.UtcStartDate</div>
+        </div>
+    </div>
+}
+@if (Model.StoreId != null)
+{
+    <input type="hidden" name="StoreId" value="@Model.StoreId" />
+    <div class="form-group row">
+        <div class="col-sm-5">
+            <nop-label asp-for="StoreName"></nop-label>
+        </div>
+        <div class="col-sm-7 text-left">
+            <div class="col-form-label">@Model.StoreName</div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-sm-5">
+            <div class="label-wrapper">
+                <label class="col-form-label">Group memberships:</label>
+            </div>
+        </div>
+        <div class="col-sm-7 text-left">
+            @{
+                var groupMembershipText = string.Join(", ", Model.GroupMembershipMappings.Select(x => $"{x.NexportGroupName} ({x.NexportGroupShortName})").ToList());
+            }
+            <div class="col-form-label">
+                @(groupMembershipText)
+            </div>
+        </div>
+    </div>
+}
+@if (Model.PurchasingGroupId != null)
+{
+    <input type="hidden" name="PurchasingGroupId" value="@Model.PurchasingGroupId" />
+    <div class="form-group row">
+        <div class="col-sm-5">
+            <nop-label asp-for="PurchasingGroupName"></nop-label>
+        </div>
+        <div class="col-sm-7 text-left">
+            <div class="col-form-label">@Model.PurchasingGroupName</div>
+        </div>
+    </div>
+}
+@if (Model.ExtensionOption != null)
+{
+    <input type="hidden" name="ExtensionOption" value="@Model.ExtensionOption" />
+    <div class="form-group row">
+        <div class="col-sm-5">
+            <nop-label asp-for="ExtensionOption"></nop-label>
+        </div>
+        <div class="col-sm-7 text-left">
+            <div class="col-form-label">@Model.ExtensionOption.GetDisplayName()</div>
+        </div>
+    </div>
+}

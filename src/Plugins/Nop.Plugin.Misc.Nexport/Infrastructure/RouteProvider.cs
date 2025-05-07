@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Nop.Web.Framework.Mvc.Routing;
 
@@ -94,12 +96,16 @@ public class RouteProvider : IRouteProvider
             new { area = "Admin", controller = "NexportWholesale", action = "AdminNexportWholesalePurchasesByFundingPoolsRedemptionList" });
 
         endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Wholesale.Purchase.ByFundingPools.Redemptions.Redeem",
-            "Admin/Wholesale/Purchases/ByFundingPools/Redemptions/Redeem",
-            new { area = "Admin", controller = "NexportWholesale", action = "RedeemProduct" });
+            "Admin/Wholesale/Purchases/RedemptionAuditLog/List",
+            new { area = "Admin", controller = "NexportWholesale", action = "RedemptionAuditLogList" });
 
         //endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Groups",
         //    "customer/nexportgroups",
         //    new { controller = "NexportWholesale", action = "CustomerNexportGroups" });
+
+        endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Admin.Wholesale.Purchase.RedemptionAuditLog.List",
+            "Admin/Wholesale/Purchases/ByFundingPools/List",
+            new { area = "Admin", controller = "NexportWholesale", action = "AdminNexportWholesalePurchasesByFundingPoolsList" });
 
         endpointRouteBuilder.MapControllerRoute("Plugin.Misc.Nexport.Customer.Group.Products",
             "customer/nexportgroups/products",
@@ -120,5 +126,13 @@ public class RouteProvider : IRouteProvider
         endpointRouteBuilder.MapControllerRoute(name: "RedeemByEmail",
             pattern: "redeembyemail/{invoiceItemId:min(0)}",
             defaults: new { controller = "NexportWholesale", action = "RedeemByEmail" });
+
+        endpointRouteBuilder.MapControllerRoute(name: "VerifyExistingEnrollmentForRedemption",
+            "verifyexistingenrollmentforredemption",
+            new { controller = "NexportIntegration", action = "VerifyExistingEnrollmentForRedemption" });
+
+        endpointRouteBuilder.MapControllerRoute(name: "ReturnRequest",
+            pattern: "returnrequest/{orderId:min(0)}",
+            new { controller = "NexportReturnRequest", action = "ReturnRequest" });
     }
 }

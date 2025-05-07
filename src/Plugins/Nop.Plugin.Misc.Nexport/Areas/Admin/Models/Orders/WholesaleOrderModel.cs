@@ -11,7 +11,7 @@ public class WholesaleOrderModel
     [NopResourceDisplayName("Admin.CurrentCarts.Store")]
     public int StoreId { get; set; }
 
-    [NopResourceDisplayName("Plugins.Misc.Nexport.Organization")]
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Order.GroupId")]
     [UIHint("GuidNullable")]
     public Guid? OrganizationId { get; set; }
 
@@ -32,13 +32,13 @@ public class WholesaleOrderModel
     [UIHint("Int32Nullable")]
     public int? FundingPoolId { get; set; }
 
-    public List<SelectListItem> AvailableStores { get; set; } = new();
+    public List<SelectListItem> AvailableStores { get; set; } = [];
 
-    public List<SelectListItem> AvailablePaymentMethods { get; set; } = new();
+    public List<SelectListItem> AvailablePaymentMethods { get; set; } = [];
 
-    public List<SelectListItem> AvailableOrganizations { get; set; } = new();
+    public List<SelectListItem> AvailableOrganizations { get; set; } = [];
 
-    public List<SelectListItem> AvailableFundingPools { get; set; } = new();
+    public List<SelectListItem> AvailableFundingPools { get; set; } = [];
 
     public string Error { get; set; }
 }

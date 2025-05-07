@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
+﻿using System.Dynamic;
 using System.Net;
-using System.Threading.Tasks;
-using DocumentFormat.OpenXml.EMMA;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -579,6 +574,8 @@ public class NexportIntegrationController : BasePluginController,
             model.HideSectionCEUsInProductPage, store.Id);
         await _genericAttributeService.SaveAttributeAsync(store, NexportDefaults.HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY,
             model.HideAddToCartForIneligibleProducts, store.Id);
+        await _genericAttributeService.SaveAttributeAsync(store, NexportDefaults.DISPLAY_LAST_PURCHASE_INFO,
+            model.DisplayLastPurchaseInfo, store.Id);
 
         _notificationService.SuccessNotification("Success update Nexport store configuration");
 
@@ -862,16 +859,12 @@ public class NexportIntegrationController : BasePluginController,
 
     [AuthorizeAdmin]
     [Area(AreaNames.ADMIN)]
-    //public async Task<IActionResult> GetCatalogList(Guid? orgId, int nopProductId)
     public async Task<IActionResult> GetCatalogList(NexportCatalogSearchModel searchModel)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
             !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
             return await AccessDeniedDataTablesJson();
-
-        //var searchModel = new NexportCatalogSearchModel { OrgId = orgId, NopProductId = nopProductId };
-        //searchModel.SetGridPageSize();
 
         return View("~/Plugins/Misc.Nexport/Views/MapNexportProductList.cshtml", searchModel);
     }
@@ -3312,7 +3305,7 @@ public class NexportIntegrationController : BasePluginController,
                     }
                 }
 
-                await _genericAttributeService.SaveAttributeAsync<bool>(order, "IsWholesaleOrder", isWholesale, store.Id);
+                await _genericAttributeService.SaveAttributeAsync(order, "IsWholesaleOrder", isWholesale, store.Id);
             }
         }
     }
@@ -3663,19 +3656,17 @@ public class NexportIntegrationController : BasePluginController,
                 redeemingUserId = userMapping.NexportUserId;
             }
 
-            var nexportOrderInvoiceItem =
-                await _nexportService.FindNexportOrderInvoiceItemById(orderItemInvoiceId);
+            var nexportOrderInvoiceItem = await _nexportService.FindNexportOrderInvoiceItemById(orderItemInvoiceId);
 
             var order = await _orderService.GetOrderByIdAsync(nexportOrderInvoiceItem.OrderId);
 
             try
             {
-                var isWholesale = await _genericAttributeService.GetAttributeAsync<bool>(order, "isWholesaleOrder", order.StoreId);
+                var isWholesale = await _genericAttributeService.GetAttributeAsync<bool>(order, "IsWholesaleOrder", order.StoreId);
 
                 if (isWholesale)
                 {
-                    var redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem,
-                         redeemingUserId.Value);
+                    var redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem, redeemingUserId.Value);
                     if (redeemed)
                     {
                         var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(order.Id, nexportOrderInvoiceItem.OrderItemId);
@@ -3690,8 +3681,7 @@ public class NexportIntegrationController : BasePluginController,
                 }
                 else
                 {
-                    await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem,
-                        redeemingUserId.Value);
+                    await _nexportService.RedeemNexportInvoiceItemAsync(nexportOrderInvoiceItem, redeemingUserId.Value);
                 }
 
                 await _nexportService.AddOrderNoteAsync(order,
@@ -3870,5 +3860,38 @@ public class NexportIntegrationController : BasePluginController,
         var model = await _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldAnswerListModel(searchModel);
 
         return Json(model);
+    }
+
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> VerifyExistingEnrollmentForRedemption(int? storeId)
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var productId = await _genericAttributeService.GetAttributeAsync<int>(customer, "RedeemProductModel_ProductId");
+        var redeemingProductId = await _genericAttributeService.GetAttributeAsync<int?>(customer, "RedeemProductModel_RedeemingProductId");
+
+        var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+        if (userMapping == null)
+            throw new Exception("User mapping not found!");
+
+        NexportProductMapping productMapping;
+        if (redeemingProductId != null)
+        {
+            productMapping = await _nexportService.GetProductMappingByNopProductId(redeemingProductId.Value, storeId)
+                             ?? await _nexportService.GetProductMappingByNopProductId(redeemingProductId.Value);
+        }
+        else
+        {
+            productMapping = await _nexportService.GetProductMappingByNopProductId(productId, storeId)
+                             ?? await _nexportService.GetProductMappingByNopProductId(productId);
+        }
+
+        if (productMapping == null)
+            throw new Exception("Product mapping not found!");
+
+        var existingEnrollmentStatus = await _nexportService.VerifyNexportEnrollmentStatusAsync(productMapping, userMapping);
+
+        var model = await _nexportPluginModelFactory.PrepareRedeemActionModel(existingEnrollmentStatus != null);
+
+        return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ProductOptionStep.RedeemAction.cshtml", model);
     }
 }

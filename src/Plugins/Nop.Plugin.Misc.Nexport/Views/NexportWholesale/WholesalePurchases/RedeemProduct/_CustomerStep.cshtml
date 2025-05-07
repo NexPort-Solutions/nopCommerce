@@ -1,9 +1,11 @@
-﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
-@using Nop.Plugin.Misc.Nexport.Models.NexportWholesale
+﻿@using Nop.Plugin.Misc.Nexport.Models.NexportWholesale
+
 @inject NexportSettings NexportSettings
+
 @model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct.CustomerStepModel
+
 @{
-    Uri.TryCreate(new Uri(NexportSettings.Url.TrimEnd('/')), "Account/Info.nex?user=",out var userInfoUrl);
+    Uri.TryCreate(new Uri(NexportSettings.Url.TrimEnd('/')), "Account/Info.nex?user=", out var userInfoUrl);
 
     var userLinkUri = userInfoUrl != null ? userInfoUrl.AbsoluteUri : "";
 }
@@ -11,71 +13,81 @@
     <label>@T("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.SearchHeader")</label>
 </div>
 <div class="form-group row section">
-    <div class="col-sm-4">
+
+    <div class="col-md-3 col-lg-4">
         <nop-label asp-for="SearchEmail" />
     </div>
-    <div class="col-sm-4">
-        <nop-editor asp-for="SearchEmail" />
-    </div>
-    <div class="col-sm-2">
-        <button id="search-nexport-users" class="button-1" type="button" onclick="SearchClicked()">search</button>
+    <div class="col-md-9 col-lg-8">
+        <div class="input-group input-group-short">
+            <nop-editor asp-for="SearchEmail" />
+            <span class="input-group-append">
+                <button id="search-nexport-users" class="btn btn-info btn-flat" type="button" onclick="SearchClicked()">Search</button>
+            </span>
+        </div>
     </div>
 </div>
 <input type="hidden" asp-for="@Model.GroupId" value="@Model.GroupId" />
 <input type="hidden" asp-for="@Model.ProductId" value="@Model.ProductId" />
-
-<div class="section" id="search-table-div" style="display: none">
-    <div id="matching-users-grid_processing" class="dataTables_processing" style="display: none;">Loading...</div>
-    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new DataTablesModel
-    {
-        Name = "matching-users-grid",
-        UrlRead = new DataUrl(Url.Action("GetMatchingUsers", "NexportWholesale")),
-        Length = Model.PageSize,
-        LengthMenu = Model.AvailablePageSizes,
-        SearchButtonId = "search-nexport-users",
-        HeaderCallback = "headerCallback",
-        Filters = new List<FilterParameter>
-        {
-            new(nameof(Model.SearchEmail)),
-            new(nameof(Model.TableFirstDraw)),
-            new(nameof(Model.GroupId)),
-            new(nameof(Model.ProductId))
-        },
-        ColumnCollection = new List<ColumnProperty>
-        {
-            new(nameof(NexportUserModel.UserId))
+<div class="form-group row section">
+    <div class="@(Model.AdminView ? "d-xs-none col-md-2 col-lg-4" : "d-xs-none col-md-2 col-lg-2")">
+    </div>
+    <div class="@(Model.AdminView ? "col-xs-12 col-md-8 col-lg-4" : "col-xs-12 col-md-8 col-lg-8")">
+        <div class="section" id="search-table-div" style="display: none">
+            <div id="matching-users-grid_processing" class="dataTables_processing" style="display: none;">Loading...</div>
+            @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new DataTablesModel
             {
-                Encode = false,
-                Render = new RenderCustom("RenderRadio"),
-                Width = "100"
-            },
-            new(nameof(NexportUserModel.FirstName))
-            {
-                Title = "Name",
-                Encode = false,
-                Render = new RenderCustom("RenderName"),
-                Width = "300"
-            },
-            new(nameof(NexportUserModel.Email))
-            {
-                Title = "Email",
-                Encode = false,
-                Width = "400"
-            },
-            new(nameof(NexportUserModel.OwnerOrg))
-            {
-                Title = "Owner Org",
-                Encode = false,
-                Render = new RenderCustom("RenderOrgName"),
-                Width = "200"
-            }
-        }
-    })
-    <input asp-for="TableFirstDraw" type="hidden"/>
-    <input type="hidden" asp-for="SelectedUserId"/>
-    <input type="hidden" asp-for="SelectedUserEmailAddress"/>
-    <input type="hidden" asp-for="SelectedUserFirstName"/>
-    <input type="hidden" asp-for="SelectedUserLastName"/>
+                Name = "matching-users-grid",
+                UrlRead = new DataUrl(Url.Action("GetMatchingUsers", "NexportWholesale")),
+                Length = Model.PageSize,
+                LengthMenu = Model.AvailablePageSizes,
+                SearchButtonId = "search-nexport-users",
+                HeaderCallback = "headerCallback",
+                Filters = new List<FilterParameter>
+                {
+                    new(nameof(Model.SearchEmail)),
+                    new(nameof(Model.TableFirstDraw)),
+                    new(nameof(Model.GroupId)),
+                    new(nameof(Model.ProductId))
+                },
+                ColumnCollection = new List<ColumnProperty>
+                {
+                    new(nameof(NexportUserModel.UserId))
+                    {
+                        Encode = false,
+                        Render = new RenderCustom("RenderRadio"),
+                        Width = "50"
+                    },
+                    new(nameof(NexportUserModel.FirstName))
+                    {
+                        Title = "Name",
+                        Encode = false,
+                        Render = new RenderCustom("RenderName"),
+                        Width = "300"
+                    },
+                    new(nameof(NexportUserModel.Email))
+                    {
+                        Title = "Email",
+                        Encode = false,
+                        Width = "400"
+                    },
+                    new(nameof(NexportUserModel.OwnerOrg))
+                    {
+                        Title = "Owner Org",
+                        Encode = false,
+                        Render = new RenderCustom("RenderOrgName"),
+                        Width = "200"
+                    }
+                }
+            })
+            <input asp-for="TableFirstDraw" type="hidden" />
+            <input type="hidden" asp-for="SelectedUserId" />
+            <input type="hidden" asp-for="SelectedUserEmailAddress" />
+            <input type="hidden" asp-for="SelectedUserFirstName" />
+            <input type="hidden" asp-for="SelectedUserLastName" />
+        </div>
+    </div>
+    <div class="@(Model.AdminView ? "d-xs-none col-md-2 col-lg-4" : "d-xs-none col-md-2 col-lg-2")">
+    </div>
 </div>
 <div class="section">
     <span asp-validation-for="SelectedUserId"></span>
@@ -86,28 +98,28 @@
         <label>@T("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.EnterNewHeader")</label>
     </div>
     <div class="form-group row section">
-        <div class="col-sm-4">
+        <div class="col-md-3 col-lg-4">
             <nop-label asp-for="Email" />
         </div>
-        <div class="col-sm-4">
-            <nop-editor asp-for="Email"/>
+        <div class="col-md-9 col-lg-8">
+            <nop-editor asp-for="Email" />
             <span asp-validation-for="Email"></span>
         </div>
     </div>
     <div class="form-group row section">
-        <div class="col-sm-4">
+        <div class="col-md-3 col-lg-4">
             <nop-label asp-for="FirstName" />
         </div>
-        <div class="col-sm-4">
+        <div class="col-md-9 col-lg-8">
             <nop-editor asp-for="FirstName" />
             <span asp-validation-for="FirstName"></span>
         </div>
     </div>
     <div class="form-group row section">
-        <div class="col-sm-4">
+        <div class="col-md-3 col-lg-4">
             <nop-label asp-for="LastName" />
         </div>
-        <div class="col-sm-4">
+        <div class="col-md-9 col-lg-8">
             <nop-editor asp-for="LastName" />
             <span asp-validation-for="LastName"></span>
         </div>
@@ -116,27 +128,29 @@
 <script>
     $(document).ready(function () {
         $("#Email").on("blur", function(){
-            if($("#Email").val().length>0)
+            if($("#Email").val().length > 0)
             {
-                $("input[name=select-nexport-user]:checked").prop("checked",false);
+                $("input[name=select-nexport-user]:checked").prop("checked", false);
                 SetInputValsForSelectedRadio(null, null, null, null);
             }
             $("#Email").valid();
         });
-        $("#FirstName").on("blur",function(){
+
+        $("#FirstName").on("blur",function() {
             $("#FirstName").valid();
         });
+
         $("#LastName").on("blur", function () {
             $("#LastName").valid();
         })
     });
 
     function SearchClicked(){
-        if ($("#TableFirstDraw").val() == "True") {
+        if ($("#TableFirstDraw").val() === "True") {
             $("#TableFirstDraw").val("False");
         }
 
-        if ($("#search-table-div").css("display") == "none") {
+        if ($("#search-table-div").css("display") === "none") {
             $("#search-table-div").css("display", "initial")
         }
     }
@@ -144,6 +158,7 @@
     function SelectedUserClicked(radio) {
         if (radio.checked) {
             SetInputValsForSelectedRadio(radio.dataset.userId, radio.dataset.firstName, radio.dataset.lastName, radio.dataset.emailAddress);
+
             $(".field-validation-error").empty();
             $("#Email").val("");
             $("#FirstName").val("");
@@ -151,8 +166,7 @@
         }
     }
 
-    function SetInputValsForSelectedRadio(userId,firstName,lastName,emailAddress)
-    {
+    function SetInputValsForSelectedRadio(userId,firstName,lastName,emailAddress) {
         $("#SelectedUserId").val(userId);
         $("#SelectedUserFirstName").val(firstName);
         $("#SelectedUserLastName").val(lastName);
@@ -183,7 +197,7 @@
         {
             SetInputValsForSelectedRadio(null, null, null, null);
 
-            if ($("#search-table-div").css("display") == "none") {
+            if ($("#search-table-div").css("display") === "none") {
                 $("#search-table-div").css("display", "initial")
             }
         }

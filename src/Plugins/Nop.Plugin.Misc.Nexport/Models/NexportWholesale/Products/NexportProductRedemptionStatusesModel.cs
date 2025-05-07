@@ -14,5 +14,8 @@ public record NexportProductRedemptionStatusesModel : BaseNopModel
     [NopResourceDisplayName("Assigned")]
     public int Assigned { get; set; }
 
+    [NopResourceDisplayName("Refunded")]
+    public int Refunded { get; set; }
+
     public int ProductId { get; set;}
 }

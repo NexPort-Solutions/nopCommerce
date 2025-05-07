@@ -11,6 +11,8 @@ public class NexportOrderInvoiceRedemptionQueueItem : BaseEntity
 
     public int ProductMappingId { get; set; }
 
+    public int? RedeemingProductMappingId { get; set; }
+
     public int OrderItemId { get; set; }
 
     public DateTime UtcDateCreated { get; set; }
@@ -20,4 +22,6 @@ public class NexportOrderInvoiceRedemptionQueueItem : BaseEntity
     public int RetryCount { get; set; }
 
     public int? ManualApprovalAction { get; set; }
+
+    public DateTime? UtcProcessingDate { get; set; }
 }

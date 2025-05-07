@@ -10,6 +10,7 @@ using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.ReturnRequest;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -214,6 +215,9 @@ public class NexportPluginMapperConfiguration : Profile, IOrderedMapperProfile
 
         CreateMap<ReturnRequest, NexportReturnRequestModel>();
         CreateMap<ReturnRequestModel, NexportReturnRequestModel>();
+
+        CreateMap<NexportRedemptionAuditLog, NexportRedemptionAuditLogModel>();
+        CreateMap<NexportRedemptionAuditLogModel, NexportRedemptionAuditLog>();
     }
 
     public int Order => 0;

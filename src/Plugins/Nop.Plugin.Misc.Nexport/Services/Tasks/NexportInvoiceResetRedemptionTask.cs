@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using NexportApi.Model;
+﻿using NexportApi.Model;
 using Nop.Core.Domain.Orders;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Services.Cms;
 using Nop.Services.Common;
@@ -126,7 +123,7 @@ public class NexportInvoiceResetRedemptionTask : IScheduleTask
 
                                             invoiceItem = await _nexportService.ResetInvoiceRedemptionAsync(invoiceItem);
 
-                                            // if something fails and redemption code comes back null
+                                            // If something fails and redemption code comes back null
                                             // then try to get the invoice redemption from api one more time
                                             if (invoiceItem.InvoiceItemRedemptionCode == null)
                                             {
@@ -145,23 +142,25 @@ public class NexportInvoiceResetRedemptionTask : IScheduleTask
                                             }
                                             else
                                             {
-                                                invoiceItem.RedemptionStatus = invoiceItem.RedemptionStatus switch
-                                                {
-                                                    NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable =>
-                                                        NexportOrderInvoiceItemRedemptionStatus.Available,
-                                                    NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting =>
-                                                        NexportOrderInvoiceItemRedemptionStatus.Awaiting,
-                                                    _ => invoiceItem.RedemptionStatus
-                                                };
-
-                                                //update invoice item with new redemption code so it can be reassigned later
-                                                await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
-
                                                 var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(order.Id, orderItem.Id);
                                                 if (wholesaleOrderInfo != null)
                                                 {
+                                                    if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable)
+                                                    {
+                                                        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Available;
+                                                        wholesaleOrderInfo.ProcessingAvailable--;
+
+                                                    }
+                                                    else if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting)
+                                                    {
+                                                        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Awaiting;
+                                                        wholesaleOrderInfo.ProcessingAwaiting--;
+                                                    }
+
                                                     wholesaleOrderInfo.Available++;
 
+                                                    // Update invoice item with new redemption code so it can be reassigned later
+                                                    await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
                                                     await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
                                                 }
 
@@ -171,6 +170,20 @@ public class NexportInvoiceResetRedemptionTask : IScheduleTask
                                                     $"Nexport invoice item {invoiceItem.InvoiceItemId} that was assigned to user {oldUserId} has been reset");
 
                                                 await _logger.InformationAsync($"Order invoice reset redemption queue item {queueItemId} for order {order.Id} has been processed and removed!");
+
+                                                var previousUser = await _nexportService.FindUserMappingByNexportUserId(oldUserId.Value);
+                                                if (previousUser != null)
+                                                {
+                                                    await _nexportService.InsertNexportRedemptionAuditLogAsync(
+                                                        new NexportRedemptionAuditLog
+                                                        {
+                                                            InvoiceItemId = invoiceItem.InvoiceItemId,
+                                                            CustomerId = previousUser.NopUserId,
+                                                            Description = "Invoice item had been unassigned",
+                                                            Type = NexportRedemptionAuditLogTypeEnum.UnassignRedemption,
+                                                            UtcDateCreated = DateTime.UtcNow
+                                                        });
+                                                }
                                             }
                                         }
                                     }
@@ -216,7 +229,7 @@ public class NexportInvoiceResetRedemptionTask : IScheduleTask
     private async Task DeleteResetRedemptionQueueItemAndAddFinalOrderNote(Order order,
         NexportOrderInvoiceResetRedemptionQueueItem queueItem, NexportOrderInvoiceItem invoiceItem)
     {
-        await _nexportService.AddOrderNoteAsync(order, $"Nexport invoice item with id:{invoiceItem.InvoiceItemId} redemption cannot be reset");
+        await _nexportService.AddOrderNoteAsync(order, $"Nexport invoice item with Id: {invoiceItem.InvoiceItemId} redemption cannot be reset");
 
         await _nexportService.DeleteNexportOrderInvoiceResetRedemptionQueueItem(queueItem);
     }

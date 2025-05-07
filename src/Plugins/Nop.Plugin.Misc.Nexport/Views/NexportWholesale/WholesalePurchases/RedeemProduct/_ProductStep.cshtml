@@ -1,10 +1,12 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct.ProductStepModel
 
+<input type="hidden" asp-for="@Model.IsOpenEnded" />
+
 <div class="form-group row section">
-     <div class="col-sm-3">
-         <nop-label asp-for="SelectedProductMappingId"/>
+    <div class="col-sm-3">
+         <nop-label asp-for="SelectedProductId" />
     </div>
     <div class="col-sm-9">
-        <nop-select asp-for="SelectedProductMappingId" asp-items="Model.AvailableMappings" asp-multiple="false" title="Select Product" asp-required="false"/>
+        <nop-select asp-for="SelectedProductId" asp-items="Model.AvailableMappings" asp-multiple="false" title="Select Product" asp-required="false"/>
     </div>
 </div>

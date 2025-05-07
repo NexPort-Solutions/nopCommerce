@@ -22,4 +22,7 @@ public record NexportStoreModel : StoreModel
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.HideAddToCartForIneligibleProducts")]
     public bool HideAddToCartForIneligibleProducts { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.DisplayLastPurchaseInfo")]
+    public bool DisplayLastPurchaseInfo { get; set; }
 }

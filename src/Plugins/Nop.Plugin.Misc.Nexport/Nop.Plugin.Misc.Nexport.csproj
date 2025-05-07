@@ -15,8 +15,8 @@
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyVersion>1.0.0.30</AssemblyVersion>
-    <FileVersion>1.0.0.30</FileVersion>
+    <AssemblyVersion>1.0.0.35</AssemblyVersion>
+    <FileVersion>1.0.0.35</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,7 +33,7 @@
 
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
-    <PackageReference Include="NexportApi" Version="1.0.34" />
+    <PackageReference Include="NexportApi" Version="1.0.37" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,7 +47,9 @@
     <None Remove="Areas\Admin\Views\NexportWholesale\FundingPool\Edit.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\FundingPool\List.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\FundingPool\_CreateOrUpdate.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\Purchases\ViewRedemptionAuditLogPopup.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\Redirect.cshtml" />
+    <None Remove="Areas\Admin\Views\NexportWholesale\RequestRefund.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\WholesaleOrderPaymentDetails.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\WholesaleOrderPurchasingProducts.cshtml" />
     <None Remove="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\Edit.cshtml" />
@@ -148,6 +150,7 @@
     <None Remove="Content\uikit.min.css" />
     <None Remove="Content\unassign_redemption_request.css" />
     <None Remove="logo.jpg" />
+    <None Remove="Migrations\M037_AddRedemptionUnassignmentRequestReason.cs~RF96bdac0.TMP" />
     <None Remove="plugin.json" />
     <None Remove="Scripts\bootstrap.bundle.min.js" />
     <None Remove="Scripts\bootstrap3-typeahead.js" />
@@ -155,7 +158,6 @@
     <None Remove="Scripts\dataTables.bootstrap5.min.js" />
     <None Remove="Scripts\dataTables.buttons.bootstrap5.min.js" />
     <None Remove="Scripts\dataTables.rowGroup.min.js" />
-    <None Remove="Scripts\fontawesome\all.min.js" />
     <None Remove="Scripts\fontawesome\brands.min.js" />
     <None Remove="Scripts\fontawesome\duotone.min.js" />
     <None Remove="Scripts\fontawesome\fontawesome.min.js" />
@@ -190,6 +192,7 @@
     <None Remove="Views\NexportGroups.cshtml" />
     <None Remove="Views\NexportStore\List.cshtml" />
     <None Remove="Views\NexportTrainings.cshtml" />
+    <None Remove="Views\NexportWholesale\WholesalePurchases\RedeemProduct\_ProductOptionStep.RedeemAction.cshtml" />
     <None Remove="Views\NexportWholesale\WholesalePurchases\RequestUnassignment.cshtml" />
     <None Remove="Views\Order\CustomerOrders.cshtml" />
     <None Remove="Views\ProductMappingDetails.cshtml" />
@@ -202,12 +205,14 @@
     <None Remove="Views\RedeemProduct.cshtml" />
     <None Remove="Views\RegistrationField\_CustomerFields.Control.cshtml" />
     <None Remove="Views\RegistrationField\_CustomerFields.cshtml" />
+    <None Remove="Views\ReturnRequest\ReturnRequest.cshtml" />
     <None Remove="Views\Shared\Components\TagHelpers\NexportDurationPicker\Default.cshtml" />
     <None Remove="Views\Shared\EditorTemplates\DateNullable.cshtml" />
     <None Remove="Views\Shared\GuidNullable.cshtml" />
     <None Remove="Views\Shared\Table.cshtml" />
     <None Remove="Views\Shared\_ColumnsOne_groups.cshtml" />
     <None Remove="Views\Shared\_GridLocalization.cshtml" />
+    <None Remove="Views\Shared\_ProductRedemptionsCustomRenders.cshtml" />
     <None Remove="Views\Shared\_Root.Head_Groups.cshtml" />
     <None Remove="Views\Shared\_Root_Groups.cshtml" />
     <None Remove="Views\Shared\_Table.Definition.cshtml" />
@@ -235,6 +240,7 @@
     <None Remove="Views\Widget\Order\WidgetsOrderSummaryCartFooter.cshtml" />
     <None Remove="Views\Widget\Product\NexportProductBoxAddInfoBefore.cshtml" />
     <None Remove="Views\Widget\Product\NexportProductDetailsAfterPictures.cshtml" />
+    <None Remove="Views\Widget\Product\WidgetsNexportProductDetailsAfterBreadcrumb.cshtml" />
     <None Remove="Views\Widget\Product\WidgetsProductDetailsOverviewTop.cshtml" />
     <None Remove="Views\Widget\WidgetsHeaderLinksBefore.cshtml" />
     <None Remove="Views\Widget\_EmailStep.cshtml" />
@@ -264,6 +270,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\NexportWholesale\Purchases\ByFundingPools\PurchaseListing.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\Purchases\ViewRedemptionAuditLogPopup.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\RequestRefund.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\NexportWholesale\UnassignmentRequests\RedemptionUnassignmentRequestReasonEdit.cshtml">
@@ -597,9 +609,6 @@
     <Content Include="Scripts\dataTables.bootstrap5.min.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Scripts\fontawesome\all.min.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Scripts\fontawesome\brands.min.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -711,6 +720,12 @@
     <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemByEmail.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemProduct\_ProductOptionStep.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\NexportWholesale\WholesalePurchases\RedeemProduct\_ProductOptionStep.RedeemAction.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\NexportWholesale\WholesalePurchases\RequestRefund.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -765,6 +780,9 @@
     <Content Include="Views\RegistrationField\_CustomerFields.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\ReturnRequest\ReturnRequest.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\Shared\EditorTemplates\DateNullable.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -779,6 +797,9 @@
     <Content Include="Views\Shared\_GridLocalization.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\_ProductRedemptionsCustomRenders.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Shared\_Table.Definition.cshtml">
@@ -861,6 +882,9 @@
     <Content Include="Views\Widget\Product\NexportProductMappingsInProductPage.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\Widget\Product\WidgetsNexportProductDetailsAfterBreadcrumb.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\Widget\Product\WidgetsProductDetailsOverviewTop.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -897,10 +921,6 @@
     <Content Include="Views\SupplementalInfo\Question\List.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Services\Caching\" />
   </ItemGroup>
 
   <ItemGroup>

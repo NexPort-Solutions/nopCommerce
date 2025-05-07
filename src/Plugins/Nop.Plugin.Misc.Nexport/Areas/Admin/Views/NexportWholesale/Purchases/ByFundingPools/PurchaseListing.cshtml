@@ -11,20 +11,48 @@
     {
         new(nameof(NexportGroupProductModel.FundingPool))
         {
-            //Title = T("Plugins.Misc.Nexport.Group.Name").Text
-            Title = "Funding Pool"
+            Title = T("Plugins.Misc.Nexport.Group.FundingPool").Text,
+            Width = "400",
         },
         new(nameof(NexportGroupProductModel.Available))
         {
-            Title = T("Plugins.Misc.Nexport.Group.Product.Available").Text
+            Title = T("Plugins.Misc.Nexport.Group.Product.Available").Text,
+            Width = "100"
+        },
+        new(nameof(NexportGroupProductModel.ProcessingAvailable))
+        {
+            Title = T("Plugins.Misc.Nexport.Group.Product.ProcessingAvailable").Text,
+            Width = "100"
         },
         new(nameof(NexportGroupProductModel.Awaiting))
         {
-            Title = T("Plugins.Misc.Nexport.Group.Product.Awaiting").Text
+            Title = T("Plugins.Misc.Nexport.Group.Product.Awaiting").Text,
+            Width = "100"
+        },
+        new(nameof(NexportGroupProductModel.ProcessingAwaiting))
+        {
+            Title = T("Plugins.Misc.Nexport.Group.Product.ProcessingAwaiting").Text,
+            Width = "100"
         },
         new(nameof(NexportGroupProductModel.Redeemed))
         {
-            Title = T("Plugins.Misc.Nexport.Group.Product.Assigned").Text
+            Title = T("Plugins.Misc.Nexport.Group.Product.Assigned").Text,
+            Width = "100"
+        },
+        new(nameof(NexportGroupProductModel.ProcessingRefund))
+        {
+            Title = T("Plugins.Misc.Nexport.Group.Product.ProcessingRefund").Text,
+            Width = "100"
+        },
+        new(nameof(NexportGroupProductModel.Refunded))
+        {
+            Title = T("Plugins.Misc.Nexport.Group.Product.Refunded").Text,
+            Width = "100"
+        },
+        new(nameof(NexportGroupProductModel.Total))
+        {
+            Title = T("Plugins.Misc.Nexport.Group.Product.Total").Text,
+            Width = "100"
         },
         new(nameof(NexportGroupProductModel.FundingPoolId))
         {
@@ -109,26 +137,15 @@
 <script>
     function renderViewRedemptions(data, type, row, meta) {
         var buttonFunction = "";
-
-        if (row.FundingPoolId !== null) {
-            buttonFunction = "viewRedemptionsForFundingPool('" + row.FundingPoolId + "')";
-        } else {
-            buttonFunction = "viewRedemptionsForFundingPool(null)";
-        }
-
-        return renderCustomButton(buttonFunction, "far fa-eye", "@T("Plugins.Misc.Nexport.Group.Product.Button.View")");
-    }
-
-    function viewRedemptionsForFundingPool(fundingPoolId) {
         var url = "";
 
-        if (fundingPoolId) {
+        if (row.FundingPoolId) {
             url = "@Url.RouteUrl("Plugin.Misc.Nexport.Admin.Wholesale.Purchase.ByFundingPools.Redemptions")"
-            url += "/" + fundingPoolId;
+            url += "/" + row.FundingPoolId;
         } else {
             url = "@Url.RouteUrl("Plugin.Misc.Nexport.Admin.Wholesale.Purchase.ByFundingPools.Redemptions")";
         }
 
-        window.location.href = url;
+        return renderCustomLinkTag(url, null, "far fa-eye", "@T("Plugins.Misc.Nexport.Group.Product.Button.View")");
     }
 </script>

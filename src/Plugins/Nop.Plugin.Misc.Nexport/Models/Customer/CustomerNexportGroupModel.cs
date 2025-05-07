@@ -10,22 +10,13 @@ public partial record CustomerNexportGroupModel : BaseNopModel
 {
     public CustomerNexportGroupModel()
     {
-        //AdditionalProductReviewList = new List<ProductReviewReviewTypeMappingModel>();
     }
-    public Guid GroupGuid { get; set; }
-    public string Name { get; set; }
-    public string ShortName { get; set; }
 
-    //public int ProductId { get; set; }
-    //public string ProductName { get; set; }
-    //public string ProductSeName { get; set; }
-    //public string Title { get; set; }
-    //public string ReviewText { get; set; }
-    //public string ReplyText { get; set; }
-    //public int Rating { get; set; }
-    //public string WrittenOnStr { get; set; }
-    //public string ApprovalStatus { get; set; }
-    //public IList<ProductReviewReviewTypeMappingModel> AdditionalProductReviewList { get; set; }
+    public Guid GroupGuid { get; set; }
+
+    public string Name { get; set; }
+
+    public string ShortName { get; set; }
 }
 
 public partial record CustomerNexportGroupsModel : BaseNopModel
@@ -36,6 +27,7 @@ public partial record CustomerNexportGroupsModel : BaseNopModel
     }
 
     public IList<CustomerNexportGroupModel> NexportGroups { get; set; }
+
     public PagerModel PagerModel { get; set; }
 
     #region Nested class

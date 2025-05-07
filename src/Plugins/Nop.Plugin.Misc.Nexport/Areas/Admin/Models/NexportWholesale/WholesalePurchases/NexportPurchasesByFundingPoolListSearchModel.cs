@@ -8,7 +8,7 @@ namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesaleP
 
 public record NexportPurchasesByFundingPoolListSearchModel : BaseSearchModel
 {
-    //[NopResourceDisplayName("Plugins.Misc.Nexport.Group.SearchName")]
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.SearchFundingPoolName")]
     public string SearchFundingPoolName { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchStatus")]

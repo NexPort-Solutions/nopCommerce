@@ -62,6 +62,8 @@ public class WidgetsNexportStoreDetails : NopViewComponent
                 NexportDefaults.ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
         model.AllowRepurchasePassedCourses = await _genericAttributeService.GetAttributeAsync<bool>(store,
             NexportDefaults.ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY, store.Id);
+        model.DisplayLastPurchaseInfo = await _genericAttributeService.GetAttributeAsync<bool>(store,
+            NexportDefaults.DISPLAY_LAST_PURCHASE_INFO, store.Id);
 
         return View("~/Plugins/Misc.Nexport/Views/Widget/Store/NexportStoreDetails.cshtml", model);
     }

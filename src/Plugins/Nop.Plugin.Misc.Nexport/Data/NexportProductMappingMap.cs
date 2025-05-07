@@ -8,19 +8,19 @@ public class NexportProductMappingMap : NopEntityBuilder<NexportProductMapping>
 {
     public override void MapEntity(CreateTableExpressionBuilder table)
     {
-            table.WithColumn(nameof(NexportProductMapping.NexportProductName)).AsFixedLengthString(255)
-                .WithColumn(nameof(NexportProductMapping.DisplayName)).AsFixedLengthString(255)
-                .WithColumn(nameof(NexportProductMapping.Type)).AsInt32()
-                .WithColumn(nameof(NexportProductMapping.PublishingModel)).AsInt32()
-                .WithColumn(nameof(NexportProductMapping.PricingModel)).AsInt32()
-                .WithColumn(nameof(NexportProductMapping.NexportSubscriptionOrgName)).AsFixedLengthString(255)
-                .WithColumn(nameof(NexportProductMapping.NexportSubscriptionOrgShortName)).AsFixedLengthString(50)
-                .WithColumn(nameof(NexportProductMapping.SectionCeus)).AsFixedLengthString(64)
-                .WithColumn(nameof(NexportProductMapping.RenewalWindow)).AsFixedLengthString(255)
-                .WithColumn(nameof(NexportProductMapping.RenewalDuration)).AsFixedLengthString(255)
-                .WithColumn(nameof(NexportProductMapping.RenewalApprovalMethod)).AsInt32().Nullable()
-                .WithColumn(nameof(NexportProductMapping.ExtensionPurchaseLimit)).AsInt32().Nullable()
-                .WithColumn(nameof(NexportProductMapping.AssignWhenRedeemed)).AsInt32().Nullable()
-                .WithColumn(nameof(NexportProductMapping.NopCategoryId)).AsInt32().Nullable();
+        table.WithColumn(nameof(NexportProductMapping.NexportProductName)).AsFixedLengthString(255)
+            .WithColumn(nameof(NexportProductMapping.DisplayName)).AsFixedLengthString(255)
+            .WithColumn(nameof(NexportProductMapping.Type)).AsInt32()
+            .WithColumn(nameof(NexportProductMapping.PublishingModel)).AsInt32()
+            .WithColumn(nameof(NexportProductMapping.PricingModel)).AsInt32()
+            .WithColumn(nameof(NexportProductMapping.NexportSubscriptionOrgName)).AsFixedLengthString(255)
+            .WithColumn(nameof(NexportProductMapping.NexportSubscriptionOrgShortName)).AsFixedLengthString(50)
+            .WithColumn(nameof(NexportProductMapping.SectionCeus)).AsFixedLengthString(64)
+            .WithColumn(nameof(NexportProductMapping.RenewalWindow)).AsFixedLengthString(255)
+            .WithColumn(nameof(NexportProductMapping.RenewalDuration)).AsFixedLengthString(255)
+            .WithColumn(nameof(NexportProductMapping.RenewalApprovalMethod)).AsInt32().Nullable()
+            .WithColumn(nameof(NexportProductMapping.ExtensionPurchaseLimit)).AsInt32().Nullable()
+            .WithColumn(nameof(NexportProductMapping.AssignWhenRedeemed)).AsInt32().Nullable()
+            .WithColumn(nameof(NexportProductMapping.NopCategoryId)).AsInt32().Nullable();
     }
 }

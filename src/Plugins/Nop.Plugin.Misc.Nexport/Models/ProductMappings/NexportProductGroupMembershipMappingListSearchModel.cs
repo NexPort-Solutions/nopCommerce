@@ -6,8 +6,8 @@ public record NexportProductGroupMembershipMappingListSearchModel : BaseSearchMo
 {
     public NexportProductGroupMembershipMappingListSearchModel()
     {
-            SetGridPageSize();
-        }
+        SetGridPageSize();
+    }
 
     public int NexportProductMappingId { get; set; }
 }

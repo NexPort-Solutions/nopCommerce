@@ -60,6 +60,7 @@
             AutoWidth = false
         }
     };
+
     var groupMembershipChildTableColumns = new List<ColumnProperty>
     {
         new(nameof(NexportProductGroupMembershipMappingModel.NexportGroupId))
@@ -81,6 +82,7 @@
             Render = new RenderCustom("renderNexportGroupShortName")
         }
     };
+
     var childGroupTable = new NexportDataTablesModel
     {
         Name = "product-mapping-group-memberships-grid",
@@ -91,9 +93,10 @@
         ColumnCollection = groupMembershipChildTableColumns,
         Filters = new List<FilterParameter>
         {
-            new FilterParameter(nameof(NexportProductGroupMembershipMappingModel.NexportProductMappingId), "Id", true)
+            new(nameof(NexportProductGroupMembershipMappingModel.NexportProductMappingId), "Id", true)
         }
     };
+
     var productMappingTable = new NexportDataTablesModel
     {
         Name = "product-mappings-grid",
@@ -104,9 +107,9 @@
             }),
         Filters = new List<FilterParameter>
         {
-            new FilterParameter(nameof(Model.SearchNexportProductName)),
-            new FilterParameter(nameof(Model.SearchStoreName)),
-            new FilterParameter(nameof(Model.NexportProductType))
+            new(nameof(Model.SearchNexportProductName)),
+            new(nameof(Model.SearchStoreName)),
+            new(nameof(Model.NexportProductType))
         },
         SearchButtonId = "search-mappings",
         UrlDelete = new DataUrl("DeleteMapping", "NexportIntegration", null),
@@ -116,6 +119,7 @@
         ColumnCollection = productMappingTableColumns,
         ChildTable = childGroupTable
     };
+
     const string hideSearchNexportMappingsBlockAttributeName = "ProductPage.HideSearchNexportMappingsBlock";
     var hideSearchNexportMappingsBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchNexportMappingsBlockAttributeName);
 }
@@ -210,11 +214,12 @@
 
     function renderNexportProductInfo(data, type, row, meta) {
         if (data !== null) {
-            if(row.NopCategoryId==null)
+            if (row.NopCategoryId==null)
             {
                 var displayText = "<b>Name: </b>" + data + "<br>";
                 if (row.NexportCatalogId !== "00000000-0000-0000-0000-000000000000") {
-                    displayText += "<br><b>Type: </b>";
+                    displayText += "<b>Type: </b>";
+
                     if (row.Type === +"@((int)NexportProductTypeEnum.Catalog)") {
                         displayText += "Catalog";
                     } else if (row.Type === +"@((int)NexportProductTypeEnum.Section)") {
@@ -222,15 +227,25 @@
                     } else if (row.Type === +"@((int)NexportProductTypeEnum.TrainingPlan)") {
                         displayText += "Training Plain";
                     }
+
                     displayText += "<br>" + "<b>Nexport Catalog: </b>" + row.NexportCatalogName + " (" + row.NexportCatalogId + ")";
-                    if (row.NexportSyllabusId || row.NexportSyllabus !== "00000000-0000-0000-0000-000000000000") {
-                        displayText += "<br>" + "<b>Nexport Syllabus: </b>" + row.UniqueName + " (" + row.NexportSyllabusId + ")";
+
+                    if (row.NexportSyllabusId && row.NexportSyllabusId !== "00000000-0000-0000-0000-000000000000") {
+                        if (row.UniqueName) {
+                            displayText += "<br>" + "<b>Nexport Syllabus: </b>" + row.UniqueName + " (" + row.NexportSyllabusId + ")";
+                        }
+                        else {
+                            displayText += "<br>" + "<b>Nexport Syllabus: </b>" + "N/A" + " (" + row.NexportSyllabusId + ")";
+                        }
                     }
+
                     displayText += "<br>" + "<b>NexPort Product Id: </b>" + row.NexportCatalogSyllabusLinkId;
+
                     if (row.UtcLastSynchronizationDate) {
                         displayText += "<br>" + "<b>Last Synchronized Date: </b>" + renderLocalDateForTableEntry(row.UtcLastSynchronizationDate, null, null, null);
                     }
                 }
+
                 return displayText;
             }
             else{
@@ -253,22 +268,22 @@
                 displayText += "<b>Subscription Organization: </b>" + subOrgDisplayText;
             }
 
-            var groupMembershipNames = "";
-            var groupMemberships = row.GroupMembershipMappingModels;
-            if (groupMemberships) {
-                if (groupMemberships.length > 0) {
-                    groupMembershipNames += "<br>" + "<b>Group Memberships: </b>";
-                    for (var i = 0; i < groupMemberships.length; i++) {
-                        groupMembershipNames += groupMemberships[i].NexportGroupName + " (" +
-                            groupMemberships[i].NexportGroupShortName + ")";
-                        if (i < groupMemberships.length - 1) {
-                            groupMembershipNames += ", ";
-                        }
-                    }
+            // var groupMembershipNames = "";
+            // var groupMemberships = row.GroupMembershipMappingModels;
+            // if (groupMemberships) {
+            //     if (groupMemberships.length > 0) {
+            //         groupMembershipNames += "<br>" + "<b>Group Memberships: </b>";
+            //         for (var i = 0; i < groupMemberships.length; i++) {
+            //             groupMembershipNames += groupMemberships[i].NexportGroupName + " (" +
+            //                 groupMemberships[i].NexportGroupShortName + ")";
+            //             if (i < groupMemberships.length - 1) {
+            //                 groupMembershipNames += ", ";
+            //             }
+            //         }
 
-                    displayText += groupMembershipNames;
-                }
-            }
+            //         displayText += groupMembershipNames;
+            //     }
+            // }
 
             return displayText;
         }
@@ -383,7 +398,6 @@
     checkDefaultMappingExisted();
 
     $(document).ready(function () {
-
         $("#product-mapping-container").on("xhr.dt", "#product-mappings-grid",
             function (e, settings, json, xhr) {
                 if (json.data) {
@@ -450,6 +464,7 @@
                 $("#search-mappings").click();
         });
     });
+
     function checkDefaultMappingExisted() {
         var checkDefaultMappingData = {
             productId: @Model.NopProductId
@@ -487,5 +502,5 @@
         OpenWindow(url, 800, 800, true);
     }
 
-        //# sourceURL=ProductMappingTable.js
+    //# sourceURL=ProductMappingTable.js
 </script>

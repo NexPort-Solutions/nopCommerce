@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Localization;
-using Nop.Core.Domain.Media;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
@@ -29,6 +25,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Models.Checkout;
+using RedeemProductModel = Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProductModel;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers;
 
@@ -218,46 +215,66 @@ public class NexportWholesaleController : BasePluginController
 
     [HttpPost]
     [AutoValidateAntiforgeryToken]
-    public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(
-        NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId, int? orderId = null)
+    public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId,
+        int productId, int? orderId = null)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
         var store = await _storeContext.GetCurrentStoreAsync();
         if (!await _customerService.IsRegisteredAsync(customer))
             return Challenge();
 
-        int? count;
+        //int? count;
+        //if (groupId == null)
+        //{
+        //    count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(null, productId, orderId, customer, store);
+        //}
+        //else
+        //{
+        //    var hasGroupPermission = await _nexportService.HasGroupPermissionAsync(customer, groupId.Value);
+        //    count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, customer, store: store);
+        //}
 
-        if (groupId == null)
-        {
-            var isAdmin = await _customerService.IsAdminAsync(customer);
-            if (searchModel.AdminView && isAdmin)
-            {
-                //show all items under group not assigned
-                count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(null, productId, orderId);
-            }
-            else
-            {
-                //show only items for group not assigned that belong to the current store and current customer
-                count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(null, productId, orderId, customer, store);
-            }
-        }
-        else
-        {
-            var hasGroupPermission = await _nexportService.HasGroupPermissionAsync(customer, groupId.Value);
-            if (searchModel.AdminView && hasGroupPermission)
-            {
-                //show all items for the group
-                count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId);
-            }
-            else
-            {
-                //show only items for the group that belong to the current store
-                count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, store: store);
-            }
-        }
+        var count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, customer, store);
 
         return Json(new { result = count });
+
+        //var customer = await _workContext.GetCurrentCustomerAsync();
+        //var store = await _storeContext.GetCurrentStoreAsync();
+        //if (!await _customerService.IsRegisteredAsync(customer))
+        //    return Challenge();
+
+        //int? count;
+
+        //if (groupId == null)
+        //{
+        //    var isAdmin = await _customerService.IsAdminAsync(customer);
+        //    if (searchModel.AdminView && isAdmin)
+        //    {
+        //        //show all items under group not assigned
+        //        count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(null, productId, orderId);
+        //    }
+        //    else
+        //    {
+        //        //show only items for group not assigned that belong to the current store and current customer
+        //        count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(null, productId, orderId, customer, store);
+        //    }
+        //}
+        //else
+        //{
+        //    var hasGroupPermission = await _nexportService.HasGroupPermissionAsync(customer, groupId.Value);
+        //    if (searchModel.AdminView && hasGroupPermission)
+        //    {
+        //        //show all items for the group
+        //        count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId);
+        //    }
+        //    else
+        //    {
+        //        //show only items for the group that belong to the current store
+        //        count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, store: store);
+        //    }
+        //}
+
+        //return Json(new { result = count });
     }
 
     [HttpPost]
@@ -273,15 +290,10 @@ public class NexportWholesaleController : BasePluginController
         if (invoiceItem != null)
             await _nexportService.UnassignInvoiceItem(invoiceItem);
 
-        return Json(
-            new
-            {
-                result = invoiceItem != null ? invoiceItem.RedemptionStatus.GetDisplayName() : "",
-            }
-        );
+        return Json(new { result = invoiceItem != null ? invoiceItem.RedemptionStatus.GetDisplayName() : "" });
     }
 
-    public virtual async Task<IActionResult> GetMatchingUsers(CustomerStepModel searchModel)
+    public virtual async Task<IActionResult> GetMatchingUsers(NexportUserAssignmentListSearchModel searchModel)
     {
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
         if (!await _customerService.IsRegisteredAsync(currentCustomer))
@@ -290,62 +302,10 @@ public class NexportWholesaleController : BasePluginController
         var paged = new List<NexportUserAssignmentModel>().ToPagedList(searchModel);
 
         if (searchModel.TableFirstDraw)
-        {
             return Json(paged);
-        }
 
-        var customers = await _nexportService.SearchCustomersAsync(searchModel.SearchEmail ?? "");
-        var nexportUsers = new List<NexportUserAssignmentModel>();
-        foreach (var customer in customers)
-        {
-            var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
-            if (userMapping != null)
-            {
-                var invoiceRedemptions = await _nexportService.SearchGroupProductRedemptionsAsync(
-                    searchModel.GroupId, searchModel.ProductId,
-                    customerEmail: customer.Email,
-                    redemptionStatus: NexportOrderInvoiceItemRedemptionStatus.Assigned);
-
-                try
-                {
-                    var nexUser = await _nexportService.GetNexportUserAsync(userMapping.NexportUserId);
-
-                    if (nexUser != null)
-                    {
-                        // populate name and email from nop customer so we don't get confused if the
-                        // linked nexport account has a different name and email
-                        nexportUsers.Add(new NexportUserAssignmentModel
-                        {
-                            UserId = nexUser.UserId,
-                            FirstName = customer.FirstName,
-                            LastName = customer.LastName,
-                            Email = customer.Email,
-                            OwnerOrgId = nexUser.OwnerOrgId,
-                            OwnerOrg = nexUser.OwnerOrgId != null
-                                ? (await _nexportService.GetOrganizationDetailsAsync(nexUser.OwnerOrgId.Value))?.Name
-                                : "",
-                            OwnerOrgShortName = nexUser.OwnerOrgShortName,
-                            IsAvailable = !invoiceRedemptions.Any()
-                        });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await _logger.ErrorAsync(ex.Message, ex);
-                }
-            }
-        }
-
-        paged = await nexportUsers.SelectAwait(async x => x).ToPagedListAsync(searchModel);
-
-        var dtlist = new NexportUserAssignmentListModel();
-
-        dtlist = await dtlist.PrepareToGridAsync(searchModel, paged, () =>
-        {
-            return paged.SelectAwait(async x => x);
-        });
-
-        return Json(dtlist);
+        var model = await _nexportPluginModelFactory.PrepareNexportUserAssignmentListModelAsync(searchModel);
+        return Json(model);
     }
 
     [HttpsRequirement]
@@ -354,11 +314,9 @@ public class NexportWholesaleController : BasePluginController
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
         if (!await _customerService.IsRegisteredAsync(currentCustomer))
             return Challenge();
-        //if (currentCustomer.Email!=email)
-        //    return Challenge();
 
-        var model = await _nexportPluginModelFactory.PrepareRedeemByEmailModel(invoiceItemId,
-            email, productMappingId);
+        var model = await _nexportPluginModelFactory.PrepareRedeemByEmailModel(invoiceItemId, email, productMappingId);
+
         return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemByEmail.cshtml", model);
     }
 
@@ -369,10 +327,7 @@ public class NexportWholesaleController : BasePluginController
         if (invoiceItem != null)
             await _nexportService.RedeemAwaitingInvoiceItem(invoiceItem, nexportUserId, productMappingId);
 
-        return Json(new
-        {
-            Result = true
-        });
+        return Json(new { Result = true });
     }
 
     [HttpPost]
@@ -388,12 +343,7 @@ public class NexportWholesaleController : BasePluginController
         if (invoiceItem != null)
             await _nexportService.CancelAwaitingInvoiceItem(invoiceItem);
 
-        return Json(
-            new
-            {
-                result = invoiceItem != null ? invoiceItem.RedemptionStatus.GetDisplayName() : "",
-            }
-        );
+        return Json(new { result = invoiceItem != null ? invoiceItem.RedemptionStatus.GetDisplayName() : "" });
     }
 
     [HttpsRequirement]
@@ -429,19 +379,12 @@ public class NexportWholesaleController : BasePluginController
             await _genericAttributeService.SaveAttributeAsync<string>(customer, "RedeemProductModel_LastName", null);
 
         await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_ReturnUrl",
-            Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions") + "?groupId=" + groupId +
-            "&productId=" + productId);
+            Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions") + "?groupId=" + groupId + "&productId=" + productId);
 
-        await _genericAttributeService.SaveAttributeAsync<Guid?>(customer, "RedeemProductModel_InvoiceItemId",
-            invoiceItemId);
-
-        await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_ProductId",
-            productId);
-
-        await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_OpenEndedProductMappingId",
-            model.ProductMappingIdForOpenEndedProduct);
-
-        await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
+        await _genericAttributeService.SaveAttributeAsync<Guid?>(customer, "RedeemProductModel_InvoiceItemId", invoiceItemId);
+        await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_ProductId", productId);
+        await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_RedeemingProductId", null);
+        await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_IsOpenEnded", false);
 
         return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/MyNexportGroups.cshtml");
     }
@@ -487,6 +430,15 @@ public class NexportWholesaleController : BasePluginController
 
         var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
 
+        await _nexportService.InsertNexportRedemptionAuditLogAsync(new NexportRedemptionAuditLog
+        {
+            CustomerId = currentCustomer.Id,
+            InvoiceItemId = model.InvoiceItemId,
+            Description = "Unassignment request had been submitted.",
+            Type = NexportRedemptionAuditLogTypeEnum.RequestUnassign,
+            UtcDateCreated = DateTime.UtcNow
+        });
+
         await _nexportService.SendNewRedemptionUnassignmentRequestStoreOwnerNotificationAsync(
             unassignmentRequest, invoiceItem, _localizationSettings.DefaultAdminLanguageId);
 
@@ -526,6 +478,11 @@ public class NexportWholesaleController : BasePluginController
         if (order == null || order.Deleted || customer.Id != order.CustomerId)
             return Challenge();
 
+        var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId, invoiceItem.OrderItemId);
+
+        if (wholesaleOrderInfo == null)
+            throw new Exception("Wholesale order information is missing!");
+
         var requestActions = await _returnRequestService.GetAllReturnRequestActionsAsync();
         var requestReasons = await _returnRequestService.GetAllReturnRequestReasonsAsync();
 
@@ -557,7 +514,26 @@ public class NexportWholesaleController : BasePluginController
         await _customerService.UpdateCustomerAsync(customer);
         await _returnRequestService.UpdateReturnRequestAsync(rr);
 
-        await _genericAttributeService.SaveAttributeAsync(rr, "RefundRequestInvoiceItemId", model.InvoiceItemId, rr.StoreId);
+        if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Assigned)
+            wholesaleOrderInfo.Redeemed--;
+
+        wholesaleOrderInfo.ProcessingRefund++;
+        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.ProcessingRefund;
+
+        await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
+        await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+
+        await _genericAttributeService.SaveAttributeAsync(rr, "RefundRequestInvoiceItems",
+            JsonConvert.SerializeObject(new List<Guid> { model.InvoiceItemId }), rr.StoreId);
+
+        await _nexportService.InsertNexportRedemptionAuditLogAsync(new NexportRedemptionAuditLog
+        {
+            CustomerId = customer.Id,
+            InvoiceItemId = model.InvoiceItemId,
+            Description = "Refund request had been submitted.",
+            Type = NexportRedemptionAuditLogTypeEnum.RequestRefund,
+            UtcDateCreated = DateTime.UtcNow
+        });
 
         //notify store owner
         await _workflowMessageService.SendNewReturnRequestStoreOwnerNotificationAsync(rr, orderItem, order, _localizationSettings.DefaultAdminLanguageId);
@@ -565,7 +541,7 @@ public class NexportWholesaleController : BasePluginController
         await _workflowMessageService.SendNewReturnRequestCustomerNotificationAsync(rr, orderItem, order);
 
         model = await _nexportPluginModelFactory.PrepareSubmitInvoiceItemRefundRequestModelAsync(model);
-        model.Result = await _localizationService.GetResourceAsync("RedemptionUnassignmentRequests.Submitted");
+        model.Result = await _localizationService.GetResourceAsync("ReturnRequests.Submitted");
 
         return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestRefund.cshtml", model);
     }
@@ -600,7 +576,7 @@ public class NexportWholesaleController : BasePluginController
                     });
                 }
 
-                await _genericAttributeService.SaveAttributeAsync<bool?>(customer, "RedeemProductModel_SendViaEmail", true);
+                await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_SendViaEmail", true);
                 await _genericAttributeService.SaveAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId", null);
                 await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_EmailAddress", model.Email);
                 await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_FirstName", model.FirstName);
@@ -618,18 +594,21 @@ public class NexportWholesaleController : BasePluginController
 
     public async Task<IActionResult> GoToProductStep(Customer customer)
     {
-        var productId = await _genericAttributeService.GetAttributeAsync<int>(customer, "RedeemProductModel_productId");
-
+        var productId = await _genericAttributeService.GetAttributeAsync<int>(customer, "RedeemProductModel_ProductId");
         var invoiceItemId = await _genericAttributeService.GetAttributeAsync<Guid>(customer, "RedeemProductModel_InvoiceItemId");
 
         var productStepModel = await _nexportPluginModelFactory.PrepareProductStepModel(productId, invoiceItemId);
 
-        if (productStepModel.AvailableMappings.Count < 1)
+        //if (productStepModel.AvailableMappings.Count < 1)
+        //    throw new Exception("Error preparing step. Could not load mappings for product");
+
+        if (productStepModel.AvailableMappings.Count == 0)
             throw new Exception("Error preparing step. Could not load mappings for product");
 
         if (productStepModel.AvailableMappings.Count == 1)
         {
-            return await GoToConfirmStep(productStepModel, customer);
+            productStepModel.SelectedProductId = int.Parse(productStepModel.AvailableMappings.First().Value);
+            return await GoToOptionStep(productStepModel, false);
         }
 
         return Json(new
@@ -643,19 +622,101 @@ public class NexportWholesaleController : BasePluginController
         });
     }
 
+    [HttpPost]
+    public virtual async Task<IActionResult> AsnSaveProduct(ProductStepModel model, IFormCollection form)
+    {
+        try
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+
+            if (model.SelectedProductId == null)
+                throw new Exception("There was an error retrieving the product information from the previous steps");
+
+            var productMapping = await _nexportService.GetProductMappingByNopProductId(model.SelectedProductId.Value);
+            if (productMapping == null)
+                throw new Exception("There was an error retrieving the product mapping information");
+
+            var product = await _productService.GetProductByIdAsync(productMapping.NopProductId);
+            if (product == null)
+                throw new Exception("There was an error retrieving the product");
+
+            await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_RedeemingProductId", model.SelectedProductId);
+            await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_IsOpenEnded", model.IsOpenEnded);
+
+            var optionStepModel = await _nexportPluginModelFactory.PrepareOptionStepModel(model.IsOpenEnded);
+
+            return Json(new
+            {
+                update_section = new UpdateSectionJsonModel
+                {
+                    name = "options",
+                    html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ProductOptionStep.cshtml", optionStepModel)
+                },
+                goto_section = "options"
+            });
+        }
+        catch (Exception exc)
+        {
+            await _logger.WarningAsync(exc.Message, exc, await _workContext.GetCurrentCustomerAsync());
+            return Json(new { error = 1, message = exc.Message });
+        }
+    }
+
+    [HttpPost]
+    public virtual async Task<IActionResult> AsnProductOptions(OptionStepModel model, IFormCollection form)
+    {
+        try
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+
+            await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_StartDate", model.UtcStartDate);
+            await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_PurchasingForStore", model.StoreId);
+            await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_PurchasingGroupId", model.PurchasingGroupId);
+
+            var confirmStepModel = await _nexportPluginModelFactory.PrepareConfirmStepModel(model.UtcStartDate, model.StoreId, model.PurchasingGroupId, form["PurchasingGroupName"]);
+
+            return Json(new
+            {
+                update_section = new UpdateSectionJsonModel
+                {
+                    name = "confirm",
+                    html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ConfirmStep.cshtml", confirmStepModel)
+                },
+                goto_section = "confirm"
+            });
+        }
+        catch (Exception exc)
+        {
+            await _logger.WarningAsync(exc.Message, exc, await _workContext.GetCurrentCustomerAsync());
+            return Json(new { error = 1, message = exc.Message });
+        }
+    }
+
+    public async Task<ActionResult> GoToOptionStep(ProductStepModel model, bool isOpenEnded)
+    {
+        var optionStepModel = await _nexportPluginModelFactory.PrepareOptionStepModel(isOpenEnded);
+
+        return Json(new
+        {
+            update_section = new UpdateSectionJsonModel
+            {
+                name = "options",
+                html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ProductOptionStep.cshtml", optionStepModel)
+            },
+            goto_section = "options"
+        });
+    }
+
     public async Task<ActionResult> GoToConfirmStep(ProductStepModel model, Customer customer)
     {
-        if (model.SelectedProductMappingId == null)
-            throw new Exception("There was an error retreiving the product information from the previous steps");
-        //await _genericAttributeService.SaveAttributeAsync<int?>(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
+        if (model.SelectedProductId == null)
+            throw new Exception("There was an error retrieving the product information from the previous steps");
 
-        var productMapping = await _nexportService.GetProductMappingById(model.SelectedProductMappingId.Value);
-
+        var productMapping = await _nexportService.GetProductMappingById(model.SelectedProductId.Value);
         if (productMapping == null)
             throw new Exception("There was an error retrieving the product mapping information");
 
         var product = await _productService.GetProductByIdAsync(productMapping.NopProductId);
-
         if (product == null)
             throw new Exception("There was an error retrieving the product");
 
@@ -682,93 +743,70 @@ public class NexportWholesaleController : BasePluginController
         });
     }
 
-
     [HttpPost]
-    public virtual async Task<IActionResult> AsnSaveProduct(ProductStepModel model, IFormCollection form)
-    {
-        try
-        {
-            var customer = await _workContext.GetCurrentCustomerAsync();
-
-            if (model.SelectedProductMappingId == null)
-                throw new Exception("There was an error retreiving the product information from the previous steps");
-
-            await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_SelectedProductMappingId", model.SelectedProductMappingId);
-
-            var productMapping = await _nexportService.GetProductMappingById(model.SelectedProductMappingId.Value);
-
-            if (productMapping == null)
-                throw new Exception("There was an error retrieving the product mapping information");
-
-            var product = await _productService.GetProductByIdAsync(productMapping.NopProductId);
-
-            if (product == null)
-                throw new Exception("There was an error retrieving the product");
-
-            var sendViaEmail = await _genericAttributeService.GetAttributeAsync<bool?>(customer, "RedeemProductModel_SendViaEmail");
-
-            var email = await _genericAttributeService.GetAttributeAsync<string>(customer, "RedeemProductModel_EmailAddress");
-            var firstName = await _genericAttributeService.GetAttributeAsync<string>(customer, "RedeemProductModel_FirstName");
-            var lastName = await _genericAttributeService.GetAttributeAsync<string>(customer, "RedeemProductModel_LastName");
-
-            return Json(new
-            {
-                update_section = new UpdateSectionJsonModel
-                {
-                    name = "confirm",
-                    html = await RenderPartialViewToStringAsync("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ConfirmStep.cshtml", new ConfirmStepModel
-                    {
-                        Email = email,
-                        Product = product.Name,
-                        FirstName = firstName,
-                        LastName = lastName,
-                        SendViaEmail = (sendViaEmail != null && sendViaEmail.Value) ? "Email" : "Instant"
-                    })
-                },
-                goto_section = "confirm"
-            });
-        }
-        catch (Exception exc)
-        {
-            await _logger.WarningAsync(exc.Message, exc, await _workContext.GetCurrentCustomerAsync());
-            return Json(new { error = 1, message = exc.Message });
-        }
-    }
-
-    [HttpPost]
-    //[AutoValidateAntiforgeryToken]
     public virtual async Task<IActionResult> AsnSaveConfirm(ConfirmStepModel model, IFormCollection form)
     {
         try
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
             var returnUrl = await _genericAttributeService.GetAttributeAsync<string>(customer, "RedeemProductModel_ReturnUrl");
-            var selectedProductMappingId = await _genericAttributeService.GetAttributeAsync<int?>(customer, "RedeemProductModel_SelectedProductMappingId");
+            var productId = await _genericAttributeService.GetAttributeAsync<int>(customer, "RedeemProductModel_ProductId");
+            // The ID of the redeeming product. For open-ended products, this will be different from the ID of the original purchased product
+            var redeemingProductId = await _genericAttributeService.GetAttributeAsync<int?>(customer, "RedeemProductModel_RedeemingProductId");
             var sendViaEmail = await _genericAttributeService.GetAttributeAsync<bool?>(customer, "RedeemProductModel_SendViaEmail");
             var firstName = await _genericAttributeService.GetAttributeAsync<string>(customer, "RedeemProductModel_FirstName");
             var lastName = await _genericAttributeService.GetAttributeAsync<string>(customer, "RedeemProductModel_LastName");
-            var openEndedMappingId = await _genericAttributeService.GetAttributeAsync<int?>(customer, "RedeemProductModel_OpenEndedProductMappingId");
             var emailAddress = await _genericAttributeService.GetAttributeAsync<string>(customer, "RedeemProductModel_EmailAddress");
             var invoiceItemId = await _genericAttributeService.GetAttributeAsync<Guid?>(customer, "RedeemProductModel_InvoiceItemId");
             var selectedUserId = await _genericAttributeService.GetAttributeAsync<Guid?>(customer, "RedeemProductModel_SelectedUserId");
+            var utcStartDate = await _genericAttributeService.GetAttributeAsync<DateTime?>(customer, "RedeemProductModel_StartDate");
+            var storeId = await _genericAttributeService.GetAttributeAsync<int?>(customer, "RedeemProductModel_PurchasingForStore");
+            var purchasingGroupId = await _genericAttributeService.GetAttributeAsync<Guid?>(customer, "RedeemProductModel_PurchasingGroupId");
+            var openEndedProduct = await _genericAttributeService.GetAttributeAsync<bool>(customer, "RedeemProductModel_IsOpenEnded");
 
             if (invoiceItemId == null)
                 throw new Exception("Error retrieving invoice item id for transaction.");
 
-            bool success = await _nexportService.RedeemProductForCustomer(new RedeemProductModel
+            int? targetUserId = null;
+            if (selectedUserId != null)
             {
-                ReturnUrl = returnUrl ?? "",
-                SelectedProductMappingId = selectedProductMappingId,
-                AssignmentType = sendViaEmail != null && sendViaEmail.Value ? "Email" : "Instant",
-                Email = emailAddress,
-                FirstName = firstName,
-                LastName = lastName,
-                ProductMappingIdForOpenEndedProduct = openEndedMappingId,
+                var selectedUser = await _nexportService.FindUserMappingByNexportUserId(selectedUserId.Value);
+                if (selectedUser != null)
+                {
+                    targetUserId = selectedUser.NopUserId;
+                }
+            }
+
+            // Add audit log for redemption assignment
+            await _nexportService.InsertNexportRedemptionAuditLogAsync(new NexportRedemptionAuditLog
+            {
                 InvoiceItemId = invoiceItemId.Value,
-                UserId = selectedUserId
+                Description = $"The invoice item has been scheduled to be assigned and redeemed for customer [{firstName} {lastName}]",
+                CustomerId = customer.Id,
+                TargetedCustomerId = targetUserId,
+                Type = NexportRedemptionAuditLogTypeEnum.AssignRedemption,
+                UtcDateCreated = DateTime.UtcNow
             });
 
-            return Json(new { success = 1 });
+            var success = await _nexportService.RedeemProductForCustomer(
+                new RedeemProductModel
+                {
+                    ReturnUrl = returnUrl ?? "",
+                    ProductId = productId,
+                    RedeemingProductId = redeemingProductId,
+                    AssignmentType = sendViaEmail != null && sendViaEmail.Value ? "Email" : "Instant",
+                    Email = emailAddress,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    InvoiceItemId = invoiceItemId.Value,
+                    UserId = selectedUserId,
+                    UtcStartDate = utcStartDate,
+                    StoreId = storeId,
+                    PurchasingGroupId = purchasingGroupId,
+                    IsOpenEnded = openEndedProduct
+                });
+
+            return Json(new { success });
         }
         catch (Exception exc)
         {
