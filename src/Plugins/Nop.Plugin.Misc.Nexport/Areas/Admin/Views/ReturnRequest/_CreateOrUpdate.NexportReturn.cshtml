@@ -5,6 +5,7 @@
 @using Nop.Core.Domain.Orders;
 @using Nop.Plugin.Misc.Nexport
 @using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Extensions
 @using Nop.Services
 
 <div asp-validation-summary="All"></div>
@@ -46,12 +47,27 @@
                             </div>
                             <div class="col-md-9">
                                 <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.CustomerId">@Model.CustomerInfo</a>
-                                @if (!string.IsNullOrWhiteSpace(Model.NexportUserProfileLink))
+                                @if (!string.IsNullOrWhiteSpace(Model.RequestUserNexportProfileLink))
                                 {
-                                    <text> (<a href="@Model.NexportUserProfileLink" target="_blank">View Nexport profile</a>)</text>
+                                    <text> (<a href="@Model.RequestUserNexportProfileLink" target="_blank">View Nexport profile</a>)</text>
                                 }
                             </div>
                         </div>
+                        @if (Model.IsNexportWholesalePurchase && Model.ReturnedQuantity == 1)
+                        {
+                            <div class="form-group row">
+                                <div class="col-md-3">
+                                    <nop-label asp-for="AssignedUserNexportId" />
+                                </div>
+                                <div class="col-md-9">
+                                    <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.AssignedUserCustomerId">@Model.AssignedUserInfo</a>
+                                    @if (!string.IsNullOrWhiteSpace(Model.AssignedUserNexportProfileLink))
+                                    {
+                                        <text> (<a href="@Model.AssignedUserNexportProfileLink" target="_blank">View Nexport profile</a>)</text>
+                                    }
+                                </div>
+                            </div>
+                        }
                         <div class="form-group row">
                             <div class="col-md-3">
                                 <nop-label asp-for="ProductName" />
@@ -72,15 +88,10 @@
                                 <nop-label asp-for="Quantity" />
                             </div>
                             <div class="col-md-9">
-                                @if (Model.InvoiceItemId != null)
-                                {
-                                    <div class="form-text-row">@Model.Quantity</div>
-                                }
-                                else
-                                {
-                                    <nop-editor asp-for="Quantity" />
-                                }
-                                <span asp-validation-for="Quantity"></span>
+                                <div class="form-text-row">@Model.Quantity</div>
+                                @Html.HiddenFor(x => x.Quantity)
+                                @* <nop-editor asp-for="Quantity" />
+                                <span asp-validation-for="Quantity"></span> *@
                             </div>
                         </div>
                         @if (!Model.IsNexportPurchase)
@@ -99,16 +110,8 @@
                             <div class="col-md-3">
                                 <nop-label asp-for="ReturnRequestStatusId" />
                             </div>
-                            @{
-                                var returnRequestStatusListItem = await ((ReturnRequestStatus)Model.ReturnRequestStatusId).ToSelectListAsync(valuesToExclude: new[]
-                                {
-                                    (int)ReturnRequestStatus.ReturnAuthorized,
-                                    (int)ReturnRequestStatus.ItemsRepaired,
-                                });
-                            }
                             <div class="col-md-9">
-                                <nop-select asp-for="ReturnRequestStatusId" asp-items="@returnRequestStatusListItem" />
-                                <span asp-validation-for="ReturnRequestStatusId"></span>
+                                <div class="form-text-row">@Model.ReturnRequestStatusStr</div>
                             </div>
                         </div>
                         <div class="form-group row">
@@ -116,8 +119,10 @@
                                 <nop-label asp-for="ReasonForReturn" />
                             </div>
                             <div class="col-md-9">
-                                <nop-editor asp-for="ReasonForReturn" asp-required="true" />
-                                <span asp-validation-for="ReasonForReturn"></span>
+                                <div class="form-text-row">@Model.ReasonForReturn</div>
+                                @Html.HiddenFor(x => x.ReasonForReturn)
+                                @* <nop-editor asp-for="ReasonForReturn" asp-required="true" />
+                                <span asp-validation-for="ReasonForReturn"></span> *@
                             </div>
                         </div>
                         <div class="form-group row">
@@ -125,22 +130,12 @@
                                 <nop-label asp-for="RequestedAction" />
                             </div>
                             <div class="col-md-9">
-                                <nop-editor asp-for="RequestedAction" asp-required="true" />
-                                <span asp-validation-for="RequestedAction"></span>
+                                <div class="form-text-row">@Model.RequestedAction</div>
+                                @Html.HiddenFor(x => x.RequestedAction)
+                                @* <nop-editor asp-for="RequestedAction" asp-required="true" />
+                                <span asp-validation-for="RequestedAction"></span> *@
                             </div>
                         </div>
-                        @if (Model.IsNexportWholesalePurchase)
-                        {
-                            <div class="form-group row">
-                                <div class="col-md-3">
-                                    <nop-label asp-for="RefundOption" />
-                                </div>
-                                <div class="col-md-9">
-                                    <nop-select asp-for="RefundOption" asp-items="@(await ((NexportRefundOptionEnums)Model.RefundOption).ToSelectListAsync())" />
-                                    <span asp-validation-for="RefundOption"></span>
-                                </div>
-                            </div>
-                        }
                         @if (Model.UploadedFileGuid != Guid.Empty)
                         {
                             <div class="form-group row">
@@ -157,8 +152,10 @@
                                 <nop-label asp-for="CustomerComments" />
                             </div>
                             <div class="col-md-9">
-                                <nop-textarea asp-for="CustomerComments" />
-                                <span asp-validation-for="CustomerComments"></span>
+                                <div class="form-text-row">@Model.CustomerComments</div>
+                                @Html.HiddenFor(x => x.CustomerComments)
+                                @* <nop-textarea asp-for="CustomerComments" />
+                                <span asp-validation-for="CustomerComments"></span> *@
                             </div>
                         </div>
                         <div class="form-group row">
@@ -166,8 +163,15 @@
                                 <nop-label asp-for="StaffNotes" />
                             </div>
                             <div class="col-md-9">
-                                <nop-textarea asp-for="StaffNotes" />
-                                <span asp-validation-for="StaffNotes"></span>
+                                @if (Model.ReturnRequestStatusId != (int)ReturnRequestStatus.Pending)
+                                {
+                                    <div class="form-text-row">@Model.StaffNotes</div>
+                                }
+                                else
+                                {
+                                    <nop-textarea asp-for="StaffNotes" />
+                                    <span asp-validation-for="StaffNotes"></span>
+                                }
                             </div>
                         </div>
                         <div class="form-group row">
@@ -178,6 +182,26 @@
                                 <div class="form-text-row">@Model.CreatedOn</div>
                             </div>
                         </div>
+                        @if (Model.IsNexportWholesalePurchase)
+                        {
+                            <div class="form-group row">
+                                <div class="col-md-3">
+                                    <nop-label asp-for="RefundOption" />
+                                </div>
+                                <div class="col-md-9">
+                                    @if (Model.ReturnRequestStatusId != (int)ReturnRequestStatus.Pending)
+                                    {
+                                        @* <div class="form-text-row">@Model.RefundOption.GetDisplayName()</div> *@
+                                        <nop-select asp-for="RefundOption" asp-items="@(await ((NexportRefundOptionEnums)Model.RefundOption).ToSelectListAsync())" disabled />
+                                    }
+                                    else
+                                    {
+                                        <nop-select asp-for="RefundOption" asp-items="@(await ((NexportRefundOptionEnums)Model.RefundOption).ToSelectListAsync())" class="disabled" />
+                                        <span asp-validation-for="RefundOption"></span>
+                                    }
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
                 @await Component.InvokeAsync(typeof(AdminWidgetViewComponent), new { widgetZone = AdminWidgetZones.ReturnRequestDetailsBottom, additionalData = Model })

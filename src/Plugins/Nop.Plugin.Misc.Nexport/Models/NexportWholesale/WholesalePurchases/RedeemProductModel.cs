@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core.Domain.Catalog;
 using Nop.Web.Framework.Models;
-using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 
@@ -11,7 +8,7 @@ public record RedeemProductModel : BaseNopEntityModel
 {
     public bool AdminView { get; set; } = false;
 
-    public NexportGroupModel CurrentGroup { get; set; } = new NexportGroupModel { OrganizationId = null, Name = "No Group" };
+    public NexportGroupModel CurrentGroup { get; set; } = new() { OrganizationId = null, Name = "No Group" };
 
     public Product CurrentProduct { get; set; }
 
@@ -29,12 +26,19 @@ public record RedeemProductModel : BaseNopEntityModel
 
     public IList<SelectListItem> AvailableMappings { get; set; }
 
-    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectProduct")]
-    public int? SelectedProductMappingId { get; set; }
+    public int ProductId { get; set; }
 
-    public int? ProductMappingIdForOpenEndedProduct { get; set; }
+    public int? RedeemingProductId { get; set; }
 
     public string Email { get; set; }
 
-    public bool SendViaEmail { get; set; }
+    public DateTime? UtcStartDate { get; set; }
+
+    public int? StoreId { get; set; }
+
+    public Guid? PurchasingGroupId { get; set; }
+
+    public bool IsOpenEnded { get; set; }
+
+    public int? ExtensionOption { get; set; }
 }

@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
@@ -25,47 +24,47 @@ public class OrderDetailsActionFilter : ActionFilterAttribute
         IWorkContext workContext,
         NexportService nexportService)
     {
-            _customerService = customerService;
-            _orderService = orderService;
-            _storeContext = storeContext;
-            _workContext = workContext;
-            _nexportService = nexportService;
-        }
+        _customerService = customerService;
+        _orderService = orderService;
+        _storeContext = storeContext;
+        _workContext = workContext;
+        _nexportService = nexportService;
+    }
 
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-            if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
-                return;
+        if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
+            return;
 
-            if (actionDescriptor.ControllerTypeInfo == typeof(OrderController) &&
-                actionDescriptor.ActionName == nameof(OrderController.Details))
+        if (actionDescriptor.ControllerTypeInfo == typeof(OrderController) &&
+            actionDescriptor.ActionName == nameof(OrderController.Details))
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            if (customer != null && await _customerService.IsRegisteredAsync(customer))
             {
-                var customer = await _workContext.GetCurrentCustomerAsync();
-                if (customer != null && await _customerService.IsRegisteredAsync(customer))
+                var store = await _storeContext.GetCurrentStoreAsync();
+
+                var hasRequiredSupplementalInfo =
+                    await _nexportService.HasRequiredSupplementalInfo(customer.Id, store.Id);
+
+                if (hasRequiredSupplementalInfo)
                 {
-                    var store = await _storeContext.GetCurrentStoreAsync();
+                    context.ActionArguments.TryGetValue("orderId", out var orderIdValue);
 
-                    var hasRequiredSupplementalInfo =
-                        await _nexportService.HasRequiredSupplementalInfo(customer.Id, store.Id);
-
-                    if (hasRequiredSupplementalInfo)
+                    if (orderIdValue is int orderId and > 0)
                     {
-                        context.ActionArguments.TryGetValue("orderId", out var orderIdValue);
+                        var order = await _orderService.GetOrderByIdAsync(orderId);
 
-                        if (orderIdValue is int orderId and > 0)
+                        if (order is { Deleted: false } && order.CustomerId == customer.Id)
                         {
-                            var order = await _orderService.GetOrderByIdAsync(orderId);
-
-                            if (order is { Deleted: false } && order.CustomerId == customer.Id)
-                            {
-                                context.Result = new RedirectToActionResult("AnswerSupplementalInfoQuestion",
-                                    "NexportIntegration", new { returnUrl = $"/orderdetails/{orderId}" });
-                            }
+                            context.Result = new RedirectToActionResult("AnswerSupplementalInfoQuestion",
+                                "NexportIntegration", new { returnUrl = $"/orderdetails/{orderId}" });
                         }
                     }
                 }
             }
-
-            await base.OnActionExecutionAsync(context, next);
         }
+
+        await base.OnActionExecutionAsync(context, next);
+    }
 }

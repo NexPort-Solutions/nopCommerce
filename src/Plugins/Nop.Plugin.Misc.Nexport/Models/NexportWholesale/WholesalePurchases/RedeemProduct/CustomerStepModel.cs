@@ -1,14 +1,10 @@
-﻿
-using System;
-using Nop.Web.Framework.Models;
+﻿using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
 
 public record CustomerStepModel : BaseSearchModel
 {
-    public bool CustomerStepSendViaEmail { get; set; }
-
     [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Customer.SearchNameOrEmail")]
     public string SearchEmail { get; set; }
 
@@ -34,6 +30,8 @@ public record CustomerStepModel : BaseSearchModel
     public Guid? GroupId { get; set; }
 
     public bool TableFirstDraw { get; set; } = true;
+
+    public bool AdminView { get; set; }
 
     public CustomerStepModel()
     {

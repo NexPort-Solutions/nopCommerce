@@ -1,3 +1,4 @@
+@using Nop.Core.Domain.Orders
 @model Nop.Plugin.Misc.Nexport.Areas.Admin.Models.ReturnRequest.NexportReturnRequestModel
 
 @{
@@ -17,13 +18,13 @@
             </small>
         </h1>
         <div class="float-right">
-            <button type="submit" name="save" class="btn btn-primary">
-                <i class="far fa-save"></i>
-                @T("Admin.Common.Save")
+            <button type="submit" name="accept" class="btn btn-primary" @if(Model.ReturnRequestStatusId != (int)ReturnRequestStatus.Pending) { <text>disabled</text> }>
+                <i class="fas fa-check"></i>
+                Accept
             </button>
-            <button type="submit" name="save-continue" class="btn btn-primary">
-                <i class="far fa-save"></i>
-                @T("Admin.Common.SaveContinue")
+            <button type="submit" name="deny" class="btn btn-warning" @if(Model.ReturnRequestStatusId != (int)ReturnRequestStatus.Pending) { <text>disabled</text> }>
+                <i class="fas fa-times"></i>
+                Deny
             </button>
             <span id="returnrequest-delete" class="btn btn-danger">
                 <i class="far fa-trash-alt"></i>

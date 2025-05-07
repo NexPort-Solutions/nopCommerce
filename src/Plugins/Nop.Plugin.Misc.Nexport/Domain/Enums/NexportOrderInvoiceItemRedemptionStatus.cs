@@ -1,14 +1,10 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Plugin.Misc.Nexport.Extensions;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Nop.Plugin.Misc.Nexport.Domain.Enums;
 
 public enum NexportOrderInvoiceItemRedemptionStatus
 {
-    [Display(Name = "Processing")]
+    [Display(Name = "Processing Available")]
     ProcessingAvailable = 0,
 
     [Display(Name = "Available")]
@@ -20,14 +16,12 @@ public enum NexportOrderInvoiceItemRedemptionStatus
     [Display(Name = "Assigned")]
     Assigned = 3,
 
-    [Display(Name = "Processing")]
-    ProcessingAwaiting = 4
-}
+    [Display(Name = "Processing Awaiting")]
+    ProcessingAwaiting = 4,
 
-public static class NexportEnumExtensions
-{
-    public static SelectList ToNexportSelectListFromEnum(this NexportOrderInvoiceItemRedemptionStatus enumObj, bool markCurrentAsSelected = true, int[] valuesToExclude = null)
-    {
-        return enumObj.ToNexportSelectList(markCurrentAsSelected, valuesToExclude);
-    }
+    [Display(Name = "Refunded")]
+    Refunded = 5,
+
+    [Display(Name = "Processing Refund")]
+    ProcessingRefund = 6
 }

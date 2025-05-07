@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DocumentFormat.OpenXml.EMMA;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.ReturnRequest;
@@ -79,7 +81,7 @@ public class NexportReturnRequestController(
     }
 
     [Route("Admin/ReturnRequest/Nexport/Edit/{id}")]
-    public virtual async Task<IActionResult> Edit(int id)
+    public new virtual async Task<IActionResult> Edit(int id)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageReturnRequests))
             return AccessDeniedView();
@@ -96,9 +98,9 @@ public class NexportReturnRequestController(
     }
 
     [Route("Admin/ReturnRequest/Nexport/Edit/{id}")]
-    [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
-    [FormValueRequired("save", "save-continue")]
-    public virtual async Task<IActionResult> Edit(NexportReturnRequestModel model, bool continueEditing)
+    [HttpPost, ParameterBasedOnFormName("deny", "denyRefund")]
+    [FormValueRequired("accept", "deny")]
+    public virtual async Task<IActionResult> Edit(NexportReturnRequestModel model, bool denyRefund)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageReturnRequests))
             return AccessDeniedView();
@@ -110,77 +112,105 @@ public class NexportReturnRequestController(
 
         if (ModelState.IsValid)
         {
-            if (model.ReturnRequestStatusId == (int)ReturnRequestStatus.ItemsRefunded)
+            if (model.ReturnRequestStatusId == (int)ReturnRequestStatus.Pending)
             {
-
-                var invoiceItemId = await genericAttributeService.GetAttributeAsync<Guid?>(returnRequest, "RefundRequestInvoiceItemId", returnRequest.StoreId);
-                if (invoiceItemId != null)
+                try
                 {
-                    var invoiceItem = await nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId.Value);
-                    if (invoiceItem != null)
+                    var currentCustomer = await workContext.GetCurrentCustomerAsync();
+
+                    if (model.Quantity == 1)
                     {
-                        switch ((NexportRefundOptionEnums)model.RefundOption)
+                        var invoiceItemIds = await genericAttributeService.GetAttributeAsync<string>(returnRequest, "RefundRequestInvoiceItems", returnRequest.StoreId);
+                        if (!string.IsNullOrWhiteSpace(invoiceItemIds))
                         {
-                            default:
-                            case NexportRefundOptionEnums.ExpireEnrollment:
-                                if (invoiceItem.RedemptionEnrollmentId != null)
+                            var invoiceItemList = JsonConvert.DeserializeObject<List<Guid>>(invoiceItemIds);
+                            if (invoiceItemList.Count == 1)
+                            {
+                                var invoiceItemId = invoiceItemList.First();
+                                var invoiceItem =
+                                    await nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
+                                if (invoiceItem != null)
                                 {
-                                    await nexportService.ResetInvoiceRedemptionAsync(invoiceItem, $"Expiring enrollment {invoiceItem.RedemptionEnrollmentId} due to refund!");
-                                }
-                                break;
+                                    if (denyRefund)
+                                    {
+                                        // Deny the refund request
+                                        await nexportService.ProcessRefundingInvoiceItem(invoiceItem, false);
 
-                            case NexportRefundOptionEnums.DropEnrollment:
-                                if (invoiceItem.RedemptionEnrollmentId != null)
-                                {
-                                    await nexportService.DropEnrollmentAsync(invoiceItem.RedemptionEnrollmentId.Value)!;
-                                }
-                                break;
+                                        returnRequest.ReturnRequestStatus = ReturnRequestStatus.RequestRejected;
+                                    }
+                                    else
+                                    {
+                                        switch ((NexportRefundOptionEnums)model.RefundOption)
+                                        {
+                                            default:
+                                            case NexportRefundOptionEnums.ExpireEnrollment:
+                                                if (invoiceItem.RedemptionEnrollmentId != null)
+                                                {
+                                                    await nexportService.ResetInvoiceRedemptionAsync(invoiceItem,
+                                                        $"Expiring enrollment {invoiceItem.RedemptionEnrollmentId} due to refund!");
+                                                }
 
-                            case NexportRefundOptionEnums.DestroyEnrollment:
-                                if (invoiceItem.RedemptionEnrollmentId != null)
-                                {
-                                    await nexportService.DestroyEnrollmentAsync(invoiceItem.RedemptionEnrollmentId.Value)!;
+                                                break;
+
+                                            case NexportRefundOptionEnums.DropEnrollment:
+                                                if (invoiceItem.RedemptionEnrollmentId != null)
+                                                {
+                                                    await nexportService.DropEnrollmentAsync(invoiceItem
+                                                        .RedemptionEnrollmentId.Value)!;
+                                                }
+
+                                                break;
+
+                                            case NexportRefundOptionEnums.DestroyEnrollment:
+                                                if (invoiceItem.RedemptionEnrollmentId != null)
+                                                {
+                                                    await nexportService.DestroyEnrollmentAsync(invoiceItem
+                                                        .RedemptionEnrollmentId.Value)!;
+                                                }
+
+                                                break;
+                                        }
+
+                                        // Refund the invoice item
+                                        await nexportService.ProcessRefundingInvoiceItem(invoiceItem, true);
+
+                                        returnRequest.ReturnRequestStatus = ReturnRequestStatus.ItemsRefunded;
+                                    }
                                 }
-                                break;
+                            }
                         }
-
-                        // Refund the invoice item
-                        await nexportService.RefundInvoiceItem(invoiceItem);
                     }
-                }
-                else
-                {
-                    var quantityToReturn = model.Quantity;
-                    if (quantityToReturn > 0)
+                    else
                     {
                         var order = await _orderService.GetOrderByOrderItemAsync(returnRequest.OrderItemId);
                         if (order != null)
                         {
-                            await nexportService.RefundOrderItem(quantityToReturn, order.Id, returnRequest.OrderItemId);
+                            await nexportService.RefundOrderItem(model.Quantity, order.Id, returnRequest.OrderItemId);
+                            returnRequest.ReturnRequestStatus = ReturnRequestStatus.ItemsRefunded;
                         }
                     }
+
+                    returnRequest = model.ToEntity(returnRequest);
+                    returnRequest.UpdatedOnUtc = DateTime.UtcNow;
+
+                    await _returnRequestService.UpdateReturnRequestAsync(returnRequest);
+
+                    await genericAttributeService.SaveAttributeAsync(returnRequest, "ModifiedByUser", currentCustomer.Id, returnRequest.StoreId);
+
+                    //activity log
+                    await _customerActivityService.InsertActivityAsync("EditReturnRequest",
+                        string.Format(await _localizationService.GetResourceAsync("ActivityLog.EditReturnRequest"),
+                            returnRequest.Id), returnRequest);
+
+                    _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.ReturnRequests.Updated"));
+
+                    return RedirectToAction("Edit", "NexportReturnRequest", new { id = returnRequest.Id });
+                }
+                catch (Exception ex)
+                {
+                    _notificationService.ErrorNotification("Unable to process request refund invoice item!");
                 }
             }
-
-            returnRequest = model.ToEntity(returnRequest);
-            returnRequest.UpdatedOnUtc = DateTime.UtcNow;
-
-            await _returnRequestService.UpdateReturnRequestAsync(returnRequest);
-
-            var currentCustomer = await workContext.GetCurrentCustomerAsync();
-            await genericAttributeService.SaveAttributeAsync(returnRequest, "ModifiedByUser", currentCustomer.Id, returnRequest.StoreId);
-
-            //activity log
-            await _customerActivityService.InsertActivityAsync("EditReturnRequest",
-                string.Format(await _localizationService.GetResourceAsync("ActivityLog.EditReturnRequest"),
-                    returnRequest.Id), returnRequest);
-
-            _notificationService.SuccessNotification(
-                await _localizationService.GetResourceAsync("Admin.ReturnRequests.Updated"));
-
-            return continueEditing
-                ? RedirectToAction("Edit", "NexportReturnRequest", new { id = returnRequest.Id })
-                : RedirectToAction("List", "NexportReturnRequest");
         }
 
         //prepare model
@@ -188,5 +218,50 @@ public class NexportReturnRequestController(
 
         //if we got this far, something failed, redisplay form
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/ReturnRequest/Edit.NexportReturn.cshtml", model);
+    }
+
+    [Route("Admin/ReturnRequest/Nexport/Delete/{id}")]
+    [HttpPost]
+    public new virtual async Task<IActionResult> Delete(int id)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageReturnRequests))
+            return AccessDeniedView();
+
+        //try to get a return request with the specified id
+        var returnRequest = await _returnRequestService.GetReturnRequestByIdAsync(id);
+        if (returnRequest == null)
+            return RedirectToAction("List");
+
+        if (returnRequest.ReturnRequestStatusId == (int)ReturnRequestStatus.Pending)
+        {
+            if (returnRequest.Quantity == 1)
+            {
+                var invoiceItemIds = await genericAttributeService.GetAttributeAsync<string>(returnRequest, "RefundRequestInvoiceItems", returnRequest.StoreId);
+                if (!string.IsNullOrWhiteSpace(invoiceItemIds))
+                {
+                    var invoiceItemList = JsonConvert.DeserializeObject<List<Guid>>(invoiceItemIds);
+                    if (invoiceItemList.Count == 1)
+                    {
+                        var invoiceItemId = invoiceItemList.First();
+                        var invoiceItem = await nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
+                        if (invoiceItem != null)
+                        {
+                            // Deny the refund request
+                            await nexportService.ProcessRefundingInvoiceItem(invoiceItem, false);
+                        }
+                    }
+                }
+            }
+        }
+
+        await _returnRequestService.DeleteReturnRequestAsync(returnRequest);
+
+        //activity log
+        await _customerActivityService.InsertActivityAsync("DeleteReturnRequest",
+            string.Format(await _localizationService.GetResourceAsync("ActivityLog.DeleteReturnRequest"), returnRequest.Id), returnRequest);
+
+        _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.ReturnRequests.Deleted"));
+
+        return RedirectToAction("List");
     }
 }

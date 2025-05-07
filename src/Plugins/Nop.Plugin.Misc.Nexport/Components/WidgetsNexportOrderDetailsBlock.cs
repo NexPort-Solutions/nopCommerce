@@ -46,7 +46,7 @@ public class WidgetsNexportOrderDetailsBlock : NopViewComponent
 
         var orderModel = (OrderModel)additionalData;
 
-        var order = _orderService.GetOrderByIdAsync(orderModel.Id);
+        var order = await _orderService.GetOrderByIdAsync(orderModel.Id);
 
         if (order == null)
             return Content("");

@@ -1,6 +1,4 @@
-﻿using System;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Collections.Generic;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
@@ -11,10 +9,10 @@ public record NexportProductMappingListSearchModel : BaseSearchModel
 {
     public NexportProductMappingListSearchModel()
     {
-            AvailableNexportProductTypes = new List<SelectListItem>();
+        AvailableNexportProductTypes = new List<SelectListItem>();
 
-            SetGridPageSize();
-        }
+        SetGridPageSize();
+    }
 
     public Guid? NexportProductId { get; set; }
 
@@ -34,5 +32,4 @@ public record NexportProductMappingListSearchModel : BaseSearchModel
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.ProductMapping.SearchStoreName")]
     public string SearchStoreName { get; set; }
-
 }

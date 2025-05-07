@@ -192,6 +192,51 @@ var Product = {
   }
 };
 
+var ProductOptions = {
+  form: false,
+  saveUrl: false,
+  productId: false,
+
+  init: function (form, saveUrl) {
+    this.form = form;
+    this.saveUrl = saveUrl;
+  },
+
+  save: function () {
+    if (Assign.loadWaiting !== false) return;
+
+    Assign.setLoadWaiting("productOptions");
+
+    $.ajax({
+      cache: false,
+      url: this.saveUrl,
+      data: $(this.form).serialize(),
+      type: "POST",
+      success: this.nextStep,
+      complete: this.resetLoadWaiting,
+      error: Assign.ajaxFailure
+    });
+  },
+
+  resetLoadWaiting: function () {
+    Assign.setLoadWaiting(false);
+  },
+
+  nextStep: function (response) {
+    if (response.error) {
+      if (typeof response.message === "string") {
+        alert(response.message);
+      } else {
+        alert(response.message.join("\n"));
+      }
+
+      return false;
+    }
+
+    Assign.setStepResponse(response);
+  }
+};
+
 var Confirm = {
   form: false,
   saveUrl: false,

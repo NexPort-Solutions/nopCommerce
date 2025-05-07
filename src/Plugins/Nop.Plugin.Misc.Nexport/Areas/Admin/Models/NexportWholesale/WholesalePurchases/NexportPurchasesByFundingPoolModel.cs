@@ -8,6 +8,16 @@ public record NexportPurchasesByFundingPoolModel : BaseNopModel
 
     public int Awaiting { get; set; }
 
+    public int ProcessingAvailable { get; set; }
+
+    public int ProcessingAwaiting { get; set; }
+
+    public int Refunded { get; set; }
+
+    public int ProcessingRefund { get; set; }
+
+    public int Total { get; set; }
+
     public int Redeemed { get; set; }
 
     public int? FundingPoolId { get; set; }

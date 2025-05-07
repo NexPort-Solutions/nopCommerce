@@ -126,7 +126,7 @@ public partial class NexportService
     private readonly IRepository<ProductCategory> _productCategoryMappingRepository;
     private readonly IRepository<NexportRedemptionUnassignmentRequest> _nexportRedemptionUnassignmentRequestRepository;
     private readonly IRepository<NexportRedemptionUnassignmentRequestReason> _nexportRedemptionUnassignmentRequestReasonRepository;
-    private readonly IRepository<NexportRedemptionAssignmentLog> _nexportRedemptionAssignmentLogRepository;
+    private readonly IRepository<NexportRedemptionAuditLog> _nexportRedemptionAuditLogRepository;
     private readonly IHtmlFormatter _htmlFormatter;
     private readonly IEventPublisher _eventPublisher;
 
@@ -204,7 +204,7 @@ public partial class NexportService
         IRepository<ProductCategory> productCategoryMappingRepository,
         IRepository<NexportRedemptionUnassignmentRequest> nexportRedemptionUnassignmentRequestRepository,
         IRepository<NexportRedemptionUnassignmentRequestReason> nexportRedemptionUnassignmentRequestReasonRepository,
-        IRepository<NexportRedemptionAssignmentLog> nexportRedemptionAssignmentLogRepository,
+        IRepository<NexportRedemptionAuditLog> nexportRedemptionAuditLogRepository,
         IHtmlFormatter htmlFormatter,
         IEventPublisher eventPublisher)
     {
@@ -278,7 +278,7 @@ public partial class NexportService
         _productCategoryMappingRepository = productCategoryMappingRepository;
         _nexportRedemptionUnassignmentRequestRepository = nexportRedemptionUnassignmentRequestRepository;
         _nexportRedemptionUnassignmentRequestReasonRepository = nexportRedemptionUnassignmentRequestReasonRepository;
-        _nexportRedemptionAssignmentLogRepository = nexportRedemptionAssignmentLogRepository;
+        _nexportRedemptionAuditLogRepository = nexportRedemptionAuditLogRepository;
         _htmlFormatter = htmlFormatter;
         _eventPublisher = eventPublisher;
     }
@@ -950,7 +950,13 @@ public partial class NexportService
     [CanBeNull]
     public async Task<OrganizationResponseItem> GetOrganizationDetailsAsync(Guid orgId)
     {
-        var availableOrganizations = await FindAllOrganizationsAsync(orgId);
+        var cacheKey = new CacheKey("Misc.Nexport.GetNexportOrganizations.{0}", orgId.ToString())
+        {
+            CacheTime = 30
+        };
+
+        var availableOrganizations = await _cacheManager.GetAsync(cacheKey, async () => await FindAllOrganizationsAsync(orgId));
+        //var availableOrganizations = await FindAllOrganizationsAsync(orgId);
         var result = availableOrganizations.SingleOrDefault(s => s.OrgId == orgId);
 
         return result;
@@ -1867,60 +1873,8 @@ public partial class NexportService
     }
 
     public async Task<bool> RedeemNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, NexportProductMapping mapping = null,
-        RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction = RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
-    {
-        if (invoiceItem == null)
-            throw new ArgumentNullException(nameof(invoiceItem));
-
-        if (redeemingUserId == Guid.Empty)
-            throw new ArgumentException("Redeeming User Id cannot be empty identifier", nameof(redeemingUserId));
-
-        try
-        {
-            var redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode);
-
-            if (redeemInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
-                throw new ApiException((int)redeemInvoiceResult.ApiErrorEntity.ErrorCode,
-                    redeemInvoiceResult.ApiErrorEntity.ErrorMessage);
-
-            invoiceItem.RedeemingUserId = redeemingUserId;
-            invoiceItem.UtcDateRedemption = redeemInvoiceResult.UtcRedemptionDate;
-            invoiceItem.RequireManualApproval = null;
-            invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Assigned;
-
-
-            if (redeemInvoiceResult.RedemptionEnrollmentId != null)
-            {
-                invoiceItem.RedemptionEnrollmentId = redeemInvoiceResult.RedemptionEnrollmentId;
-            }
-
-            await UpdateNexportOrderInvoiceItem(invoiceItem);
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-            var errMsg =
-                $"Error occurred during RedeemInvoiceItem api call with the parameters: invoice_item_id - {invoiceItem.InvoiceItemId}, redeeming_user_id - {redeemingUserId}, redemption_action_type - {redemptionAction}";
-            await _logger.ErrorAsync($"{errMsg}", ex);
-
-            if (ex is ApiException exception)
-            {
-                var errorResponse = JsonConvert.DeserializeObject<InvoiceRedemptionResponse>(exception.ErrorContent.ToString());
-                if (errorResponse != null)
-                {
-                    throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
-                }
-            }
-
-            throw;
-        }
-    }
-
-    public async Task<bool> RedeemOpenEndedNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, NexportProductMapping mapping = null,
-        RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction =
-            RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
+        RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction = RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption,
+        UpdatedInvoiceFields updatedInvoiceFields = null)
     {
         if (invoiceItem == null)
             throw new ArgumentNullException(nameof(invoiceItem));
@@ -1931,26 +1885,35 @@ public partial class NexportService
         try
         {
             InvoiceRedemptionResponse redeemInvoiceResult;
-            if (mapping.Type == NexportProductTypeEnum.Catalog)
+            if (mapping != null)
             {
-                redeemInvoiceResult = _nexportApiService.RedeemOpenEndedNexportInvoice(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode, mapping.NexportCatalogId, Enums.ProductTypeEnum.Catalog);
+                if (mapping.Type == NexportProductTypeEnum.Catalog)
+                {
+                    redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
+                        _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode,
+                        mapping.NexportCatalogId, Enums.ProductTypeEnum.Catalog, updatedInvoiceFields);
+                }
+                else
+                {
+                    redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
+                        _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode,
+                        mapping.NexportCatalogSyllabusLinkId, Enums.ProductTypeEnum.Syllabus, updatedInvoiceFields);
+                }
             }
             else
             {
-                redeemInvoiceResult = _nexportApiService.RedeemOpenEndedNexportInvoice(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode, mapping.NexportCatalogSyllabusLinkId, Enums.ProductTypeEnum.Syllabus);
+                redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
+                    _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode,
+                    updatedInvoiceFields: updatedInvoiceFields);
             }
 
             if (redeemInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
-                throw new ApiException((int)redeemInvoiceResult.ApiErrorEntity.ErrorCode,
-                    redeemInvoiceResult.ApiErrorEntity.ErrorMessage);
+                throw new ApiException((int)redeemInvoiceResult.ApiErrorEntity.ErrorCode, redeemInvoiceResult.ApiErrorEntity.ErrorMessage);
 
             invoiceItem.RedeemingUserId = redeemingUserId;
             invoiceItem.UtcDateRedemption = redeemInvoiceResult.UtcRedemptionDate;
             invoiceItem.RequireManualApproval = null;
             invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Assigned;
-
 
             if (redeemInvoiceResult.RedemptionEnrollmentId != null)
             {
@@ -1979,6 +1942,67 @@ public partial class NexportService
             throw;
         }
     }
+
+    //public async Task<bool> RedeemOpenEndedNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, NexportProductMapping mapping = null,
+    //    RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction = RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
+    //{
+    //    if (invoiceItem == null)
+    //        throw new ArgumentNullException(nameof(invoiceItem));
+
+    //    if (redeemingUserId == Guid.Empty)
+    //        throw new ArgumentException("Redeeming User Id cannot be empty identifier", nameof(redeemingUserId));
+
+    //    try
+    //    {
+    //        InvoiceRedemptionResponse redeemInvoiceResult;
+    //        if (mapping.Type == NexportProductTypeEnum.Catalog)
+    //        {
+    //            redeemInvoiceResult = _nexportApiService.RedeemOpenEndedNexportInvoice(_nexportSettings.Url,
+    //                _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode, mapping.NexportCatalogId, Enums.ProductTypeEnum.Catalog);
+    //        }
+    //        else
+    //        {
+    //            redeemInvoiceResult = _nexportApiService.RedeemOpenEndedNexportInvoice(_nexportSettings.Url,
+    //                _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode, mapping.NexportCatalogSyllabusLinkId, Enums.ProductTypeEnum.Syllabus);
+    //        }
+
+    //        if (redeemInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
+    //            throw new ApiException((int)redeemInvoiceResult.ApiErrorEntity.ErrorCode,
+    //                redeemInvoiceResult.ApiErrorEntity.ErrorMessage);
+
+    //        invoiceItem.RedeemingUserId = redeemingUserId;
+    //        invoiceItem.UtcDateRedemption = redeemInvoiceResult.UtcRedemptionDate;
+    //        invoiceItem.RequireManualApproval = null;
+    //        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Assigned;
+
+
+    //        if (redeemInvoiceResult.RedemptionEnrollmentId != null)
+    //        {
+    //            invoiceItem.RedemptionEnrollmentId = redeemInvoiceResult.RedemptionEnrollmentId;
+    //        }
+
+    //        await UpdateNexportOrderInvoiceItem(invoiceItem);
+
+    //        return true;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        var errMsg =
+    //            $"Error occurred during RedeemInvoiceItem api call with the parameters: invoice_item_id - {invoiceItem.InvoiceItemId}, redeeming_user_id - {redeemingUserId}, redemption_action_type - {redemptionAction}";
+    //        await _logger.ErrorAsync($"{errMsg}", ex);
+
+    //        if (ex is ApiException exception)
+    //        {
+    //            var errorResponse = JsonConvert.DeserializeObject<InvoiceRedemptionResponse>(exception.ErrorContent.ToString());
+    //            if (errorResponse != null)
+    //            {
+    //                throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+    //            }
+    //        }
+
+    //        throw;
+    //    }
+    //}
 
     [CanBeNull]
     public async Task<InvoiceRedemptionResponse> GetNexportInvoiceRedemptionAsync(Guid invoiceItemId)
@@ -2030,6 +2054,42 @@ public partial class NexportService
         }
 
         return null;
+    }
+
+    //public async Task<(Guid, Guid)> UpdateNexportOrderInvoiceItemAsync(
+    //    Guid invoiceItemId, Guid? productId = null, Enums.ProductTypeEnum productType = Enums.ProductTypeEnum.Syllabus,
+    //    string productCode = null, bool isRenewal = false, decimal? cost = null,
+    //    DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null,
+    //    Guid? subscriptionOrgId = null, IList<Guid> groupMembershipIds = null,
+    //    Guid? purchasingGroupId = null, string fundingPool = null, DateTime? redemptionAvailableDate = null,
+    //    string note = null)
+    public async Task<(Guid, Guid)> UpdateNexportOrderInvoiceItemAsync(Guid invoiceItemId, UpdatedInvoiceFields updatedInvoiceFields)
+    {
+        UpdateInvoiceItemResponse updateInvoiceItemResult;
+
+        try
+        {
+            updateInvoiceItemResult = _nexportApiService.UpdateInvoiceItem(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                invoiceItemId, updatedInvoiceFields);
+        }
+        catch (Exception ex)
+        {
+            var errMsg = $"Error occurred during UpdateInvoiceItem api call with the parameters: invoiceItem_id - {invoiceItemId}";
+            await _logger.ErrorAsync($"{errMsg}", ex);
+
+            if (ex is ApiException exception)
+            {
+                var errorResponse = JsonConvert.DeserializeObject<UpdateInvoiceItemResponse>(exception.ErrorContent.ToString());
+                if (errorResponse != null)
+                {
+                    throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                }
+            }
+
+            throw;
+        }
+
+        return (updateInvoiceItemResult.InvoiceItemId, updateInvoiceItemResult.InvoiceId);
     }
 
     public async Task<string> SignInNexportAsync(NexportOrderInvoiceItem invoiceItem)
@@ -2513,8 +2573,7 @@ public partial class NexportService
     [CanBeNull]
     public async Task<(Guid EnrollmentId, Enums.PhaseEnum Phase, Enums.ResultEnum Result,
             DateTime? enrollementExpirationDate, int completionPercentage)?>
-        VerifyNexportEnrollmentStatusAsync(Product product, Customer customer,
-            int? storeId = null)
+        VerifyNexportEnrollmentStatusAsync(Product product, Customer customer, int? storeId = null)
     {
         var mapping = await GetProductMappingByNopProductId(product.Id, storeId) ?? await GetProductMappingByNopProductId(product.Id);
         if (mapping != null)
@@ -3107,8 +3166,7 @@ public partial class NexportService
             if (field is not { Type: NexportRegistrationFieldType.CustomType })
                 continue;
 
-            var customRender =
-                await _registrationFieldCustomRenderPluginManager.LoadPluginBySystemNameAsync(field.CustomFieldRender);
+            var customRender = await _registrationFieldCustomRenderPluginManager.LoadPluginBySystemNameAsync(field.CustomFieldRender);
             var processResult = await customRender?.ProcessCustomRegistrationFields(answer.CustomerId, field.Id);
             if (processResult != null)
             {
@@ -3183,7 +3241,8 @@ public partial class NexportService
         return new PagedList<Store>(stores, pageIndex, pageSize);
     }
 
-    public async Task<NexportOrderInvoiceItem> ResetInvoiceRedemptionAsync(NexportOrderInvoiceItem invoiceItem, string note = null)
+    public async Task<NexportOrderInvoiceItem> ResetInvoiceRedemptionAsync(NexportOrderInvoiceItem invoiceItem,
+        string note = null, bool refundInvoice = false)
     {
         if (invoiceItem == null)
             throw new ArgumentNullException(nameof(invoiceItem));
@@ -3197,19 +3256,21 @@ public partial class NexportService
                 throw new ApiException((int)resetInvoiceResult.ApiErrorEntity.ErrorCode,
                     resetInvoiceResult.ApiErrorEntity.ErrorMessage);
 
-            var newRedemption = resetInvoiceResult.NewRedemption;
+            if (!refundInvoice)
+            {
+                var newRedemption = resetInvoiceResult.NewRedemption;
 
-            invoiceItem.RedeemingUserId = newRedemption.RedemptionUserId;
-            invoiceItem.InvoiceItemRedemptionCode = newRedemption.RedemptionCode;
-            invoiceItem.UtcDateRedemption = newRedemption.UtcRedemptionDate;
-            invoiceItem.RedemptionEnrollmentId = newRedemption.RedemptionEnrollmentId;
+                invoiceItem.RedeemingUserId = newRedemption.RedemptionUserId;
+                invoiceItem.InvoiceItemRedemptionCode = newRedemption.RedemptionCode;
+                invoiceItem.UtcDateRedemption = newRedemption.UtcRedemptionDate;
+                invoiceItem.RedemptionEnrollmentId = newRedemption.RedemptionEnrollmentId;
+            }
 
             return invoiceItem;
         }
         catch (Exception ex)
         {
-            var errMsg =
-                $"Error occurred during ResetInvoiceItem api call with the parameter: invoice_item_id - {invoiceItem.InvoiceItemId}";
+            var errMsg = $"Error occurred during ResetInvoiceItem api call with the parameter: invoice_item_id - {invoiceItem.InvoiceItemId}";
             await _logger.ErrorAsync($"{errMsg}", ex);
 
             if (ex is ApiException exception)
@@ -3241,13 +3302,14 @@ public partial class NexportService
     {
         if (userId == Guid.Empty)
             throw new ArgumentException("userId cannot be empty", nameof(userId));
+
         if (groupId == Guid.Empty)
             throw new ArgumentException("groupId cannot be empty", nameof(groupId));
 
         try
         {
-            var hasGroupPermissionResult = _nexportApiService.HasGroupPermission(_nexportSettings.Url, _nexportSettings.AuthenticationToken, userId,
-            groupId, permission);
+            var hasGroupPermissionResult = _nexportApiService.HasGroupPermission(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+                userId, groupId, permission);
 
             if (hasGroupPermissionResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
                 throw new ApiException((int)hasGroupPermissionResult.ApiErrorEntity.ErrorCode,
@@ -3257,8 +3319,7 @@ public partial class NexportService
         }
         catch (Exception ex)
         {
-            var errMsg =
-                $"Error occurred during HasGroupPermission api call with the parameter: user_id - {userId},group_id - {groupId}";
+            var errMsg = $"Error occurred during HasGroupPermission api call with the parameter: user_id - {userId}, group_id - {groupId}";
             await _logger.ErrorAsync($"{errMsg}", ex);
 
             if (ex is ApiException exception)
@@ -3276,12 +3337,13 @@ public partial class NexportService
 
     public async Task<IList<DirectoryResponseItem>> SearchGroupsForPermissionAsync(Guid userId, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION)
     {
-        var items = new List<DirectoryResponseItem>();
-
         if (userId == Guid.Empty)
             throw new ArgumentException("User Id cannot be empty", nameof(userId));
+
         if (groupId == Guid.Empty)
             throw new ArgumentException("Group Id cannot be empty", nameof(groupId));
+
+        var items = new List<DirectoryResponseItem>();
 
         try
         {

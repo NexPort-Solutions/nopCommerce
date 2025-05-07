@@ -1,0 +1,71 @@
+﻿@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.SubmitInvoiceItemRefundRequestModel
+
+@{
+    Layout = "_AdminPopupLayout";
+    ViewBag.PageTitle = "Request Refund";
+}
+
+@if (ViewBag.RefreshPage == true)
+{
+    <script>
+        try {
+            window.opener.$("#@(Context.Request.Query["containerId"]) #@(Context.Request.Query["btnId"])").click();
+        }
+        catch (e) { }
+    </script>
+}
+
+@if (ViewBag.ClosePage == true)
+{
+    <script>
+        window.close();
+    </script>
+}
+
+@if (Model != null)
+{
+    if (!string.IsNullOrEmpty(Model.Result))
+    {
+        <div class="content">
+            <div class="form-horizontal">
+                @Model.Result
+            </div>
+        </div>
+    }
+    else
+    {
+        <form id="submit-invoice-item-refund-request" method="post"
+              asp-action="RequestRefund"
+              asp-controller="NexportWholesale"
+              asp-route-invoiceItemId="@Context.Request.Query["invoiceItemId"]"
+              asp-route-containerId="@Context.Request.Query["containerId"]"
+              asp-route-btnId="@Context.Request.Query["btnId"]">
+            <div class="content-header clearfix">
+                <div class="float-right">
+                    <button type="submit" name="submitrequestrefund" class="btn btn-primary">
+                        <i class="far fa-save"></i>
+                        Submit
+                    </button>
+                </div>
+            </div>
+            <div class="content">
+                <div class="form-horizontal">
+                    <div class="card-group">
+                        <div class="card card-default card-popup">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <div class="col-md-4">
+                                        <nop-label asp-for="Comments" />
+                                    </div>
+                                    <div class="col-md-8">
+                                        <nop-textarea asp-for="Comments" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    }
+}

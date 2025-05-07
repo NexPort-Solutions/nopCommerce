@@ -204,6 +204,8 @@ public class NexportDefaults
 
     public const string HIDE_ADD_TO_CART_FOR_INELIGIBLE_PRODUCTS_SETTING_KEY = "HideAddToCartForIneligibleProducts";
 
+    public const string DISPLAY_LAST_PURCHASE_INFO = "DisplayLastPurchaseInfo";
+
     public const string ALLOW_REPURCHASE_FAILED_COURSES_FROM_NEXPORT_SETTING_KEY = "AllowRepurchaseFailedCoursesFromNexport";
 
     public const string ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY = "AllowRepurchasePassedCoursesFromNexport";

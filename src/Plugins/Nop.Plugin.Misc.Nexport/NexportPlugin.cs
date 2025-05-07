@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using FluentMigrator.Runner;
+﻿using FluentMigrator.Runner;
 using FluentMigrator.Runner.Exceptions;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -315,7 +311,8 @@ public class NexportPlugin(
                 AdminWidgetZones.OrderListButtons,
                 PublicWidgetZones.OrderDetailsPageAfterproducts,
                 PublicWidgetZones.ProductDetailsAfterPictures,
-                PublicWidgetZones.ProductBoxAddinfoBefore
+                PublicWidgetZones.ProductBoxAddinfoBefore,
+                PublicWidgetZones.ProductDetailsAfterBreadcrumb
             });
     }
 
@@ -362,6 +359,9 @@ public class NexportPlugin(
 
         if (widgetZone == PublicWidgetZones.OrderSummaryCartFooter)
             return typeof(WidgetsOrderSummaryCartFooter);
+
+        if (widgetZone == PublicWidgetZones.ProductDetailsAfterBreadcrumb)
+            return typeof(WidgetsNexportProductDetailsAfterBreadcrumb);
 
         if (widgetZone == PublicWidgetZones.ProductDetailsOverviewTop)
             return typeof(WidgetsProductDetailsOverviewTop);

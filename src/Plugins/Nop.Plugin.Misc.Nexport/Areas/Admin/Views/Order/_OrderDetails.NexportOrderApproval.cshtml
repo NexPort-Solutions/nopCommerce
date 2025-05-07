@@ -7,14 +7,14 @@
 <div class="card-group">
     <div class="card card-body">
         @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new NexportDataTablesModel
-   {
-       Name = "nexport-order-invoice-items-grid",
-       UrlRead = new DataUrl("GetNexportOrderInvoiceItems", "NexportIntegration",
-                new RouteValueDictionary { [nameof(Model.SearchModel.OrderId)] = Model.SearchModel.OrderId }),
-       Length = Model.SearchModel.PageSize,
-       LengthMenu = Model.SearchModel.AvailablePageSizes,
-       ColumnCollection = new List<ColumnProperty>
-            {
+        {
+           Name = "nexport-order-invoice-items-grid",
+           UrlRead = new DataUrl("GetNexportOrderInvoiceItems", "NexportIntegration",
+           new RouteValueDictionary { [nameof(Model.SearchModel.OrderId)] = Model.SearchModel.OrderId }),
+           Length = Model.SearchModel.PageSize,
+           LengthMenu = Model.SearchModel.AvailablePageSizes,
+           ColumnCollection = new List<ColumnProperty>
+           {
                 new(nameof(NexportOrderInvoiceItemModel.ProductName))
                 {
                     Title = "Product",
@@ -53,7 +53,7 @@
                     Render = new RenderCustom("renderModifyEnrollment"),
                     AutoWidth = false
                 }
-            }
+           }
         })
     </div>
 </div>

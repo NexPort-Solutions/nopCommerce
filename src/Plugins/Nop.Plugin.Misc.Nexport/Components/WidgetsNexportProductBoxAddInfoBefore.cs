@@ -46,17 +46,14 @@ public class WidgetsNexportProductBoxAddInfoBefore : NopViewComponent
     public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
     {
         var store = await _storeContext.GetCurrentStoreAsync();
-
         if (store == null)
             return Content("");
 
         var customer = await _workContext.GetCurrentCustomerAsync();
 
         var productOverviewModel = (ProductOverviewModel)additionalData;
-
         if (productOverviewModel == null)
             return Content("");
-
 
         var model = await _nexportPluginModelFactory.PrepareNexportProductRedemptionStatusesModel(customer, productOverviewModel.Id, store.Id);
 

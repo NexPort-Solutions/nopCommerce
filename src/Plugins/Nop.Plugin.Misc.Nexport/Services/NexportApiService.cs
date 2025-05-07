@@ -892,7 +892,9 @@ public class NexportApiService(Configuration apiConfiguration)
     }
 
     public InvoiceRedemptionResponse RedeemNexportInvoice([NotNull] string url, [NotNull] string accessToken,
-        Guid redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction, string invoiceItemRedemptionCode)
+        Guid redeemingUserId, RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction, string invoiceItemRedemptionCode,
+        Guid? productId = null, Enums.ProductTypeEnum? productType = null,
+        UpdatedInvoiceFields updatedInvoiceFields = null)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
@@ -908,8 +910,19 @@ public class NexportApiService(Configuration apiConfiguration)
             AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
         };
 
-        var result = nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
-                new RedeemInvoiceItemRequest(invoiceItemRedemptionCode: invoiceItemRedemptionCode, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction));
+        InvoiceRedemptionResponse result;
+        if (productId != null)
+        {
+            result = nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
+                new RedeemInvoiceItemRequest(invoiceItemRedemptionCode: invoiceItemRedemptionCode, redeemingUserId: redeemingUserId, redemptionActionType: redemptionAction,
+                    productId: productId.Value, productType: productType, invoiceUpdates: updatedInvoiceFields));
+        }
+        else
+        {
+            result = nexportApi.PointOfSaleApiRedeemInvoiceItem(accessToken,
+                new RedeemInvoiceItemRequest(invoiceItemRedemptionCode: invoiceItemRedemptionCode, redeemingUserId: redeemingUserId,
+                    redemptionActionType: redemptionAction, invoiceUpdates: updatedInvoiceFields));
+        }
 
         return result;
     }
@@ -1289,6 +1302,35 @@ public class NexportApiService(Configuration apiConfiguration)
 
         var result = nexportApi.PointOfSaleApiResetInvoiceRedemption(accessToken,
                 new ResetInvoiceRedemptionRequest(invoiceItemId, note, NexportDefaults.REMOTE_SYS_NAME_FOR_API));
+
+        return result;
+    }
+
+    //public UpdateInvoiceItemResponse UpdateInvoiceItem([NotNull] string url, [NotNull] string accessToken,
+    //    Guid invoiceItemId, Guid? productId = null, Enums.ProductTypeEnum productType = Enums.ProductTypeEnum.Syllabus,
+    //    string productCode = null, bool isRenewal = false,
+    //    decimal? cost = null, string note = null,
+    //    DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null,
+    //    Guid? subscriptionOrgId = null, IList<Guid> groupMembershipIds = null,
+    //    Guid? purchasingGroupId = null, string fundingPool = null, DateTime? redemptionAvailableDate = null)
+    public UpdateInvoiceItemResponse UpdateInvoiceItem([NotNull] string url, [NotNull] string accessToken,
+        Guid invoiceItemId, UpdatedInvoiceFields updatedInvoiceFields)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
+
+        apiConfiguration.BasePath = url;
+
+        var nexportApi = new PointOfSaleApi(apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var result = nexportApi.PointOfSaleApiUpdateInvoiceItem(accessToken, new UpdateInvoiceItemRequest(invoiceItemId, updatedInvoiceFields));
 
         return result;
     }
