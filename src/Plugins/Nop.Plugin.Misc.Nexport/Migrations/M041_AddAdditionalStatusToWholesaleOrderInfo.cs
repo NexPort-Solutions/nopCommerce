@@ -13,10 +13,10 @@ public class M041_AddAdditionalStatusToWholesaleOrderInfo : Migration
     public override void Up()
     {
         Alter.Table(TABLE_NAME)
-            .AddColumn("ProcessingAvailable").AsInt32()
-            .AddColumn("ProcessingAwaiting").AsInt32()
-            .AddColumn("Refunded").AsInt32()
-            .AddColumn("ProcessingRefund").AsInt32();
+            .AddColumn("ProcessingAvailable").AsInt32().SetExistingRowsTo(0)
+            .AddColumn("ProcessingAwaiting").AsInt32().SetExistingRowsTo(0)
+            .AddColumn("Refunded").AsInt32().SetExistingRowsTo(0)
+            .AddColumn("ProcessingRefund").AsInt32().SetExistingRowsTo(0);
     }
 
     public override void Down()
