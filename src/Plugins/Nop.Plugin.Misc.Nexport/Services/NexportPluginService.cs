@@ -119,6 +119,8 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.LastSynchronizationDate.Hint", "The date that the last synchronization occurred" },
         { "Plugins.Misc.Nexport.AutoRedeem", "Auto redeeming purchase" },
         { "Plugins.Misc.Nexport.AutoRedeem.Hint", "Allows customers to redeem the product right after purchasing" },
+        { "Plugins.Misc.Nexport.AllowPurchaseWithExistingEnrollment", "Allow purchasing with existing enrollments" },
+        { "Plugins.Misc.Nexport.AllowPurchaseWithExistingEnrollment.Hint", "Allow customers to purchase the product even if they already have existing enrollments" },
         { "Plugins.Misc.Nexport.StoreMapping", "Store" },
         { "Plugins.Misc.Nexport.StoreMapping.Hint",
             "The current store that the product is mapped to. If it is empty, this mapping is the default mapping." },

@@ -53,6 +53,8 @@ public class NexportProductMapping : BaseEntity, INexportProductMapping
 
     public bool AutoRedeem { get; set; }
 
+    public bool AllowPurchaseWithExistingEnrollment { get; set; }
+
     public bool AllowExtension { get; set; }
 
     public bool IsExtensionProduct { get; set; }

@@ -2679,6 +2679,12 @@ public partial class NexportService
                 return await CanPurchaseDifferentProductInNexportCategoryAsync(product, customer, store.Id);
             }
 
+            if (!mapping.AutoRedeem && mapping.AllowPurchaseWithExistingEnrollment)
+            {
+                // Customer is allowed to purchase this product for wholesale purposes only.
+                return (true, null);
+            }
+
             switch (existingEnrollmentStatus)
             {
                 case { Phase: Enums.PhaseEnum.Finished, Result: Enums.ResultEnum.Failing }:

@@ -83,10 +83,21 @@
                                     <nop-label asp-for="AutoRedeem" />
                                 </div>
                                 <div class="col-sm-7 col-md-8">
-                                    <div style="display: inline;margin-right:10px">
+                                    <div style="display: inline; margin-right:10px">
                                         <nop-editor asp-for="AutoRedeem"/>
                                     </div>
-                                    <span asp-validation-for="AutoRedeem" style="font-style: italic; background: yellow;"></span>
+                                    <span asp-validation-for="AutoRedeem"></span>
+                                </div>
+                            </div>
+                            <div class="form-group row advanced-setting">
+                                <div class="col-sm-5 col-md-4">
+                                    <nop-label asp-for="AllowPurchaseWithExistingEnrollment" />
+                                </div>
+                                <div class="col-sm-7 col-md-8">
+                                    <div style="display: inline; margin-right:10px">
+                                        <nop-editor asp-for="AllowPurchaseWithExistingEnrollment" />
+                                    </div>
+                                    <span asp-validation-for="AllowPurchaseWithExistingEnrollment"></span>
                                 </div>
                             </div>
                             <div class="form-group row">
@@ -98,12 +109,12 @@
                                     <div class="form-text-row">@Model.StoreName</div>
                                 </div>
                             </div>
-                            <div class="form-group row" style=@(Model.Type!=0?"display:none":"")>
+                            <div class="form-group row" style=@(Model.Type != (int)NexportProductTypeEnum.Catalog ? "display: none;" : "")>
                                 <div class="col-sm-5 col-md-4">
                                     <nop-label asp-for="AssignWhenRedeemed" />
                                 </div>
                                 <div class="col-sm-7 col-md-8">
-                                    <div class="form-text-row">@(Model.AssignWhenRedeemed is true ?"Yes":"No")</div>
+                                    <div class="form-text-row">@(Model.AssignWhenRedeemed is true ? "Yes" : "No")</div>
                                 </div>
                             </div>
                         </div>
@@ -395,6 +406,18 @@
             }
         }
 
+        function toggleAllowPurchaseWithExistingEnrollment() {
+            var currentElementValue = @Json.Serialize(Model.AllowPurchaseWithExistingEnrollment);
+            var element = $("#@Html.IdFor(model => model.AllowPurchaseWithExistingEnrollment)");
+            if ($("#@Html.IdFor(model => model.AutoRedeem)").is(":checked")) {
+                element.prop("checked", false);
+                element.prop("disabled", true);
+            } else {
+                element.prop("checked", currentElementValue);
+                element.prop("disabled", false);
+            }
+        }
+
         $(window).on("unload", function (e) {
             try {
                 window.opener.$("#@(Context.Request.Query["containerId"]) #@(Context.Request.Query["btnId"])").click();
@@ -409,9 +432,14 @@
 
             var disableAutoRedeem = @(Model.AssignWhenRedeemed is true ? "true" : "false");
             if (disableAutoRedeem) {
-                $("#AutoRedeem").prop("disabled","true");
-                $("#AutoRedeem").parent().prop("title", "Cannot auto redeem if assign when redeemed is selected");
-                $("[data-valmsg-for=AutoRedeem]").html("(Cannot auto redeem if assign when redeemed is selected)");
+                var assignWhenRedeemErr = "Cannot set auto redeem if assign when redeemed is selected";
+                $("#AutoRedeem").prop("disabled", true);
+                $("#AutoRedeem").parent().prop("title", assignWhenRedeemErr);
+                $("[data-valmsg-for=AutoRedeem]")
+                    .css("font-style", "italic")
+                    .css("font-weight", "bolder")
+                    .css("background", "yellow")
+                    .html("(" + assignWhenRedeemErr + ")");
             }
 
             var groupIdInputElement = $("#AddGroupMembership_GroupId");
@@ -532,6 +560,11 @@
                     }
                 });
             });
+
+            $("#@Html.IdFor(model => model.AutoRedeem)").on("change", function(e) {
+                toggleAllowPurchaseWithExistingEnrollment();
+            });
+            toggleAllowPurchaseWithExistingEnrollment();
 
             $("#@Html.IdFor(model => model.AllowExtension)").click(toggleExtensionSettings);
             toggleExtensionSettings();

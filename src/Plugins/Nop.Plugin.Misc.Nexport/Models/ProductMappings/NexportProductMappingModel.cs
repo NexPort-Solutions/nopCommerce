@@ -91,6 +91,9 @@ public record NexportProductMappingModel : BaseNopEntityModel, INexportProductMa
     [NopResourceDisplayName("Plugins.Misc.Nexport.AutoRedeem")]
     public bool AutoRedeem { get; set; }
 
+    [NopResourceDisplayName("Plugins.Misc.Nexport.AllowPurchaseWithExistingEnrollment")]
+    public bool AllowPurchaseWithExistingEnrollment { get; set; }
+
     public int? StoreId { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.StoreMapping")]

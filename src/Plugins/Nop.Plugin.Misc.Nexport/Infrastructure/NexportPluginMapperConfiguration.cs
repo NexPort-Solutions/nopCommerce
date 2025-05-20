@@ -81,6 +81,8 @@ public class NexportPluginMapperConfiguration : Profile, IOrderedMapperProfile
                 opts => opts.MapFrom(model => model.UtcLastSynchronizationDate))
             .ForMember(entity => entity.AutoRedeem,
                 opts => opts.MapFrom(model => model.AutoRedeem))
+            .ForMember(entity => entity.AllowPurchaseWithExistingEnrollment,
+                opts => opts.MapFrom(model => model.AllowPurchaseWithExistingEnrollment))
             .ForMember(entity => entity.NexportSubscriptionOrgId,
                 opts => opts.MapFrom(model => model.NexportSubscriptionOrgId))
             .ForMember(entity => entity.NexportSubscriptionOrgName,
