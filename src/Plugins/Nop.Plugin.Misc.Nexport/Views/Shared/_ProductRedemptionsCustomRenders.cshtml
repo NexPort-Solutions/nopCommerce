@@ -42,6 +42,16 @@
         return "";
     }
 
+    function renderStatus(data, type, row, meta) {
+        var textRenderer = $.fn.dataTable.render.text().display;
+
+        if (isAdminView && data === "Refunded" && row.HasRefundRequest) {
+            return textRenderer(data) + "<a class=\"ml-1 refund-note\" tabindex=\"0\" data-trigger=\"focus\" data-content=\"" + row.RefundNote + "\" data-container=\"body\" data-toggle=\"popover\" data-placement=\"top\" data-id=\"refund-status\" style=\"color: rgb(43, 43, 43);\"><i class=\"fa-solid fa-circle-info fa-1x\"></i></a>";
+        }
+
+        return textRenderer(data);
+    }
+
     function renderRefundRedemption(data, type, row, meta) {
         if (row.InvoiceItemId != null) {
             var buttonFunction = "";
@@ -58,14 +68,19 @@
                 buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestRefund")";
                 buttonDisabledState = row.HasRefundRequest;
             } else if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Refunded.GetDisplayName())") {
-                buttonDisabledState = true;
-
-                if (row.CustomerId !== null) {
-                    buttonIcon = "fa-solid fa-rotate-exclamation";
-                    buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestRefund")";
+                if (row.HasRefundRequest && isAdminView) {
+                    var url = "@Url.Content("~/Admin/ReturnRequest/Nexport/Edit/")" + row.RefundRequestId;
+                    return renderCustomLinkTag(url, null, "fa-solid fa-file-magnifying-glass", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.ViewRefundRequest")");
                 } else {
-                    buttonIcon = "fa-solid fa-rotate-left";
-                    buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Refund")";
+                    buttonDisabledState = true;
+
+                    if (row.CustomerId !== null) {
+                        buttonIcon = "fa-solid fa-rotate-exclamation";
+                        buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestRefund")";
+                    } else {
+                        buttonIcon = "fa-solid fa-rotate-left";
+                        buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Refund")";
+                    }
                 }
             } else if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.ProcessingRefund.GetDisplayName())") {
                 if (isAdminView)

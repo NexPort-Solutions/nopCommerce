@@ -46,7 +46,8 @@
         new(nameof(NexportGroupProductRedemptionModel.Status))
         {
             Title = T("Plugins.Misc.Nexport.Group.Product.Redemption.Status").Text,
-            Width = "100"
+            Width = "100",
+            Render = new RenderCustom("renderStatus")
         }
     };
 
@@ -290,6 +291,11 @@
     }
 
     $(document).ready(function () {
+        $("body").popover({
+            trigger: "focus",
+            selector: ".refund-note"
+        });
+
         updateAvailableRedemptions();
 
         $(document).on("click", ".data-tables-refresh :button", function(e) {

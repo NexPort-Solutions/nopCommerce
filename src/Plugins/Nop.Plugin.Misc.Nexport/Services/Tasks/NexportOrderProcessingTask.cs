@@ -762,57 +762,69 @@ public class NexportOrderProcessingTask : IScheduleTask
                         {
                             completionPercentage = existingEnrollmentStatus.Value.CompletionPercentage;
 
-                            if (productMapping.RenewalCompletionThreshold.HasValue)
+                            if (productMapping.RenewalApprovalMethod == NexportEnrollmentRenewalApprovalMethodEnum.ForceManual)
                             {
-                                if (completionPercentage < productMapping.RenewalCompletionThreshold)
-                                {
-                                    // Use either access expiration date or access time limit when restarting enrollments that below the completion threshold
-                                    invoiceItemId = await _nexportService.AddItemToNexportOrderInvoiceAsync(
-                                        orderInvoiceId,
-                                        productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus,
-                                        productCost,
-                                        subscriptionOrgId, groupMembershipIds,
-                                        productMapping.UtcAccessExpirationDate, productMapping.AccessTimeLimit,
-                                        purchasingGroupId, fundingPool, redemptionAvailableDate)!;
-
-                                    extensionAction = 2;
-                                }
-                                else
-                                {
-                                    invoiceItemId = await _nexportService.AddItemToNexportOrderInvoiceAsync(
-                                        orderInvoiceId,
-                                        productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus,
-                                        productCost,
-                                        subscriptionOrgId, groupMembershipIds,
-                                        productMapping.UtcAccessExpirationDate, productMapping.RenewalDuration,
-                                        purchasingGroupId, fundingPool, redemptionAvailableDate)!;
-
-                                    requireManualApproval = productMapping.RenewalApprovalMethod == NexportEnrollmentRenewalApprovalMethodEnum.Manual;
-                                }
-                            }
-                            else
-                            {
-                                var newAccessTimeLimit = !string.IsNullOrEmpty(productMapping.AccessTimeLimit)
-                                    ? productMapping.AccessTimeLimit
-                                    : productMapping.RenewalDuration;
-
                                 invoiceItemId = await _nexportService.AddItemToNexportOrderInvoiceAsync(
                                     orderInvoiceId,
                                     productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus,
                                     productCost,
                                     subscriptionOrgId, groupMembershipIds,
-                                    productMapping.UtcAccessExpirationDate, newAccessTimeLimit,
+                                    productMapping.UtcAccessExpirationDate, productMapping.RenewalDuration,
                                     purchasingGroupId, fundingPool, redemptionAvailableDate)!;
+
+                                requireManualApproval = true;
+                            }
+                            else
+                            {
+                                if (productMapping.RenewalCompletionThreshold.HasValue)
+                                {
+                                    if (completionPercentage < productMapping.RenewalCompletionThreshold)
+                                    {
+                                        // Use either access expiration date or access time limit when restarting enrollments that below the completion threshold
+                                        invoiceItemId = await _nexportService.AddItemToNexportOrderInvoiceAsync(
+                                            orderInvoiceId,
+                                            productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus,
+                                            productCost,
+                                            subscriptionOrgId, groupMembershipIds,
+                                            productMapping.UtcAccessExpirationDate, productMapping.AccessTimeLimit,
+                                            purchasingGroupId, fundingPool, redemptionAvailableDate)!;
+
+                                        extensionAction = 2;
+                                    }
+                                    else
+                                    {
+                                        invoiceItemId = await _nexportService.AddItemToNexportOrderInvoiceAsync(
+                                            orderInvoiceId,
+                                            productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus,
+                                            productCost,
+                                            subscriptionOrgId, groupMembershipIds,
+                                            productMapping.UtcAccessExpirationDate, productMapping.RenewalDuration,
+                                            purchasingGroupId, fundingPool, redemptionAvailableDate)!;
+
+                                        requireManualApproval = productMapping.RenewalApprovalMethod == NexportEnrollmentRenewalApprovalMethodEnum.Manual;
+                                    }
+                                }
+                                else
+                                {
+                                    var newAccessTimeLimit = !string.IsNullOrEmpty(productMapping.AccessTimeLimit)
+                                        ? productMapping.AccessTimeLimit
+                                        : productMapping.RenewalDuration;
+
+                                    invoiceItemId = await _nexportService.AddItemToNexportOrderInvoiceAsync(
+                                        orderInvoiceId,
+                                        productMapping.NexportCatalogSyllabusLinkId.Value, Enums.ProductTypeEnum.Syllabus,
+                                        productCost,
+                                        subscriptionOrgId, groupMembershipIds,
+                                        productMapping.UtcAccessExpirationDate, newAccessTimeLimit,
+                                        purchasingGroupId, fundingPool, redemptionAvailableDate)!;
+                                }
                             }
 
                             break;
                         }
 
                     // Applicable for new enrollment or enrollment that has been completed (passed or failed)
-                    case var status
-                        when status == null ||
-                             status.Value.Phase == Enums.PhaseEnum.Finished &&
-                             status.Value.Result is Enums.ResultEnum.Failing or Enums.ResultEnum.Passing:
+                    case null or { Phase: Enums.PhaseEnum.Finished, Result: Enums.ResultEnum.Failing or Enums.ResultEnum.Passing }:
                         {
                             if (productMapping.Type == NexportProductTypeEnum.Catalog)
                             {
