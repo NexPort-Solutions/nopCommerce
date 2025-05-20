@@ -8,5 +8,8 @@ public enum NexportEnrollmentRenewalApprovalMethodEnum
     Auto = 0,
 
     [Display(Name = "Manual")]
-    Manual = 1
+    Manual = 1,
+
+    [Display(Name = "Force Manual")]
+    ForceManual = 2,
 }
