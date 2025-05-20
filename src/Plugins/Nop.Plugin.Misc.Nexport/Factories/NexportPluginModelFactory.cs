@@ -2349,11 +2349,26 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                         await setRedemptionCustomerInfo();
                     }
 
-                    var refundRequest = await _returnRequestService.SearchReturnRequestsAsync(order.StoreId, order.CustomerId, invoiceItem.OrderItemId);
-                    if (refundRequest.TotalCount > 0)
+                    var refundRequests = await _returnRequestService.SearchReturnRequestsAsync(order.StoreId, order.CustomerId, invoiceItem.OrderItemId);
+                    if (refundRequests.TotalCount > 0)
                     {
                         redemptionItem.HasRefundRequest = true;
-                        redemptionItem.RefundRequestId = refundRequest.FirstOrDefault().Id;
+
+                        foreach (var request in refundRequests)
+                        {
+                            var invoiceItemIds = await _genericAttributeService.GetAttributeAsync<string>(request, "RefundRequestInvoiceItems", request.StoreId);
+                            if (string.IsNullOrWhiteSpace(invoiceItemIds))
+                                continue;
+
+                            var invoiceItemList = JsonConvert.DeserializeObject<List<Guid>>(invoiceItemIds);
+                            if (!invoiceItemList.Contains(invoiceItem.InvoiceItemId))
+                                continue;
+
+                            redemptionItem.RefundRequestId = request.Id;
+                            redemptionItem.RefundNote = request.StaffNotes;
+
+                            break;
+                        }
                     }
 
                     redemptions.Add(redemptionItem);
@@ -3660,44 +3675,34 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 var isWholesalePurchase = await _genericAttributeService.GetAttributeAsync<bool>(order, "IsWholesaleOrder", order.StoreId);
                 newModel.IsNexportWholesalePurchase = isWholesalePurchase;
 
-                if (newModel.Quantity == 1)
+                var invoiceItemIds = await _genericAttributeService.GetAttributeAsync<string>(returnRequest, "RefundRequestInvoiceItems", returnRequest.StoreId);
+                if (!string.IsNullOrWhiteSpace(invoiceItemIds))
                 {
-                    var invoiceItemIds = await _genericAttributeService.GetAttributeAsync<string>(returnRequest, "RefundRequestInvoiceItems", returnRequest.StoreId);
-                    if (!string.IsNullOrWhiteSpace(invoiceItemIds))
+                    var invoiceItemList = JsonConvert.DeserializeObject<List<Guid>>(invoiceItemIds);
+                    if (invoiceItemList.Count == 1)
                     {
-                        var invoiceItemList = JsonConvert.DeserializeObject<List<Guid>>(invoiceItemIds);
-                        if (invoiceItemList.Count == 1)
+                        var invoiceItemId = invoiceItemList.First();
+                        newModel.InvoiceItemId = invoiceItemId;
+                        newModel.RefundOption = await _genericAttributeService.GetAttributeAsync<int>(returnRequest, "RefundRequestOption", order.StoreId);
+                        var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
+                        if (invoiceItem != null)
                         {
-                            var invoiceItemId = invoiceItemList.First();
-                            newModel.InvoiceItemId = invoiceItemId;
-                            newModel.RefundOption =
-                                await _genericAttributeService.GetAttributeAsync<int>(returnRequest,
-                                    "RefundRequestOption", order.StoreId);
-                            var invoiceItem =
-                                await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
-                            if (invoiceItem != null)
+                            newModel.AssignedUserNexportId = invoiceItem.RedeemingUserId;
+                            if (invoiceItem.RedeemingUserId != null)
                             {
-                                newModel.AssignedUserNexportId = invoiceItem.RedeemingUserId;
-                                if (invoiceItem.RedeemingUserId != null)
+                                var assignedUserMapping = await _nexportService.FindUserMappingByNexportUserId(invoiceItem.RedeemingUserId.Value);
+                                if (assignedUserMapping != null)
                                 {
-                                    var assignedUserMapping =
-                                        await _nexportService.FindUserMappingByNexportUserId(invoiceItem.RedeemingUserId
-                                            .Value);
-                                    if (assignedUserMapping != null)
+                                    newModel.AssignedUserCustomerId = assignedUserMapping.NopUserId;
+                                    var assignedCustomer = await _customerService.GetCustomerByIdAsync(assignedUserMapping.NopUserId);
+                                    if (assignedCustomer != null)
                                     {
-                                        newModel.AssignedUserCustomerId = assignedUserMapping.NopUserId;
-                                        var assignedCustomer =
-                                            await _customerService.GetCustomerByIdAsync(assignedUserMapping.NopUserId);
-                                        if (assignedCustomer != null)
-                                        {
-                                            newModel.AssignedUserInfo = assignedCustomer.Email;
-                                        }
-
-                                        Uri.TryCreate(new Uri(_nexportSettings.Url.TrimEnd('/')),
-                                            $"Account/Info.nex?user={invoiceItem.RedeemingUserId}", out var link);
-                                        if (link != null)
-                                            newModel.AssignedUserNexportProfileLink = link.AbsoluteUri;
+                                        newModel.AssignedUserInfo = assignedCustomer.Email;
                                     }
+
+                                    Uri.TryCreate(new Uri(_nexportSettings.Url.TrimEnd('/')), $"Account/Info.nex?user={invoiceItem.RedeemingUserId}", out var link);
+                                    if (link != null)
+                                        newModel.AssignedUserNexportProfileLink = link.AbsoluteUri;
                                 }
                             }
                         }
@@ -3762,36 +3767,34 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 var isWholesalePurchase = await _genericAttributeService.GetAttributeAsync<bool>(order, "IsWholesaleOrder", order.StoreId);
                 model.IsNexportWholesalePurchase = isWholesalePurchase;
 
-                if (model.Quantity == 1)
+                var invoiceItemIds = await _genericAttributeService.GetAttributeAsync<string>(returnRequest, "RefundRequestInvoiceItems", returnRequest.StoreId);
+                if (!string.IsNullOrWhiteSpace(invoiceItemIds))
                 {
-                    var invoiceItemIds = await _genericAttributeService.GetAttributeAsync<string>(returnRequest, "RefundRequestInvoiceItems", returnRequest.StoreId);
-                    if (!string.IsNullOrWhiteSpace(invoiceItemIds))
+                    var invoiceItemList = JsonConvert.DeserializeObject<List<Guid>>(invoiceItemIds);
+                    if (invoiceItemList.Count == 1)
                     {
-                        var invoiceItemList = JsonConvert.DeserializeObject<List<Guid>>(invoiceItemIds);
-                        if (invoiceItemList.Count == 1)
+                        var invoiceItemId = invoiceItemList.First();
+                        model.InvoiceItemId = invoiceItemId;
+                        model.RefundOption = await _genericAttributeService.GetAttributeAsync<int>(returnRequest, "RefundRequestOption", order.StoreId);
+                        var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
+                        if (invoiceItem != null)
                         {
-                            var invoiceItemId = invoiceItemList.First();
-                            model.InvoiceItemId = invoiceItemId;
-                            model.RefundOption = await _genericAttributeService.GetAttributeAsync<int>(returnRequest, "RefundRequestOption", order.StoreId);
-                            var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
-                            if (invoiceItem != null)
+                            model.AssignedUserNexportId = invoiceItem.RedeemingUserId;
+                            if (invoiceItem.RedeemingUserId != null)
                             {
-                                model.AssignedUserNexportId = invoiceItem.RedeemingUserId;
-                                if (invoiceItem.RedeemingUserId != null)
+                                var assignedUserMapping = await _nexportService.FindUserMappingByNexportUserId(invoiceItem.RedeemingUserId.Value);
+                                if (assignedUserMapping != null)
                                 {
-                                    var assignedUserMapping = await _nexportService.FindUserMappingByNexportUserId(invoiceItem.RedeemingUserId.Value);
-                                    if (assignedUserMapping != null)
+                                    model.AssignedUserCustomerId = assignedUserMapping.NopUserId;
+                                    var assignedCustomer = await _customerService.GetCustomerByIdAsync(assignedUserMapping.NopUserId);
+                                    if (assignedCustomer != null)
                                     {
-                                        model.AssignedUserCustomerId = assignedUserMapping.NopUserId;
-                                        var assignedCustomer = await _customerService.GetCustomerByIdAsync(assignedUserMapping.NopUserId);
-                                        if (assignedCustomer != null)
-                                        {
-                                            model.AssignedUserInfo = assignedCustomer.Email;
-                                        }
-                                        Uri.TryCreate(new Uri(_nexportSettings.Url.TrimEnd('/')), $"Account/Info.nex?user={invoiceItem.RedeemingUserId}", out var link);
-                                        if (link != null)
-                                            model.AssignedUserNexportProfileLink = link.AbsoluteUri;
+                                        model.AssignedUserInfo = assignedCustomer.Email;
                                     }
+
+                                    Uri.TryCreate(new Uri(_nexportSettings.Url.TrimEnd('/')), $"Account/Info.nex?user={invoiceItem.RedeemingUserId}", out var link);
+                                    if (link != null)
+                                        model.AssignedUserNexportProfileLink = link.AbsoluteUri;
                                 }
                             }
                         }

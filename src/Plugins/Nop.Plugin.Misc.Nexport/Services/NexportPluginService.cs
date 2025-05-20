@@ -160,6 +160,8 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.DuplicateSourceStoreMapping.Hint", "The store that contains the product mapping which will be duplicated from." },
         { "Plugins.Misc.Nexport.DuplicateDestinationStoreMappings", "Mapping duplication destinations" },
         { "Plugins.Misc.Nexport.DuplicateDestinationStoreMappings.Hint", "The list of stores that the product mapping will be duplicated to." },
+        { "Plugins.Misc.Nexport.AssignWhenRedeemed", "Assign when redeemed" },
+        { "Plugins.Misc.Nexport.AssignWhenRedeemed.Hint", "A specific product will be required to assign at redemption time" },
 
         { "Plugins.Misc.Nexport.Training", "Nexport Training" },
 
@@ -329,7 +331,6 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.Group.Product.Redemptions.Redeem.SelectProduct", "Select product" },
         { "Plugins.Misc.Nexport.Group.Product.Redemptions.Modify", "Modify Assignment" },
         { "Plugins.Misc.Nexport.Errors.MixedRedemptionTypeNotAllowedInShoppingCart", "Cannot add this product to the other products in the cart due to restriction on the product mapping." },
-        { "Plugins.Misc.Nexport.AssignWhenRedeemed", "Assign When Redeemed" },
         { "Plugins.Misc.Nexport.Group.Product.Redemptions.Unassign.Confirmation", "Are you sure you want to unassign?" },
         { "Plugins.Misc.Nexport.RedeemByEmail.Success", "Successfully redeemed" },
         { "Plugins.Misc.Nexport.RedeemByEmail.Available", "Available to be redeemed" },
@@ -479,6 +480,8 @@ public class NexportPluginService
         { "RedemptionUnassignmentRequestReasons.Deleted", "The unassignment request reason has been deleted successfully." },
         { "RedemptionUnassignmentRequestReasons.Updated", "The unassignment request reason has been updated successfully." },
 
+        { "Plugins.Misc.Nexport.InvoiceItemRefund.AssignedUser", "Assigned customer" },
+        { "Plugins.Misc.Nexport.InvoiceItemRefund.AssignedUser.Hint", "The customer that the enrollment has been assigned previously" },
         { "Plugins.Misc.Nexport.InvoiceItemRefund.Option", "Enrollment refund option" },
         { "Plugins.Misc.Nexport.InvoiceItemRefund.Option.Hint", "Action to be taken for the enrollment" },
         { "Plugins.Misc.Nexport.InvoiceItemRefund.Request.Comments", "Comments" },

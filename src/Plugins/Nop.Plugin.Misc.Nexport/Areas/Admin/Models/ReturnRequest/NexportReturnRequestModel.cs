@@ -10,6 +10,7 @@ public record NexportReturnRequestModel : ReturnRequestModel
 
     public int? AssignedUserCustomerId { get; set; }
 
+    [NopResourceDisplayName("Plugins.Misc.Nexport.InvoiceItemRefund.AssignedUser")]
     public Guid? AssignedUserNexportId { get; set; }
 
     public string AssignedUserInfo { get; set; }
