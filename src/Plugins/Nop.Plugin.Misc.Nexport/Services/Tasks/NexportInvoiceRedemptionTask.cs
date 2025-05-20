@@ -32,11 +32,7 @@ public class NexportInvoiceRedemptionTask : IScheduleTask
     private readonly IGenericAttributeService _genericAttributeService;
 
     private int _batchSize;
-#if DEBUG
-    private const int MAX_RETRY_COUNT = 1;
-#else
     private const int MAX_RETRY_COUNT = 5;
-#endif
 
     public NexportInvoiceRedemptionTask(
         IWidgetPluginManager widgetPluginManager,
