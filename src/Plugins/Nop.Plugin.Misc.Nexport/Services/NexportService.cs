@@ -2106,8 +2106,7 @@ public partial class NexportService
         }
         catch (Exception ex)
         {
-            var errMsg =
-                $"Error occurred during GetInvoiceRedemption api call with the invoice item {invoiceItem.InvoiceItemId}";
+            var errMsg = $"Error occurred during GetInvoiceRedemption api call with the invoice item {invoiceItem.InvoiceItemId}";
             await _logger.ErrorAsync($"{errMsg}", ex);
 
             if (ex is ApiException exception)

@@ -3763,6 +3763,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
             var productMapping = await _nexportService.GetProductMappingByNopProductId(product.Id);
             if (productMapping != null)
             {
+                model.HasPaymentMethod = !string.IsNullOrWhiteSpace(order.PaymentMethodSystemName);
                 model.IsNexportPurchase = true;
                 var isWholesalePurchase = await _genericAttributeService.GetAttributeAsync<bool>(order, "IsWholesaleOrder", order.StoreId);
                 model.IsNexportWholesalePurchase = isWholesalePurchase;

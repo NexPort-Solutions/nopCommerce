@@ -182,6 +182,7 @@ public class NexportPluginService
 
         { "Plugins.Misc.Nexport.Order.ViewRedemption", "Launch this training" },
         { "Plugins.Misc.Nexport.Order.Redeem", "Redeem" },
+        { "Plugins.Misc.Nexport.Order.Assign", "Assign" },
 
         { "Plugins.Misc.Nexport.SupplementalInfoQuestion", "Supplemental info questions" },
         { "Plugins.Misc.Nexport.SupplementalInfo.Question.Text", "Question text" },
@@ -486,6 +487,7 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.InvoiceItemRefund.Option.Hint", "Action to be taken for the enrollment" },
         { "Plugins.Misc.Nexport.InvoiceItemRefund.Request.Comments", "Comments" },
         { "Plugins.Misc.Nexport.InvoiceItemRefund.Request.Comments.Hint", "The refund request comments" },
+        { "Plugins.Misc.Nexport.InvoiceItemRefund.Request.ExternalSystemWarning", "* This refund will require additional processing from external payment provider!" },
 
         { "ActivityLog.EditUnassignmentRequest", "Edited an unassignment request (ID = {0})" },
         { "ActivityLog.DeleteUnassignmentRequest", "Deleted an unassignment request (ID = {0})" },

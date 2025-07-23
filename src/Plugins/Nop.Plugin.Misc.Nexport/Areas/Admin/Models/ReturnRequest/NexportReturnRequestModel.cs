@@ -25,4 +25,6 @@ public record NexportReturnRequestModel : ReturnRequestModel
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.InvoiceItemRefund.Option")]
     public int RefundOption { get; set; }
+
+    public bool HasPaymentMethod { get; set; }
 }
