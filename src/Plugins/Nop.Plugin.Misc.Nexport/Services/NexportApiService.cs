@@ -1266,7 +1266,7 @@ public class NexportApiService(Configuration apiConfiguration)
 
         var result = new NexportSearchGroupsForPermissionResponse
         {
-            SearchGroupsForPermissionList = response.Data.Groups
+            SearchGroupsForPermissionList = response.Data != null ? response.Data.Groups : []
         };
 
         if (response.Headers.TryGetValue("X-Total-Count", out var totalCountHeader))

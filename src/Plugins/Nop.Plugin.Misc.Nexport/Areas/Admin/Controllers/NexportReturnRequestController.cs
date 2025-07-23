@@ -81,7 +81,7 @@ public class NexportReturnRequestController(
     }
 
     [Route("Admin/ReturnRequest/Nexport/Edit/{id}")]
-    public new virtual async Task<IActionResult> Edit(int id)
+    public virtual async Task<IActionResult> Edit(int id)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageReturnRequests))
             return AccessDeniedView();
