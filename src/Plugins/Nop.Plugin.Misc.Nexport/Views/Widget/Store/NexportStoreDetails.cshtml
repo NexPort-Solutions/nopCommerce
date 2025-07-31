@@ -1,17 +1,46 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.Stores.NexportStoreModel
 
+@{
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
+
+    const string hideNexportStoreIntegrationConfigBlockAttribute = "NexportWholesale.HideNexportStoreIntegrationConfigBlock";
+    var hideNexportStoreIntegrationConfigBlock = await genericAttributeService.GetAttributeAsync(currentCustomer, hideNexportStoreIntegrationConfigBlockAttribute, defaultValue: false);
+}
+
 @if (Model.Id > 0)
 {
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
 
-    <div class="card card-default">
-        <div class="card-header">
-            Nexport Integration Configuration
-        </div>
+    <nop-card asp-name="nexport-store-configuration" asp-icon="fas fa-info" asp-title="Nexport Integration Configuration"
+        asp-advanced="false" asp-hide="@hideNexportStoreIntegrationConfigBlock" asp-hide-block-attribute-name="@hideNexportStoreIntegrationConfigBlockAttribute">
         <div class="card-body">
             <div class="card card-default">
                 <div class="card-header">
-                    Nexport Product Display Configuration
+                    Nexport Organization Subscription
+                </div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="NexportSubscriptionOrgId" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="input-group">
+                                <nop-editor asp-for="NexportSubscriptionOrgId" asp-required="false" asp-render-form-control-class="true"
+                                            asp-template="GuidNullable" />
+                                <div class="input-group-append">
+                                    <button id="setSubscriptionOrgId" name="setsubscriptionorgid" class="btn btn-info">
+                                        Set
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-default">
+                <div class="card-header">
+                    Product Display Configuration
                 </div>
                 <div class="card-body">
                     <div class="form-group row">
@@ -43,7 +72,7 @@
 
             <div class="card card-default">
                 <div class="card-header">
-                    Nexport Repurchasing Configuration
+                    Repurchasing Configuration
                 </div>
                 <div class="card-body">
                     <div class="form-group row">
@@ -65,37 +94,30 @@
 
                 </div>
             </div>
-        </div>
-        <div class="card-footer text-right">
-            <button id="saveNexportStoreConfig" name="savenexportstoreconfig" class="btn btn-info">
-                Save
-            </button>
-        </div>
-    </div>
 
-    <div class="card card-default">
-        <div class="card-header">
-            Nexport Organization Subscription
-        </div>
-        <div class="card-body">
-            <div class="form-group row">
-                <div class="col-md-3">
-                    <nop-label asp-for="NexportSubscriptionOrgId" />
+            <div class="card card-default">
+                <div class="card-header">
+                    Registration Configuration
                 </div>
-                <div class="col-md-9">
-                    <div class="input-group">
-                        <nop-editor asp-for="NexportSubscriptionOrgId" asp-required="false" asp-render-form-control-class="true"
-                                    asp-template="GuidNullable"/>
-                        <div class="input-group-append">
-                            <button id="setSubscriptionOrgId" name="setsubscriptionorgid" class="btn btn-info">
-                                Set
-                            </button>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="OverrideNexportOwnerOrgId" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="OverrideNexportOwnerOrgId" asp-required="false" />
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <div class="card-footer text-right">
+            <button id="saveNexportStoreConfig" name="savenexportstoreconfig" class="btn btn-info">
+                Save
+            </button>
+        </div>
+    </nop-card>
 
     <script>
         $(document).ready(function () {

@@ -210,6 +210,8 @@ public class NexportDefaults
 
     public const string ALLOW_REPURCHASE_PASSED_COURSES_FROM_NEXPORT_SETTING_KEY = "AllowRepurchasePassedCoursesFromNexport";
 
+    public const string OVERRIDE_OWNER_ORG_ID_SETTING_KEY = "OverrideOwnerOrganizationId";
+
     public const string LIMIT_SINGLE_PRODUCT_PURCHASE_IN_CATEGORY = "LimitSingleProductPurchaseInCategory";
 
     public const string AUTO_SWAP_PRODUCT_PURCHASE_IN_CATEGORY = "AutoSwapProductPurchaseInCategory";

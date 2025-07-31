@@ -576,6 +576,8 @@ public class NexportIntegrationController : BasePluginController,
             model.HideAddToCartForIneligibleProducts, store.Id);
         await _genericAttributeService.SaveAttributeAsync(store, NexportDefaults.DISPLAY_LAST_PURCHASE_INFO,
             model.DisplayLastPurchaseInfo, store.Id);
+        await _genericAttributeService.SaveAttributeAsync(store, NexportDefaults.OVERRIDE_OWNER_ORG_ID_SETTING_KEY,
+            model.OverrideNexportOwnerOrgId, store.Id);
 
         _notificationService.SuccessNotification("Success update Nexport store configuration");
 
