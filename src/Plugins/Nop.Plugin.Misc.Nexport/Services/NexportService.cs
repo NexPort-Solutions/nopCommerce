@@ -2507,8 +2507,20 @@ public partial class NexportService
             }
         }
 
-        var nexportUser = await CreateNexportUserAsync(login, password, customer.FirstName, customer.LastName,
-            customer.Email, _nexportSettings.RootOrganizationId.Value, contactInfo)!;
+        var ownerOrgId = _nexportSettings.RootOrganizationId.Value;
+        var store = await _storeService.GetStoreByIdAsync(customer.RegisteredInStoreId);
+        if (store != null)
+        {
+            var overrideOwnerOrgId = await _genericAttributeService.GetAttributeAsync<bool>(store, NexportDefaults.OVERRIDE_OWNER_ORG_ID_SETTING_KEY, store.Id);
+
+            if (overrideOwnerOrgId)
+            {
+                ownerOrgId = await _genericAttributeService.GetAttributeAsync<Guid?>(store, NexportDefaults.NEXPORT_SUBSCRIPTION_ORGANIZATION_ID_SETTING_KEY, store.Id)
+                             ?? _nexportSettings.RootOrganizationId.Value;
+            }
+        }
+
+        var nexportUser = await CreateNexportUserAsync(login, password, customer.FirstName, customer.LastName, customer.Email, ownerOrgId, contactInfo)!;
 
         if (nexportUser != null)
         {

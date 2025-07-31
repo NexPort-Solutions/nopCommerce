@@ -75,6 +75,8 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.DocumentationUrl.Hint", "Link to custom documentation" },
         { "Plugins.Misc.Nexport.DisplayLastPurchaseInfo", "Display last purchase information" },
         { "Plugins.Misc.Nexport.DisplayLastPurchaseInfo.Hint", "Display the last purchase information in the product page" },
+        { "Plugins.Misc.Nexport.OverrideNexportOwnerOrgId", "Override owner organization Id" },
+        { "Plugins.Misc.Nexport.OverrideNexportOwnerOrgId.Hint", "Override owner organization Id of the users during registration" },
 
         { "Plugins.Misc.Nexport.NexportProductName", "Product name" },
         { "Plugins.Misc.Nexport.NexportProductName.Hint", "The name of the product in Nexport" },
