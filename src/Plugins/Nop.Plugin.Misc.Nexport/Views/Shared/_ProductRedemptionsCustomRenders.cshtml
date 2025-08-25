@@ -117,7 +117,7 @@
             var buttonText = "";
             var buttonDisabledState = false;
 
-            if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Assigned.GetDisplayName())") {
+            if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Assigned.GetDisplayName())") {
                 if (isAdminRole) {
                     buttonFunction = "unassignRedemption('" + row.InvoiceItemId + "')";
                     buttonIcon = "fa-solid fa-square-minus";
@@ -127,11 +127,11 @@
                     buttonIcon =  "fa-solid fa-square-info";
                     buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestUnassignment")";
                 }
-            } else if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Available.GetDisplayName())") {
+            } else if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Available.GetDisplayName())") {
                 buttonFunction = "assignRedemption('" + row.InvoiceItemId + "')";
                 buttonIcon = "fa-solid fa-square-plus";
                 buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign")";
-            } else if (row.Status == "@(NexportOrderInvoiceItemRedemptionStatus.Awaiting.GetDisplayName())") {
+            } else if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Awaiting.GetDisplayName())") {
                 buttonFunction = "cancelAwaitingRedemption('" + row.InvoiceItemId + "')";
                 buttonIcon = "fa-solid fa-square-xmark";
                 buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting")";
@@ -185,7 +185,8 @@
                     location.reload();
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
-                    alert("@T("Plugins.Misc.Nexport.Group.Product.Redemption.Unassign.Failed")");
+                    alert("@T("Plugins.Misc.Nexport.Group.Product.Redemption.Refund.Failed")");
+                    console.log(errorThrown);
                 }
             });
         }
@@ -225,12 +226,13 @@
                 data: postData,
                 dataType: "json",
                 success: function (data, textStatus, jqXHR) {
-                    if (data.result == "@(NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable.GetDisplayName())") {
+                    if (data.result === "@(NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable.GetDisplayName())") {
                         location.reload();
                     }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
-                    alert('@T("Plugins.Misc.Nexport.Group.Product.Redemption.Unassign.Failed")');
+                    alert("@T("Plugins.Misc.Nexport.Group.Product.Redemption.Unassign.Failed")");
+                    console.log(errorThrown);
                 }
             });
         }
@@ -250,12 +252,13 @@
                 data: postData,
                 dataType: "json",
                 success: function (data, textStatus, jqXHR) {
-                    if (data.result == "@(NexportOrderInvoiceItemRedemptionStatus.Available)") {
+                    if (data.result === "@(NexportOrderInvoiceItemRedemptionStatus.Available)") {
                         location.reload();
                     }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     alert("@T("Plugins.Misc.Nexport.Group.Product.Redemption.CancelAwaiting.Failed")");
+                    console.log(errorThrown);
                 }
             });
         }

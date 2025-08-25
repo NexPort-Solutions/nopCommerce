@@ -448,7 +448,7 @@ public class NexportWholesaleController : BaseAdminController
         var refundResult = false;
 
         if (invoiceItem != null)
-            refundResult = await _nexportService.ProcessRefundingInvoiceItem(invoiceItem, false);
+            refundResult = await _nexportService.ProcessRefundingInvoiceItem(invoiceItem, true);
 
         return Json(new { result = refundResult });
     }
