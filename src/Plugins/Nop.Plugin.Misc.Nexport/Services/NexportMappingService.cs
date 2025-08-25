@@ -2527,7 +2527,7 @@ public partial class NexportService : INexportService
                             OrderItemId = invoiceItem.OrderItemId,
                             UtcDateCreated = DateTime.UtcNow,
                             UtcProcessingDate = model.UtcStartDate,
-                            //ManualApprovalAction = model.ExtensionOption
+                            ManualApprovalAction = model.ExtensionOption
                         });
                 }
                 else

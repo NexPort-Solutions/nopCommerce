@@ -32,7 +32,11 @@ public class NexportInvoiceRedemptionTask : IScheduleTask
     private readonly IGenericAttributeService _genericAttributeService;
 
     private int _batchSize;
+#if DEBUG
+    private const int MAX_RETRY_COUNT = 1;
+#else
     private const int MAX_RETRY_COUNT = 5;
+#endif
 
     public NexportInvoiceRedemptionTask(
         IWidgetPluginManager widgetPluginManager,
@@ -392,13 +396,13 @@ public class NexportInvoiceRedemptionTask : IScheduleTask
                                     redeemingStore = await _storeService.GetStoreByIdAsync(redeemingProductMapping.StoreId.Value) ?? store;
                                 }
 
-                                //var ignoreEnrollmentStatus = await _genericAttributeService.GetAttributeAsync<bool>(
-                                //    invoiceItem, $"IgnoreEnrollmentStatus-{invoiceItem.Id}", order.StoreId);
+                                var ignoreEnrollmentStatus = await _genericAttributeService.GetAttributeAsync<bool>(
+                                    invoiceItem, $"IgnoreEnrollmentStatus-{invoiceItem.Id}", order.StoreId);
 
                                 // Redeem the invoice based on the enrollment condition
                                 var redeemed = await RedeemNexportInvoiceAsync(redeemingProductMapping, userMapping,
                                     invoiceItem, queueItem.RedeemingUserId,
-                                    queueItem.ManualApprovalAction, updatedInvoiceFields);
+                                    queueItem.ManualApprovalAction, updatedInvoiceFields, ignoreEnrollmentStatus);
 
                                 var nexportUser = await _nexportService.GetNexportUserAsync(queueItem.RedeemingUserId)!;
                                 var userText = $"user Id: [{queueItem.RedeemingUserId}]";
@@ -529,8 +533,11 @@ public class NexportInvoiceRedemptionTask : IScheduleTask
     /// <param name="redeemingUserId">The Nexport user Id</param>
     /// <param name="extensionAction">The extension action: 1 - Renew and extend enrollment; 2 - Restart enrollment</param>
     /// <param name="updatedInvoiceFields">The invoice updated fields</param>
-    private async Task<bool> RedeemNexportInvoiceAsync(NexportProductMapping productMapping, NexportUserMapping userMapping,
-        NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, int? extensionAction = null, UpdatedInvoiceFields updatedInvoiceFields = null)
+    /// <param name="ignoreEnrollmentStatus"></param>
+    private async Task<bool> RedeemNexportInvoiceAsync(NexportProductMapping productMapping,
+        NexportUserMapping userMapping,
+        NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, int? extensionAction = null,
+        UpdatedInvoiceFields updatedInvoiceFields = null, bool ignoreEnrollmentStatus = false)
     {
         ArgumentNullException.ThrowIfNull(productMapping);
         ArgumentNullException.ThrowIfNull(userMapping);
@@ -541,79 +548,98 @@ public class NexportInvoiceRedemptionTask : IScheduleTask
 
         var redeemed = false;
 
-        var existingEnrollmentStatus = await _nexportService.VerifyNexportEnrollmentStatusAsync(productMapping, userMapping);
-        if (existingEnrollmentStatus != null)
+        if (ignoreEnrollmentStatus && extensionAction != null)
         {
-            switch (existingEnrollmentStatus)
-            {
-                case { Phase: Enums.PhaseEnum.Finished, Result: Enums.ResultEnum.Failing }:
-                case { Phase: Enums.PhaseEnum.Finished, Result: Enums.ResultEnum.Passing }:
-                    {
-                        redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
-                            RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment, updatedInvoiceFields);
-
-                        break;
-                    }
-
-                case var _
-                    when existingEnrollmentStatus.Value.Phase is Enums.PhaseEnum.InProgress or Enums.PhaseEnum.NotStarted:
-                    {
-                        var currentEnrollmentExpirationDate = existingEnrollmentStatus.Value.EnrollmentExpirationDate;
-                        if (currentEnrollmentExpirationDate.HasValue && currentEnrollmentExpirationDate >= DateTime.UtcNow)
-                        {
-                            // Renew the enrollment since the current enrollment has not expired yet
-                            redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
-                                productMapping, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption, updatedInvoiceFields);
-                        }
-                        else
-                        if (existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.InProgress ||
-                            existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.NotStarted && productMapping.AllowExtension)
-                        {
-                            if (productMapping.RenewalApprovalMethod == NexportEnrollmentRenewalApprovalMethodEnum.Auto)
-                            {
-                                // Renew or delete depends on the threshold setting if the product type is section
-                                if (productMapping.Type == NexportProductTypeEnum.Section)
-                                {
-                                    var completionThreshold = productMapping.RenewalCompletionThreshold;
-                                    if (completionThreshold.HasValue)
-                                    {
-                                        redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
-                                            completionThreshold > existingEnrollmentStatus.Value.CompletionPercentage
-                                                ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
-                                                : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment,
-                                            updatedInvoiceFields);
-                                    }
-                                }
-                                else
-                                {
-                                    // Only renew the enrollment for training plan and catalog
-                                    redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
-                                        RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption, updatedInvoiceFields);
-                                }
-                            }
-                            else
-                            {
-                                redeemed = extensionAction != null
-                                    ? await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
-                                        extensionAction == 1
-                                            ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
-                                            : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment,
-                                        updatedInvoiceFields)
-                                    :
-                                    // Delete current enrollment and create new enrollment when the enrollment has been started
-                                    // and the product does not allow extension.
-                                    await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
-                                        RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment, updatedInvoiceFields);
-                            }
-                        }
-
-                        break;
-                    }
-            }
+            redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
+                (RedeemInvoiceItemRequest.RedemptionActionTypeEnum)extensionAction, updatedInvoiceFields);
         }
         else
         {
-            redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping, updatedInvoiceFields: updatedInvoiceFields);
+            var existingEnrollmentStatus = await _nexportService.VerifyNexportEnrollmentStatusAsync(productMapping, userMapping);
+            if (existingEnrollmentStatus != null)
+            {
+                switch (existingEnrollmentStatus)
+                {
+                    case { Phase: Enums.PhaseEnum.Finished, Result: Enums.ResultEnum.Failing }:
+                    case { Phase: Enums.PhaseEnum.Finished, Result: Enums.ResultEnum.Passing }:
+                        {
+                            redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping,
+                                RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment, updatedInvoiceFields);
+
+                            break;
+                        }
+
+                    case var _
+                        when existingEnrollmentStatus.Value.Phase is Enums.PhaseEnum.InProgress or Enums.PhaseEnum.NotStarted:
+                        {
+                            var currentEnrollmentExpirationDate = existingEnrollmentStatus.Value.EnrollmentExpirationDate;
+                            if (currentEnrollmentExpirationDate.HasValue && currentEnrollmentExpirationDate >= DateTime.UtcNow)
+                            {
+                                // Renew the enrollment since the current enrollment has not expired yet
+                                redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId,
+                                    productMapping, RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption, updatedInvoiceFields);
+                            }
+                            else
+                            {
+                                if (existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.InProgress ||
+                                    existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.NotStarted &&
+                                    productMapping.AllowExtension)
+                                {
+                                    if (productMapping.RenewalApprovalMethod == NexportEnrollmentRenewalApprovalMethodEnum.Auto)
+                                    {
+                                        // Renew or delete depends on the threshold setting if the product type is section
+                                        if (productMapping.Type == NexportProductTypeEnum.Section)
+                                        {
+                                            var completionThreshold = productMapping.RenewalCompletionThreshold;
+                                            if (completionThreshold.HasValue)
+                                            {
+                                                redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem,
+                                                    redeemingUserId, productMapping,
+                                                    completionThreshold >
+                                                    existingEnrollmentStatus.Value.CompletionPercentage
+                                                        ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
+                                                        : RedeemInvoiceItemRequest.RedemptionActionTypeEnum
+                                                            .RestartEnrollment,
+                                                    updatedInvoiceFields);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            // Only renew the enrollment for training plan and catalog
+                                            redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem,
+                                                redeemingUserId, productMapping,
+                                                RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption,
+                                                updatedInvoiceFields);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        redeemed = extensionAction != null
+                                            ? await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem,
+                                                redeemingUserId, productMapping,
+                                                extensionAction == 1
+                                                    ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
+                                                    : RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment,
+                                                updatedInvoiceFields)
+                                            :
+                                            // Delete current enrollment and create new enrollment when the enrollment has been started
+                                            // and the product does not allow extension.
+                                            await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem,
+                                                redeemingUserId, productMapping,
+                                                RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment,
+                                                updatedInvoiceFields);
+                                    }
+                                }
+                            }
+
+                            break;
+                        }
+                }
+            }
+            else
+            {
+                redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem, redeemingUserId, productMapping, updatedInvoiceFields: updatedInvoiceFields);
+            }
         }
 
         return redeemed;
