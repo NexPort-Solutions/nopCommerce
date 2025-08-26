@@ -450,6 +450,19 @@ public class NexportWholesaleController : BasePluginController
         return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestUnassignment.cshtml", model);
     }
 
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> RefundInvoiceItem(Guid invoiceItemId)
+    {
+        var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
+        var refundResult = false;
+
+        if (invoiceItem != null)
+            refundResult = await _nexportService.ProcessRefundingInvoiceItem(invoiceItem, true);
+
+        return Json(new { result = refundResult });
+    }
+
     [HttpsRequirement]
     public async Task<IActionResult> RequestRefund(Guid invoiceItemId)
     {
