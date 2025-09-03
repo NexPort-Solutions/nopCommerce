@@ -1,11 +1,14 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct.RedeemActionModel
 
-<div class="form-group row section">
-    <div class="col-sm-4">
-        <nop-label asp-for="ExtensionAction" />
+@if (Model.HasExistingEnrollment)
+{
+    <div class="form-group row section">
+        <div class="col-sm-4">
+            <nop-label asp-for="ExtensionAction" />
+        </div>
+        <div class="col-sm-4">
+            <nop-select asp-for="ExtensionAction" asp-items="Model.AvailableExtensionActions" asp-multiple="false" title="Select extension action" />
+            <span asp-validation-for="ExtensionAction"></span>
+        </div>
     </div>
-    <div class="col-sm-4">
-        <nop-select asp-for="ExtensionAction" asp-items="Model.AvailableExtensionActions" asp-multiple="false" title="Select extension action" />
-        <span asp-validation-for="ExtensionAction"></span>
-    </div>
-</div>
+}
