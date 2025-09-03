@@ -58,6 +58,7 @@
             var buttonIcon = "";
             var buttonText = "";
             var buttonDisabledState = false;
+            var url = "";
 
             if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Assigned.GetDisplayName())") {
                 if (!row.HasRefundRequest) {
@@ -68,40 +69,42 @@
                 buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestRefund")";
                 buttonDisabledState = row.HasRefundRequest;
             } else if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Refunded.GetDisplayName())") {
-                if (row.HasRefundRequest && isAdminView) {
-                    var url = "@Url.Content("~/Admin/ReturnRequest/Nexport/Edit/")" + row.RefundRequestId;
-                    return renderCustomLinkTag(url, null, "fa-solid fa-file-magnifying-glass", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.ViewRefundRequest")");
-                } else {
-                    buttonDisabledState = true;
-
-                    if (row.CustomerId !== null) {
-                        buttonIcon = "fa-solid fa-rotate-exclamation";
-                        buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestRefund")";
+                if (isAdminView) {
+                    if (row.HasRefundRequest) {
+                        url = "@Url.Content("~/Admin/ReturnRequest/Nexport/Edit/")" + row.RefundRequestId;
+                        return renderCustomLinkTag(url, null, "fa-solid fa-file-magnifying-glass", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.ViewRefundRequest")");
                     } else {
+                        buttonDisabledState = true;
+
                         buttonIcon = "fa-solid fa-rotate-left";
                         buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Refund")";
                     }
+                } else {
+                    buttonDisabledState = true;
+
+                    buttonIcon = "fa-solid fa-rotate-exclamation";
+                    buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestRefund")";
                 }
             } else if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.ProcessingRefund.GetDisplayName())") {
-                if (isAdminView)
-                {
-                    var url = "@Url.Content("~/Admin/ReturnRequest/Nexport/Edit/")" + row.RefundRequestId;
+                if (isAdminView) {
+                    url = "@Url.Content("~/Admin/ReturnRequest/Nexport/Edit/")" + row.RefundRequestId;
                     return renderCustomLinkTag(url, null, "fa-solid fa-file-magnifying-glass", "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.ViewRefundRequest")");
                 } else {
                     buttonDisabledState = true;
 
-                    if (row.CustomerId != null) {
-                        buttonIcon = "fa-solid fa-rotate-exclamation";
-                        buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestRefund")";
-                    } else {
-                        buttonIcon = "fa-solid fa-rotate-left";
-                        buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Refund")";
-                    }
+                    buttonIcon = "fa-solid fa-rotate-exclamation";
+                    buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestRefund")";
                 }
             } else {
-                buttonFunction = "refundRedemption('" + row.InvoiceItemId + "')";
-                buttonIcon = "fa-solid fa-rotate-left";
-                buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Refund")";
+                if (isAdminView) {
+                    buttonFunction = "refundRedemption('" + row.InvoiceItemId + "')";
+                    buttonIcon = "fa-solid fa-rotate-left";
+                    buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Refund")";
+                } else {
+                    buttonFunction = "requestRefundRedemption('" + row.InvoiceItemId + "')";
+                    buttonIcon = "fa-solid fa-rotate-exclamation";
+                    buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestRefund")";
+                }
             }
 
             return renderCustomButton(buttonFunction, buttonIcon, buttonText, buttonDisabledState);

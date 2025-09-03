@@ -1,14 +1,18 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Services
 @using Nop.Services.Orders
 @using Nop.Core.Domain.Orders
+@using Nop.Plugin.Misc.Nexport.Domain.Enums
 
 @inject IOrderService orderService
 @inject NexportService nexportService
+@inject IWorkContext workContext
 
 @model Nop.Web.Models.Order.OrderDetailsModel.OrderItemModel
 
 @{
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_common.js");
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
+    var nexportCustomer = await nexportService.FindUserMappingByCustomerId(currentCustomer.Id);
 }
 
 <style>
@@ -35,11 +39,19 @@
         text-decoration: underline !important;
     }
 
-    .button-link:hover {
-        color: #3081ff !important
-    }
-</style>
+        .button-link:hover {
+            color: #3081ff !important
+        }
 
+    .redemption-links {
+        display: flex;
+        margin: 0.75em 1em;
+    }
+
+        .redemption-links::before {
+            content: "\221F";
+        }
+</style>
 @if (Model is { Id: > 0 })
 {
     var orderItem = await orderService.GetOrderItemByIdAsync(Model.Id);
@@ -56,38 +68,60 @@
 
                 var nexportOrderInvoice = nexportOrderInvoiceItems[0];
 
-                if (nexportOrderInvoice.UtcDateRedemption != null)
-                {
-                    <a href="javascript:void(0);" class="button-link" data-id="view-training-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">
-                        (@T("Plugins.Misc.Nexport.Order.ViewRedemption"))
-                    </a>
 
-                    <div data-id="launch-training-popup" data-nexport-order-invoice-id="@nexportOrderInvoice.Id" title="Launch training" style="display: none;">
-                        <div id="redemption-options" style="">
-                            <div style="margin-bottom: 1em;">
-                                <a type="button" class="button-link" href="javascript:void(0);" onclick="navigateToNexportClassroom(this); return false;" data-id="launch-training" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">Click here to view the training in Nexport.</a>
+                @if (nexportOrderInvoice.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Assigned)
+                {
+                    if (nexportOrderInvoice.RedeemingUserId == nexportCustomer.NexportUserId)
+                    {
+                        <div class="redemption-links">
+                            <a href="javascript:void(0);" class="button-link" data-id="view-training-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">
+                                @T("Plugins.Misc.Nexport.Order.ViewRedemption")
+                            </a>
+
+                            <div data-id="launch-training-popup" data-nexport-order-invoice-id="@nexportOrderInvoice.Id" title="Launch training" style="display: none;">
+                                <div id="redemption-options" style="">
+                                    <div style="margin-bottom: 1em;">
+                                        <a type="button" class="button-link" href="javascript:void(0);" onclick="navigateToNexportClassroom(this); return false;" data-id="launch-training" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">Click here to view the training in Nexport.</a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    }
                 }
                 else
                 {
-                    <a href="javascript:void(0);" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">
-                        (@T("Plugins.Misc.Nexport.Order.Redeem"))
-                    </a>
-                    <a href="javascript:void(0);" data-id="refreshLink" style="display: none;">(Check the redemption)</a>
-                    <input type="hidden" id="redeemCompleted" data-redeemed=false />
+                    <div class="redemption-links">
+                        <span style="font-weight: bolder">
+                            <a href="javascript:void(0);" class="button-link" data-id="view-redemption-link" data-nexport-order-invoice-id="@nexportOrderInvoice.Id">
+                                @T("Plugins.Misc.Nexport.Order.Redeem")
+                            </a>
+                            <a href="javascript:void(0);" class="button-link" data-id="refreshLink" style="display: none;">Check the redemption</a>
+                            <input type="hidden" id="redeemCompleted" data-redeemed=false />
 
-                    <div data-id="redemption-view-popup" data-nexport-order-invoice-id="@nexportOrderInvoice.Id" title="@T("Plugins.Misc.Nexport.Order.Redeem").Text" style="display: none;">
-                        <div id="redemption-options" style="">
-                            <div style="margin-bottom: 1em;">
-                                Are you sure you would like to redeem this product?
+                            <div data-id="redemption-view-popup" data-nexport-order-invoice-id="@nexportOrderInvoice.Id" title="@T("Plugins.Misc.Nexport.Order.Redeem").Text" style="display: none;">
+                                <div id="redemption-options" style="">
+                                    <div style="margin-bottom: 1em;">
+                                        Are you sure you would like to redeem this product?
+                                    </div>
+                                    <div>
+                                        <input type="button" class="button-1 redemption-submit-btn" id="redemption-submit" value="Yes" style="margin-right:1em">
+                                        <input type="button" class="button-2 redemption-submit-btn" id="redemption-cancel" value="No">
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <input type="button" class="button-1 redemption-submit-btn" id="redemption-submit" value="Yes" style="margin-right:1em">
-                                <input type="button" class="button-2 redemption-submit-btn" id="redemption-cancel" value="No">
-                            </div>
-                        </div>
+
+                            @if (orderInfo != null)
+                            {
+                                if (mapping is { AutoRedeem: false })
+                                {
+                                    <text>&nbsp;/&nbsp;</text>
+                                    var urlRef = $"{Url.Action("RedeemProduct", "NexportWholesale")}?GroupId={orderInfo.NexportGroupId}&InvoiceItemId={nexportOrderInvoice.InvoiceItemId}&ProductId={orderItem.ProductId}";
+                                    <a href="@urlRef" class="button-link" data-id="assign-redemption-link" data-order-id="orderItem.OrderId">
+                                        @T("Plugins.Misc.Nexport.Order.Assign")
+                                    </a>
+                                }
+                            }
+                        </span>
                     </div>
                 }
 
@@ -114,6 +148,7 @@
                                     if ($("#redeemCompleted").data("redeemed")) {
                                         $("[data-id=view-redemption-link]").hide();
                                         $("[data-id=assign-redemption-link]").hide();
+                                        $("[data-id=refreshLink]").show();
                                     }
                                 }
                             });
@@ -131,7 +166,7 @@
 
                         $("[data-id=refreshLink]").on("click", function (e) {
                             location.reload();
-                        }).show();
+                        });
 
                         $("#redemption-cancel").on("click",function (e) {
                             $("[data-id=redemption-view-popup][data-nexport-order-invoice-id=@nexportOrderInvoice.Id]").dialog("close");
@@ -157,20 +192,6 @@
                         });
                     });
                 </script>
-
-                if (nexportOrderInvoice.UtcDateRedemption == null)
-                {
-                    if (orderInfo != null)
-                    {
-                        if (mapping is { AutoRedeem: false })
-                        {
-                            var urlRef = $"{Url.Action("RedeemProduct", "NexportWholesale")}?GroupId={orderInfo.NexportGroupId}&InvoiceItemId={nexportOrderInvoice.InvoiceItemId}&ProductId={orderItem.ProductId}";
-                            <a href="@urlRef" data-id="assign-redemption-link" data-order-id="orderItem.OrderId">
-                                (@T("Plugins.Misc.Nexport.Order.Assign"))
-                            </a>
-                        }
-                    }
-                }
             }
         }
     }
