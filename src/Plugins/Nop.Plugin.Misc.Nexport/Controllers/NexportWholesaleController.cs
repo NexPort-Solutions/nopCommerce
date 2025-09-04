@@ -554,7 +554,7 @@ public class NexportWholesaleController : BasePluginController
         await _workflowMessageService.SendNewReturnRequestCustomerNotificationAsync(rr, orderItem, order);
 
         model = await _nexportPluginModelFactory.PrepareSubmitInvoiceItemRefundRequestModelAsync(model);
-        model.Result = await _localizationService.GetResourceAsync("ReturnRequests.Submitted");
+        model.Result = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.InvoiceItemRefund.Request.Submitted");
 
         return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestRefund.cshtml", model);
     }
