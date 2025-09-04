@@ -442,7 +442,7 @@ public class NexportPluginService
         { "RedemptionUnassignmentRequests.WhyUnassigning", "Why do you want to unassign this?" },
         { "RedemptionUnassignmentRequests.UnassignReason", "Reason for unassignment" },
         { "RedemptionUnassignmentRequests.Comments", "Comments" },
-        { "RedemptionUnassignmentRequests.Submit", "Submit unassignment Request" },
+        { "RedemptionUnassignmentRequests.Submit", "Submit unassignment request" },
         { "RedemptionUnassignmentRequests.Submitted", "Your unassignment request has been submitted successfully." },
         { "RedemptionUnassignmentRequests.Description", "List of customer requests to unassign redemptions" },
         { "RedemptionUnassignmentRequests.EditUnassignmentRequestDetails", "Edit unassignment request details" },
@@ -484,6 +484,8 @@ public class NexportPluginService
         { "RedemptionUnassignmentRequestReasons.Deleted", "The unassignment request reason has been deleted successfully." },
         { "RedemptionUnassignmentRequestReasons.Updated", "The unassignment request reason has been updated successfully." },
 
+        { "Plugins.Misc.Nexport.InvoiceItemRefund.Request.Submit", "Submit refund request" },
+        { "Plugins.Misc.Nexport.InvoiceItemRefund.Request.Submitted", "Your refund request has been submitted successfully." },
         { "Plugins.Misc.Nexport.InvoiceItemRefund.AssignedUser", "Assigned customer" },
         { "Plugins.Misc.Nexport.InvoiceItemRefund.AssignedUser.Hint", "The customer that the enrollment has been assigned previously" },
         { "Plugins.Misc.Nexport.InvoiceItemRefund.Option", "Enrollment refund option" },
