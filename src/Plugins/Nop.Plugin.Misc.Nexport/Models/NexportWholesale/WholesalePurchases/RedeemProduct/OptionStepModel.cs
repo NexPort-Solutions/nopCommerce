@@ -5,6 +5,10 @@ namespace Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.Red
 
 public record OptionStepModel : RedeemStepModel
 {
+    public Guid? RedeemingUserId { get; set; }
+
+    public string Email { get; set; }
+
     [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Option.StartDate")]
     public DateTime? UtcStartDate { get; set; }
 
@@ -20,9 +24,7 @@ public record OptionStepModel : RedeemStepModel
 
     public IList<SelectListItem> AvailableNexportPurchasingGroups { get; set; } = new List<SelectListItem>();
 
-    public IList<SelectListItem> AvailableExtensionActions { get; set; } = new List<SelectListItem>();
-
     public bool IsOpenEnded { get; set; }
 
-    public bool HasExistingEnrollment { get; set; }
+    public bool RequireApproval { get; set; }
 }

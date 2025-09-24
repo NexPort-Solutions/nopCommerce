@@ -1,5 +1,9 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct.OptionStepModel
 
+@{
+    var requireEnrollmentVerification = Model.RedeemingUserId != null;
+}
+
 <div id="additional-options">
     <div class="section">
         <label>Enrollment options</label>
@@ -38,6 +42,8 @@
     <div id="extension-options-container"></div>
 </div>
 <script>
+    var requireEnrollmentVerification = @Json.Serialize(requireEnrollmentVerification);
+
     $(document).ready(function () {
         $("#@Html.IdFor(model => model.PurchasingGroupId)").on("change", function (e) {
             var selectedGroupName = $("#@Html.IdFor(model => model.PurchasingGroupId) option:selected").text()
@@ -45,17 +51,25 @@
         });
 
         $("#@Html.IdFor(model => model.StoreId)").on("change", function (e) {
-           verifyExistingEnrollment();
+            if (!requireEnrollmentVerification) {
+                return;
+            }
+
+            verifyExistingEnrollment();
         });
 
-        verifyExistingEnrollment();
+        if (requireEnrollmentVerification) {
+            verifyExistingEnrollment();
+        }
     });
 
     function verifyExistingEnrollment() {
         console.log("Verifying existing enrollment...");
         var storeId = $("#@Html.IdFor(model => model.StoreId)").val();
         var postData = {
-            storeId: storeId
+            redeemingUserId: "@Model.RedeemingUserId",
+            storeId: storeId,
+            isAdminView: @Json.Serialize(Model.AdminView)
         };
         addAntiForgeryToken(postData);
 

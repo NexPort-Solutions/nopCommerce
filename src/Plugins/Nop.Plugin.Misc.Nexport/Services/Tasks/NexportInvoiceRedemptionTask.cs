@@ -476,12 +476,12 @@ public class NexportInvoiceRedemptionTask : IScheduleTask
                                 }
                                 else
                                 {
-                                    await _logger.ErrorAsync($"Failed to redeem Nexport invoice item {invoiceItem.InvoiceItemId} for user {queueItem.RedeemingUserId} in the wholesale redemption process!");
-
                                     queueItem.RetryCount++;
 
                                     if (queueItem.RetryCount <= MAX_RETRY_COUNT)
                                     {
+                                        await _logger.WarningAsync($"Unable to redeem Nexport invoice item {invoiceItem.InvoiceItemId} for user {queueItem.RedeemingUserId} in the wholesale redemption process!");
+
                                         await _nexportService.AddOrderNoteAsync(order,
                                             $"Nexport invoice item {invoiceItem.InvoiceItemId} cannot be redeemed for user {queueItem.RedeemingUserId} and will be retry again!");
 
@@ -489,6 +489,8 @@ public class NexportInvoiceRedemptionTask : IScheduleTask
                                     }
                                     else
                                     {
+                                        await _logger.ErrorAsync($"Failed to redeem Nexport invoice item {invoiceItem.InvoiceItemId} for user {queueItem.RedeemingUserId} in the wholesale redemption process!");
+
                                         await WholesaleDeleteRedemptionQueueItemAndAddFinalOrderNote(order, queueItem, invoiceItem);
 
                                         // Complete the order
@@ -503,7 +505,7 @@ public class NexportInvoiceRedemptionTask : IScheduleTask
         }
         catch (Exception ex)
         {
-            await _logger.ErrorAsync($"Failed to redeem Nexport invoice item {invoiceItem.InvoiceItemId} for user {queueItem.RedeemingUserId} in the wholesale redemption process", ex);
+            await _logger.ErrorAsync($"Failed to process wholesale redemption for Nexport invoice item {invoiceItem.InvoiceItemId} for user {queueItem.RedeemingUserId}", ex);
 
             queueItem.RetryCount++;
 

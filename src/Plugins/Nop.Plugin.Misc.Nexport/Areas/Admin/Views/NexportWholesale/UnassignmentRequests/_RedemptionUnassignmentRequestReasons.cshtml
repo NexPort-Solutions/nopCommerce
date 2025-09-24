@@ -1,50 +1,61 @@
 ﻿@using Nop.Plugin.Misc.Nexport.Domain.Wholesale
 
-@model Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases.NexportRedemptionUnassignmentRequestReasonSearchModel 
+@model Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases.NexportRedemptionUnassignmentRequestReasonSearchModel
+
 @{
-    NopHtml.SetActiveMenuItemSystemName("UnassignmentRequestReasons");
+    ViewBag.PageTitle = T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequests").Text;
+
+    NopHtml.SetActiveMenuItemSystemName("Unassignment - Request Reasons");
 }
-<div class="card card-default">
-    <div class="card-header">
-    @T("RedemptionUnassignmentRequestReasons.CardHeader")
-    </div>
-    <div class="card-body">
-        <p>
-            <em>@T("RedemptionUnassignmentRequestReasons.CardBody.Hint")</em>
-        </p>
-        @await Html.PartialAsync("Table", new DataTablesModel
-        {
-            Name = "unassignmentrequestreasons-grid",
-            UrlRead = new DataUrl("UnassignmentRequestReasonsList", "NexportWholesale", null),
-            Length = Model.PageSize,
-            LengthMenu = Model.AvailablePageSizes,
-            ColumnCollection = new List<ColumnProperty>
-            {
-                new(nameof(NexportRedemptionUnassignmentRequestReason.Name))
-                {
-                    Title = @T("RedemptionUnassignmentRequestReasons.Name").Text,
-                    Width = "300"
-                },
-        new(nameof(NexportRedemptionUnassignmentRequestReason.DisplayOrder))
-                {
-                    Title = @T("RedemptionUnassignmentRequestReasons.DisplayOrder").Text,
-                    Width = "100",
-                    ClassName =  NopColumnClassDefaults.CenterAll
-                },
-        new(nameof(NexportRedemptionUnassignmentRequestReason.Id))
-                {
-                    Title = T("Admin.Common.Edit").Text,
-                    Width = "100",
-                    ClassName =  NopColumnClassDefaults.Button,
-                    Render = new RenderButtonEdit(new DataUrl("Edit"))
-                }
-            }
-        }) 
-    </div>
-    <div class="card-footer">
-        <a asp-action="UnassignmentRequestReasonCreate" asp-controller="NexportWholesale" class="btn btn-primary">
-            <i class="far fa-plus-square"></i>
-            @T("Admin.Common.AddNew")
-        </a>
+<div class="content-header clearfix">
+    <h1 class="float-left">
+        @T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequestReasons.CardHeader")
+    </h1>
+</div>
+<div class="content">
+    <div class="form-horizontal">
+        <div class="cards-group">
+            <div class="card card-default">
+                <div class="card-body">
+                    <p>
+                        <em>@T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequestReasons.CardBody.Hint")</em>
+                    </p>
+                    @await Html.PartialAsync("Table", new DataTablesModel
+                    {
+                        Name = "unassignmentrequestreasons-grid",
+                        UrlRead = new DataUrl("UnassignmentRequestReasonsList", "NexportWholesale", null),
+                        Length = Model.PageSize,
+                        LengthMenu = Model.AvailablePageSizes,
+                        ColumnCollection = new List<ColumnProperty>
+                        {
+                            new(nameof(NexportRedemptionUnassignmentRequestReason.Name))
+                            {
+                                Title = @T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequestReasons.Name").Text,
+                                Width = "300",
+                            },
+                            new(nameof(NexportRedemptionUnassignmentRequestReason.DisplayOrder))
+                            {
+                                Title = @T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequestReasons.DisplayOrder").Text,
+                                Width = "50",
+                                ClassName =  NopColumnClassDefaults.CenterAll
+                            },
+                            new(nameof(NexportRedemptionUnassignmentRequestReason.Id))
+                            {
+                                Title = T("Admin.Common.Edit").Text,
+                                Width = "50",
+                                ClassName =  NopColumnClassDefaults.Button,
+                                Render = new RenderButtonEdit(new DataUrl("Edit"))
+                            }
+                        }
+                    })
+                </div>
+                <div class="card-footer">
+                    <a asp-action="UnassignmentRequestReasonCreate" asp-controller="NexportWholesale" class="btn btn-primary">
+                        <i class="far fa-plus-square"></i>
+                        @T("Admin.Common.AddNew")
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

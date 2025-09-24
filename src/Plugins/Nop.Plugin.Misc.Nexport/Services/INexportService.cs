@@ -397,6 +397,10 @@ public interface INexportService
 
     Task CancelAwaitingInvoiceItem(NexportOrderInvoiceItem invoiceItem);
 
+    Task ApproveRedemptionAssignment(NexportRedemptionAssignmentApprovalRequest approvalRequest, NexportOrderInvoiceItem invoiceItem, WholesaleOrderInfo wholesaleOrderInfo);
+
+    Task DenyRedemptionAssignment(NexportRedemptionAssignmentApprovalRequest approvalRequest, NexportOrderInvoiceItem invoiceItem, WholesaleOrderInfo wholesaleOrderInfo);
+
     Task<bool> ProcessRefundingInvoiceItem(NexportOrderInvoiceItem invoiceItem, bool accept);
 
     Task RefundOrderItem(int quantity, int orderId, int orderItemId);
@@ -469,7 +473,25 @@ public interface INexportService
         DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
         int pageIndex = 0, int pageSize = int.MaxValue);
 
-    //Task<bool> HasWholesaleOrders(Customer customer, Store store = null);
+    Task<NexportRedemptionUnassignmentRequest> FindRecentNexportRedemptionUnassignmentRequest(Guid invoiceItemId);
+
+    Task<NexportRedemptionAssignmentApprovalRequest> GetNexportRedemptionAssignmentApprovalRequestByIdAsync(int? requestId);
+
+    Task UpdateNexportRedemptionAssignmentApprovalRequestAsync(NexportRedemptionAssignmentApprovalRequest assignmentApprovalRequest);
+
+    Task DeleteNexportRedemptionAssignmentApprovalRequestAsync(NexportRedemptionAssignmentApprovalRequest assignmentApprovalRequest);
+
+    Task InsertNexportRedemptionAssignmentApprovalRequestAsync(NexportRedemptionAssignmentApprovalRequest assignmentApprovalRequest);
+
+    Task<IList<int>> SendNexportRedemptionAssignmentApprovalRequestCustomerNotificationAsync(
+        NexportRedemptionAssignmentApprovalRequest assignmentApprovalRequest,
+        NexportOrderInvoiceItem invoiceItem, string template);
+
+    Task<IPagedList<NexportRedemptionAssignmentApprovalRequest>> SearchNexportRedemptionAssignmentApprovalRequestsAsync(int storeId = 0,
+        int customerId = 0,
+        NexportRedemptionAssignmentApprovalRequestStatus? requestStatus = null,
+        DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
+        int pageIndex = 0, int pageSize = int.MaxValue);
 
     Task InsertNexportRedemptionAuditLogAsync(NexportRedemptionAuditLog redemptionAuditLog);
 

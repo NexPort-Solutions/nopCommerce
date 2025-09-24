@@ -23,5 +23,8 @@ public enum NexportOrderInvoiceItemRedemptionStatus
     Refunded = 5,
 
     [Display(Name = "Processing Refund")]
-    ProcessingRefund = 6
+    ProcessingRefund = 6,
+
+    [Display(Name = "Approval Awaiting")]
+    ApprovalAwaiting = 7
 }

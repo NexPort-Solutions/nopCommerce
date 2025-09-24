@@ -44,4 +44,6 @@ public record NexportGroupProductRedemptionModel : BaseNopEntityModel
     public int? RefundRequestId { get; set; }
 
     public string RefundNote { get; set; }
+
+    public bool HasRecentUnassignmentRequest { get; set; }
 }

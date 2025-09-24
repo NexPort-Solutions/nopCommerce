@@ -1,0 +1,38 @@
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.NexportRedemptionAssignmentApprovalRequestModel
+
+@{
+    ViewBag.PageTitle = T("Plugins.Misc.Nexport.Wholesale.RedemptionAssignmentApprovalRequests.Edit").Text;
+    NopHtml.SetActiveMenuItemSystemName("Assignment Approval Requests");
+}
+
+<form asp-controller="NexportWholesale" asp-action="EditAssignmentApprovalRequest" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Plugins.Misc.Nexport.Wholesale.RedemptionAssignmentApprovalRequests.Edit")
+            <small>
+                <i class="fas fa-arrow-circle-left"></i>
+                <a asp-action="AssignmentApprovalRequestsList">@T("Plugins.Misc.Nexport.Wholesale.RedemptionAssignmentApprovalRequests.Edit.BackToList")</a>
+            </small>
+        </h1>
+        <div class="float-right">
+            @if (Model.Status == NexportRedemptionAssignmentApprovalRequestStatus.Received)
+            {
+                <button type="submit" name="accept" class="btn btn-primary">
+                    <i class="fas fa-check"></i>
+                    @T("Plugins.Misc.Nexport.Common.Accept")
+                </button>
+                <button type="submit" name="deny" class="btn btn-warning">
+                    <i class="fas fa-times"></i>
+                    @T("Plugins.Misc.Nexport.Common.Deny")
+                </button>
+            }
+            <span id="assignment-approval-request-delete" class="btn bg-red">
+                <i class="far fa-trash-alt"></i>
+                @T("Admin.Common.Delete")
+            </span>
+        </div>
+    </div>
+    @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/AssignmentApprovalRequests/_CreateOrUpdate.cshtml", Model)
+</form>
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="assignment-approval-request-delete" asp-action="DeleteAssignmentApprovalRequest" />

@@ -2,13 +2,27 @@
 
 @if (Model.HasExistingEnrollment)
 {
-    <div class="form-group row section">
-        <div class="col-sm-4">
-            <nop-label asp-for="ExtensionAction" />
+    if (Model.RequireApproval)
+    {
+        <div class="form-group row section">
+            <div class="col-sm-4">
+            </div>
+            <div class="col-sm-8 text-left d-flex align-items-center">
+                <input type="hidden" asp-for="RequireApproval" />
+                <div class="text-info font-weight-bold"><i class="fa-solid fa-asterisk"></i>This assignment will require additional approval since there is an existing enrollment.</div>
+            </div>
         </div>
-        <div class="col-sm-4">
-            <nop-select asp-for="ExtensionAction" asp-items="Model.AvailableExtensionActions" asp-multiple="false" title="Select extension action" />
-            <span asp-validation-for="ExtensionAction"></span>
+    }
+    else
+    {
+        <div class="form-group row section">
+            <div class="col-sm-4">
+                <nop-label asp-for="ExtensionAction" />
+            </div>
+            <div class="col-sm-4">
+                <nop-select asp-for="ExtensionAction" asp-items="Model.AvailableExtensionActions" asp-multiple="false" title="Select extension action" />
+                <span asp-validation-for="ExtensionAction"></span>
+            </div>
         </div>
-    </div>
+    }
 }

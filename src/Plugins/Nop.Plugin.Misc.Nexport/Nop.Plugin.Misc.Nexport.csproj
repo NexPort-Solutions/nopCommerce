@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="JetBrains.Annotations" Version="2025.2.0" />
+    <PackageReference Include="JetBrains.Annotations" Version="2025.2.2" />
     <PackageReference Include="NexportApi" Version="1.0.38" />
   </ItemGroup>
 
@@ -261,6 +261,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\NexportCategory\NexportOptions.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\AssignmentApprovalRequests\Edit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\AssignmentApprovalRequests\List.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\NexportWholesale\AssignmentApprovalRequests\_CreateOrUpdate.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\NexportWholesale\Purchases\ByFundingPools\List.cshtml">

@@ -46,7 +46,11 @@
         var textRenderer = $.fn.dataTable.render.text().display;
 
         if (isAdminView && data === "Refunded" && row.HasRefundRequest) {
-            return textRenderer(data) + "<a class=\"ml-1 refund-note\" tabindex=\"0\" data-trigger=\"focus\" data-content=\"" + row.RefundNote + "\" data-container=\"body\" data-toggle=\"popover\" data-placement=\"top\" data-id=\"refund-status\" style=\"color: rgb(43, 43, 43);\"><i class=\"fa-solid fa-circle-info fa-1x\"></i></a>";
+            return textRenderer(data) + "<a class=\"ml-1 refund-note\" tabindex=\"0\" data-trigger=\"focus\" data-content=\"" + row.RefundNote + "\" data-container=\"body\" data-toggle=\"popover\" data-placement=\"right\" data-id=\"redemption-status-note\" style=\"color: rgb(43, 43, 43);\"><i class=\"fa-solid fa-circle-info fa-1x\"></i></a>";
+        }
+
+        if (row.HasRecentUnassignmentRequest) {
+            return textRenderer(data) + "<a class=\"ml-1 unassign-request-note\" tabindex=\"0\" data-trigger=\"focus\" data-content=\"There is an active unassignment request!\" data-container=\"body\" data-toggle=\"popover\" data-placement=\"right\" data-id=\"redemption-status-note\" style=\"color: rgb(43, 43, 43);\"><i class=\"fa-solid fa-circle-info fa-1x\"></i></a>";
         }
 
         return textRenderer(data);
@@ -105,6 +109,10 @@
                     buttonIcon = "fa-solid fa-rotate-exclamation";
                     buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestRefund")";
                 }
+
+                if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.Refunded.GetDisplayName())") {
+                    buttonDisabledState = true;
+                }
             }
 
             return renderCustomButton(buttonFunction, buttonIcon, buttonText, buttonDisabledState);
@@ -126,6 +134,10 @@
                     buttonIcon = "fa-solid fa-square-minus";
                     buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")";
                 } else {
+                    if (row.HasRecentUnassignmentRequest) {
+                        buttonDisabledState = true;
+                    }
+
                     buttonFunction = "requestUnassignment('" + row.InvoiceItemId + "', " + row.CustomerId + ")";
                     buttonIcon =  "fa-solid fa-square-info";
                     buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestUnassignment")";
@@ -138,6 +150,10 @@
                 buttonFunction = "cancelAwaitingRedemption('" + row.InvoiceItemId + "')";
                 buttonIcon = "fa-solid fa-square-xmark";
                 buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.CancelAwaiting")";
+            } else if (row.Status === "@(NexportOrderInvoiceItemRedemptionStatus.ApprovalAwaiting.GetDisplayName())") {
+                buttonDisabledState = true;
+                buttonIcon = "fa-solid fa-square-xmark";
+                buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Assign")";
             } else {
                 buttonDisabledState = true;
                 if (row.CustomerId != null) {
@@ -145,6 +161,10 @@
                         buttonIcon = "fa-solid fa-square-minus";
                         buttonText = "@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.Unassign")";
                     } else {
+                        if (row.HasRecentUnassignmentRequest) {
+                            buttonDisabledState = true;
+                        }
+
                         buttonIcon =  "fa-solid fa-square-info";
                         buttonText ="@T("Plugins.Misc.Nexport.Group.Product.Redemption.Button.RequestUnassignment")";
                     }

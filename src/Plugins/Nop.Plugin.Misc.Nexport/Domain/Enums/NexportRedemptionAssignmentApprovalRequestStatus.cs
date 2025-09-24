@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Misc.Nexport.Domain.Enums;
 
-public enum NexportRedemptionUnassignmentRequestStatus
+public enum NexportRedemptionAssignmentApprovalRequestStatus
 {
     [Display(Name = "Received")]
     Received = 10,

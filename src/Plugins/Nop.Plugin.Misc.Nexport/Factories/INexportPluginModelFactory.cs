@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using NexportApi.Model;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
@@ -32,7 +30,6 @@ using Nop.Plugin.Misc.Nexport.Models.Syllabus;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Web.Areas.Admin.Models.Stores;
-using RedeemProductModel = Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProductModel;
 
 namespace Nop.Plugin.Misc.Nexport.Factories;
 
@@ -160,11 +157,7 @@ public partial interface INexportPluginModelFactory
     Task<OrderSummaryCartFooterModel> PrepareOrderSummaryCartFooterModel(
         OrderSummaryCartFooterModel orderSummaryCartFooterModel, Customer customer, Store store, IList<ShoppingCartItem> cart);
 
-    //Task<NexportGroupListModel> PrepareNexportGroupListModelAsync(
-    //    NexportGroupListSearchModel searchModel, Customer currentCustomer);
-
-    Task<NexportGroupProductListModel> PrepareNexportGroupProductListModelAsync(
-        NexportGroupProductListSearchModel searchModel, Customer currentCustomer);
+    Task<NexportGroupProductListModel> PrepareNexportGroupProductListModelAsync(NexportGroupProductListSearchModel searchModel, Customer currentCustomer);
 
     Task<NexportGroupProductRedemptionListModel> PrepareNexportGroupProductRedemptionListModelAsync(
         NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId, int productId, Customer currentCustomer, int? orderId = null);
@@ -198,14 +191,14 @@ public partial interface INexportPluginModelFactory
     Task<OptionStepModel> PrepareOptionStepModel(bool isOpenEndedProduct = false);
 
     Task<ConfirmStepModel> PrepareConfirmStepModel(DateTime? utcStartDate, int? storeId, Guid? purchasingGroupId,
-        string purchasingGroupName, int? extensionOption = null);
+        string purchasingGroupName, int? extensionOption = null, bool requireApproval = false);
 
-    Task<RedeemActionModel> PrepareRedeemActionModel(bool hasExistingEnrollment = false);
+    Task<RedeemActionModel> PrepareRedeemActionModel(bool isAdminView, bool hasExistingEnrollment = false,
+        Enums.PhaseEnum? enrollmentPhase = null);
 
     Task<MapProductToCategoryModel> PrepareMapProductToCategoryModel();
 
-    Task<NexportProductMappingListModel> PrepareNexportCategoryProductMappingListModelAsync(
-        NexportCategoryProductMappingListSearchModel searchModel);
+    Task<NexportProductMappingListModel> PrepareNexportCategoryProductMappingListModelAsync(NexportCategoryProductMappingListSearchModel searchModel);
 
     Task<NexportCategorySearchModel> PrepareCategorySearchModelAsync(NexportCategorySearchModel searchModel);
 
@@ -215,9 +208,11 @@ public partial interface INexportPluginModelFactory
 
     Task<SubmitRedemptionUnassignmentRequestModel> PrepareSubmitUnassignmentRequestModel(Guid? groupId, Guid? invoiceItemId, int? productId, int? customerId);
 
-    Task<NexportRedemptionRequestUnassignmentListModel> PrepareNexportRedemptionUnassignmentRequestListModel(NexportRedemptionUnassignmentRequestListSearchModel searchModel);
+    Task<NexportRedemptionRequestUnassignmentListModel> PrepareNexportRedemptionUnassignmentRequestListModel(
+        NexportRedemptionUnassignmentRequestListSearchModel searchModel);
 
-    Task<NexportRedemptionUnassignmentRequestReasonListModel> PrepareRedemptionUnassignmentRequestReasonListModelAsync(NexportRedemptionUnassignmentRequestReasonSearchModel searchModel);
+    Task<NexportRedemptionUnassignmentRequestReasonListModel> PrepareRedemptionUnassignmentRequestReasonListModelAsync(
+        NexportRedemptionUnassignmentRequestReasonSearchModel searchModel);
 
     Task<NexportRedemptionUnassignmentRequestReasonModel> PrepareRedemptionUnassignmentRequestReasonModelAsync(
         NexportRedemptionUnassignmentRequestReasonModel model,
@@ -229,7 +224,18 @@ public partial interface INexportPluginModelFactory
 
     Task<SubmitRedemptionUnassignmentRequestModel> PrepareSubmitRedemptionUnassignmentRequestModelAsync(SubmitRedemptionUnassignmentRequestModel model);
 
-    Task<NexportRedemptionUnassignmentRequestListSearchModel> PrepareRedemptionUnassignmentRequestSearchModelAsync(NexportRedemptionUnassignmentRequestListSearchModel searchModel);
+    Task<NexportRedemptionUnassignmentRequestListSearchModel> PrepareRedemptionUnassignmentRequestSearchModelAsync(
+        NexportRedemptionUnassignmentRequestListSearchModel searchModel);
+
+    Task<NexportRedemptionAssignmentApprovalRequestListSearchModel> PrepareNexportRedemptionAssignmentApprovalRequestSearchModelAsync(
+        NexportRedemptionAssignmentApprovalRequestListSearchModel searchModel);
+
+    Task<NexportRedemptionAssignmentApprovalRequestListModel> PrepareNexportRedemptionAssignmentApprovalRequestListModel(
+        NexportRedemptionAssignmentApprovalRequestListSearchModel searchModel);
+
+    Task<NexportRedemptionAssignmentApprovalRequestModel> PrepareNexportRedemptionAssignmentApprovalRequestModelAsync(
+        NexportRedemptionAssignmentApprovalRequestModel model, NexportRedemptionAssignmentApprovalRequest assignmentApprovalRequest,
+        bool excludeProperties = false);
 
     Task<NexportFundingPoolSearchModel> PrepareNexportFundingPoolSearchModelAsync(NexportFundingPoolSearchModel searchModel);
 
@@ -243,7 +249,8 @@ public partial interface INexportPluginModelFactory
 
     Task<NexportReturnRequestListModel> PrepareNexportReturnRequestListModelAsync(NexportReturnRequestSearchModel searchModel);
 
-    Task<NexportReturnRequestModel> PrepareNexportReturnRequestModelAsync(NexportReturnRequestModel model, ReturnRequest returnRequest, bool excludeProperties = false);
+    Task<NexportReturnRequestModel> PrepareNexportReturnRequestModelAsync(NexportReturnRequestModel model, ReturnRequest returnRequest,
+        bool excludeProperties = false);
 
     Task<SubmitInvoiceItemRefundRequestModel> PrepareInvoiceItemRefundRequestModel(Guid invoiceItemId);
 

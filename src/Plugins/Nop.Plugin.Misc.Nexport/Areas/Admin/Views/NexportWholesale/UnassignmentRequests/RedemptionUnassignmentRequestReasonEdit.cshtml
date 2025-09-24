@@ -1,8 +1,8 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.NexportRedemptionUnassignmentRequestReasonModel
 
 @{
-    ViewBag.Title = T("RedemptionUnassignmentRequestReasons.EditDetails").Text;
-    NopHtml.SetActiveMenuItemSystemName("UnassignmentRequestReasons");
+    ViewBag.PageTitle = T("RedemptionUnassignmentRequestReasons.EditDetails").Text;
+    NopHtml.SetActiveMenuItemSystemName("Unassignment - Request Reasons");
 }
 
 <form asp-controller="NexportWholesale" asp-action="UnassignmentRequestReasonEdit" method="post">
@@ -39,4 +39,4 @@
 </form>
 <nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="unassignmentrequestreason-delete"
                          asp-controller="NexportWholesale"
-                         asp-action="UnassignmentRequestReasonDelete" />
+                         asp-action="DeleteUnassignmentRequestReason" />

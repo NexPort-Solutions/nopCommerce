@@ -1,28 +1,32 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.NexportRedemptionUnassignmentRequestModel
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.NexportRedemptionUnassignmentRequestModel
 
 @{
-    ViewBag.Title = T("RedemptionUnassignmentRequests.EditUnassignmentRequestDetails").Text;
-    NopHtml.SetActiveMenuItemSystemName("UnassignmentRequests");
+    ViewBag.PageTitle = T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequests.EditUnassignmentRequestDetails").Text;
+    NopHtml.SetActiveMenuItemSystemName("Unassignment - Requests");
 }
 
 <form asp-controller="NexportWholesale" asp-action="EditUnassignmentRequest" method="post">
     <div class="content-header clearfix">
         <h1 class="float-left">
-            @T("RedemptionUnassignmentRequests.EditUnassignmentRequestDetails")
+            @T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequests.EditUnassignmentRequestDetails")
             <small>
                 <i class="fas fa-arrow-circle-left"></i>
-                <a asp-action="UnassignmentRequestsList">@T("RedemptionUnassignmentRequests.EditUnassignmentRequest.BackToList")</a>
+                <a asp-action="UnassignmentRequestsList">@T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequests.EditUnassignmentRequest.BackToList")</a>
             </small>
         </h1>
         <div class="float-right">
-            <button type="submit" name="save" class="btn btn-primary">
-                <i class="far fa-save"></i>
-                @T("Admin.Common.Save")
-            </button>
-            <button type="submit" name="save-continue" class="btn btn-primary">
-                <i class="far fa-save"></i>
-                @T("Admin.Common.SaveContinue")
-            </button>
+            @if (Model.RequestStatus == NexportRedemptionUnassignmentRequestStatus.Received)
+            {
+                <button type="submit" name="accept" class="btn btn-primary">
+                    <i class="fas fa-check"></i>
+                    @T("Plugins.Misc.Nexport.Common.Accept")
+                </button>
+                <button type="submit" name="deny" class="btn btn-warning">
+                    <i class="fas fa-times"></i>
+                    @T("Plugins.Misc.Nexport.Common.Deny")
+                </button>
+            }
             <span id="unassignmentrequest-delete" class="btn bg-red">
                 <i class="far fa-trash-alt"></i>
                 @T("Admin.Common.Delete")
@@ -31,4 +35,4 @@
     </div>
     @await Html.PartialAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/_CreateOrUpdate.cshtml", Model)
 </form>
-<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="unassignmentrequest-delete" />
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="unassignmentrequest-delete" asp-action="DeleteUnassignmentRequest" />

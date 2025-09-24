@@ -9,7 +9,7 @@
 @model Nop.Plugin.Sale.CancelPendingOrderRequests.Models.PendingOrderCancellationRequestSearchModel
 
 @{
-    ViewBag.Title = T("Admin.PendingOrderCancellationRequests").Text;
+    ViewBag.PageTitle = T("Admin.PendingOrderCancellationRequests").Text;
     NopHtml.SetActiveMenuItemSystemName("Cancellation requests");
 
     var currentCustomer = await workContext.GetCurrentCustomerAsync();
@@ -27,7 +27,7 @@
 <div class="content">
     <div class="form-horizontal">
         <div class="cards-group">
-            <div class="card card-default panel-search">
+            <div class="card card-default card-search">
                 <div class="card-body">
                     <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
                         <div class="search-text">@T("Admin.Common.Search")</div>

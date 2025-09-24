@@ -1,0 +1,210 @@
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
+@using Nop.Plugin.Misc.Nexport.Extensions
+@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.NexportRedemptionAssignmentApprovalRequestModel
+
+<div asp-validation-summary="All"></div>
+
+<div class="content">
+    <div class="form-horizontal">
+        <div class="card-group">
+            <div class="card card-default">
+                <div class="card-body">
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="Id" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.Id</div>
+                            <input asp-for="Id" type="hidden" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="InvoiceItemId" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.InvoiceItemId</div>
+                            <input asp-for="InvoiceItemId" type="hidden" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="ProductId" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.Product.Name</div>
+                            <input asp-for="ProductId" type="hidden" />
+                        </div>
+                    </div>
+                    @if (Model.RedeemingProductId != null && Model.RedeemingProduct != null)
+                    {
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="RedeemingProductId" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.RedeemingProduct.Name</div>
+                                <input asp-for="RedeemingProductId" type="hidden" />
+                            </div>
+                        </div>
+                    }
+
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="RequestedByCustomerInfo" />
+                        </div>
+                        <div class="col-md-9">
+                            <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.RequestedByCustomerId">@Model.RequestedByCustomerInfo</a>
+                        </div>
+                    </div>
+                    @if (Model.RedemptionAssignmentType == NexportRedemptionAssignmentTypeStatus.Instant)
+                    {
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="RedemptionUserId" />
+                            </div>
+                            <div class="col-md-9">
+                                <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.RedemptionCustomerId">@Model.RedemptionCustomerInfo</a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="RedemptionCustomerInfo" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.RedemptionCustomerInfo</div>
+                            </div>
+                        </div>
+                    }
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="RedemptionAssignmentType" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.RedemptionAssignmentType.GetDisplayName()</div>
+                        </div>
+                    </div>
+                    @if (Model.PurchasingGroupId != null)
+                    {
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="PurchasingGroupId" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.PurchasingGroupId</div>
+                                <input asp-for="PurchasingGroupId" type="hidden" />
+                            </div>
+                        </div>
+                    }
+                    @if (Model.UtcRedemptionStartDate != null)
+                    {
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="UtcRedemptionStartDate" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.UtcRedemptionStartDate</div>
+                                <input asp-for="UtcRedemptionStartDate" type="hidden" />
+                            </div>
+                        </div>
+                    }
+                    @if (Model.StoreId != null)
+                    {
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="StoreId" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.Store</div>
+                                <input asp-for="StoreId" type="hidden" />
+                            </div>
+                        </div>
+                    }
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="Status" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.Status.GetDisplayName()</div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="UtcCreatedDate" />
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-text-row">@Model.UtcCreatedDate</div>
+                            <input asp-for="UtcCreatedDate" type="hidden" />
+                        </div>
+                    </div>
+                    @if (Model.UtcModifiedDate != null)
+                    {
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="UtcModifiedDate" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.UtcModifiedDate</div>
+                                <input asp-for="UtcModifiedDate" type="hidden" />
+                            </div>
+                        </div>
+                    }
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="Notes" />
+                        </div>
+                        <div class="col-md-9">
+                            @if (Model.Status == NexportRedemptionAssignmentApprovalRequestStatus.Received)
+                            {
+                                <nop-textarea asp-for="Notes"  />
+                                <span asp-validation-for="Notes"></span>
+                            }
+                            else
+                            {
+                                <div class="form-text-row">@Model.Notes</div>
+                            }
+                        </div>
+                    </div>
+                    @if (Model.ExtensionOption != null)
+                    {
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="ExtensionOption" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.ExtensionOption.GetDisplayName()</div>
+                            </div>
+                        </div>
+                    } else {
+                        if (Model.Status == NexportRedemptionAssignmentApprovalRequestStatus.Received)
+                        {
+                            <div class="form-group row">
+                                <div class="col-md-3">
+                                    <nop-label asp-for="AvailableExtensionOptions" />
+                                </div>
+                                <div class="col-md-9">
+                                    <nop-select asp-for="ExtensionOption" asp-items="Model.AvailableExtensionOptions" asp-multiple="false" title="Select extension action" />
+                                    <span asp-validation-for="ExtensionOption"></span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    @if (Model.ApprovedByCustomerId != null)
+                    {
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="ApprovedByCustomerId" />
+                            </div>
+                            <div class="col-md-9">
+                                <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.ApprovedByCustomerId">@Model.ApprovedByCustomerInfo</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
