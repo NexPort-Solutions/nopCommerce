@@ -8,6 +8,6 @@ public class RequestUnassignmentValidator : BaseNopValidator<SubmitRedemptionUna
 {
     public RequestUnassignmentValidator()
     {
-        RuleFor(x=>x.Comments).NotEmpty();
+        RuleFor(x => x.Comments).NotEmpty();
     }
 }

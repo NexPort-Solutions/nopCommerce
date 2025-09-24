@@ -28,6 +28,8 @@ public record NexportGroupProductModel : BaseNopEntityModel
 
     public int ProcessingRefund { get; set; }
 
+    public int ApprovalAwaiting { get; set; }
+
     public int Total { get; set; }
 
     public int Redeemed { get; set; }

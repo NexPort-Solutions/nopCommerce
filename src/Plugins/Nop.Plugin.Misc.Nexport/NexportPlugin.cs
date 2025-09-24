@@ -125,14 +125,12 @@ public class NexportPlugin(
             Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
             Title = await localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
             SystemName = "Wholesale Purchases",
-            ControllerName = "NexportWholesale",
             IconClass = "far fa-dot-circle"
         };
 
         wholesaleListNode.ChildNodes.Add(new SiteMapNode
         {
             Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            //Title = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
             Title = "By Group",
             SystemName = "Wholesale Purchases - By Group",
             ControllerName = "NexportWholesale",
@@ -143,7 +141,6 @@ public class NexportPlugin(
         wholesaleListNode.ChildNodes.Add(new SiteMapNode
         {
             Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            //Title = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
             Title = "By Funding Pools",
             SystemName = "Wholesale Purchases - By Funding Pools",
             ControllerName = "NexportWholesale",
@@ -166,30 +163,42 @@ public class NexportPlugin(
         wholesaleNode.ChildNodes.Add(new SiteMapNode
         {
             Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools),
-            Title = "Funding Pools",
-            SystemName = "Nexport Funding Pools",
+            Title = "Assignment Approval Requests",
+            SystemName = "Assignment Approval Requests",
             ControllerName = "NexportWholesale",
-            ActionName = "ListFundingPools",
+            ActionName = "AssignmentApprovalRequestsList",
             IconClass = "far fa-dot-circle"
         });
-        wholesaleNode.ChildNodes.Add(new SiteMapNode
+
+        var unassigmentNode = new SiteMapNode
         {
             Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            Title = "Unassignment Requests",
-            SystemName = "UnassignmentRequests",
+            Title = "Unassignments",
+            SystemName = "Unassignment",
+            IconClass = "far fa-dot-circle"
+        };
+
+        unassigmentNode.ChildNodes.Add(new SiteMapNode
+        {
+            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
+            Title = "Requests",
+            SystemName = "Unassignment - Requests",
             ControllerName = "NexportWholesale",
             ActionName = "UnassignmentRequestsList",
-            IconClass = "far fa-dot-circle"
+            IconClass = "far fa-circle"
         });
-        wholesaleNode.ChildNodes.Add(new SiteMapNode
+
+        unassigmentNode.ChildNodes.Add(new SiteMapNode
         {
             Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            Title = "Unassignment Request Reasons",
-            SystemName = "UnassignmentRequestReasons",
+            Title = "Request Reasons",
+            SystemName = "Unassignment - Request Reasons",
             ControllerName = "NexportWholesale",
             ActionName = "UnassignmentRequestReasonsList",
-            IconClass = "far fa-dot-circle"
+            IconClass = "far fa-circle"
         });
+
+        wholesaleNode.ChildNodes.Add(unassigmentNode);
 
         rootNode.ChildNodes.Add(node);
         rootNode.ChildNodes.Add(wholesaleNode);

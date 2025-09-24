@@ -102,15 +102,33 @@
         </div>
     </div>
 }
-@if (Model.ExtensionOption != null)
+
+@if (Model.AdminView) {
+    if (Model.ExtensionOption != null)
+    {
+        <input type="hidden" name="ExtensionOption" value="@Model.ExtensionOption" />
+        <div class="form-group row">
+            <div class="col-sm-5">
+                <nop-label asp-for="ExtensionOption"></nop-label>
+            </div>
+            <div class="col-sm-7 text-left">
+                <div class="col-form-label">@Model.ExtensionOption.GetDisplayName()</div>
+            </div>
+        </div>
+    }
+}
+else
 {
-    <input type="hidden" name="ExtensionOption" value="@Model.ExtensionOption" />
-    <div class="form-group row">
-        <div class="col-sm-5">
-            <nop-label asp-for="ExtensionOption"></nop-label>
+    if (Model.RequireApproval)
+    {
+        <input type="hidden" name="RequireApproval" value="@Model.RequireApproval" />
+        <div class="form-group row">
+            <div class="col-sm-5">
+                <nop-label asp-for="RequireApproval"></nop-label>
+            </div>
+            <div class="col-sm-7 text-left">
+                <div class="col-form-label">@(Model.RequireApproval ? "Yes" : "No")</div>
+            </div>
         </div>
-        <div class="col-sm-7 text-left">
-            <div class="col-form-label">@Model.ExtensionOption.GetDisplayName()</div>
-        </div>
-    </div>
+    }
 }

@@ -12,6 +12,7 @@
 @{
     var currentCustomer = await workContext.GetCurrentCustomerAsync();
     var hasAdminRole = await CustomerService.IsAdminAsync(currentCustomer);
+
     const string hideSearchBlockAttributeName = "NexportGroupsPage.HideSearchBlock";
     var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(currentCustomer, hideSearchBlockAttributeName);
 
@@ -293,7 +294,7 @@
     $(document).ready(function () {
         $("body").popover({
             trigger: "focus",
-            selector: ".refund-note"
+            selector: "[data-id='redemption-status-note']"
         });
 
         updateAvailableRedemptions();

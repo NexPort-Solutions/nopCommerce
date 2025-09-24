@@ -126,6 +126,7 @@ public partial class NexportService
     private readonly IRepository<ProductCategory> _productCategoryMappingRepository;
     private readonly IRepository<NexportRedemptionUnassignmentRequest> _nexportRedemptionUnassignmentRequestRepository;
     private readonly IRepository<NexportRedemptionUnassignmentRequestReason> _nexportRedemptionUnassignmentRequestReasonRepository;
+    private readonly IRepository<NexportRedemptionAssignmentApprovalRequest> _nexportRedemptionAssignmentApprovalRequestRepository;
     private readonly IRepository<NexportRedemptionAuditLog> _nexportRedemptionAuditLogRepository;
     private readonly IHtmlFormatter _htmlFormatter;
     private readonly IEventPublisher _eventPublisher;
@@ -204,6 +205,7 @@ public partial class NexportService
         IRepository<ProductCategory> productCategoryMappingRepository,
         IRepository<NexportRedemptionUnassignmentRequest> nexportRedemptionUnassignmentRequestRepository,
         IRepository<NexportRedemptionUnassignmentRequestReason> nexportRedemptionUnassignmentRequestReasonRepository,
+        IRepository<NexportRedemptionAssignmentApprovalRequest> nexportRedemptionAssignmentApprovalRequestRepository,
         IRepository<NexportRedemptionAuditLog> nexportRedemptionAuditLogRepository,
         IHtmlFormatter htmlFormatter,
         IEventPublisher eventPublisher)
@@ -278,6 +280,7 @@ public partial class NexportService
         _productCategoryMappingRepository = productCategoryMappingRepository;
         _nexportRedemptionUnassignmentRequestRepository = nexportRedemptionUnassignmentRequestRepository;
         _nexportRedemptionUnassignmentRequestReasonRepository = nexportRedemptionUnassignmentRequestReasonRepository;
+        _nexportRedemptionAssignmentApprovalRequestRepository = nexportRedemptionAssignmentApprovalRequestRepository;
         _nexportRedemptionAuditLogRepository = nexportRedemptionAuditLogRepository;
         _htmlFormatter = htmlFormatter;
         _eventPublisher = eventPublisher;
@@ -1943,67 +1946,6 @@ public partial class NexportService
         }
     }
 
-    //public async Task<bool> RedeemOpenEndedNexportInvoiceItemAsync(NexportOrderInvoiceItem invoiceItem, Guid redeemingUserId, NexportProductMapping mapping = null,
-    //    RedeemInvoiceItemRequest.RedemptionActionTypeEnum redemptionAction = RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption)
-    //{
-    //    if (invoiceItem == null)
-    //        throw new ArgumentNullException(nameof(invoiceItem));
-
-    //    if (redeemingUserId == Guid.Empty)
-    //        throw new ArgumentException("Redeeming User Id cannot be empty identifier", nameof(redeemingUserId));
-
-    //    try
-    //    {
-    //        InvoiceRedemptionResponse redeemInvoiceResult;
-    //        if (mapping.Type == NexportProductTypeEnum.Catalog)
-    //        {
-    //            redeemInvoiceResult = _nexportApiService.RedeemOpenEndedNexportInvoice(_nexportSettings.Url,
-    //                _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode, mapping.NexportCatalogId, Enums.ProductTypeEnum.Catalog);
-    //        }
-    //        else
-    //        {
-    //            redeemInvoiceResult = _nexportApiService.RedeemOpenEndedNexportInvoice(_nexportSettings.Url,
-    //                _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode, mapping.NexportCatalogSyllabusLinkId, Enums.ProductTypeEnum.Syllabus);
-    //        }
-
-    //        if (redeemInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
-    //            throw new ApiException((int)redeemInvoiceResult.ApiErrorEntity.ErrorCode,
-    //                redeemInvoiceResult.ApiErrorEntity.ErrorMessage);
-
-    //        invoiceItem.RedeemingUserId = redeemingUserId;
-    //        invoiceItem.UtcDateRedemption = redeemInvoiceResult.UtcRedemptionDate;
-    //        invoiceItem.RequireManualApproval = null;
-    //        invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Assigned;
-
-
-    //        if (redeemInvoiceResult.RedemptionEnrollmentId != null)
-    //        {
-    //            invoiceItem.RedemptionEnrollmentId = redeemInvoiceResult.RedemptionEnrollmentId;
-    //        }
-
-    //        await UpdateNexportOrderInvoiceItem(invoiceItem);
-
-    //        return true;
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        var errMsg =
-    //            $"Error occurred during RedeemInvoiceItem api call with the parameters: invoice_item_id - {invoiceItem.InvoiceItemId}, redeeming_user_id - {redeemingUserId}, redemption_action_type - {redemptionAction}";
-    //        await _logger.ErrorAsync($"{errMsg}", ex);
-
-    //        if (ex is ApiException exception)
-    //        {
-    //            var errorResponse = JsonConvert.DeserializeObject<InvoiceRedemptionResponse>(exception.ErrorContent.ToString());
-    //            if (errorResponse != null)
-    //            {
-    //                throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
-    //            }
-    //        }
-
-    //        throw;
-    //    }
-    //}
-
     [CanBeNull]
     public async Task<InvoiceRedemptionResponse> GetNexportInvoiceRedemptionAsync(Guid invoiceItemId)
     {
@@ -2602,8 +2544,7 @@ public partial class NexportService
 
     public async Task<(Guid EnrollmentId, Enums.PhaseEnum Phase, Enums.ResultEnum Result,
             DateTime? EnrollmentExpirationDate, int CompletionPercentage)?>
-        VerifyNexportEnrollmentStatusAsync(NexportProductMapping productMapping,
-            NexportUserMapping nexportUserMapping)
+        VerifyNexportEnrollmentStatusAsync(NexportProductMapping productMapping, NexportUserMapping nexportUserMapping)
     {
         if (productMapping == null)
             throw new ArgumentNullException(nameof(productMapping), "Product mapping cannot be null!");

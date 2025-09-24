@@ -2459,8 +2459,8 @@ public partial class NexportService : INexportService
             if (orderItem == null)
                 throw new Exception($"Order item for invoice item {invoiceItem.InvoiceItemId} is missing!");
 
-            if (orderInfo is not { Available: > 0 })
-                throw new Exception($"Order for invoice item {invoiceItem.InvoiceItemId} is missing or empty!");
+            if (orderInfo is { Available: 0, ApprovalAwaiting: 0 })
+                throw new Exception($"Order info for invoice item {invoiceItem.InvoiceItemId} is missing");
 
             var productMapping = await GetProductMappingByNopProductId(model.ProductId, order.StoreId)
                                  ?? await GetProductMappingByNopProductId(model.ProductId);
@@ -2509,12 +2509,21 @@ public partial class NexportService : INexportService
                     if (model.UserId == null)
                         throw new Exception("User Id of the redeeming user cannot be empty!");
 
+                    if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.ApprovalAwaiting)
+                    {
+                        orderInfo.ApprovalAwaiting--;
+                    }
+                    else
+                    {
+                        orderInfo.Available--;
+                    }
+
+                    orderInfo.ProcessingAvailable++;
+
                     invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable;
                     invoiceItem.RedeemingUserId = model.UserId;
-                    await UpdateNexportOrderInvoiceItem(invoiceItem);
 
-                    orderInfo.Available--;
-                    orderInfo.ProcessingAvailable++;
+                    await UpdateNexportOrderInvoiceItem(invoiceItem);
                     await UpdateWholesaleOrderInfoAsync(orderInfo);
 
                     await InsertNexportOrderInvoiceRedemptionQueueItem(
@@ -2691,6 +2700,120 @@ public partial class NexportService : INexportService
         catch (Exception ex)
         {
             await _logger.ErrorAsync($"Failed to cancel awaiting status for invoice item {invoiceItem.InvoiceItemId}", ex);
+        }
+    }
+
+    public async Task ApproveRedemptionAssignment(NexportRedemptionAssignmentApprovalRequest approvalRequest,
+        NexportOrderInvoiceItem invoiceItem, WholesaleOrderInfo wholesaleOrderInfo)
+    {
+        try
+        {
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+
+            int? targetCustomerId = null;
+            if (approvalRequest.RedemptionUserId != null)
+            {
+                var redeemingUserMapping = await FindUserMappingByNexportUserId(approvalRequest.RedemptionUserId.Value);
+                if (redeemingUserMapping != null)
+                {
+                    targetCustomerId = redeemingUserMapping.NopUserId;
+                }
+            }
+
+            await RedeemProductForCustomer(
+                new RedeemProductModel
+                {
+                    ProductId = approvalRequest.ProductId,
+                    RedeemingProductId = approvalRequest.RedeemingProductId,
+                    AssignmentType = approvalRequest.RedemptionAssignmentType == NexportRedemptionAssignmentTypeStatus.Instant ? "Instant" : "Email",
+                    Email = approvalRequest.RedemptionEmail,
+                    FirstName = approvalRequest.RedemptionFirstName,
+                    LastName = approvalRequest.RedemptionLastName,
+                    InvoiceItemId = approvalRequest.InvoiceItemId,
+                    UserId = approvalRequest.RedemptionUserId,
+                    UtcStartDate = approvalRequest.UtcRedemptionStartDate,
+                    StoreId = approvalRequest.StoreId,
+                    PurchasingGroupId = approvalRequest.PurchasingGroupId,
+                    IsOpenEnded = approvalRequest.IsOpenEnded,
+                    ExtensionOption = approvalRequest.ExtensionOption
+                });
+
+            approvalRequest.Status = NexportRedemptionAssignmentApprovalRequestStatus.Accepted;
+            approvalRequest.ApprovedByCustomerId = currentCustomer.Id;
+            approvalRequest.UtcModifiedDate = DateTime.UtcNow;
+
+            await UpdateNexportRedemptionAssignmentApprovalRequestAsync(approvalRequest);
+
+            await InsertNexportRedemptionAuditLogAsync(new NexportRedemptionAuditLog
+            {
+                InvoiceItemId = invoiceItem.InvoiceItemId,
+                CustomerId = currentCustomer.Id,
+                TargetedCustomerId = targetCustomerId,
+                Description = "The assignment for the redemption had been approved",
+                Type = NexportRedemptionAuditLogTypeEnum.ApprovalAwaiting,
+                UtcDateCreated = DateTime.UtcNow
+            });
+
+            // Notify the customer that the assignment request has been accepted
+            await SendNexportRedemptionAssignmentApprovalRequestCustomerNotificationAsync(
+                approvalRequest, invoiceItem,
+                NexportDefaults.REDEMPTION_ASSIGNMENT_APPROVAL_REQUEST_ACCEPTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE);
+        }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync($"Failed to approve the redemption assignment for request #{approvalRequest.Id} ({invoiceItem.InvoiceItemId})", ex);
+            throw;
+        }
+    }
+
+    public async Task DenyRedemptionAssignment(NexportRedemptionAssignmentApprovalRequest approvalRequest,
+        NexportOrderInvoiceItem invoiceItem, WholesaleOrderInfo wholesaleOrderInfo)
+    {
+        try
+        {
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+
+            int? targetCustomerId = null;
+            if (approvalRequest.RedemptionUserId != null)
+            {
+                var redeemingUserMapping = await FindUserMappingByNexportUserId(approvalRequest.RedemptionUserId.Value);
+                if (redeemingUserMapping != null)
+                {
+                    targetCustomerId = redeemingUserMapping.NopUserId;
+                }
+            }
+
+            approvalRequest.Status = NexportRedemptionAssignmentApprovalRequestStatus.Rejected;
+            approvalRequest.UtcModifiedDate = DateTime.UtcNow;
+
+            invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Available;
+
+            wholesaleOrderInfo.Available++;
+            wholesaleOrderInfo.ApprovalAwaiting--;
+
+            await UpdateNexportOrderInvoiceItem(invoiceItem);
+            await UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+            await UpdateNexportRedemptionAssignmentApprovalRequestAsync(approvalRequest);
+
+            await InsertNexportRedemptionAuditLogAsync(new NexportRedemptionAuditLog
+            {
+                InvoiceItemId = invoiceItem.InvoiceItemId,
+                CustomerId = currentCustomer.Id,
+                TargetedCustomerId = targetCustomerId,
+                Description = "The assignment for the redemption had been rejected",
+                Type = NexportRedemptionAuditLogTypeEnum.ApprovalAwaiting,
+                UtcDateCreated = DateTime.UtcNow
+            });
+
+            // Notify the customer that the assignment request has been rejected
+            await SendNexportRedemptionAssignmentApprovalRequestCustomerNotificationAsync(
+                approvalRequest, invoiceItem,
+                NexportDefaults.REDEMPTION_UNASSIGNMENT_REQUEST_REJECTED_CUSTOMER_NOTIFICATION_MESSAGE_TEMPLATE);
+        }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync($"Failed to deny the redemption assignment for request #{approvalRequest.Id} ({invoiceItem.InvoiceItemId})", ex);
+            throw;
         }
     }
 
@@ -3121,6 +3244,7 @@ public partial class NexportService : INexportService
                     ProcessingAvailable = x.Sum(y => y.ProcessingAvailable),
                     ProcessingAwaiting = x.Sum(y => y.ProcessingAwaiting),
                     ProcessingRefund = x.Sum(y => y.ProcessingRefund),
+                    ApprovalAwaiting = x.Sum(y => y.ApprovalAwaiting),
                     FundingPoolId = x.FirstOrDefault()!.FundingPoolId,
                     UtcRedeemByDate = x.FirstOrDefault()!.UtcRedeemByDate,
                 }
@@ -3136,6 +3260,7 @@ public partial class NexportService : INexportService
                 NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable => orderInfoQuery.Where(x => x.ProcessingAvailable > 0),
                 NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting => orderInfoQuery.Where(x => x.ProcessingAwaiting > 0),
                 NexportOrderInvoiceItemRedemptionStatus.ProcessingRefund => orderInfoQuery.Where(x => x.ProcessingRefund > 0),
+                NexportOrderInvoiceItemRedemptionStatus.ApprovalAwaiting => orderInfoQuery.Where(x => x.ApprovalAwaiting > 0),
                 NexportOrderInvoiceItemRedemptionStatus.Refunded => orderInfoQuery.Where(x => x.Refunded > 0),
                 _ => orderInfoQuery
             };
@@ -3185,6 +3310,7 @@ public partial class NexportService : INexportService
                     ProcessingAvailable = x.Sum(y => y.ProcessingAvailable),
                     ProcessingAwaiting = x.Sum(y => y.ProcessingAwaiting),
                     ProcessingRefund = x.Sum(y => y.ProcessingRefund),
+                    ApprovalAwaiting = x.Sum(y => y.ApprovalAwaiting),
                     FundingPoolId = x.FirstOrDefault()!.FundingPoolId,
                     UtcRedeemByDate = x.FirstOrDefault()!.UtcRedeemByDate,
                 }
@@ -3200,6 +3326,7 @@ public partial class NexportService : INexportService
                 NexportOrderInvoiceItemRedemptionStatus.ProcessingAvailable => orderInfoQuery.Where(x => x.ProcessingAvailable > 0),
                 NexportOrderInvoiceItemRedemptionStatus.ProcessingAwaiting => orderInfoQuery.Where(x => x.ProcessingAwaiting > 0),
                 NexportOrderInvoiceItemRedemptionStatus.ProcessingRefund => orderInfoQuery.Where(x => x.ProcessingRefund > 0),
+                NexportOrderInvoiceItemRedemptionStatus.ApprovalAwaiting => orderInfoQuery.Where(x => x.ApprovalAwaiting > 0),
                 NexportOrderInvoiceItemRedemptionStatus.Refunded => orderInfoQuery.Where(x => x.Refunded > 0),
                 _ => orderInfoQuery
             };
@@ -3213,8 +3340,10 @@ public partial class NexportService : INexportService
         if (unassignmentRequest == null)
             throw new ArgumentNullException(nameof(unassignmentRequest));
 
-        if (_nexportRedemptionUnassignmentRequestRepository.Table.Any(x => x.InvoiceItemId == unassignmentRequest.InvoiceItemId))
-            return;
+        if (_nexportRedemptionUnassignmentRequestRepository.Table.Any(x =>
+                x.InvoiceItemId == unassignmentRequest.InvoiceItemId &&
+                x.RequestStatus == NexportRedemptionUnassignmentRequestStatus.Received))
+            throw new Exception("Unable to add new unassignment request entity due to previous request status!");
 
         await _nexportRedemptionUnassignmentRequestRepository.InsertAsync(unassignmentRequest);
     }
@@ -3229,7 +3358,6 @@ public partial class NexportService : INexportService
         tokens.Add(new Token("UnassignmentRequest.StaffNotes",
             _htmlFormatter.FormatText(unassignmentRequest.StaffNotes, false, true, false, false, false, false), true));
         tokens.Add(new Token("UnassignmentRequest.Status", await _localizationService.GetLocalizedEnumAsync(unassignmentRequest.RequestStatus)));
-
     }
 
     /// <summary>
@@ -3481,6 +3609,134 @@ public partial class NexportService : INexportService
             .ThenByDescending(request => request.Id);
 
         return await query.ToPagedListAsync(pageIndex, pageSize);
+    }
+
+    public async Task<NexportRedemptionUnassignmentRequest> FindRecentNexportRedemptionUnassignmentRequest(
+        Guid invoiceItemId)
+    {
+        return await _nexportRedemptionUnassignmentRequestRepository
+            .Table
+            .Where(x =>
+                x.InvoiceItemId == invoiceItemId &&
+                x.RequestStatus == NexportRedemptionUnassignmentRequestStatus.Received)
+            .OrderByDescending(x => x.UtcCreatedDate)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<NexportRedemptionAssignmentApprovalRequest> GetNexportRedemptionAssignmentApprovalRequestByIdAsync(int? requestId)
+    {
+        return await _nexportRedemptionAssignmentApprovalRequestRepository.GetByIdAsync(requestId);
+    }
+
+    public async Task InsertNexportRedemptionAssignmentApprovalRequestAsync(NexportRedemptionAssignmentApprovalRequest assignmentApprovalRequest)
+    {
+        if (assignmentApprovalRequest == null)
+            throw new ArgumentNullException(nameof(assignmentApprovalRequest));
+
+        await _nexportRedemptionAssignmentApprovalRequestRepository.InsertAsync(assignmentApprovalRequest);
+    }
+
+    public async Task UpdateNexportRedemptionAssignmentApprovalRequestAsync(NexportRedemptionAssignmentApprovalRequest assignmentApprovalRequest)
+    {
+        if (assignmentApprovalRequest == null)
+            throw new ArgumentNullException(nameof(assignmentApprovalRequest));
+
+        await _nexportRedemptionAssignmentApprovalRequestRepository.UpdateAsync(assignmentApprovalRequest);
+    }
+
+    public async Task DeleteNexportRedemptionAssignmentApprovalRequestAsync(NexportRedemptionAssignmentApprovalRequest assignmentApprovalRequest)
+    {
+        if (assignmentApprovalRequest == null)
+            throw new ArgumentNullException(nameof(assignmentApprovalRequest));
+
+        await _nexportRedemptionAssignmentApprovalRequestRepository.DeleteAsync(assignmentApprovalRequest);
+    }
+
+    public async Task<IList<int>> SendNexportRedemptionAssignmentApprovalRequestCustomerNotificationAsync(
+        NexportRedemptionAssignmentApprovalRequest assignmentApprovalRequest,
+        NexportOrderInvoiceItem invoiceItem, string template)
+    {
+        var invoiceOrder = await _orderService.GetOrderByIdAsync(invoiceItem.OrderId);
+        var languageId = invoiceOrder.CustomerLanguageId;
+        if (assignmentApprovalRequest == null)
+            throw new ArgumentNullException(nameof(assignmentApprovalRequest));
+
+        var store = await _storeService.GetStoreByIdAsync(invoiceOrder.StoreId) ?? await _storeContext.GetCurrentStoreAsync();
+        languageId = await EnsureLanguageIsActiveAsync(languageId, store.Id);
+
+        var messageTemplates = await GetActiveMessageTemplatesAsync(template, store.Id);
+        if (!messageTemplates.Any())
+            return new List<int>();
+
+        var customer = await _customerService.GetCustomerByIdAsync(assignmentApprovalRequest.RequestedByCustomerId)
+                       ?? throw new Exception($"Customer with Id {assignmentApprovalRequest.RequestedByCustomerId} does not existed");
+
+        var commonTokens = new List<Token>();
+
+        await _messageTokenProvider.AddCustomerTokensAsync(commonTokens, customer);
+        await AddRedemptionAssignmentApprovalRequestTokensAsync(commonTokens, assignmentApprovalRequest, invoiceItem);
+
+        return await messageTemplates.SelectAwait(async messageTemplate =>
+        {
+            var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
+
+            var tokens = new List<Token>(commonTokens);
+            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+
+            await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
+
+            var billingAddress = await _addressService.GetAddressByIdAsync(invoiceOrder.BillingAddressId);
+
+            var customerIsGuest = await _customerService.IsGuestAsync(customer);
+            var toEmail = customerIsGuest
+                ? billingAddress.Email
+                : customer.Email;
+            var toName = customerIsGuest
+                ? billingAddress.FirstName
+                : await _customerService.GetCustomerFullNameAsync(customer);
+
+            return await _workflowMessageService
+                .SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
+        }).ToListAsync();
+    }
+
+    public async Task<IPagedList<NexportRedemptionAssignmentApprovalRequest>> SearchNexportRedemptionAssignmentApprovalRequestsAsync(
+        int storeId = 0,
+        int customerId = 0,
+        NexportRedemptionAssignmentApprovalRequestStatus? requestStatus = null,
+        DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
+        int pageIndex = 0, int pageSize = int.MaxValue)
+    {
+        var query = _nexportRedemptionAssignmentApprovalRequestRepository.Table;
+
+        if (customerId > 0)
+            query = query.Where(request => customerId == request.RequestedByCustomerId);
+
+        if (requestStatus.HasValue)
+        {
+            var statusId = (int)requestStatus.Value;
+            query = query.Where(request => (int)request.Status == statusId);
+        }
+
+        if (createdFromUtc.HasValue)
+            query = query.Where(request => createdFromUtc.Value <= request.UtcCreatedDate);
+        if (createdToUtc.HasValue)
+            query = query.Where(request => createdToUtc.Value >= request.UtcCreatedDate);
+
+        query = query
+            .OrderByDescending(request => request.UtcCreatedDate)
+            .ThenByDescending(request => request.Id);
+
+        return await query.ToPagedListAsync(pageIndex, pageSize);
+    }
+
+    protected async Task AddRedemptionAssignmentApprovalRequestTokensAsync(IList<Token> tokens, NexportRedemptionAssignmentApprovalRequest assignmentApprovalRequest, NexportOrderInvoiceItem invoiceItem)
+    {
+        tokens.Add(new Token("AssignmentApprovalRequest.Id", assignmentApprovalRequest.Id));
+        tokens.Add(new Token("AssignmentApprovalRequest.InvoiceItemId", invoiceItem.Id));
+        tokens.Add(new Token("AssignmentApprovalRequest.Notes",
+            _htmlFormatter.FormatText(assignmentApprovalRequest.Notes, false, true, false, false, false, false), true));
+        tokens.Add(new Token("AssignmentApprovalRequest.Status", await _localizationService.GetLocalizedEnumAsync(assignmentApprovalRequest.Status)));
     }
 
     public async Task InsertNexportRedemptionAuditLogAsync(NexportRedemptionAuditLog redemptionAuditLog)

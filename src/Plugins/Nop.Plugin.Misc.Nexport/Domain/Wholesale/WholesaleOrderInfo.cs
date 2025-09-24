@@ -52,6 +52,8 @@ public class NexportGroupProduct : BaseEntity
 
     public int ProcessingRefund { get; set; }
 
+    public int ApprovalAwaiting { get; set; }
+
     public int? FundingPoolId { get; set; }
 
     public DateTime? UtcRedeemByDate { get; set; }

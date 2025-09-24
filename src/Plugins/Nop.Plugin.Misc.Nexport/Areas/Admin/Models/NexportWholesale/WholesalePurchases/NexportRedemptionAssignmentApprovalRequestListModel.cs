@@ -3,6 +3,6 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases;
 
-public partial record NexportRedemptionRequestUnassignmentListModel : BasePagedListModel<NexportRedemptionUnassignmentRequestModel>
+public partial record NexportRedemptionAssignmentApprovalRequestListModel : BasePagedListModel<NexportRedemptionAssignmentApprovalRequestModel>
 {
 }

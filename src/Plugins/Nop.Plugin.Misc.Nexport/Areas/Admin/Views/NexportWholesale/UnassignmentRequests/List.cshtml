@@ -1,29 +1,31 @@
-﻿@inject IWorkContext workContext
-@using Nop.Plugin.Misc.Nexport.Domain.Enums
+﻿@using Nop.Plugin.Misc.Nexport.Domain.Enums
 @using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases
+
 @model Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases.NexportRedemptionUnassignmentRequestListSearchModel
 
-@{
-    ViewBag.Title = T("RedemptionUnassignmentRequests").Text;
+@inject IWorkContext workContext
 
-    NopHtml.SetActiveMenuItemSystemName("UnassignmentRequests");
+@{
+    ViewBag.PageTitle = T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequests").Text;
+
+    NopHtml.SetActiveMenuItemSystemName("Unassignment - Requests");
 
     var currentCustomer = await workContext.GetCurrentCustomerAsync();
 
     const string hideSearchBlockAttributeName = "UnassignmentRequestsPage.HideSearchBlock";
-    var hideSearchBlock = await genericAttributeService.GetAttributeAsync(currentCustomer, hideSearchBlockAttributeName, defaultValue: true);
+    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(currentCustomer, hideSearchBlockAttributeName);
 }
 
 <nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="float-left">
-        @T("RedemptionUnassignmentRequests")
+        @T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequests")
     </h1>
 </div>
 <div class="content">
     <div class="form-horizontal">
         <div class="cards-group">
-            <div class="card card-default panel-search">
+            <div class="card card-default card-search">
                 <div class="card-body">
                     <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
                         <div class="search-text">@T("Admin.Common.Search")</div>
@@ -65,7 +67,7 @@
                         <div class="row">
                             <div class="col-md-7 offset-md-5">
                                 <button type="button" id="search-unassignmentrequests" class="btn btn-primary btn-search">
-                                    <i class="far fa-search"></i>
+                                    <i class="fas fa-search"></i>
                                     @T("Admin.Common.Search")
                                 </button>
                             </div>
@@ -76,7 +78,7 @@
             <div class="card card-default">
                 <div class="card-body">
                     <p>
-                        @T("RedemptionUnassignmentRequests.Description")
+                        @T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequests.Description")
                     </p>
                     @await Html.PartialAsync("Table", new DataTablesModel
                     {
@@ -95,40 +97,44 @@
                         {
                             new(nameof(NexportRedemptionUnassignmentRequestModel.Id))
                             {
-                                Title = "Id"
+                                Title = "Id",
+                                Width = "50"
                             },
                             new(nameof(NexportRedemptionUnassignmentRequestModel.InvoiceItemId))
                             {
-                                Title = "Nexport Invoice Item"
+                                Title = "Nexport Invoice Item",
+                                Width = "250",
                             },
                                 new(nameof(NexportRedemptionUnassignmentRequestModel.OrderId))
                             {
                                 Title = "Order",
                                 ClassName = NopColumnClassDefaults.Button,
                                 Render =  new RenderCustom("renderOrderInfo"),
-                                Width = "100",
+                                Width = "150",
                                 AutoWidth = false
                             },
                             new(nameof(NexportRedemptionUnassignmentRequestModel.RequestedByCustomerId))
                             {
-                                Title = T("RedemptionUnassignmentRequests.Fields.Customer").Text,
-                                Width = "350",
+                                Title = T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequests.Fields.Customer").Text,
+                                Width = "300",
                                 Render = new RenderCustom("renderCustomerInfo")
-                            },
-                            new(nameof(NexportRedemptionUnassignmentRequestModel.CustomerComments))
-                            {
-                                Title = T("RedemptionUnassignmentRequests.Fields.CustomerComments").Text
                             },
                             new(nameof(NexportRedemptionUnassignmentRequestModel.RequestStatus))
                             {
-                                Title = T("RedemptionUnassignmentRequests.Fields.RequestStatus").Text,
+                                Title = T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequests.Fields.RequestStatus").Text,
                                 Width = "200",
                                 Render = new RenderCustom("renderStatusInfo")
                             },
                             new(nameof(NexportRedemptionUnassignmentRequestModel.UtcCreatedDate))
                             {
-                                Title = T("RedemptionUnassignmentRequests.Fields.CreatedOn").Text,
-                                Width = "100",
+                                Title = T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequests.Fields.UtcCreatedDate").Text,
+                                Width = "150",
+                                Render = new RenderDate()
+                            },
+                            new(nameof(NexportRedemptionUnassignmentRequestModel.UtcLastModifiedDate))
+                            {
+                                Title = T("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequests.Fields.UtcLastModifiedDate").Text,
+                                Width = "150",
                                 Render = new RenderDate()
                             },
                             new(nameof(NexportRedemptionUnassignmentRequestModel.Id))

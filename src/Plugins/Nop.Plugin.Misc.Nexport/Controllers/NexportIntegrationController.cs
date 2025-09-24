@@ -3,12 +3,16 @@ using System.Net;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Newtonsoft.Json;
 using NexportApi.Client;
 using NexportApi.Model;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Common;
+using Nop.Core.Domain.Configuration;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Stores;
@@ -27,8 +31,13 @@ using Nop.Plugin.Misc.Nexport.Infrastructure.ModelState;
 using Nop.Plugin.Misc.Nexport.Models;
 using Nop.Plugin.Misc.Nexport.Models.Catalog;
 using Nop.Plugin.Misc.Nexport.Models.Category;
+using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Models.Enrollment;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
+using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.Refund;
 using Nop.Plugin.Misc.Nexport.Models.Order;
+using Nop.Plugin.Misc.Nexport.Models.Plugins;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField.Customer;
@@ -61,14 +70,6 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
-using Nop.Core.Domain.Common;
-using Nop.Core.Domain.Localization;
-using Nop.Plugin.Misc.Nexport.Models.Plugins;
-using Nop.Core.Domain.Configuration;
-using Nop.Plugin.Misc.Nexport.Models.Customer;
-using Nop.Plugin.Misc.Nexport.Models.Enrollment;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.Refund;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers;
 
@@ -3865,15 +3866,12 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [AutoValidateAntiforgeryToken]
-    public async Task<IActionResult> VerifyExistingEnrollmentForRedemption(int? storeId)
+    public async Task<IActionResult> VerifyExistingEnrollmentForRedemption(int? storeId, bool isAdminView)
     {
-        var customer = await _workContext.GetCurrentCustomerAsync();
-        var productId = await _genericAttributeService.GetAttributeAsync<int>(customer, "RedeemProductModel_ProductId");
-        var redeemingProductId = await _genericAttributeService.GetAttributeAsync<int?>(customer, "RedeemProductModel_RedeemingProductId");
-
-        var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
-        if (userMapping == null)
-            throw new Exception("User mapping not found!");
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+        var productId = await _genericAttributeService.GetAttributeAsync<int>(currentCustomer, "RedeemProductModel_ProductId");
+        var redeemingProductId = await _genericAttributeService.GetAttributeAsync<int?>(currentCustomer, "RedeemProductModel_RedeemingProductId");
+        var redeemingUserId = await _genericAttributeService.GetAttributeAsync<Guid?>(currentCustomer, "RedeemProductModel_SelectedUserId");
 
         NexportProductMapping productMapping;
         if (redeemingProductId != null)
@@ -3890,9 +3888,17 @@ public class NexportIntegrationController : BasePluginController,
         if (productMapping == null)
             throw new Exception("Product mapping not found!");
 
+
+        if (redeemingUserId == null)
+            return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ProductOptionStep.RedeemAction.cshtml", new RedeemActionModel());
+
+        var userMapping = await _nexportService.FindUserMappingByNexportUserId(redeemingUserId.Value);
+        if (userMapping == null)
+            throw new Exception("User mapping not found!");
+
         var existingEnrollmentStatus = await _nexportService.VerifyNexportEnrollmentStatusAsync(productMapping, userMapping);
 
-        var model = await _nexportPluginModelFactory.PrepareRedeemActionModel(existingEnrollmentStatus != null);
+        var model = await _nexportPluginModelFactory.PrepareRedeemActionModel(isAdminView, existingEnrollmentStatus != null, existingEnrollmentStatus?.Phase);
 
         return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ProductOptionStep.RedeemAction.cshtml", model);
     }

@@ -218,63 +218,15 @@ public class NexportWholesaleController : BasePluginController
     public async Task<IActionResult> GetAvailableNexportGroupProductRedemptionsCount(NexportGroupProductRedemptionListSearchModel searchModel, Guid? groupId,
         int productId, int? orderId = null)
     {
-        var customer = await _workContext.GetCurrentCustomerAsync();
         var store = await _storeContext.GetCurrentStoreAsync();
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
         if (!await _customerService.IsRegisteredAsync(customer))
             return Challenge();
-
-        //int? count;
-        //if (groupId == null)
-        //{
-        //    count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(null, productId, orderId, customer, store);
-        //}
-        //else
-        //{
-        //    var hasGroupPermission = await _nexportService.HasGroupPermissionAsync(customer, groupId.Value);
-        //    count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, customer, store: store);
-        //}
 
         var count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, customer, store);
 
         return Json(new { result = count });
-
-        //var customer = await _workContext.GetCurrentCustomerAsync();
-        //var store = await _storeContext.GetCurrentStoreAsync();
-        //if (!await _customerService.IsRegisteredAsync(customer))
-        //    return Challenge();
-
-        //int? count;
-
-        //if (groupId == null)
-        //{
-        //    var isAdmin = await _customerService.IsAdminAsync(customer);
-        //    if (searchModel.AdminView && isAdmin)
-        //    {
-        //        //show all items under group not assigned
-        //        count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(null, productId, orderId);
-        //    }
-        //    else
-        //    {
-        //        //show only items for group not assigned that belong to the current store and current customer
-        //        count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(null, productId, orderId, customer, store);
-        //    }
-        //}
-        //else
-        //{
-        //    var hasGroupPermission = await _nexportService.HasGroupPermissionAsync(customer, groupId.Value);
-        //    if (searchModel.AdminView && hasGroupPermission)
-        //    {
-        //        //show all items for the group
-        //        count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId);
-        //    }
-        //    else
-        //    {
-        //        //show only items for the group that belong to the current store
-        //        count = await _nexportService.GetAvailableNexportGroupProductRedemptionsCountAsync(groupId, productId, orderId, store: store);
-        //    }
-        //}
-
-        //return Json(new { result = count });
     }
 
     [HttpPost]
@@ -412,6 +364,10 @@ public class NexportWholesaleController : BasePluginController
 
         var requestReason = await _nexportService.GetNexportRedemptionUnassignmentRequestReasonByIdAsync(model.RedemptionUnassignmentRequestReasonId);
 
+        var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
+        if (invoiceItem.RedemptionStatus != NexportOrderInvoiceItemRedemptionStatus.Assigned)
+            throw new Exception("Unable to submit unassignment request due to the redemption has not been assigned yet!");
+
         var unassignmentRequest = new NexportRedemptionUnassignmentRequest
         {
             InvoiceItemId = model.InvoiceItemId,
@@ -428,8 +384,6 @@ public class NexportWholesaleController : BasePluginController
 
         await _nexportService.InsertRedemptionUnassignmentRequestAsync(unassignmentRequest);
 
-        var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(model.InvoiceItemId);
-
         await _nexportService.InsertNexportRedemptionAuditLogAsync(new NexportRedemptionAuditLog
         {
             CustomerId = currentCustomer.Id,
@@ -445,7 +399,7 @@ public class NexportWholesaleController : BasePluginController
         await _nexportService.SendNewRedemptionUnassignmentRequestCustomerNotificationAsync(unassignmentRequest, invoiceItem);
 
         model = await _nexportPluginModelFactory.PrepareSubmitRedemptionUnassignmentRequestModelAsync(model);
-        model.Result = await _localizationService.GetResourceAsync("RedemptionUnassignmentRequests.Submitted");
+        model.Result = await _localizationService.GetResourceAsync("Plugins.Misc.Nexport.Wholesale.RedemptionUnassignmentRequests.Submitted");
 
         return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RequestUnassignment.cshtml", model);
     }
@@ -685,8 +639,13 @@ public class NexportWholesaleController : BasePluginController
             await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_StartDate", model.UtcStartDate);
             await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_PurchasingForStore", model.StoreId);
             await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_PurchasingGroupId", model.PurchasingGroupId);
+            await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_ExtensionAction", model.ExtensionAction);
+            await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_RequireApproval", model.RequireApproval);
 
-            var confirmStepModel = await _nexportPluginModelFactory.PrepareConfirmStepModel(model.UtcStartDate, model.StoreId, model.PurchasingGroupId, form["PurchasingGroupName"]);
+            var confirmStepModel = await _nexportPluginModelFactory.PrepareConfirmStepModel(
+                model.UtcStartDate, model.StoreId, model.PurchasingGroupId,
+                form["PurchasingGroupName"],
+                model.ExtensionAction, model.RequireApproval);
 
             return Json(new
             {
@@ -776,6 +735,8 @@ public class NexportWholesaleController : BasePluginController
             var storeId = await _genericAttributeService.GetAttributeAsync<int?>(customer, "RedeemProductModel_PurchasingForStore");
             var purchasingGroupId = await _genericAttributeService.GetAttributeAsync<Guid?>(customer, "RedeemProductModel_PurchasingGroupId");
             var openEndedProduct = await _genericAttributeService.GetAttributeAsync<bool>(customer, "RedeemProductModel_IsOpenEnded");
+            var extensionOption = await _genericAttributeService.GetAttributeAsync<int?>(customer, "RedeemProductModel_ExtensionAction");
+            var requireApproval = await _genericAttributeService.GetAttributeAsync<bool>(customer, "RedeemProductModel_RequireApproval");
 
             if (invoiceItemId == null)
                 throw new Exception("Error retrieving invoice item id for transaction.");
@@ -790,36 +751,92 @@ public class NexportWholesaleController : BasePluginController
                 }
             }
 
-            // Add audit log for redemption assignment
-            await _nexportService.InsertNexportRedemptionAuditLogAsync(new NexportRedemptionAuditLog
+            if (requireApproval)
             {
-                InvoiceItemId = invoiceItemId.Value,
-                Description = $"The invoice item has been scheduled to be assigned and redeemed for customer [{firstName} {lastName}]",
-                CustomerId = customer.Id,
-                TargetedCustomerId = targetUserId,
-                Type = NexportRedemptionAuditLogTypeEnum.AssignRedemption,
-                UtcDateCreated = DateTime.UtcNow
-            });
+                await _nexportService.InsertNexportRedemptionAssignmentApprovalRequestAsync(
+                    new NexportRedemptionAssignmentApprovalRequest
+                    {
+                        ProductId = productId,
+                        RedeemingProductId = redeemingProductId,
+                        RedemptionAssignmentType =
+                            sendViaEmail != null && sendViaEmail.Value
+                                ? NexportRedemptionAssignmentTypeStatus.Email
+                                : NexportRedemptionAssignmentTypeStatus.Instant,
+                        RedemptionEmail = emailAddress,
+                        RedemptionFirstName = firstName,
+                        RedemptionLastName = lastName,
+                        InvoiceItemId = invoiceItemId.Value,
+                        RedemptionUserId = selectedUserId,
+                        UtcRedemptionStartDate = utcStartDate,
+                        StoreId = storeId,
+                        PurchasingGroupId = purchasingGroupId,
+                        IsOpenEnded = openEndedProduct,
+                        ExtensionOption = extensionOption,
+                        RequestedByCustomerId = customer.Id,
+                        UtcCreatedDate = DateTime.UtcNow,
+                        Status = NexportRedemptionAssignmentApprovalRequestStatus.Received
+                    });
 
-            var success = await _nexportService.RedeemProductForCustomer(
-                new RedeemProductModel
+                var invoiceItem = await _nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId.Value);
+
+                var wholesaleOrderInfo = await _nexportService.GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId, invoiceItem.OrderItemId);
+                if (wholesaleOrderInfo == null)
+                    throw new Exception("Wholesale order information is missing!");
+
+                wholesaleOrderInfo.ApprovalAwaiting++;
+                wholesaleOrderInfo.Available--;
+
+                invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.ApprovalAwaiting;
+
+                await _nexportService.UpdateNexportOrderInvoiceItem(invoiceItem);
+                await _nexportService.UpdateWholesaleOrderInfoAsync(wholesaleOrderInfo);
+
+                await _nexportService.InsertNexportRedemptionAuditLogAsync(new NexportRedemptionAuditLog
                 {
-                    ReturnUrl = returnUrl ?? "",
-                    ProductId = productId,
-                    RedeemingProductId = redeemingProductId,
-                    AssignmentType = sendViaEmail != null && sendViaEmail.Value ? "Email" : "Instant",
-                    Email = emailAddress,
-                    FirstName = firstName,
-                    LastName = lastName,
                     InvoiceItemId = invoiceItemId.Value,
-                    UserId = selectedUserId,
-                    UtcStartDate = utcStartDate,
-                    StoreId = storeId,
-                    PurchasingGroupId = purchasingGroupId,
-                    IsOpenEnded = openEndedProduct
+                    Description = $"The invoice item assignment approval has been submitted",
+                    CustomerId = customer.Id,
+                    TargetedCustomerId = targetUserId,
+                    Type = NexportRedemptionAuditLogTypeEnum.ApprovalAwaiting,
+                    UtcDateCreated = DateTime.UtcNow
                 });
 
-            return Json(new { success });
+                return Json(new { success = true });
+            }
+            else
+            {
+                var success = await _nexportService.RedeemProductForCustomer(
+                    new RedeemProductModel
+                    {
+                        ReturnUrl = returnUrl ?? "",
+                        ProductId = productId,
+                        RedeemingProductId = redeemingProductId,
+                        AssignmentType = sendViaEmail != null && sendViaEmail.Value ? "Email" : "Instant",
+                        Email = emailAddress,
+                        FirstName = firstName,
+                        LastName = lastName,
+                        InvoiceItemId = invoiceItemId.Value,
+                        UserId = selectedUserId,
+                        UtcStartDate = utcStartDate,
+                        StoreId = storeId,
+                        PurchasingGroupId = purchasingGroupId,
+                        IsOpenEnded = openEndedProduct,
+                        ExtensionOption = extensionOption
+                    });
+
+                // Add audit log for redemption assignment
+                await _nexportService.InsertNexportRedemptionAuditLogAsync(new NexportRedemptionAuditLog
+                {
+                    InvoiceItemId = invoiceItemId.Value,
+                    Description = $"The invoice item has been scheduled to be assigned and redeemed for customer [{firstName} {lastName}]",
+                    CustomerId = customer.Id,
+                    TargetedCustomerId = targetUserId,
+                    Type = NexportRedemptionAuditLogTypeEnum.AssignRedemption,
+                    UtcDateCreated = DateTime.UtcNow
+                });
+
+                return Json(new { success });
+            }
         }
         catch (Exception exc)
         {

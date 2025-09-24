@@ -43,5 +43,8 @@ public record ConfirmStepModel : RedeemStepModel
 
     public List<NexportProductGroupMembershipMappingModel> GroupMembershipMappings { get; set; }
 
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Option.ExtensionOption")]
     public RedeemInvoiceItemRequest.RedemptionActionTypeEnum? ExtensionOption { get; set; }
+
+    public bool RequireApproval { get; set; }
 }

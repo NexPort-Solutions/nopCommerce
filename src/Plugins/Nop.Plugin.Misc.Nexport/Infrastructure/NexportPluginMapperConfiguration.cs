@@ -215,6 +215,9 @@ public class NexportPluginMapperConfiguration : Profile, IOrderedMapperProfile
         CreateMap<NexportRedemptionUnassignmentRequestReason, NexportRedemptionUnassignmentRequestReasonModel>();
         CreateMap<NexportRedemptionUnassignmentRequestReasonModel, NexportRedemptionUnassignmentRequestReason>();
 
+        CreateMap<NexportRedemptionAssignmentApprovalRequest, NexportRedemptionAssignmentApprovalRequestModel>();
+        CreateMap<NexportRedemptionAssignmentApprovalRequestModel, NexportRedemptionAssignmentApprovalRequest>();
+
         CreateMap<ReturnRequest, NexportReturnRequestModel>();
         CreateMap<ReturnRequestModel, NexportReturnRequestModel>();
 

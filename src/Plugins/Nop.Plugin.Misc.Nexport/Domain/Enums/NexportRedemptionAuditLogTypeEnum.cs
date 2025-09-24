@@ -25,6 +25,9 @@ public enum NexportRedemptionAuditLogTypeEnum
     [Display(Name = "Cancel Awaiting")]
     CancelAwaiting = 7,
 
+    [Display(Name = "Approval Awaiting")]
+    ApprovalAwaiting = 8,
+
     [Display(Name = "Other")]
     Other = 100
 }
