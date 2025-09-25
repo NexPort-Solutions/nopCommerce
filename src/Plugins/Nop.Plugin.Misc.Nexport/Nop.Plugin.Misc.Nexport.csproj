@@ -172,6 +172,7 @@
     <None Remove="Scripts\fontawesome\thin.min.js" />
     <None Remove="Scripts\fontawesome\v4-shims.min.js" />
     <None Remove="Scripts\jquery-ui-timepicker-addon.min.js" />
+    <None Remove="Scripts\nexport.wholesale.common.js" />
     <None Remove="Scripts\nexport_common.js" />
     <None Remove="Scripts\nexport_plugin_common.js" />
     <None Remove="Scripts\uikit.min.js" />
@@ -655,6 +656,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Scripts\fontawesome\v4-shims.min.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\nexport.wholesale.common.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Scripts\redeem-product.js">
