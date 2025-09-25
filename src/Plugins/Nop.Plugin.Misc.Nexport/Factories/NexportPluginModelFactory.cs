@@ -3945,14 +3945,19 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                         if (existingEnrollmentStatus.Value.Phase != Enums.PhaseEnum.Finished)
                         {
                             // Ignore DeleteFinishedEnrollment option if the enrollment is already in progress since the only valid action is to Renew or Restart the enrollments
-                            excludingItems = excludingItems
-                                .Append((int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment).ToArray();
+                            excludingItems = excludingItems.Append((int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment).ToArray();
                         }
                         else if (existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.Finished)
                         {
                             // Ignore RestartEnrollment option if the enrollment is already finished since the only valid action is to Renew or Delete the enrollments
-                            excludingItems = excludingItems
-                                .Append((int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment).ToArray();
+                            excludingItems = excludingItems.Append((int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment).ToArray();
+                        }
+
+                        if (productMapping.AccessTimeLimit == null || productMapping.RenewalDuration == null ||
+                            productMapping.UtcAccessExpirationDate == null)
+                        {
+                            // Ignore RenewEnrollment option if there is no expiration date or renewal duration set on the product mapping
+                            excludingItems = excludingItems.Append((int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption).ToArray();
                         }
 
                         var redeemAction = RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption.ToNexportSelectList(false, excludingItems);
