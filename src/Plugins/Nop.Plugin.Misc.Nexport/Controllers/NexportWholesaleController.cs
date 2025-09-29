@@ -481,6 +481,9 @@ public class NexportWholesaleController : BasePluginController
         await _customerService.UpdateCustomerAsync(customer);
         await _returnRequestService.UpdateReturnRequestAsync(rr);
 
+        await _genericAttributeService.SaveAttributeAsync(invoiceItem, "RefundRequestInvoiceItemRedemptionStatus",
+            (int)invoiceItem.RedemptionStatus);
+
         if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Assigned)
             wholesaleOrderInfo.Redeemed--;
 

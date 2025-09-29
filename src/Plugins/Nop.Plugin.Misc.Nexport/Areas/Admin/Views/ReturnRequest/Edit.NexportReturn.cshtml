@@ -18,14 +18,17 @@
             </small>
         </h1>
         <div class="float-right">
-            <button type="submit" name="accept" class="btn btn-primary" @if(Model.ReturnRequestStatusId != (int)ReturnRequestStatus.Pending) { <text>disabled</text> }>
-                <i class="fas fa-check"></i>
-                Accept
-            </button>
-            <button type="submit" name="deny" class="btn btn-warning" @if(Model.ReturnRequestStatusId != (int)ReturnRequestStatus.Pending) { <text>disabled</text> }>
-                <i class="fas fa-times"></i>
-                Deny
-            </button>
+            @if (Model.ReturnRequestStatusId == (int)ReturnRequestStatus.Pending)
+            {
+                <button type="submit" name="accept" class="btn btn-primary">
+                    <i class="fas fa-check"></i>
+                    Accept
+                </button>
+                <button type="submit" name="deny" class="btn btn-warning">
+                    <i class="fas fa-times"></i>
+                    Deny
+                </button>
+            }
             <span id="returnrequest-delete" class="btn btn-danger">
                 <i class="far fa-trash-alt"></i>
                 @T("Admin.Common.Delete")

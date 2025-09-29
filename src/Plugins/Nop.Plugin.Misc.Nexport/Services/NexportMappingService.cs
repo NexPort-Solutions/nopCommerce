@@ -2819,6 +2819,9 @@ public partial class NexportService : INexportService
 
     public async Task<bool> ProcessRefundingInvoiceItem(NexportOrderInvoiceItem invoiceItem, bool accept)
     {
+        if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.Refunded)
+            throw new NexportException("Cannot process refund for an invoice item that has already been refunded!");
+
         try
         {
             var wholesaleOrderInfo = await GetWholesaleOrderInfoForOrderItemAsync(invoiceItem.OrderId, invoiceItem.OrderItemId);
@@ -2859,7 +2862,10 @@ public partial class NexportService : INexportService
                 if (invoiceItem.RedemptionStatus == NexportOrderInvoiceItemRedemptionStatus.ProcessingRefund)
                     wholesaleOrderInfo.ProcessingRefund--;
 
-                invoiceItem.RedemptionStatus = NexportOrderInvoiceItemRedemptionStatus.Assigned;
+                var previousStatus = (NexportOrderInvoiceItemRedemptionStatus)await _genericAttributeService.GetAttributeAsync<int>(
+                    invoiceItem, "RefundRequestInvoiceItemRedemptionStatus");
+
+                invoiceItem.RedemptionStatus = previousStatus;
                 wholesaleOrderInfo.Redeemed++;
 
                 await UpdateNexportOrderInvoiceItem(invoiceItem);
