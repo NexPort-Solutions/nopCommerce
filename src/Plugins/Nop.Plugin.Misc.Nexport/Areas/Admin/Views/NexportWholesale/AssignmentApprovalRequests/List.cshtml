@@ -105,13 +105,13 @@
                                 Title = "Nexport Invoice Item",
                                 Width = "300",
                             },
-                            new(nameof(NexportRedemptionAssignmentApprovalRequestModel.RedemptionCustomerInfo))
+                            new(nameof(NexportRedemptionAssignmentApprovalRequestModel.RequestedByCustomerId))
                             {
-                                Title = T("Plugins.Misc.Nexport.Wholesale.RedemptionAssignmentApprovalRequests.Fields.Customer").Text,
+                                Title = T("Plugins.Misc.Nexport.Wholesale.RedemptionAssignmentApprovalRequests.Fields.RequestedByCustomer").Text,
                                 Width = "300",
                                 Render = new RenderCustom("renderRequestByCustomerInfo")
                             },
-                            new(nameof(NexportRedemptionAssignmentApprovalRequestModel.RedemptionCustomerInfo))
+                            new(nameof(NexportRedemptionAssignmentApprovalRequestModel.RedemptionCustomerId))
                             {
                                 Title = T("Plugins.Misc.Nexport.Wholesale.RedemptionAssignmentApprovalRequests.Fields.RedeemingCustomer").Text,
                                 Width = "300",

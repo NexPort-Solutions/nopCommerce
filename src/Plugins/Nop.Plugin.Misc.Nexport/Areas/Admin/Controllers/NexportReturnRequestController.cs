@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.EMMA;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
@@ -37,6 +36,7 @@ public class NexportReturnRequestController(
     IWorkContext workContext,
     INexportPluginModelFactory nexportPluginModelFactory,
     NexportService nexportService,
+    ILogger logger,
     INexportWholesaleService nexportWholesaleService)
     : ReturnRequestController(
         customerActivityService,
@@ -127,10 +127,12 @@ public class NexportReturnRequestController(
                             if (invoiceItemList.Count == 1)
                             {
                                 var invoiceItemId = invoiceItemList.First();
-                                var invoiceItem =
-                                    await nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
+                                var invoiceItem = await nexportService.FindNexportOrderInvoiceItemByGuidAsync(invoiceItemId);
                                 if (invoiceItem != null)
                                 {
+                                    if (invoiceItem.RedemptionStatus != NexportOrderInvoiceItemRedemptionStatus.ProcessingRefund)
+                                        throw new Exception("Invoice item status is invalid!");
+
                                     if (denyRefund)
                                     {
                                         // Deny the refund request
@@ -155,8 +157,7 @@ public class NexportReturnRequestController(
                                             case NexportRefundOptionEnums.DropEnrollment:
                                                 if (invoiceItem.RedemptionEnrollmentId != null)
                                                 {
-                                                    await nexportService.DropEnrollmentAsync(invoiceItem
-                                                        .RedemptionEnrollmentId.Value)!;
+                                                    await nexportService.DropEnrollmentAsync(invoiceItem.RedemptionEnrollmentId.Value)!;
                                                 }
 
                                                 break;
@@ -164,8 +165,7 @@ public class NexportReturnRequestController(
                                             case NexportRefundOptionEnums.DestroyEnrollment:
                                                 if (invoiceItem.RedemptionEnrollmentId != null)
                                                 {
-                                                    await nexportService.DestroyEnrollmentAsync(invoiceItem
-                                                        .RedemptionEnrollmentId.Value)!;
+                                                    await nexportService.DestroyEnrollmentAsync(invoiceItem.RedemptionEnrollmentId.Value)!;
                                                 }
 
                                                 break;
@@ -190,7 +190,6 @@ public class NexportReturnRequestController(
                         }
                     }
 
-                    returnRequest = model.ToEntity(returnRequest);
                     returnRequest.UpdatedOnUtc = DateTime.UtcNow;
 
                     await _returnRequestService.UpdateReturnRequestAsync(returnRequest);
@@ -209,6 +208,7 @@ public class NexportReturnRequestController(
                 catch (Exception ex)
                 {
                     _notificationService.ErrorNotification("Unable to process request refund invoice item!");
+                    await logger.ErrorAsync("Failed to process request for refunding invoice item", ex);
                 }
             }
         }
