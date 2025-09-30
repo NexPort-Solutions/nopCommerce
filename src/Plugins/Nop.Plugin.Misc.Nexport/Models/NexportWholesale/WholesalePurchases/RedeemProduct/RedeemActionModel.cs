@@ -11,5 +11,9 @@ public record RedeemActionModel
 
     public bool HasExistingEnrollment { get; set; }
 
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Option.RequireApproval")]
     public bool RequireApproval { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Option.UtcPreviousEnrollmentExpirationDate")]
+    public DateTime? UtcPreviousEnrollmentExpirationDate { get; set; }
 }

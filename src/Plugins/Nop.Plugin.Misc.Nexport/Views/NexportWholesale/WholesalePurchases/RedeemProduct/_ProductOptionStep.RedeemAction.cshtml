@@ -1,4 +1,7 @@
-﻿@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct.RedeemActionModel
+﻿@using Nop.Services.Helpers
+@model Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct.RedeemActionModel
+
+@inject IDateTimeHelper dateTimeHelper
 
 @if (Model.HasExistingEnrollment)
 {
@@ -8,8 +11,12 @@
             <div class="col-sm-4">
             </div>
             <div class="col-sm-8 text-left d-flex align-items-center">
-                <input type="hidden" asp-for="RequireApproval" />
-                <div class="text-info font-weight-bold"><i class="fa-solid fa-asterisk"></i>This assignment will require additional approval since there is an existing enrollment.</div>
+                <input type="hidden" asp-for="UtcPreviousEnrollmentExpirationDate" value="@Model.UtcPreviousEnrollmentExpirationDate" />
+                <input type="hidden" asp-for="RequireApproval" value="@Model.RequireApproval" />
+                <div class="text-info font-weight-bold">
+                    <i class="fa-solid fa-asterisk"></i>
+                    This assignment will require additional approval since there is a previous enrollment with the expiration date of @((await dateTimeHelper.ConvertToUserTimeAsync(Model.UtcPreviousEnrollmentExpirationDate!.Value)).ToString("f")).
+                </div>
             </div>
         </div>
     }
@@ -20,8 +27,13 @@
                 <nop-label asp-for="ExtensionAction" />
             </div>
             <div class="col-sm-4">
+                <input type="hidden" asp-for="UtcPreviousEnrollmentExpirationDate" value="@Model.UtcPreviousEnrollmentExpirationDate" />
                 <nop-select asp-for="ExtensionAction" asp-items="Model.AvailableExtensionActions" asp-multiple="false" title="Select extension action" />
                 <span asp-validation-for="ExtensionAction"></span>
+                <div class="m-2 text-info font-weight-bold">
+                    <i class="fa-solid fa-asterisk"></i>
+                    @T("Plugins.Misc.Nexport.Group.Product.Redemption.RedeemProduct.Option.UtcPreviousEnrollmentExpirationDate"): @((await dateTimeHelper.ConvertToUserTimeAsync(Model.UtcPreviousEnrollmentExpirationDate!.Value)).ToString("f")).
+                </div>
             </div>
         </div>
     }

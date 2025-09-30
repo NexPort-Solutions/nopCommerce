@@ -760,7 +760,7 @@ public class NexportOrderProcessingTask : IScheduleTask
                     // Applicable for enrollment that is needed to be renewed or restarted
                     case { Phase: Enums.PhaseEnum.NotStarted or Enums.PhaseEnum.InProgress }:
                         {
-                            completionPercentage = existingEnrollmentStatus.Value.CompletionPercentage;
+                            completionPercentage = existingEnrollmentStatus.CompletionPercentage;
 
                             if (productMapping.RenewalApprovalMethod == NexportEnrollmentRenewalApprovalMethodEnum.ForceManual)
                             {

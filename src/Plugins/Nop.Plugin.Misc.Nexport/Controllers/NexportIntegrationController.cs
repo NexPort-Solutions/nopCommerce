@@ -3896,9 +3896,9 @@ public class NexportIntegrationController : BasePluginController,
         if (userMapping == null)
             throw new Exception("User mapping not found!");
 
-        var existingEnrollmentStatus = await _nexportService.VerifyNexportEnrollmentStatusAsync(productMapping, userMapping);
+        var existingEnrollment = await _nexportService.VerifyNexportEnrollmentStatusAsync(productMapping, userMapping);
 
-        var model = await _nexportPluginModelFactory.PrepareRedeemActionModel(isAdminView, existingEnrollmentStatus != null, existingEnrollmentStatus?.Phase);
+        var model = await _nexportPluginModelFactory.PrepareRedeemActionModel(isAdminView, existingEnrollment);
 
         return View("~/Plugins/Misc.Nexport/Views/NexportWholesale/WholesalePurchases/RedeemProduct/_ProductOptionStep.RedeemAction.cshtml", model);
     }

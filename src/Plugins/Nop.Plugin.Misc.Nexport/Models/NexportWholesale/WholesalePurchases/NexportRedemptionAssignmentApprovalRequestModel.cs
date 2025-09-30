@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System.ComponentModel.DataAnnotations;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core.Domain.Catalog;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -67,10 +68,15 @@ public record NexportRedemptionAssignmentApprovalRequestModel : BaseNopEntityMod
     [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.RedemptionAssignmentApprovalRequests.Fields.ExtensionOption")]
     public IList<SelectListItem> AvailableExtensionOptions { get; set; } = new List<SelectListItem>();
 
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.RedemptionAssignmentApprovalRequests.Fields.UtcPreviousEnrollmentExpirationDate")]
+    [UIHint("DateNullable")]
+    public DateTime? UtcPreviousEnrollmentExpirationDate { get; set; }
+
     [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.RedemptionAssignmentApprovalRequests.Fields.UtcCreatedDate")]
     public DateTime UtcCreatedDate { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.RedemptionAssignmentApprovalRequests.Fields.UtcModifiedDate")]
+    [UIHint("DateNullable")]
     public DateTime? UtcModifiedDate { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.RedemptionAssignmentApprovalRequests.Fields.RequestStatus")]

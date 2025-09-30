@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using NexportApi.Model;
+﻿using NexportApi.Model;
 using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Models.Enrollment;
@@ -26,7 +21,13 @@ public record NexportEnrollmentResponseItemModel : BaseNopModel
 
     public DateTime? LastActivityDate { get; set; }
 
-    public Enums.PhaseEnum Status { get; set; }
+    public Enums.PhaseEnum Phase { get; set; }
+
+    public Enums.ResultEnum Result { get; set; }
+
+    public int CompletionPercentage { get; set; }
+
+    public int RequirementsFulfilledPercentage { get; set; }
 
     public bool HasCertificate { get; set; }
 

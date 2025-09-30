@@ -31,6 +31,7 @@ using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Models;
+using Nop.Plugin.Misc.Nexport.Models.Enrollment;
 using Nop.Plugin.Misc.Nexport.Models.Organization;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
@@ -2524,9 +2525,7 @@ public partial class NexportService
     }
 
     [CanBeNull]
-    public async Task<(Guid EnrollmentId, Enums.PhaseEnum Phase, Enums.ResultEnum Result,
-            DateTime? enrollementExpirationDate, int completionPercentage)?>
-        VerifyNexportEnrollmentStatusAsync(Product product, Customer customer, int? storeId = null)
+    public async Task<NexportEnrollmentResponseItemModel> VerifyNexportEnrollmentStatusAsync(Product product, Customer customer, int? storeId = null)
     {
         var mapping = await GetProductMappingByNopProductId(product.Id, storeId) ?? await GetProductMappingByNopProductId(product.Id);
         if (mapping != null)
@@ -2542,9 +2541,7 @@ public partial class NexportService
         return null;
     }
 
-    public async Task<(Guid EnrollmentId, Enums.PhaseEnum Phase, Enums.ResultEnum Result,
-            DateTime? EnrollmentExpirationDate, int CompletionPercentage)?>
-        VerifyNexportEnrollmentStatusAsync(NexportProductMapping productMapping, NexportUserMapping nexportUserMapping)
+    public async Task<NexportEnrollmentResponseItemModel> VerifyNexportEnrollmentStatusAsync(NexportProductMapping productMapping, NexportUserMapping nexportUserMapping)
     {
         if (productMapping == null)
             throw new ArgumentNullException(nameof(productMapping), "Product mapping cannot be null!");
@@ -2581,8 +2578,14 @@ public partial class NexportService
 
                 if (existingEnrollment != null)
                 {
-                    return (existingEnrollment.EnrollmentId, existingEnrollment.Phase, existingEnrollment.Result,
-                        existingEnrollment.ExpirationDate, existingEnrollment.PercentAssignmentsComplete);
+                    return new NexportEnrollmentResponseItemModel
+                    {
+                        Id = existingEnrollment.EnrollmentId,
+                        Phase = existingEnrollment.Phase,
+                        Result = existingEnrollment.Result,
+                        ExpirationDate = existingEnrollment.ExpirationDate,
+                        CompletionPercentage = existingEnrollment.PercentAssignmentsComplete
+                    };
                 }
             }
             else if (productMapping.Type == NexportProductTypeEnum.TrainingPlan)
@@ -2592,8 +2595,14 @@ public partial class NexportService
 
                 if (existingEnrollment != null)
                 {
-                    return (existingEnrollment.EnrollmentId, existingEnrollment.Phase, existingEnrollment.Result,
-                        existingEnrollment.ExpirationDate, existingEnrollment.PercentRequirementsFulfilled);
+                    return new NexportEnrollmentResponseItemModel
+                    {
+                        Id = existingEnrollment.EnrollmentId,
+                        Phase = existingEnrollment.Phase,
+                        Result = existingEnrollment.Result,
+                        ExpirationDate = existingEnrollment.ExpirationDate,
+                        CompletionPercentage = existingEnrollment.PercentRequirementsFulfilled
+                    };
                 }
             }
         }
@@ -2618,7 +2627,7 @@ public partial class NexportService
 
         var store = await _storeContext.GetCurrentStoreAsync();
 
-        var existingEnrollmentStatus = await VerifyNexportEnrollmentStatusAsync(product, customer, store.Id);
+        var existingEnrollmentStatus = await VerifyNexportEnrollmentStatusAsync(product, customer, store.Id)!;
         var mapping = await GetProductMappingByNopProductId(product.Id, store.Id) ?? await GetProductMappingByNopProductId(product.Id);
 
         if (mapping != null)
@@ -2654,17 +2663,17 @@ public partial class NexportService
                     }
 
                 case var status
-                    when status.Value.Phase is Enums.PhaseEnum.InProgress or Enums.PhaseEnum.NotStarted:
+                    when status.Phase is Enums.PhaseEnum.InProgress or Enums.PhaseEnum.NotStarted:
                     {
                         // Customer is allowed to purchase this product under one of these scenarios:
-                        // A - The product allows extension, the purchase limit has not exceed yet, and the enrollment has been expired.
-                        // B - The product allows extension, the purchase limit has not exceed yet, the enrollment has not yet expired,
+                        // A - The product allows extension, the purchase limit does not exceed yet, and the enrollment has been expired.
+                        // B - The product allows extension, the purchase limit does not exceed yet, the enrollment has not yet expired,
                         // and it is within the renewal window time-frame.
                         if (mapping.AllowExtension)
                         {
-                            if (!await ExceedExtensionPurchaseLimitAsync(customer, mapping, status.Value.EnrollmentId))
+                            if (!await ExceedExtensionPurchaseLimitAsync(customer, mapping, status.Id))
                             {
-                                var currentEnrollmentExpirationDate = status.Value.enrollementExpirationDate;
+                                var currentEnrollmentExpirationDate = status.ExpirationDate;
                                 if (currentEnrollmentExpirationDate.HasValue)
                                 {
                                     if (currentEnrollmentExpirationDate >= DateTime.UtcNow)
@@ -2777,10 +2786,10 @@ public partial class NexportService
                         {
                             var existingEnrollmentStatus = await VerifyNexportEnrollmentStatusAsync(otherProduct, customer, storeId)!;
 
-                            var currentEnrollmentExpirationDate = existingEnrollmentStatus?.enrollementExpirationDate;
+                            var currentEnrollmentExpirationDate = existingEnrollmentStatus?.ExpirationDate;
                             if (currentEnrollmentExpirationDate.HasValue &&
                                 currentEnrollmentExpirationDate >= DateTime.UtcNow &&
-                                existingEnrollmentStatus.Value.Phase is Enums.PhaseEnum.NotStarted or Enums.PhaseEnum.InProgress)
+                                existingEnrollmentStatus.Phase is Enums.PhaseEnum.NotStarted or Enums.PhaseEnum.InProgress)
                             {
                                 // Customer is not allowed to purchase this product
                                 // since there is an existing enrollment from a different product within this category

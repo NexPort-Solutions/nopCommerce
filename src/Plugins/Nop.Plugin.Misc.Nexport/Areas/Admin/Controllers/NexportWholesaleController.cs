@@ -721,6 +721,7 @@ public class NexportWholesaleController : BaseAdminController
             await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_IsOpenEnded", model.IsOpenEnded);
 
             var optionStepModel = await _nexportPluginModelFactory.PrepareOptionStepModel(model.IsOpenEnded);
+            optionStepModel.AdminView = true;
 
             return Json(new
             {
@@ -776,6 +777,7 @@ public class NexportWholesaleController : BaseAdminController
     public async Task<ActionResult> GoToOptionStep(ProductStepModel model, bool isOpenEnded)
     {
         var optionStepModel = await _nexportPluginModelFactory.PrepareOptionStepModel(isOpenEnded);
+        optionStepModel.AdminView = true;
 
         return Json(new
         {

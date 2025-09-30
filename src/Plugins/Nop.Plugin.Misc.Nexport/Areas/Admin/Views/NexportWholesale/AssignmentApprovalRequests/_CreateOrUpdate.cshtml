@@ -87,6 +87,18 @@
                             <div class="form-text-row">@Model.RedemptionAssignmentType.GetDisplayName()</div>
                         </div>
                     </div>
+                    @if (Model.UtcPreviousEnrollmentExpirationDate != null)
+                    {
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="UtcPreviousEnrollmentExpirationDate" />
+                            </div>
+                            <div class="col-md-9">
+                                <div class="form-text-row">@Model.UtcPreviousEnrollmentExpirationDate</div>
+                                <input asp-for="UtcPreviousEnrollmentExpirationDate" type="hidden" />
+                            </div>
+                        </div>
+                    }
                     @if (Model.PurchasingGroupId != null)
                     {
                         <div class="form-group row">

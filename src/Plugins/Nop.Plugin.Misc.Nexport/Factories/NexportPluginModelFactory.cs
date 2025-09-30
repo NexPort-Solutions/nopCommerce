@@ -862,7 +862,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                         StartDate = item.StartDate,
                         SyllabusId = item.SyllabusId,
                         LastActivityDate = item.LastActivityDate,
-                        Status = item.Phase,
+                        Phase = item.Phase,
                     };
 
                     if (item.Phase == Enums.PhaseEnum.Finished)
@@ -3099,9 +3099,14 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         return model;
     }
 
-    public async Task<RedeemActionModel> PrepareRedeemActionModel(bool isAdminView, bool hasExistingEnrollment = false, Enums.PhaseEnum? enrollmentPhase = null)
+    public async Task<RedeemActionModel> PrepareRedeemActionModel(bool isAdminView, NexportEnrollmentResponseItemModel enrollment)
     {
-        var model = new RedeemActionModel { HasExistingEnrollment = hasExistingEnrollment };
+        var hasExistingEnrollment = enrollment != null;
+        var model = new RedeemActionModel
+        {
+            HasExistingEnrollment = hasExistingEnrollment,
+            UtcPreviousEnrollmentExpirationDate = enrollment?.ExpirationDate
+        };
 
         if (isAdminView)
         {
@@ -3111,17 +3116,18 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 (int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption
             ];
 
-            if (enrollmentPhase != Enums.PhaseEnum.Finished)
+            if (hasExistingEnrollment)
             {
-                // Ignore DeleteFinishedEnrollment option if the enrollment is already in progress since the only valid action is to Renew or Restart the enrollments
-                excludingItems = excludingItems
-                    .Append((int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment).ToArray();
-            }
-            else if (enrollmentPhase == Enums.PhaseEnum.Finished)
-            {
-                // Ignore RestartEnrollment option if the enrollment is already finished since the only valid action is to Renew or Delete the enrollments
-                excludingItems = excludingItems
-                    .Append((int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment).ToArray();
+                if (enrollment.Phase != Enums.PhaseEnum.Finished)
+                {
+                    // Ignore DeleteFinishedEnrollment option if the enrollment is already in progress since the only valid action is to Renew or Restart the enrollments
+                    excludingItems = excludingItems.Append((int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment).ToArray();
+                }
+                else if (enrollment.Phase == Enums.PhaseEnum.Finished)
+                {
+                    // Ignore RestartEnrollment option if the enrollment is already finished since the only valid action is to Renew or Delete the enrollments
+                    excludingItems = excludingItems.Append((int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment).ToArray();
+                }
             }
 
             var redeemAction = RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption.ToNexportSelectList(false, excludingItems);
@@ -3883,6 +3889,14 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 await _dateTimeHelper.GetCustomerTimeZoneAsync(requestedCustomer));
         }
 
+        if (assignmentApprovalRequest.UtcPreviousEnrollmentExpirationDate != null)
+        {
+            model.UtcPreviousEnrollmentExpirationDate = _dateTimeHelper.ConvertToUserTime(
+                assignmentApprovalRequest.UtcPreviousEnrollmentExpirationDate.Value,
+                TimeZoneInfo.Utc,
+                await _dateTimeHelper.GetCustomerTimeZoneAsync(requestedCustomer));
+        }
+
         if (assignmentApprovalRequest.StoreId != null)
         {
             model.Store = (await _storeService.GetStoreByIdAsync(assignmentApprovalRequest.StoreId.Value)).Name;
@@ -3942,12 +3956,12 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                             (int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.NormalRedemption
                         ];
 
-                        if (existingEnrollmentStatus.Value.Phase != Enums.PhaseEnum.Finished)
+                        if (existingEnrollmentStatus.Phase != Enums.PhaseEnum.Finished)
                         {
                             // Ignore DeleteFinishedEnrollment option if the enrollment is already in progress since the only valid action is to Renew or Restart the enrollments
                             excludingItems = excludingItems.Append((int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.DeleteFinishedEnrollment).ToArray();
                         }
-                        else if (existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.Finished)
+                        else if (existingEnrollmentStatus.Phase == Enums.PhaseEnum.Finished)
                         {
                             // Ignore RestartEnrollment option if the enrollment is already finished since the only valid action is to Renew or Delete the enrollments
                             excludingItems = excludingItems.Append((int)RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RestartEnrollment).ToArray();
