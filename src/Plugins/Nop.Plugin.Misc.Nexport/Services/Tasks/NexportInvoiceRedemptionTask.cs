@@ -572,9 +572,9 @@ public class NexportInvoiceRedemptionTask : IScheduleTask
                         }
 
                     case var _
-                        when existingEnrollmentStatus.Value.Phase is Enums.PhaseEnum.InProgress or Enums.PhaseEnum.NotStarted:
+                        when existingEnrollmentStatus.Phase is Enums.PhaseEnum.InProgress or Enums.PhaseEnum.NotStarted:
                         {
-                            var currentEnrollmentExpirationDate = existingEnrollmentStatus.Value.EnrollmentExpirationDate;
+                            var currentEnrollmentExpirationDate = existingEnrollmentStatus.ExpirationDate;
                             if (currentEnrollmentExpirationDate.HasValue && currentEnrollmentExpirationDate >= DateTime.UtcNow)
                             {
                                 // Renew the enrollment since the current enrollment has not expired yet
@@ -583,8 +583,8 @@ public class NexportInvoiceRedemptionTask : IScheduleTask
                             }
                             else
                             {
-                                if (existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.InProgress ||
-                                    existingEnrollmentStatus.Value.Phase == Enums.PhaseEnum.NotStarted &&
+                                if (existingEnrollmentStatus.Phase == Enums.PhaseEnum.InProgress ||
+                                    existingEnrollmentStatus.Phase == Enums.PhaseEnum.NotStarted &&
                                     productMapping.AllowExtension)
                                 {
                                     if (productMapping.RenewalApprovalMethod == NexportEnrollmentRenewalApprovalMethodEnum.Auto)
@@ -598,7 +598,7 @@ public class NexportInvoiceRedemptionTask : IScheduleTask
                                                 redeemed = await _nexportService.RedeemNexportInvoiceItemAsync(invoiceItem,
                                                     redeemingUserId, productMapping,
                                                     completionThreshold >
-                                                    existingEnrollmentStatus.Value.CompletionPercentage
+                                                    existingEnrollmentStatus.CompletionPercentage
                                                         ? RedeemInvoiceItemRequest.RedemptionActionTypeEnum.RenewRedemption
                                                         : RedeemInvoiceItemRequest.RedemptionActionTypeEnum
                                                             .RestartEnrollment,

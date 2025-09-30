@@ -644,6 +644,7 @@ public class NexportWholesaleController : BasePluginController
             await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_PurchasingGroupId", model.PurchasingGroupId);
             await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_ExtensionAction", model.ExtensionAction);
             await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_RequireApproval", model.RequireApproval);
+            await _genericAttributeService.SaveAttributeAsync(customer, "RedeemProductModel_PreviousEnrollmentExpirationDate", model.UtcPreviousEnrollmentExpirationDate);
 
             var confirmStepModel = await _nexportPluginModelFactory.PrepareConfirmStepModel(
                 model.UtcStartDate, model.StoreId, model.PurchasingGroupId,
@@ -740,6 +741,8 @@ public class NexportWholesaleController : BasePluginController
             var openEndedProduct = await _genericAttributeService.GetAttributeAsync<bool>(customer, "RedeemProductModel_IsOpenEnded");
             var extensionOption = await _genericAttributeService.GetAttributeAsync<int?>(customer, "RedeemProductModel_ExtensionAction");
             var requireApproval = await _genericAttributeService.GetAttributeAsync<bool>(customer, "RedeemProductModel_RequireApproval");
+            var utcPreviousEnrollmentExpirationDate =
+                await _genericAttributeService.GetAttributeAsync<DateTime?>(customer, "RedeemProductModel_PreviousEnrollmentExpirationDate");
 
             if (invoiceItemId == null)
                 throw new Exception("Error retrieving invoice item id for transaction.");
@@ -775,6 +778,7 @@ public class NexportWholesaleController : BasePluginController
                         PurchasingGroupId = purchasingGroupId,
                         IsOpenEnded = openEndedProduct,
                         ExtensionOption = extensionOption,
+                        UtcPreviousEnrollmentExpirationDate = utcPreviousEnrollmentExpirationDate,
                         RequestedByCustomerId = customer.Id,
                         UtcCreatedDate = DateTime.UtcNow,
                         Status = NexportRedemptionAssignmentApprovalRequestStatus.Received

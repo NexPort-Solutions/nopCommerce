@@ -193,8 +193,7 @@ public partial interface INexportPluginModelFactory
     Task<ConfirmStepModel> PrepareConfirmStepModel(DateTime? utcStartDate, int? storeId, Guid? purchasingGroupId,
         string purchasingGroupName, int? extensionOption = null, bool requireApproval = false);
 
-    Task<RedeemActionModel> PrepareRedeemActionModel(bool isAdminView, bool hasExistingEnrollment = false,
-        Enums.PhaseEnum? enrollmentPhase = null);
+    Task<RedeemActionModel> PrepareRedeemActionModel(bool isAdminView, NexportEnrollmentResponseItemModel enrollment);
 
     Task<MapProductToCategoryModel> PrepareMapProductToCategoryModel();
 

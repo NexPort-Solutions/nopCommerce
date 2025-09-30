@@ -27,4 +27,6 @@ public record OptionStepModel : RedeemStepModel
     public bool IsOpenEnded { get; set; }
 
     public bool RequireApproval { get; set; }
+
+    public DateTime? UtcPreviousEnrollmentExpirationDate { get; set; }
 }

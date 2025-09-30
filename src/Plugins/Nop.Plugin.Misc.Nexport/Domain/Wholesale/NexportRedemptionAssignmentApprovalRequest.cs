@@ -31,6 +31,8 @@ public class NexportRedemptionAssignmentApprovalRequest : BaseEntity
 
     public int? ExtensionOption { get; set; }
 
+    public DateTime? UtcPreviousEnrollmentExpirationDate { get; set; }
+
     public DateTime UtcCreatedDate { get; set; }
 
     public DateTime? UtcModifiedDate { get; set; }
