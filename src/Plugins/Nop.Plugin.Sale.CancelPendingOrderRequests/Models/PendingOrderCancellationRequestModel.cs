@@ -1,5 +1,4 @@
-﻿using System;
-using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
+﻿using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 

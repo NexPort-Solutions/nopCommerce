@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Nop.Core;
+﻿using Nop.Core;
 using Nop.Core.Domain.Localization;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Models;
 using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Services;
-using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Localization;
 using Nop.Web.Framework.Models.Extensions;
 

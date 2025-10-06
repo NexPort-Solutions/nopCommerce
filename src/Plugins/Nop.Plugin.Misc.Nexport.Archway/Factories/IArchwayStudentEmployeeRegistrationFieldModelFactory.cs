@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Nop.Plugin.Misc.Nexport.Archway.Models;
+﻿using Nop.Plugin.Misc.Nexport.Archway.Models;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Factories;
 

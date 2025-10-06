@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Nop.Data.Mapping;
+﻿using Nop.Data.Mapping;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Data;

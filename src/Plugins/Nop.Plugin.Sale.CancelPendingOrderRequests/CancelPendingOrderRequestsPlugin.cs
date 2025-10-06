@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Exceptions;
 using Nop.Core.Domain.Cms;

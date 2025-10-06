@@ -2,7 +2,7 @@
   "Group": "Misc",
   "FriendlyName": "Nexport",
   "SystemName": "Misc.Nexport",
-  "Version": "1.0",
+  "Version": "1.00",
   "SupportedVersions": [ "4.70" ],
   "Author": "Nexport Solutions",
   "DisplayOrder": 1000,

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Nop.Plugin.Misc.Nexport.Archway.Extensions;
+﻿namespace Nop.Plugin.Misc.Nexport.Archway.Extensions;
 
 [AttributeUsage(AttributeTargets.Property, Inherited = false)]
 public class ArchwayStudentRegistrationFieldControlAttribute : Attribute

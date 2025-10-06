@@ -1,6 +1,4 @@
-﻿using System;
-using System.Reflection;
-using System.Threading.Tasks;
+﻿using System.Reflection;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Exceptions;
 using FluentMigrator.Runner.Initialization;
@@ -13,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using Nop.Core.Infrastructure;
 using Nop.Data;
 using Nop.Services.Configuration;
-using Nop.Plugin.Misc.Nexport.Archway.Data;
 using Nop.Plugin.Misc.Nexport.Archway.Infrastructure.RoutingRule;
 using Nop.Plugin.Misc.Nexport.Archway.Migrations;
 using Nop.Plugin.Misc.Nexport.Archway.Services;

@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Nop.Core.Domain.Localization;
+﻿using Nop.Core.Domain.Localization;
 using Nop.Services.Localization;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services;

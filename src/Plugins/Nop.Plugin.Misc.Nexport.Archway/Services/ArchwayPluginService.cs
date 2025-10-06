@@ -1,11 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Nop.Services.Configuration;
+﻿using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.ScheduleTasks;
 using Nop.Plugin.Misc.Nexport.Services;
-using System.Linq;
 using Nop.Core.Domain.Localization;
 using Nop.Data;
 
@@ -23,37 +20,22 @@ public class ArchwayPluginService
 
     private static readonly Dictionary<string, string> _localeResources = new()
     {
-        {"Plugins.Misc.Nexport.Archway.Fields.Options.StoreStateFieldKey",
-            "Store state field key"},
-        {"Plugins.Misc.Nexport.Archway.Fields.Options.StoreCityFieldKey",
-            "Store city field key"},
-        {"Plugins.Misc.Nexport.Archway.Fields.Options.StoreAddressFieldKey",
-            "Store address field key"},
-        {"Plugins.Misc.Nexport.Archway.Fields.Options.StoreIdFieldKey",
-            "Store number field key"},
-        {"Plugins.Misc.Nexport.Archway.Fields.Options.StoreTypeFieldKey",
-            "Store type field key"},
-        {"Plugins.Misc.Nexport.Archway.Fields.Options.EmployeeIdFieldKey",
-            "Employee Id field key"},
-        {"Plugins.Misc.Nexport.Archway.Fields.Options.EmployeePositionFieldKey",
-            "Employee position field key"},
-        {"Plugins.Misc.Nexport.Archway.Fields.Options.UploadStoreData",
-            "Upload store data"},
-        {"Plugins.Misc.Nexport.Archway.Fields.Options.UploadStoreData.Hint",
-            "Update the Archway store data by uploading a new store location record files. Only CSV file format is supported."},
+        { "Plugins.Misc.Nexport.Archway.Fields.Options.StoreStateFieldKey", "Store state field key"},
+        { "Plugins.Misc.Nexport.Archway.Fields.Options.StoreCityFieldKey", "Store city field key"},
+        { "Plugins.Misc.Nexport.Archway.Fields.Options.StoreAddressFieldKey", "Store address field key"},
+        { "Plugins.Misc.Nexport.Archway.Fields.Options.StoreIdFieldKey", "Store number field key"},
+        { "Plugins.Misc.Nexport.Archway.Fields.Options.StoreTypeFieldKey", "Store type field key"},
+        { "Plugins.Misc.Nexport.Archway.Fields.Options.EmployeeIdFieldKey", "Employee Id field key"},
+        { "Plugins.Misc.Nexport.Archway.Fields.Options.EmployeePositionFieldKey", "Employee position field key"},
+        { "Plugins.Misc.Nexport.Archway.Fields.Options.UploadStoreData", "Upload store data"},
+        { "Plugins.Misc.Nexport.Archway.Fields.Options.UploadStoreData.Hint", "Update the Archway store data by uploading a new store location record files. Only CSV file format is supported."},
+        { "Plugins.Misc.Nexport.Archway.Field.StoreLocationState", "Restaurant State"},
+        { "Plugins.Misc.Nexport.Archway.Field.StoreLocationCity", "Restaurant City"},
+        { "Plugins.Misc.Nexport.Archway.Field.StoreLocationAddress", "Restaurant Address"},
+        { "Plugins.Misc.Nexport.Archway.Field.EmployeePosition", "Employee Position"},
+        { "Plugins.Misc.Nexport.Archway.Field.EmployeeId", "Employee Id"},
 
-        {"Plugins.Misc.Nexport.Archway.Field.StoreLocationState",
-            "Restaurant State"},
-        {"Plugins.Misc.Nexport.Archway.Field.StoreLocationCity",
-            "Restaurant City"},
-        {"Plugins.Misc.Nexport.Archway.Field.StoreLocationAddress",
-            "Restaurant Address"},
-        {"Plugins.Misc.Nexport.Archway.Field.EmployeePosition",
-            "Employee Position"},
-        {"Plugins.Misc.Nexport.Archway.Field.EmployeeId",
-            "Employee Id"},
-
-        {"Plugins.Misc.Nexport.Archway.Errors.ModifiedLocaleResources",
+        { "Plugins.Misc.Nexport.Archway.Errors.ModifiedLocaleResources",
             "There are modified resource values within the <b>Archway custom registration field plugin</b> that conflicts with the default value. Review them <a href=\"javascript:OpenWindow(\'{0}\', 800, 500, true)\">here</a>."}
     };
 

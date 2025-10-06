@@ -1,5 +1,4 @@
-﻿using System;
-using Nop.Core;
+﻿using Nop.Core;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;

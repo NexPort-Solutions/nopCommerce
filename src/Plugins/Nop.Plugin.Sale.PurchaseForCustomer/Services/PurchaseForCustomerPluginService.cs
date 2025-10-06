@@ -1,8 +1,5 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using Nop.Services.Configuration;
+﻿using Nop.Services.Configuration;
 using Nop.Services.Localization;
-using System.Collections.Generic;
 using Nop.Core.Domain.Localization;
 using Nop.Data;
 

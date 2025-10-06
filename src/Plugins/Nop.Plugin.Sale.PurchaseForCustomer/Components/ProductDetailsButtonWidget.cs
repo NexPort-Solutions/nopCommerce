@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Framework.Components;
 using Nop.Web.Areas.Admin.Models.Catalog;
-using System.Threading.Tasks;
 
 namespace Nop.Plugin.Sale.PurchaseForCustomer.Components;
 

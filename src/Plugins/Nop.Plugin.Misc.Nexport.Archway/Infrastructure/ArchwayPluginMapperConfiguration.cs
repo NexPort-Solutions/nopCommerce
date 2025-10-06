@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
-using Nop.Core.Domain.Localization;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Nexport.Archway.Domains;
-using Nop.Web.Areas.Admin.Models.Localization;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Infrastructure;
 
