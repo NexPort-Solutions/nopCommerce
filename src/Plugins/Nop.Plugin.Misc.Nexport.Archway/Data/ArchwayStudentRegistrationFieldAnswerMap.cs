@@ -1,6 +1,4 @@
-﻿using Nop.Plugin.Misc.Nexport.Archway.Domains;
-
-namespace Nop.Plugin.Misc.Nexport.Archway.Data;
+﻿namespace Nop.Plugin.Misc.Nexport.Archway.Data;
 
 //public class ArchwayStudentRegistrationFieldAnswerMap : NopEntityTypeConfiguration<ArchwayStudentRegistrationFieldAnswer>
 //{

@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Models;
+﻿using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Models;
 
 namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Factories;
 

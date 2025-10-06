@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Configuration;
@@ -8,7 +7,6 @@ using Nop.Core.Infrastructure;
 using Nop.Services.Configuration;
 using Nop.Plugin.Sale.PurchaseForCustomer.Services;
 using Nop.Plugin.Sale.PurchaseForCustomer.Factories;
-using System.Threading.Tasks;
 using Nop.Plugin.Sale.PurchaseForCustomer.Filters;
 
 namespace Nop.Plugin.Sale.PurchaseForCustomer.Infrastructure;

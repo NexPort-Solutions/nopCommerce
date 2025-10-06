@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Domain.Discounts;
 using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Factories;
 using Nop.Services.Catalog;

@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
+﻿namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
 
 public interface IPluginLocalizationService
 {

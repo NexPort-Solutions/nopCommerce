@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models.Plugins;
 using Nop.Services.Configuration;
 using Nop.Web.Areas.Admin.Models.Plugins;

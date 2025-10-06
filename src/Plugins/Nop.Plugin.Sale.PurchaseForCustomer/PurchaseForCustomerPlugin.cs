@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Nop.Core.Domain.Cms;
+﻿using Nop.Core.Domain.Cms;
 using Nop.Plugin.Sale.PurchaseForCustomer.Components;
 using Nop.Plugin.Sale.PurchaseForCustomer.Services;
 using Nop.Services.Cms;

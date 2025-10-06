@@ -2,8 +2,6 @@
 using Nop.Core.Infrastructure;
 using Nop.Web.Framework.Themes;
 using Nop.Web.Framework;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Nop.Plugin.Sale.PurchaseForCustomer.Infrastructure;
 

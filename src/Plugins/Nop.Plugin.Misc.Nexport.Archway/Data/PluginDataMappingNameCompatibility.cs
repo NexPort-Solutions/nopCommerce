@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Nop.Data.Mapping;
+﻿using Nop.Data.Mapping;
 using Nop.Plugin.Misc.Nexport.Archway.Domains;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Data;

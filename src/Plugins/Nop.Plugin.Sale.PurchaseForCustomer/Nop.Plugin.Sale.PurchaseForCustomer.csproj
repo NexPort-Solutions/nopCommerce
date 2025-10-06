@@ -13,8 +13,8 @@
     <OutDir>$(OutputPath)</OutDir>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyVersion>1.0.0.30</AssemblyVersion>
-    <FileVersion>1.0.0.30</FileVersion>
+    <AssemblyVersion>1.0.0.40</AssemblyVersion>
+    <FileVersion>1.0.0.40</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

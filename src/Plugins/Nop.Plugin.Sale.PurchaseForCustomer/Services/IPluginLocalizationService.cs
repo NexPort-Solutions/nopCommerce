@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace Nop.Plugin.Sale.PurchaseForCustomer.Services;
+﻿namespace Nop.Plugin.Sale.PurchaseForCustomer.Services;
 
 public interface IPluginLocalizationService
 {

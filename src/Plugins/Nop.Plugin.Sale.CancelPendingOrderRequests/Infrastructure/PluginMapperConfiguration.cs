@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
-using Nop.Core.Domain.Localization;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
-using Nop.Web.Areas.Admin.Models.Localization;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Infrastructure;
 
