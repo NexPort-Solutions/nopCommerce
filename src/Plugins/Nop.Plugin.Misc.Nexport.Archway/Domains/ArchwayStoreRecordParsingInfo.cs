@@ -2,7 +2,9 @@
 
 public class ArchwayStoreRecordParsingInfo : IArchwayStoreRecord
 {
-    public int StoreNumber { get; set; }
+    public int Id { get; set; }
+
+    public string StoreNumber { get; set; }
 
     public string OperatorId { get; set; }
 

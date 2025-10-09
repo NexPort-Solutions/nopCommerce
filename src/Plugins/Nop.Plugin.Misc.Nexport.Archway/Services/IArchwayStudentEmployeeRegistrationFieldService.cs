@@ -10,7 +10,7 @@ public interface IArchwayStudentEmployeeRegistrationFieldService
 
     Task ProcessUploadedStoreDataFile(string storeDataFilePath);
 
-    Task<ArchwayStoreRecordInfo> GetArchwayStoreRecordInfo(int storeNumber);
+    Task<ArchwayStoreRecordInfo> GetArchwayStoreRecordInfo(string storeNumber);
 
     Task<IList<ArchwayStoreRecordInfo>> GetArchwayStoreRecordInfos();
 

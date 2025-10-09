@@ -1,59 +1,59 @@
 ﻿using FluentMigrator;
 using Nop.Data.Migrations;
 
-namespace Nop.Plugin.Misc.Nexport.Archway.Migrations
+namespace Nop.Plugin.Misc.Nexport.Archway.Migrations;
+
+[Tags(PluginDefaults.PluginMigrationTag)]
+[Migration(1, "Initial table creation for Archway plugin")]
+[SkipMigration]
+public class M001_CreatePluginSchemas : Migration
 {
-    [Tags(PluginDefaults.PluginMigrationTag)]
-    [Migration(1, "Initial table creation for Archway plugin")]
-    [SkipMigration]
-    public class M001_CreatePluginSchemas : Migration
+    private const string ARCHWAY_STORE_TABLE_NAME = "ArchwayStore";
+
+    private const string ARCHWAY_STORE_EMPLOYEE_POSITION_TABLE_NAME = "ArchwayStoreEmployeePosition";
+
+    private const string ARCHWAY_STUDENT_REGISTRATION_FIELD_KEY_MAPPING = "ArchwayStudentRegistrationFieldKeyMapping";
+
+    private const string ARCHWAY_STUDENT_REGISTRATION_FIELD_ANSWER = "ArchwayStudentRegistrationFieldAnswer";
+
+    public override void Up()
     {
-        private const string ARCHWAY_STORE_TABLE_NAME = "ArchwayStore";
+        Create.Table(ARCHWAY_STORE_TABLE_NAME)
+            .WithColumn("StoreNumber").AsInt32().PrimaryKey()
+            .WithColumn("OperatorId").AsString(255).NotNullable()
+            .WithColumn("RegionCode").AsInt32().NotNullable()
+            .WithColumn("Address").AsString(500).Nullable()
+            .WithColumn("City").AsString(255).NotNullable()
+            .WithColumn("State").AsString(100).NotNullable()
+            .WithColumn("PostalCode").AsString(100).NotNullable()
+            .WithColumn("AdvertisingCoop").AsString(255).NotNullable()
+            .WithColumn("StoreType").AsString(255).NotNullable()
+            .WithColumn("OperatorFirstName").AsString(255).Nullable()
+            .WithColumn("OperatorLastName").AsString(255).Nullable();
 
-        private const string ARCHWAY_STORE_EMPLOYEE_POSITION_TABLE_NAME = "ArchwayStoreEmployeePosition";
+        Create.Table(ARCHWAY_STORE_EMPLOYEE_POSITION_TABLE_NAME)
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("JobCode").AsInt32().NotNullable()
+            .WithColumn("JobTitle").AsString(255).NotNullable()
+            .WithColumn("JobType").AsString(255).NotNullable()
+            .WithColumn("JobLevel").AsString(255).NotNullable();
 
-        private const string ARCHWAY_STUDENT_REGISTRATION_FIELD_KEY_MAPPING = "ArchwayStudentRegistrationFieldKeyMapping";
+        Create.Table(ARCHWAY_STUDENT_REGISTRATION_FIELD_KEY_MAPPING)
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("FieldId").AsInt32().NotNullable()
+            .WithColumn("FieldControlName").AsString(1000).NotNullable()
+            .WithColumn("FieldKey").AsString(255).Nullable();
 
-        private const string ARCHWAY_STUDENT_REGISTRATION_FIELD_ANSWER = "ArchwayStudentRegistrationFieldAnswer";
+        Create.Table(ARCHWAY_STUDENT_REGISTRATION_FIELD_ANSWER)
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("CustomerId").AsInt32().NotNullable()
+            .WithColumn("FieldId").AsInt32().NotNullable()
+            .WithColumn("FieldKey").AsString(255).NotNullable()
+            .WithColumn("TextValue").AsString().Nullable()
+            .WithColumn("UtcDateCreated").AsDateTime2().NotNullable()
+            .WithColumn("UtcDateModified").AsDateTime2().Nullable();
 
-        public override void Up()
-        {
-            Create.Table(ARCHWAY_STORE_TABLE_NAME)
-                .WithColumn("StoreNumber").AsInt32().PrimaryKey()
-                .WithColumn("OperatorId").AsString(255).NotNullable()
-                .WithColumn("RegionCode").AsInt32().NotNullable()
-                .WithColumn("Address").AsString(500).Nullable()
-                .WithColumn("City").AsString(255).NotNullable()
-                .WithColumn("State").AsString(100).NotNullable()
-                .WithColumn("PostalCode").AsString(100).NotNullable()
-                .WithColumn("AdvertisingCoop").AsString(255).NotNullable()
-                .WithColumn("StoreType").AsString(255).NotNullable()
-                .WithColumn("OperatorFirstName").AsString(255).Nullable()
-                .WithColumn("OperatorLastName").AsString(255).Nullable();
-
-            Create.Table(ARCHWAY_STORE_EMPLOYEE_POSITION_TABLE_NAME)
-                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-                .WithColumn("JobCode").AsInt32().NotNullable()
-                .WithColumn("JobTitle").AsString(255).NotNullable()
-                .WithColumn("JobType").AsString(255).NotNullable()
-                .WithColumn("JobLevel").AsString(255).NotNullable();
-
-            Create.Table(ARCHWAY_STUDENT_REGISTRATION_FIELD_KEY_MAPPING)
-                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-                .WithColumn("FieldId").AsInt32().NotNullable()
-                .WithColumn("FieldControlName").AsString(1000).NotNullable()
-                .WithColumn("FieldKey").AsString(255).Nullable();
-
-            Create.Table(ARCHWAY_STUDENT_REGISTRATION_FIELD_ANSWER)
-                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-                .WithColumn("CustomerId").AsInt32().NotNullable()
-                .WithColumn("FieldId").AsInt32().NotNullable()
-                .WithColumn("FieldKey").AsString(255).NotNullable()
-                .WithColumn("TextValue").AsString().Nullable()
-                .WithColumn("UtcDateCreated").AsDateTime2().NotNullable()
-                .WithColumn("UtcDateModified").AsDateTime2().Nullable();
-
-            var storeEmployeePositionDataInsertion = @"
+        var storeEmployeePositionDataInsertion = @"
                 SET IDENTITY_INSERT [dbo].[ArchwayStoreEmployeePosition] ON
                 GO
                 INSERT [dbo].[ArchwayStoreEmployeePosition] ([Id], [JobCode], [JobTitle], [JobType], [JobLevel]) VALUES (1, 641, N'General Manager', N'OO', N'Management');
@@ -87,15 +87,14 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Migrations
                 GO
             ";
 
-            Execute.Sql(storeEmployeePositionDataInsertion);
-        }
+        Execute.Sql(storeEmployeePositionDataInsertion);
+    }
 
-        public override void Down()
-        {
-            Delete.Table(ARCHWAY_STORE_TABLE_NAME);
-            Delete.Table(ARCHWAY_STORE_EMPLOYEE_POSITION_TABLE_NAME);
-            Delete.Table(ARCHWAY_STUDENT_REGISTRATION_FIELD_KEY_MAPPING);
-            Delete.Table(ARCHWAY_STUDENT_REGISTRATION_FIELD_ANSWER);
-        }
+    public override void Down()
+    {
+        Delete.Table(ARCHWAY_STORE_TABLE_NAME);
+        Delete.Table(ARCHWAY_STORE_EMPLOYEE_POSITION_TABLE_NAME);
+        Delete.Table(ARCHWAY_STUDENT_REGISTRATION_FIELD_KEY_MAPPING);
+        Delete.Table(ARCHWAY_STUDENT_REGISTRATION_FIELD_ANSWER);
     }
 }
