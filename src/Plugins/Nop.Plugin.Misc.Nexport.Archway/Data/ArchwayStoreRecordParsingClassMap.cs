@@ -7,6 +7,7 @@ public class ArchwayStoreRecordParsingClassMap : ClassMap<ArchwayStoreRecordPars
 {
     public ArchwayStoreRecordParsingClassMap()
     {
+        Map(x => x.Id).Name("NATL_STR_NU");
         Map(x => x.StoreNumber).Name("NATL_STR_NU");
         Map(x => x.OperatorId).Name("OPER_ID_NU");
         Map(x => x.RegionCode).Name("REG_CD");

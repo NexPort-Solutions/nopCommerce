@@ -5,10 +5,10 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Data;
 
 public class PluginDataMappingNameCompatibility : INameCompatibility
 {
-    public Dictionary<Type, string> TableNames => new Dictionary<Type, string>
+    public Dictionary<Type, string> TableNames => new()
     {
         { typeof(ArchwayStoreRecordInfo), "ArchwayStore" }
     };
 
-    public Dictionary<(Type, string), string> ColumnName => new Dictionary<(Type, string), string>();
+    public Dictionary<(Type, string), string> ColumnName => new();
 }

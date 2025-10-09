@@ -5,20 +5,9 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Domains;
 
 public class ArchwayStoreRecordInfo : BaseEntity, IArchwayStoreRecord
 {
-    [NotMapped]
-    public new int Id
-    {
-        get
-        {
-            return StoreNumber;
-        }
-        set
-        {
-            StoreNumber = value;
-        }
-    }
+    public int Id { get; set; }
 
-    public int StoreNumber { get; set; }
+    public string StoreNumber { get; set; }
 
     public string OperatorId { get; set; }
 

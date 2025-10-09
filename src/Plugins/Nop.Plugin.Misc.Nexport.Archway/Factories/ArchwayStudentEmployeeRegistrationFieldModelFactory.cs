@@ -217,7 +217,12 @@ public class ArchwayStudentEmployeeRegistrationFieldModelFactory : IArchwayStude
             .ToList();
 
         return records.Select(record =>
-                new ArchwayStoreAddressModel { name = record.Address, storeNumber = record.Id, storeType = record.StoreType })
+                new ArchwayStoreAddressModel
+                {
+                    name = record.Address,
+                    storeNumber = record.Id,
+                    storeType = record.StoreType
+                })
             .ToList();
     }
 
@@ -227,8 +232,7 @@ public class ArchwayStudentEmployeeRegistrationFieldModelFactory : IArchwayStude
         if (string.IsNullOrWhiteSpace(storeNumber))
             return new List<ArchwayStoreEmployeePositionModel>();
 
-        var storeRecord = await _archwayStudentEmployeeRegistrationFieldService
-            .GetArchwayStoreRecordInfo(int.Parse(storeNumber));
+        var storeRecord = await _archwayStudentEmployeeRegistrationFieldService.GetArchwayStoreRecordInfo(storeNumber);
 
         if (storeRecord == null)
             return new List<ArchwayStoreEmployeePositionModel>();

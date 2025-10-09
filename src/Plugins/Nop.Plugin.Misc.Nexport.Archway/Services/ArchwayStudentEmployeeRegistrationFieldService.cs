@@ -114,15 +114,16 @@ public class ArchwayStudentEmployeeRegistrationFieldService : IArchwayStudentEmp
                 string.IsNullOrWhiteSpace(dataSettings.ConnectionString))
                 return;
 
-            await _nopDataProvider.ExecuteNonQueryAsync("DELETE FROM ArchwayStore");
+            await _nopDataProvider.ExecuteNonQueryAsync("TRUNCATE TABLE ArchwayStore");
 
-            using var bulkCopy = new SqlBulkCopy(dataSettings.ConnectionString) { BatchSize = 1000 };
+            using var bulkCopy = new SqlBulkCopy(dataSettings.ConnectionString);
+            bulkCopy.BatchSize = 1000;
 
             var map = new ArchwayStoreRecordParsingClassMap();
 
             foreach (var member in map.MemberMaps)
             {
-                bulkCopy.ColumnMappings.Add(member.Data.Names.First(), member.Data.Member.Name);
+                bulkCopy.ColumnMappings.Add(member.Data.Names.First(), member.Data.Member?.Name);
             }
 
             bulkCopy.DestinationTableName = "ArchwayStore";
@@ -142,7 +143,7 @@ public class ArchwayStudentEmployeeRegistrationFieldService : IArchwayStudentEmp
             : await _archwayStoreRecordRepository.GetByIdAsync(id);
     }
 
-    public async Task<ArchwayStoreRecordInfo> GetArchwayStoreRecordInfo(int storeNumber)
+    public async Task<ArchwayStoreRecordInfo> GetArchwayStoreRecordInfo(string storeNumber)
     {
         return await _archwayStoreRecordRepository.Table.FirstOrDefaultAsync(s => s.StoreNumber == storeNumber);
     }

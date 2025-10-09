@@ -1,22 +1,21 @@
 ﻿using FluentMigrator;
 using Nop.Data.Migrations;
 
-namespace Nop.Plugin.Misc.Nexport.Archway.Migrations
+namespace Nop.Plugin.Misc.Nexport.Archway.Migrations;
+
+[Tags(PluginDefaults.PluginMigrationTag)]
+[Migration(2, "Remove FieldId from ArchwayStudentRegistrationFieldKeyMapping table")]
+[SkipMigration]
+public class M002_RemoveFieldIdFromArchwayStudentRegistrationFieldKeyMapping : Migration
 {
-    [Tags(PluginDefaults.PluginMigrationTag)]
-    [Migration(2, "Remove FieldId from ArchwayStudentRegistrationFieldKeyMapping table")]
-    [SkipMigration]
-    public class M002_RemoveFieldIdFromArchwayStudentRegistrationFieldKeyMapping : Migration
+    private const string TABLE_NAME = "ArchwayStudentRegistrationFieldKeyMapping";
+
+    public override void Up()
     {
-        private const string TABLE_NAME = "ArchwayStudentRegistrationFieldKeyMapping";
+        Delete.Column("FieldId").FromTable(TABLE_NAME);
+    }
 
-        public override void Up()
-        {
-            Delete.Column("FieldId").FromTable(TABLE_NAME);
-        }
-
-        public override void Down()
-        {
-        }
+    public override void Down()
+    {
     }
 }

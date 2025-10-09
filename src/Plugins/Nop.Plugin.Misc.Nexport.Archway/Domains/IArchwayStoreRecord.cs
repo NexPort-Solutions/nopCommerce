@@ -2,7 +2,7 @@
 
 public interface IArchwayStoreRecord
 {
-    int StoreNumber { get; set; }
+    string StoreNumber { get; set; }
 
     string OperatorId { get; set; }
 
