@@ -3430,6 +3430,14 @@ public class NexportIntegrationController : BasePluginController,
 
         try
         {
+            var store = await _storeContext.GetCurrentStoreAsync();
+
+            var hasRequiredSupplementalInfo = await _nexportService.HasRequiredSupplementalInfo(customer.Id, store.Id);
+            if (hasRequiredSupplementalInfo)
+            {
+                return await AnswerSupplementalInfoQuestion("/customer/nexporttraining");
+            }
+
             var model = await _nexportPluginModelFactory.PrepareNexportTrainingListModelAsync(customer);
 
             var myTrainingViewLocationSetting =
