@@ -38,126 +38,126 @@ public class NexportSupplementalInfoAnswerProcessingTask : IScheduleTask
         IRepository<NexportSupplementalInfoAnswerProcessingQueueItem> nexportSupplementalInfoAnswerProcessingQueueRepository,
         NexportService nexportService)
     {
-            _widgetPluginManager = widgetPluginManager;
-            _logger = logger;
-            _customerService = customerService;
-            _customerActivityService = customerActivityService;
-            _settingService = settingService;
-            _nexportSupplementalInfoAnswerProcessingQueueRepository = nexportSupplementalInfoAnswerProcessingQueueRepository;
-            _nexportService = nexportService;
-        }
+        _widgetPluginManager = widgetPluginManager;
+        _logger = logger;
+        _customerService = customerService;
+        _customerActivityService = customerActivityService;
+        _settingService = settingService;
+        _nexportSupplementalInfoAnswerProcessingQueueRepository = nexportSupplementalInfoAnswerProcessingQueueRepository;
+        _nexportService = nexportService;
+    }
 
     public async Task ExecuteAsync()
     {
-            if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
-                return;
+        if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
+            return;
 
-            try
-            {
-                _batchSize = await _settingService.GetSettingByKeyAsync(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSizeSettingKey,
-                    NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSize);
+        try
+        {
+            _batchSize = await _settingService.GetSettingByKeyAsync(NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSizeSettingKey,
+                NexportDefaults.NexportSupplementalInfoAnswerProcessingTaskBatchSize);
 
-                var answers = await _nexportSupplementalInfoAnswerProcessingQueueRepository.Table
-                    .OrderBy(q => q.UtcDateCreated)
-                    .Select(q => q.Id)
-                    .Take(_batchSize)
-                    .ToListAsync();
+            var answers = await _nexportSupplementalInfoAnswerProcessingQueueRepository.Table
+                .OrderBy(q => q.UtcDateCreated)
+                .Select(q => q.Id)
+                .Take(_batchSize)
+                .ToListAsync();
 
-                await ProcessNexportSupplementalInfoAnswersAsync(answers);
-            }
-            catch (Exception ex)
-            {
-                await _logger.ErrorAsync("Cannot process Nexport supplemental info answers", ex);
-            }
+            await ProcessNexportSupplementalInfoAnswersAsync(answers);
         }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync("Cannot process Nexport supplemental info answers", ex);
+        }
+    }
 
     public async Task ProcessNexportSupplementalInfoAnswersAsync(IList<int> queueItemIds)
     {
-            try
+        try
+        {
+            foreach (var queueItemId in queueItemIds)
             {
-                foreach (var queueItemId in queueItemIds)
+                try
                 {
-                    try
+                    var queueItem = await _nexportSupplementalInfoAnswerProcessingQueueRepository.GetByIdAsync(queueItemId);
+
+                    if (queueItem == null)
+                        return;
+
+                    await _logger.DebugAsync($"Begin processing supplemental info answer for answer {queueItem.AnswerId}");
+
+                    var answer = await _nexportService.GetNexportSupplementalInfoAnswerById(queueItem.AnswerId);
+
+                    if (answer != null)
                     {
-                        var queueItem = await _nexportSupplementalInfoAnswerProcessingQueueRepository.GetByIdAsync(queueItemId);
-
-                        if (queueItem == null)
-                            return;
-
-                        await _logger.DebugAsync($"Begin processing supplemental info answer for answer {queueItem.AnswerId}");
-
-                        var answer = await _nexportService.GetNexportSupplementalInfoAnswerById(queueItem.AnswerId);
-
-                        if (answer != null)
+                        var option = await _nexportService.GetNexportSupplementalInfoOptionById(answer.OptionId);
+                        if (option != null)
                         {
-                            var option = await _nexportService.GetNexportSupplementalInfoOptionById(answer.OptionId);
-                            if (option != null)
+                            var customerMapping = await _nexportService.FindUserMappingByCustomerId(answer.CustomerId);
+                            if (customerMapping != null)
                             {
-                                var customerMapping = await _nexportService.FindUserMappingByCustomerId(answer.CustomerId);
-                                if (customerMapping != null)
+                                var customer = await _customerService.GetCustomerByIdAsync(customerMapping.NopUserId);
+                                if (customer != null)
                                 {
-                                    var customer = await _customerService.GetCustomerByIdAsync(customerMapping.NopUserId);
-                                    if (customer != null)
-                                    {
-                                        var groupAssociations =
-                                            await _nexportService.GetNexportSupplementalInfoOptionGroupAssociations(option.Id, true);
+                                    var groupAssociations =
+                                        await _nexportService.GetNexportSupplementalInfoOptionGroupAssociations(option.Id, true);
 
-                                        foreach (var groupAssociation in groupAssociations)
+                                    foreach (var groupAssociation in groupAssociations)
+                                    {
+                                        try
                                         {
-                                            try
-                                            {
-                                                var newMemberShipInfo = await _nexportService.AddNexportMembershipsAsync(customerMapping.NexportUserId, new List<Guid>(1)
+                                            var newMemberShipInfo = await _nexportService.AddNexportMembershipsAsync(customerMapping.NexportUserId, new List<Guid>(1)
                                                 {
                                                     groupAssociation.NexportGroupId
                                                 });
 
-                                                if (newMemberShipInfo.Count == 0)
-                                                    throw new Exception("Failed to create membership in Nexport");
+                                            if (newMemberShipInfo.Count == 0)
+                                                throw new Exception("Failed to create membership in Nexport");
 
-                                                await _nexportService.InsertNexportSupplementalInfoAnswerMembership(
-                                                    new NexportSupplementalInfoAnswerMembership
-                                                    {
-                                                        AnswerId = answer.Id,
-                                                        NexportMembershipId = newMemberShipInfo[0].MembershipId
-                                                    });
+                                            await _nexportService.InsertNexportSupplementalInfoAnswerMembership(
+                                                new NexportSupplementalInfoAnswerMembership
+                                                {
+                                                    AnswerId = answer.Id,
+                                                    NexportMembershipId = newMemberShipInfo[0].MembershipId
+                                                });
 
-                                                await _customerActivityService.InsertActivityAsync(customer,
-                                                    NexportDefaults
-                                                        .NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE,
-                                                    $"Successfully created membership for the group {groupAssociation.NexportGroupName} ({groupAssociation.NexportGroupShortName}) [Id: {groupAssociation.NexportGroupId}] in Nexport.");
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                await _customerActivityService.InsertActivityAsync(customer,
-                                                    NexportDefaults
-                                                        .NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE,
-                                                    $"Cannot create membership for the group {groupAssociation.NexportGroupName} ({groupAssociation.NexportGroupShortName}) [Id: {groupAssociation.NexportGroupId}] in Nexport." +
-                                                    $" Error: {(ex as ApiException).Message}");
-                                            }
+                                            await _customerActivityService.InsertActivityAsync(customer,
+                                                NexportDefaults
+                                                    .NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE,
+                                                $"Successfully created membership for the group {groupAssociation.NexportGroupName} ({groupAssociation.NexportGroupShortName}) [Id: {groupAssociation.NexportGroupId}] in Nexport.");
                                         }
-
-                                        answer.Status = NexportSupplementalInfoAnswerStatus.Processed;
-                                        answer.UtcDateProcessed = DateTime.UtcNow;
-
-                                        await _nexportService.UpdateNexportSupplementalInfoAnswer(answer);
+                                        catch (Exception ex)
+                                        {
+                                            await _customerActivityService.InsertActivityAsync(customer,
+                                                NexportDefaults
+                                                    .NEXPORT_PROCESSING_SUPPLEMENTAL_INFO_GROUP_ASSOCIATIONS_ACTIVITY_LOG_TYPE,
+                                                $"Cannot create membership for the group {groupAssociation.NexportGroupName} ({groupAssociation.NexportGroupShortName}) [Id: {groupAssociation.NexportGroupId}] in Nexport." +
+                                                $" Error: {(ex as ApiException).Message}");
+                                        }
                                     }
+
+                                    answer.Status = NexportSupplementalInfoAnswerStatus.Processed;
+                                    answer.UtcDateProcessed = DateTime.UtcNow;
+
+                                    await _nexportService.UpdateNexportSupplementalInfoAnswer(answer);
                                 }
                             }
                         }
-
-                        await _nexportService.DeleteNexportSupplementalInfoAnswerProcessingQueueItem(queueItem);
-
-                        await _logger.InformationAsync($"Supplemental info answer processing queue item {queueItemId} has been processed and removed!");
                     }
-                    catch (Exception ex)
-                    {
-                        await _logger.ErrorAsync($"Cannot process the NexportSupplementalInfoAnswerQueue item with Id {queueItemId}", ex);
-                    }
+
+                    await _nexportService.DeleteNexportSupplementalInfoAnswerProcessingQueueItem(queueItem);
+
+                    await _logger.InformationAsync($"Supplemental info answer processing queue item {queueItemId} has been processed and removed!");
+                }
+                catch (Exception ex)
+                {
+                    await _logger.ErrorAsync($"Cannot process the NexportSupplementalInfoAnswerQueue item with Id {queueItemId}", ex);
                 }
             }
-            catch (Exception ex)
-            {
-                await _logger.ErrorAsync($"Cannot process the NexportSupplementalInfoAnswerQueue", ex);
-            }
         }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync($"Cannot process the NexportSupplementalInfoAnswerQueue", ex);
+        }
+    }
 }

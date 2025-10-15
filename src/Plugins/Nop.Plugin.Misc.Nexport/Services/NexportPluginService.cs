@@ -201,6 +201,10 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.SupplementalInfo.Option.Text", "Option text" },
         { "Plugins.Misc.Nexport.SupplementalInfo.Option.Text.Hint", "The question option text" },
         { "Plugins.Misc.Nexport.SupplementalInfo.Customer.Edit", "Modify" },
+        { "Plugins.Misc.Nexport.SupplementalInfo.Question.UtcDateCreated", "Created on" },
+        { "Plugins.Misc.Nexport.SupplementalInfo.Question.UtcDateCreated.Hint", "The date/time the supplemental info question was created" },
+        { "Plugins.Misc.Nexport.SupplementalInfo.Question.UtcDateModified", "Modified date" },
+        { "Plugins.Misc.Nexport.SupplementalInfo.Question.UtcDateModified.Hint", "The date/time the supplemental info question was modified" },
 
         { "Plugins.Misc.Nexport.Navigation.SupplementalInfoAnswers", "Supplemental info answers" },
         { "Plugins.Misc.Nexport.Navigation.MyAccount.SupplementalInfoAnswers.PageTitle", "Supplemental info answers" },

@@ -11,9 +11,9 @@ public record NexportSupplementalInfoOptionModel : BaseNopEntityModel
 {
     public NexportSupplementalInfoOptionModel()
     {
-            AddGroupMembershipMappingModel = new NexportProductGroupMembershipMappingModel();
-            GroupMembershipMappingModels = new List<NexportProductGroupMembershipMappingModel>();
-        }
+        AddGroupMembershipMappingModel = new NexportProductGroupMembershipMappingModel();
+        GroupMembershipMappingModels = new List<NexportProductGroupMembershipMappingModel>();
+    }
 
     public int QuestionId { get; set; }
 
