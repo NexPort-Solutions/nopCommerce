@@ -175,7 +175,7 @@
                 <select asp-for="StoreLocationCity" asp-items="Model.AvailableCities"
                         data-storelocation-address="#@Html.IdFor(model => model.StoreLocationAddress)"
                         data-loading="#addresses-loading-progress"></select>
-                <span id="cities-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+                <span id="cities-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait")</span>
                 @if (registrationField.IsRequired)
                 {
                     <nop-required />
@@ -187,7 +187,7 @@
                 <select asp-for="StoreLocationAddress" asp-items="Model.AvailableAddresses"
                         data-storelocation-employeeposition="#@Html.IdFor(model => model.EmployeePosition)"
                         data-loading="#employee-positions-loading-progress"></select>
-                <span id="addresses-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+                <span id="addresses-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait")</span>
                 @if (registrationField.IsRequired)
                 {
                     <nop-required />
@@ -199,7 +199,7 @@
             <div class="inputs custom-attributes">
                 <label asp-for="EmployeePosition" asp-postfix=":"></label>
                 <select asp-for="EmployeePosition" asp-items="Model.AvailableEmployeePositions"></select>
-                <span id="employee-positions-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+                <span id="employee-positions-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait")</span>
                 @if (registrationField.IsRequired)
                 {
                     <nop-required />

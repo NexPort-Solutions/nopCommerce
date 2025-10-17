@@ -31,7 +31,7 @@
                     <nop-select asp-for="StoreLocationCity" asp-items="Model.AvailableCities"
                         data-storelocation-address="#@Html.IdFor(model => model.StoreLocationAddress)"
                         data-loading="#addresses-loading-progress" />
-                    <span id="cities-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+                    <span id="cities-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait")</span>
                     <span asp-validation-for="StoreLocationCity"></span>
                 </div>
             </div>
@@ -45,7 +45,7 @@
                         data-storelocation-employeeposition="#@Html.IdFor(model => model.EmployeePosition)"
                         data-loading="#employee-positions-loading-progress" />
 
-                    <span id="addresses-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+                    <span id="addresses-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait")</span>
                     <span asp-validation-for="StoreLocationAddress"></span>
                 </div>
             </div>
@@ -56,7 +56,7 @@
                 </div>
                 <div class="col-md-9">
                     <nop-select asp-for="EmployeePosition" asp-items="Model.AvailableEmployeePositions" />
-                    <span id="employee-positions-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait...")</span>
+                    <span id="employee-positions-loading-progress" style="display: none;" class="please-wait">@T("Common.Wait")</span>
                     <span asp-validation-for="EmployeePosition"></span>
                 </div>
             </div>
