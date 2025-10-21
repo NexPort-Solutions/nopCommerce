@@ -559,16 +559,18 @@ public partial class NexportService
         }
         catch (Exception ex)
         {
-            var errorMsg = $"Error occurred during Web API call AuthenticateUser for username {username}";
-            await _logger.ErrorAsync($"{errorMsg}", ex);
-
             if (ex is ApiException exception)
             {
-                var errorResponse = JsonConvert.DeserializeObject<GetUserResponse>(exception.ErrorContent.ToString()!);
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponseBase>(exception.ErrorContent.ToString()!);
                 if (errorResponse != null)
                 {
                     throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
                 }
+            }
+            else
+            {
+                var errorMsg = $"Error occurred during Web API call AuthenticateUser for username {username}";
+                await _logger.ErrorAsync($"{errorMsg}", ex);
             }
 
             throw;
@@ -613,7 +615,7 @@ public partial class NexportService
 
             if (ex is ApiException exception)
             {
-                var errorResponse = JsonConvert.DeserializeObject<GetUserResponse>(exception.ErrorContent.ToString());
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponseBase>(exception.ErrorContent.ToString()!);
                 if (errorResponse != null)
                 {
                     throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);

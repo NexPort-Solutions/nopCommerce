@@ -1,7 +1,9 @@
 ﻿using System;
+using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure;
@@ -134,5 +136,10 @@ public class RouteProvider : IRouteProvider
         endpointRouteBuilder.MapControllerRoute(name: "ReturnRequest",
             pattern: "returnrequest/{orderId:min(0)}",
             new { controller = "NexportReturnRequest", action = "ReturnRequest" });
+
+        endpointRouteBuilder.MapHangfireDashboard("/Admin/Hangfire", new DashboardOptions()
+        {
+            Authorization = new[] { new HangfireAuthorizationFilter() }
+        });
     }
 }

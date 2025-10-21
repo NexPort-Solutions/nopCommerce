@@ -4,7 +4,11 @@ using System.Threading.Tasks;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Exceptions;
 using FluentMigrator.Runner.Initialization;
+using Hangfire;
+using Hangfire.RecurringJobAdmin;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,10 +22,12 @@ using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Plugin.Misc.Nexport.Infrastructure.Logging;
 using Nop.Plugin.Misc.Nexport.Migrations;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Plugin.Misc.Nexport.Services.ScheduleJobs;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Orders;
 using Nop.Services.Stores;
+using Nop.Web.Infrastructure;
 using ILogger = Nop.Services.Logging.ILogger;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure;
@@ -36,6 +42,25 @@ public class PluginStartup : INopStartup
     /// <param name="configuration">Configuration of the application</param>
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
+        var dataSettings = DataSettingsManager.LoadSettings();
+        if (dataSettings == null ||
+            dataSettings.DataProvider == DataProviderType.Unknown ||
+            string.IsNullOrWhiteSpace(dataSettings.ConnectionString))
+            return;
+
+        services.AddHangfire(conf => conf
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UseSqlServerStorage(dataSettings.ConnectionString)
+            .UseRecurringJobAdmin(typeof(NopStartup).Assembly, typeof(NexportPlugin).Assembly));
+
+        // Add the processing server as IHostedService
+        services.AddHangfireServer(options =>
+        {
+            options.SchedulePollingInterval = TimeSpan.FromSeconds(5);
+        });
+
         services.Configure<RazorViewEngineOptions>(options =>
         {
             options.ViewLocationExpanders.Add(new ViewLocationExpander());
@@ -73,6 +98,7 @@ public class PluginStartup : INopStartup
         services.AddScoped<INexportPluginModelFactory, NexportPluginModelFactory>();
         services.AddScoped<NexportIntegrationController>();
         services.AddScoped<INexportWholesaleService, NexportNexportWholesaleService>();
+        services.AddScoped<IScheduleJobService, ScheduleJobService>();
 
         //added this line because the modelstate was invalid when trying to save product mapping
         //(line 818 editmapping in nexportintegrationcontroller) which was keeping the save from happening
@@ -151,6 +177,7 @@ public class PluginStartup : INopStartup
                 Task.Run(() => nexportPluginService.AddMessageTemplatesAsync());
                 Task.Run(() => nexportPluginService.AddOrUpdateResourcesAsync());
                 Task.Run(() => nexportPluginService.InstallPermissionProviderAsync());
+                Task.Run(() => InitScheduleJobs(application));
             }
         }
     }
@@ -180,6 +207,22 @@ public class PluginStartup : INopStartup
         catch (Exception ex)
         {
             await logger.ErrorAsync($"Error occurred during database migration process: {ex.Message}", ex);
+        }
+    }
+
+    private async Task InitScheduleJobs(IApplicationBuilder application)
+    {
+        var logger = EngineContext.Current.Resolve<ILogger>();
+
+        try
+        {
+            using var serviceScope = application.ApplicationServices.CreateScope();
+            var scheduleJobService = serviceScope.ServiceProvider.GetRequiredService<IScheduleJobService>();
+            await scheduleJobService.InitializeScheduleJobs();
+        }
+        catch (Exception ex)
+        {
+            await logger.ErrorAsync($"Error occurred during recurring job scheduling initialization: {ex.Message}", ex);
         }
     }
 

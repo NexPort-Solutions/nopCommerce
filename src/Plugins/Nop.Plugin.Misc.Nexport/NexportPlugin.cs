@@ -74,6 +74,18 @@ public class NexportPlugin(
             }
         }
 
+        var storeUrl = webHelper.GetStoreLocation();
+
+        var systemNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "System");
+        systemNode?.ChildNodes.Add(new SiteMapNode
+        {
+            Visible = true,
+            Title = "Hangfire Dashboard",
+            SystemName = "Hangfire Dashboard",
+            Url = $"{storeUrl}Admin/Hangfire",
+            IconClass = "far fa-dot-circle"
+        });
+
         var node = new SiteMapNode
         {
             SystemName = "Nexport",
