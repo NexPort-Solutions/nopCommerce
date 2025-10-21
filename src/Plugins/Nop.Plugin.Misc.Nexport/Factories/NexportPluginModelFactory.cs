@@ -1454,12 +1454,13 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         var availableFields = await _nexportService.GetNexportRegistrationFields(store.Id);
 
         var fieldsWithCategory = (await availableFields.Where(x => x.FieldCategoryId != null)
-                .GroupByAwait(async x =>
+                .ToAsyncEnumerable().GroupByAwait(async x =>
                 {
-                    var fieldCategory =
-                        await _nexportService.GetNexportRegistrationFieldCategoryById(x.FieldCategoryId.Value);
-                    return fieldCategory;
-                })
+                    if (x.FieldCategoryId == null)
+                        return null;
+
+                    return await _nexportService.GetNexportRegistrationFieldCategoryById(x.FieldCategoryId.Value);
+                }, comparer: new NexportRegistrationFieldCategoryComparer())
                 .ToDictionaryAwaitAsync(
                     async x => x.Key.ToModel<NexportRegistrationFieldCategoryModel>(),
                     x => x

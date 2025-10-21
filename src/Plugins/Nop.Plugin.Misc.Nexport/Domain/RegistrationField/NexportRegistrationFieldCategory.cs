@@ -10,3 +10,24 @@ public class NexportRegistrationFieldCategory: BaseEntity
 
     public int DisplayOrder { get; set; }
 }
+
+public class NexportRegistrationFieldCategoryComparer : IEqualityComparer<NexportRegistrationFieldCategory>
+{
+    public bool Equals(NexportRegistrationFieldCategory x, NexportRegistrationFieldCategory y)
+    {
+        if (ReferenceEquals(x, y))
+            return true;
+        if (x is null)
+            return false;
+        if (y is null)
+            return false;
+        if (x.GetType() != y.GetType())
+            return false;
+        return x.Id == y.Id;
+    }
+
+    public int GetHashCode(NexportRegistrationFieldCategory obj)
+    {
+        return obj.Id;
+    }
+}
