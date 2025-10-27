@@ -12,8 +12,8 @@
     <OutputPath>..\..\Presentation\Nop.Web\Plugins\Misc.Nexport.Archway</OutputPath>
     <OutDir>$(OutputPath)</OutDir>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>1.0.0.40</AssemblyVersion>
-    <FileVersion>1.0.0.40</FileVersion>
+    <AssemblyVersion>1.0.0.50</AssemblyVersion>
+    <FileVersion>1.0.0.50</FileVersion>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 

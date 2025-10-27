@@ -155,10 +155,10 @@ public class ArchwayStudentEmployeeRegistrationFieldModelFactory : IArchwayStude
 
         model.EmployeePosition = currentAnswers.FirstOrDefault(x => x.FieldKey == "EmployeePositionField")?.TextValue;
 
-        model.StoreNumber = int.Parse(currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreIdField")?.TextValue ?? "0");
+        model.StoreNumber = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreIdField")?.TextValue ?? "00000";
         model.StoreType = currentAnswers.FirstOrDefault(x => x.FieldKey == "StoreTypeField")?.TextValue;
 
-        var positionFromCurrentAddress = await GetArchwayStoreEmployeePositionsByStore(model.StoreNumber.ToString(), true);
+        var positionFromCurrentAddress = await GetArchwayStoreEmployeePositionsByStore(model.StoreNumber, true);
         foreach (var position in positionFromCurrentAddress)
         {
             model.AvailableEmployeePositions.Add(new SelectListItem
@@ -220,7 +220,7 @@ public class ArchwayStudentEmployeeRegistrationFieldModelFactory : IArchwayStude
                 new ArchwayStoreAddressModel
                 {
                     name = record.Address,
-                    storeNumber = record.Id,
+                    storeNumber = record.StoreNumber,
                     storeType = record.StoreType
                 })
             .ToList();

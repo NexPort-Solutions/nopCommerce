@@ -4,7 +4,7 @@ namespace Nop.Plugin.Misc.Nexport.Archway.Models;
 
 public record ArchwayStoreAddressModel : BaseNopModel
 {
-    public int storeNumber { get; set; }
+    public string storeNumber { get; set; }
 
     public string name { get; set; }
 

@@ -17,7 +17,7 @@ public record ArchwayStudentEmployeeRegistrationFieldModel : BaseNopModel
     [NopResourceDisplayName("Plugins.Misc.Nexport.Archway.Field.StoreLocationAddress")]
     public string StoreLocationAddress { get; set; }
 
-    public int StoreNumber { get; set; }
+    public string StoreNumber { get; set; }
 
     public string StoreType { get; set; }
 
