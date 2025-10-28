@@ -1,0 +1,75 @@
+﻿@model Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Setting.NexportStoreSettingsModel
+
+@{
+    ViewBag.PageTitle = T("Plugins.Misc.Nexport.Admin.Configuration.Settings.Store").Text;
+
+    NopHtml.SetActiveMenuItemSystemName("Nexport Integration - Settings - Store settings");
+
+    const string hideCommonBlockAttributeName = "NexportSettingsPage.HideCommonBlock";
+    var customer = await workContext.GetCurrentCustomerAsync();
+    var hideCommonBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideCommonBlockAttributeName);
+}
+
+<form asp-controller="NexportSetting" asp-action="Store" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Plugins.Misc.Nexport.Admin.Configuration.Settings.Store")
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.Save")
+            </button>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-horizontal">
+                @await Component.InvokeAsync(typeof(StoreScopeConfigurationViewComponent))
+                @await Component.InvokeAsync(typeof(SettingModeViewComponent))
+
+                <div asp-validation-summary="All"></div>
+
+                <nop-cards id="nexport-store-settings-cards">
+                    <nop-card asp-name="nexport-store-settings-general" asp-icon="fas fa-info" asp-title="Common" asp-hide-block-attribute-name="@hideCommonBlockAttributeName" asp-hide="@hideCommonBlock" asp-advanced="false">
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <div class="col-md-3">
+                                    <nop-override-store-checkbox asp-for="RedirectAfterOrderConfirmation_OverrideForStore" asp-input="RedirectAfterOrderConfirmation" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+                                    <nop-label asp-for="RedirectAfterOrderConfirmation" />
+                                </div>
+                                <div class="col-md-9">
+                                    <nop-editor asp-for="RedirectAfterOrderConfirmation" />
+                                    <span asp-validation-for="RedirectAfterOrderConfirmation"></span>
+                                </div>
+                            </div>
+                            <nop-nested-setting asp-for="RedirectAfterOrderConfirmation">
+                                <div class="form-group row advanced-setting">
+                                    <div class="col-md-3">
+                                        <nop-override-store-checkbox asp-for="RedirectAfterOrderConfirmationPath_OverrideForStore" asp-input="RedirectAfterOrderConfirmationPath" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+                                        <nop-label asp-for="RedirectAfterOrderConfirmationPath" />
+                                    </div>
+                                    <div class="col-md-9">
+                                        <nop-editor asp-for="RedirectAfterOrderConfirmationPath" />
+                                        <span asp-validation-for="RedirectAfterOrderConfirmationPath"></span>
+                                    </div>
+                                </div>
+                            </nop-nested-setting>
+                            <div class="form-group row">
+                                <div class="col-md-3">
+                                    <nop-override-store-checkbox asp-for="DisplayManagePurchasesLink_OverrideForStore" asp-input="DisplayManagePurchasesLink" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+                                    <nop-label asp-for="DisplayManagePurchasesLink" />
+                                </div>
+                                <div class="col-md-9">
+                                    <nop-editor asp-for="DisplayManagePurchasesLink" />
+                                    <span asp-validation-for="DisplayManagePurchasesLink"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </nop-card>
+                </nop-cards>
+            </div>
+        </div>
+    </section>
+</form>

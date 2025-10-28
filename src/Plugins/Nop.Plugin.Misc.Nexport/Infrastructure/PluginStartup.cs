@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using NexportApi.Client;
 using Nop.Core.Infrastructure;
 using Nop.Data;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
 using Nop.Plugin.Misc.Nexport.Controllers;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Filters;
@@ -96,9 +97,12 @@ public class PluginStartup : INopStartup
         services.AddScoped<NexportService>();
         services.AddScoped<NexportPluginService>();
         services.AddScoped<INexportPluginModelFactory, NexportPluginModelFactory>();
-        services.AddScoped<NexportIntegrationController>();
+        services.AddScoped<INexportSettingModelFactory, NexportSettingModelFactory>();
         services.AddScoped<INexportWholesaleService, NexportNexportWholesaleService>();
         services.AddScoped<IScheduleJobService, ScheduleJobService>();
+
+        services.AddScoped<NexportIntegrationController>();
+        services.AddScoped<NexportSettingController>();
 
         //added this line because the modelstate was invalid when trying to save product mapping
         //(line 818 editmapping in nexportintegrationcontroller) which was keeping the save from happening

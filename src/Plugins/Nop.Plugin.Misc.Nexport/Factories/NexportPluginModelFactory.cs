@@ -22,6 +22,7 @@ using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.ReturnRequest;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Setting;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
@@ -2291,16 +2292,17 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 {
                     // Show all items under group not assigned
                     invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(null, productId,
-                        searchModel.SearchStatusId, searchModel.SearchName, searchModel.SearchEmail,
-                        dateAssignedFromValue, dateAssignedToValue, orderId);
+                        searchModel.SearchStatusId,
+                        searchModel.SearchCustomerName, searchModel.SearchEmail, searchModel.SearchPurchaserName,
+                        fromUtc: dateAssignedFromValue, toUtc: dateAssignedToValue, orderId: searchModel.SearchOrderId);
                 }
                 else
                 {
                     // Show only items for group not assigned that belong to the current store and current customer
                     var store = await _storeContext.GetCurrentStoreAsync();
                     invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(null, productId,
-                        searchModel.SearchStatusId, searchModel.SearchName, searchModel.SearchEmail,
-                        dateAssignedFromValue, dateAssignedToValue, orderId, store, currentCustomer);
+                        searchModel.SearchStatusId, searchModel.SearchCustomerName, searchModel.SearchEmail,
+                        fromUtc: dateAssignedFromValue, toUtc: dateAssignedToValue, orderId: orderId, store: store, customer: currentCustomer);
                 }
             }
             // Check for wholesale purchases which the customer has purchasing agent permission on.
@@ -2313,16 +2315,16 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 {
                     // Show all items for the group
                     invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
-                        searchModel.SearchStatusId, searchModel.SearchName, searchModel.SearchEmail,
-                        dateAssignedFromValue, dateAssignedToValue, orderId);
+                        searchModel.SearchStatusId, searchModel.SearchCustomerName, searchModel.SearchEmail,
+                        fromUtc: dateAssignedFromValue, toUtc: dateAssignedToValue, orderId: searchModel.SearchOrderId);
                 }
                 else
                 {
                     // Show only items for the group that belong to the current store
                     var store = await _storeContext.GetCurrentStoreAsync();
                     invoiceItems = await _nexportService.SearchGroupProductRedemptionsAsync(groupId, productId,
-                        searchModel.SearchStatusId, searchModel.SearchName, searchModel.SearchEmail,
-                        dateAssignedFromValue, dateAssignedToValue, orderId, store, currentCustomer);
+                        searchModel.SearchStatusId, searchModel.SearchCustomerName, searchModel.SearchEmail,
+                        fromUtc: dateAssignedFromValue, toUtc: dateAssignedToValue, orderId: orderId, store: store, customer: currentCustomer);
                 }
             }
 
@@ -2735,9 +2737,13 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.DateAssignedTo.Value,
                     await _dateTimeHelper.GetCurrentTimeZoneAsync()).AddDays(1);
 
-            var invoiceItems = await _nexportService.SearchProductRedemptionsAsync(searchModel.FundingPoolId, null,
-                searchModel.SearchCustomerEmail, searchModel.SearchCustomerName, searchModel.SearchStatusId,
-                dateAssignedFromValue, dateAssignedToValue);
+            //var invoiceItems = await _nexportService.SearchProductRedemptionsAsync(searchModel.FundingPoolId, null,
+            //    searchModel.SearchCustomerEmail, searchModel.SearchCustomerName, searchModel.SearchStatusId,
+            //    dateAssignedFromValue, dateAssignedToValue);
+            var invoiceItems = await _nexportService.SearchProductRedemptionsAsync(searchModel.FundingPoolId, searchModel.SearchStatusId,
+                searchModel.SearchCustomerName, searchModel.SearchCustomerEmail, searchModel.SearchPurchaserName,
+                productName: searchModel.SearchProductName, fromUtc: dateAssignedFromValue, toUtc: dateAssignedToValue,
+                orderId: searchModel.SearchOrderId);
 
             if (invoiceItems != null)
             {
@@ -2889,8 +2895,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
             {
                 var invoiceRedemptions = await _nexportService.SearchGroupProductRedemptionsAsync(
                     searchModel.GroupId, searchModel.ProductId,
-                    customerEmail: customer.Email,
-                    redemptionStatus: NexportOrderInvoiceItemRedemptionStatus.Assigned);
+                    redemptionStatus: NexportOrderInvoiceItemRedemptionStatus.Assigned, customerEmail: customer.Email);
 
                 try
                 {

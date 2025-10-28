@@ -19,10 +19,8 @@
     var currentGroupId = Model.CurrentGroup.OrganizationId;
 
     var groupProductsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Products") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Products");
-    // var groupProductRedemptionsRouteUrl = Model.AdminView ? Url.RouteUrl("Plugin.Misc.Nexport.Admin.Group.Product.Redemptions") : Url.RouteUrl("Plugin.Misc.Nexport.Customer.Group.Product.Redemptions");
 
     var groupText = Model.CurrentGroup.OrganizationId != null ? Model.CurrentGroup.Name + " - " : "";
-    //var groupProductRedemptionText = T("Plugins.Misc.Nexport.Group.Product.Redemptions") + " - " + groupText + Model.CurrentProduct.Name;
 
     var hasGroupPermission = Model.CurrentGroup.OrganizationId != null && await NexportService.HasGroupPermissionAsync(currentCustomer, Model.CurrentGroup.OrganizationId.Value);
 
@@ -54,6 +52,13 @@
 
     if (hasGroupPermission || Model.AdminView)
     {
+        redemptionsColumns.Add(new ColumnProperty(nameof(NexportGroupProductRedemptionModel.OrderId))
+        {
+            Title = T("Plugins.Misc.Nexport.Group.Product.Redemption.OrderNumber").Text,
+            Width = "50",
+            Render = new RenderCustom("renderOrderNumber"),
+        });
+
         redemptionsColumns.Add(new ColumnProperty(nameof(NexportGroupProductRedemptionModel.PurchasedInStore))
         {
             Title = T("Plugins.Misc.Nexport.Group.Product.Redemption.PurchasedInStore").Text,
@@ -125,8 +130,10 @@
         LengthMenu = Model.AvailablePageSizes,
         Filters = new List<FilterParameter>
         {
-            new(nameof(Model.SearchName)),
+            new(nameof(Model.SearchCustomerName)),
             new(nameof(Model.SearchEmail)),
+            new(nameof(Model.SearchPurchaserName)),
+            new(nameof(Model.SearchOrderId)),
             new(nameof(Model.SearchStatusId)),
             new(nameof(Model.DateAssignedFrom)),
             new(nameof(Model.DateAssignedTo)),
@@ -173,10 +180,10 @@
                                 <div class="col-md-5">
                                     <div class="form-group row">
                                         <div class="col-md-4">
-                                            <nop-label asp-for="SearchName" />
+                                            <nop-label asp-for="SearchCustomerName" />
                                         </div>
                                         <div class="col-md-8">
-                                            <nop-editor asp-for="SearchName" />
+                                            <nop-editor asp-for="SearchCustomerName" />
                                         </div>
                                     </div>
                                     <div class="form-group row">
@@ -187,6 +194,25 @@
                                             <nop-editor asp-for="SearchEmail" />
                                         </div>
                                     </div>
+                                    @if (Model.AdminView)
+                                    {
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="SearchPurchaserName" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="SearchPurchaserName" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="SearchOrderId" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="SearchOrderId" />
+                                            </div>
+                                        </div>
+                                    }
                                 </div>
                                 <div class="col-md-7">
                                     <div class="form-group row">

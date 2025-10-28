@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using AutoMapper;
-using AutoMapper.Internal;
 using AutoMapper.Configuration;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Orders;
@@ -13,6 +9,7 @@ using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.FundingPool;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.ReturnRequest;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Setting;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
@@ -223,6 +220,13 @@ public class NexportPluginMapperConfiguration : Profile, IOrderedMapperProfile
 
         CreateMap<NexportRedemptionAuditLog, NexportRedemptionAuditLogModel>();
         CreateMap<NexportRedemptionAuditLogModel, NexportRedemptionAuditLog>();
+
+        CreateMap<NexportStoreSettings, NexportStoreSettingsModel>()
+            .ForMember(model => model.RedirectAfterOrderConfirmation_OverrideForStore, opts => opts.Ignore())
+            .ForMember(model => model.RedirectAfterOrderConfirmationPath_OverrideForStore, opts => opts.Ignore())
+            .ForMember(model => model.DisplayManagePurchasesLink_OverrideForStore, opts => opts.Ignore());
+
+        CreateMap<NexportStoreSettingsModel, NexportStoreSettings>();
     }
 
     public int Order => 0;

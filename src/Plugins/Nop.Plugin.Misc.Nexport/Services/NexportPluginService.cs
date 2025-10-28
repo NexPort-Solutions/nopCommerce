@@ -27,6 +27,7 @@ public class NexportPluginService
     private readonly IScheduleTaskService _scheduleTaskService;
     private readonly IScheduleTaskRunner _taskRunner;
     private readonly ISettingService _settingService;
+    private readonly ILanguageService _languageService;
     private readonly ILocalizationService _localizationService;
     private readonly ICustomerActivityService _customerActivityService;
     private readonly IMessageTemplateService _messageTemplateService;
@@ -80,6 +81,16 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.DisplayLastPurchaseInfo.Hint", "Display the last purchase information in the product page" },
         { "Plugins.Misc.Nexport.OverrideNexportOwnerOrgId", "Override owner organization Id" },
         { "Plugins.Misc.Nexport.OverrideNexportOwnerOrgId.Hint", "Override owner organization Id of the users during registration" },
+
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.Store", "Store Settings" },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.Store.RedirectAfterOrderConfirmation", "Redirect after order confirmation" },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.Store.RedirectAfterOrderConfirmation.Hint", "Store Settings" },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.Store.RedirectAfterOrderConfirmationPath", "Redirect path" },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.Store.RedirectAfterOrderConfirmationPath.Hint", "Store Settings" },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.Store.DisplayManagePurchasesLink", "Display manage purchases link" },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.Store.DisplayManagePurchasesLink.Hint", "Store Settings" },
+        { "Plugins.Misc.Nexport.DisplayManagePurchaseLink.Title", "MANAGE PURCHASES" },
+        { "Plugins.Misc.Nexport.DisplayManagePurchaseLink.Link", "Click here to redeem or assign purchases" },
 
         { "Plugins.Misc.Nexport.NexportProductName", "Product name" },
         { "Plugins.Misc.Nexport.NexportProductName.Hint", "The name of the product in Nexport" },
@@ -374,6 +385,7 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.Group.Product.Redemption.Customer", "Customer" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.Customer.Name", "Customer Name" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.Customer.Email", "Customer Email" },
+        { "Plugins.Misc.Nexport.Group.Product.Redemption.OrderNumber", "Order #" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.PurchasedBy", "Purchased By" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.PurchasedInStore", "Store" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.Product.Name", "Product Name" },
@@ -403,6 +415,10 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.Group.Product.Redemption.SearchCustomerName.Hint", "Search by customer name" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.SearchCustomerEmail", "Email" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.SearchCustomerEmail.Hint", "Search by customer email" },
+        { "Plugins.Misc.Nexport.Group.Product.Redemption.SearchPurchaserName", "Purchaser name" },
+        { "Plugins.Misc.Nexport.Group.Product.Redemption.SearchPurchaserName.Hint", "Search by purchaser name" },
+        { "Plugins.Misc.Nexport.Group.Product.Redemption.SearchOrderNumber", "Order #" },
+        { "Plugins.Misc.Nexport.Group.Product.Redemption.SearchOrderNumber.Hint", "Search by order number" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.SearchProductName", "Name" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.SearchProductName.Hint", "Search by product name" },
         { "Plugins.Misc.Nexport.Group.Product.Redemption.SearchStatus", "Status" },
@@ -587,6 +603,7 @@ public class NexportPluginService
         IScheduleTaskRunner taskRunner,
         ISettingService settingService,
         IPermissionService permissionService,
+        ILanguageService languageService,
         ILocalizationService localizationService,
         ICustomerActivityService customerActivityService,
         IMessageTemplateService messageTemplateService,
@@ -600,6 +617,7 @@ public class NexportPluginService
         _taskRunner = taskRunner;
         _settingService = settingService;
         _permissionService = permissionService;
+        _languageService = languageService;
         _localizationService = localizationService;
         _customerActivityService = customerActivityService;
         _messageTemplateService = messageTemplateService;
@@ -1056,8 +1074,19 @@ public class NexportPluginService
         }
     }
 
+    protected async Task<List<int>> GetAvailableLanguageIds()
+    {
+        var languages = await _languageService.GetAllLanguagesAsync(true);
+        var languageIds = languages.Select(x => x.Id).ToList();
+
+        return languageIds;
+    }
+
     public async Task AddOrUpdateResourceAsync(string resourceName, string resourceValue, int languageId = 1)
     {
+        if (languageId < 0)
+            throw new ArgumentOutOfRangeException(nameof(languageId), "Invalid language ID");
+
         if (await _nexportPluginLocalizationService.CheckForExistingResourceAndAddNonExistingResource(resourceName, resourceValue, languageId))
         {
             var nexportSetting = await _settingService.GetSettingAsync("Plugin.Misc.Nexport.HasModifiedLocaleResources");
@@ -1071,27 +1100,42 @@ public class NexportPluginService
 
     public async Task AddOrUpdateResourcesAsync()
     {
+        var languageIds = await GetAvailableLanguageIds();
+
         foreach (var localeResource in _localeResources)
         {
-            await AddOrUpdateResourceAsync(localeResource.Key, localeResource.Value);
+            foreach (var languageId in languageIds)
+            {
+                await AddOrUpdateResourceAsync(localeResource.Key, localeResource.Value, languageId);
+            }
         }
     }
 
     public async Task DeleteResourcesAsync()
     {
-        await _localizationService.DeleteLocaleResourcesAsync(_localeResources.Keys.ToList());
+        var languageIds = await GetAvailableLanguageIds();
+
+        foreach (var languageId in languageIds)
+        {
+            await _localizationService.DeleteLocaleResourcesAsync(_localeResources.Keys.ToList(), languageId);
+        }
     }
 
     public async Task<List<LocaleStringResource>> GetConflictedLocalizedResourcesAsync()
     {
+        var languageIds = await GetAvailableLanguageIds();
+
         var results = new List<LocaleStringResource>();
 
         foreach (var localeResource in GetLocaleResources())
         {
-            var currentResource = await _localizationService.GetLocaleStringResourceByNameAsync(localeResource.Key, 1, false);
-            if (currentResource.ResourceValue != localeResource.Value)
+            foreach (var languageId in languageIds)
             {
-                results.Add(currentResource);
+                var currentResource = await _localizationService.GetLocaleStringResourceByNameAsync(localeResource.Key, languageId, false);
+                if (currentResource.ResourceValue != localeResource.Value)
+                {
+                    results.Add(currentResource);
+                }
             }
         }
 

@@ -2302,8 +2302,10 @@ public partial class NexportService : INexportService
     }
 
     public async Task<IList<NexportOrderInvoiceItem>> SearchGroupProductRedemptionsAsync(Guid? groupId, int productId,
-        NexportOrderInvoiceItemRedemptionStatus? redemptionStatus, string customerName = null, string customerEmail = null,
-        DateTime? fromUtc = null, DateTime? toUtc = null, int? orderId = null, Store store = null, Customer customer = null)
+        NexportOrderInvoiceItemRedemptionStatus? redemptionStatus,
+        string customerName = null, string customerEmail = null, string purchaserName = null,
+        DateTime? fromUtc = null, DateTime? toUtc = null, int? orderId = null, Store store = null,
+        Customer customer = null)
     {
         if (groupId == Guid.Empty)
             throw new ArgumentException("Group Id cannot be empty Guid", nameof(groupId));
@@ -2314,9 +2316,25 @@ public partial class NexportService : INexportService
         var invoiceItemQuery = _nexportOrderInvoiceItemRepository.Table;
 
         var orderQuery = _orderRepository.Table;
+
         if (customer != null)
         {
             orderQuery = orderQuery.Where(x => x.CustomerId == customer.Id);
+        }
+        else
+        {
+            if (!string.IsNullOrWhiteSpace(purchaserName))
+            {
+                var customerQuery = _customerRepository.Table;
+
+                customerQuery = customerQuery.Where(x => x.FirstName.Contains(purchaserName) || x.LastName.Contains(purchaserName));
+                var customerIdList = await customerQuery.Select(x => x.Id).ToListAsync();
+
+                if (customerIdList.Any())
+                {
+                    orderQuery = orderQuery.Where(x => customerIdList.Contains(x.CustomerId));
+                }
+            }
         }
 
         if (store != null)
@@ -2376,15 +2394,35 @@ public partial class NexportService : INexportService
     }
 
     public async Task<IList<NexportOrderInvoiceItem>> SearchProductRedemptionsAsync(int? fundingPoolId,
-        string customerName, string customerEmail, string productName, NexportOrderInvoiceItemRedemptionStatus? redemptionStatus,
-        DateTime? fromUtc, DateTime? toUtc, Store store = null)
+        NexportOrderInvoiceItemRedemptionStatus? redemptionStatus,
+        string customerName = null, string customerEmail = null, string purchaserName = null, string productName = null,
+        DateTime? fromUtc = null, DateTime? toUtc = null, Store store = null, int? orderId = null)
     {
         var invoiceItemQuery = _nexportOrderInvoiceItemRepository.Table;
 
         var orderQuery = _orderRepository.Table;
+
+        if (!string.IsNullOrWhiteSpace(purchaserName))
+        {
+            var customerQuery = _customerRepository.Table;
+
+            customerQuery = customerQuery.Where(x => x.FirstName.Contains(purchaserName) || x.LastName.Contains(purchaserName));
+            var customerIdList = await customerQuery.Select(x => x.Id).ToListAsync();
+
+            if (customerIdList.Any())
+            {
+                orderQuery = orderQuery.Where(x => customerIdList.Contains(x.CustomerId));
+            }
+        }
+
         var orderIdList = await orderQuery.Select(x => x.Id).ToListAsync();
 
         invoiceItemQuery = invoiceItemQuery.Where(x => orderIdList.Contains(x.OrderId));
+
+        if (orderId != null)
+        {
+            invoiceItemQuery = invoiceItemQuery.Where(x => x.OrderId == orderId);
+        }
 
         if (fromUtc.HasValue)
             invoiceItemQuery = invoiceItemQuery.Where(x => fromUtc.Value <= x.UtcDateRedemption);

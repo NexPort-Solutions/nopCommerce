@@ -9,6 +9,8 @@
     Layout = "_ConfigurePlugin";
 
     NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap3-typeahead.js", "", true);
+
+    NopHtml.SetActiveMenuItemSystemName("Nexport Integration - Settings - General");
 }
 
 <form asp-controller="NexportIntegration" asp-action="Configure" method="post">

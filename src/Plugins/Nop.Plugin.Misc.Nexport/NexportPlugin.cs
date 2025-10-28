@@ -94,20 +94,40 @@ public class NexportPlugin(
             IconClass = "fas fa-plug",
         };
 
-        node.ChildNodes.Add(new SiteMapNode
+        var pluginSettingsNode = new SiteMapNode
+        {
+            SystemName = "Nexport Integration - Settings",
+            Visible = true,
+            Title = "Settings",
+            IconClass = "far fa-dot-circle",
+        };
+
+        pluginSettingsNode.ChildNodes.Add(new SiteMapNode
         {
             Visible = await permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins),
-            Title = "Configuration",
-            SystemName = "Nexport Integration - Configuration",
+            Title = "General",
+            SystemName = "Nexport Integration - Settings - General",
             ControllerName = "NexportIntegration",
             ActionName = "Configure",
-            IconClass = "far fa-dot-circle"
+            IconClass = "far fa-circle"
         });
+
+        pluginSettingsNode.ChildNodes.Add(new SiteMapNode
+        {
+            Visible = await permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins),
+            Title = "Store settings",
+            SystemName = "Nexport Integration - Settings - Store settings",
+            ControllerName = "NexportSetting",
+            ActionName = "Store",
+            IconClass = "far fa-circle"
+        });
+
+        node.ChildNodes.Add(pluginSettingsNode);
 
         node.ChildNodes.Add(new SiteMapNode
         {
             Visible = await permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores),
-            Title = "Store Configuration",
+            Title = "Store configuration",
             SystemName = "Nexport Integration - Store Configuration",
             ControllerName = "Store",
             ActionName = "List",

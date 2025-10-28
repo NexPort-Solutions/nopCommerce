@@ -26,6 +26,16 @@
         return "";
     }
 
+    function renderOrderNumber(data, type, row, meta) {
+        if (isAdminView) {
+            var viewOrderLink = "@Url.Action("Edit", "Order")/" + row.OrderId;
+            var orderLink = "<a href=\"" + viewOrderLink + "\">" + row.OrderId + "</a>";
+            return orderLink;
+        }
+
+        return row.OrderId;
+    }
+
     function renderPurchasedByCustomerDetails(data, type, row, meta) {
         if (row.PurchasedByCustomerName !== null) {
             var emailTextDetails = row.PurchasedByCustomerEmail;

@@ -16,15 +16,23 @@ public record NexportGroupProductRedemptionListSearchModel : BaseSearchModel
 
     public Product CurrentProduct { get; set; }
 
+    [UIHint("Int32Nullable")]
     public int? OrderId {get; set; }
 
     public bool AdminView { get; set; } = false;
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchCustomerName")]
-    public string SearchName { get; set; }
+    public string SearchCustomerName { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchCustomerEmail")]
     public string SearchEmail { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchPurchaserName")]
+    public string SearchPurchaserName { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchOrderNumber")]
+    [UIHint("Int32Nullable")]
+    public int? SearchOrderId { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchStatus")]
     public NexportOrderInvoiceItemRedemptionStatus? SearchStatusId { get; set; }
@@ -58,6 +66,13 @@ public record NexportProductRedemptionListSearchModel : BaseSearchModel
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchCustomerEmail")]
     public string SearchCustomerEmail { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchPurchaserName")]
+    public string SearchPurchaserName { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchOrderNumber")]
+    [UIHint("Int32Nullable")]
+    public int? SearchOrderId { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Group.Product.Redemption.SearchProductName")]
     public string SearchProductName { get; set; }
