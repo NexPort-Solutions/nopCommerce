@@ -5,6 +5,7 @@
         vertical-align: middle;
     }
 </style>
+
 <script>
     var currentPurchasingProducts = new Array();
     @foreach (var item in Model.Items)
@@ -32,16 +33,16 @@
             <thead>
                 <tr>
                     <th>
-                        @T("ShoppingCart.Product(s)")
+                        @T("Plugins.Misc.Nexport.Wholesale.Purchase.Product(s)")
                     </th>
                     <th>
-                        @T("ShoppingCart.UnitPrice")
+                        @T("Plugins.Misc.Nexport.Wholesale.Purchase.UnitPrice")
                     </th>
                     <th>
-                        @T("ShoppingCart.Quantity")
+                        @T("Plugins.Misc.Nexport.Wholesale.Purchase.Quantity")
                     </th>
                     <th>
-                        @T("ShoppingCart.Remove")
+                        @T("Plugins.Misc.Nexport.Wholesale.Purchase.Remove")
                     </th>
                 </tr>
             </thead>
@@ -54,17 +55,15 @@
                             <a href="@(Url.RouteUrl<Product>(new { SeName = item.Name }))" class="product-name">@item.Name</a>
                         </td>
                         <td>
-                            @* <label class="td-title">@T("ShoppingCart.UnitPrice"):</label> *@
                             <span class="product-unit-price">$@item.Price.ToString("0.00")</span>
+                            <input type="hidden" name="itemprice@(item.Id)" value="@(item.Price)" />
                         </td>
                         <td>
-                            @* <label class="td-title" for="itemquantity@(item.Id)">@T("ShoppingCart.Quantity"):</label> *@
-                            <input name="itemquantity@(item.Id)" id="itemquantity@(item.Id)" type="number" value="1" class="form-control" aria-label="@T("ShoppingCart.Quantity")" />
+                            <input name="itemquantity@(item.Id)" id="itemquantity@(item.Id)" type="number" value="1" class="form-control" aria-label="@T("Plugins.Misc.Nexport.Wholesale.Purchase.Quantity")" />
                         </td>
                         <td>
-                            @* <input type="checkbox" name="removefromcart" id="removefromcart@(item.Id)" value="@(item.Id)" aria-label="@T("ShoppingCart.Remove")" /> *@
                             <button type="button" name="removefromcart" data-product-Id="@(item.Id)" class="btn btn-outline-danger">
-                                <i class="fas fa-times"></i> Remove
+                                <i class="fas fa-times"></i> @T("Plugins.Misc.Nexport.Wholesale.Purchase.Remove")
                             </button>
                         </td>
                     </tr>
@@ -75,9 +74,7 @@
 </div>
 <script>
     $("[name='removefromcart']").on("click", function (e) {
-        console.log("test");
         var removingProductId = $(e.target).attr("data-product-id");
         $("[data-product-id='" + removingProductId + "']").remove();
-        console.log(currentPurchasingProducts);
     });
 </script>

@@ -4,12 +4,7 @@
 
 @{
     ViewBag.PageTitle = T("Plugins.Misc.Nexport.Wholesale.AddNew").Text;
-    NopHtml.SetActiveMenuItemSystemName("Orders");
-}
-
-@{
-    const string hideSearchBlockAttributeName = "ProductListPage.HideSearchBlock";
-    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
+    NopHtml.SetActiveMenuItemSystemName("New Wholesale Order");
 }
 
 <style>
@@ -54,7 +49,6 @@
 <form asp-controller="NexportWholesale" asp-action="PlaceWholesaleOrder" method="post" id="wholesale-order-form">
     <input type="submit" id="btnRefreshWholesaleOrderProducts" style="display: none">
     <input type="submit" id="btnShowPayment" style="display: none">
-    @* <input type="hidden" id="wholesaleOrderProducts" /> *@
 
     <div class="content-header clearfix">
         <h1 class="float-left">
@@ -125,6 +119,7 @@
                                     </div>
                                     <div class="col-md-10">
                                         <nop-select asp-for="OrganizationId" asp-items="Model.AvailableOrganizations" />
+                                        <span style="color: #6262ff;">* Requires additional purchasing agent permission in Nexport</span>
                                     </div>
                                     <input type="hidden" id="OrganizationName" name="OrganizationName" />
                                     <input type="hidden" id="OrganizationShortName" name="OrganizationShortName" />
@@ -188,7 +183,6 @@
 
         $("#btnShowPayment").on("click", function (e) {
             $("#nexport-purchasing-details-container").show();
-            // $("#redeem-by-container").show();
 
             $("#payment-method-container").show();
 
@@ -198,23 +192,29 @@
         $("#@Html.IdFor(model => model.PaymentMethod)").on("change", function (e) {
             var paymentSystemName = $(e.target).val();
             if (paymentSystemName !== null) {
-                $.ajax({
-                    cache: false,
-                    url: "@(Url.Action("WholesaleOrderPaymentInfo", "NexportWholesale"))",
-                    traditional: true,
-                    data: {
-                        "paymentSystemName": paymentSystemName
-                    },
-                    success: function (data, textStatus, jqXHR) {
-                        $("#payment-method-view-details").html(data);
-                        $("#payment-method-view-details").find("input").addClass("form-control");
-                        $("#payment-method-view-details").find("select").addClass("form-control");
-                        $("#payment-method-details-container").show();
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        console.log("Error while getting payment detail view!");
-                    }
-                });
+                if (paymentSystemName === "Payments.NoPayment")
+                {
+                    $("#payment-method-view-details").html();
+                    $("#payment-method-details-container").hide();
+                } else {
+                    $.ajax({
+                        cache: false,
+                        url: "@(Url.Action("WholesaleOrderPaymentInfo", "NexportWholesale"))",
+                        traditional: true,
+                        data: {
+                            "paymentSystemName": paymentSystemName
+                        },
+                        success: function (data, textStatus, jqXHR) {
+                            $("#payment-method-view-details").html(data);
+                            $("#payment-method-view-details").find("input").addClass("form-control");
+                            $("#payment-method-view-details").find("select").addClass("form-control");
+                            $("#payment-method-details-container").show();
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            console.log("Error while getting payment detail view!");
+                        }
+                    });
+                }
             }
         });
 

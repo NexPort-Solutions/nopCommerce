@@ -221,28 +221,18 @@ public class NexportWholesaleController : BaseAdminController
             ModelState.AddModelError(string.Empty, "Invalid store.");
         }
 
-        var activePlugins = await _paymentPluginManager.LoadActivePluginsAsync(customer, model.StoreId);
-        var paymentMethod = activePlugins
-            .Select(plugin => plugin.ToPluginModel<PaymentMethodModel>())
-            .FirstOrDefault(p => p.SystemName == model.PaymentMethod);
-
-        if (paymentMethod == null)
+        if (model.PaymentMethod != "Payments.NoPayment")
         {
-            ModelState.AddModelError(string.Empty, "Selected payment method is invalid.");
-        }
+            var activePlugins = await _paymentPluginManager.LoadActivePluginsAsync(customer, model.StoreId);
+            var paymentMethod = activePlugins
+                .Select(plugin => plugin.ToPluginModel<PaymentMethodModel>())
+                .FirstOrDefault(p => p.SystemName == model.PaymentMethod);
 
-        //if (await _nexportService.GetOrganizationDetailsAsync(model.OrganizationId) is null)
-        //{
-        //    ModelState.AddModelError(nameof(model.OrganizationId), "Invalid organization.");
-        //}
-        //if (!model.IsRedemptionPeriodUnlimited && (model.RedeemByUtc is null || model.RedeemByUtc.Value <= DateTime.UtcNow))
-        //{
-        //    ModelState.AddModelError(nameof(model.RedeemByUtc), $"{nameof(model.RedeemByUtc)} must be a date in the future or {nameof(model.IsRedemptionPeriodUnlimited)} must be true.");
-        //}
-        //if (model.Quantity is > 100_000 or < 1)
-        //{
-        //    ModelState.AddModelError(nameof(model.Quantity), $"{nameof(model.Quantity)} {model.Quantity} is invalid.");
-        //}
+            if (paymentMethod == null)
+            {
+                ModelState.AddModelError(string.Empty, "Selected payment method is invalid.");
+            }
+        }
 
         if (ModelState.IsValid)
         {
@@ -270,7 +260,7 @@ public class NexportWholesaleController : BaseAdminController
                 OrderGuidGeneratedOnUtc = DateTime.UtcNow,
                 StoreId = model.StoreId,
                 CustomerId = customer.Id,
-                PaymentMethodSystemName = model.PaymentMethod
+                PaymentMethodSystemName = model.PaymentMethod == "Payments.NoPayment" ? "" : model.PaymentMethod
             };
 
             var groupModel = new NexportGroupModel

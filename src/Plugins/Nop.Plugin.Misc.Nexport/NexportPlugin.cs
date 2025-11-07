@@ -195,6 +195,16 @@ public class NexportPlugin(
         wholesaleNode.ChildNodes.Add(new SiteMapNode
         {
             Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools),
+            Title = "Funding Pools",
+            SystemName = "Nexport Funding Pools",
+            ControllerName = "NexportWholesale",
+            ActionName = "ListFundingPools",
+            IconClass = "far fa-dot-circle"
+        });
+
+        wholesaleNode.ChildNodes.Add(new SiteMapNode
+        {
+            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools),
             Title = "Assignment Approval Requests",
             SystemName = "Assignment Approval Requests",
             ControllerName = "NexportWholesale",

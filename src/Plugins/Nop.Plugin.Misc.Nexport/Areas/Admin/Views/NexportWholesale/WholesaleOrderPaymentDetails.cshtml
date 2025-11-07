@@ -1,9 +1,12 @@
 ﻿@model Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders.WholesaleOrderPaymentInfoModel
 
-<div class="checkout-data">
-    <div class="section payment-info">
-        <div class="info">
-            @await Component.InvokeAsync(Model.PaymentViewComponent)
+@if(Model is { PaymentViewComponent: not null })
+{
+    <div class="checkout-data">
+        <div class="section payment-info">
+            <div class="info">
+                @await Component.InvokeAsync(Model.PaymentViewComponent)
+            </div>
         </div>
     </div>
-</div>
+}

@@ -42,7 +42,7 @@ public class CancelPendingOrderRequestsPlugin : BasePlugin, IAdminMenuPlugin, IM
             Title = "Cancellation requests",
             ControllerName = "CancelPendingOrderRequests",
             ActionName = "List",
-            IconClass = "fa fa-dot-circle-o",
+            IconClass = "far fa-dot-circle",
             Visible = true
         };
 
