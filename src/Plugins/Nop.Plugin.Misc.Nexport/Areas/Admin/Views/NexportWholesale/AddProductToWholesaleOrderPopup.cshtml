@@ -131,7 +131,7 @@
 
                             <script>
                                 function renderColumnPrice(data, type, row, meta) {
-                                    return (row.ProductTypeId != @((int)ProductType.GroupedProduct) ) ? data : null;
+                                    return (row.ProductTypeId !== @((int)ProductType.GroupedProduct) ) ? data : null;
                                 }
 
                                 function renderNexportProductMappingAvailable(data, type, row, meta) {
@@ -154,9 +154,8 @@
         var postData = {
             selectedIds: selectedIds
         };
-        console.log(postData);
+
         window.opener.wholesaleOrderProductsList = postData;
-        // $(window.opener.document.forms["@(Context.Request.Query["formId"])"].wholesaleOrderProducts).val(JSON.stringify(postData));
         window.opener.document.forms["@(Context.Request.Query["formId"])"].btnRefreshWholesaleOrderProducts.click();
         window.opener.document.forms["@(Context.Request.Query["formId"])"].btnShowPayment.click();
 

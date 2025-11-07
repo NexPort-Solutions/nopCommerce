@@ -1929,6 +1929,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
             return new SelectListItem { Text = paymentMethodModel.FriendlyName, Value = paymentMethodModel.SystemName };
         }).ToList();
         model.AvailablePaymentMethods.Insert(0, new SelectListItem { Text = "Select payment method", Value = null });
+        model.AvailablePaymentMethods.Insert(1, new SelectListItem { Text = "No payment", Value = "Payments.NoPayment" });
 
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
@@ -1948,12 +1949,26 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                 _nexportSettings.RootOrganizationId.Value)));
         model.AvailableOrganizations = groupsFromApi.Select(org =>
             new SelectListItem { Text = $"{org.Name} ({org.ShortName})", Value = org.Id.ToString() }).ToList();
-        model.AvailableOrganizations.Insert(0, new SelectListItem { Text = "Select organization", Value = "" });
+        if (model.AvailableOrganizations.Count > 0)
+        {
+            model.AvailableOrganizations.Insert(0, new SelectListItem { Text = "Select organization", Value = "" });
+        }
+        else
+        {
+            model.AvailableOrganizations.Insert(0, new SelectListItem { Text = "No organization available", Value = "" });
+        }
 
         var fundingPools = await _nexportWholesaleService.GetFundingPools();
         model.AvailableFundingPools = fundingPools.Select(fundingPool =>
             new SelectListItem { Text = $"{fundingPool.Name}", Value = fundingPool.Id.ToString() }).ToList();
-        model.AvailableFundingPools.Insert(0, new SelectListItem { Text = "Select funding pool", Value = "" });
+        if (model.AvailableFundingPools.Count > 0)
+        {
+            model.AvailableFundingPools.Insert(0, new SelectListItem { Text = "Select a funding pool or leave empty for no funding pool", Value = "" });
+        }
+        else
+        {
+            model.AvailableFundingPools.Insert(0, new SelectListItem { Text = "No funding pool available", Value = "" });
+        }
 
         return model;
     }
@@ -2022,10 +2037,12 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         return productListModel;
     }
 
-    public virtual async Task<WholesaleOrderPaymentInfoModel> PrepareWholesaleOrderPaymentInfoModelAsync(
-        string paymentSystemName)
+    public virtual async Task<WholesaleOrderPaymentInfoModel> PrepareWholesaleOrderPaymentInfoModelAsync(string paymentSystemName)
     {
-        var paymentMethod = await _paymentPluginManager.LoadActivePluginsAsync(new List<string> { paymentSystemName });
+        if (paymentSystemName == "Payments.NoPayment")
+            return new WholesaleOrderPaymentInfoModel();
+
+        var paymentMethod = await _paymentPluginManager.LoadActivePluginsAsync([paymentSystemName]);
         if (paymentMethod.Count > 0)
         {
             return new WholesaleOrderPaymentInfoModel
@@ -3363,7 +3380,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         var model = new MapProductToCategoryModel
         {
             AvailableCategories =
-                (await _categoryService.GetAllCategoriesAsync())
+                (await _categoryService.GetAllCategoriesAsync(showHidden: true))
                 .Select(x => new SelectListItem(x.Name, $"{x.Id}"))
                 .ToList()
         };

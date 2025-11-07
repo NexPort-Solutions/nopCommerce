@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
@@ -8,10 +6,10 @@ namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 
 public class WholesaleOrderModel
 {
-    [NopResourceDisplayName("Admin.CurrentCarts.Store")]
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.Purchase.Store")]
     public int StoreId { get; set; }
 
-    [NopResourceDisplayName("Plugins.Misc.Nexport.Order.GroupId")]
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.Purchase.PurchasingGroup")]
     [UIHint("GuidNullable")]
     public Guid? OrganizationId { get; set; }
 
@@ -19,7 +17,7 @@ public class WholesaleOrderModel
 
     public string OrganizationShortName { get; set; }
 
-    [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.RedeemBy")]
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.Purchase.RedeemBy")]
     [UIHint("DateNullable")]
     public DateTime? RedeemByUtc { get; set; }
 
@@ -29,6 +27,7 @@ public class WholesaleOrderModel
     [NopResourceDisplayName("Admin.Orders.Fields.PaymentMethod")]
     public string PaymentMethod { get; set; }
 
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.Purchase.FundingPool")]
     [UIHint("Int32Nullable")]
     public int? FundingPoolId { get; set; }
 
