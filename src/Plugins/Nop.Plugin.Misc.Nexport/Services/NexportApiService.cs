@@ -809,6 +809,47 @@ public class NexportApiService(Configuration apiConfiguration)
         return result;
     }
 
+    public AddInvoiceItemsResponse AddNexportInvoiceItems([NotNull] string url, [NotNull] string accessToken,
+        Guid invoiceId, Guid productId, Enums.ProductTypeEnum productType,
+        Guid subscriptionOrgId, IList<Guid> groupMembershipIds,
+        decimal cost, int quantity = 1, string note = null, DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null,
+        Guid? purchasingGroupId = null, string fundingPool = null, DateTime? redemptionAvailableDate = null)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new NullReferenceException("Api url cannot be empty");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new NullReferenceException("Access token cannot be empty");
+
+        apiConfiguration.BasePath = url;
+
+        var nexportApi = new PointOfSaleApi(apiConfiguration)
+        {
+            Client = EngineContext.Current.Resolve<ISynchronousClient>(),
+            AsynchronousClient = EngineContext.Current.Resolve<IAsynchronousClient>()
+        };
+
+        var result = nexportApi.PointOfSaleApiAddInvoiceItems(accessToken,
+            new CreateInvoiceItemsRequest
+            {
+                InvoiceId = invoiceId,
+                ProductId = productId,
+                Quantity = quantity,
+                ProductType = productType,
+                SubscriptionOrgId = subscriptionOrgId,
+                GroupMembershipIds = groupMembershipIds.ToList(),
+                Note = note,
+                Cost = cost,
+                UtcAccessExpirationDate = accessExpirationDate,
+                AccessExpirationTimeLimit = accessExpirationTimeLimit,
+                PurchasingGroupId = purchasingGroupId,
+                FundingPool = fundingPool,
+                UtcRedemptionAvailableDate = redemptionAvailableDate
+            });
+
+        return result;
+    }
+
     public AddInvoiceScheduledPaymentResponse AddNexportInvoiceScheduledPayment([NotNull] string url, [NotNull] string accessToken,
         Guid invoiceId, decimal amount, DateTime dueDate, string note = null)
     {
