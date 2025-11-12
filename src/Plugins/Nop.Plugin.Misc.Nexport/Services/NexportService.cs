@@ -1818,6 +1818,44 @@ public partial class NexportService
         return addInvoiceItemResult?.InvoiceItemId;
     }
 
+    public async Task<List<Guid>> AddItemsToNexportOrderInvoiceAsync(Guid invoiceId, Guid nexportProductId,
+        Enums.ProductTypeEnum productType, decimal productCost,
+        Guid subscriptionOrgId, IList<Guid> groupMembershipIds = null,
+        DateTime? accessExpirationDate = null, string accessExpirationTimeLimit = null,
+        Guid? purchasingGroupId = null, string fundingPool = null, DateTime? redemptionAvailableDate = null,
+        string note = null, int quantity = 1)
+    {
+        AddInvoiceItemsResponse addInvoiceItemsResult;
+
+        try
+        {
+            addInvoiceItemsResult = _nexportApiService.AddNexportInvoiceItems(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, invoiceId, nexportProductId,
+                productType, subscriptionOrgId, groupMembershipIds,
+                productCost, quantity, note, accessExpirationDate, accessExpirationTimeLimit,
+                purchasingGroupId, fundingPool, redemptionAvailableDate);
+        }
+        catch (Exception ex)
+        {
+            var errMsg =
+                $"Error occurred during AddInvoiceItems api call with the parameters: invoice_id - {invoiceId}, product_id - {nexportProductId}, quantity - {quantity}";
+            await _logger.ErrorAsync($"{errMsg}", ex);
+
+            if (ex is ApiException exception)
+            {
+                var errorResponse = JsonConvert.DeserializeObject<AddInvoiceItemsResponse>(exception.ErrorContent.ToString());
+                if (errorResponse != null)
+                {
+                    throw new ApiException((int)errorResponse.ApiErrorEntity.ErrorCode, errorResponse.ApiErrorEntity.ErrorMessage);
+                }
+            }
+
+            throw;
+        }
+
+        return addInvoiceItemsResult?.InvoiceItemIds;
+    }
+
     public async Task<CommitInvoiceResponse> CommitNexportOrderInvoiceTransactionAsync(Guid invoiceId)
     {
         CommitInvoiceResponse commitInvoiceResult;
