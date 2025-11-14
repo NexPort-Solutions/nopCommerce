@@ -15,8 +15,8 @@
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyVersion>1.0.0.55</AssemblyVersion>
-    <FileVersion>1.0.0.55</FileVersion>
+    <AssemblyVersion>1.0.0.60</AssemblyVersion>
+    <FileVersion>1.0.0.60</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

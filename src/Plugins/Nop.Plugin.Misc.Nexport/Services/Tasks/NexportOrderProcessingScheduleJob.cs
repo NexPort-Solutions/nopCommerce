@@ -411,12 +411,16 @@ public class NexportOrderProcessingScheduleJob(
 
             await nexportService.AddOrderNoteAsync(order, $"Nexport invoice has started processing for order: #{order.Id} (Store: {store.Name})");
 
-            var orgId = await genericAttributeService.GetAttributeAsync<Guid>(store, "NexportSubscriptionOrganizationId", store.Id);
+            // Get the store subscription organization ID
+            var nexportStoreOrganizationId = await genericAttributeService.GetAttributeAsync<Guid>(store, "NexportSubscriptionOrganizationId", store.Id);
+            // Get the invoice organization ID from order attribute; if not found, use the store organization ID
+            var invoiceOrganizationId = await genericAttributeService.GetAttributeAsync(order, "WholesaleOrder-InvoiceOrganizationId", defaultValue: nexportStoreOrganizationId);
 
-            if (orgId == Guid.Empty)
+            // If the invoice organization ID still empty, use the root organization ID
+            if (invoiceOrganizationId == Guid.Empty)
             {
                 // ReSharper disable once PossibleInvalidOperationException
-                orgId = nexportSettings.RootOrganizationId.Value;
+                invoiceOrganizationId = nexportSettings.RootOrganizationId.Value;
             }
 
             var wholesaleOrderInfo = await nexportService.GetWholesaleOrderInfoForOrderAsync(order.Id);
@@ -437,11 +441,11 @@ public class NexportOrderProcessingScheduleJob(
                 {
                     // pass group into begin order transaction
                     orderInvoiceId = await nexportService.BeginNexportOrderInvoiceTransactionAsync(
-                        orgId, userMapping.NexportUserId, wholesalePurchasingGroup.NexportGroupId);
+                        invoiceOrganizationId, userMapping.NexportUserId, wholesalePurchasingGroup.NexportGroupId);
                 }
                 else
                 {
-                    orderInvoiceId = await nexportService.BeginNexportOrderInvoiceTransactionAsync(orgId, userMapping.NexportUserId);
+                    orderInvoiceId = await nexportService.BeginNexportOrderInvoiceTransactionAsync(invoiceOrganizationId, userMapping.NexportUserId);
                 }
             }
 
@@ -473,7 +477,7 @@ public class NexportOrderProcessingScheduleJob(
                         if (product != null)
                         {
                             var productCost = product.ProductCost;
-                            var subscriptionOrgId = mapping.NexportSubscriptionOrgId ?? orgId;
+                            var subscriptionOrgId = mapping.NexportSubscriptionOrgId ?? invoiceOrganizationId;
 
                             // Generate the listing of group membership identifiers
                             var groupMembershipIds = await GenerateGroupMembershipIds(order, orderItem, mapping);
@@ -548,7 +552,7 @@ public class NexportOrderProcessingScheduleJob(
                 if (!requireManualApproval)
                 {
                     completeOrder = true;
-                    await nexportService.AddOrderNoteAsync(order, $"Nexport invoice has started processing for order #{order.Id} (Store: {store.Name})");
+                    //await nexportService.AddOrderNoteAsync(order, $"Nexport invoice has started processing for order #{order.Id} (Store: {store.Name})");
                 }
                 else
                 {

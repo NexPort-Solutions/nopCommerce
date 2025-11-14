@@ -3254,6 +3254,13 @@ public class NexportIntegrationController : BasePluginController,
                 {
                     try
                     {
+                        var invoiceOrganizationId = await _genericAttributeService.GetAttributeAsync<Guid?>(customer, "WholesaleOrder-InvoiceOrganizationId", store.Id);
+                        if (invoiceOrganizationId != null)
+                        {
+                            await _genericAttributeService.SaveAttributeAsync(order, "WholesaleOrder-InvoiceOrganizationId", invoiceOrganizationId.Value);
+                            await _genericAttributeService.SaveAttributeAsync<Guid?>(customer, "WholesaleOrder-InvoiceOrganizationId", null, store.Id);
+                        }
+
                         var groupInfo = await _genericAttributeService.GetAttributeAsync<string>(customer, "WholesaleOrder-PurchasingGroup", store.Id);
 
                         NexportGroupModel group = null;
