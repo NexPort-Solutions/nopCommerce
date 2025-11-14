@@ -82,7 +82,9 @@
                                     <nop-label asp-for="StoreId" />
                                 </div>
                                 <div class="col-md-10">
-                                    <nop-select asp-for="StoreId" asp-items="Model.AvailableStores" />
+                                    <div class="select2-blue">
+                                        <nop-select asp-for="StoreId" asp-items="Model.AvailableStores" class="form-control" data-dropdown-css-class="select2-blue" style="width: 100%;" />
+                                    </div>
                                 </div>
                             </div>
                             <div class="form-group row">
@@ -113,16 +115,40 @@
                                 </div>
                             </div>
                             <div id="nexport-purchasing-details-container" style="display: none;">
-                                <div class="form-group row" id="group-purchasing-selection-container">
+                                <div class="form-group row">
                                     <div class="col-md-2">
-                                        <nop-label asp-for="OrganizationId" />
+                                        <nop-label asp-for="OverrideOrganizationIdForInvoice" />
                                     </div>
                                     <div class="col-md-10">
-                                        <nop-select asp-for="OrganizationId" asp-items="Model.AvailableOrganizations" />
+                                        <nop-editor asp-for="OverrideOrganizationIdForInvoice" />
+                                        <span asp-validation-for="OverrideOrganizationIdForInvoice"></span>
+                                    </div>
+                                </div>
+                                <nop-nested-setting asp-for="OverrideOrganizationIdForInvoice">
+                                    <div class="form-group row advanced-setting">
+                                        <div class="col-md-2">
+                                            <nop-label asp-for="InvoiceOrganizationId" />
+                                        </div>
+                                        <div class="col-md-10">
+                                            <div class="select2-blue">
+                                                <nop-select asp-for="InvoiceOrganizationId" asp-items="Model.AvailableOrganizations" class="form-control" data-dropdown-css-class="select2-blue" style="width: 100%;" />
+                                            </div>
+                                            <span asp-validation-for="InvoiceOrganizationId"></span>
+                                        </div>
+                                    </div>
+                                </nop-nested-setting>
+                                <div class="form-group row" id="group-purchasing-selection-container">
+                                    <div class="col-md-2">
+                                        <nop-label asp-for="PurchasingGroupId" />
+                                    </div>
+                                    <div class="col-md-10">
+                                        <div class="select2-blue">
+                                            <nop-select asp-for="PurchasingGroupId" asp-items="Model.AvailableOrganizations" class="form-control" data-dropdown-css-class="select2-blue" style="width: 100%;" />
+                                        </div>
                                         <span style="color: #6262ff;">* Requires additional purchasing agent permission in Nexport</span>
                                     </div>
-                                    <input type="hidden" id="OrganizationName" name="OrganizationName" />
-                                    <input type="hidden" id="OrganizationShortName" name="OrganizationShortName" />
+                                    <input type="hidden" id="PurchasingGroupName" name="PurchasingGroupName" />
+                                    <input type="hidden" id="PurchasingGroupShortName" name="PurchasingGroupShortName" />
                                 </div>
                                 <div class="form-group row" id="redeem-by-container">
                                     <div class="col-md-2">
@@ -137,7 +163,9 @@
                                         <nop-label asp-for="FundingPoolId" />
                                     </div>
                                     <div class="col-md-10">
-                                        <nop-select asp-for="FundingPoolId" asp-items="Model.AvailableFundingPools" />
+                                        <div class="select2-blue">
+                                            <nop-select asp-for="FundingPoolId" asp-items="Model.AvailableFundingPools" class="form-control" data-dropdown-css-class="select2-blue" style="width: 100%;" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -170,6 +198,48 @@
 
     <script>
         var wholesaleOrderProductsList = null;
+
+        $(function() {
+            $("#@Html.IdFor(model => model.StoreId)").select2({
+                @if (!Model.AvailableStores.Any())
+                {
+                    <text>
+                        disabled: true,
+                        placeholder: 'No store available'
+                    </text>
+                }
+            });
+
+            $("#@Html.IdFor(model => model.InvoiceOrganizationId)").select2({
+                @if (!Model.AvailableOrganizations.Any())
+                {
+                    <text>
+                        disabled: true,
+                        placeholder: 'No organization available'
+                    </text>
+                }
+            });
+
+            $("#@Html.IdFor(model => model.PurchasingGroupId)").select2({
+                @if (!Model.AvailableOrganizations.Any())
+                {
+                    <text>
+                        disabled: true,
+                        placeholder: 'No group or organization available'
+                    </text>
+                }
+            });
+
+            $("#@Html.IdFor(model => model.FundingPoolId)").select2({
+                @if (!Model.AvailableFundingPools.Any())
+                {
+                    <text>
+                        disabled: true,
+                        placeholder: 'No funding pool available'
+                    </text>
+                }
+            });
+        });
 
         $("#addProductsToWholesale").on("click", function (e) {
             var currentStoreId = $("#@Html.IdFor(model => model.StoreId)").val();
@@ -218,20 +288,27 @@
             }
         });
 
-        $("#@Html.IdFor(model => model.OrganizationId)").on("change", function(e) {
-            var orgNameDetails = $("#@Html.IdFor(model => model.OrganizationId) option:selected").text();
-            var regex = /\(([^()]*)\)/g;
-            var regexText = orgNameDetails.split(regex);
-
-            if (regexText.length > 0) {
-                var orgName = regexText[0].trim();
-                var orgShortName = regexText[1].trim();
-
-                $("#OrganizationName").val(orgName);
-                $("#OrganizationShortName").val(orgShortName);
+        $("#@Html.IdFor(model => model.PurchasingGroupId)").on("change", function(e) {
+            var selectedElement = $("#@Html.IdFor(model => model.PurchasingGroupId) option:selected");
+            if (!selectedElement.val())
+            {
+                $("#PurchasingGroupName").val("");
+                $("#PurchasingGroupShortName").val("");
             } else {
-                $("#OrganizationName").val("");
-                $("#OrganizationShortName").val("");
+                var orgNameDetails = selectedElement.text();
+                var regex = /\(([^()]*)\)/g;
+                var regexText = orgNameDetails.split(regex);
+
+                if (regexText.length > 0) {
+                    var orgName = regexText[0].trim();
+                    var orgShortName = regexText[1].trim();
+
+                    $("#PurchasingGroupName").val(orgName);
+                    $("#PurchasingGroupShortName").val(orgShortName);
+                } else {
+                    $("#PurchasingGroupName").val("");
+                    $("#PurchasingGroupShortName").val("");
+                }
             }
         });
 

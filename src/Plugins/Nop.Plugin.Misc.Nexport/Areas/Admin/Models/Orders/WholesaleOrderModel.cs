@@ -9,13 +9,20 @@ public class WholesaleOrderModel
     [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.Purchase.Store")]
     public int StoreId { get; set; }
 
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.Purchase.OverrideOrganizationIdForInvoice")]
+    public bool OverrideOrganizationIdForInvoice { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.Purchase.InvoiceOrganizationId")]
+    [UIHint("GuidNullable")]
+    public Guid? InvoiceOrganizationId { get; set; }
+
     [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.Purchase.PurchasingGroup")]
     [UIHint("GuidNullable")]
-    public Guid? OrganizationId { get; set; }
+    public Guid? PurchasingGroupId { get; set; }
 
-    public string OrganizationName { get; set; }
+    public string PurchasingGroupName { get; set; }
 
-    public string OrganizationShortName { get; set; }
+    public string PurchasingGroupShortName { get; set; }
 
     [NopResourceDisplayName("Plugins.Misc.Nexport.Wholesale.Purchase.RedeemBy")]
     [UIHint("DateNullable")]

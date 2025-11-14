@@ -265,15 +265,20 @@ public class NexportWholesaleController : BaseAdminController
 
             var groupModel = new NexportGroupModel
             {
-                OrganizationId = model.OrganizationId,
-                Name = model.OrganizationName,
-                ShortName = model.OrganizationShortName
+                OrganizationId = model.PurchasingGroupId,
+                Name = model.PurchasingGroupName,
+                ShortName = model.PurchasingGroupShortName
             };
 
             var serializedGroupModelValue = JsonSerializer.Serialize(groupModel);
             await _genericAttributeService.SaveAttributeAsync(customer, "WholesaleOrder-PurchasingGroup", serializedGroupModelValue, model.StoreId);
             await _genericAttributeService.SaveAttributeAsync(customer, "WholesaleOrder-FundingPoolId", model.FundingPoolId, model.StoreId);
             await _genericAttributeService.SaveAttributeAsync(customer, "WholesaleOrder-RedeemByUtc", model.RedeemByUtc, model.StoreId);
+
+            if (model.OverrideOrganizationIdForInvoice)
+            {
+                await _genericAttributeService.SaveAttributeAsync(customer, "WholesaleOrder-InvoiceOrganizationId", model.InvoiceOrganizationId, model.StoreId);
+            }
 
             var placedOrderResult = await _nexportWholesaleService.PlaceWholesaleOrderAsync(processingPaymentRequest, shoppingCartItems);
             if (!placedOrderResult.Success)
