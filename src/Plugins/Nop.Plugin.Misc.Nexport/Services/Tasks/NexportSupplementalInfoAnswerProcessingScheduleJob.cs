@@ -1,4 +1,5 @@
-﻿using NexportApi.Client;
+﻿using Hangfire;
+using NexportApi.Client;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
@@ -47,6 +48,7 @@ public class NexportSupplementalInfoAnswerProcessingScheduleJob : INexportSchedu
         _nexportService = nexportService;
     }
 
+    [DisableConcurrentExecution(120)]
     public async Task ExecuteAsync()
     {
         if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))

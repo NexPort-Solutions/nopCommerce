@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Hangfire;
+using Newtonsoft.Json;
 using NexportApi.Model;
 using Nop.Core.Domain.Orders;
 using Nop.Data;
@@ -38,6 +39,7 @@ public class NexportInvoiceRedemptionScheduleJob(
 
     public long Interval { get; set; } = 30; // Default to 30 seconds
 
+    [DisableConcurrentExecution(120)]
     public async Task ExecuteAsync()
     {
         if (!await widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))

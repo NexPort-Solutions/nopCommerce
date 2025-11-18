@@ -1,4 +1,5 @@
-﻿using NexportApi.Model;
+﻿using Hangfire;
+using NexportApi.Model;
 using Nop.Core.Domain.Orders;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
@@ -34,6 +35,7 @@ public class NexportInvoiceResetRedemptionScheduleJob(
 
     public long Interval { get; set; } = 5; // Default to 5 seconds
 
+    [DisableConcurrentExecution(120)]
     public async Task ExecuteAsync()
     {
         if (!await widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))

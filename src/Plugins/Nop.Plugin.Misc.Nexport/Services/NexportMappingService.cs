@@ -460,18 +460,18 @@ public partial class NexportService : INexportService
                 {
                     invoiceToUpdate.InvoiceItemId = item.InvoiceItemId;
                     await _nexportOrderInvoiceItemRepository.UpdateAsync(invoiceToUpdate);
-                    return true;
-
                 }
                 else
                 {
                     await _nexportOrderInvoiceItemRepository.InsertAsync(item);
-                    return true;
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 await _logger.ErrorAsync($"Cannot update new invoice item for the order item {item.OrderItemId} in order {item.OrderId}", ex);
+                return false;
             }
         }
         else
@@ -484,10 +484,9 @@ public partial class NexportService : INexportService
             catch (Exception ex)
             {
                 await _logger.ErrorAsync($"Cannot add new Nexport order invoice item for the order item {item.OrderItemId} in order {item.OrderId}", ex);
+                return false;
             }
         }
-
-        return false;
     }
 
     public async Task InsertNexportOrderInvoiceRedemptionQueueItem(NexportOrderInvoiceRedemptionQueueItem queueItem)
