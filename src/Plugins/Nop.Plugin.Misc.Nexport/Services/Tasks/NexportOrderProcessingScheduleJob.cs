@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Hangfire;
+using Newtonsoft.Json;
 using NexportApi.Model;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Messages;
@@ -48,6 +49,7 @@ public class NexportOrderProcessingScheduleJob(
 
     public long Interval { get; set; } = 5; // Default to 5 seconds
 
+    [DisableConcurrentExecution(120)]
     public async Task ExecuteAsync()
     {
         if (!await widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
@@ -61,12 +63,21 @@ public class NexportOrderProcessingScheduleJob(
             _batchSize = await settingService.GetSettingByKeyAsync(NexportDefaults.NexportOrderProcessingTaskBatchSizeSettingKey,
                 NexportDefaults.NexportOrderProcessingTaskBatchSize);
 
-            var orders = (from q in nexportOrderProcessingQueueRepository.Table
-                orderby q.UtcDateCreated
-                where q.UtcProcessingDate == null || (q.UtcProcessingDate != null && q.UtcProcessingDate <= DateTime.UtcNow)
-                select q.Id).Take(_batchSize).ToList();
+            var queueItems = (nexportOrderProcessingQueueRepository.Table.OrderBy(q => q.UtcDateCreated)
+                .Where(q =>
+                    q.UtcProcessingDate == null ||
+                    (q.UtcProcessingDate != null &&
+                     q.UtcProcessingDate <= DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5))))
+                .Take(_batchSize)).ToList();
 
-            await ProcessNexportOrdersAsync(orders);
+            foreach (var queueItem in queueItems)
+            {
+                queueItem.UtcProcessingDate = DateTime.UtcNow;
+            }
+
+            await nexportOrderProcessingQueueRepository.UpdateAsync(queueItems);
+
+            await ProcessNexportOrdersAsync(queueItems.Select(x => x.Id));
         }
         catch (Exception ex)
         {
@@ -82,7 +93,7 @@ public class NexportOrderProcessingScheduleJob(
         public int? ExtensionAction;
     }
 
-    public async Task ProcessNexportOrdersAsync(IList<int> queueItemIds)
+    public async Task ProcessNexportOrdersAsync(IEnumerable<int> queueItemIds)
     {
         try
         {

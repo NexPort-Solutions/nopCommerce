@@ -1,11 +1,12 @@
-﻿using Nop.Plugin.Misc.Nexport.Domain;
-using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
-using Nop.Plugin.Misc.Nexport.Services.ScheduleJobs;
+﻿using Hangfire;
+using NexportApi.Model;
 using Nop.Data;
+using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
+using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Plugin.Misc.Nexport.Services.ScheduleJobs;
 using Nop.Services.Cms;
 using Nop.Services.Logging;
-using NexportApi.Model;
-using Nop.Plugin.Misc.Nexport.Extensions;
 
 namespace Nop.Plugin.Misc.Nexport.Services.Tasks;
 
@@ -27,6 +28,7 @@ public class NexportRegistrationFieldSynchronizationScheduleJob(
 
     public long Interval { get; set; } = 300; // Default to 5 minutes
 
+    [DisableConcurrentExecution(120)]
     public async Task ExecuteAsync()
     {
         if (!await widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
