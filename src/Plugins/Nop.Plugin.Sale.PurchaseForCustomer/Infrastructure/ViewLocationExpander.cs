@@ -8,13 +8,23 @@ namespace Nop.Plugin.Sale.PurchaseForCustomer.Infrastructure;
 public class ViewLocationExpander : IViewLocationExpander
 {
     private const string THEME_KEY = "nop.themename";
+    private const string HTTP_CONTEXT_THEME_CACHE_KEY = "nop.cachedthemename";
 
     public void PopulateValues(ViewLocationExpanderContext context)
     {
         if (context.AreaName?.Equals(AreaNames.ADMIN) ?? false)
             return;
 
-        context.Values[THEME_KEY] = EngineContext.Current.Resolve<IThemeContext>().GetWorkingThemeNameAsync().Result;
+        var httpContext = context.ActionContext.HttpContext;
+        if (!httpContext.Items.TryGetValue(HTTP_CONTEXT_THEME_CACHE_KEY, out var cachedThemeName))
+        {
+            cachedThemeName = EngineContext.Current.Resolve<IThemeContext>()
+                .GetWorkingThemeNameAsync()
+                .GetAwaiter().GetResult();
+            httpContext.Items[HTTP_CONTEXT_THEME_CACHE_KEY] = cachedThemeName;
+        }
+
+        context.Values[THEME_KEY] = (string)cachedThemeName;
     }
 
     public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
