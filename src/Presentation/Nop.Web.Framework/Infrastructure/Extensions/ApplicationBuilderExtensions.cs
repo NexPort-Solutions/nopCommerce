@@ -30,6 +30,7 @@ using Nop.Services.Plugins;
 using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
 using Nop.Services.Seo;
+using Nop.Services.Themes;
 using Nop.Web.Framework.Globalization;
 using Nop.Web.Framework.Mvc.Routing;
 using Nop.Web.Framework.WebOptimizer;
@@ -63,6 +64,9 @@ public static class ApplicationBuilderExtensions
         {
             //log application start
             await engine.Resolve<ILogger>().InformationAsync("Application started");
+
+            //init theme provider
+            await engine.Resolve<IThemeProvider>().InitializeAsync();
 
             //install and update plugins
             var pluginService = engine.Resolve<IPluginService>();
