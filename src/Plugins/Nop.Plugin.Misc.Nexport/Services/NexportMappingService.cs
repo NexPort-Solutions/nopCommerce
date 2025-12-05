@@ -2325,14 +2325,9 @@ public partial class NexportService : INexportService
             if (!string.IsNullOrWhiteSpace(purchaserName))
             {
                 var customerQuery = _customerRepository.Table;
-
                 customerQuery = customerQuery.Where(x => x.FirstName.Contains(purchaserName) || x.LastName.Contains(purchaserName));
-                var customerIdList = await customerQuery.Select(x => x.Id).ToListAsync();
 
-                if (customerIdList.Any())
-                {
-                    orderQuery = orderQuery.Where(x => customerIdList.Contains(x.CustomerId));
-                }
+                orderQuery = orderQuery.Where(x => customerQuery.Any(y => y.Id == x.CustomerId));
             }
         }
 
@@ -2341,9 +2336,7 @@ public partial class NexportService : INexportService
             orderQuery = orderQuery.Where(x => x.StoreId == store.Id);
         }
 
-        var orderIdList = await orderQuery.Select(x => x.Id).ToListAsync();
-
-        invoiceItemQuery = invoiceItemQuery.Where(x => orderIdList.Contains(x.OrderId));
+        invoiceItemQuery = invoiceItemQuery.Where(x => orderQuery.Any(y => y.Id == x.OrderId));
 
         if (orderId != null)
         {
@@ -2365,26 +2358,16 @@ public partial class NexportService : INexportService
             if (!string.IsNullOrWhiteSpace(customerName))
                 customerQuery = customerQuery.Where(x => x.FirstName.Contains(customerName) || x.LastName.Contains(customerName));
 
-            var customerIdList = await customerQuery.Select(x => x.Id).ToListAsync();
+            var nexportUserQuery =
+                _nexportUserMappingRepository.Table.Where(x => customerQuery.Any(y => y.Id == x.NopUserId));
 
-            if (customerIdList.Any())
-            {
-                var nexportUserQuery =
-                    _nexportUserMappingRepository.Table.Where(x => customerIdList.Contains(x.NopUserId));
-
-                var nexportUserIdList = await nexportUserQuery.Select(x => x.NexportUserId).ToListAsync();
-
-                invoiceItemQuery = invoiceItemQuery.Where(x =>
-                    x.RedeemingUserId != null && nexportUserIdList.Contains(x.RedeemingUserId.Value));
-            }
+            invoiceItemQuery = invoiceItemQuery.Where(x =>
+                x.RedeemingUserId != null && nexportUserQuery.Any(y => y.NexportUserId == x.RedeemingUserId.Value));
         }
 
         var orderInfoQuery = _wholesaleOrderInfoRepository.Table.Where(x => x.NexportGroupId == groupId && x.ProductId == productId);
 
-        var orderInfoQueryIdList = await orderInfoQuery
-            .Select(x => new { orderId = x.OrderId, orderItemId = x.OrderItemId }).ToListAsync();
-
-        invoiceItemQuery = invoiceItemQuery.Where(x => orderInfoQueryIdList.Contains(new { orderId = x.OrderId, orderItemId = x.OrderItemId }));
+        invoiceItemQuery = invoiceItemQuery.Where(x => orderInfoQuery.Any(y => y.OrderId == x.OrderId && y.OrderItemId == x.OrderItemId));
 
         if (redemptionStatus != null)
             invoiceItemQuery = invoiceItemQuery.Where(x => x.RedemptionStatusId == (int)redemptionStatus);
@@ -2404,19 +2387,12 @@ public partial class NexportService : INexportService
         if (!string.IsNullOrWhiteSpace(purchaserName))
         {
             var customerQuery = _customerRepository.Table;
-
             customerQuery = customerQuery.Where(x => x.FirstName.Contains(purchaserName) || x.LastName.Contains(purchaserName));
-            var customerIdList = await customerQuery.Select(x => x.Id).ToListAsync();
 
-            if (customerIdList.Any())
-            {
-                orderQuery = orderQuery.Where(x => customerIdList.Contains(x.CustomerId));
-            }
+            orderQuery = orderQuery.Where(x => customerQuery.Any(y => y.Id == x.CustomerId));
         }
 
-        var orderIdList = await orderQuery.Select(x => x.Id).ToListAsync();
-
-        invoiceItemQuery = invoiceItemQuery.Where(x => orderIdList.Contains(x.OrderId));
+        invoiceItemQuery = invoiceItemQuery.Where(x => orderQuery.Any(y => y.Id == x.OrderId));
 
         if (orderId != null)
         {
@@ -2438,18 +2414,11 @@ public partial class NexportService : INexportService
             if (!string.IsNullOrWhiteSpace(customerName))
                 customerQuery = customerQuery.Where(x => x.FirstName.Contains(customerName) || x.LastName.Contains(customerName));
 
-            var customerIdList = await customerQuery.Select(x => x.Id).ToListAsync();
+            var nexportUserQuery =
+                _nexportUserMappingRepository.Table.Where(x => customerQuery.Any(y => y.Id == x.NopUserId));
 
-            if (customerIdList.Any())
-            {
-                var nexportUserQuery =
-                    _nexportUserMappingRepository.Table.Where(x => customerIdList.Contains(x.NopUserId));
-
-                var nexportUserIdList = await nexportUserQuery.Select(x => x.NexportUserId).ToListAsync();
-
-                invoiceItemQuery = invoiceItemQuery.Where(x =>
-                    x.RedeemingUserId != null && nexportUserIdList.Contains(x.RedeemingUserId.Value));
-            }
+            invoiceItemQuery = invoiceItemQuery.Where(x =>
+                x.RedeemingUserId != null && nexportUserQuery.Any(y => y.NexportUserId == x.RedeemingUserId.Value));
         }
 
         var orderInfoQuery = _wholesaleOrderInfoRepository.Table.Where(x => x.FundingPoolId == fundingPoolId);
@@ -2464,10 +2433,7 @@ public partial class NexportService : INexportService
             orderInfoQuery = orderInfoQuery.Where(x => productIdList.Contains(x.ProductId));
         }
 
-        var orderInfoQueryIdList = await orderInfoQuery
-            .Select(x => new { orderId = x.OrderId, orderItemId = x.OrderItemId }).ToListAsync();
-
-        invoiceItemQuery = invoiceItemQuery.Where(x => orderInfoQueryIdList.Contains(new { orderId = x.OrderId, orderItemId = x.OrderItemId }));
+        invoiceItemQuery = invoiceItemQuery.Where(x => orderInfoQuery.Any(y => y.OrderId == x.OrderId && y.OrderItemId == x.OrderItemId));
 
         if (redemptionStatus != null)
             invoiceItemQuery = invoiceItemQuery.Where(x => x.RedemptionStatusId == (int)redemptionStatus);
