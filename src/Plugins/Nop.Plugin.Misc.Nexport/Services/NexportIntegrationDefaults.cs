@@ -60,10 +60,7 @@ public static class NexportIntegrationDefaults
     /// <summary>
     /// Gets a key for caching group memberships in product mapping
     /// </summary>
-    /// <remarks>
-    /// {0} : cNexport product mapping ID
-    /// </remarks>
-    public static CacheKey GroupMembershipMappingsByNexportProductMappingIdCacheKey => new("Nop.nexport.groupmembership.mapping.{0}", GroupMembershipMappingsByNexportProductMappingIdPrefix);
+    public static CacheKey GroupMembershipMappingsByNexportProductMappingIdCacheKey => new(GroupMembershipMappingsByNexportProductMappingIdPrefix);
 
     /// <summary>
     /// Gets a key for caching
