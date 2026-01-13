@@ -16,6 +16,7 @@ public partial record RegisterModel : BaseNopModel
         AvailableStates = new List<SelectListItem>();
         CustomerAttributes = new List<CustomerAttributeModel>();
         GdprConsents = new List<GdprConsentModel>();
+        NewsLetterSubscriptions = new List<NewsLetterSubscriptionModel>();
     }
 
     [DataType(DataType.EmailAddress)]
@@ -127,8 +128,8 @@ public partial record RegisterModel : BaseNopModel
     public string Fax { get; set; }
 
     public bool NewsletterEnabled { get; set; }
-    [NopResourceDisplayName("Account.Fields.Newsletter")]
-    public bool Newsletter { get; set; }
+
+    public IList<NewsLetterSubscriptionModel> NewsLetterSubscriptions { get; set; }
 
     public bool AcceptPrivacyPolicyEnabled { get; set; }
     public bool AcceptPrivacyPolicyPopup { get; set; }
@@ -143,6 +144,7 @@ public partial record RegisterModel : BaseNopModel
     [NopResourceDisplayName("Account.Fields.VatNumber")]
     public string VatNumber { get; set; }
     public bool DisplayVatNumber { get; set; }
+    public bool VatNumberRequired { get; set; }
 
     public bool HoneypotEnabled { get; set; }
     public bool DisplayCaptcha { get; set; }

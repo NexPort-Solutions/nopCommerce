@@ -7,6 +7,7 @@ using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Domain.Tax;
+using Nop.Core.Domain.Translation;
 using Nop.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Customers;
@@ -23,6 +24,7 @@ using Nop.Services.Tax;
 using Nop.Services.Topics;
 using Nop.Services.Vendors;
 using Nop.Web.Areas.Admin.Infrastructure.Cache;
+using Nop.Web.Framework.Models.Translation;
 using LogLevel = Nop.Core.Domain.Logging.LogLevel;
 
 namespace Nop.Web.Areas.Admin.Factories;
@@ -47,16 +49,18 @@ public partial class BaseAdminModelFactory : IBaseAdminModelFactory
     protected readonly ILocalizationService _localizationService;
     protected readonly IManufacturerService _manufacturerService;
     protected readonly IManufacturerTemplateService _manufacturerTemplateService;
+    protected readonly INewsLetterSubscriptionTypeService _newsLetterSubscriptionTypeService;
     protected readonly IPluginService _pluginService;
     protected readonly IProductTemplateService _productTemplateService;
     protected readonly ISpecificationAttributeService _specificationAttributeService;
-    protected readonly IShippingService _shippingService;
     protected readonly IStateProvinceService _stateProvinceService;
     protected readonly IStaticCacheManager _staticCacheManager;
     protected readonly IStoreService _storeService;
     protected readonly ITaxCategoryService _taxCategoryService;
     protected readonly ITopicTemplateService _topicTemplateService;
     protected readonly IVendorService _vendorService;
+    protected readonly IWarehouseService _warehouseService;
+    protected readonly TranslationSettings _translationSettings;
 
     #endregion
 
@@ -75,16 +79,18 @@ public partial class BaseAdminModelFactory : IBaseAdminModelFactory
         ILocalizationService localizationService,
         IManufacturerService manufacturerService,
         IManufacturerTemplateService manufacturerTemplateService,
+        INewsLetterSubscriptionTypeService newsLetterSubscriptionTypeService,
         IPluginService pluginService,
         IProductTemplateService productTemplateService,
         ISpecificationAttributeService specificationAttributeService,
-        IShippingService shippingService,
         IStateProvinceService stateProvinceService,
         IStaticCacheManager staticCacheManager,
         IStoreService storeService,
         ITaxCategoryService taxCategoryService,
         ITopicTemplateService topicTemplateService,
-        IVendorService vendorService)
+        IVendorService vendorService,
+        IWarehouseService warehouseService,
+        TranslationSettings translationSettings)
     {
         _categoryService = categoryService;
         _categoryTemplateService = categoryTemplateService;
@@ -99,16 +105,18 @@ public partial class BaseAdminModelFactory : IBaseAdminModelFactory
         _localizationService = localizationService;
         _manufacturerService = manufacturerService;
         _manufacturerTemplateService = manufacturerTemplateService;
+        _newsLetterSubscriptionTypeService = newsLetterSubscriptionTypeService;
         _pluginService = pluginService;
         _productTemplateService = productTemplateService;
         _specificationAttributeService = specificationAttributeService;
-        _shippingService = shippingService;
         _stateProvinceService = stateProvinceService;
         _staticCacheManager = staticCacheManager;
         _storeService = storeService;
         _taxCategoryService = taxCategoryService;
         _topicTemplateService = topicTemplateService;
         _vendorService = vendorService;
+        _warehouseService = warehouseService;
+        _translationSettings = translationSettings;
     }
 
     #endregion
@@ -147,24 +155,18 @@ public partial class BaseAdminModelFactory : IBaseAdminModelFactory
     /// </returns>
     protected virtual async Task<List<SelectListItem>> GetCategoryListAsync()
     {
-        var listItems = await _staticCacheManager.GetAsync(NopModelCacheDefaults.CategoriesListKey, async () =>
-        {
-            var categories = await _categoryService.GetAllCategoriesAsync(showHidden: true);
-            return await categories.SelectAwait(async c => new SelectListItem
-            {
-                Text = await _categoryService.GetFormattedBreadCrumbAsync(c, categories),
-                Value = c.Id.ToString()
-            }).ToListAsync();
-        });
+        var categories = await _staticCacheManager.GetAsync(NopModelCacheDefaults.CategoriesListKey, async () => await _categoryService.GetAllCategoriesAsync(showHidden: true));
 
         var result = new List<SelectListItem>();
-        //clone the list to ensure that "selected" property is not set
-        foreach (var item in listItems)
+        foreach (var category in categories)
         {
+            if (!await _categoryService.CanVendorAddProductsAsync(category, categories))
+                continue;
+
             result.Add(new SelectListItem
             {
-                Text = item.Text,
-                Value = item.Value
+                Text = await _categoryService.GetFormattedBreadCrumbAsync(category, categories),
+                Value = category.Id.ToString()
             });
         }
 
@@ -443,6 +445,28 @@ public partial class BaseAdminModelFactory : IBaseAdminModelFactory
         foreach (var customerRole in availableCustomerRoles)
         {
             items.Add(new SelectListItem { Value = customerRole.Id.ToString(), Text = customerRole.Name });
+        }
+
+        //insert special item for the default value
+        await PrepareDefaultItemAsync(items, withSpecialDefaultItem, defaultItemText);
+    }
+
+    /// <summary>
+    /// Prepare available newsletter subscription types
+    /// </summary>
+    /// <param name="items">Newsletter subscription type items</param>
+    /// <param name="withSpecialDefaultItem">Whether to insert the first special item for the default value</param>
+    /// <param name="defaultItemText">Default item text; pass null to use default value of the default item text</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public virtual async Task PrepareSubscriptionTypesAsync(IList<SelectListItem> items, bool withSpecialDefaultItem = true, string defaultItemText = null)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+
+        //prepare available newsletter subscription types
+        var availableSubscriptionTypes = await _newsLetterSubscriptionTypeService.GetAllNewsLetterSubscriptionTypesAsync();
+        foreach (var subscriptionType in availableSubscriptionTypes)
+        {
+            items.Add(new SelectListItem { Value = subscriptionType.Id.ToString(), Text = subscriptionType.Name });
         }
 
         //insert special item for the default value
@@ -881,7 +905,7 @@ public partial class BaseAdminModelFactory : IBaseAdminModelFactory
         ArgumentNullException.ThrowIfNull(items);
 
         //prepare available warehouses
-        var availableWarehouses = await _shippingService.GetAllWarehousesAsync();
+        var availableWarehouses = await _warehouseService.GetAllWarehousesAsync();
         foreach (var warehouse in availableWarehouses)
         {
             items.Add(new SelectListItem { Value = warehouse.Id.ToString(), Text = warehouse.Name });
@@ -981,6 +1005,22 @@ public partial class BaseAdminModelFactory : IBaseAdminModelFactory
 
         //insert special item for the default value
         await PrepareDefaultItemAsync(items, withSpecialDefaultItem, defaultItemText, defaultItemValue);
+    }    
+
+    /// <summary>
+    /// Prepare translation supported model
+    /// </summary>
+    /// <param name="model">Translation supported model</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public virtual async Task PreparePreTranslationSupportModelAsync(ITranslationSupportedModel model)
+    {
+        if (!_translationSettings.AllowPreTranslate)
+            return;
+
+        var allLanguages = await _languageService.GetAllLanguagesAsync(showHidden: true);
+        model.PreTranslationAvailable = allLanguages.Any(l =>
+            !_translationSettings.NotTranslateLanguages.Contains(l.Id) &&
+            l.Id != _translationSettings.TranslateFromLanguageId);
     }
 
     #endregion

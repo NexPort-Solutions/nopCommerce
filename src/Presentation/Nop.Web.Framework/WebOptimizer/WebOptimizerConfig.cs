@@ -1,5 +1,5 @@
-﻿using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Http.Features;
+﻿using Microsoft.AspNetCore.Http.Features;
+using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Configuration;
 using Nop.Core.Infrastructure;
@@ -68,6 +68,7 @@ public partial class WebOptimizerConfig : IWebOptimizerOptions, IConfig
     public string CdnUrl { get; set; } = "";
     public bool? AllowEmptyBundle { get; set; } = true;
     public HttpsCompressionMode HttpsCompression { get; set; } = HttpsCompressionMode.Compress;
+    public TimeSpan MemoryCacheTimeToLive { get; set; } = TimeSpan.FromMinutes(60);
 
     #endregion
 

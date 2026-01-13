@@ -28,6 +28,7 @@ public class NexportPlugin(
     NexportPluginService nexportPluginService,
     IUrlHelperFactory urlHelperFactory,
     IActionContextAccessor actionContextAccessor,
+    IAdminMenu adminMenu,
     IDiscountService discountService,
     WidgetSettings widgetSetting,
     ILocalizationService localizationService,
@@ -36,216 +37,13 @@ public class NexportPlugin(
     IScheduleTaskService scheduleTaskService,
     IWebHelper webHelper,
     ILogger logger)
-    : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
+    : BasePlugin, IMiscPlugin, IWidgetPlugin
 {
     private readonly IUrlHelperFactory _urlHelperFactory = urlHelperFactory;
     private readonly IActionContextAccessor _actionContextAccessor = actionContextAccessor;
     private readonly IDiscountService _discountService = discountService;
     private readonly IScheduleTaskService _scheduleTaskService = scheduleTaskService;
     private readonly ILogger _logger = logger;
-
-    public async Task ManageSiteMapAsync(SiteMapNode rootNode)
-    {
-        var pluginNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Nexport");
-        if (pluginNode != null)
-            return;
-
-        if (string.IsNullOrWhiteSpace(nexportSettings.AuthenticationToken))
-            return;
-
-        var helpNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Help");
-        if (helpNode != null)
-        {
-            if (!string.IsNullOrWhiteSpace(nexportSettings.DocumentationUrl))
-            {
-                foreach (var helpNodeChildNode in helpNode.ChildNodes)
-                {
-                    helpNodeChildNode.Visible = false;
-                }
-
-                helpNode.ChildNodes.Add(new SiteMapNode
-                {
-                    Visible = true,
-                    Title = "Nexport Marketplace Documentation",
-                    SystemName = "Nexport Marketplace Documentation",
-                    Url = nexportSettings.DocumentationUrl,
-                    IconClass = "far fa-dot-circle"
-                });
-            }
-        }
-
-        var storeUrl = webHelper.GetStoreLocation();
-
-        var systemNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "System");
-        systemNode?.ChildNodes.Add(new SiteMapNode
-        {
-            Visible = true,
-            Title = "Hangfire Dashboard",
-            SystemName = "Hangfire Dashboard",
-            Url = $"{storeUrl}Admin/Hangfire",
-            IconClass = "far fa-dot-circle"
-        });
-
-        var node = new SiteMapNode
-        {
-            SystemName = "Nexport",
-            Visible = true,
-            Title = "Nexport Integration",
-            IconClass = "fas fa-plug",
-        };
-
-        var pluginSettingsNode = new SiteMapNode
-        {
-            SystemName = "Nexport Integration - Settings",
-            Visible = true,
-            Title = "Settings",
-            IconClass = "far fa-dot-circle",
-        };
-
-        pluginSettingsNode.ChildNodes.Add(new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins),
-            Title = "General",
-            SystemName = "Nexport Integration - Settings - General",
-            ControllerName = "NexportIntegration",
-            ActionName = "Configure",
-            IconClass = "far fa-circle"
-        });
-
-        pluginSettingsNode.ChildNodes.Add(new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins),
-            Title = "Store settings",
-            SystemName = "Nexport Integration - Settings - Store settings",
-            ControllerName = "NexportSetting",
-            ActionName = "Store",
-            IconClass = "far fa-circle"
-        });
-
-        node.ChildNodes.Add(pluginSettingsNode);
-
-        node.ChildNodes.Add(new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores),
-            Title = "Store configuration",
-            SystemName = "Nexport Integration - Store Configuration",
-            ControllerName = "Store",
-            ActionName = "List",
-            IconClass = "far fa-dot-circle"
-        });
-
-        node.ChildNodes.Add(new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo),
-            Title = "Supplemental Info",
-            SystemName = NexportDefaults.SUPPLEMENTAL_INFO_MENU_SYSTEM_NAME,
-            ControllerName = "NexportIntegration",
-            ActionName = "ListSupplementalInfoQuestion",
-            IconClass = "far fa-dot-circle"
-        });
-
-        var wholesaleNode = new SiteMapNode
-        {
-            SystemName = "Nexport",
-            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            Title = "Nexport Wholesale",
-            IconClass = "fas fa-shopping-basket",
-        };
-
-        var wholesaleListNode = new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            Title = await localizationService.GetResourceAsync("Plugins.Misc.Nexport.Admin.Navigation.Groups"),
-            SystemName = "Wholesale Purchases",
-            IconClass = "far fa-dot-circle"
-        };
-
-        wholesaleListNode.ChildNodes.Add(new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            Title = "By Group",
-            SystemName = "Wholesale Purchases - By Group",
-            ControllerName = "NexportWholesale",
-            ActionName = "AdminNexportGroupProducts",
-            IconClass = "far fa-circle"
-        });
-
-        wholesaleListNode.ChildNodes.Add(new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            Title = "By Funding Pools",
-            SystemName = "Wholesale Purchases - By Funding Pools",
-            ControllerName = "NexportWholesale",
-            ActionName = "AdminNexportWholesalePurchasesByFundingPoolsList",
-            IconClass = "far fa-circle"
-        });
-
-        wholesaleNode.ChildNodes.Add(wholesaleListNode);
-
-        wholesaleNode.ChildNodes.Add(new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            Title = "New Wholesale Order",
-            SystemName = "New Wholesale Order",
-            ControllerName = "NexportWholesale",
-            ActionName = "CreateWholesaleOrder",
-            IconClass = "far fa-dot-circle"
-        });
-
-        wholesaleNode.ChildNodes.Add(new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools),
-            Title = "Funding Pools",
-            SystemName = "Nexport Funding Pools",
-            ControllerName = "NexportWholesale",
-            ActionName = "ListFundingPools",
-            IconClass = "far fa-dot-circle"
-        });
-
-        wholesaleNode.ChildNodes.Add(new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools),
-            Title = "Assignment Approval Requests",
-            SystemName = "Assignment Approval Requests",
-            ControllerName = "NexportWholesale",
-            ActionName = "AssignmentApprovalRequestsList",
-            IconClass = "far fa-dot-circle"
-        });
-
-        var unassigmentNode = new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            Title = "Unassignments",
-            SystemName = "Unassignment",
-            IconClass = "far fa-dot-circle"
-        };
-
-        unassigmentNode.ChildNodes.Add(new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            Title = "Requests",
-            SystemName = "Unassignment - Requests",
-            ControllerName = "NexportWholesale",
-            ActionName = "UnassignmentRequestsList",
-            IconClass = "far fa-circle"
-        });
-
-        unassigmentNode.ChildNodes.Add(new SiteMapNode
-        {
-            Visible = await permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale),
-            Title = "Request Reasons",
-            SystemName = "Unassignment - Request Reasons",
-            ControllerName = "NexportWholesale",
-            ActionName = "UnassignmentRequestReasonsList",
-            IconClass = "far fa-circle"
-        });
-
-        wholesaleNode.ChildNodes.Add(unassigmentNode);
-
-        rootNode.ChildNodes.Add(node);
-        rootNode.ChildNodes.Add(wholesaleNode);
-    }
-
     public override string GetConfigurationPageUrl()
     {
         return $"{webHelper.GetStoreLocation()}Admin/NexportIntegration/Configure";
@@ -288,8 +86,6 @@ public class NexportPlugin(
         await nexportPluginService.AddActivityLogTypesAsync();
 
         await nexportPluginService.AddOrUpdateResourcesAsync();
-
-        await nexportPluginService.InstallPermissionProviderAsync();
 
         await base.InstallAsync();
     }

@@ -79,7 +79,7 @@ public partial class LocalizationService : ILocalizationService
         return locales;
     }
 
-    protected virtual HashSet<(string name, string value)> LoadLocaleResourcesFromStream(StreamReader xmlStreamReader, string language)
+    protected virtual HashSet<(string name, string value)> LoadLocaleResourcesFromStream(StreamReader xmlStreamReader)
     {
         var result = new HashSet<(string name, string value)>();
 
@@ -326,7 +326,7 @@ public partial class LocalizationService : ILocalizationService
 
         if (!loadPublicLocales.HasValue || allLocales != null)
         {
-            var rez = allLocales ?? await _staticCacheManager.GetAsync(key, () =>
+            var rez = allLocales ?? await _staticCacheManager.GetAsync(key, async () =>
             {
                 //we use no tracking here for performance optimization
                 //anyway records are loaded only for read-only operations
@@ -335,7 +335,7 @@ public partial class LocalizationService : ILocalizationService
                     where l.LanguageId == languageId
                     select l;
 
-                return ResourceValuesToDictionary(query);
+                return ResourceValuesToDictionary(await query.ToListAsync());
             });
 
             //remove separated resource 
@@ -351,7 +351,7 @@ public partial class LocalizationService : ILocalizationService
                 : NopLocalizationDefaults.LocaleStringResourcesAllAdminCacheKey,
             languageId);
 
-        return await _staticCacheManager.GetAsync(key, () =>
+        return await _staticCacheManager.GetAsync(key, async () =>
         {
             //we use no tracking here for performance optimization
             //anyway records are loaded only for read-only operations
@@ -361,7 +361,7 @@ public partial class LocalizationService : ILocalizationService
                 select l;
             query = loadPublicLocales.Value ? query.Where(r => !r.ResourceName.StartsWith(NopLocalizationDefaults.AdminLocaleStringResourcesPrefix)) : query.Where(r => r.ResourceName.StartsWith(NopLocalizationDefaults.AdminLocaleStringResourcesPrefix));
 
-            return ResourceValuesToDictionary(query);
+            return ResourceValuesToDictionary(await query.ToListAsync());
         });
     }
 
@@ -504,24 +504,28 @@ public partial class LocalizationService : ILocalizationService
             return;
 
         var lsNamesList = new Dictionary<string, LocaleStringResource>();
+        var locales = await _lsrRepository.Table
+            .Where(lsr => lsr.LanguageId == language.Id)
+            .OrderBy(lsr => lsr.Id)
+            .ToListAsync();
 
-        foreach (var localeStringResource in _lsrRepository.Table.Where(lsr => lsr.LanguageId == language.Id)
-                     .OrderBy(lsr => lsr.Id))
+        foreach (var localeStringResource in locales)
+        {
             lsNamesList[localeStringResource.ResourceName.ToLowerInvariant()] = localeStringResource;
+        }
 
-        var lrsToUpdateList = new List<LocaleStringResource>();
+        var lrsToUpdateList = new Dictionary<string, LocaleStringResource>();
         var lrsToInsertList = new Dictionary<string, LocaleStringResource>();
 
-        foreach (var (name, value) in LoadLocaleResourcesFromStream(xmlStreamReader, language.Name))
+        foreach (var (name, value) in LoadLocaleResourcesFromStream(xmlStreamReader))
         {
             if (lsNamesList.TryGetValue(name, out var localString))
             {
                 if (!updateExistingResources)
                     continue;
 
-                var lsr = localString;
-                lsr.ResourceValue = value;
-                lrsToUpdateList.Add(lsr);
+                localString.ResourceValue = value;
+                lrsToUpdateList[name] = localString;
             }
             else
             {
@@ -530,7 +534,7 @@ public partial class LocalizationService : ILocalizationService
             }
         }
 
-        await _lsrRepository.UpdateAsync(lrsToUpdateList, false);
+        await _lsrRepository.UpdateAsync(lrsToUpdateList.Values.ToList(), false);
         await _lsrRepository.InsertAsync(lrsToInsertList.Values.ToList(), false);
 
         //clear cache
@@ -678,7 +682,7 @@ public partial class LocalizationService : ILocalizationService
 
         //set default value if required
         if (string.IsNullOrEmpty(result))
-            result = CommonHelper.ConvertEnum(enumValue.ToString());
+            result = CommonHelper.SplitCamelCaseWord(enumValue.ToString());
 
         return result;
     }

@@ -7,17 +7,19 @@ public class CancelPendingOrderRequestsPluginMigrationVersionTable : IVersionTab
 {
     public object ApplicationContext { get; set; }
 
-    public virtual string SchemaName => "";
+    public string SchemaName => "";
 
-    public virtual string TableName => "CancelPendingOrderRequestsPluginMigrationVersionInfo";
+    public string TableName => "CancelPendingOrderRequestsPluginMigrationVersionInfo";
 
-    public virtual string ColumnName => "Version";
+    public string ColumnName => "Version";
 
-    public virtual string UniqueIndexName => "UC_Version";
+    public string UniqueIndexName => "UC_Version";
 
-    public virtual string AppliedOnColumnName => "AppliedOn";
+    public string AppliedOnColumnName => "AppliedOn";
 
-    public virtual string DescriptionColumnName => "Description";
+    public bool CreateWithPrimaryKey => false;
 
-    public virtual bool OwnsSchema => true;
+    public string DescriptionColumnName => "Description";
+
+    public bool OwnsSchema => true;
 }

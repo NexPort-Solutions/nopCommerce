@@ -27,6 +27,7 @@ public partial class HomeController : BaseAdminController
     protected readonly ISettingService _settingService;
     protected readonly IGenericAttributeService _genericAttributeService;
     protected readonly IWorkContext _workContext;
+    protected readonly NopHttpClient _nopHttpClient;
 
     #endregion
 
@@ -40,7 +41,8 @@ public partial class HomeController : BaseAdminController
         IPermissionService permissionService,
         ISettingService settingService,
         IGenericAttributeService genericAttributeService,
-        IWorkContext workContext)
+        IWorkContext workContext,
+        NopHttpClient nopHttpClient)
     {
         _adminAreaSettings = adminAreaSettings;
         _commonModelFactory = commonModelFactory;
@@ -51,6 +53,7 @@ public partial class HomeController : BaseAdminController
         _settingService = settingService;
         _workContext = workContext;
         _genericAttributeService = genericAttributeService;
+        _nopHttpClient = nopHttpClient;
     }
 
     #endregion
@@ -64,7 +67,7 @@ public partial class HomeController : BaseAdminController
         var hideCard = await _genericAttributeService.GetAttributeAsync<bool>(customer, NopCustomerDefaults.HideConfigurationStepsAttribute);
         var closeCard = await _genericAttributeService.GetAttributeAsync<bool>(customer, NopCustomerDefaults.CloseConfigurationStepsAttribute);
 
-        if ((hideCard || closeCard) && await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageMaintenance))
+        if ((hideCard || closeCard) && await _permissionService.AuthorizeAsync(StandardPermission.System.MANAGE_MAINTENANCE))
         {
             var warnings = await _commonModelFactory.PrepareSystemWarningModelsAsync();
             if (warnings.Any(warning => warning.Level == SystemWarningLevel.Fail || warning.Level == SystemWarningLevel.Warning))
@@ -139,6 +142,21 @@ public partial class HomeController : BaseAdminController
         var model = new DataTablesModel();
         model = await _homeModelFactory.PrepareOrderAverageModelAsync(model);
         return PartialView("Table", model);
+    }
+
+    [HttpPost]
+    public virtual async Task<IActionResult> AcceptLicenseTerms()
+    {
+        if (!(await _settingService.TryGetLicenseAsync(true)).Exists)
+            return Json(new { Result = false });
+
+        try
+        {
+            await _nopHttpClient.CheckLicenseTermsAsync(true);
+        }
+        catch { }
+
+        return Json(new { Result = true });
     }
 
     #endregion

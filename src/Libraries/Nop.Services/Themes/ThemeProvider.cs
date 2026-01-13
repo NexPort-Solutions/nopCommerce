@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using Newtonsoft.Json;
 using Nop.Core;
-using Nop.Core.Infrastructure;
 using Nop.Services.Plugins;
 
 namespace Nop.Services.Themes;
@@ -50,7 +49,6 @@ public partial class ThemeProvider : IThemeProvider
         }
     }
 
-
     /// <summary>
     /// Get theme descriptor from the description text
     /// </summary>
@@ -75,7 +73,7 @@ public partial class ThemeProvider : IThemeProvider
     /// A task that represents the asynchronous operation
     /// The task result contains the list of the theme descriptor
     /// </returns>
-    public Task<IList<ThemeDescriptor>> GetThemesAsync()
+    public virtual Task<IList<ThemeDescriptor>> GetThemesAsync()
     {
         return Task.FromResult<IList<ThemeDescriptor>>(_themeDescriptors.Values.ToList());
     }
@@ -86,9 +84,9 @@ public partial class ThemeProvider : IThemeProvider
     /// <param name="systemName">Theme system name</param>
     /// <returns>
     /// A task that represents the asynchronous operation
-    /// The task result contains the me descriptor
+    /// The task result contains theme descriptor
     /// </returns>
-    public Task<ThemeDescriptor> GetThemeBySystemNameAsync(string systemName)
+    public virtual Task<ThemeDescriptor> GetThemeBySystemNameAsync(string systemName)
     {
         if (string.IsNullOrEmpty(systemName))
             return Task.FromResult<ThemeDescriptor>(null);
@@ -106,7 +104,7 @@ public partial class ThemeProvider : IThemeProvider
     /// A task that represents the asynchronous operation
     /// The task result contains true if the theme exists; otherwise false
     /// </returns>
-    public Task<bool> ThemeExistsAsync(string systemName)
+    public virtual Task<bool> ThemeExistsAsync(string systemName)
     {
         if (string.IsNullOrEmpty(systemName))
             return Task.FromResult(false);

@@ -57,7 +57,7 @@ public class NexportReturnRequestController(
     [Route("Admin/ReturnRequest/List")]
     public override async Task<IActionResult> List()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageReturnRequests))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Orders.RETURN_REQUESTS_VIEW))
             return AccessDeniedView();
 
         //prepare model
@@ -70,8 +70,8 @@ public class NexportReturnRequestController(
     [Route("Admin/ReturnRequest/List")]
     public virtual async Task<IActionResult> List(NexportReturnRequestSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageReturnRequests))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Orders.RETURN_REQUESTS_VIEW))
+            return await AccessDeniedJsonAsync();
 
         //prepare model
         var model = await nexportPluginModelFactory.PrepareNexportReturnRequestListModelAsync(searchModel);
@@ -82,7 +82,7 @@ public class NexportReturnRequestController(
     [Route("Admin/ReturnRequest/Nexport/Edit/{id}")]
     public virtual async Task<IActionResult> Edit(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageReturnRequests))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Orders.RETURN_REQUESTS_VIEW))
             return AccessDeniedView();
 
         //try to get a return request with the specified id
@@ -101,7 +101,7 @@ public class NexportReturnRequestController(
     [FormValueRequired("accept", "deny")]
     public virtual async Task<IActionResult> Edit(NexportReturnRequestModel model, bool denyRefund)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageReturnRequests))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Orders.RETURN_REQUESTS_VIEW))
             return AccessDeniedView();
 
         //try to get a return request with the specified id
@@ -223,7 +223,7 @@ public class NexportReturnRequestController(
     [HttpPost]
     public new virtual async Task<IActionResult> Delete(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageReturnRequests))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Orders.RETURN_REQUESTS_VIEW))
             return AccessDeniedView();
 
         //try to get a return request with the specified id

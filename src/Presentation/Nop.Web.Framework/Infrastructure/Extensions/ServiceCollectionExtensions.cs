@@ -1,7 +1,4 @@
-﻿using System.Net;
-using System.Threading.RateLimiting;
-using Azure.Identity;
-using Azure.Storage.Blobs;
+﻿using System.Threading.RateLimiting;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;
@@ -21,6 +18,7 @@ using Nop.Core.Http;
 using Nop.Core.Infrastructure;
 using Nop.Core.Security;
 using Nop.Data;
+using Nop.Services.ArtificialIntelligence;
 using Nop.Services.Authentication;
 using Nop.Services.Authentication.External;
 using Nop.Services.Common;
@@ -31,7 +29,7 @@ using Nop.Web.Framework.Security.Captcha;
 using Nop.Web.Framework.Themes;
 using Nop.Web.Framework.Validators;
 using Nop.Web.Framework.WebOptimizer;
-using WebMarkupMin.AspNetCore8;
+using WebMarkupMin.AspNetCoreLatest;
 using WebMarkupMin.Core;
 using WebMarkupMin.NUglify;
 
@@ -50,10 +48,6 @@ public static class ServiceCollectionExtensions
     public static void ConfigureApplicationSettings(this IServiceCollection services,
         WebApplicationBuilder builder)
     {
-        //let the operating system decide what TLS protocol version to use
-        //see https://docs.microsoft.com/dotnet/framework/network-programming/tls
-        ServicePointManager.SecurityProtocol = SecurityProtocolType.SystemDefault;
-
         //create default file provider
         CommonHelper.DefaultFileProvider = new NopFileProvider(builder.Environment);
 
@@ -61,6 +55,19 @@ public static class ServiceCollectionExtensions
         var typeFinder = new WebAppTypeFinder();
         Singleton<ITypeFinder>.Instance = typeFinder;
         services.AddSingleton<ITypeFinder>(typeFinder);
+
+        //bind general configuration
+        services.BindApplicationSettings(builder);
+    }
+
+    /// <summary>
+    /// Bind application settings
+    /// </summary>
+    /// <param name="services">Collection of service descriptors</param>
+    /// <param name="builder">A builder for web applications and services</param>
+    public static void BindApplicationSettings(this IServiceCollection services, WebApplicationBuilder builder)
+    {
+        var typeFinder = Singleton<ITypeFinder>.Instance;
 
         //add configuration parameters
         var configurations = typeFinder
@@ -71,8 +78,18 @@ public static class ServiceCollectionExtensions
         foreach (var config in configurations)
             builder.Configuration.GetSection(config.Name).Bind(config, options => options.BindNonPublicProperties = true);
 
-        var appSettings = AppSettingsHelper.SaveAppSettings(configurations, CommonHelper.DefaultFileProvider, false);
-        services.AddSingleton(appSettings);
+        var appSettings = Singleton<AppSettings>.Instance;
+
+        if (appSettings == null)
+        {
+            appSettings = AppSettingsHelper.SaveAppSettings(configurations, CommonHelper.DefaultFileProvider, false);
+            services.AddSingleton(appSettings);
+        }
+        else
+        {
+            var needToUpdate = configurations.Any(conf => !appSettings.Configuration.ContainsKey(conf.Name));
+            AppSettingsHelper.SaveAppSettings(configurations, CommonHelper.DefaultFileProvider, needToUpdate);
+        }
     }
 
     /// <summary>
@@ -91,6 +108,9 @@ public static class ServiceCollectionExtensions
         var pluginConfig = new PluginConfig();
         builder.Configuration.GetSection(nameof(PluginConfig)).Bind(pluginConfig, options => options.BindNonPublicProperties = true);
         mvcCoreBuilder.PartManager.InitializePlugins(pluginConfig);
+
+        //bind plugins configurations
+        services.BindApplicationSettings(builder);
 
         //create engine and configure service provider
         var engine = EngineContext.Create();
@@ -220,32 +240,11 @@ public static class ServiceCollectionExtensions
     /// <param name="services">Collection of service descriptors</param>
     public static void AddNopDataProtection(this IServiceCollection services)
     {
-        var appSettings = Singleton<AppSettings>.Instance;
-        if (appSettings.Get<AzureBlobConfig>().Enabled && appSettings.Get<AzureBlobConfig>().StoreDataProtectionKeys)
-        {
-            var blobServiceClient = new BlobServiceClient(appSettings.Get<AzureBlobConfig>().ConnectionString);
-            var blobContainerClient = blobServiceClient.GetBlobContainerClient(appSettings.Get<AzureBlobConfig>().DataProtectionKeysContainerName);
-            var blobClient = blobContainerClient.GetBlobClient(NopDataProtectionDefaults.AzureDataProtectionKeyFile);
+        var dataProtectionKeysPath = CommonHelper.DefaultFileProvider.MapPath(NopDataProtectionDefaults.DataProtectionKeysPath);
+        var dataProtectionKeysFolder = new System.IO.DirectoryInfo(dataProtectionKeysPath);
 
-            var dataProtectionBuilder = services.AddDataProtection().PersistKeysToAzureBlobStorage(blobClient);
-
-            if (!appSettings.Get<AzureBlobConfig>().DataProtectionKeysEncryptWithVault)
-                return;
-
-            var keyIdentifier = appSettings.Get<AzureBlobConfig>().DataProtectionKeysVaultId;
-            var credentialOptions = new DefaultAzureCredentialOptions();
-            var tokenCredential = new DefaultAzureCredential(credentialOptions);
-
-            dataProtectionBuilder.ProtectKeysWithAzureKeyVault(new Uri(keyIdentifier), tokenCredential);
-        }
-        else
-        {
-            var dataProtectionKeysPath = CommonHelper.DefaultFileProvider.MapPath(NopDataProtectionDefaults.DataProtectionKeysPath);
-            var dataProtectionKeysFolder = new System.IO.DirectoryInfo(dataProtectionKeysPath);
-
-            //configure the data protection system to persist keys to the specified directory
-            services.AddDataProtection().PersistKeysToFileSystem(dataProtectionKeysFolder);
-        }
+        //configure the data protection system to persist keys to the specified directory
+        services.AddDataProtection().PersistKeysToFileSystem(dataProtectionKeysFolder);
     }
 
     /// <summary>
@@ -270,6 +269,7 @@ public static class ServiceCollectionExtensions
             options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
             options.LoginPath = NopAuthenticationDefaults.LoginPath;
             options.AccessDeniedPath = NopAuthenticationDefaults.AccessDeniedPath;
+            options.ReturnUrlParameter = NopAuthenticationDefaults.ReturnUrlParameter;
         });
 
         //add external authentication
@@ -280,6 +280,7 @@ public static class ServiceCollectionExtensions
             options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
             options.LoginPath = NopAuthenticationDefaults.LoginPath;
             options.AccessDeniedPath = NopAuthenticationDefaults.AccessDeniedPath;
+            options.ReturnUrlParameter = NopAuthenticationDefaults.ReturnUrlParameter;
         });
 
         //register and configure external authentication plugins now
@@ -361,6 +362,7 @@ public static class ServiceCollectionExtensions
     {
         //we use custom redirect executor as a workaround to allow using non-ASCII characters in redirect URLs
         services.AddScoped<IActionResultExecutor<RedirectResult>, NopRedirectResultExecutor>();
+        services.AddScoped<IActionResultExecutor<LocalRedirectResult>, NopLocalRedirectResultExecutor>();
     }
 
     /// <summary>
@@ -446,5 +448,8 @@ public static class ServiceCollectionExtensions
 
         //client to request reCAPTCHA service
         services.AddHttpClient<CaptchaHttpClient>().WithProxy();
+
+        //client to request artificial intelligence service
+        services.AddHttpClient<ArtificialIntelligenceHttpClient>().WithProxy();
     }
 }

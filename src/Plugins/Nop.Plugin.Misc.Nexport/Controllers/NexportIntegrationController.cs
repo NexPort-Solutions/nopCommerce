@@ -246,7 +246,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpGet]
     public async Task<IActionResult> SearchNexportDirectory(string searchTerm, int? page = null)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING))
             return AccessDeniedView();
 
         if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
@@ -280,8 +280,8 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetModifiedLocaleResources(NexportPluginResourceListSearchModel searchModel, string friendlyName)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportPluginResourceListModelAsync(searchModel);
 
@@ -294,7 +294,7 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         if (selectedIds != null && selectedIds.Count != 0)
@@ -346,7 +346,7 @@ public class NexportIntegrationController : BasePluginController,
     [ImportModelState]
     public async Task<IActionResult> Configure()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         var model = new ConfigurationModel
@@ -369,7 +369,7 @@ public class NexportIntegrationController : BasePluginController,
     [ExportModelState]
     public async Task<IActionResult> Configure(ConfigurationModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         if (!ModelState.IsValid)
@@ -406,7 +406,7 @@ public class NexportIntegrationController : BasePluginController,
     [ExportModelState]
     public async Task<IActionResult> SetServerUrl(ConfigurationModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         if (!ModelState.IsValid)
@@ -441,7 +441,7 @@ public class NexportIntegrationController : BasePluginController,
     [ExportModelState]
     public async Task<IActionResult> SetRootOrganization(ConfigurationModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         if (!ModelState.IsValid)
@@ -473,7 +473,7 @@ public class NexportIntegrationController : BasePluginController,
     [ExportModelState]
     public async Task<IActionResult> SetMerchantAccount(ConfigurationModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         if (!ModelState.IsValid)
@@ -504,7 +504,7 @@ public class NexportIntegrationController : BasePluginController,
     [ExportModelState]
     public async Task<IActionResult> SaveMiscSettings(ConfigurationModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         if (!ModelState.IsValid)
@@ -538,7 +538,7 @@ public class NexportIntegrationController : BasePluginController,
     [FormValueRequired("setsubscriptionorgid")]
     public async Task<IActionResult> SetNexportSubscriptionOrganizationId(StoreModel model, [FromForm(Name = "NexportSubscriptionOrgId")] Guid subOrgId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_STORES))
             return AccessDeniedView();
 
         var store = await _storeService.GetStoreByIdAsync(model.Id);
@@ -560,7 +560,7 @@ public class NexportIntegrationController : BasePluginController,
     [FormValueRequired("savenexportstoreconfig")]
     public async Task<IActionResult> SaveNexportStoreConfiguration(NexportStoreModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_STORES))
             return AccessDeniedView();
 
         var store = await _storeService.GetStoreByIdAsync(model.Id);
@@ -596,7 +596,7 @@ public class NexportIntegrationController : BasePluginController,
     [FormValueRequired("setnexportuserid")]
     public async Task<IActionResult> MapNexportUser(CustomerModel model, [FromForm(Name = "NexportUserId")] Guid nexportUserId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return AccessDeniedView();
 
         var customer = await _customerService.GetCustomerByIdAsync(model.Id);
@@ -642,7 +642,7 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportUserDetails(Guid nexportUserId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return ErrorJson(await _localizationService.GetResourceAsync("Admin.AccessDenied.Description"));
 
         GetUserResponse nexportUser = null;
@@ -682,7 +682,7 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> SetNexportUser(int customerId, Guid nexportUserId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return ErrorJson(await _localizationService.GetResourceAsync("Admin.AccessDenied.Description"));
 
         var customer = await _customerService.GetCustomerByIdAsync(customerId);
@@ -768,7 +768,7 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> CanSetNexportUser(int customerId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return ErrorJson(await _localizationService.GetResourceAsync("Admin.AccessDenied.Description"));
 
         var customer = await _customerService.GetCustomerByIdAsync(customerId);
@@ -795,7 +795,7 @@ public class NexportIntegrationController : BasePluginController,
     [FormValueRequired("syncnexportregistrationfields")]
     public async Task<IActionResult> SyncCustomerRegistrationFieldsWithNexport(CustomerModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return AccessDeniedView();
 
         var customer = await _customerService.GetCustomerByIdAsync(model.Id);
@@ -818,7 +818,7 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> SetPrimaryBillingAddress(int customerId, int addressId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return ErrorJson(await _localizationService.GetResourceAsync("Admin.AccessDenied.Description"));
 
         var customer = await _customerService.GetCustomerByIdAsync(customerId);
@@ -864,10 +864,10 @@ public class NexportIntegrationController : BasePluginController,
     [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> GetCatalogList(NexportCatalogSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-            return await AccessDeniedDataTablesJson();
+            return await AccessDeniedJsonAsync();
 
         return View("~/Plugins/Misc.Nexport/Views/MapNexportProductList.cshtml", searchModel);
     }
@@ -878,10 +878,10 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> CatalogList(NexportCatalogSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-            return await AccessDeniedDataTablesJson();
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportCatalogListModelAsync(searchModel);
 
@@ -893,10 +893,10 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> SyllabusList(NexportSyllabusListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-            return await AccessDeniedDataTablesJson();
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportSyllabusListModelAsync(searchModel);
 
@@ -909,10 +909,10 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetCatalogs(NexportCatalogSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-            return await AccessDeniedDataTablesJson();
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportCatalogListModelAsync(searchModel);
 
@@ -925,10 +925,10 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetSyllabuses(NexportSyllabusListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-            return await AccessDeniedDataTablesJson();
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportSyllabusListModelAsync(searchModel);
 
@@ -940,8 +940,8 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> ProductMappingDetailsPopup(int mappingId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
             return AccessDeniedView();
 
@@ -958,10 +958,10 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetProductMappings(NexportProductMappingListSearchModel searchModel, int? nopProductId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-            return await AccessDeniedDataTablesJson();
+            return await AccessDeniedJsonAsync();
 
         var model = new NexportProductMappingListModel();
 
@@ -977,10 +977,10 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetProductMappingsForCategoryId(NexportCategoryProductMappingListSearchModel searchModel, int nopCategoryId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-            return await AccessDeniedDataTablesJson();
+            return await AccessDeniedJsonAsync();
         searchModel.NopCategoryId = nopCategoryId;
         var model = await _nexportPluginModelFactory.PrepareNexportCategoryProductMappingListModelAsync(searchModel);
 
@@ -995,8 +995,8 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> EditMapping(NexportProductMappingModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
             return AccessDeniedView();
 
@@ -1117,8 +1117,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> DeleteMapping(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING))
             return AccessDeniedView();
 
         var mapping = await _nexportService.GetProductMappingById(id)
@@ -1141,7 +1141,7 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> HasDefaultMapping(int productId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         return Json(await _nexportService.HasDefaultMapping(productId));
@@ -1153,8 +1153,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> DeleteMappings(ICollection<int> selectedIds)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING))
             return AccessDeniedView();
 
         if (selectedIds != null)
@@ -1204,10 +1204,10 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetProductGroupMembershipMappings(NexportProductGroupMembershipMappingListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-            return await AccessDeniedDataTablesJson();
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportProductMappingGroupMembershipListModelAsync(searchModel);
 
@@ -1220,8 +1220,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> AddGroupMembershipMapping(int nexportProductMappingId, Guid nexportGroupId, string nexportGroupName, string nexportGroupShortName)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING))
             return AccessDeniedView();
 
         if (nexportGroupId == Guid.Empty)
@@ -1248,8 +1248,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> DeleteGroupMembershipMapping(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING))
             return AccessDeniedView();
 
         var groupMembershipMapping = await _nexportService.GetProductGroupMembershipMappingById(id);
@@ -1265,8 +1265,8 @@ public class NexportIntegrationController : BasePluginController,
     [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> MapNexportProductPopup()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
             return AccessDeniedView();
 
@@ -1280,8 +1280,8 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> MapNexportProductPopup(MapNexportProductModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
             return AccessDeniedView();
 
@@ -1365,8 +1365,8 @@ public class NexportIntegrationController : BasePluginController,
     [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> MapProductToCategory()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
             return AccessDeniedView();
 
@@ -1382,8 +1382,8 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> MapProductToCategory(MapProductToCategoryModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
             return AccessDeniedView();
 
@@ -1427,8 +1427,8 @@ public class NexportIntegrationController : BasePluginController,
     [FormValueRequired("syncnexportproduct")]
     public async Task<IActionResult> SyncNexportProductWithNopProduct(ProductModel model, [FromForm(Name = "NexportMappingId")] int mappingId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping) ||
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING) ||
             string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
             return AccessDeniedView();
 
@@ -1458,7 +1458,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> CopyProduct(ProductModel model, bool copyProductMapping = false)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW))
             return AccessDeniedView();
 
         var copyModel = model.CopyProductModel;
@@ -1494,7 +1494,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> DuplicateProductMapping(int productId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW))
             return AccessDeniedView();
 
         var product = await _productService.GetProductByIdAsync(productId)
@@ -1511,7 +1511,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> DuplicateProductMapping(int productId, DuplicateNexportProductMappingModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW))
             return AccessDeniedView();
 
         var product = await _productService.GetProductByIdAsync(productId)
@@ -1582,7 +1582,7 @@ public class NexportIntegrationController : BasePluginController,
     [FormValueRequired("savenexportcategoryoptions")]
     public async Task<IActionResult> SaveNexportCategoryOptions(NexportCategoryModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.CATEGORIES_VIEW))
             return AccessDeniedView();
 
         var category = await _categoryService.GetCategoryByIdAsync(model.Id);
@@ -1613,9 +1613,9 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetNexportOrderInvoiceItems(NexportOrderInvoiceItemSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportOrderInvoice))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Orders.ORDERS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_ORDER_INVOICE))
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportOrderInvoiceItemListModelAsync(searchModel, true);
 
@@ -1628,8 +1628,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> ModifyNexportEnrollment(int id, int action)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportOrderInvoice))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Orders.ORDERS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_ORDER_INVOICE))
             return AccessDeniedView();
 
         var orderInvoiceItem = await _nexportService.FindNexportOrderInvoiceItemById(id);
@@ -1684,7 +1684,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> ListSupplementalInfoQuestion()
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         //prepare model
@@ -1700,8 +1700,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> ListSupplementalInfoQuestion(NexportSupplementalInfoQuestionSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
+            return await AccessDeniedJsonAsync();
 
         //prepare model
         var model = await _nexportPluginModelFactory
@@ -1714,7 +1714,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> AddSupplementalInfoQuestion()
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var model = await _nexportPluginModelFactory.PrepareNexportSupplementalInfoQuestionModelAsync(new NexportSupplementalInfoQuestionModel(), null);
@@ -1730,7 +1730,7 @@ public class NexportIntegrationController : BasePluginController,
     public async Task<IActionResult> AddSupplementalInfoQuestion(NexportSupplementalInfoQuestionModel model,
         bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         if (ModelState.IsValid)
@@ -1755,7 +1755,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> EditSupplementalInfoQuestion(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var supplementalInfoQuestion = await _nexportService.GetNexportSupplementalInfoQuestionById(id);
@@ -1774,7 +1774,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     public virtual async Task<IActionResult> EditSupplementalInfoQuestion(NexportSupplementalInfoQuestionModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var supplementalInfoQuestion = await _nexportService.GetNexportSupplementalInfoQuestionById(model.Id);
@@ -1807,7 +1807,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public virtual async Task<IActionResult> DeleteSupplementalInfoQuestion(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var supplementalInfoQuestion = await _nexportService.GetNexportSupplementalInfoQuestionById(id);
@@ -1827,7 +1827,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public virtual async Task<IActionResult> DeleteSelectedSupplementalInfoQuestion(ICollection<int> selectedIds)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         if (selectedIds != null)
@@ -1845,8 +1845,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public virtual async Task<IActionResult> SupplementalInfoOptionList(NexportSupplementalInfoOptionSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
+            return await AccessDeniedJsonAsync();
 
         var question = await _nexportService.GetNexportSupplementalInfoQuestionById(searchModel.QuestionId)
                        ?? throw new ArgumentException("No Nexport supplemental info question found with the specified id");
@@ -1861,7 +1861,7 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public virtual async Task<IActionResult> SupplementalInfoOptionCreatePopup(int questionId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var question = await _nexportService.GetNexportSupplementalInfoQuestionById(questionId)
@@ -1880,7 +1880,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public virtual async Task<IActionResult> SupplementalInfoOptionCreatePopup(NexportSupplementalInfoOptionModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var question = await _nexportService.GetNexportSupplementalInfoQuestionById(model.QuestionId)
@@ -1908,7 +1908,7 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public virtual async Task<IActionResult> SupplementalInfoOptionEditPopup(int optionId)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var option = await _nexportService.GetNexportSupplementalInfoOptionById(optionId)
@@ -1929,7 +1929,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public virtual async Task<IActionResult> SupplementalInfoOptionEditPopup(NexportSupplementalInfoOptionModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var option = await _nexportService.GetNexportSupplementalInfoOptionById(model.Id)
@@ -1960,7 +1960,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public virtual async Task<IActionResult> DeleteSupplementalInfoOption(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var option = await _nexportService.GetNexportSupplementalInfoOptionById(id)
@@ -1977,7 +1977,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> AddSupplementalInfoOptionGroupAssociation(int optionId, Guid nexportGroupId, string nexportGroupName, string nexportGroupShortName)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         if (nexportGroupId == Guid.Empty)
@@ -2008,7 +2008,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> DeleteSupplementalInfoOptionGroupAssociation(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var groupAssociation = await _nexportService.GetNexportSupplementalInfoOptionGroupAssociationById(id)
@@ -2025,7 +2025,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> ChangeSupplementalInfoOptionGroupAssociationStatus(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var groupAssociation = await _nexportService.GetNexportSupplementalInfoOptionGroupAssociationById(id)
@@ -2045,11 +2045,11 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetSupplementalInfoOptionGroupAssociations(NexportSupplementalInfoOptionGroupAssociationListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
+            return await AccessDeniedJsonAsync();
 
         if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken))
-            return await AccessDeniedDataTablesJson();
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportSupplementalInfoOptionGroupAssociationListModelAsync(searchModel);
 
@@ -2134,8 +2134,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> GetCustomerSupplementalInfoQuestions(NexportCustomerSupplementalInfoAnsweredQuestionListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
+            return await AccessDeniedJsonAsync();
 
         var model =
             await _nexportPluginModelFactory.PrepareNexportSupplementalInfoQuestionListModelAsync(searchModel);
@@ -2149,8 +2149,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> GetCustomerSupplementalInfoAnswers(NexportSupplementalInfoAnswerListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
+            return await AccessDeniedJsonAsync();
 
         var model =
             await _nexportPluginModelFactory.PrepareNexportSupplementalInfoAnswerListModelAsync(searchModel);
@@ -2162,8 +2162,8 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> EditCustomerSupplementalInfoAnsweredQuestion(int customerId, int storeId, int questionId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var customer = await _customerService.GetCustomerByIdAsync(customerId)
@@ -2186,8 +2186,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> EditCustomerSupplementalInfoAnsweredQuestion(int customerId, int storeId, EditSupplementInfoAnswerRequestModel editModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
             return AccessDeniedView();
 
         var customer = await _customerService.GetCustomerByIdAsync(customerId)
@@ -2326,9 +2326,9 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> DeleteCustomerSupplementalInfoAnswer(int answerId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageSupplementalInfo))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_VIEW) ||
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_SUPPLEMENTAL_INFO))
+            return await AccessDeniedJsonAsync();
 
         var answer = await _nexportService.GetNexportSupplementalInfoAnswerById(answerId)
                      ?? throw new Exception($"No Nexport supplemental info answer found with the specified id {answerId}");
@@ -2378,7 +2378,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> ListRegistrationFieldCategory()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         // Select an appropriate panel
@@ -2394,8 +2394,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> ListRegistrationFieldCategory(NexportRegistrationFieldCategorySearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportRegistrationFieldCategoryListModelAsync(searchModel);
 
@@ -2406,7 +2406,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> CreateRegistrationFieldCategory()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var model = await _nexportPluginModelFactory.PrepareNexportRegistrationFieldCategoryModelAsync(
@@ -2421,7 +2421,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     public async Task<IActionResult> CreateRegistrationFieldCategory(NexportRegistrationFieldCategoryModel model, bool continueEditing = false)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         if (ModelState.IsValid)
@@ -2447,7 +2447,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> EditRegistrationFieldCategory(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var registrationFieldCategory = await _nexportService.GetNexportRegistrationFieldCategoryById(id);
@@ -2465,7 +2465,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     public virtual async Task<IActionResult> EditRegistrationFieldCategory(NexportRegistrationFieldCategoryModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var registrationFieldCategory = await _nexportService.GetNexportRegistrationFieldCategoryById(model.Id);
@@ -2491,7 +2491,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public virtual async Task<IActionResult> DeleteRegistrationFieldCategory(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var registrationFieldCategory = await _nexportService.GetNexportRegistrationFieldCategoryById(id);
@@ -2513,7 +2513,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> ListRegistrationField()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         // Select an appropriate panel
@@ -2529,8 +2529,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> ListRegistrationField(NexportRegistrationFieldSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportRegistrationFieldListModelAsync(searchModel);
 
@@ -2541,7 +2541,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> CreateRegistrationField()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var model = await _nexportPluginModelFactory.PrepareNexportRegistrationFieldModelAsync(new NexportRegistrationFieldModel(), null);
@@ -2555,7 +2555,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     public async Task<IActionResult> CreateRegistrationField(NexportRegistrationFieldModel model, bool continueEditing = false)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         if (ModelState.IsValid)
@@ -2593,7 +2593,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> EditRegistrationField(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var registrationField = await _nexportService.GetNexportRegistrationFieldById(id);
@@ -2611,7 +2611,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     public async Task<IActionResult> EditRegistrationField(NexportRegistrationFieldModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var registrationField = await _nexportService.GetNexportRegistrationFieldById(model.Id);
@@ -2688,7 +2688,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> DeleteRegistrationField(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var registrationField = await _nexportService.GetNexportRegistrationFieldById(id);
@@ -2725,8 +2725,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> ListRegistrationFieldOptions(NexportRegistrationFieldOptionSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
+            return await AccessDeniedJsonAsync();
 
         var registrationField = await _nexportService.GetNexportRegistrationFieldById(searchModel.RegistrationFieldId)
                                 ?? throw new ArgumentException("No Nexport registration field found with the specified id");
@@ -2740,7 +2740,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> CreateRegistrationFieldOption(int fieldId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var registrationField = await _nexportService.GetNexportRegistrationFieldById(fieldId);
@@ -2759,7 +2759,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     public async Task<IActionResult> CreateRegistrationFieldOption(NexportRegistrationFieldOptionModel model, bool continueEditing = false)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var registrationField = await _nexportService.GetNexportRegistrationFieldById(model.FieldId);
@@ -2788,7 +2788,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> EditRegistrationFieldOption(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var registrationFieldOption = await _nexportService.GetNexportRegistrationFieldOptionById(id);
@@ -2810,7 +2810,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> EditRegistrationFieldOption(NexportRegistrationFieldOptionModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var registrationFieldOption = await _nexportService.GetNexportRegistrationFieldOptionById(model.Id);
@@ -2832,7 +2832,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> DeleteRegistrationFieldOption(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var registrationFieldOption =
@@ -2850,7 +2850,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> GetRegistrationFieldCustomRenderOptionUrl(string systemName, int fieldId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         if (string.IsNullOrEmpty(systemName))
@@ -2891,7 +2891,7 @@ public class NexportIntegrationController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> LoadRegistrationFieldAnswersByStore(int storeId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return AccessDeniedView();
 
         var store = await _storeService.GetStoreByIdAsync(storeId);
@@ -2910,8 +2910,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> GetNexportRegistrationFieldsForCustomer(NexportCustomerRegistrationFieldWithAnswersListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldWithAnswersListModel(searchModel);
 
@@ -2924,8 +2924,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> GetNexportRegistrationFieldAnswersForCustomer(NexportCustomerRegistrationFieldAnswerListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldAnswerListModel(searchModel);
 
@@ -2952,7 +2952,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> AddCustomerRegistrationFieldAnswers(int customerId, int storeId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return AccessDeniedView();
 
         var customer = await _customerService.GetCustomerByIdAsync(customerId)
@@ -2972,7 +2972,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> AddCustomerRegistrationFieldAnswers(int customerId, int storeId, IFormCollection form)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return AccessDeniedView();
 
         var customer = await _customerService.GetCustomerByIdAsync(customerId)
@@ -3032,7 +3032,7 @@ public class NexportIntegrationController : BasePluginController,
     [AuthorizeAdmin]
     public async Task<IActionResult> EditCustomerRegistrationFieldAnswers(int customerId, int fieldId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return AccessDeniedView();
 
         var customer = await _customerService.GetCustomerByIdAsync(customerId)
@@ -3052,7 +3052,7 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> EditCustomerRegistrationFieldAnswers(int customerId, EditRegistrationFieldAnswerRequestModel editModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return AccessDeniedView();
 
         var customer = await _customerService.GetCustomerByIdAsync(customerId)
@@ -3872,8 +3872,8 @@ public class NexportIntegrationController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> GetNexportRefundRequestsForCustomer(NexportRefundRequestListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldAnswerListModel(searchModel);
 

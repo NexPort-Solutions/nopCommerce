@@ -1,18 +1,18 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Globalization;
-using System.Resources;
 using FluentAssertions;
 using FluentMigrator;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Conventions;
 using FluentMigrator.Runner.Generators;
 using FluentMigrator.Runner.Initialization;
-using FluentMigrator.Runner.Processors;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
@@ -36,6 +36,7 @@ using Nop.Data;
 using Nop.Data.Configuration;
 using Nop.Data.Migrations;
 using Nop.Services.Affiliates;
+using Nop.Services.ArtificialIntelligence;
 using Nop.Services.Attributes;
 using Nop.Services.Authentication.External;
 using Nop.Services.Authentication.MultiFactor;
@@ -50,6 +51,7 @@ using Nop.Services.Directory;
 using Nop.Services.Discounts;
 using Nop.Services.Events;
 using Nop.Services.ExportImport;
+using Nop.Services.FilterLevels;
 using Nop.Services.Forums;
 using Nop.Services.Gdpr;
 using Nop.Services.Helpers;
@@ -58,6 +60,7 @@ using Nop.Services.Installation;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Media;
+using Nop.Services.Menus;
 using Nop.Services.Messages;
 using Nop.Services.News;
 using Nop.Services.Orders;
@@ -76,10 +79,10 @@ using Nop.Services.Themes;
 using Nop.Services.Topics;
 using Nop.Services.Vendors;
 using Nop.Tests.Nop.Services.Tests.ScheduleTasks;
+using Nop.Tests.Nop.Web.Tests.Public.Factories;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Factories;
-using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.Routing;
 using Nop.Web.Framework.Themes;
 using Nop.Web.Framework.UI;
@@ -94,7 +97,6 @@ namespace Nop.Tests;
 public partial class BaseNopTest
 {
     private static readonly ServiceProvider _serviceProvider;
-    private static readonly ResourceManager _resourceManager;
 
     protected BaseNopTest()
     {
@@ -107,52 +109,57 @@ public partial class BaseNopTest
     {
         var dataProvider = _serviceProvider.GetService<IDataProviderManager>().DataProvider;
 
-        dataProvider.CreateDatabase(null);
+        dataProvider.CreateDatabase();
         dataProvider.InitializeDatabase();
 
-        var languagePackInfo = (DownloadUrl: string.Empty, Progress: 0);
+        var installationService = _serviceProvider.GetService<IInstallationService>();
 
-        var cultureInfo = new CultureInfo(NopCommonDefaults.DefaultLanguageCulture);
-        var regionInfo = new RegionInfo(NopCommonDefaults.DefaultLanguageCulture);
+        installationService.InstallAsync(
+            new InstallationSettings
+            {
+                AdminEmail = NopTestsDefaults.AdminEmail,
+                AdminPassword = NopTestsDefaults.AdminPassword,
+                LanguagePackDownloadLink = string.Empty,
+                LanguagePackProgress = 0,
+                RegionInfo = new RegionInfo(NopCommonDefaults.DefaultLanguageCulture),
+                CultureInfo = new CultureInfo(NopCommonDefaults.DefaultLanguageCulture),
+                InstallSampleData = true
+            }).Wait();
 
-        _serviceProvider.GetService<IInstallationService>()
-            .InstallRequiredDataAsync(NopTestsDefaults.AdminEmail, NopTestsDefaults.AdminPassword, languagePackInfo, regionInfo, cultureInfo).Wait();
-        _serviceProvider.GetService<IInstallationService>().InstallSampleDataAsync(NopTestsDefaults.AdminEmail).Wait();
+        var permissionService = EngineContext.Current.Resolve<IPermissionService>();
+        permissionService.InsertPermissionsAsync().Wait();
 
-        var provider = (IPermissionProvider)Activator.CreateInstance(typeof(StandardPermissionProvider));
-        EngineContext.Current.Resolve<IPermissionService>().InstallPermissionsAsync(provider).Wait();
+        //init theme provider
+        var themeProvider = EngineContext.Current.Resolve<IThemeProvider>();
+        themeProvider.InitializeAsync().Wait();
     }
 
-    protected static T PropertiesShouldEqual<T, Tm>(T entity, Tm model, params string[] filter) where T : BaseEntity
-        where Tm : BaseNopModel
+    protected static void PropertiesShouldEqual<T1, T2>(T1 obj1, T2 obj2, params string[] filter)
     {
-        var objectProperties = typeof(T).GetProperties();
-        var modelProperties = typeof(Tm).GetProperties();
+        var object1Properties = typeof(T1).GetProperties();
+        var object2Properties = typeof(T2).GetProperties();
 
-        foreach (var objectProperty in objectProperties)
+        foreach (var object1Property in object1Properties)
         {
-            var name = objectProperty.Name;
+            var name = object1Property.Name;
 
             if (filter.Contains(name))
                 continue;
 
-            var modelProperty = Array.Find(modelProperties, p => p.Name == name);
+            var object2Property = Array.Find(object2Properties, p => p.Name == name);
 
-            if (modelProperty == null)
+            if (object2Property == null)
                 continue;
 
-            var objectPropertyValue = objectProperty.GetValue(entity);
-            var modelPropertyValue = modelProperty.GetValue(model);
+            var object1PropertyValue = object1Property.GetValue(obj1);
+            var object2PropertyValue = object2Property.GetValue(obj2);
 
-            objectPropertyValue.Should().Be(modelPropertyValue, $"The property \"{typeof(T).Name}.{objectProperty.Name}\" of these objects is not equal");
+            object1PropertyValue.Should().Be(object2PropertyValue, $"The property \"{typeof(T1).Name}.{object1Property.Name}\" of these objects is not equal");
         }
-
-        return entity;
     }
 
     static BaseNopTest()
     {
-        _resourceManager = Connections.ResourceManager;
         SetDataProviderType(DataProviderType.Unknown);
 
         TypeDescriptor.AddAttributes(typeof(List<int>),
@@ -174,6 +181,9 @@ public partial class BaseNopTest
         webHostEnvironment.Setup(p => p.EnvironmentName).Returns("test");
         webHostEnvironment.Setup(p => p.ApplicationName).Returns("nopCommerce");
         services.AddSingleton(webHostEnvironment.Object);
+
+        var htmlHelper = new Mock<IHtmlHelper>();
+        services.AddSingleton(htmlHelper.Object);
 
         //file provider
         services.AddTransient<INopFileProvider, NopFileProvider>();
@@ -203,11 +213,12 @@ public partial class BaseNopTest
 
         var hostApplicationLifetime = new Mock<IHostApplicationLifetime>();
         services.AddSingleton(hostApplicationLifetime.Object);
-            
+
         services.AddWebEncoders();
 
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Headers.Append(HeaderNames.Host, NopTestsDefaults.HostIpAddress);
+        httpContext.Session = new TestSeesion();
 
         var httpContextAccessor = new Mock<IHttpContextAccessor>();
         httpContextAccessor.Setup(p => p.HttpContext).Returns(httpContext);
@@ -238,7 +249,7 @@ public partial class BaseNopTest
 
         services.AddSingleton<ITypeFinder>(typeFinder);
         Singleton<ITypeFinder>.Instance = typeFinder;
-            
+
         //web helper
         services.AddTransient<IWebHelper, WebHelper>();
 
@@ -266,7 +277,7 @@ public partial class BaseNopTest
 
         services.AddTransient(typeof(IConcurrentCollection<>), typeof(ConcurrentTrie<>));
 
-        var memoryDistributedCache = new MemoryDistributedCache(new TestMemoryDistributedCacheoptions());
+        var memoryDistributedCache = new MemoryDistributedCache(new TestMemoryDistributedCacheOptions());
         services.AddSingleton<IDistributedCache>(memoryDistributedCache);
         services.AddScoped<MemoryDistributedCacheManager>();
         services.AddSingleton(new DistributedCacheLocker(memoryDistributedCache));
@@ -274,6 +285,7 @@ public partial class BaseNopTest
         //services
         services.AddTransient<IBackInStockSubscriptionService, BackInStockSubscriptionService>();
         services.AddTransient<ICategoryService, CategoryService>();
+        services.AddTransient<IFilterLevelValueService, FilterLevelValueService>();
         services.AddTransient<ICompareProductsService, CompareProductsService>();
         services.AddTransient<IRecentlyViewedProductsService, RecentlyViewedProductsService>();
         services.AddTransient<IManufacturerService, ManufacturerService>();
@@ -282,6 +294,7 @@ public partial class BaseNopTest
         services.AddTransient<IProductAttributeParser, ProductAttributeParser>();
         services.AddTransient<IProductAttributeService, ProductAttributeService>();
         services.AddTransient<IProductService, ProductService>();
+        services.AddTransient<IProductReviewService, ProductReviewService>();
         services.AddTransient<ICopyProductService, CopyProductService>();
         services.AddTransient<ISpecificationAttributeService, SpecificationAttributeService>();
         services.AddTransient<IProductTemplateService, ProductTemplateService>();
@@ -291,6 +304,7 @@ public partial class BaseNopTest
         services.AddTransient<IProductTagService, ProductTagService>();
         services.AddTransient<IAddressService, AddressService>();
         services.AddTransient<IAffiliateService, AffiliateService>();
+        services.AddTransient<IArtificialIntelligenceService, ArtificialIntelligenceService>();
         services.AddTransient<IVendorService, VendorService>();
 
         //attribute services
@@ -322,12 +336,15 @@ public partial class BaseNopTest
         services.AddTransient<ILocalizationService, LocalizationService>();
         services.AddTransient<ILocalizedEntityService, LocalizedEntityService>();
         services.AddTransient(typeof(Lazy<ILocalizationService>));
+        services.AddTransient<ITranslationModelFactory, TranslationModelFactory>();
         services.AddTransient<IInstallationLocalizationService, InstallationLocalizationService>();
         services.AddTransient<ILanguageService, LanguageService>();
         services.AddTransient<IDownloadService, DownloadService>();
         services.AddTransient<IMessageTemplateService, MessageTemplateService>();
+        services.AddScoped<IMenuService, MenuService>();
         services.AddTransient<IQueuedEmailService, QueuedEmailService>();
         services.AddTransient<INewsLetterSubscriptionService, NewsLetterSubscriptionService>();
+        services.AddTransient<INewsLetterSubscriptionTypeService, NewsLetterSubscriptionTypeService>();
         services.AddTransient<INotificationService, NotificationService>();
         services.AddTransient<ICampaignService, CampaignService>();
         services.AddTransient<IEmailAccountService, EmailAccountService>();
@@ -345,6 +362,7 @@ public partial class BaseNopTest
         services.AddTransient<IReturnRequestService, ReturnRequestService>();
         services.AddTransient<IRewardPointService, RewardPointService>();
         services.AddTransient<IShoppingCartService, ShoppingCartService>();
+        services.AddTransient<ICustomWishlistService, CustomWishlistService>();
         services.AddTransient<ICustomNumberFormatter, CustomNumberFormatter>();
         services.AddTransient<IPaymentService, PaymentService>();
         services.AddTransient<IEncryptionService, EncryptionService>();
@@ -352,6 +370,8 @@ public partial class BaseNopTest
         services.AddTransient<IUrlRecordService, UrlRecordService>();
         services.AddTransient<IShipmentService, ShipmentService>();
         services.AddTransient<IShippingService, ShippingService>();
+        services.AddTransient<IWarehouseService, WarehouseService>();
+        services.AddTransient<IShippingMethodsService, ShippingMethodsService>();
         services.AddTransient<IDateRangeService, DateRangeService>();
         services.AddTransient<ITaxCategoryService, TaxCategoryService>();
         services.AddTransient<ICheckVatService, CheckVatService>();
@@ -370,7 +390,7 @@ public partial class BaseNopTest
         services.AddTransient<IImportManager, ImportManager>();
         services.AddTransient<IPdfService, PdfService>();
         services.AddTransient<IUploadService, UploadService>();
-        services.AddTransient<IThemeProvider, ThemeProvider>();
+        services.AddSingleton<IThemeProvider, ThemeProvider>();
         services.AddTransient<IExternalAuthenticationService, ExternalAuthenticationService>();
         services.AddScoped<IBBCodeHelper, BBCodeHelper>();
         services.AddScoped<IHtmlFormatter, HtmlFormatter>();
@@ -394,6 +414,9 @@ public partial class BaseNopTest
         services.AddTransient<IShippingPluginManager, ShippingPluginManager>();
         services.AddTransient<ITaxPluginManager, TaxPluginManager>();
         services.AddScoped<ISearchPluginManager, SearchPluginManager>();
+
+        //picture thumb service
+        services.AddScoped<IThumbService, ThumbService>();
 
         services.AddTransient<IPictureService, TestPictureService>();
         services.AddScoped<IVideoService, VideoService>();
@@ -425,21 +448,22 @@ public partial class BaseNopTest
         services
             // add common FluentMigrator services
             .AddFluentMigratorCore()
-            .AddScoped<IProcessorAccessor, TestProcessorAccessor>()
             // set accessor for the connection string
             .AddScoped<IConnectionStringAccessor>(_ => DataSettingsManager.LoadSettings())
             .AddScoped<IMigrationManager, MigrationManager>()
+            .AddScoped<Lazy<IMigrationManager>>()
             .AddSingleton<IConventionSet, NopTestConventionSet>()
             .ConfigureRunner(rb =>
-                rb.WithVersionTable(new MigrationVersionInfo()).AddSqlServer().AddMySql5().AddPostgres().AddSQLite()
+                rb.WithVersionTable(new MigrationVersionInfo()).AddSQLite()
                     // define the assembly containing the migrations
                     .ScanIn(mAssemblies).For.Migrations());
 
         services.AddOptions<GeneratorOptions>().Configure(go => go.CompatibilityMode = CompatibilityMode.LOOSE);
 
-        services.AddTransient<IStoreContext, WebStoreContext>();
+        services.AddScoped<IStoreContext, WebStoreContext>();
         services.AddTransient<Lazy<IStoreContext>>();
-        services.AddTransient<IWorkContext, WebWorkContext>();
+        services.AddScoped<IWorkContext, WebWorkContext>();
+        services.AddTransient<Lazy<IWorkContext>>();
         services.AddTransient<IThemeContext, ThemeContext>();
         services.AddTransient<Lazy<ILocalizationService>>();
         services.AddTransient<INopHtmlHelper, NopHtmlHelper>();
@@ -452,12 +476,12 @@ public partial class BaseNopTest
         services.AddWebOptimizer();
 
         //common factories
-        services.AddTransient<IAclSupportedModelFactory, AclSupportedModelFactory>();
         services.AddTransient<IDiscountSupportedModelFactory, DiscountSupportedModelFactory>();
         services.AddTransient<ILocalizedModelFactory, LocalizedModelFactory>();
         services.AddTransient<IStoreMappingSupportedModelFactory, StoreMappingSupportedModelFactory>();
 
         //admin factories
+        services.AddTransient<IAclSupportedModelFactory, AclSupportedModelFactory>();
         services.AddTransient<IBaseAdminModelFactory, BaseAdminModelFactory>();
         services.AddTransient<IActivityLogModelFactory, ActivityLogModelFactory>();
         services.AddTransient<IAddressAttributeModelFactory, AddressAttributeModelFactory>();
@@ -484,13 +508,14 @@ public partial class BaseNopTest
         services.AddTransient<IManufacturerModelFactory, ManufacturerModelFactory>();
         services.AddTransient<IMeasureModelFactory, MeasureModelFactory>();
         services.AddTransient<IMessageTemplateModelFactory, MessageTemplateModelFactory>();
-        services.AddTransient<INewsletterSubscriptionModelFactory, NewsletterSubscriptionModelFactory>();
+        services.AddTransient<INewsLetterSubscriptionModelFactory, NewsLetterSubscriptionModelFactory>();
         services.AddTransient<INewsModelFactory, NewsModelFactory>();
         services.AddTransient<IOrderModelFactory, OrderModelFactory>();
         services.AddTransient<IPaymentModelFactory, PaymentModelFactory>();
         services.AddTransient<IPluginModelFactory, PluginModelFactory>();
         services.AddTransient<IPollModelFactory, PollModelFactory>();
         services.AddTransient<IProductModelFactory, ProductModelFactory>();
+        services.AddTransient<ProductModelFactoryTests.ProductModelFactoryForTest>();
         services.AddTransient<IProductAttributeModelFactory, ProductAttributeModelFactory>();
         services.AddTransient<IProductReviewModelFactory, ProductReviewModelFactory>();
         services.AddTransient<IReportModelFactory, ReportModelFactory>();
@@ -526,7 +551,7 @@ public partial class BaseNopTest
                 Web.Factories.ExternalAuthenticationModelFactory>();
         services.AddTransient<Web.Factories.IJsonLdModelFactory, Web.Factories.JsonLdModelFactory>();
         services.AddTransient<Web.Factories.INewsModelFactory, Web.Factories.NewsModelFactory>();
-        services.AddTransient<Web.Factories.INewsletterModelFactory, Web.Factories.NewsletterModelFactory>();
+        services.AddTransient<Web.Factories.INewsLetterModelFactory, Web.Factories.NewsLetterModelFactory>();
         services.AddTransient<Web.Factories.IOrderModelFactory, Web.Factories.OrderModelFactory>();
         services.AddTransient<Web.Factories.IPollModelFactory, Web.Factories.PollModelFactory>();
         services
@@ -556,25 +581,6 @@ public partial class BaseNopTest
         return scope.ServiceProvider.GetService<T>();
     }
 
-    public async Task TestCrud<TEntity>(TEntity baseEntity, Func<TEntity, Task> insert, TEntity updateEntity, Func<TEntity, Task> update, Func<int, Task<TEntity>> getById, Func<TEntity, TEntity, bool> equals, Func<TEntity, Task> delete) where TEntity : BaseEntity
-    {
-        baseEntity.Id = 0;
-
-        await insert(baseEntity);
-        baseEntity.Id.Should().BeGreaterThan(0);
-
-        updateEntity.Id = baseEntity.Id;
-        await update(updateEntity);
-
-        var item = await getById(baseEntity.Id);
-        item.Should().NotBeNull();
-        equals(updateEntity, item).Should().BeTrue();
-
-        await delete(baseEntity);
-        item = await getById(baseEntity.Id);
-        item.Should().BeNull();
-    }
-
     public static bool SetDataProviderType(DataProviderType type)
     {
         var dataConfig = Singleton<DataConfig>.Instance ?? new DataConfig();
@@ -582,29 +588,22 @@ public partial class BaseNopTest
         dataConfig.DataProvider = type;
         dataConfig.ConnectionString = string.Empty;
 
-        try
+        switch (type)
         {
-            switch (type)
-            {
-                case DataProviderType.SqlServer:
-                    dataConfig.ConnectionString = _resourceManager.GetString("sql server connection string");
-                    break;
-                case DataProviderType.MySql:
-                    dataConfig.ConnectionString = _resourceManager.GetString("MySql server connection string");
-                    break;
-                case DataProviderType.PostgreSQL:
-                    dataConfig.ConnectionString = _resourceManager.GetString("PostgreSql server connection string");
-                    break;
-                case DataProviderType.Unknown:
-                    dataConfig.ConnectionString = "Data Source=nopCommerceTest.sqlite;Mode=Memory;Cache=Shared";
-                    break;
-            }
+            case DataProviderType.SqlServer:
+                dataConfig.ConnectionString = NopTestConfiguration.SqlServerConnectionString;
+                break;
+            case DataProviderType.MySql:
+                dataConfig.ConnectionString = NopTestConfiguration.MySqlServerConnectionString;
+                break;
+            case DataProviderType.PostgreSQL:
+                dataConfig.ConnectionString = NopTestConfiguration.PostgreSqlServerConnectionString;
+                break;
+            case DataProviderType.Unknown:
+                dataConfig.ConnectionString = NopTestConfiguration.SqliteConnectionString;
+                break;
         }
-        catch (MissingManifestResourceException)
-        {
-            //ignore
-        }
-
+       
         Singleton<DataConfig>.Instance = dataConfig;
         var flag = !string.IsNullOrEmpty(dataConfig.ConnectionString);
 
@@ -678,15 +677,15 @@ public partial class BaseNopTest
             IHttpContextAccessor httpContextAccessor, ILogger logger, INopFileProvider fileProvider,
             IProductAttributeParser productAttributeParser, IProductAttributeService productAttributeService,
             IRepository<Picture> pictureRepository, IRepository<PictureBinary> pictureBinaryRepository,
-            IRepository<ProductPicture> productPictureRepository, ISettingService settingService,
+            IRepository<ProductPicture> productPictureRepository, ISettingService settingService, IThumbService thumbService,
             IUrlRecordService urlRecordService, IWebHelper webHelper, MediaSettings mediaSettings) : base(
             downloadService, httpContextAccessor, logger, fileProvider, productAttributeParser, productAttributeService,
-            pictureRepository, pictureBinaryRepository, productPictureRepository, settingService, urlRecordService,
+            pictureRepository, pictureBinaryRepository, productPictureRepository, settingService, thumbService, urlRecordService,
             webHelper, mediaSettings)
         {
         }
 
-        // Travis doesn't support named semaphore, that's why we use implementation without it 
+        // Not all CI/CD support working with named semaphore, that's why we use implementation without it 
         public override async Task<(string Url, Picture Picture)> GetPictureUrlAsync(Picture picture,
             int targetSize = 0,
             bool showDefaultPicture = true,
@@ -703,7 +702,7 @@ public partial class BaseNopTest
             byte[] pictureBinary = null;
             if (picture.IsNew)
             {
-                await DeletePictureThumbsAsync(picture);
+                await _thumbService.DeletePictureThumbsAsync(picture);
                 pictureBinary = await LoadPictureBinaryAsync(picture);
 
                 if ((pictureBinary?.Length ?? 0) == 0)
@@ -734,9 +733,9 @@ public partial class BaseNopTest
                     ? $"{picture.Id:0000000}_{seoFileName}.{lastPart}"
                     : $"{picture.Id:0000000}.{lastPart}";
 
-                var thumbFilePath = await GetThumbLocalPathAsync(thumbFileName);
-                if (await GeneratedThumbExistsAsync(thumbFilePath, thumbFileName))
-                    return (await GetThumbUrlAsync(thumbFileName, storeLocation), picture);
+                var thumbFilePath = await _thumbService.GetThumbLocalPathAsync(thumbFileName);
+                if (await _thumbService.GeneratedThumbExistsAsync(thumbFilePath, thumbFileName))
+                    return (await _thumbService.GetThumbUrlAsync(thumbFileName, storeLocation), picture);
 
                 pictureBinary ??= await LoadPictureBinaryAsync(picture);
 
@@ -748,7 +747,7 @@ public partial class BaseNopTest
                 mutex.WaitOne();
                 try
                 {
-                    SaveThumbAsync(thumbFilePath, thumbFileName, string.Empty, pictureBinary).Wait();
+                    _thumbService.SaveThumbAsync(thumbFilePath, thumbFileName, string.Empty, pictureBinary).Wait();
                 }
                 finally
                 {
@@ -761,9 +760,9 @@ public partial class BaseNopTest
                     ? $"{picture.Id:0000000}_{seoFileName}_{targetSize}.{lastPart}"
                     : $"{picture.Id:0000000}_{targetSize}.{lastPart}";
 
-                var thumbFilePath = await GetThumbLocalPathAsync(thumbFileName);
-                if (await GeneratedThumbExistsAsync(thumbFilePath, thumbFileName))
-                    return (await GetThumbUrlAsync(thumbFileName, storeLocation), picture);
+                var thumbFilePath = await _thumbService.GetThumbLocalPathAsync(thumbFileName);
+                if (await _thumbService.GeneratedThumbExistsAsync(thumbFilePath, thumbFileName))
+                    return (await _thumbService.GetThumbUrlAsync(thumbFileName, storeLocation), picture);
 
                 pictureBinary ??= await LoadPictureBinaryAsync(picture);
 
@@ -788,7 +787,7 @@ public partial class BaseNopTest
                         }
                     }
 
-                    SaveThumbAsync(thumbFilePath, thumbFileName, string.Empty, pictureBinary).Wait();
+                    _thumbService.SaveThumbAsync(thumbFilePath, thumbFileName, string.Empty, pictureBinary).Wait();
                 }
                 finally
                 {
@@ -796,7 +795,7 @@ public partial class BaseNopTest
                 }
             }
 
-            return (await GetThumbUrlAsync(thumbFileName, storeLocation), picture);
+            return (await _thumbService.GetThumbUrlAsync(thumbFileName, storeLocation), picture);
         }
     }
 
@@ -807,9 +806,51 @@ public partial class BaseNopTest
         }
     }
 
-    private class TestMemoryDistributedCacheoptions : IOptions<MemoryDistributedCacheOptions>
+    private class TestMemoryDistributedCacheOptions : IOptions<MemoryDistributedCacheOptions>
     {
         public MemoryDistributedCacheOptions Value => new();
+    }
+
+    private class TestSeesion : ISession
+    {
+        private static ConcurrentDictionary<string, byte[]> _sessison = new();
+
+        public Task LoadAsync(CancellationToken cancellationToken = new())
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task CommitAsync(CancellationToken cancellationToken = new())
+        {
+            return Task.CompletedTask;
+        }
+
+        public bool TryGetValue(string key, out byte[] value)
+        {
+            return _sessison.TryGetValue(key, out value);
+        }
+
+        public void Set(string key, byte[] value)
+        {
+            if (!_sessison.ContainsKey(key))
+                _sessison.TryAdd(key, value);
+            else
+                _sessison[key] = value;
+        }
+
+        public void Remove(string key)
+        {
+            _sessison.Remove(key, out _);
+        }
+
+        public void Clear()
+        {
+            _sessison.Clear();
+        }
+
+        public bool IsAvailable => true;
+        public string Id => "nop_test_session";
+        public IEnumerable<string> Keys => _sessison.Keys;
     }
 
     #endregion

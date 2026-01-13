@@ -24,29 +24,47 @@
     //Model name for js function names
     var model_name = ReplaceName(Model.Name);
 
-    //dom
-    var buttonsPanel = "";
-    var infoPanel = "<'col-lg-4 col-xs-12'<'float-lg-right text-center'i>>";
+    //layout options
+    var buttons = Model.RefreshButton && !Model.IsChildTable ? "buttons" : "";
 
-    if (Model.RefreshButton && !Model.IsChildTable)
+    var layoutOptions = new List<LayoutOption>
     {
-        buttonsPanel = "<'col-lg-1 col-xs-12'<'float-lg-right text-center data-tables-refresh'B>>";
-        infoPanel = "<'col-lg-3 col-xs-12'<'float-lg-right text-center'i>>";
-    }
+        new LayoutOption
+        {
+            Name = "topStart",
+            OptionType = LayoutOptionType.Null
+        },
+        new LayoutOption
+        {
+            Name = "topEnd",
+            OptionType = LayoutOptionType.Null
+        },
+        new LayoutOption
+        {
+            Name = "bottomStart",
+            OptionType = LayoutOptionType.Array,
+            Value = new List<string>()
+        },
+        new LayoutOption
+        {
+            Name = "bottomEnd",
+            OptionType = LayoutOptionType.Array,
+            Value = new List<string>()
+        },
+        new LayoutOption
+        {
+            Name = "bottom",
+            OptionType = LayoutOptionType.Array,
+            Value = new List<string>
+            {
+                "paging", "pageLength", "info", buttons
+            }
+        }
+    };
 
-
-
-    var dom = "<'row'<'col-md-12'tr>>" +
-              "<'row margin-t-5 mt-2'" +
-                "<'col-lg-5 col-xs-12'<'float-lg-left'p>>" +
-                "<'col-lg-3 col-xs-12'<'text-center'l>>" +
-                infoPanel +
-                buttonsPanel +
-              ">";
-
-    if (!string.IsNullOrEmpty(Model.Dom))
+    if (Model.LayoutCollection.Any())
     {
-        dom = Model.Dom;
+        layoutOptions = Model.LayoutCollection;
     }
 
     //check using MasterCheckBox
@@ -56,51 +74,66 @@
 @if (!string.IsNullOrEmpty(Model.HeaderCallback))
 {
     <text>
-    headerCallback: function (tfoot, data, start, end, display) {
-        return @(Model.HeaderCallback)(tfoot, data, start, end, display);
-    },
+        headerCallback: function (thead, data, start, end, display) {
+            return @(Model.HeaderCallback)(thead, data, start, end, display);
+        },
     </text>
 }
 @if (!string.IsNullOrEmpty(Model.FooterCallback))
 {
     <text>
-    footerCallback: function (tfoot, data, start, end, display) {
-        return @(Model.FooterCallback)(tfoot, data, start, end, display);
-    },
+        footerCallback: function (tfoot, data, start, end, display) {
+            return @(Model.FooterCallback)(tfoot, data, start, end, display);
+        },
+    </text>
+}
+@if (!string.IsNullOrEmpty(Model.DrawCallback))
+{
+    <text>
+        drawCallback: function (settings) {
+            return @(Model.DrawCallback)(settings);
+        },
     </text>
 }
 @if (Model.Processing)
 {
     <text>
-    processing: @Model.Processing.ToString().ToLowerInvariant(),
+        processing: @Model.Processing.ToString().ToLowerInvariant(),
+    </text>
+}
+@if (Model.DeferLoading.HasValue)
+{
+    <text>
+        deferLoading: @Model.DeferLoading.ToString(),
     </text>
 }
 @if (Model.ServerSide)
 {
     <text>
-    serverSide: @Model.ServerSide.ToString().ToLowerInvariant(),
+        serverSide: @Model.ServerSide.ToString().ToLowerInvariant(),
     </text>
 }
 @if (!string.IsNullOrEmpty(Model.RowIdBasedOnField))
 {
     <text>
-    rowId: function (item) {
-    var rowId = '';
-    if (item.hasOwnProperty('@(Model.RowIdBasedOnField)'))
-    {
-        if(item.@(Model.RowIdBasedOnField)){
-            var val = item.@(Model.RowIdBasedOnField).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-            rowId = 'row_' + val;
-        } else return;
-    }
-    return rowId;
-    },
+        rowId: function (item) {
+            var rowId = '';
+            if (item.hasOwnProperty('@(Model.RowIdBasedOnField)')) {
+                if (item.@(Model.RowIdBasedOnField)) {
+                    var val = item.@(Model.RowIdBasedOnField).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                    rowId = 'row_' + val;
+                } else {
+                    return rowId;
+                }
+            }
+            return rowId;
+        },
     </text>
 }
 @if (Model.Data != null)
 {
     <text>
-    data: @Html.Raw(Model.Data.ToString()),
+        data: @Html.Raw(Model.Data.ToString()),
     </text>
 }
 else
@@ -182,6 +215,10 @@ else
     </text>
 }
 scrollX: true,
+preDrawCallback: function (data) {
+    data.nTableWrapper.querySelectorAll('colgroup').forEach((e) => e.remove());
+},
+autoWidth: false,
 info: @Model.Info.ToString().ToLowerInvariant(),
 paging: @Model.Paging.ToString().ToLowerInvariant(),
 pagingType: '@Model.PagingType',
@@ -223,7 +260,42 @@ ordering: @Model.Ordering.ToString().ToLowerInvariant(),
     }],
     </text>
 }
-dom: '@JavaScriptEncoder.Default.Encode(dom)',
+layout: {
+    @foreach (var layoutOption in layoutOptions)
+    {
+        switch (layoutOption.OptionType)
+        {
+            case LayoutOptionType.Null:
+                <text>
+                    @JavaScriptEncoder.Default.Encode(layoutOption.Name): null,
+                </text>
+                break;
+            case LayoutOptionType.String:
+                <text>
+                    @JavaScriptEncoder.Default.Encode(layoutOption.Name): '@JavaScriptEncoder.Default.Encode(layoutOption.Value.ToString())',
+                </text>
+                break;
+            case LayoutOptionType.Object:
+                <text>
+                    @JavaScriptEncoder.Default.Encode(layoutOption.Name): @layoutOption.Value,
+                </text>
+                break;
+            case LayoutOptionType.Array:
+                var listValues = ((List<string>)layoutOption.Value);
+                <text>
+                    @JavaScriptEncoder.Default.Encode(layoutOption.Name): [
+                    @foreach (var val in listValues)
+                    {
+                        <text>
+                            '@JavaScriptEncoder.Default.Encode(val)',
+                        </text>
+                    }
+                    ],
+                </text>
+                break;
+        }
+    }
+},
 columns: [
     @for (int i = 0; i < Model.ColumnCollection.Count; i++)
     {
@@ -424,7 +496,10 @@ columns: [
             }
             data: '@column.Data'
         }
-        @if (i != Model.ColumnCollection.Count - 1) {<text>,</text>}
+        @if (i != Model.ColumnCollection.Count - 1)
+        {
+            <text>,</text>
+        }
         </text>
     }
 ]

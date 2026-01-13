@@ -1,6 +1,7 @@
 ﻿using Nop.Core.Domain.Catalog;
 using Nop.Web.Framework.Models;
 using Nop.Web.Models.Media;
+using Nop.Web.Models.ShoppingCart;
 
 namespace Nop.Web.Models.Catalog;
 
@@ -12,6 +13,7 @@ public partial record ProductOverviewModel : BaseNopEntityModel
         PictureModels = new List<PictureModel>();
         ProductSpecificationModel = new ProductSpecificationModel();
         ReviewOverviewModel = new ProductReviewOverviewModel();
+        ProductToWishlist = new ProductToWishlistModel();
     }
 
     public string Name { get; set; }
@@ -34,36 +36,5 @@ public partial record ProductOverviewModel : BaseNopEntityModel
     //price
     public ProductReviewOverviewModel ReviewOverviewModel { get; set; }
 
-    #region Nested Classes
-
-    public partial record ProductPriceModel : BaseNopModel
-    {
-        public string OldPrice { get; set; }
-        public decimal? OldPriceValue { get; set; }
-        public string Price { get; set; }
-        public decimal? PriceValue { get; set; }
-        /// <summary>
-        /// PAngV baseprice (used in Germany)
-        /// </summary>
-        public string BasePricePAngV { get; set; }
-        public decimal? BasePricePAngVValue { get; set; }
-
-        public bool DisableBuyButton { get; set; }
-        public bool DisableWishlistButton { get; set; }
-        public bool DisableAddToCompareListButton { get; set; }
-
-        public bool AvailableForPreOrder { get; set; }
-        public DateTime? PreOrderAvailabilityStartDateTimeUtc { get; set; }
-
-        public bool IsRental { get; set; }
-
-        public bool ForceRedirectionAfterAddingToCart { get; set; }
-
-        /// <summary>
-        /// A value indicating whether we should display tax/shipping info (used in Germany)
-        /// </summary>
-        public bool DisplayTaxShippingInfo { get; set; }
-    }
-
-    #endregion
+    public ProductToWishlistModel ProductToWishlist { get; set; }
 }

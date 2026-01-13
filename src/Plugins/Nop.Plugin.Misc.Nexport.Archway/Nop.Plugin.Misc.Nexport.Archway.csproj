@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <TieredCompilation>true</TieredCompilation>
     <ApplicationIcon />
     <Authors>Nexport Solutions</Authors>
@@ -12,8 +12,8 @@
     <OutputPath>..\..\Presentation\Nop.Web\Plugins\Misc.Nexport.Archway</OutputPath>
     <OutDir>$(OutputPath)</OutDir>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>1.0.0.50</AssemblyVersion>
-    <FileVersion>1.0.0.50</FileVersion>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
@@ -66,7 +66,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="33.0.1" />
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
   </ItemGroup>
 
   <!-- This target execute after "Build" target -->

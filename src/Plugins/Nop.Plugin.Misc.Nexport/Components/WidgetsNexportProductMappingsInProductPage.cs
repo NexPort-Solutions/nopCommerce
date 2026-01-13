@@ -37,7 +37,7 @@ public class WidgetsNexportProductMappingsInProductPage : NopViewComponent
     public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
     {
         if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping))
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING))
             return Content("");
 
         var productModel = (ProductModel)additionalData;

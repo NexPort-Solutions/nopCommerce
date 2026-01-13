@@ -68,8 +68,8 @@ public class ArchwayEmployeeRegistrationFieldController : BasePluginController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetModifiedLocaleResources(ArchwayPluginResourceListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
+            return await AccessDeniedJsonAsync();
 
         var model = await _archwayStudentEmployeeRegistrationFieldModelFactory
             .PrepareArchwayPluginResourceListModelAsync(searchModel);
@@ -83,7 +83,7 @@ public class ArchwayEmployeeRegistrationFieldController : BasePluginController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         if (selectedIds != null && selectedIds.Count != 0)
@@ -135,7 +135,7 @@ public class ArchwayEmployeeRegistrationFieldController : BasePluginController
     [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> Configure(int fieldId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return Content("Access denied");
 
         var model = await _archwayStudentEmployeeRegistrationFieldModelFactory.PrepareArchwayStudentEmployeeRegistrationFieldOptionModelAsync(fieldId);
@@ -160,7 +160,7 @@ public class ArchwayEmployeeRegistrationFieldController : BasePluginController
     [FormValueRequired("savecustomregistrationfield_archway")]
     public async Task<IActionResult> SaveCustomFieldOption(ArchwayStudentEmployeeRegistrationFieldOptionModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var registrationField = await _nexportService.GetNexportRegistrationFieldById(model.FieldId);

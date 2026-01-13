@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core;
+using Nop.Core.Caching;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Localization;
@@ -63,6 +64,8 @@ public class NexportOrderProcessingService(
     IShippingService shippingService,
     IShoppingCartService shoppingCartService,
     IStateProvinceService stateProvinceService,
+    IStaticCacheManager staticCacheManager,
+    IStoreContext storeContext,
     IStoreMappingService storeMappingService,
     IStoreService storeService,
     ITaxService taxService,
@@ -77,22 +80,20 @@ public class NexportOrderProcessingService(
     ShippingSettings shippingSettings,
     TaxSettings taxSettings,
     NexportService nexportService)
-    : OrderProcessingService(currencySettings, addressService, affiliateService, checkoutAttributeFormatter,
-        countryService, currencyService, customerActivityService, customerService, customNumberFormatter,
-        discountService, encryptionService, eventPublisher, genericAttributeService, giftCardService, languageService,
-        localizationService, logger, orderService, orderTotalCalculationService, paymentPluginManager, paymentService,
-        pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser,
-        productService, returnRequestService, rewardPointService, shipmentService, shippingService, shoppingCartService,
-        stateProvinceService, storeMappingService, storeService, taxService, vendorService, webHelper, workContext,
-        workflowMessageService, localizationSettings, orderSettings, paymentSettings, rewardPointsSettings,
-        shippingSettings, taxSettings)
+    : OrderProcessingService(currencySettings, addressService, affiliateService,
+        checkoutAttributeFormatter, countryService, currencyService,
+        customerActivityService, customerService, customNumberFormatter,
+        discountService, encryptionService, eventPublisher, genericAttributeService, giftCardService,
+        languageService, localizationService, logger, orderService, orderTotalCalculationService,
+        paymentPluginManager, paymentService, pdfService, priceCalculationService, priceFormatter,
+        productAttributeFormatter, productAttributeParser, productService, returnRequestService, rewardPointService,
+        shipmentService, shippingService, shoppingCartService, stateProvinceService,
+        staticCacheManager, storeContext, storeMappingService, storeService, taxService, vendorService,
+        webHelper, workContext, workflowMessageService,
+        localizationSettings, orderSettings, paymentSettings, rewardPointsSettings, shippingSettings, taxSettings)
 {
     private readonly IOrderService _orderService = orderService;
     private readonly OrderSettings _orderSettings = orderSettings;
-
-    #region Constructor
-
-    #endregion
 
     /// <summary>
     /// Check and set the order status.

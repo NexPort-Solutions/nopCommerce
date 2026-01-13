@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Configuration;
 using Nop.Core.Domain;
+using Nop.Core.Domain.ArtificialIntelligence;
 using Nop.Core.Domain.Blogs;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.FilterLevels;
 using Nop.Core.Domain.Forums;
 using Nop.Core.Domain.Gdpr;
 using Nop.Core.Domain.Localization;
@@ -18,6 +20,7 @@ using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Seo;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Domain.Tax;
+using Nop.Core.Domain.Translation;
 using Nop.Core.Domain.Vendors;
 using Nop.Core.Events;
 using Nop.Core.Infrastructure;
@@ -45,6 +48,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Framework.Mvc.ModelBinding;
+using Nop.Web.Framework.Security;
 using Nop.Web.Framework.WebOptimizer;
 
 namespace Nop.Web.Areas.Admin.Controllers;
@@ -68,7 +72,6 @@ public partial class SettingController : BaseAdminController
     protected readonly INopFileProvider _fileProvider;
     protected readonly INotificationService _notificationService;
     protected readonly IOrderService _orderService;
-    protected readonly IPermissionService _permissionService;
     protected readonly IPictureService _pictureService;
     protected readonly ISettingModelFactory _settingModelFactory;
     protected readonly ISettingService _settingService;
@@ -97,7 +100,6 @@ public partial class SettingController : BaseAdminController
         INopFileProvider fileProvider,
         INotificationService notificationService,
         IOrderService orderService,
-        IPermissionService permissionService,
         IPictureService pictureService,
         ISettingModelFactory settingModelFactory,
         ISettingService settingService,
@@ -121,7 +123,6 @@ public partial class SettingController : BaseAdminController
         _fileProvider = fileProvider;
         _notificationService = notificationService;
         _orderService = orderService;
-        _permissionService = permissionService;
         _pictureService = pictureService;
         _settingModelFactory = settingModelFactory;
         _settingService = settingService;
@@ -134,6 +135,24 @@ public partial class SettingController : BaseAdminController
     #endregion
 
     #region Utilities
+
+    protected virtual async Task UpdateFilterLevelLocalesAsync(FilterLevelEnum filterLevel, FilterLevelModel model)
+    {
+        foreach (var localized in model.Locales)
+        {
+            await _localizationService.AddOrUpdateLocaleResourceAsync(new Dictionary<string, string>
+            {
+                [$"Enums.Nop.Core.Domain.FilterLevels.FilterLevelEnum.{filterLevel}"] = localized?.Name ?? ""
+            }, localized.LanguageId);
+        }
+        if (!model.Locales.Any())
+        {
+            await _localizationService.AddOrUpdateLocaleResourceAsync(new Dictionary<string, string>
+            {
+                [$"Enums.Nop.Core.Domain.FilterLevels.FilterLevelEnum.{filterLevel}"] = model.Name
+            });
+        }
+    }
 
     protected virtual async Task UpdateGdprConsentLocalesAsync(GdprConsent gdprConsent, GdprConsentModel model)
     {
@@ -175,11 +194,9 @@ public partial class SettingController : BaseAdminController
         return Redirect(returnUrl);
     }
 
+    [CheckPermission(StandardPermission.System.MANAGE_APP_SETTINGS)]
     public virtual async Task<IActionResult> AppSettings()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAppSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareAppSettingsModel();
 
@@ -187,11 +204,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.System.MANAGE_APP_SETTINGS)]
     public virtual async Task<IActionResult> AppSettings(AppSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAppSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             var configurations = new List<IConfig>
@@ -199,7 +214,6 @@ public partial class SettingController : BaseAdminController
                 model.CacheConfigModel.ToConfig(_appSettings.Get<CacheConfig>()),
                 model.HostingConfigModel.ToConfig(_appSettings.Get<HostingConfig>()),
                 model.DistributedCacheConfigModel.ToConfig(_appSettings.Get<DistributedCacheConfig>()),
-                model.AzureBlobConfigModel.ToConfig(_appSettings.Get<AzureBlobConfig>()),
                 model.InstallationConfigModel.ToConfig(_appSettings.Get<InstallationConfig>()),
                 model.PluginConfigModel.ToConfig(_appSettings.Get<PluginConfig>()),
                 model.CommonConfigModel.ToConfig(_appSettings.Get<CommonConfig>()),
@@ -228,11 +242,9 @@ public partial class SettingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Blog()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareBlogSettingsModelAsync();
 
@@ -240,11 +252,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Blog(BlogSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -282,11 +292,9 @@ public partial class SettingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Vendor()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareVendorSettingsModelAsync();
 
@@ -294,11 +302,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Vendor(VendorSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -339,11 +345,9 @@ public partial class SettingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Forum()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareForumSettingsModelAsync();
 
@@ -351,11 +355,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Forum(ForumSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -408,11 +410,9 @@ public partial class SettingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> News()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareNewsSettingsModelAsync();
 
@@ -420,11 +420,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> News(NewsSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -463,11 +461,9 @@ public partial class SettingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Shipping()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareShippingSettingsModelAsync();
 
@@ -475,11 +471,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Shipping(ShippingSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -552,11 +546,9 @@ public partial class SettingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Tax()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareTaxSettingsModelAsync();
 
@@ -564,11 +556,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Tax(TaxSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -624,11 +614,15 @@ public partial class SettingController : BaseAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(taxSettings, x => x.PaymentMethodAdditionalFeeTaxClassId, model.PaymentMethodAdditionalFeeTaxClassId_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(taxSettings, x => x.EuVatEnabled, model.EuVatEnabled_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(taxSettings, x => x.EuVatEnabledForGuests, model.EuVatEnabledForGuests_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(taxSettings, x => x.EuVatRequired, model.EuVatRequired_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(taxSettings, x => x.EuVatShopCountryId, model.EuVatShopCountryId_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(taxSettings, x => x.EuVatAllowVatExemption, model.EuVatAllowVatExemption_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(taxSettings, x => x.EuVatUseWebService, model.EuVatUseWebService_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(taxSettings, x => x.EuVatAssumeValid, model.EuVatAssumeValid_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(taxSettings, x => x.EuVatEmailAdminWhenNewVatSubmitted, model.EuVatEmailAdminWhenNewVatSubmitted_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(taxSettings, x => x.HmrcApiUrl, model.HmrcApiUrl_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(taxSettings, x => x.HmrcClientId, model.HmrcClientId_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(taxSettings, x => x.HmrcClientSecret, model.HmrcClientSecret_OverrideForStore, storeScope, false);
 
             //now clear settings cache
             await _settingService.ClearCacheAsync();
@@ -648,11 +642,9 @@ public partial class SettingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Catalog()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareCatalogSettingsModelAsync();
 
@@ -660,11 +652,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Catalog(CatalogSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -711,6 +701,7 @@ public partial class SettingController : BaseAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.NumberOfBestsellersOnHomepage, model.NumberOfBestsellersOnHomepage_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.SearchPageProductsPerPage, model.SearchPageProductsPerPage_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.SearchPageAllowCustomersToSelectPageSize, model.SearchPageAllowCustomersToSelectPageSize_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.ShowSearchBoxCategories, model.ShowSearchBoxCategories_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.SearchPagePageSizeOptions, model.SearchPagePageSizeOptions_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.SearchPagePriceRangeFiltering, model.SearchPagePriceRangeFiltering_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.SearchPagePriceFrom, model.SearchPagePriceFrom_OverrideForStore, storeScope, false);
@@ -747,6 +738,7 @@ public partial class SettingController : BaseAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.ProductReviewsSortByCreatedDateAscending, model.ProductReviewsSortByCreatedDateAscending_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.ExportImportProductAttributes, model.ExportImportProductAttributes_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.ExportImportProductSpecificationAttributes, model.ExportImportProductSpecificationAttributes_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.ExportImportTierPrices, model.ExportImportTierPrices_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.ExportImportProductCategoryBreadcrumb, model.ExportImportProductCategoryBreadcrumb_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.ExportImportCategoriesUsingCategoryName, model.ExportImportCategoriesUsingCategoryName_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.ExportImportAllowDownloadImages, model.ExportImportAllowDownloadImages_OverrideForStore, storeScope, false);
@@ -754,6 +746,7 @@ public partial class SettingController : BaseAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.RemoveRequiredProducts, model.RemoveRequiredProducts_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.ExportImportRelatedEntitiesByName, model.ExportImportRelatedEntitiesByName_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.ExportImportProductUseLimitedToStores, model.ExportImportProductUseLimitedToStores_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.ExportImportCategoryUseLimitedToStores, model.ExportImportCategoryUseLimitedToStores_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.DisplayDatePreOrderAvailability, model.DisplayDatePreOrderAvailability_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.UseAjaxCatalogProductsLoading, model.UseAjaxCatalogProductsLoading_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(catalogSettings, x => x.EnableManufacturerFiltering, model.EnableManufacturerFiltering_OverrideForStore, storeScope, false);
@@ -773,6 +766,24 @@ public partial class SettingController : BaseAdminController
             await _settingService.SaveSettingAsync(catalogSettings, x => x.IgnoreStoreLimitations, 0, false);
             await _settingService.SaveSettingAsync(catalogSettings, x => x.CacheProductPrices, 0, false);
 
+            var artificialIntelligenceSettings = await _settingService.LoadSettingAsync<ArtificialIntelligenceSettings>();
+
+            artificialIntelligenceSettings.Enabled = model.ArtificialIntelligenceSettingsModel.Enabled;
+            artificialIntelligenceSettings.ProviderType = (ArtificialIntelligenceProviderType)model.ArtificialIntelligenceSettingsModel.ProviderTypeId;
+            artificialIntelligenceSettings.ChatGptApiKey = model.ArtificialIntelligenceSettingsModel.ChatGptApiKey;
+            artificialIntelligenceSettings.DeepSeekApiKey = model.ArtificialIntelligenceSettingsModel.DeepSeekApiKey;
+            artificialIntelligenceSettings.GeminiApiKey = model.ArtificialIntelligenceSettingsModel.GeminiApiKey;
+            artificialIntelligenceSettings.AllowProductDescriptionGeneration = model.ArtificialIntelligenceSettingsModel.AllowProductDescriptionGeneration;
+            artificialIntelligenceSettings.ProductDescriptionQuery = model.ArtificialIntelligenceSettingsModel.ProductDescriptionQuery;
+            artificialIntelligenceSettings.AllowMetaTitleGeneration = model.ArtificialIntelligenceSettingsModel.AllowMetaTitleGeneration;
+            artificialIntelligenceSettings.MetaTitleQuery = model.ArtificialIntelligenceSettingsModel.MetaTitleQuery;
+            artificialIntelligenceSettings.AllowMetaKeywordsGeneration = model.ArtificialIntelligenceSettingsModel.AllowMetaKeywordsGeneration;
+            artificialIntelligenceSettings.MetaKeywordsQuery = model.ArtificialIntelligenceSettingsModel.MetaKeywordsQuery;
+            artificialIntelligenceSettings.AllowMetaDescriptionGeneration = model.ArtificialIntelligenceSettingsModel.AllowMetaDescriptionGeneration;
+            artificialIntelligenceSettings.MetaDescriptionQuery = model.ArtificialIntelligenceSettingsModel.MetaDescriptionQuery;
+
+            await _settingService.SaveSettingAsync(artificialIntelligenceSettings);
+
             //now clear settings cache
             await _settingService.ClearCacheAsync();
 
@@ -791,12 +802,143 @@ public partial class SettingController : BaseAdminController
         return View(model);
     }
 
+    #region FilterLevel
+
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
+    public virtual async Task<IActionResult> FilterLevel()
+    {
+        //prepare model
+        var model = await _settingModelFactory.PrepareFilterLevelSettingsModelAsync();
+
+        return View(model);
+    }
+
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
+    public virtual async Task<IActionResult> FilterLevel(FilterLevelSettingsModel model)
+    {
+        if (ModelState.IsValid)
+        {
+            var filterLevelSettings = await _settingService.LoadSettingAsync<FilterLevelSettings>();
+
+            filterLevelSettings = model.ToSettings(filterLevelSettings);
+
+            await _settingService.SaveSettingAsync(filterLevelSettings, x => x.FilterLevelEnabled, 0, false);
+            await _settingService.SaveSettingAsync(filterLevelSettings, x => x.DisplayOnHomePage, 0, false);
+            await _settingService.SaveSettingAsync(filterLevelSettings, x => x.DisplayOnProductDetailsPage, 0, false);
+
+            //now clear settings cache
+            await _settingService.ClearCacheAsync();
+
+            //activity log
+            await _customerActivityService.InsertActivityAsync("EditSettings", await _localizationService.GetResourceAsync("ActivityLog.EditSettings"));
+
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Configuration.Updated"));
+
+            return RedirectToAction("FilterLevel");
+        }
+
+        //prepare model
+        model = await _settingModelFactory.PrepareFilterLevelSettingsModelAsync(model);
+
+        //if we got this far, something failed, redisplay form
+        return View(model);
+    }
+
+    [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
+    public virtual async Task<IActionResult> FilterLevelList(FilterLevelSearchModel searchModel)
+    {
+        //prepare model
+        var model = await _settingModelFactory.PrepareFilterLevelListModelAsync(searchModel);
+
+        return Json(model);
+    }
+
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
+    public virtual async Task<IActionResult> EditFilterLevel(int id)
+    {
+        //prepare model
+        var model = await _settingModelFactory.PrepareFilterLevelModelAsync(null, (FilterLevelEnum)id);
+
+        return View(model);
+    }
+
+    [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
+    public virtual async Task<IActionResult> EditFilterLevel(FilterLevelModel model, bool continueEditing)
+    {
+        if (ModelState.IsValid)
+        {
+            var filterLevelSettings = await _settingService.LoadSettingAsync<FilterLevelSettings>();
+            var filterLevelEnumDisabled = filterLevelSettings.FilterLevelEnumDisabled;
+            var filterLevel = (FilterLevelEnum)model.Id;
+
+            if (model.Enabled && filterLevelEnumDisabled.Contains(model.Id))
+            {
+                var parentLevels = Enum.GetValues<FilterLevelEnum>()
+                    .Where(fl => (int)fl < (int)filterLevel && fl != filterLevel);
+
+                if (parentLevels.Any())
+                {
+                    var hasDisabledParent = parentLevels.Any(childLevel => filterLevelEnumDisabled.Contains((int)childLevel));
+
+                    if (hasDisabledParent)
+                    {
+                        _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Admin.Configuration.Settings.FilterLevel.CannotEnableChild"));
+                        return RedirectToAction("EditFilterLevel", new { id = model.Id });
+                    }
+                }
+
+                filterLevelEnumDisabled.Remove(model.Id);
+            }
+
+            if (!model.Enabled && !filterLevelEnumDisabled.Contains(model.Id))
+            {
+                // Check if this is a parent level and any child levels are enabled
+                var childLevels = Enum.GetValues<FilterLevelEnum>()
+                    .Where(fl => (int)fl > (int)filterLevel && fl != filterLevel);
+
+                if (childLevels.Any())
+                {
+                    var hasEnabledChildren = childLevels.Any(childLevel => !filterLevelEnumDisabled.Contains((int)childLevel));
+
+                    if (hasEnabledChildren)
+                    {
+                        _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Admin.Configuration.Settings.FilterLevel.CannotDisableParent"));
+                        return RedirectToAction("EditFilterLevel", new { id = model.Id });
+                    }
+                }
+
+                filterLevelEnumDisabled.Add(model.Id);
+            }
+
+            await _settingService.SaveSettingAsync(filterLevelSettings, x => x.FilterLevelEnumDisabled, 0, false);
+
+            //now clear settings cache
+            await _settingService.ClearCacheAsync();
+
+            //locales                
+            await UpdateFilterLevelLocalesAsync((FilterLevelEnum)model.Id, model);
+
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Configuration.Settings.FilterLevel.Updated"));
+
+            return continueEditing ? RedirectToAction("EditFilterLevel", model.Id) : RedirectToAction("FilterLevel");
+        }
+
+        //prepare model
+        model = await _settingModelFactory.PrepareFilterLevelModelAsync(model, (FilterLevelEnum)model.Id, true);
+
+        //if we got this far, something failed, redisplay form
+        return View(model);
+    }
+
+    #endregion
+
+    [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> SortOptionsList(SortOptionSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _settingModelFactory.PrepareSortOptionListModelAsync(searchModel);
 
@@ -804,11 +946,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> SortOptionUpdate(SortOptionModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return await AccessDeniedDataTablesJson();
-
         var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
         var catalogSettings = await _settingService.LoadSettingAsync<CatalogSettings>(storeScope);
 
@@ -827,11 +967,9 @@ public partial class SettingController : BaseAdminController
         return new NullJsonResult();
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> RewardPoints()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareRewardPointsSettingsModelAsync();
 
@@ -839,11 +977,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> RewardPoints(RewardPointsSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -892,11 +1028,9 @@ public partial class SettingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Order()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareOrderSettingsModelAsync();
 
@@ -904,11 +1038,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Order(OrderSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -944,6 +1076,7 @@ public partial class SettingController : BaseAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(orderSettings, x => x.CustomOrderNumberMask, model.CustomOrderNumberMask_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(orderSettings, x => x.ExportWithProducts, model.ExportWithProducts_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(orderSettings, x => x.AllowAdminsToBuyCallForPriceProducts, model.AllowAdminsToBuyCallForPriceProducts_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(orderSettings, x => x.AllowCustomersCancelOrders, model.AllowCustomersCancelOrders_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(orderSettings, x => x.ShowProductThumbnailInOrderDetailsPage, model.ShowProductThumbnailInOrderDetailsPage_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(orderSettings, x => x.DeleteGiftCardUsageHistory, model.DeleteGiftCardUsageHistory_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingAsync(orderSettings, x => x.ActivateGiftCardsAfterCompletingOrder, 0, false);
@@ -982,11 +1115,9 @@ public partial class SettingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> ShoppingCart()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareShoppingCartSettingsModelAsync();
 
@@ -994,11 +1125,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> ShoppingCart(ShoppingCartSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -1013,6 +1142,8 @@ public partial class SettingController : BaseAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(shoppingCartSettings, x => x.DisplayWishlistAfterAddingProduct, model.DisplayWishlistAfterAddingProduct_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(shoppingCartSettings, x => x.MaximumShoppingCartItems, model.MaximumShoppingCartItems_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(shoppingCartSettings, x => x.MaximumWishlistItems, model.MaximumWishlistItems_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(shoppingCartSettings, x => x.AllowMultipleWishlist, model.AllowMultipleWishlist_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(shoppingCartSettings, x => x.MaximumNumberOfCustomWishlist, model.MaximumNumberOfCustomWishlist_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(shoppingCartSettings, x => x.AllowOutOfStockItemsToBeAddedToWishlist, model.AllowOutOfStockItemsToBeAddedToWishlist_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(shoppingCartSettings, x => x.MoveItemsFromWishlistToCart, model.MoveItemsFromWishlistToCart_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(shoppingCartSettings, x => x.CartsSharedBetweenStores, model.CartsSharedBetweenStores_OverrideForStore, storeScope, false);
@@ -1047,11 +1178,9 @@ public partial class SettingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Media()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareMediaSettingsModelAsync();
 
@@ -1060,11 +1189,9 @@ public partial class SettingController : BaseAdminController
 
     [HttpPost]
     [FormValueRequired("save")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Media(MediaSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -1091,7 +1218,7 @@ public partial class SettingController : BaseAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(mediaSettings, x => x.DefaultImageQuality, model.DefaultImageQuality_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(mediaSettings, x => x.ImportProductImagesUsingHash, model.ImportProductImagesUsingHash_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(mediaSettings, x => x.DefaultPictureZoomEnabled, model.DefaultPictureZoomEnabled_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(mediaSettings, x => x.AllowSVGUploads, model.AllowSVGUploads_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(mediaSettings, x => x.AllowSvgUploads, model.AllowSvgUploads_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(mediaSettings, x => x.ProductDefaultImageId, model.ProductDefaultImageId_OverrideForStore, storeScope, false);
 
             //now clear settings cache
@@ -1114,11 +1241,9 @@ public partial class SettingController : BaseAdminController
 
     [HttpPost, ActionName("Media")]
     [FormValueRequired("change-picture-storage")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> ChangePictureStorage()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         await _pictureService.SetIsStoreInDbAsync(!await _pictureService.IsStoreInDbAsync());
 
         //activity log
@@ -1129,11 +1254,52 @@ public partial class SettingController : BaseAdminController
         return RedirectToAction("Media");
     }
 
+    [HttpPost, ActionName("Media")]
+    [FormValueRequired("change-picture-path")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
+    public virtual async Task<IActionResult> ChangeImagePath(MediaSettingsModel model)
+    {
+        try
+        {
+            if (!_fileProvider.CheckPermissions(model.PicturePath, true, true, true, true))
+            {
+                _notificationService.ErrorNotification(string.Format(await _localizationService.GetResourceAsync("Admin.Configuration.Settings.Media.PicturePath.NotGrantedPermission"), CurrentOSUser.FullName, model.PicturePath));
+
+                return RedirectToAction("Media");
+            }
+
+            await _pictureService.ChangePicturesPathAsync(model.PicturePath);
+
+            //activity log
+            await _customerActivityService.InsertActivityAsync("EditSettings", await _localizationService.GetResourceAsync("ActivityLog.EditSettings"));
+
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Configuration.Updated"));
+
+            var returnUrl = Url.Action("Media", "Setting", new { area = AreaNames.ADMIN });
+            return View("RestartApplication", returnUrl);
+        }
+        catch (Exception ex)
+        {
+            var exceptionMessage = ex.Message;
+            var mediaSettings = await _settingService.LoadSettingAsync<MediaSettings>();
+
+            if (_fileProvider.EnumerateFiles(mediaSettings.PicturePath, "*.*", false).Any())
+                exceptionMessage += $" {await _localizationService.GetResourceAsync("Admin.Configuration.Settings.Media.ChangePicturePath.TryAgain")}";
+            else
+            {
+                mediaSettings.PicturePath = model.PicturePath;
+                await _settingService.SaveSettingAsync(mediaSettings, settings => settings.PicturePath);
+            }
+
+            _notificationService.ErrorNotification(exceptionMessage);
+        }
+
+        return RedirectToAction("Media");
+    }
+
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> CustomerUser()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareCustomerUserSettingsModelAsync();
 
@@ -1141,11 +1307,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> CustomerUser(CustomerUserSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
@@ -1235,11 +1399,9 @@ public partial class SettingController : BaseAdminController
 
     #region GDPR
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Gdpr()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareGdprSettingsModelAsync();
 
@@ -1247,11 +1409,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> Gdpr(GdprSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -1264,7 +1424,7 @@ public partial class SettingController : BaseAdminController
             //and loaded from database after each update
             await _settingService.SaveSettingOverridablePerStoreAsync(gdprSettings, x => x.GdprEnabled, model.GdprEnabled_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(gdprSettings, x => x.LogPrivacyPolicyConsent, model.LogPrivacyPolicyConsent_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(gdprSettings, x => x.LogNewsletterConsent, model.LogNewsletterConsent_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(gdprSettings, x => x.LogNewsletterConsent, model.LogNewsLetterConsent_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(gdprSettings, x => x.LogUserProfileChanges, model.LogUserProfileChanges_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(gdprSettings, x => x.DeleteInactiveCustomersAfterMonths, model.DeleteInactiveCustomersAfterMonths_OverrideForStore, storeScope, false);
 
@@ -1287,22 +1447,18 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> GdprConsentList(GdprConsentSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _settingModelFactory.PrepareGdprConsentListModelAsync(searchModel);
 
         return Json(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> CreateGdprConsent()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareGdprConsentModelAsync(new GdprConsentModel(), null);
 
@@ -1310,11 +1466,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> CreateGdprConsent(GdprConsentModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             var gdprConsent = model.ToEntity<GdprConsent>();
@@ -1335,11 +1489,9 @@ public partial class SettingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> EditGdprConsent(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //try to get a consent with the specified id
         var gdprConsent = await _gdprService.GetConsentByIdAsync(id);
         if (gdprConsent == null)
@@ -1352,11 +1504,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> EditGdprConsent(GdprConsentModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //try to get a GDPR consent with the specified id
         var gdprConsent = await _gdprService.GetConsentByIdAsync(model.Id);
         if (gdprConsent == null)
@@ -1383,11 +1533,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> DeleteGdprConsent(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //try to get a GDPR consent with the specified id
         var gdprConsent = await _gdprService.GetConsentByIdAsync(id);
         if (gdprConsent == null)
@@ -1402,35 +1550,20 @@ public partial class SettingController : BaseAdminController
 
     #endregion
 
-    public virtual async Task<IActionResult> GeneralCommon(bool showtour = false)
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
+    public virtual async Task<IActionResult> GeneralCommon()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareGeneralCommonSettingsModelAsync();
-
-        //show configuration tour
-        if (showtour)
-        {
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            var hideCard = await _genericAttributeService.GetAttributeAsync<bool>(customer, NopCustomerDefaults.HideConfigurationStepsAttribute);
-            var closeCard = await _genericAttributeService.GetAttributeAsync<bool>(customer, NopCustomerDefaults.CloseConfigurationStepsAttribute);
-
-            if (!hideCard && !closeCard)
-                ViewBag.ShowTour = true;
-        }
 
         return View(model);
     }
 
     [HttpPost]
     [FormValueRequired("save")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> GeneralCommon(GeneralCommonSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             //load settings for a chosen store scope
@@ -1580,12 +1713,13 @@ public partial class SettingController : BaseAdminController
             captchaSettings.ShowOnEmailProductToFriendPage = model.CaptchaSettings.ShowOnEmailProductToFriendPage;
             captchaSettings.ShowOnBlogCommentPage = model.CaptchaSettings.ShowOnBlogCommentPage;
             captchaSettings.ShowOnNewsCommentPage = model.CaptchaSettings.ShowOnNewsCommentPage;
-            captchaSettings.ShowOnNewsletterPage = model.CaptchaSettings.ShowOnNewsletterPage;
+            captchaSettings.ShowOnNewsletterPage = model.CaptchaSettings.ShowOnNewsLetterPage;
             captchaSettings.ShowOnProductReviewPage = model.CaptchaSettings.ShowOnProductReviewPage;
             captchaSettings.ShowOnForgotPasswordPage = model.CaptchaSettings.ShowOnForgotPasswordPage;
             captchaSettings.ShowOnApplyVendorPage = model.CaptchaSettings.ShowOnApplyVendorPage;
             captchaSettings.ShowOnForum = model.CaptchaSettings.ShowOnForum;
             captchaSettings.ShowOnCheckoutPageForGuests = model.CaptchaSettings.ShowOnCheckoutPageForGuests;
+            captchaSettings.ShowOnCheckGiftCardBalance = model.CaptchaSettings.ShowOnCheckGiftCardBalance;
             captchaSettings.ReCaptchaPublicKey = model.CaptchaSettings.ReCaptchaPublicKey;
             captchaSettings.ReCaptchaPrivateKey = model.CaptchaSettings.ReCaptchaPrivateKey;
             captchaSettings.CaptchaType = (CaptchaType)model.CaptchaSettings.CaptchaType;
@@ -1602,12 +1736,13 @@ public partial class SettingController : BaseAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ShowOnEmailProductToFriendPage, model.CaptchaSettings.ShowOnEmailProductToFriendPage_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ShowOnBlogCommentPage, model.CaptchaSettings.ShowOnBlogCommentPage_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ShowOnNewsCommentPage, model.CaptchaSettings.ShowOnNewsCommentPage_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ShowOnNewsletterPage, model.CaptchaSettings.ShowOnNewsletterPage_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ShowOnNewsletterPage, model.CaptchaSettings.ShowOnNewsLetterPage_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ShowOnProductReviewPage, model.CaptchaSettings.ShowOnProductReviewPage_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ShowOnApplyVendorPage, model.CaptchaSettings.ShowOnApplyVendorPage_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ShowOnForgotPasswordPage, model.CaptchaSettings.ShowOnForgotPasswordPage_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ShowOnForum, model.CaptchaSettings.ShowOnForum_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ShowOnCheckoutPageForGuests, model.CaptchaSettings.ShowOnCheckoutPageForGuests_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ShowOnCheckGiftCardBalance, model.CaptchaSettings.ShowOnCheckGiftCardBalance_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ReCaptchaPublicKey, model.CaptchaSettings.ReCaptchaPublicKey_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ReCaptchaPrivateKey, model.CaptchaSettings.ReCaptchaPrivateKey_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(captchaSettings, x => x.ReCaptchaV3ScoreThreshold, model.CaptchaSettings.ReCaptchaV3ScoreThreshold_OverrideForStore, storeScope, false);
@@ -1657,71 +1792,15 @@ public partial class SettingController : BaseAdminController
             localizationSettings.LoadAllUrlRecordsOnStartup = model.LocalizationSettings.LoadAllUrlRecordsOnStartup;
             await _settingService.SaveSettingAsync(localizationSettings);
 
-            //display default menu item
-            var displayDefaultMenuItemSettings = await _settingService.LoadSettingAsync<DisplayDefaultMenuItemSettings>(storeScope);
-
-            //we do not clear cache after each setting update.
-            //this behavior can increase performance because cached settings will not be cleared 
-            //and loaded from database after each update
-            displayDefaultMenuItemSettings.DisplayHomepageMenuItem = model.DisplayDefaultMenuItemSettings.DisplayHomepageMenuItem;
-            displayDefaultMenuItemSettings.DisplayNewProductsMenuItem = model.DisplayDefaultMenuItemSettings.DisplayNewProductsMenuItem;
-            displayDefaultMenuItemSettings.DisplayProductSearchMenuItem = model.DisplayDefaultMenuItemSettings.DisplayProductSearchMenuItem;
-            displayDefaultMenuItemSettings.DisplayCustomerInfoMenuItem = model.DisplayDefaultMenuItemSettings.DisplayCustomerInfoMenuItem;
-            displayDefaultMenuItemSettings.DisplayBlogMenuItem = model.DisplayDefaultMenuItemSettings.DisplayBlogMenuItem;
-            displayDefaultMenuItemSettings.DisplayForumsMenuItem = model.DisplayDefaultMenuItemSettings.DisplayForumsMenuItem;
-            displayDefaultMenuItemSettings.DisplayContactUsMenuItem = model.DisplayDefaultMenuItemSettings.DisplayContactUsMenuItem;
-
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultMenuItemSettings, x => x.DisplayHomepageMenuItem, model.DisplayDefaultMenuItemSettings.DisplayHomepageMenuItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultMenuItemSettings, x => x.DisplayNewProductsMenuItem, model.DisplayDefaultMenuItemSettings.DisplayNewProductsMenuItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultMenuItemSettings, x => x.DisplayProductSearchMenuItem, model.DisplayDefaultMenuItemSettings.DisplayProductSearchMenuItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultMenuItemSettings, x => x.DisplayCustomerInfoMenuItem, model.DisplayDefaultMenuItemSettings.DisplayCustomerInfoMenuItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultMenuItemSettings, x => x.DisplayBlogMenuItem, model.DisplayDefaultMenuItemSettings.DisplayBlogMenuItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultMenuItemSettings, x => x.DisplayForumsMenuItem, model.DisplayDefaultMenuItemSettings.DisplayForumsMenuItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultMenuItemSettings, x => x.DisplayContactUsMenuItem, model.DisplayDefaultMenuItemSettings.DisplayContactUsMenuItem_OverrideForStore, storeScope, false);
-
-            //now clear settings cache
-            await _settingService.ClearCacheAsync();
-
-            //display default footer item
-            var displayDefaultFooterItemSettings = await _settingService.LoadSettingAsync<DisplayDefaultFooterItemSettings>(storeScope);
-
-            //we do not clear cache after each setting update.
-            //this behavior can increase performance because cached settings will not be cleared 
-            //and loaded from database after each update
-            displayDefaultFooterItemSettings.DisplaySitemapFooterItem = model.DisplayDefaultFooterItemSettings.DisplaySitemapFooterItem;
-            displayDefaultFooterItemSettings.DisplayContactUsFooterItem = model.DisplayDefaultFooterItemSettings.DisplayContactUsFooterItem;
-            displayDefaultFooterItemSettings.DisplayProductSearchFooterItem = model.DisplayDefaultFooterItemSettings.DisplayProductSearchFooterItem;
-            displayDefaultFooterItemSettings.DisplayNewsFooterItem = model.DisplayDefaultFooterItemSettings.DisplayNewsFooterItem;
-            displayDefaultFooterItemSettings.DisplayBlogFooterItem = model.DisplayDefaultFooterItemSettings.DisplayBlogFooterItem;
-            displayDefaultFooterItemSettings.DisplayForumsFooterItem = model.DisplayDefaultFooterItemSettings.DisplayForumsFooterItem;
-            displayDefaultFooterItemSettings.DisplayRecentlyViewedProductsFooterItem = model.DisplayDefaultFooterItemSettings.DisplayRecentlyViewedProductsFooterItem;
-            displayDefaultFooterItemSettings.DisplayCompareProductsFooterItem = model.DisplayDefaultFooterItemSettings.DisplayCompareProductsFooterItem;
-            displayDefaultFooterItemSettings.DisplayNewProductsFooterItem = model.DisplayDefaultFooterItemSettings.DisplayNewProductsFooterItem;
-            displayDefaultFooterItemSettings.DisplayCustomerInfoFooterItem = model.DisplayDefaultFooterItemSettings.DisplayCustomerInfoFooterItem;
-            displayDefaultFooterItemSettings.DisplayCustomerOrdersFooterItem = model.DisplayDefaultFooterItemSettings.DisplayCustomerOrdersFooterItem;
-            displayDefaultFooterItemSettings.DisplayCustomerAddressesFooterItem = model.DisplayDefaultFooterItemSettings.DisplayCustomerAddressesFooterItem;
-            displayDefaultFooterItemSettings.DisplayShoppingCartFooterItem = model.DisplayDefaultFooterItemSettings.DisplayShoppingCartFooterItem;
-            displayDefaultFooterItemSettings.DisplayWishlistFooterItem = model.DisplayDefaultFooterItemSettings.DisplayWishlistFooterItem;
-            displayDefaultFooterItemSettings.DisplayApplyVendorAccountFooterItem = model.DisplayDefaultFooterItemSettings.DisplayApplyVendorAccountFooterItem;
-
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplaySitemapFooterItem, model.DisplayDefaultFooterItemSettings.DisplaySitemapFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayContactUsFooterItem, model.DisplayDefaultFooterItemSettings.DisplayContactUsFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayProductSearchFooterItem, model.DisplayDefaultFooterItemSettings.DisplayProductSearchFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayNewsFooterItem, model.DisplayDefaultFooterItemSettings.DisplayNewsFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayBlogFooterItem, model.DisplayDefaultFooterItemSettings.DisplayBlogFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayForumsFooterItem, model.DisplayDefaultFooterItemSettings.DisplayForumsFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayRecentlyViewedProductsFooterItem, model.DisplayDefaultFooterItemSettings.DisplayRecentlyViewedProductsFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayCompareProductsFooterItem, model.DisplayDefaultFooterItemSettings.DisplayCompareProductsFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayNewProductsFooterItem, model.DisplayDefaultFooterItemSettings.DisplayNewProductsFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayCustomerInfoFooterItem, model.DisplayDefaultFooterItemSettings.DisplayCustomerInfoFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayCustomerOrdersFooterItem, model.DisplayDefaultFooterItemSettings.DisplayCustomerOrdersFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayCustomerAddressesFooterItem, model.DisplayDefaultFooterItemSettings.DisplayCustomerAddressesFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayShoppingCartFooterItem, model.DisplayDefaultFooterItemSettings.DisplayShoppingCartFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayWishlistFooterItem, model.DisplayDefaultFooterItemSettings.DisplayWishlistFooterItem_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(displayDefaultFooterItemSettings, x => x.DisplayApplyVendorAccountFooterItem, model.DisplayDefaultFooterItemSettings.DisplayApplyVendorAccountFooterItem_OverrideForStore, storeScope, false);
-
-            //now clear settings cache
-            await _settingService.ClearCacheAsync();
+            //translation settings
+            var translationSettings = await _settingService.LoadSettingAsync<TranslationSettings>(storeScope);
+            translationSettings.AllowPreTranslate = model.TranslationSettings.AllowPreTranslate;
+            translationSettings.TranslateFromLanguageId = model.TranslationSettings.TranslateFromLanguageId;
+            translationSettings.NotTranslateLanguages = model.TranslationSettings.NotTranslateLanguages?.ToList() ?? new List<int>();
+            translationSettings.GoogleApiKey = model.TranslationSettings.GoogleApiKey;
+            translationSettings.DeepLAuthKey = model.TranslationSettings.DeepLAuthKey;
+            translationSettings.TranslationServiceId = model.TranslationSettings.TranslationServiceId;
+            await _settingService.SaveSettingAsync(translationSettings);
 
             //admin area
             var adminAreaSettings = await _settingService.LoadSettingAsync<AdminAreaSettings>(storeScope);
@@ -1730,8 +1809,10 @@ public partial class SettingController : BaseAdminController
             //this behavior can increase performance because cached settings will not be cleared 
             //and loaded from database after each update
             adminAreaSettings.UseRichEditorInMessageTemplates = model.AdminAreaSettings.UseRichEditorInMessageTemplates;
+            adminAreaSettings.UseStickyHeaderLayout = model.AdminAreaSettings.UseStickyHeaderLayout;
 
             await _settingService.SaveSettingOverridablePerStoreAsync(adminAreaSettings, x => x.UseRichEditorInMessageTemplates, model.AdminAreaSettings.UseRichEditorInMessageTemplates_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingAsync(adminAreaSettings, x => x.UseStickyHeaderLayout, clearCache: false);
 
             //now clear settings cache
             await _settingService.ClearCacheAsync();
@@ -1753,11 +1834,9 @@ public partial class SettingController : BaseAdminController
 
     [HttpPost, ActionName("GeneralCommon")]
     [FormValueRequired("changeencryptionkey")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> ChangeEncryptionKey(GeneralCommonSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
         var securitySettings = await _settingService.LoadSettingAsync<SecuritySettings>(storeScope);
 
@@ -1831,11 +1910,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> UploadLocalePattern()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         try
         {
             await _uploadService.UploadLocalePatternAsync();
@@ -1850,11 +1927,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> UploadIcons(IFormFile iconsFile)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         try
         {
             if (iconsFile == null || iconsFile.Length == 0)
@@ -1912,11 +1987,9 @@ public partial class SettingController : BaseAdminController
         return RedirectToAction("GeneralCommon");
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> AllSettings(string settingName)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _settingModelFactory.PrepareSettingSearchModelAsync(new SettingSearchModel { SearchSettingName = WebUtility.HtmlEncode(settingName) });
 
@@ -1924,11 +1997,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> AllSettings(SettingSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _settingModelFactory.PrepareSettingListModelAsync(searchModel);
 
@@ -1936,11 +2007,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> SettingUpdate(SettingModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return await AccessDeniedDataTablesJson();
-
         if (!ModelState.IsValid)
             return ErrorJson(ModelState.SerializeErrors());
 
@@ -1963,11 +2032,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> SettingAdd(SettingModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return await AccessDeniedDataTablesJson();
-
         if (!ModelState.IsValid)
             return ErrorJson(ModelState.SerializeErrors());
 
@@ -1983,11 +2050,9 @@ public partial class SettingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SETTINGS)]
     public virtual async Task<IActionResult> SettingDelete(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a setting with the specified id
         var setting = await _settingService.GetSettingByIdAsync(id)
             ?? throw new ArgumentException("No setting found with the specified id", nameof(id));
@@ -2003,7 +2068,7 @@ public partial class SettingController : BaseAdminController
 
     //action displaying notification (warning) to a store owner about a lot of traffic 
     //between the distributed cache server and the application when LoadAllLocaleRecordsOnStartup setting is set
-    public async Task<IActionResult> DistributedCacheHighTrafficWarning(bool loadAllLocaleRecordsOnStartup)
+    public virtual async Task<IActionResult> DistributedCacheHighTrafficWarning(bool loadAllLocaleRecordsOnStartup)
     {
         //LoadAllLocaleRecordsOnStartup is set and distributed cache is used, so display warning
         if (_appSettings.Get<DistributedCacheConfig>().Enabled && _appSettings.Get<DistributedCacheConfig>().DistributedCacheType != DistributedCacheType.Memory && loadAllLocaleRecordsOnStartup)
@@ -2019,7 +2084,7 @@ public partial class SettingController : BaseAdminController
     }
 
     //Action that displays a notification (warning) to the store owner about the absence of active authentication providers
-    public async Task<IActionResult> ForceMultifactorAuthenticationWarning(bool forceMultifactorAuthentication)
+    public virtual async Task<IActionResult> ForceMultifactorAuthenticationWarning(bool forceMultifactorAuthentication)
     {
         //ForceMultifactorAuthentication is set and the store haven't active Authentication provider , so display warning
         if (forceMultifactorAuthentication && !await _multiFactorAuthenticationPluginManager.HasActivePluginsAsync())
@@ -2035,7 +2100,7 @@ public partial class SettingController : BaseAdminController
     }
 
     //Action that displays a notification (warning) to the store owner about the need to restart the application after changing the setting
-    public async Task<IActionResult> SeoFriendlyUrlsForLanguagesEnabledWarning(bool seoFriendlyUrlsForLanguagesEnabled)
+    public virtual async Task<IActionResult> SeoFriendlyUrlsForLanguagesEnabledWarning(bool seoFriendlyUrlsForLanguagesEnabled)
     {
         //load settings for a chosen store scope
         var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();

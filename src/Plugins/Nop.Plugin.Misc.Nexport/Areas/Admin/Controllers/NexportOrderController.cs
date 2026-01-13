@@ -23,8 +23,8 @@ public class NexportOrderController : BaseAdminController
     [HttpPost]
     public async Task<IActionResult> OrderList(OrderSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Orders.ORDERS_VIEW))
+            return await AccessDeniedJsonAsync();
 
         //prepare model
         var model = await _nexportPluginModelFactory.PrepareOrderListModelAsync(searchModel);

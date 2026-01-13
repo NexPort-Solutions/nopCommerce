@@ -23,7 +23,6 @@ using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
 using Nop.Services.Security;
-using Nop.Services.Stores;
 using Nop.Services.Tax;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
@@ -66,7 +65,6 @@ public partial class CustomerController : BaseAdminController
     protected readonly IQueuedEmailService _queuedEmailService;
     protected readonly IRewardPointService _rewardPointService;
     protected readonly IStoreContext _storeContext;
-    protected readonly IStoreService _storeService;
     protected readonly ITaxService _taxService;
     protected readonly IWorkContext _workContext;
     protected readonly IWorkflowMessageService _workflowMessageService;
@@ -105,7 +103,6 @@ public partial class CustomerController : BaseAdminController
         IQueuedEmailService queuedEmailService,
         IRewardPointService rewardPointService,
         IStoreContext storeContext,
-        IStoreService storeService,
         ITaxService taxService,
         IWorkContext workContext,
         IWorkflowMessageService workflowMessageService,
@@ -139,7 +136,6 @@ public partial class CustomerController : BaseAdminController
         _queuedEmailService = queuedEmailService;
         _rewardPointService = rewardPointService;
         _storeContext = storeContext;
-        _storeService = storeService;
         _taxService = taxService;
         _workContext = workContext;
         _workflowMessageService = workflowMessageService;
@@ -161,7 +157,7 @@ public partial class CustomerController : BaseAdminController
         var rolesToDelete = existingCustomerRoles.Except(customerRoles, new CustomerRoleComparerByName());
         if (rolesToAdd.Any(role => role.SystemName != NopCustomerDefaults.RegisteredRoleName) || rolesToDelete.Any())
         {
-            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAcl))
+            if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_ACL))
                 return await _localizationService.GetResourceAsync("Admin.Customers.Customers.CustomerRolesManagingError");
         }
 
@@ -271,11 +267,9 @@ public partial class CustomerController : BaseAdminController
         return RedirectToAction("List");
     }
 
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
     public virtual async Task<IActionResult> List()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _customerModelFactory.PrepareCustomerSearchModelAsync(new CustomerSearchModel());
 
@@ -283,22 +277,18 @@ public partial class CustomerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
     public virtual async Task<IActionResult> CustomerList(CustomerSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _customerModelFactory.PrepareCustomerListModelAsync(searchModel);
 
         return Json(model);
     }
 
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Create()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _customerModelFactory.PrepareCustomerModelAsync(new CustomerModel(), null);
 
@@ -307,11 +297,9 @@ public partial class CustomerController : BaseAdminController
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     [FormValueRequired("save", "save-continue")]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Create(CustomerModel model, bool continueEditing, IFormCollection form)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         if (!string.IsNullOrWhiteSpace(model.Email) && await _customerService.GetCustomerByEmailAsync(model.Email) != null)
             ModelState.AddModelError(string.Empty, "Email is already registered");
 
@@ -400,42 +388,6 @@ public partial class CustomerController : BaseAdminController
 
             await _customerService.InsertCustomerAsync(customer);
 
-            //newsletter subscriptions
-            if (!string.IsNullOrEmpty(customer.Email))
-            {
-                var allStores = await _storeService.GetAllStoresAsync();
-                foreach (var store in allStores)
-                {
-                    var newsletterSubscription = await _newsLetterSubscriptionService
-                        .GetNewsLetterSubscriptionByEmailAndStoreIdAsync(customer.Email, store.Id);
-                    if (model.SelectedNewsletterSubscriptionStoreIds != null &&
-                        model.SelectedNewsletterSubscriptionStoreIds.Contains(store.Id))
-                    {
-                        //subscribed
-                        if (newsletterSubscription == null)
-                        {
-                            await _newsLetterSubscriptionService.InsertNewsLetterSubscriptionAsync(new NewsLetterSubscription
-                            {
-                                NewsLetterSubscriptionGuid = Guid.NewGuid(),
-                                Email = customer.Email,
-                                Active = true,
-                                StoreId = store.Id,
-                                LanguageId = customer.LanguageId ?? store.DefaultLanguageId,
-                                CreatedOnUtc = DateTime.UtcNow
-                            });
-                        }
-                    }
-                    else
-                    {
-                        //not subscribed
-                        if (newsletterSubscription != null)
-                        {
-                            await _newsLetterSubscriptionService.DeleteNewsLetterSubscriptionAsync(newsletterSubscription);
-                        }
-                    }
-                }
-            }
-
             //password
             if (!string.IsNullOrWhiteSpace(model.Password))
             {
@@ -498,11 +450,9 @@ public partial class CustomerController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
     public virtual async Task<IActionResult> Edit(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(id);
         if (customer == null || customer.Deleted)
@@ -516,11 +466,9 @@ public partial class CustomerController : BaseAdminController
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     [FormValueRequired("save", "save-continue")]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Edit(CustomerModel model, bool continueEditing, IFormCollection form)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(model.Id);
         if (customer == null || customer.Deleted)
@@ -566,6 +514,7 @@ public partial class CustomerController : BaseAdminController
             {
                 customer.AdminComment = model.AdminComment;
                 customer.IsTaxExempt = model.IsTaxExempt;
+                customer.MustChangePassword = model.MustChangePassword;
 
                 //prevent deactivation of the last active administrator
                 if (!await _customerService.IsAdminAsync(customer) || model.Active || await SecondAdminAccountExistsAsync(customer))
@@ -643,42 +592,6 @@ public partial class CustomerController : BaseAdminController
 
                 //custom customer attributes
                 customer.CustomCustomerAttributesXML = customerAttributesXml;
-
-                //newsletter subscriptions
-                if (!string.IsNullOrEmpty(customer.Email))
-                {
-                    var allStores = await _storeService.GetAllStoresAsync();
-                    foreach (var store in allStores)
-                    {
-                        var newsletterSubscription = await _newsLetterSubscriptionService
-                            .GetNewsLetterSubscriptionByEmailAndStoreIdAsync(customer.Email, store.Id);
-                        if (model.SelectedNewsletterSubscriptionStoreIds != null &&
-                            model.SelectedNewsletterSubscriptionStoreIds.Contains(store.Id))
-                        {
-                            //subscribed
-                            if (newsletterSubscription == null)
-                            {
-                                await _newsLetterSubscriptionService.InsertNewsLetterSubscriptionAsync(new NewsLetterSubscription
-                                {
-                                    NewsLetterSubscriptionGuid = Guid.NewGuid(),
-                                    Email = customer.Email,
-                                    Active = true,
-                                    StoreId = store.Id,
-                                    LanguageId = customer.LanguageId ?? store.DefaultLanguageId,
-                                    CreatedOnUtc = DateTime.UtcNow
-                                });
-                            }
-                        }
-                        else
-                        {
-                            //not subscribed
-                            if (newsletterSubscription != null)
-                            {
-                                await _newsLetterSubscriptionService.DeleteNewsLetterSubscriptionAsync(newsletterSubscription);
-                            }
-                        }
-                    }
-                }
 
                 var currentCustomerRoleIds = await _customerService.GetCustomerRoleIdsAsync(customer, true);
 
@@ -759,11 +672,9 @@ public partial class CustomerController : BaseAdminController
 
     [HttpPost, ActionName("Edit")]
     [FormValueRequired("changepassword")]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> ChangePassword(CustomerModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(model.Id);
         if (customer == null)
@@ -790,11 +701,9 @@ public partial class CustomerController : BaseAdminController
 
     [HttpPost, ActionName("Edit")]
     [FormValueRequired("markVatNumberAsValid")]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> MarkVatNumberAsValid(CustomerModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(model.Id);
         if (customer == null)
@@ -808,11 +717,9 @@ public partial class CustomerController : BaseAdminController
 
     [HttpPost, ActionName("Edit")]
     [FormValueRequired("markVatNumberAsInvalid")]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> MarkVatNumberAsInvalid(CustomerModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(model.Id);
         if (customer == null)
@@ -826,11 +733,9 @@ public partial class CustomerController : BaseAdminController
 
     [HttpPost, ActionName("Edit")]
     [FormValueRequired("remove-affiliate")]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> RemoveAffiliate(CustomerModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(model.Id);
         if (customer == null)
@@ -843,11 +748,9 @@ public partial class CustomerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> RemoveBindMFA(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(id);
         if (customer == null)
@@ -864,11 +767,9 @@ public partial class CustomerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Delete(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(id);
         if (customer == null)
@@ -896,14 +797,10 @@ public partial class CustomerController : BaseAdminController
             //delete
             await _customerService.DeleteCustomerAsync(customer);
 
-            //remove newsletter subscription (if exists)
-            foreach (var store in await _storeService.GetAllStoresAsync())
-            {
-                var subscription = await _newsLetterSubscriptionService.GetNewsLetterSubscriptionByEmailAndStoreIdAsync(customerEmail, store.Id);
-                
-                if (subscription != null)
-                    await _newsLetterSubscriptionService.DeleteNewsLetterSubscriptionAsync(subscription);
-            }
+            //remove newsletter subscriptions (if exist)
+            var subscriptions = await _newsLetterSubscriptionService.GetNewsLetterSubscriptionsByEmailAsync(customerEmail);
+            foreach (var subscription in subscriptions)
+                await _newsLetterSubscriptionService.DeleteNewsLetterSubscriptionAsync(subscription);
 
             //activity log
             await _customerActivityService.InsertActivityAsync("DeleteCustomer",
@@ -922,11 +819,9 @@ public partial class CustomerController : BaseAdminController
 
     [HttpPost, ActionName("Edit")]
     [FormValueRequired("impersonate")]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_IMPERSONATION)]
     public virtual async Task<IActionResult> Impersonate(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AllowCustomerImpersonation))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(id);
         if (customer == null)
@@ -964,11 +859,9 @@ public partial class CustomerController : BaseAdminController
 
     [HttpPost, ActionName("Edit")]
     [FormValueRequired("send-welcome-message")]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> SendWelcomeMessage(CustomerModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(model.Id);
         if (customer == null)
@@ -983,11 +876,9 @@ public partial class CustomerController : BaseAdminController
 
     [HttpPost, ActionName("Edit")]
     [FormValueRequired("resend-activation-message")]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> ReSendActivationMessage(CustomerModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(model.Id);
         if (customer == null)
@@ -1002,11 +893,9 @@ public partial class CustomerController : BaseAdminController
         return RedirectToAction("Edit", new { id = customer.Id });
     }
 
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> SendEmail(CustomerModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(model.Id);
         if (customer == null)
@@ -1052,11 +941,9 @@ public partial class CustomerController : BaseAdminController
         return RedirectToAction("Edit", new { id = customer.Id });
     }
 
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> SendPm(CustomerModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(model.Id);
         if (customer == null)
@@ -1074,12 +961,13 @@ public partial class CustomerController : BaseAdminController
                 throw new NopException(await _localizationService.GetResourceAsync("PrivateMessages.MessageCannotBeEmpty"));
 
             var store = await _storeContext.GetCurrentStoreAsync();
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
             var privateMessage = new PrivateMessage
             {
                 StoreId = store.Id,
                 ToCustomerId = customer.Id,
-                FromCustomerId = customer.Id,
+                FromCustomerId = currentCustomer.Id,
                 Subject = model.SendPm.Subject,
                 Text = model.SendPm.Message,
                 IsDeletedByAuthor = false,
@@ -1105,11 +993,9 @@ public partial class CustomerController : BaseAdminController
     #region Reward points history
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
     public virtual async Task<IActionResult> RewardPointsHistorySelect(CustomerRewardPointsSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(searchModel.CustomerId)
             ?? throw new ArgumentException("No customer found with the specified id");
@@ -1120,11 +1006,9 @@ public partial class CustomerController : BaseAdminController
         return Json(model);
     }
 
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> RewardPointsHistoryAdd(AddRewardPointsToCustomerModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
-
         //prevent adding a new row with zero value
         if (model.Points == 0)
             return ErrorJson(await _localizationService.GetResourceAsync("Admin.Customers.Customers.RewardPoints.AddingZeroValueNotAllowed"));
@@ -1164,11 +1048,9 @@ public partial class CustomerController : BaseAdminController
     #region Addresses
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
     public virtual async Task<IActionResult> AddressesSelect(CustomerAddressSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(searchModel.CustomerId)
             ?? throw new ArgumentException("No customer found with the specified id");
@@ -1180,11 +1062,9 @@ public partial class CustomerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> AddressDelete(int id, int customerId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(customerId)
             ?? throw new ArgumentException("No customer found with the specified id", nameof(customerId));
@@ -1204,11 +1084,9 @@ public partial class CustomerController : BaseAdminController
         return new NullJsonResult();
     }
 
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> AddressCreate(int customerId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(customerId);
         if (customer == null)
@@ -1221,11 +1099,9 @@ public partial class CustomerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> AddressCreate(CustomerAddressModel model, IFormCollection form)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(model.CustomerId);
         if (customer == null)
@@ -1267,11 +1143,9 @@ public partial class CustomerController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> AddressEdit(int addressId, int customerId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(customerId);
         if (customer == null)
@@ -1289,11 +1163,9 @@ public partial class CustomerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> AddressEdit(CustomerAddressModel model, IFormCollection form)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(model.CustomerId);
         if (customer == null)
@@ -1335,11 +1207,9 @@ public partial class CustomerController : BaseAdminController
     #region Orders
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
     public virtual async Task<IActionResult> OrderList(CustomerOrderSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(searchModel.CustomerId)
             ?? throw new ArgumentException("No customer found with the specified id");
@@ -1354,11 +1224,9 @@ public partial class CustomerController : BaseAdminController
 
     #region Customer
 
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
     public virtual async Task<IActionResult> LoadCustomerStatistics(string period)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return Content(string.Empty);
-
         var result = new List<object>();
 
         var nowDt = await _dateTimeHelper.ConvertToUserTimeAsync(DateTime.Now);
@@ -1443,11 +1311,9 @@ public partial class CustomerController : BaseAdminController
     #region Current shopping cart/ wishlist
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
     public virtual async Task<IActionResult> GetCartList(CustomerShoppingCartSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(searchModel.CustomerId)
             ?? throw new ArgumentException("No customer found with the specified id");
@@ -1463,11 +1329,10 @@ public partial class CustomerController : BaseAdminController
     #region Activity log
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
+    [CheckPermission(StandardPermission.Customers.ACTIVITY_LOG_VIEW)]
     public virtual async Task<IActionResult> ListActivityLog(CustomerActivityLogSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(searchModel.CustomerId)
             ?? throw new ArgumentException("No customer found with the specified id");
@@ -1483,11 +1348,9 @@ public partial class CustomerController : BaseAdminController
     #region Back in stock subscriptions
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
     public virtual async Task<IActionResult> BackInStockSubscriptionList(CustomerBackInStockSubscriptionSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(searchModel.CustomerId)
             ?? throw new ArgumentException("No customer found with the specified id");
@@ -1502,11 +1365,10 @@ public partial class CustomerController : BaseAdminController
 
     #region GDPR
 
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
+    [CheckPermission(StandardPermission.Customers.GDPR_MANAGE)]
     public virtual async Task<IActionResult> GdprLog()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _customerModelFactory.PrepareGdprLogSearchModelAsync(new GdprLogSearchModel());
 
@@ -1514,11 +1376,10 @@ public partial class CustomerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
+    [CheckPermission(StandardPermission.Customers.GDPR_MANAGE)]
     public virtual async Task<IActionResult> GdprLogList(GdprLogSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _customerModelFactory.PrepareGdprLogListModelAsync(searchModel);
 
@@ -1526,11 +1387,10 @@ public partial class CustomerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
+    [CheckPermission(StandardPermission.Customers.GDPR_MANAGE)]
     public virtual async Task<IActionResult> GdprDelete(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(id);
         if (customer == null)
@@ -1573,11 +1433,10 @@ public partial class CustomerController : BaseAdminController
         }
     }
 
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
+    [CheckPermission(StandardPermission.Customers.GDPR_MANAGE)]
     public virtual async Task<IActionResult> GdprExport(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(id);
         if (customer == null)
@@ -1587,7 +1446,7 @@ public partial class CustomerController : BaseAdminController
         {
             //log
             //_gdprService.InsertLog(customer, 0, GdprRequestType.ExportData, await _localizationService.GetResource("Gdpr.Exported"));
-            //export
+            
             //export
             var store = await _storeContext.GetCurrentStoreAsync();
             var bytes = await _exportManager.ExportCustomerGdprInfoToXlsxAsync(customer, store.Id);
@@ -1606,11 +1465,10 @@ public partial class CustomerController : BaseAdminController
 
     [HttpPost, ActionName("ExportExcel")]
     [FormValueRequired("exportexcel-all")]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_IMPORT_EXPORT)]
     public virtual async Task<IActionResult> ExportExcelAll(CustomerSearchModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         var customers = await _customerService.GetAllCustomersAsync(customerRoleIds: model.SelectedCustomerRoleIds.ToArray(),
             email: model.SearchEmail,
             username: model.SearchUsername,
@@ -1619,6 +1477,7 @@ public partial class CustomerController : BaseAdminController
             dayOfBirth: int.TryParse(model.SearchDayOfBirth, out var dayOfBirth) ? dayOfBirth : 0,
             monthOfBirth: int.TryParse(model.SearchMonthOfBirth, out var monthOfBirth) ? monthOfBirth : 0,
             company: model.SearchCompany,
+            isActive: model.SearchIsActive,
             phone: model.SearchPhone,
             zipPostalCode: model.SearchZipPostalCode);
 
@@ -1635,11 +1494,10 @@ public partial class CustomerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_IMPORT_EXPORT)]
     public virtual async Task<IActionResult> ExportExcelSelected(string selectedIds)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         var customers = new List<Customer>();
         if (selectedIds != null)
         {
@@ -1664,11 +1522,10 @@ public partial class CustomerController : BaseAdminController
 
     [HttpPost, ActionName("ExportXML")]
     [FormValueRequired("exportxml-all")]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_IMPORT_EXPORT)]
     public virtual async Task<IActionResult> ExportXmlAll(CustomerSearchModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         var customers = await _customerService.GetAllCustomersAsync(customerRoleIds: model.SelectedCustomerRoleIds.ToArray(),
             email: model.SearchEmail,
             username: model.SearchUsername,
@@ -1677,6 +1534,7 @@ public partial class CustomerController : BaseAdminController
             dayOfBirth: int.TryParse(model.SearchDayOfBirth, out var dayOfBirth) ? dayOfBirth : 0,
             monthOfBirth: int.TryParse(model.SearchMonthOfBirth, out var monthOfBirth) ? monthOfBirth : 0,
             company: model.SearchCompany,
+            isActive: model.SearchIsActive,
             phone: model.SearchPhone,
             zipPostalCode: model.SearchZipPostalCode);
 
@@ -1693,11 +1551,10 @@ public partial class CustomerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_VIEW)]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_IMPORT_EXPORT)]
     public virtual async Task<IActionResult> ExportXmlSelected(string selectedIds)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         var customers = new List<Customer>();
         if (selectedIds != null)
         {
@@ -1721,11 +1578,10 @@ public partial class CustomerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_CREATE_EDIT_DELETE)]
+    [CheckPermission(StandardPermission.Customers.CUSTOMERS_IMPORT_EXPORT)]
     public virtual async Task<IActionResult> ImportExcel(IFormFile importexcelfile)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
-            return AccessDeniedView();
-
         if (await _workContext.GetCurrentVendorAsync() != null)
             //a vendor can not import customer
             return AccessDeniedView();

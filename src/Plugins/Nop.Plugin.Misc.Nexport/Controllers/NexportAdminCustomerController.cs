@@ -65,11 +65,11 @@ public class NexportAdminCustomerController(
     IQueuedEmailService queuedEmailService,
     IRewardPointService rewardPointService,
     IStoreContext storeContext,
-    IStoreService storeService,
     ITaxService taxService,
     IWorkContext workContext,
     IWorkflowMessageService workflowMessageService,
     TaxSettings taxSettings,
+    IStoreService storeService,
     NexportService nexportService,
     IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
     ILogger logger)
@@ -81,7 +81,7 @@ public class NexportAdminCustomerController(
         genericAttributeService,
         importManager, localizationService, newsLetterSubscriptionService, notificationService, permissionService,
         queuedEmailService,
-        rewardPointService, storeContext, storeService, taxService, workContext, workflowMessageService, taxSettings)
+        rewardPointService, storeContext, taxService, workContext, workflowMessageService, taxSettings)
 {
     #region Fields
 
@@ -127,7 +127,7 @@ public class NexportAdminCustomerController(
 
     public override async Task<IActionResult> Create(CustomerModel model, bool continueEditing, IFormCollection form)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return AccessDeniedView();
 
         if (!string.IsNullOrWhiteSpace(model.Email) && await _customerService.GetCustomerByEmailAsync(model.Email) != null)
@@ -217,41 +217,6 @@ public class NexportAdminCustomerController(
             customer.CustomCustomerAttributesXML = customerAttributesXml;
 
             await _customerService.InsertCustomerAsync(customer);
-
-            //newsletter subscriptions
-            if (!string.IsNullOrEmpty(customer.Email))
-            {
-                var allStores = await _storeService.GetAllStoresAsync();
-                foreach (var store in allStores)
-                {
-                    var newsletterSubscription = await _newsLetterSubscriptionService
-                        .GetNewsLetterSubscriptionByEmailAndStoreIdAsync(customer.Email, store.Id);
-                    if (model.SelectedNewsletterSubscriptionStoreIds != null &&
-                        model.SelectedNewsletterSubscriptionStoreIds.Contains(store.Id))
-                    {
-                        //subscribed
-                        if (newsletterSubscription == null)
-                        {
-                            await _newsLetterSubscriptionService.InsertNewsLetterSubscriptionAsync(new NewsLetterSubscription
-                            {
-                                NewsLetterSubscriptionGuid = Guid.NewGuid(),
-                                Email = customer.Email,
-                                Active = true,
-                                StoreId = store.Id,
-                                CreatedOnUtc = DateTime.UtcNow
-                            });
-                        }
-                    }
-                    else
-                    {
-                        //not subscribed
-                        if (newsletterSubscription != null)
-                        {
-                            await _newsLetterSubscriptionService.DeleteNewsLetterSubscriptionAsync(newsletterSubscription);
-                        }
-                    }
-                }
-            }
 
             //password
             if (!string.IsNullOrWhiteSpace(model.Password))
@@ -353,7 +318,7 @@ public class NexportAdminCustomerController(
     public async Task<IActionResult> Impersonate(int id, [Bind("storeId")] int storeId)
     {
         var store = await _storeService.GetStoreByIdAsync(storeId);
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AllowCustomerImpersonation))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_IMPERSONATION))
             return AccessDeniedView();
 
         //try to get a customer with the specified id

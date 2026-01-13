@@ -1938,11 +1938,9 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         if (nexportUserMapping == null)
             throw new Exception($"Unable to verify Nexport user mapping for customer {currentCustomer.Id}");
 
-        var groupPermissionSearchCacheKey = new CacheKey("Misc.Nexport.SearchGroupForPermission.{0}-{1}",
-            nexportUserMapping.NexportUserId.ToString(), _nexportSettings.RootOrganizationId?.ToString())
-        {
-            CacheTime = 30
-        };
+        var groupPermissionSearchCacheKey = _staticCacheManager.PrepareKey(new CacheKey("Misc.Nexport.SearchGroupForPermission.{0}-{1}"),
+            nexportUserMapping.NexportUserId.ToString(), _nexportSettings.RootOrganizationId?.ToString());
+        groupPermissionSearchCacheKey.CacheTime = 30;
 
         var groupsFromApi = await _staticCacheManager.GetAsync(groupPermissionSearchCacheKey,
             // ReSharper disable once PossibleInvalidOperationException
@@ -2132,11 +2130,9 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                     }
                 }
 
-                var groupPermissionSearchCacheKey = new CacheKey("Misc.Nexport.SearchGroupForPermission.{0}-{1}",
-                    userMapping.NexportUserId.ToString(), _nexportSettings.RootOrganizationId?.ToString())
-                {
-                    CacheTime = 30
-                };
+                var groupPermissionSearchCacheKey = _staticCacheManager.PrepareKey(new CacheKey("Misc.Nexport.SearchGroupForPermission.{0}-{1}"),
+                    userMapping.NexportUserId.ToString(), _nexportSettings.RootOrganizationId?.ToString());
+                groupPermissionSearchCacheKey.CacheTime = 30;
 
                 var groupsFromApi = await _staticCacheManager.GetAsync(groupPermissionSearchCacheKey,
                     // ReSharper disable once PossibleInvalidOperationException
@@ -2559,11 +2555,9 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
             var userMapping = await _nexportService.FindUserMappingByCustomerId(customerId.Value);
             if (userMapping != null)
             {
-                var groupPermissionSearchCacheKey = new CacheKey("Misc.Nexport.SearchGroupForPermission.{0}-{1}",
-                    userMapping.NexportUserId.ToString(), _nexportSettings.RootOrganizationId?.ToString())
-                {
-                    CacheTime = 30
-                };
+                var groupPermissionSearchCacheKey = _staticCacheManager.PrepareKey(new CacheKey("Misc.Nexport.SearchGroupForPermission.{0}-{1}"),
+                    userMapping.NexportUserId.ToString(), _nexportSettings.RootOrganizationId?.ToString());
+                groupPermissionSearchCacheKey.CacheTime = 30;
 
                 var groupSearchResult = await _staticCacheManager.GetAsync(groupPermissionSearchCacheKey,
                     async () => (await _nexportService.SearchGroupsForPermissionAsync(userMapping.NexportUserId,
@@ -3027,11 +3021,9 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
 
         await _baseAdminModelFactory.PrepareStoresAsync(model.AvailableStores, false);
 
-        var groupPermissionSearchCacheKey = new CacheKey("Misc.Nexport.SearchGroupForPermission.{0}-{1}",
-            nexportUserMapping.NexportUserId.ToString(), _nexportSettings.RootOrganizationId?.ToString())
-        {
-            CacheTime = 30
-        };
+        var groupPermissionSearchCacheKey = _staticCacheManager.PrepareKey(new CacheKey("Misc.Nexport.SearchGroupForPermission.{0}-{1}"),
+            nexportUserMapping.NexportUserId.ToString(), _nexportSettings.RootOrganizationId?.ToString());
+        groupPermissionSearchCacheKey.CacheTime = 30;
 
         var groupsFromApi = await _staticCacheManager.GetAsync(groupPermissionSearchCacheKey,
             // ReSharper disable once PossibleInvalidOperationException

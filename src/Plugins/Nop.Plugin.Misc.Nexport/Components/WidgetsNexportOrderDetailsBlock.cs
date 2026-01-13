@@ -41,7 +41,7 @@ public class WidgetsNexportOrderDetailsBlock : NopViewComponent
     public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
     {
         if (string.IsNullOrWhiteSpace(_nexportSettings.AuthenticationToken) ||
-            !await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportOrderInvoice))
+            !await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_ORDER_INVOICE))
             return Content("");
 
         var orderModel = (OrderModel)additionalData;

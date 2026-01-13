@@ -5,6 +5,7 @@ using LinqToDB.Common;
 using LinqToDB.Data;
 using LinqToDB.DataProvider;
 using LinqToDB.SqlQuery;
+using LinqToDB.Tools;
 using Nop.Core;
 using Nop.Data.DataProviders.LinqToDB;
 using Nop.Data.Mapping;
@@ -39,9 +40,9 @@ public partial class PostgreSqlDataProvider : BaseDataProvider, INopDataProvider
     /// Gets the connection string builder
     /// </summary>
     /// <returns>The connection string builder</returns>
-    protected static NpgsqlConnectionStringBuilder GetConnectionStringBuilder()
+    protected virtual NpgsqlConnectionStringBuilder GetConnectionStringBuilder()
     {
-        return new NpgsqlConnectionStringBuilder(GetCurrentConnectionString());
+        return new NpgsqlConnectionStringBuilder(DataSettings.ConnectionString);
     }
 
     /// <summary>
@@ -84,11 +85,33 @@ public partial class PostgreSqlDataProvider : BaseDataProvider, INopDataProvider
     #region Methods
 
     /// <summary>
+    /// Performs bulk insert operation for entity collection.
+    /// </summary>
+    /// <param name="entities">Entities for insert operation</param>
+    /// <typeparam name="TEntity">Entity type</typeparam>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public override async Task BulkInsertEntitiesAsync<TEntity>(IEnumerable<TEntity> entities)
+    {
+        using var dataContext = CreateDataConnection(LinqToDbDataProvider);
+        await dataContext.BulkCopyAsync(new BulkCopyOptions() { KeepIdentity = true }, entities.RetrieveIdentity(dataContext, useSequenceName: true));
+    }
+
+    /// <summary>
+    /// Performs bulk insert operation for entity collection.
+    /// </summary>
+    /// <param name="entities">Entities for insert operation</param>
+    /// <typeparam name="TEntity">Entity type</typeparam>
+    public override void BulkInsertEntities<TEntity>(IEnumerable<TEntity> entities)
+    {
+        using var dataContext = CreateDataConnection(LinqToDbDataProvider);
+        dataContext.BulkCopy(new BulkCopyOptions() { KeepIdentity = true }, entities.RetrieveIdentity(dataContext, useSequenceName: true));
+    }
+
+    /// <summary>
     /// Creates the database by using the loaded connection string
     /// </summary>
-    /// <param name="collation"></param>
     /// <param name="triesToConnect"></param>
-    public void CreateDatabase(string collation, int triesToConnect = 10)
+    public virtual void CreateDatabase(int triesToConnect = 10)
     {
         if (DatabaseExists())
             return;
@@ -104,8 +127,12 @@ public partial class PostgreSqlDataProvider : BaseDataProvider, INopDataProvider
         using (var connection = GetInternalDbConnection(builder.ConnectionString))
         {
             var query = $"CREATE DATABASE \"{databaseName}\" WITH OWNER = '{builder.Username}'";
-            if (!string.IsNullOrWhiteSpace(collation))
-                query = $"{query} LC_COLLATE = '{collation}'";
+
+            if (!string.IsNullOrWhiteSpace(DataSettings.CharacterSet))
+                query = $"{query} ENCODING '{DataSettings.CharacterSet}'";
+
+            if (!string.IsNullOrWhiteSpace(DataSettings.Collation))
+                query = $"{query} LC_COLLATE = '{DataSettings.Collation}' TEMPLATE template0";
 
             var command = connection.CreateCommand();
             command.CommandText = query;
@@ -150,11 +177,11 @@ public partial class PostgreSqlDataProvider : BaseDataProvider, INopDataProvider
     /// Checks if the specified database exists, returns true if database exists
     /// </summary>
     /// <returns>Returns true if the database exists.</returns>
-    public bool DatabaseExists()
+    public virtual bool DatabaseExists()
     {
         try
         {
-            using var connection = GetInternalDbConnection(GetCurrentConnectionString());
+            using var connection = GetInternalDbConnection(DataSettings.ConnectionString);
 
             //just try to connect
             connection.Open();
@@ -174,11 +201,11 @@ public partial class PostgreSqlDataProvider : BaseDataProvider, INopDataProvider
     /// A task that represents the asynchronous operation
     /// The task result contains the returns true if the database exists.
     /// </returns>
-    public async Task<bool> DatabaseExistsAsync()
+    public virtual async Task<bool> DatabaseExistsAsync()
     {
         try
         {
-            await using var connection = GetInternalDbConnection(GetCurrentConnectionString());
+            await using var connection = GetInternalDbConnection(DataSettings.ConnectionString);
 
             //just try to connect
             await connection.OpenAsync();
@@ -303,7 +330,20 @@ public partial class PostgreSqlDataProvider : BaseDataProvider, INopDataProvider
     public virtual async Task ReIndexTablesAsync()
     {
         using var currentConnection = CreateDataConnection();
-        await currentConnection.ExecuteAsync($"REINDEX DATABASE \"{currentConnection.Connection.Database}\";");
+        await currentConnection.ExecuteAsync($"REINDEX DATABASE \"{GetConnectionStringBuilder().Database}\";");
+    }
+
+    /// <summary>
+    /// Shrinks database
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public virtual async Task ShrinkDatabaseAsync()
+    {
+        using var currentConnection = CreateDataConnection();
+        var tables = currentConnection.Query<string>($"SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = 'public'").ToList();
+
+        foreach (var table in tables)
+            await currentConnection.ExecuteAsync($"VACUUM FULL \"{table}\";");
     }
 
     /// <summary>
@@ -352,6 +392,19 @@ public partial class PostgreSqlDataProvider : BaseDataProvider, INopDataProvider
     public virtual string GetIndexName(string targetTable, string targetColumn)
     {
         return $"IX_{targetTable}_{targetColumn}";
+    }
+    
+    /// <summary>
+    /// Gets the name of the database collation
+    /// </summary>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the collation name
+    /// </returns>
+    public virtual Task<string> GetDataBaseCollationAsync()
+    {
+        var builder = GetConnectionStringBuilder();
+        return GetSqlStringValueAsync($"SELECT datcollate AS collation FROM pg_database WHERE datname = '{builder.Database}';");
     }
 
     #endregion

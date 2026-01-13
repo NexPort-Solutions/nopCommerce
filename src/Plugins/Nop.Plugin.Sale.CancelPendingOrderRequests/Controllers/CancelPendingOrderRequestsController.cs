@@ -99,8 +99,8 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetModifiedLocaleResources(CancelPendingOrderRequestsPluginResourceListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
+            return await AccessDeniedJsonAsync();
 
         var model = await _pendingOrderCancellationRequestModelFactory
             .PrepareCancelPendingOrderRequestsPluginResourceListModelAsync(searchModel);
@@ -114,7 +114,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         if (selectedIds != null && selectedIds.Count != 0)
@@ -162,7 +162,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> List()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         var model = await _pendingOrderCancellationRequestModelFactory
@@ -177,8 +177,8 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> List(PendingOrderCancellationRequestSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
+            return await AccessDeniedJsonAsync();
 
         var model = await _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestListModelAsync(searchModel);
 
@@ -190,7 +190,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [Route("Admin/CancelPendingOrderRequests/Edit/{requestId}")]
     public async Task<IActionResult> Edit(int requestId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         var returnRequest = await _pendingOrderCancellationRequestService.GetCancellationRequestByIdAsync(requestId);
@@ -211,7 +211,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> Edit(PendingOrderCancellationRequestModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         var cancellationRequest = await _pendingOrderCancellationRequestService.GetCancellationRequestByIdAsync(model.Id);
@@ -291,7 +291,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         var cancellationRequest = await _pendingOrderCancellationRequestService.GetCancellationRequestByIdAsync(id);
@@ -377,7 +377,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> CancellationRequestReasonList()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         // Select an appropriate panel
@@ -391,8 +391,8 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> CancellationRequestReasonList(PendingOrderCancellationRequestReasonSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
+            return await AccessDeniedJsonAsync();
 
         var model = await _pendingOrderCancellationRequestModelFactory.PreparePendingOrderCancellationRequestReasonListModelAsync(searchModel);
 
@@ -403,7 +403,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> CancellationRequestReasonCreate()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var model = await _pendingOrderCancellationRequestModelFactory.
@@ -418,7 +418,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     public async Task<IActionResult> CancellationRequestReasonCreate(PendingOrderCancellationRequestReasonModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         if (ModelState.IsValid)
@@ -446,7 +446,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [Area(AreaNames.ADMIN)]
     public async Task<IActionResult> CancellationRequestReasonEdit(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var cancellationRequestReason =
@@ -466,7 +466,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     public async Task<IActionResult> CancellationRequestReasonEdit(PendingOrderCancellationRequestReasonModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var cancellationRequestReason =
@@ -502,7 +502,7 @@ public class CancelPendingOrderRequestsController : BasePluginController,
     [HttpPost]
     public async Task<IActionResult> CancellationRequestReasonDelete(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var cancellationRequestReason =

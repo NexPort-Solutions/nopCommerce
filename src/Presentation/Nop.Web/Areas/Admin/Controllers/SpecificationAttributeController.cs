@@ -8,6 +8,8 @@ using Nop.Services.Security;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Catalog;
+using Nop.Web.Framework.Factories;
+using Nop.Web.Framework.Models.Translation;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
@@ -24,6 +26,7 @@ public partial class SpecificationAttributeController : BaseAdminController
     protected readonly IPermissionService _permissionService;
     protected readonly ISpecificationAttributeModelFactory _specificationAttributeModelFactory;
     protected readonly ISpecificationAttributeService _specificationAttributeService;
+    protected readonly ITranslationModelFactory _translationModelFactory;
 
     #endregion Fields
 
@@ -35,7 +38,8 @@ public partial class SpecificationAttributeController : BaseAdminController
         INotificationService notificationService,
         IPermissionService permissionService,
         ISpecificationAttributeModelFactory specificationAttributeModelFactory,
-        ISpecificationAttributeService specificationAttributeService)
+        ISpecificationAttributeService specificationAttributeService,
+        ITranslationModelFactory translationModelFactory)
     {
         _customerActivityService = customerActivityService;
         _localizationService = localizationService;
@@ -44,6 +48,7 @@ public partial class SpecificationAttributeController : BaseAdminController
         _permissionService = permissionService;
         _specificationAttributeModelFactory = specificationAttributeModelFactory;
         _specificationAttributeService = specificationAttributeService;
+        _translationModelFactory = translationModelFactory;
     }
 
     #endregion
@@ -92,33 +97,27 @@ public partial class SpecificationAttributeController : BaseAdminController
         return RedirectToAction("List");
     }
 
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_VIEW)]
     public virtual async Task<IActionResult> List()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
-        var model = await _specificationAttributeModelFactory.PrepareSpecificationAttributeGroupSearchModelAsync(new SpecificationAttributeGroupSearchModel());
+        var model = await _specificationAttributeModelFactory.PrepareSpecificationAttributeSearchModelAsync(new SpecificationAttributeSearchModel());
 
         return View(model);
     }
 
     [HttpPost]
-    public virtual async Task<IActionResult> SpecificationAttributeGroupList(SpecificationAttributeGroupSearchModel searchModel)
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_VIEW)]
+    public virtual async Task<IActionResult> SpecificationAttributeGroupList(SpecificationAttributeSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return await AccessDeniedDataTablesJson();
-
         var model = await _specificationAttributeModelFactory.PrepareSpecificationAttributeGroupListModelAsync(searchModel);
 
         return Json(model);
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_VIEW)]
     public virtual async Task<IActionResult> SpecificationAttributeList(SpecificationAttributeSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return await AccessDeniedDataTablesJson();
-
         SpecificationAttributeGroup group = null;
 
         if (searchModel.SpecificationAttributeGroupId > 0)
@@ -132,22 +131,18 @@ public partial class SpecificationAttributeController : BaseAdminController
         return Json(model);
     }
 
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> CreateSpecificationAttributeGroup()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         var model = await _specificationAttributeModelFactory.PrepareSpecificationAttributeGroupModelAsync(new SpecificationAttributeGroupModel(), null);
 
         return View(model);
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> CreateSpecificationAttributeGroup(SpecificationAttributeGroupModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             var specificationAttributeGroup = model.ToEntity<SpecificationAttributeGroup>();
@@ -171,22 +166,18 @@ public partial class SpecificationAttributeController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> CreateSpecificationAttribute()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         var model = await _specificationAttributeModelFactory.PrepareSpecificationAttributeModelAsync(new SpecificationAttributeModel(), null);
 
         return View(model);
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> CreateSpecificationAttribute(SpecificationAttributeModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             var specificationAttribute = model.ToEntity<SpecificationAttribute>();
@@ -210,11 +201,9 @@ public partial class SpecificationAttributeController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_VIEW)]
     public virtual async Task<IActionResult> EditSpecificationAttributeGroup(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         var specificationAttributeGroup = await _specificationAttributeService.GetSpecificationAttributeGroupByIdAsync(id);
         if (specificationAttributeGroup == null)
             return RedirectToAction("List");
@@ -225,11 +214,9 @@ public partial class SpecificationAttributeController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> EditSpecificationAttributeGroup(SpecificationAttributeGroupModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         var specificationAttributeGroup = await _specificationAttributeService.GetSpecificationAttributeGroupByIdAsync(model.Id);
         if (specificationAttributeGroup == null)
             return RedirectToAction("List");
@@ -257,11 +244,9 @@ public partial class SpecificationAttributeController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_VIEW)]
     public virtual async Task<IActionResult> EditSpecificationAttribute(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         //try to get a specification attribute with the specified id
         var specificationAttribute = await _specificationAttributeService.GetSpecificationAttributeByIdAsync(id);
         if (specificationAttribute == null)
@@ -274,11 +259,9 @@ public partial class SpecificationAttributeController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> EditSpecificationAttribute(SpecificationAttributeModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         //try to get a specification attribute with the specified id
         var specificationAttribute = await _specificationAttributeService.GetSpecificationAttributeByIdAsync(model.Id);
         if (specificationAttribute == null)
@@ -311,11 +294,28 @@ public partial class SpecificationAttributeController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
+    public virtual async Task<IActionResult> PreTranslate(int itemId)
+    {
+        var translationModel = new TranslationModel();
+
+        //try to get a specification attribute with the specified id
+        var specificationAttribute = await _specificationAttributeService.GetSpecificationAttributeByIdAsync(itemId);
+        if (specificationAttribute == null)
+            return Json(translationModel);
+
+        //prepare model
+        var model = await _specificationAttributeModelFactory.PrepareSpecificationAttributeModelAsync(null, specificationAttribute);
+
+        translationModel = await _translationModelFactory.PrepareTranslationModelAsync(model, nameof(SpecificationAttributeLocalizedModel.Name));
+
+        return Json(translationModel);
+    }
+
+    [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> DeleteSpecificationAttributeGroup(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         var specificationAttributeGroup = await _specificationAttributeService.GetSpecificationAttributeGroupByIdAsync(id);
         if (specificationAttributeGroup == null)
             return RedirectToAction("List");
@@ -331,11 +331,9 @@ public partial class SpecificationAttributeController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> DeleteSpecificationAttribute(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         var specificationAttribute = await _specificationAttributeService.GetSpecificationAttributeByIdAsync(id);
 
         if (specificationAttribute == null)
@@ -352,22 +350,18 @@ public partial class SpecificationAttributeController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> DeleteSelectedSpecificationAttributes(ICollection<int> selectedIds)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return await AccessDeniedDataTablesJson();
-
         if (selectedIds == null || !selectedIds.Any())
             return NoContent();
 
         var specificationAttributes = await _specificationAttributeService.GetSpecificationAttributeByIdsAsync(selectedIds.ToArray());
         await _specificationAttributeService.DeleteSpecificationAttributesAsync(specificationAttributes);
-
-        foreach (var specificationAttribute in specificationAttributes)
-        {
-            await _customerActivityService.InsertActivityAsync("DeleteSpecAttribute",
-                string.Format(await _localizationService.GetResourceAsync("ActivityLog.DeleteSpecAttribute"), specificationAttribute.Name), specificationAttribute);
-        }
+        
+        //activity log
+        var activityLogFormat = await _localizationService.GetResourceAsync("ActivityLog.DeleteSpecAttribute");
+        await _customerActivityService.InsertActivitiesAsync("DeleteSpecAttribute", specificationAttributes, specificationAttribute => string.Format(activityLogFormat, specificationAttribute.Name));
 
         return Json(new { Result = true });
     }
@@ -377,11 +371,9 @@ public partial class SpecificationAttributeController : BaseAdminController
     #region Specification attribute options
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_VIEW)]
     public virtual async Task<IActionResult> OptionList(SpecificationAttributeOptionSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a specification attribute with the specified id
         var specificationAttribute = await _specificationAttributeService.GetSpecificationAttributeByIdAsync(searchModel.SpecificationAttributeId)
             ?? throw new ArgumentException("No specification attribute found with the specified id");
@@ -392,11 +384,9 @@ public partial class SpecificationAttributeController : BaseAdminController
         return Json(model);
     }
 
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> OptionCreatePopup(int specificationAttributeId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         //try to get a specification attribute with the specified id
         var specificationAttribute = await _specificationAttributeService.GetSpecificationAttributeByIdAsync(specificationAttributeId);
         if (specificationAttribute == null)
@@ -410,11 +400,9 @@ public partial class SpecificationAttributeController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> OptionCreatePopup(SpecificationAttributeOptionModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         //try to get a specification attribute with the specified id
         var specificationAttribute = await _specificationAttributeService.GetSpecificationAttributeByIdAsync(model.SpecificationAttributeId);
         if (specificationAttribute == null)
@@ -444,11 +432,9 @@ public partial class SpecificationAttributeController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_VIEW)]
     public virtual async Task<IActionResult> OptionEditPopup(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         //try to get a specification attribute option with the specified id
         var specificationAttributeOption = await _specificationAttributeService.GetSpecificationAttributeOptionByIdAsync(id);
         if (specificationAttributeOption == null)
@@ -468,11 +454,9 @@ public partial class SpecificationAttributeController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> OptionEditPopup(SpecificationAttributeOptionModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return AccessDeniedView();
-
         //try to get a specification attribute option with the specified id
         var specificationAttributeOption = await _specificationAttributeService.GetSpecificationAttributeOptionByIdAsync(model.Id);
         if (specificationAttributeOption == null)
@@ -510,11 +494,9 @@ public partial class SpecificationAttributeController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> OptionDelete(int id, int specificationAttributeId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a specification attribute option with the specified id
         var specificationAttributeOption = await _specificationAttributeService.GetSpecificationAttributeOptionByIdAsync(id)
             ?? throw new ArgumentException("No specification attribute option found with the specified id", nameof(id));
@@ -529,8 +511,8 @@ public partial class SpecificationAttributeController : BaseAdminController
     {
         //do not make any permission validation here 
         //because this method could be used on some other pages (such as product editing)
-        //if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-        //    return await AccessDeniedDataTablesJson();
+        //if (!await _permissionService.AuthorizeAsync(StandardPermission.ManageAttributes))
+        //    return await AccessDeniedJsonAsync();
 
         //this action method gets called via an ajax request
         ArgumentException.ThrowIfNullOrEmpty(attributeId);
@@ -546,11 +528,9 @@ public partial class SpecificationAttributeController : BaseAdminController
     #region Mapped products
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.SPECIFICATION_ATTRIBUTES_VIEW)]
     public virtual async Task<IActionResult> UsedByProducts(SpecificationAttributeProductSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAttributes))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a specification attribute with the specified id
         var specificationAttribute = await _specificationAttributeService.GetSpecificationAttributeByIdAsync(searchModel.SpecificationAttributeId)
             ?? throw new ArgumentException("No specification attribute found with the specified id");

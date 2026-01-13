@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Vendors;
 using Nop.Services.Catalog;
-using Nop.Services.Topics;
 using Nop.Services.Vendors;
 using Nop.Web.Factories;
 using Nop.Web.Models.Catalog;
@@ -20,7 +19,6 @@ public class CatalogModelFactoryBaseTests : WebTest
     private ICategoryService _categoryService;
     private Manufacturer _manufacturer;
     private Vendor _vendor;
-    private ITopicService _topicService;
     private IHttpContextAccessor _httpContextAccessor;
     private ProductTag _productTag;
     private CatalogSettings _catalogSettings;
@@ -35,7 +33,6 @@ public class CatalogModelFactoryBaseTests : WebTest
         _product = await GetService<IProductService>().GetProductByIdAsync(1);
         _manufacturer = await GetService<IManufacturerService>().GetManufacturerByIdAsync(1);
         _vendor = await GetService<IVendorService>().GetVendorByIdAsync(1);
-        _topicService = GetService<ITopicService>();
         _httpContextAccessor = GetService<IHttpContextAccessor>();
 
         _productTag = await GetService<IProductTagService>().GetProductTagByIdAsync(1);
@@ -54,6 +51,7 @@ public class CatalogModelFactoryBaseTests : WebTest
         model.AvailableVendors.Any().Should().BeFalse();
 
         var queryString = _httpContextAccessor.HttpContext.Request.QueryString;
+        _httpContextAccessor.HttpContext.Request.Method = HttpMethods.Get;
         _httpContextAccessor.HttpContext.Request.QueryString = new QueryString("?q=t");
 
         model = await _catalogModelFactory.PrepareSearchModelAsync(new SearchModel(), new CatalogProductsCommand());
@@ -73,29 +71,6 @@ public class CatalogModelFactoryBaseTests : WebTest
         _httpContextAccessor.HttpContext.Request.QueryString = queryString;
 
         model.CatalogProductsModel.Products.Count.Should().Be(2);
-    }
-
-    [Test]
-    public async Task CanPrepareTopMenuModel()
-    {
-        var model = await _catalogModelFactory.PrepareTopMenuModelAsync();
-
-        model.Categories.Count.Should().Be(7);
-        model.Topics.Any().Should().BeFalse();
-        model.NewProductsEnabled.Should().BeTrue();
-        model.BlogEnabled.Should().BeTrue();
-        model.HasOnlyCategories.Should().BeTrue();
-
-        var topic = await _topicService.GetTopicByIdAsync(1);
-
-        topic.IncludeInTopMenu = true;
-        await _topicService.UpdateTopicAsync(topic);
-        model = await _catalogModelFactory.PrepareTopMenuModelAsync();
-        topic.IncludeInTopMenu = false;
-
-        await _topicService.UpdateTopicAsync(topic);
-        model.Topics.Any().Should().BeTrue();
-        model.Topics.Count.Should().Be(1);
     }
 
     [Test]
@@ -166,27 +141,6 @@ public class CatalogModelFactoryBaseTests : WebTest
 
         foreach (var categoryModel in model)
             categoryModel.Name.Should().BeOneOf(categories);
-    }
-
-    [Test]
-    public async Task CanPrepareRootCategories()
-    {
-        var model = await _catalogModelFactory.PrepareRootCategoriesAsync();
-        model.Any().Should().BeTrue();
-        model.Count.Should().Be(7);
-    }
-
-    [Test]
-    public async Task CanPrepareSubCategories()
-    {
-        var model = await _catalogModelFactory.PrepareSubCategoriesAsync(_category.Id);
-        model.Any().Should().BeTrue();
-        model.Count.Should().Be(3);
-
-        var categories = new[] { "Desktops", "Notebooks", "Software" };
-
-        foreach (var categorySimpleModel in model)
-            categorySimpleModel.Name.Should().BeOneOf(categories);
     }
 
     [Test]
@@ -291,17 +245,6 @@ public class CatalogModelFactoryBaseTests : WebTest
         model.Id.Should().Be(_productTag.Id);
         model.TagName.Should().Be(_productTag.Name);
         model.CatalogProductsModel.Products.Count.Should().Be(6);
-    }
-
-    [Test]
-    public async Task CanPrepareSearchBoxModel()
-    {
-        var model = await _catalogModelFactory.PrepareSearchBoxModelAsync();
-
-        model.AutoCompleteEnabled.Should().Be(_catalogSettings.ProductSearchAutoCompleteEnabled);
-        model.ShowProductImagesInSearchAutoComplete.Should().Be(_catalogSettings.ShowProductImagesInSearchAutoComplete);
-        model.SearchTermMinimumLength.Should().Be(_catalogSettings.ProductSearchTermMinimumLength);
-        model.ShowSearchBox.Should().Be(_catalogSettings.ProductSearchEnabled);
     }
 
     [Test]
@@ -413,28 +356,27 @@ public class CatalogModelFactoryBaseTests : WebTest
     }
 
     [Test]
-    public async Task CanPrepareCategorySimpleModels()
+    public async Task CanPrepareCategoryProductsModelAsync()
     {
-        var model = await _catalogModelFactory.PrepareCategorySimpleModelsAsync();
-        model.Any().Should().BeTrue();
-        model.Count.Should().Be(7);
+        var model = await _catalogModelFactory.PrepareCategoryProductsModelAsync((await _categoryService.GetAllCategoriesAsync("Notebooks")).First(), new CatalogProductsCommand());
+        model.UseAjaxLoading.Should().Be(_catalogSettings.UseAjaxCatalogProductsLoading);
+        model.AvailableSortOptions.Should().NotBeEmpty();
+        model.AvailableViewModes.Should().NotBeEmpty();
+        model.Products.Should().NotBeEmpty();
+        model.Products.Count.Should().Be(6);
+        model.ManufacturerFilter.Manufacturers.Should().NotBeEmpty();
+        model.ManufacturerFilter.Manufacturers.Count.Should().Be(2);
+        model.SpecificationFilter.Attributes.Should().NotBeEmpty();
+        model.SpecificationFilter.Attributes.Count.Should().Be(2);
+        model.TotalItems.Should().Be(model.Products.Count);
+    }
 
-        model = await _catalogModelFactory.PrepareCategorySimpleModelsAsync(_category.Id);
-
-        model.Any().Should().BeTrue();
-        model.Count.Should().Be(3);
-
-        var categories = new[] { "Desktops", "Notebooks", "Software" };
-
-        foreach (var categoryModel in model)
-            categoryModel.Name.Should().BeOneOf(categories);
-
-        model = await _catalogModelFactory.PrepareCategorySimpleModelsAsync(_category.Id, false);
-
-        model.Any().Should().BeTrue();
-        model.Count.Should().Be(3);
-
-        foreach (var categoryModel in model)
-            categoryModel.Name.Should().BeOneOf(categories);
+    [Test]
+    public async Task CanPrepareNewProductsModelAsync()
+    {
+        var model = await _catalogModelFactory.PrepareNewProductsModelAsync(new CatalogProductsCommand());
+        model.Products.Any().Should().BeTrue();
+        model.Products.Count.Should().Be(6);
+        model.UseAjaxLoading.Should().Be(_catalogSettings.UseAjaxCatalogProductsLoading);
     }
 }

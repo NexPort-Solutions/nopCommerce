@@ -44,7 +44,7 @@ public class NexportSettingController : BaseAdminController
 
     public virtual async Task<IActionResult> Store()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         //prepare model
@@ -56,7 +56,7 @@ public class NexportSettingController : BaseAdminController
     [HttpPost]
     public virtual async Task<IActionResult> Store(NexportStoreSettingsModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         if (ModelState.IsValid)

@@ -98,10 +98,9 @@ public partial class NexportCategoryController : BaseAdminController
 
     public virtual async Task<IActionResult> List()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.CATEGORIES_VIEW))
             return AccessDeniedView();
-        ViewBag.ManageNexportProductMapping =
-            await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping);
+        ViewBag.ManageNexportProductMapping = await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING);
         //prepare model
         var model = await _nexportPluginModelFactory.PrepareCategorySearchModelAsync(new NexportCategorySearchModel());
 
@@ -111,8 +110,8 @@ public partial class NexportCategoryController : BaseAdminController
     [HttpPost]
     public virtual async Task<IActionResult> List(NexportCategorySearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Catalog.CATEGORIES_VIEW))
+            return await AccessDeniedJsonAsync();
 
         //prepare model
         var model = await _nexportPluginModelFactory.PrepareCategoryListModelAsync(searchModel);

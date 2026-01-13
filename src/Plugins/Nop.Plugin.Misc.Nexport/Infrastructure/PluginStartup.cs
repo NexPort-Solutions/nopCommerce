@@ -180,7 +180,6 @@ public class PluginStartup : INopStartup
                 Task.Run(() => nexportPluginService.AddActivityLogTypesAsync());
                 Task.Run(() => nexportPluginService.AddMessageTemplatesAsync());
                 Task.Run(() => nexportPluginService.AddOrUpdateResourcesAsync());
-                Task.Run(() => nexportPluginService.InstallPermissionProviderAsync());
                 Task.Run(() => InitScheduleJobs(application));
             }
         }

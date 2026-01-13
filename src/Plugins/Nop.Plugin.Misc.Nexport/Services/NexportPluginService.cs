@@ -1159,23 +1159,12 @@ public class NexportPluginService
         return results;
     }
 
-    public async Task InstallPermissionProviderAsync()
-    {
-        var permissionProviders = new List<Type> { typeof(NexportPermissionProvider) };
-        foreach (var providerType in permissionProviders)
-        {
-            var provider = (IPermissionProvider)Activator.CreateInstance(providerType);
-            await _permissionService.InstallPermissionsAsync(provider);
-        }
-    }
-
     public async Task UninstallPermissionProviderAsync()
     {
-        var permissionProviders = new List<Type> { typeof(NexportPermissionProvider) };
-        foreach (var providerType in permissionProviders)
+        var nexportPermissionRecords = (await _permissionService.GetAllPermissionRecordsAsync()).Where(x=>x.Category == "Nexport");
+        foreach (var permissionRecord in nexportPermissionRecords)
         {
-            var provider = (IPermissionProvider)Activator.CreateInstance(providerType);
-            await _permissionService.UninstallPermissionsAsync(provider);
+            await _permissionService.DeletePermissionRecordAsync(permissionRecord);
         }
     }
 }

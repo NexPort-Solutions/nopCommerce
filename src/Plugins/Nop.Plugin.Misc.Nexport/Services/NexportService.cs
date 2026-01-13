@@ -61,7 +61,7 @@ public partial class NexportService
     private readonly NexportSettings _nexportSettings;
 
     private readonly IAddressService _addressService;
-    private readonly IStaticCacheManager _cacheManager;
+    private readonly IStaticCacheManager _staticCacheManager;
     private readonly ILocalizationService _localizationService;
     private readonly IStoreMappingService _storeMappingService;
     private readonly IAclService _aclService;
@@ -141,7 +141,7 @@ public partial class NexportService
         EmailAccountSettings emailAccountSettings,
         NexportSettings nexportSettings,
         IAddressService addressService,
-        IStaticCacheManager cacheManager,
+        IStaticCacheManager staticCacheManager,
         IProductService productService,
         IRepository<Product> productRepository,
         IRepository<GenericAttribute> genericAttributeRepository,
@@ -215,7 +215,7 @@ public partial class NexportService
         _emailAccountSettings = emailAccountSettings;
         _nexportSettings = nexportSettings;
         _addressService = addressService;
-        _cacheManager = cacheManager;
+        _staticCacheManager = staticCacheManager;
         _localizationService = localizationService;
         _storeMappingService = storeMappingService;
         _aclService = aclService;
@@ -415,7 +415,7 @@ public partial class NexportService
             var emailAccount = await GetEmailAccountOfMessageTemplateAsync(messageTemplate, languageId);
 
             var tokens = new List<Token>(commonTokens);
-            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount, languageId);
 
             var toEmail = emailAccount.Email;
             var toName = emailAccount.DisplayName;
@@ -458,7 +458,7 @@ public partial class NexportService
             var path = new Uri(new Uri(store.Url), url).AbsoluteUri;
             tokens.Add(new Token("Redemption.AcceptRedemptionUrl", path, true));
 
-            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount, languageId);
 
             return await _workflowMessageService.SendNotificationAsync(messageTemplate, emailAccount,
                 languageId, tokens, toEmail, toName);
@@ -956,13 +956,10 @@ public partial class NexportService
     [CanBeNull]
     public async Task<OrganizationResponseItem> GetOrganizationDetailsAsync(Guid orgId)
     {
-        var cacheKey = new CacheKey("Misc.Nexport.GetNexportOrganizations.{0}", orgId.ToString())
-        {
-            CacheTime = 30
-        };
+        var cacheKey = _staticCacheManager.PrepareKey(new CacheKey("Misc.Nexport.GetNexportOrganizations.{0}"), orgId.ToString());
+        cacheKey.CacheTime = 30;
 
-        var availableOrganizations = await _cacheManager.GetAsync(cacheKey, async () => await FindAllOrganizationsAsync(orgId));
-        //var availableOrganizations = await FindAllOrganizationsAsync(orgId);
+        var availableOrganizations = await _staticCacheManager.GetAsync(cacheKey, async () => await FindAllOrganizationsAsync(orgId));
         var result = availableOrganizations.SingleOrDefault(s => s.OrgId == orgId);
 
         return result;

@@ -25,7 +25,6 @@ public partial class CategoryModelFactory : ICategoryModelFactory
     protected readonly CatalogSettings _catalogSettings;
     protected readonly CurrencySettings _currencySettings;
     protected readonly ICurrencyService _currencyService;
-    protected readonly IAclSupportedModelFactory _aclSupportedModelFactory;
     protected readonly IBaseAdminModelFactory _baseAdminModelFactory;
     protected readonly ICategoryService _categoryService;
     protected readonly IDiscountService _discountService;
@@ -43,7 +42,6 @@ public partial class CategoryModelFactory : ICategoryModelFactory
     public CategoryModelFactory(CatalogSettings catalogSettings,
         CurrencySettings currencySettings,
         ICurrencyService currencyService,
-        IAclSupportedModelFactory aclSupportedModelFactory,
         IBaseAdminModelFactory baseAdminModelFactory,
         ICategoryService categoryService,
         IDiscountService discountService,
@@ -57,7 +55,6 @@ public partial class CategoryModelFactory : ICategoryModelFactory
         _catalogSettings = catalogSettings;
         _currencySettings = currencySettings;
         _currencyService = currencyService;
-        _aclSupportedModelFactory = aclSupportedModelFactory;
         _baseAdminModelFactory = baseAdminModelFactory;
         _categoryService = categoryService;
         _discountService = discountService;
@@ -218,7 +215,6 @@ public partial class CategoryModelFactory : ICategoryModelFactory
             model.PageSize = _catalogSettings.DefaultCategoryPageSize;
             model.PageSizeOptions = _catalogSettings.DefaultCategoryPageSizeOptions;
             model.Published = true;
-            model.IncludeInTopMenu = true;
             model.AllowCustomersToSelectPageSize = true;
             model.PriceRangeFiltering = true;
             model.ManuallyPriceRange = true;
@@ -243,11 +239,10 @@ public partial class CategoryModelFactory : ICategoryModelFactory
         var availableDiscounts = await _discountService.GetAllDiscountsAsync(DiscountType.AssignedToCategories, showHidden: true, isActive: null);
         await _discountSupportedModelFactory.PrepareModelDiscountsAsync(model, category, availableDiscounts, excludeProperties);
 
-        //prepare model customer roles
-        await _aclSupportedModelFactory.PrepareModelCustomerRolesAsync(model, category, excludeProperties);
-
         //prepare model stores
         await _storeMappingSupportedModelFactory.PrepareModelStoresAsync(model, category, excludeProperties);
+
+        await _baseAdminModelFactory.PreparePreTranslationSupportModelAsync(model);
 
         return model;
     }

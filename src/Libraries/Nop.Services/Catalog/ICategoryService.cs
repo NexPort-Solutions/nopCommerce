@@ -11,6 +11,14 @@ namespace Nop.Services.Catalog;
 public partial interface ICategoryService
 {
     /// <summary>
+    /// Check the possibility of adding products to the category for the current vendor
+    /// </summary>
+    /// <param name="category">Category</param>
+    /// <param name="allCategories">All categories</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    Task<bool> CanVendorAddProductsAsync(Category category, IList<Category> allCategories = null);
+
+    /// <summary>
     /// Clean up category references for a specified discount
     /// </summary>
     /// <param name="discount">Discount</param>
@@ -150,6 +158,13 @@ public partial interface ICategoryService
     /// <param name="productCategory">Product category</param>
     /// <returns>A task that represents the asynchronous operation</returns>
     Task DeleteProductCategoryAsync(ProductCategory productCategory);
+
+    /// <summary>
+    /// Deletes a list of product category mapping
+    /// </summary>
+    /// <param name="productCategories">Product category</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    Task DeleteProductCategoriesAsync(IList<ProductCategory> productCategories);
 
     /// <summary>
     /// Get a discount-category mapping record

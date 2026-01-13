@@ -58,9 +58,9 @@ public partial class NexportService : INexportService
             return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
         }
 
-        var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingCatalogAllByCatalogIdCacheKey,
+        var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingCatalogAllByCatalogIdCacheKey,
             showHidden, catalogId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
-        return await _cacheManager.GetAsync(cacheKey, async () =>
+        return await _staticCacheManager.GetAsync(cacheKey, async () =>
         {
             //var query = from np in _nexportProductMappingRepository.Table
             //    join p in _productRepository.Table on np.NopProductId equals p.Id
@@ -125,9 +125,9 @@ public partial class NexportService : INexportService
             return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
         }
 
-        var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingSectionAllBySectionIdCacheKey,
+        var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingSectionAllBySectionIdCacheKey,
             showHidden, sectionId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
-        return await _cacheManager.GetAsync(cacheKey, async () =>
+        return await _staticCacheManager.GetAsync(cacheKey, async () =>
         {
             var productQuery = (from p in _productRepository.Table
                                 where !p.Deleted && (showHidden || p.Published)
@@ -184,9 +184,9 @@ public partial class NexportService : INexportService
             return new PagedList<NexportProductMapping>(new List<NexportProductMapping>(), pageIndex, pageSize);
         }
 
-        var key = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingTrainingPlanAllByTrainingPlanIdCacheKey,
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingTrainingPlanAllByTrainingPlanIdCacheKey,
             showHidden, trainingPlanId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
-        return await _cacheManager.GetAsync(key, async () =>
+        return await _staticCacheManager.GetAsync(key, async () =>
         {
             var productQuery =
                 (_productRepository.Table.Where(p => !p.Deleted && (showHidden || p.Published))
@@ -279,12 +279,12 @@ public partial class NexportService : INexportService
 
     public async Task<IList<NexportProductMapping>> GetProductMappings(int? nopProductId = null, int? storeId = null)
     {
-        var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
+        var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.ProductMappingsAllCacheKey,
             (await _storeContext.GetCurrentStoreAsync()).Id,
             string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
             false, "", true);
 
-        return _cacheManager.Get(cacheKey, () =>
+        return _staticCacheManager.Get(cacheKey, () =>
         {
             var query = _nexportProductMappingRepository.Table;
 
@@ -304,9 +304,9 @@ public partial class NexportService : INexportService
         if (nexportProductMappingId < 1)
             return new List<NexportProductGroupMembershipMapping>();
 
-        var key = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.GroupMembershipMappingsByNexportProductMappingIdCacheKey, nexportProductMappingId);
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.GroupMembershipMappingsByNexportProductMappingIdCacheKey, nexportProductMappingId);
 
-        return await _cacheManager.GetAsync(key, async () =>
+        return await _staticCacheManager.GetAsync(key, async () =>
         {
             return await _nexportProductGroupMembershipMappingRepository.Table.Where(np =>
                 np.NexportProductMappingId == nexportProductMappingId).ToListAsync();
@@ -935,8 +935,8 @@ public partial class NexportService : INexportService
     public async Task<IPagedList<NexportSupplementalInfoQuestion>> GetAllNexportSupplementalInfoQuestionsPagination(
         int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
     {
-        var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoQuestionAllCacheKey, pageIndex, pageSize);
-        return await _cacheManager.GetAsync(cacheKey, async () =>
+        var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoQuestionAllCacheKey, pageIndex, pageSize);
+        return await _staticCacheManager.GetAsync(cacheKey, async () =>
         {
             var query = _nexportSupplementalInfoQuestionRepository.Table.Select(question => question);
 
@@ -1122,10 +1122,10 @@ public partial class NexportService : INexportService
             return new PagedList<NexportSupplementalInfoOptionGroupAssociation>(
                 new List<NexportSupplementalInfoOptionGroupAssociation>(), pageIndex, pageSize);
 
-        var cacheKey = _cacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoOptionGroupAssociationsAllCacheKey,
+        var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NexportIntegrationDefaults.SupplementalInfoOptionGroupAssociationsAllCacheKey,
             (await _storeContext.GetCurrentStoreAsync()).Id);
 
-        return await _cacheManager.GetAsync(cacheKey, async () =>
+        return await _staticCacheManager.GetAsync(cacheKey, async () =>
         {
             var query =
                 _nexportSupplementalInfoOptionGroupAssociationRepository
@@ -1242,7 +1242,7 @@ public partial class NexportService : INexportService
             return new PagedList<NexportSupplementalInfoAnswer>(
                 new List<NexportSupplementalInfoAnswer>(), pageIndex, pageSize);
 
-        return await _cacheManager.GetAsync(NexportIntegrationDefaults.SupplementalInfoAnswerAllCacheKey, async () =>
+        return await _staticCacheManager.GetAsync(NexportIntegrationDefaults.SupplementalInfoAnswerAllCacheKey, async () =>
         {
             var query =
                 _nexportSupplementalInfoAnswerRepository
@@ -1611,7 +1611,7 @@ public partial class NexportService : INexportService
         if (fieldId < 1)
             return new PagedList<NexportRegistrationFieldOption>(new List<NexportRegistrationFieldOption>(), pageIndex, pageSize);
 
-        return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldOptionAllCacheKey, async () =>
+        return await _staticCacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldOptionAllCacheKey, async () =>
         {
             var query = _nexportRegistrationFieldOptionRepository.Table
                 .Where(rfo => rfo.FieldId == fieldId);
@@ -1672,7 +1672,7 @@ public partial class NexportService : INexportService
     public async Task<IPagedList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategoriesPagination(
         int pageIndex = 0, int pageSize = int.MaxValue)
     {
-        return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldCategoryAllCacheKey, async () =>
+        return await _staticCacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldCategoryAllCacheKey, async () =>
         {
             var query = _nexportRegistrationFieldCategoryRepository.Table;
 
@@ -1770,7 +1770,7 @@ public partial class NexportService : INexportService
         int? fieldId = null,
         int pageIndex = 0, int pageSize = int.MaxValue)
     {
-        return await _cacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldAnswerAllCacheKey, async () =>
+        return await _staticCacheManager.GetAsync(NexportIntegrationDefaults.RegistrationFieldAnswerAllCacheKey, async () =>
         {
             var query = _nexportRegistrationFieldAnswerRepository
                 .Table.Where(fa => fa.CustomerId == customerId);
@@ -3413,7 +3413,7 @@ public partial class NexportService : INexportService
             var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
 
             var tokens = new List<Token>(commonTokens);
-            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount, languageId);
 
             await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 
@@ -3454,7 +3454,7 @@ public partial class NexportService : INexportService
             var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
 
             var tokens = new List<Token>(commonTokens);
-            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount, languageId);
 
             await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 
@@ -3571,7 +3571,7 @@ public partial class NexportService : INexportService
             var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
 
             var tokens = new List<Token>(commonTokens);
-            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount, languageId);
 
             await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 
@@ -3690,7 +3690,7 @@ public partial class NexportService : INexportService
             var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
 
             var tokens = new List<Token>(commonTokens);
-            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount, languageId);
 
             await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 

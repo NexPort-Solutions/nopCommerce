@@ -10,7 +10,7 @@ namespace Nop.Core.Domain.Catalog;
 /// <summary>
 /// Represents a product
 /// </summary>
-public partial class Product : BaseEntity, ILocalizedEntity, ISlugSupported, IAclSupported, IStoreMappingSupported, IDiscountSupported<DiscountProductMapping>, ISoftDeletedEntity
+public partial class Product : BaseEntity, ILocalizedEntity, ISlugSupported, IAclSupported, IStoreMappingSupported, IDiscountSupported<DiscountProductMapping>, ISoftDeletedEntity, IMetaTagsSupported
 {
     /// <summary>
     /// Gets or sets the product type identifier
@@ -277,7 +277,7 @@ public partial class Product : BaseEntity, ILocalizedEntity, ISlugSupported, IAc
     /// <summary>
     /// Gets or sets the tax category identifier
     /// </summary>
-    public int TaxCategoryId { get; set; }        
+    public int TaxCategoryId { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating how to manage inventory
@@ -466,24 +466,6 @@ public partial class Product : BaseEntity, ILocalizedEntity, ISlugSupported, IAc
     public DateTime? MarkAsNewEndDateTimeUtc { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether this product has tier prices configured
-    /// <remarks>The same as if we run TierPrices.Count > 0
-    /// We use this property for performance optimization:
-    /// if this property is set to false, then we do not need to load tier prices navigation property
-    /// </remarks>
-    /// </summary>
-    public bool HasTierPrices { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether this product has discounts applied
-    /// <remarks>The same as if we run AppliedDiscounts.Count > 0
-    /// We use this property for performance optimization:
-    /// if this property is set to false, then we do not need to load Applied Discounts navigation property
-    /// </remarks>
-    /// </summary>
-    public bool HasDiscountsApplied { get; set; }
-
-    /// <summary>
     /// Gets or sets the weight
     /// </summary>
     public decimal Weight { get; set; }
@@ -539,6 +521,16 @@ public partial class Product : BaseEntity, ILocalizedEntity, ISlugSupported, IAc
     /// Gets or sets the date and time of product update
     /// </summary>
     public DateTime UpdatedOnUtc { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether <see cref="MinimumAgeToPurchase"/> should be specified
+    /// </summary>
+    public bool AgeVerification { get; set; }
+
+    /// <summary>
+    /// Gets or sets the minimum age to purchase
+    /// </summary>
+    public int MinimumAgeToPurchase { get; set; }
 
     /// <summary>
     /// Gets or sets the product type

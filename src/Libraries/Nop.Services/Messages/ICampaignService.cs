@@ -8,6 +8,17 @@ namespace Nop.Services.Messages;
 public partial interface ICampaignService
 {
     /// <summary>
+    /// Copies campaign
+    /// </summary>
+    /// <param name="campaign">Campaign to copy</param>
+    /// <param name="newName">The new name of campaign copy</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the campaign copy
+    /// </returns>
+    Task<Campaign> CopyCampaignAsync(Campaign campaign, string newName);
+
+    /// <summary>
     /// Inserts a campaign
     /// </summary>
     /// <param name="campaign">Campaign</param>        
@@ -67,6 +78,7 @@ public partial interface ICampaignService
     /// <param name="campaign">Campaign</param>
     /// <param name="emailAccount">Email account</param>
     /// <param name="email">Email</param>
+    /// <param name="languageId">Language identifier</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    Task SendCampaignAsync(Campaign campaign, EmailAccount emailAccount, string email);
+    Task SendCampaignAsync(Campaign campaign, EmailAccount emailAccount, string email, int languageId);
 }

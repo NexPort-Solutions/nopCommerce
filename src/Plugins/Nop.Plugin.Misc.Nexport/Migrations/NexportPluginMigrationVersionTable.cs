@@ -2,22 +2,23 @@
 
 namespace Nop.Plugin.Misc.Nexport.Migrations;
 
-[VersionTableMetaData]
 public class NexportPluginMigrationVersionTable : IVersionTableMetaData
 {
     public object ApplicationContext { get; set; }
 
-    public virtual string SchemaName => "";
+    public string SchemaName => "";
 
-    public virtual string TableName => "NexportPluginMigrationVersionInfo";
+    public string TableName => "NexportPluginMigrationVersionInfo";
 
-    public virtual string ColumnName => "Version";
+    public string ColumnName => "Version";
 
-    public virtual string UniqueIndexName => "UC_Version";
+    public string UniqueIndexName => "UC_Version";
 
-    public virtual string AppliedOnColumnName => "AppliedOn";
+    public string AppliedOnColumnName => "AppliedOn";
 
-    public virtual string DescriptionColumnName => "Description";
+    public bool CreateWithPrimaryKey => false;
 
-    public virtual bool OwnsSchema => true;
+    public string DescriptionColumnName => "Description";
+
+    public bool OwnsSchema => true;
 }

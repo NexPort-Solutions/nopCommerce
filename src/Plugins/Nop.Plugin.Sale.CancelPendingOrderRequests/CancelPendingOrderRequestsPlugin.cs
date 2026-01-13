@@ -14,7 +14,7 @@ using Nop.Plugin.Sale.CancelPendingOrderRequests.Components;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests;
 
-public class CancelPendingOrderRequestsPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, IWidgetPlugin
+public class CancelPendingOrderRequestsPlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 {
     private readonly CancelPendingOrderRequestsPluginService _cancelCancelPendingOrderRequestsPluginService;
     private readonly WidgetSettings _widgetSettings;
@@ -30,24 +30,24 @@ public class CancelPendingOrderRequestsPlugin : BasePlugin, IAdminMenuPlugin, IM
         _settingService = settingService;
     }
 
-    public async Task ManageSiteMapAsync(SiteMapNode rootNode)
-    {
-        var salesNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Sales");
-        if (salesNode == null)
-            return;
+    //public async Task ManageSiteMapAsync(SiteMapNode rootNode)
+    //{
+    //    var salesNode = rootNode.ChildNodes.FirstOrDefault(x => x.SystemName == "Sales");
+    //    if (salesNode == null)
+    //        return;
 
-        var cancelOrderRequestNode = new SiteMapNode()
-        {
-            SystemName = "Cancellation requests",
-            Title = "Cancellation requests",
-            ControllerName = "CancelPendingOrderRequests",
-            ActionName = "List",
-            IconClass = "far fa-dot-circle",
-            Visible = true
-        };
+    //    var cancelOrderRequestNode = new SiteMapNode()
+    //    {
+    //        SystemName = "Cancellation requests",
+    //        Title = "Cancellation requests",
+    //        ControllerName = "CancelPendingOrderRequests",
+    //        ActionName = "List",
+    //        IconClass = "far fa-dot-circle",
+    //        Visible = true
+    //    };
 
-        salesNode.ChildNodes.Add(cancelOrderRequestNode);
-    }
+    //    salesNode.ChildNodes.Add(cancelOrderRequestNode);
+    //}
 
     public override async Task InstallAsync()
     {

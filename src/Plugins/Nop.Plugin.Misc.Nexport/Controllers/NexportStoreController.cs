@@ -35,7 +35,7 @@ public class NexportStoreController : BasePluginController
     [Area(AreaNames.ADMIN)]
     public virtual async Task<IActionResult> List()
     {
-            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+            if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_STORES))
                 return AccessDeniedView();
 
             return View("~/Plugins/Misc.Nexport/Views/NexportStore/List.cshtml", new NexportStoreSearchModel());
@@ -47,8 +47,8 @@ public class NexportStoreController : BasePluginController
     [AutoValidateAntiforgeryToken]
     public virtual async Task<IActionResult> List(NexportStoreSearchModel searchModel)
     {
-            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
-                return await AccessDeniedDataTablesJson();
+            if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_STORES))
+                return await AccessDeniedJsonAsync();
 
             //prepare model
             var model = await _nexportPluginModelFactory.PrepareStoreListModel(searchModel);

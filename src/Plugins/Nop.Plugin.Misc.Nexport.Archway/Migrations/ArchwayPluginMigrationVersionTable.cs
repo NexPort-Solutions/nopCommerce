@@ -7,17 +7,19 @@ public class ArchwayPluginMigrationVersionTable: IVersionTableMetaData
 {
     public object ApplicationContext { get; set; }
 
-    public virtual string SchemaName => "";
+    public string SchemaName => "";
 
-    public virtual string TableName => "ArchwayPluginMigrationVersionInfo";
+    public string TableName => "ArchwayPluginMigrationVersionInfo";
 
-    public virtual string ColumnName => "Version";
+    public string ColumnName => "Version";
 
-    public virtual string UniqueIndexName => "UC_Version";
+    public string UniqueIndexName => "UC_Version";
 
-    public virtual string AppliedOnColumnName => "AppliedOn";
+    public string AppliedOnColumnName => "AppliedOn";
 
-    public virtual string DescriptionColumnName => "Description";
+    public bool CreateWithPrimaryKey => false;
+
+    public string DescriptionColumnName => "Description";
 
     public virtual bool OwnsSchema => true;
 }

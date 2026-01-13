@@ -77,18 +77,18 @@ public class NexportCustomerRegistrationService : CustomerRegistrationService
         IRewardPointService rewardPointService,
         IShoppingCartService shoppingCartService,
         IStoreContext storeContext,
-        IStoreService storeService,
         IUrlHelperFactory urlHelperFactory,
         IWorkContext workContext,
         IWorkflowMessageService workflowMessageService,
         RewardPointsSettings rewardPointsSettings,
+        IStoreService storeService,
         NexportService nexportService,
         NexportSettings nexportSettings,
         ILogger logger)
         : base(customerSettings, actionContextAccessor, authenticationService, customerActivityService, customerService,
             encryptionService, eventPublisher, genericAttributeService, localizationService, multiFactorAuthenticationPluginManager,
             newsLetterSubscriptionService, notificationService, permissionService, rewardPointService,
-            shoppingCartService, storeContext, storeService, urlHelperFactory,
+            shoppingCartService, storeContext, urlHelperFactory,
             workContext, workflowMessageService, rewardPointsSettings)
     {
         _notificationService = notificationService;

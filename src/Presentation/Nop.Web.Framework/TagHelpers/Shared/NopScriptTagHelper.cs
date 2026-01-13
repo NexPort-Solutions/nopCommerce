@@ -1,7 +1,6 @@
 ﻿using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Html;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor.TagHelpers;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -129,8 +128,12 @@ public partial class NopScriptTagHelper : UrlResolutionTagHelper
 
         output.TagMode = TagMode.StartTagAndEndTag;
 
-        if (!output.Attributes.ContainsName("type")) // we don't touch other types e.g. text/template
-            output.Attributes.SetAttribute("type", MimeTypes.TextJavascript);
+        //process only text/javascript scripts
+        if (context.AllAttributes.TryGetAttribute("type", out var attribute)
+             && !string.Equals(attribute.Value?.ToString(), MimeTypes.TextJavascript, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
 
         var woConfig = _appSettings.Get<WebOptimizerConfig>();
 

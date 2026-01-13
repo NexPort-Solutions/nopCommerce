@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,8 +20,16 @@ using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Tax;
 using Nop.Core.Events;
+using Nop.Core.Http;
+using Nop.Core.Http.Extensions;
+using Nop.Core.Infrastructure;
+using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Models.Customer;
+using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Services.Attributes;
 using Nop.Services.Authentication;
 using Nop.Services.Authentication.External;
+using Nop.Services.Authentication.MultiFactor;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
@@ -31,23 +41,14 @@ using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Media;
 using Nop.Services.Messages;
-using Nop.Services.Plugins;
 using Nop.Services.Orders;
+using Nop.Services.Plugins;
+using Nop.Services.Security;
 using Nop.Services.Tax;
 using Nop.Web.Controllers;
 using Nop.Web.Factories;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Models.Customer;
-using Nop.Plugin.Misc.Nexport.Factories;
-using Nop.Plugin.Misc.Nexport.Models.Customer;
-using Nop.Plugin.Misc.Nexport.Services;
-using System.Collections.Generic;
-using Nop.Core.Infrastructure;
-using Nop.Services.Attributes;
-using Nop.Services.Authentication.MultiFactor;
-using Nop.Services.Security;
-using System.Text.Encodings.Web;
-using Nop.Core.Http.Extensions;
 
 namespace Nop.Plugin.Misc.Nexport.Controllers;
 
@@ -296,7 +297,7 @@ public class NexportCustomerController : BasePublicController
         return attributesXml;
     }
 
-    protected virtual async Task LogGdpr(Customer customer, CustomerInfoModel oldCustomerInfoModel,
+    protected virtual async Task LogGdprAsync(Customer customer, CustomerInfoModel oldCustomerInfoModel,
         CustomerInfoModel newCustomerInfoModel, IFormCollection form)
     {
         try
@@ -305,7 +306,7 @@ public class NexportCustomerController : BasePublicController
             var consents = (await _gdprService.GetAllConsentsAsync()).Where(consent => consent.DisplayOnCustomerInfoPage).ToList();
             foreach (var consent in consents)
             {
-                var previousConsentValue = await _gdprService.IsConsentAcceptedAsync(consent.Id, (await _workContext.GetCurrentCustomerAsync()).Id);
+                var previousConsentValue = await _gdprService.IsConsentAcceptedAsync(consent.Id, customer.Id);
                 var controlId = $"consent{consent.Id}";
                 var cbConsent = form[controlId];
                 if (!StringValues.IsNullOrEmpty(cbConsent) && cbConsent.ToString().Equals("on"))
@@ -329,9 +330,11 @@ public class NexportCustomerController : BasePublicController
             //newsletter subscriptions
             if (_gdprSettings.LogNewsletterConsent)
             {
-                if (oldCustomerInfoModel.Newsletter && !newCustomerInfoModel.Newsletter)
+                var oldNewsletter = oldCustomerInfoModel.NewsLetterSubscriptions.Any(subscriptionModel => subscriptionModel.IsActive);
+                var newNewsletter = newCustomerInfoModel.NewsLetterSubscriptions.Any(subscriptionModel => subscriptionModel.IsActive);
+                if (oldNewsletter && !newNewsletter)
                     await _gdprService.InsertLogAsync(customer, 0, GdprRequestType.ConsentDisagree, await _localizationService.GetResourceAsync("Gdpr.Consent.Newsletter"));
-                if (!oldCustomerInfoModel.Newsletter && newCustomerInfoModel.Newsletter)
+                if (!oldNewsletter && newNewsletter)
                     await _gdprService.InsertLogAsync(customer, 0, GdprRequestType.ConsentAgree, await _localizationService.GetResourceAsync("Gdpr.Consent.Newsletter"));
             }
 
@@ -349,7 +352,7 @@ public class NexportCustomerController : BasePublicController
                 await _gdprService.InsertLogAsync(customer, 0, GdprRequestType.ProfileChanged, $"{await _localizationService.GetResourceAsync("Account.Fields.LastName")} = {newCustomerInfoModel.LastName}");
 
             if (oldCustomerInfoModel.ParseDateOfBirth() != newCustomerInfoModel.ParseDateOfBirth())
-                await _gdprService.InsertLogAsync(customer, 0, GdprRequestType.ProfileChanged, $"{await _localizationService.GetResourceAsync("Account.Fields.DateOfBirth")} = {newCustomerInfoModel.ParseDateOfBirth().ToString()}");
+                await _gdprService.InsertLogAsync(customer, 0, GdprRequestType.ProfileChanged, $"{await _localizationService.GetResourceAsync("Account.Fields.DateOfBirth")} = {newCustomerInfoModel.ParseDateOfBirth()}");
 
             if (oldCustomerInfoModel.Email != newCustomerInfoModel.Email)
                 await _gdprService.InsertLogAsync(customer, 0, GdprRequestType.ProfileChanged, $"{await _localizationService.GetResourceAsync("Account.Fields.Email")} = {newCustomerInfoModel.Email}");
@@ -544,9 +547,12 @@ public class NexportCustomerController : BasePublicController
     {
         //check whether registration is allowed
         if (_customerSettings.UserRegistrationType == UserRegistrationType.Disabled)
-            return RedirectToRoute("RegisterResult", new { resultId = (int)UserRegistrationType.Disabled, returnUrl });
+            return RedirectToRoute(NopRouteNames.Standard.REGISTER_RESULT, new { resultId = (int)UserRegistrationType.Disabled, returnUrl });
 
+        var store = await _storeContext.GetCurrentStoreAsync();
         var customer = await _workContext.GetCurrentCustomerAsync();
+        var language = await _workContext.GetWorkingLanguageAsync();
+
         if (await _customerService.IsRegisteredAsync(customer))
         {
             //Already registered customer.
@@ -555,11 +561,12 @@ public class NexportCustomerController : BasePublicController
             //raise logged out event
             await _eventPublisher.PublishAsync(new CustomerLoggedOutEvent(customer));
 
+            customer = await _customerService.InsertGuestCustomerAsync();
+
             //Save a new record
-            await _workContext.SetCurrentCustomerAsync(await _customerService.InsertGuestCustomerAsync());
+            await _workContext.SetCurrentCustomerAsync(customer);
         }
 
-        var store = await _storeContext.GetCurrentStoreAsync();
         customer.RegisteredInStoreId = store.Id;
 
         //custom customer attributes
@@ -673,48 +680,67 @@ public class NexportCustomerController : BasePublicController
                 //newsletter
                 if (_customerSettings.NewsletterEnabled)
                 {
+                    var anyNewSubscriptions = false;
                     var isNewsletterActive = _customerSettings.UserRegistrationType != UserRegistrationType.EmailValidation;
-
-                    //save newsletter value
-                    var newsletter = await _newsLetterSubscriptionService.GetNewsLetterSubscriptionByEmailAndStoreIdAsync(customerEmail, store.Id);
-                    if (newsletter != null)
+                    var activeSubscriptions = model.NewsLetterSubscriptions.Where(subscriptionModel => subscriptionModel.IsActive);
+                    var currentSubscriptions = await _newsLetterSubscriptionService
+                        .GetNewsLetterSubscriptionsByEmailAsync(customerEmail, storeId: store.Id);
+                    if (currentSubscriptions.Any())
                     {
-                        if (model.Newsletter)
+                        var subscriptionGuid = currentSubscriptions.FirstOrDefault().NewsLetterSubscriptionGuid;
+                        foreach (var activeSubscription in activeSubscriptions)
                         {
-                            newsletter.Active = isNewsletterActive;
-                            await _newsLetterSubscriptionService.UpdateNewsLetterSubscriptionAsync(newsletter);
-
-                            //GDPR
-                            if (_gdprSettings.GdprEnabled && _gdprSettings.LogNewsletterConsent)
+                            var existingSubscription = currentSubscriptions
+                                ?.FirstOrDefault(subscription => subscription.TypeId == activeSubscription.TypeId);
+                            if (existingSubscription is not null)
                             {
-                                await _gdprService.InsertLogAsync(customer, 0, GdprRequestType.ConsentAgree, await _localizationService.GetResourceAsync("Gdpr.Consent.Newsletter"));
+                                if (!existingSubscription.Active && isNewsletterActive)
+                                {
+                                    existingSubscription.Active = true;
+                                    existingSubscription.LanguageId = customer.LanguageId ?? language.Id;
+                                    await _newsLetterSubscriptionService.UpdateNewsLetterSubscriptionAsync(existingSubscription);
+                                }
+                            }
+                            else
+                            {
+                                await _newsLetterSubscriptionService.InsertNewsLetterSubscriptionAsync(new()
+                                {
+                                    NewsLetterSubscriptionGuid = subscriptionGuid,
+                                    Email = customer.Email,
+                                    Active = isNewsletterActive,
+                                    TypeId = activeSubscription.TypeId,
+                                    StoreId = store.Id,
+                                    LanguageId = customer.LanguageId ?? language.Id,
+                                    CreatedOnUtc = DateTime.UtcNow
+                                });
+                                anyNewSubscriptions = true;
                             }
                         }
-                        //else
-                        //{
-                        //When registering, not checking the newsletter check box should not take an existing email address off of the subscription list.
-                        //_newsLetterSubscriptionService.DeleteNewsLetterSubscription(newsletter);
-                        //}
                     }
                     else
                     {
-                        if (model.Newsletter)
+                        var subscriptionGuid = Guid.NewGuid();
+                        foreach (var activeSubscription in activeSubscriptions)
                         {
-                            await _newsLetterSubscriptionService.InsertNewsLetterSubscriptionAsync(new NewsLetterSubscription
+                            await _newsLetterSubscriptionService.InsertNewsLetterSubscriptionAsync(new()
                             {
-                                NewsLetterSubscriptionGuid = Guid.NewGuid(),
-                                Email = customerEmail,
+                                NewsLetterSubscriptionGuid = subscriptionGuid,
+                                Email = customer.Email,
                                 Active = isNewsletterActive,
+                                TypeId = activeSubscription.TypeId,
                                 StoreId = store.Id,
+                                LanguageId = customer.LanguageId ?? language.Id,
                                 CreatedOnUtc = DateTime.UtcNow
                             });
-
-                            //GDPR
-                            if (_gdprSettings.GdprEnabled && _gdprSettings.LogNewsletterConsent)
-                            {
-                                await _gdprService.InsertLogAsync(customer, 0, GdprRequestType.ConsentAgree, await _localizationService.GetResourceAsync("Gdpr.Consent.Newsletter"));
-                            }
+                            anyNewSubscriptions = true;
                         }
+                    }
+
+                    //GDPR
+                    if (anyNewSubscriptions && _gdprSettings.GdprEnabled && _gdprSettings.LogNewsletterConsent)
+                    {
+                        var consentMessage = await _localizationService.GetResourceAsync("Gdpr.Consent.Newsletter");
+                        await _gdprService.InsertLogAsync(customer, 0, GdprRequestType.ConsentAgree, consentMessage);
                     }
                 }
 

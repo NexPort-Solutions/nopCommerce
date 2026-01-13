@@ -21,7 +21,6 @@ public partial class TopicModelFactory : ITopicModelFactory
     #region Fields
 
     protected readonly CatalogSettings _catalogSettings;
-    protected readonly IAclSupportedModelFactory _aclSupportedModelFactory;
     protected readonly IBaseAdminModelFactory _baseAdminModelFactory;
     protected readonly ILocalizationService _localizationService;
     protected readonly ILocalizedModelFactory _localizedModelFactory;
@@ -36,7 +35,6 @@ public partial class TopicModelFactory : ITopicModelFactory
     #region Ctor
 
     public TopicModelFactory(CatalogSettings catalogSettings,
-        IAclSupportedModelFactory aclSupportedModelFactory,
         IBaseAdminModelFactory baseAdminModelFactory,
         ILocalizationService localizationService,
         ILocalizedModelFactory localizedModelFactory,
@@ -47,7 +45,6 @@ public partial class TopicModelFactory : ITopicModelFactory
         IWebHelper webHelper)
     {
         _catalogSettings = catalogSettings;
-        _aclSupportedModelFactory = aclSupportedModelFactory;
         _baseAdminModelFactory = baseAdminModelFactory;
         _localizationService = localizationService;
         _localizedModelFactory = localizedModelFactory;
@@ -153,8 +150,7 @@ public partial class TopicModelFactory : ITopicModelFactory
                 model.SeName = await _urlRecordService.GetSeNameAsync(topic, 0, true, false);
             }
 
-            model.Url = await _nopUrlHelper
-                .RouteGenericUrlAsync<Topic>(new { SeName = await _urlRecordService.GetSeNameAsync(topic) }, _webHelper.GetCurrentRequestProtocol());
+            model.Url = await _nopUrlHelper.RouteGenericUrlAsync(topic, _webHelper.GetCurrentRequestProtocol());
 
             //define localized model configuration action
             localizedModelConfiguration = async (locale, languageId) =>
@@ -181,9 +177,6 @@ public partial class TopicModelFactory : ITopicModelFactory
 
         //prepare available topic templates
         await _baseAdminModelFactory.PrepareTopicTemplatesAsync(model.AvailableTopicTemplates, false);
-
-        //prepare model customer roles
-        await _aclSupportedModelFactory.PrepareModelCustomerRolesAsync(model, topic, excludeProperties);
 
         //prepare model stores
         await _storeMappingSupportedModelFactory.PrepareModelStoresAsync(model, topic, excludeProperties);

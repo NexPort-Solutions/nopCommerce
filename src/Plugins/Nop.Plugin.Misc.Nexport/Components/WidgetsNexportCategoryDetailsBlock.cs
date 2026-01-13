@@ -62,7 +62,7 @@ public class WidgetsNexportCategoryDetailsBlock : NopViewComponent
         model.AllowProductPurchaseInCategoryDuringEnrollment = await _genericAttributeService.GetAttributeAsync<bool>(category,
             NexportDefaults.ALLOW_PRODUCT_PURCHASE_IN_CATEGORY_DURING_ENROLLMENT);
 
-        ViewBag.ManageNexportProductMapping = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping);
+        ViewBag.ManageNexportProductMapping = await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_PRODUCT_MAPPING);
 
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Category/NexportCategoryDetails.cshtml", model);
     }

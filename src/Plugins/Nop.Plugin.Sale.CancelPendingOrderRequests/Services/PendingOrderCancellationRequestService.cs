@@ -311,7 +311,7 @@ public class PendingOrderCancellationRequestService : IPendingOrderCancellationR
             var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
 
             var tokens = new List<Token>(commonTokens);
-            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount, languageId);
 
             await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 
@@ -349,7 +349,7 @@ public class PendingOrderCancellationRequestService : IPendingOrderCancellationR
             var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
 
             var tokens = new List<Token>(commonTokens);
-            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount, languageId);
 
             await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 
@@ -394,7 +394,7 @@ public class PendingOrderCancellationRequestService : IPendingOrderCancellationR
             var emailAccount = await GetEmailAccountOfMessageTemplate(messageTemplate, languageId);
 
             var tokens = new List<Token>(commonTokens);
-            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount, languageId);
 
             await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 

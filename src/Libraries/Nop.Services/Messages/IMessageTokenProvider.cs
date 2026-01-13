@@ -22,8 +22,9 @@ public partial interface IMessageTokenProvider
     /// <param name="tokens">List of already added tokens</param>
     /// <param name="store">Store</param>
     /// <param name="emailAccount">Email account</param>
+    /// <param name="languageId">Language identifier</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    Task AddStoreTokensAsync(IList<Token> tokens, Store store, EmailAccount emailAccount);
+    Task AddStoreTokensAsync(IList<Token> tokens, Store store, EmailAccount emailAccount, int languageId);
 
     /// <summary>
     /// Add order tokens
@@ -222,7 +223,7 @@ public partial interface IMessageTokenProvider
     /// A task that represents the asynchronous operation
     /// The task result contains the collection of allowed message tokens
     /// </returns>
-    Task<IEnumerable<string>> GetListOfAllowedTokensAsync(IEnumerable<string> tokenGroups = null);
+    Task<IEnumerable<string>> GetListOfAllowedTokensAsync(IList<string> tokenGroups = null);
 
     /// <summary>
     /// Get token groups of message template

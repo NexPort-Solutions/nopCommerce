@@ -75,8 +75,8 @@ public class PurchaseForCustomerController : BasePluginController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> GetModifiedLocaleResources(PurchaseForCustomerPluginResourceListSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
+            return await AccessDeniedJsonAsync();
 
         var model = await _purchaseForCustomerModelFactory.PreparePurchaseForCustomerPluginResourceListModelAsync(searchModel);
 
@@ -89,7 +89,7 @@ public class PurchaseForCustomerController : BasePluginController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         if (selectedIds != null && selectedIds.Count != 0)
@@ -133,22 +133,18 @@ public class PurchaseForCustomerController : BasePluginController
         return Json(new { success = true });
     }
 
+    [CheckPermission(StandardPermission.Catalog.PRODUCTS_VIEW)]
     public async Task<IActionResult> PurchaseDetails(int productId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
-            return AccessDeniedView();
-
         var model = await _purchaseForCustomerModelFactory.PreparePurchaseForCustomerOrderModel(productId);
 
         return View("~/Plugins/Sale.PurchaseForCustomer/Areas/Admin/Views/PurchaseForCustomer/PurchaseDetails.cshtml", model);
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Orders.ORDERS_VIEW)]
     public async Task<IActionResult> PurchaseForCustomer(PurchaseForCustomerOrderModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders))
-            return AccessDeniedView();
-
         PlaceOrderResult result = null;
 
         if (ModelState.IsValid)
@@ -212,7 +208,7 @@ public class PurchaseForCustomerController : BasePluginController
 
     public virtual async Task<IActionResult> SearchCustomers(string term)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             return Content(string.Empty);
 
         const int searchTermMinimumLength = 3;

@@ -1,4 +1,5 @@
 ﻿using Nop.Core;
+using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
@@ -64,6 +65,8 @@ public class PurchaseForCustomerService(
     IShippingService shippingService,
     IShoppingCartService shoppingCartService,
     IStateProvinceService stateProvinceService,
+    IStaticCacheManager staticCacheManager,
+    IStoreContext storeContext,
     IStoreMappingService storeMappingService,
     IStoreService storeService,
     ITaxService taxService,
@@ -81,13 +84,15 @@ public class PurchaseForCustomerService(
     IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMappingRepository)
     : OrderProcessingService(currencySettings, addressService, affiliateService, checkoutAttributeFormatter,
         countryService, currencyService, customerActivityService, customerService, customNumberFormatter,
-        discountService, encryptionService, eventPublisher, genericAttributeService, giftCardService, languageService,
-        localizationService, logger, orderService, orderTotalCalculationService, paymentPluginManager, paymentService,
-        pdfService, priceCalculationService, priceFormatter, productAttributeFormatter, productAttributeParser,
-        productService, returnRequestService, rewardPointService, shipmentService, shippingService, shoppingCartService,
-        stateProvinceService, storeMappingService, storeService, taxService, vendorService, webHelper, workContext,
-        workflowMessageService, localizationSettings, orderSettings, paymentSettings, rewardPointsSettings,
-        shippingSettings, taxSettings), IPurchaseForCustomerService
+        discountService, encryptionService, eventPublisher, genericAttributeService, giftCardService,
+        languageService, localizationService, logger, orderService, orderTotalCalculationService,
+        paymentPluginManager, paymentService, pdfService, priceCalculationService, priceFormatter,
+        productAttributeFormatter, productAttributeParser, productService, returnRequestService, rewardPointService,
+        shipmentService, shippingService, shoppingCartService, stateProvinceService,
+        staticCacheManager, storeContext, storeMappingService, storeService,
+        taxService, vendorService, webHelper, workContext,
+        workflowMessageService, localizationSettings, orderSettings,
+        paymentSettings, rewardPointsSettings, shippingSettings, taxSettings), IPurchaseForCustomerService
 {
     #region Fields
 
@@ -182,7 +187,7 @@ public class PurchaseForCustomerService(
     protected virtual async Task<PlaceOrderContainer> PreparePlaceOrderForCustomerDetailsAsync(ProcessPaymentRequest processPaymentRequest,
         IList<ShoppingCartItem> shoppingCartItems)
     {
-        var details = new PlaceOrderContainer{Cart=shoppingCartItems};
+        var details = new PlaceOrderContainer { Cart = shoppingCartItems };
 
         var currentCurrency = await _workContext.GetWorkingCurrencyAsync();
         await PrepareAndValidateCustomerAsync(details, processPaymentRequest, currentCurrency);
@@ -473,7 +478,7 @@ public class PurchaseForCustomerService(
     {
         var query = customerRepository.Table.Where(c => !c.Deleted && !c.IsSystemAccount && !string.IsNullOrWhiteSpace(c.Email));
 
-        query = query.Where(c => (c.FirstName +" "+ c.LastName).Contains(searchNameAndEmail) || c.Email.Contains(searchNameAndEmail));
+        query = query.Where(c => (c.FirstName + " " + c.LastName).Contains(searchNameAndEmail) || c.Email.Contains(searchNameAndEmail));
 
         var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync(NopCustomerDefaults.RegisteredRoleName);
         if (registeredRole != null)

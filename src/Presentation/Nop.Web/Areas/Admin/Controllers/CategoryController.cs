@@ -5,7 +5,6 @@ using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Discounts;
 using Nop.Services.Catalog;
-using Nop.Services.Customers;
 using Nop.Services.Discounts;
 using Nop.Services.ExportImport;
 using Nop.Services.Localization;
@@ -19,6 +18,8 @@ using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Controllers;
+using Nop.Web.Framework.Factories;
+using Nop.Web.Framework.Models.Translation;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
@@ -28,23 +29,20 @@ public partial class CategoryController : BaseAdminController
 {
     #region Fields
 
-    protected readonly IAclService _aclService;
     protected readonly ICategoryModelFactory _categoryModelFactory;
     protected readonly ICategoryService _categoryService;
     protected readonly ICustomerActivityService _customerActivityService;
-    protected readonly ICustomerService _customerService;
     protected readonly IDiscountService _discountService;
     protected readonly IExportManager _exportManager;
     protected readonly IImportManager _importManager;
     protected readonly ILocalizationService _localizationService;
     protected readonly ILocalizedEntityService _localizedEntityService;
     protected readonly INotificationService _notificationService;
-    protected readonly IPermissionService _permissionService;
     protected readonly IPictureService _pictureService;
     protected readonly IProductService _productService;
     protected readonly IStaticCacheManager _staticCacheManager;
     protected readonly IStoreMappingService _storeMappingService;
-    protected readonly IStoreService _storeService;
+    protected readonly ITranslationModelFactory _translationModelFactory;
     protected readonly IUrlRecordService _urlRecordService;
     protected readonly IWorkContext _workContext;
 
@@ -52,43 +50,37 @@ public partial class CategoryController : BaseAdminController
 
     #region Ctor
 
-    public CategoryController(IAclService aclService,
-        ICategoryModelFactory categoryModelFactory,
+    public CategoryController(ICategoryModelFactory categoryModelFactory,
         ICategoryService categoryService,
         ICustomerActivityService customerActivityService,
-        ICustomerService customerService,
         IDiscountService discountService,
         IExportManager exportManager,
         IImportManager importManager,
         ILocalizationService localizationService,
         ILocalizedEntityService localizedEntityService,
         INotificationService notificationService,
-        IPermissionService permissionService,
         IPictureService pictureService,
         IProductService productService,
         IStaticCacheManager staticCacheManager,
         IStoreMappingService storeMappingService,
-        IStoreService storeService,
+        ITranslationModelFactory translationModelFactory,
         IUrlRecordService urlRecordService,
         IWorkContext workContext)
     {
-        _aclService = aclService;
         _categoryModelFactory = categoryModelFactory;
         _categoryService = categoryService;
         _customerActivityService = customerActivityService;
-        _customerService = customerService;
         _discountService = discountService;
         _exportManager = exportManager;
         _importManager = importManager;
         _localizationService = localizationService;
         _localizedEntityService = localizedEntityService;
         _notificationService = notificationService;
-        _permissionService = permissionService;
         _pictureService = pictureService;
         _productService = productService;
         _staticCacheManager = staticCacheManager;
         _storeMappingService = storeMappingService;
-        _storeService = storeService;
+        _translationModelFactory = translationModelFactory;
         _urlRecordService = urlRecordService;
         _workContext = workContext;
     }
@@ -139,56 +131,6 @@ public partial class CategoryController : BaseAdminController
             await _pictureService.SetSeoFilenameAsync(picture.Id, await _pictureService.GetPictureSeNameAsync(category.Name));
     }
 
-    protected virtual async Task SaveCategoryAclAsync(Category category, CategoryModel model)
-    {
-        category.SubjectToAcl = model.SelectedCustomerRoleIds.Any();
-        await _categoryService.UpdateCategoryAsync(category);
-
-        var existingAclRecords = await _aclService.GetAclRecordsAsync(category);
-        var allCustomerRoles = await _customerService.GetAllCustomerRolesAsync(true);
-        foreach (var customerRole in allCustomerRoles)
-        {
-            if (model.SelectedCustomerRoleIds.Contains(customerRole.Id))
-            {
-                //new role
-                if (!existingAclRecords.Any(acl => acl.CustomerRoleId == customerRole.Id))
-                    await _aclService.InsertAclRecordAsync(category, customerRole.Id);
-            }
-            else
-            {
-                //remove role
-                var aclRecordToDelete = existingAclRecords.FirstOrDefault(acl => acl.CustomerRoleId == customerRole.Id);
-                if (aclRecordToDelete != null)
-                    await _aclService.DeleteAclRecordAsync(aclRecordToDelete);
-            }
-        }
-    }
-
-    protected virtual async Task SaveStoreMappingsAsync(Category category, CategoryModel model)
-    {
-        category.LimitedToStores = model.SelectedStoreIds.Any();
-        await _categoryService.UpdateCategoryAsync(category);
-
-        var existingStoreMappings = await _storeMappingService.GetStoreMappingsAsync(category);
-        var allStores = await _storeService.GetAllStoresAsync();
-        foreach (var store in allStores)
-        {
-            if (model.SelectedStoreIds.Contains(store.Id))
-            {
-                //new store
-                if (!existingStoreMappings.Any(sm => sm.StoreId == store.Id))
-                    await _storeMappingService.InsertStoreMappingAsync(category, store.Id);
-            }
-            else
-            {
-                //remove store
-                var storeMappingToDelete = existingStoreMappings.FirstOrDefault(sm => sm.StoreId == store.Id);
-                if (storeMappingToDelete != null)
-                    await _storeMappingService.DeleteStoreMappingAsync(storeMappingToDelete);
-            }
-        }
-    }
-
     #endregion
 
     #region List
@@ -198,11 +140,9 @@ public partial class CategoryController : BaseAdminController
         return RedirectToAction("List");
     }
 
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_VIEW)]
     public virtual async Task<IActionResult> List()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _categoryModelFactory.PrepareCategorySearchModelAsync(new CategorySearchModel());
 
@@ -210,11 +150,9 @@ public partial class CategoryController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_VIEW)]
     public virtual async Task<IActionResult> List(CategorySearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _categoryModelFactory.PrepareCategoryListModelAsync(searchModel);
 
@@ -225,11 +163,9 @@ public partial class CategoryController : BaseAdminController
 
     #region Create / Edit / Delete
 
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Create()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _categoryModelFactory.PrepareCategoryModelAsync(new CategoryModel(), null);
 
@@ -237,11 +173,9 @@ public partial class CategoryController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Create(CategoryModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             var category = model.ToEntity<Category>();
@@ -269,11 +203,8 @@ public partial class CategoryController : BaseAdminController
             //update picture seo file name
             await UpdatePictureSeoNamesAsync(category);
 
-            //ACL (customer roles)
-            await SaveCategoryAclAsync(category, model);
-
             //stores
-            await SaveStoreMappingsAsync(category, model);
+            await _storeMappingService.SaveStoreMappingsAsync(category, model.SelectedStoreIds);
 
             //activity log
             await _customerActivityService.InsertActivityAsync("AddNewCategory",
@@ -294,11 +225,9 @@ public partial class CategoryController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_VIEW)]
     public virtual async Task<IActionResult> Edit(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return AccessDeniedView();
-
         //try to get a category with the specified id
         var category = await _categoryService.GetCategoryByIdAsync(id);
         if (category == null || category.Deleted)
@@ -311,11 +240,9 @@ public partial class CategoryController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Edit(CategoryModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return AccessDeniedView();
-
         //try to get a category with the specified id
         var category = await _categoryService.GetCategoryByIdAsync(model.Id);
         if (category == null || category.Deleted)
@@ -375,11 +302,8 @@ public partial class CategoryController : BaseAdminController
             //update picture seo file name
             await UpdatePictureSeoNamesAsync(category);
 
-            //ACL
-            await SaveCategoryAclAsync(category, model);
-
             //stores
-            await SaveStoreMappingsAsync(category, model);
+            await _storeMappingService.SaveStoreMappingsAsync(category, model.SelectedStoreIds);
 
             //activity log
             await _customerActivityService.InsertActivityAsync("EditCategory",
@@ -401,11 +325,30 @@ public partial class CategoryController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_CREATE_EDIT_DELETE)]
+    public virtual async Task<IActionResult> PreTranslate(int itemId)
+    {
+        var translationModel = new TranslationModel();
+
+        //try to get a category with the specified id
+        var category = await _categoryService.GetCategoryByIdAsync(itemId);
+        if (category == null || category.Deleted)
+            return Json(translationModel);
+
+        //prepare model
+        var model = await _categoryModelFactory.PrepareCategoryModelAsync(null, category);
+
+        translationModel = await _translationModelFactory.PrepareTranslationModelAsync(model,
+            (nameof(CategoryLocalizedModel.Name), false),
+            (nameof(CategoryLocalizedModel.Description), true));
+
+        return Json(translationModel);
+    }
+
+    [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Delete(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return AccessDeniedView();
-
         //try to get a category with the specified id
         var category = await _categoryService.GetCategoryByIdAsync(id);
         if (category == null)
@@ -423,15 +366,19 @@ public partial class CategoryController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> DeleteSelected(ICollection<int> selectedIds)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return await AccessDeniedDataTablesJson();
-
         if (selectedIds == null || !selectedIds.Any())
             return NoContent();
 
-        await _categoryService.DeleteCategoriesAsync(await (await _categoryService.GetCategoriesByIdsAsync(selectedIds.ToArray())).WhereAwait(async p => await _workContext.GetCurrentVendorAsync() == null).ToListAsync());
+        var categories = await _categoryService.GetCategoriesByIdsAsync(selectedIds.ToArray());
+
+        await _categoryService.DeleteCategoriesAsync(categories);
+
+        //activity log
+        var activityLogFormat = await _localizationService.GetResourceAsync("ActivityLog.DeleteCategory");
+        await _customerActivityService.InsertActivitiesAsync("DeleteCategory", categories, category => string.Format(activityLogFormat, category.Name));
 
         return Json(new { Result = true });
     }
@@ -440,11 +387,9 @@ public partial class CategoryController : BaseAdminController
 
     #region Export / Import
 
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_IMPORT_EXPORT)]
     public virtual async Task<IActionResult> ExportXml()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return AccessDeniedView();
-
         try
         {
             var xml = await _exportManager.ExportCategoriesToXmlAsync();
@@ -458,11 +403,9 @@ public partial class CategoryController : BaseAdminController
         }
     }
 
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_IMPORT_EXPORT)]
     public virtual async Task<IActionResult> ExportXlsx()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return AccessDeniedView();
-
         try
         {
             var bytes = await _exportManager
@@ -478,11 +421,9 @@ public partial class CategoryController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_IMPORT_EXPORT)]
     public virtual async Task<IActionResult> ImportFromXlsx(IFormFile importexcelfile)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return AccessDeniedView();
-
         //a vendor cannot import categories
         if (await _workContext.GetCurrentVendorAsync() != null)
             return AccessDeniedView();
@@ -515,11 +456,9 @@ public partial class CategoryController : BaseAdminController
     #region Products
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_VIEW)]
     public virtual async Task<IActionResult> ProductList(CategoryProductSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a category with the specified id
         var category = await _categoryService.GetCategoryByIdAsync(searchModel.CategoryId)
             ?? throw new ArgumentException("No category found with the specified id");
@@ -530,11 +469,9 @@ public partial class CategoryController : BaseAdminController
         return Json(model);
     }
 
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> ProductUpdate(CategoryProductModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a product category with the specified id
         var productCategory = await _categoryService.GetProductCategoryByIdAsync(model.Id)
             ?? throw new ArgumentException("No product category mapping found with the specified id");
@@ -546,11 +483,9 @@ public partial class CategoryController : BaseAdminController
         return new NullJsonResult();
     }
 
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> ProductDelete(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a product category with the specified id
         var productCategory = await _categoryService.GetProductCategoryByIdAsync(id)
             ?? throw new ArgumentException("No product category mapping found with the specified id", nameof(id));
@@ -560,11 +495,9 @@ public partial class CategoryController : BaseAdminController
         return new NullJsonResult();
     }
 
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> ProductAddPopup(int categoryId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _categoryModelFactory.PrepareAddProductToCategorySearchModelAsync(new AddProductToCategorySearchModel());
 
@@ -572,11 +505,9 @@ public partial class CategoryController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> ProductAddPopupList(AddProductToCategorySearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _categoryModelFactory.PrepareAddProductToCategoryListModelAsync(searchModel);
 
@@ -585,11 +516,9 @@ public partial class CategoryController : BaseAdminController
 
     [HttpPost]
     [FormValueRequired("save")]
+    [CheckPermission(StandardPermission.Catalog.CATEGORIES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> ProductAddPopup(AddProductToCategoryModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories))
-            return AccessDeniedView();
-
         //get selected products
         var selectedProducts = await _productService.GetProductsByIdsAsync(model.SelectedProductIds.ToArray());
         if (selectedProducts.Any())

@@ -65,7 +65,7 @@ public class NexportDiscountPerCreditHoursController : BasePluginController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> OverrideResources(ICollection<int> selectedIds, bool allChecked)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         if (selectedIds != null && selectedIds.Count != 0)
@@ -112,7 +112,7 @@ public class NexportDiscountPerCreditHoursController : BasePluginController
 
     public async Task<IActionResult> Configure(int discountId, int? discountRequirementId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageDiscounts))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Promotions.DISCOUNTS_VIEW))
             return Content("Access denied");
 
         //load the discount
@@ -144,7 +144,7 @@ public class NexportDiscountPerCreditHoursController : BasePluginController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> Configure(RequirementModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageDiscounts))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Promotions.DISCOUNTS_VIEW))
             return Content("Access denied");
 
         // Load the discount

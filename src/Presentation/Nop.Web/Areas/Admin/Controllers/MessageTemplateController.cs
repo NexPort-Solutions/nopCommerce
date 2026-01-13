@@ -23,9 +23,7 @@ public partial class MessageTemplateController : BaseAdminController
     protected readonly IMessageTemplateModelFactory _messageTemplateModelFactory;
     protected readonly IMessageTemplateService _messageTemplateService;
     protected readonly INotificationService _notificationService;
-    protected readonly IPermissionService _permissionService;
     protected readonly IStoreMappingService _storeMappingService;
-    protected readonly IStoreService _storeService;
     protected readonly IWorkflowMessageService _workflowMessageService;
 
     #endregion Fields
@@ -38,9 +36,7 @@ public partial class MessageTemplateController : BaseAdminController
         IMessageTemplateModelFactory messageTemplateModelFactory,
         IMessageTemplateService messageTemplateService,
         INotificationService notificationService,
-        IPermissionService permissionService,
         IStoreMappingService storeMappingService,
-        IStoreService storeService,
         IWorkflowMessageService workflowMessageService)
     {
         _customerActivityService = customerActivityService;
@@ -49,9 +45,7 @@ public partial class MessageTemplateController : BaseAdminController
         _messageTemplateModelFactory = messageTemplateModelFactory;
         _messageTemplateService = messageTemplateService;
         _notificationService = notificationService;
-        _permissionService = permissionService;
         _storeMappingService = storeMappingService;
-        _storeService = storeService;
         _workflowMessageService = workflowMessageService;
     }
 
@@ -85,31 +79,6 @@ public partial class MessageTemplateController : BaseAdminController
         }
     }
 
-    protected virtual async Task SaveStoreMappingsAsync(MessageTemplate messageTemplate, MessageTemplateModel model)
-    {
-        messageTemplate.LimitedToStores = model.SelectedStoreIds.Any();
-        await _messageTemplateService.UpdateMessageTemplateAsync(messageTemplate);
-
-        var existingStoreMappings = await _storeMappingService.GetStoreMappingsAsync(messageTemplate);
-        var allStores = await _storeService.GetAllStoresAsync();
-        foreach (var store in allStores)
-        {
-            if (model.SelectedStoreIds.Contains(store.Id))
-            {
-                //new store
-                if (!existingStoreMappings.Any(sm => sm.StoreId == store.Id))
-                    await _storeMappingService.InsertStoreMappingAsync(messageTemplate, store.Id);
-            }
-            else
-            {
-                //remove store
-                var storeMappingToDelete = existingStoreMappings.FirstOrDefault(sm => sm.StoreId == store.Id);
-                if (storeMappingToDelete != null)
-                    await _storeMappingService.DeleteStoreMappingAsync(storeMappingToDelete);
-            }
-        }
-    }
-
     #endregion
 
     #region Methods
@@ -119,11 +88,9 @@ public partial class MessageTemplateController : BaseAdminController
         return RedirectToAction("List");
     }
 
+    [CheckPermission(StandardPermission.ContentManagement.MESSAGE_TEMPLATES_VIEW)]
     public virtual async Task<IActionResult> List()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageMessageTemplates))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _messageTemplateModelFactory.PrepareMessageTemplateSearchModelAsync(new MessageTemplateSearchModel());
 
@@ -131,22 +98,18 @@ public partial class MessageTemplateController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.ContentManagement.MESSAGE_TEMPLATES_VIEW)]
     public virtual async Task<IActionResult> List(MessageTemplateSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageMessageTemplates))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _messageTemplateModelFactory.PrepareMessageTemplateListModelAsync(searchModel);
 
         return Json(model);
     }
 
+    [CheckPermission(StandardPermission.ContentManagement.MESSAGE_TEMPLATES_VIEW)]
     public virtual async Task<IActionResult> Edit(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageMessageTemplates))
-            return AccessDeniedView();
-
         //try to get a message template with the specified id
         var messageTemplate = await _messageTemplateService.GetMessageTemplateByIdAsync(id);
         if (messageTemplate == null)
@@ -160,11 +123,9 @@ public partial class MessageTemplateController : BaseAdminController
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     [FormValueRequired("save", "save-continue")]
+    [CheckPermission(StandardPermission.ContentManagement.MESSAGE_TEMPLATES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Edit(MessageTemplateModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageMessageTemplates))
-            return AccessDeniedView();
-
         //try to get a message template with the specified id
         var messageTemplate = await _messageTemplateService.GetMessageTemplateByIdAsync(model.Id);
         if (messageTemplate == null)
@@ -186,7 +147,7 @@ public partial class MessageTemplateController : BaseAdminController
                 string.Format(await _localizationService.GetResourceAsync("ActivityLog.EditMessageTemplate"), messageTemplate.Id), messageTemplate);
 
             //stores
-            await SaveStoreMappingsAsync(messageTemplate, model);
+            await _storeMappingService.SaveStoreMappingsAsync(messageTemplate, model.SelectedStoreIds);
 
             //locales
             await UpdateLocalesAsync(messageTemplate, model);
@@ -207,11 +168,9 @@ public partial class MessageTemplateController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.ContentManagement.MESSAGE_TEMPLATES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Delete(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageMessageTemplates))
-            return AccessDeniedView();
-
         //try to get a message template with the specified id
         var messageTemplate = await _messageTemplateService.GetMessageTemplateByIdAsync(id);
         if (messageTemplate == null)
@@ -230,11 +189,9 @@ public partial class MessageTemplateController : BaseAdminController
 
     [HttpPost, ActionName("Edit")]
     [FormValueRequired("message-template-copy")]
+    [CheckPermission(StandardPermission.ContentManagement.MESSAGE_TEMPLATES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> CopyTemplate(MessageTemplateModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageMessageTemplates))
-            return AccessDeniedView();
-
         //try to get a message template with the specified id
         var messageTemplate = await _messageTemplateService.GetMessageTemplateByIdAsync(model.Id);
         if (messageTemplate == null)
@@ -255,11 +212,9 @@ public partial class MessageTemplateController : BaseAdminController
         }
     }
 
+    [CheckPermission(StandardPermission.ContentManagement.MESSAGE_TEMPLATES_VIEW)]
     public virtual async Task<IActionResult> TestTemplate(int id, int languageId = 0)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageMessageTemplates))
-            return AccessDeniedView();
-
         //try to get a message template with the specified id
         var messageTemplate = await _messageTemplateService.GetMessageTemplateByIdAsync(id);
         if (messageTemplate == null)
@@ -274,11 +229,9 @@ public partial class MessageTemplateController : BaseAdminController
 
     [HttpPost, ActionName("TestTemplate")]
     [FormValueRequired("send-test")]
+    [CheckPermission(StandardPermission.ContentManagement.MESSAGE_TEMPLATES_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> TestTemplate(TestMessageTemplateModel model, IFormCollection form)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageMessageTemplates))
-            return AccessDeniedView();
-
         //try to get a message template with the specified id
         var messageTemplate = await _messageTemplateService.GetMessageTemplateByIdAsync(model.Id);
         if (messageTemplate == null)

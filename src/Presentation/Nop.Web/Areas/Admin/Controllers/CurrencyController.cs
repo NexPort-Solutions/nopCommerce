@@ -27,10 +27,8 @@ public partial class CurrencyController : BaseAdminController
     protected readonly ILocalizationService _localizationService;
     protected readonly ILocalizedEntityService _localizedEntityService;
     protected readonly INotificationService _notificationService;
-    protected readonly IPermissionService _permissionService;
     protected readonly ISettingService _settingService;
     protected readonly IStoreMappingService _storeMappingService;
-    protected readonly IStoreService _storeService;
 
     #endregion
 
@@ -43,10 +41,8 @@ public partial class CurrencyController : BaseAdminController
         ILocalizationService localizationService,
         ILocalizedEntityService localizedEntityService,
         INotificationService notificationService,
-        IPermissionService permissionService,
         ISettingService settingService,
-        IStoreMappingService storeMappingService,
-        IStoreService storeService)
+        IStoreMappingService storeMappingService)
     {
         _currencySettings = currencySettings;
         _currencyModelFactory = currencyModelFactory;
@@ -55,10 +51,8 @@ public partial class CurrencyController : BaseAdminController
         _localizationService = localizationService;
         _localizedEntityService = localizedEntityService;
         _notificationService = notificationService;
-        _permissionService = permissionService;
         _settingService = settingService;
         _storeMappingService = storeMappingService;
-        _storeService = storeService;
     }
 
     #endregion
@@ -73,31 +67,6 @@ public partial class CurrencyController : BaseAdminController
         }
     }
 
-    protected virtual async Task SaveStoreMappingsAsync(Currency currency, CurrencyModel model)
-    {
-        currency.LimitedToStores = model.SelectedStoreIds.Any();
-        await _currencyService.UpdateCurrencyAsync(currency);
-
-        var existingStoreMappings = await _storeMappingService.GetStoreMappingsAsync(currency);
-        var allStores = await _storeService.GetAllStoresAsync();
-        foreach (var store in allStores)
-        {
-            if (model.SelectedStoreIds.Contains(store.Id))
-            {
-                //new store
-                if (!existingStoreMappings.Any(sm => sm.StoreId == store.Id))
-                    await _storeMappingService.InsertStoreMappingAsync(currency, store.Id);
-            }
-            else
-            {
-                //remove store
-                var storeMappingToDelete = existingStoreMappings.FirstOrDefault(sm => sm.StoreId == store.Id);
-                if (storeMappingToDelete != null)
-                    await _storeMappingService.DeleteStoreMappingAsync(storeMappingToDelete);
-            }
-        }
-    }
-
     #endregion
 
     #region Methods
@@ -107,11 +76,9 @@ public partial class CurrencyController : BaseAdminController
         return RedirectToAction("List");
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_CURRENCIES)]
     public virtual async Task<IActionResult> List(bool liveRates = false)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCurrencies))
-            return AccessDeniedView();
-
         var model = new CurrencySearchModel();
 
         try
@@ -129,11 +96,9 @@ public partial class CurrencyController : BaseAdminController
 
     [HttpPost]
     [FormValueRequired("save")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_CURRENCIES)]
     public virtual async Task<IActionResult> List(CurrencySearchModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCurrencies))
-            return AccessDeniedView();
-
         _currencySettings.ActiveExchangeRateProviderSystemName = model.ExchangeRateProviderModel.ExchangeRateProvider;
         _currencySettings.AutoUpdateEnabled = model.ExchangeRateProviderModel.AutoUpdateEnabled;
         await _settingService.SaveSettingAsync(_currencySettings);
@@ -142,11 +107,9 @@ public partial class CurrencyController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_CURRENCIES)]
     public virtual async Task<IActionResult> ListGrid(CurrencySearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCurrencies))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _currencyModelFactory.PrepareCurrencyListModelAsync(searchModel);
 
@@ -154,11 +117,9 @@ public partial class CurrencyController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_CURRENCIES)]
     public virtual async Task<IActionResult> ApplyRates(IEnumerable<CurrencyExchangeRateModel> rateModels)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCurrencies))
-            return await AccessDeniedDataTablesJson();
-
         foreach (var rate in rateModels)
         {
             var currency = await _currencyService.GetCurrencyByCodeAsync(rate.CurrencyCode);
@@ -174,11 +135,9 @@ public partial class CurrencyController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_CURRENCIES)]
     public virtual async Task<IActionResult> MarkAsPrimaryExchangeRateCurrency(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCurrencies))
-            return await AccessDeniedDataTablesJson();
-
         _currencySettings.PrimaryExchangeRateCurrencyId = id;
         await _settingService.SaveSettingAsync(_currencySettings);
 
@@ -186,11 +145,9 @@ public partial class CurrencyController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_CURRENCIES)]
     public virtual async Task<IActionResult> MarkAsPrimaryStoreCurrency(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCurrencies))
-            return await AccessDeniedDataTablesJson();
-
         _currencySettings.PrimaryStoreCurrencyId = id;
         await _settingService.SaveSettingAsync(_currencySettings);
 
@@ -201,11 +158,9 @@ public partial class CurrencyController : BaseAdminController
 
     #region Create / Edit / Delete
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_CURRENCIES)]
     public virtual async Task<IActionResult> Create()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCurrencies))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _currencyModelFactory.PrepareCurrencyModelAsync(new CurrencyModel(), null);
 
@@ -213,11 +168,9 @@ public partial class CurrencyController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_CURRENCIES)]
     public virtual async Task<IActionResult> Create(CurrencyModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCurrencies))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             var currency = model.ToEntity<Currency>();
@@ -233,7 +186,7 @@ public partial class CurrencyController : BaseAdminController
             await UpdateLocalesAsync(currency, model);
 
             //stores
-            await SaveStoreMappingsAsync(currency, model);
+            await _storeMappingService.SaveStoreMappingsAsync(currency, model.SelectedStoreIds);
 
             _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Configuration.Currencies.Added"));
 
@@ -250,11 +203,9 @@ public partial class CurrencyController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_CURRENCIES)]
     public virtual async Task<IActionResult> Edit(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCurrencies))
-            return AccessDeniedView();
-
         //try to get a currency with the specified id
         var currency = await _currencyService.GetCurrencyByIdAsync(id);
         if (currency == null)
@@ -267,11 +218,9 @@ public partial class CurrencyController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_CURRENCIES)]
     public virtual async Task<IActionResult> Edit(CurrencyModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCurrencies))
-            return AccessDeniedView();
-
         //try to get a currency with the specified id
         var currency = await _currencyService.GetCurrencyByIdAsync(model.Id);
         if (currency == null)
@@ -299,7 +248,7 @@ public partial class CurrencyController : BaseAdminController
             await UpdateLocalesAsync(currency, model);
 
             //stores
-            await SaveStoreMappingsAsync(currency, model);
+            await _storeMappingService.SaveStoreMappingsAsync(currency, model.SelectedStoreIds);
 
             _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Configuration.Currencies.Updated"));
 
@@ -317,11 +266,9 @@ public partial class CurrencyController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_CURRENCIES)]
     public virtual async Task<IActionResult> Delete(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCurrencies))
-            return AccessDeniedView();
-
         //try to get a currency with the specified id
         var currency = await _currencyService.GetCurrencyByIdAsync(id);
         if (currency == null)

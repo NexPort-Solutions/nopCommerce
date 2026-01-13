@@ -193,7 +193,7 @@ public class NexportWholesaleController : BasePluginController
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
         if (!await _customerService.IsRegisteredAsync(customer))
-            return await AccessDeniedDataTablesJson();
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportGroupProductListModelAsync(searchModel, customer);
 
@@ -206,7 +206,7 @@ public class NexportWholesaleController : BasePluginController
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
         if (!await _customerService.IsRegisteredAsync(customer))
-            return await AccessDeniedDataTablesJson();
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportGroupProductRedemptionListModelAsync(searchModel, groupId, productId, customer, orderId);
 

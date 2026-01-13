@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
-using Nop.Core;
 using Nop.Core.Domain.Common;
-using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Events;
 using Nop.Services.Common;
@@ -36,14 +34,12 @@ public partial class ShippingController : BaseAdminController
     protected readonly ILocalizationService _localizationService;
     protected readonly ILocalizedEntityService _localizedEntityService;
     protected readonly INotificationService _notificationService;
-    protected readonly IPermissionService _permissionService;
     protected readonly IPickupPluginManager _pickupPluginManager;
     protected readonly ISettingService _settingService;
     protected readonly IShippingModelFactory _shippingModelFactory;
     protected readonly IShippingPluginManager _shippingPluginManager;
-    protected readonly IShippingService _shippingService;
-    protected readonly IGenericAttributeService _genericAttributeService;
-    protected readonly IWorkContext _workContext;
+    protected readonly IShippingMethodsService _shippingMethodsService;
+    protected readonly IWarehouseService _warehouseService;
     protected readonly ShippingSettings _shippingSettings;
     private static readonly char[] _separator = [','];
 
@@ -59,14 +55,12 @@ public partial class ShippingController : BaseAdminController
         ILocalizationService localizationService,
         ILocalizedEntityService localizedEntityService,
         INotificationService notificationService,
-        IPermissionService permissionService,
         IPickupPluginManager pickupPluginManager,
         ISettingService settingService,
         IShippingModelFactory shippingModelFactory,
         IShippingPluginManager shippingPluginManager,
-        IShippingService shippingService,
-        IGenericAttributeService genericAttributeService,
-        IWorkContext workContext,
+        IShippingMethodsService shippingMethodsService,
+        IWarehouseService warehouseService,
         ShippingSettings shippingSettings)
     {
         _addressService = addressService;
@@ -77,14 +71,12 @@ public partial class ShippingController : BaseAdminController
         _localizationService = localizationService;
         _localizedEntityService = localizedEntityService;
         _notificationService = notificationService;
-        _permissionService = permissionService;
         _pickupPluginManager = pickupPluginManager;
         _settingService = settingService;
         _shippingModelFactory = shippingModelFactory;
         _shippingPluginManager = shippingPluginManager;
-        _shippingService = shippingService;
-        _genericAttributeService = genericAttributeService;
-        _workContext = workContext;
+        _shippingMethodsService = shippingMethodsService;
+        _warehouseService = warehouseService;
         _shippingSettings = shippingSettings;
     }
 
@@ -121,34 +113,19 @@ public partial class ShippingController : BaseAdminController
 
     #region Shipping rate computation methods
 
-    public virtual async Task<IActionResult> Providers(bool showtour = false)
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
+    public virtual async Task<IActionResult> Providers()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareShippingProviderSearchModelAsync(new ShippingProviderSearchModel());
-
-        //show configuration tour
-        if (showtour)
-        {
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            var hideCard = await _genericAttributeService.GetAttributeAsync<bool>(customer, NopCustomerDefaults.HideConfigurationStepsAttribute);
-            var closeCard = await _genericAttributeService.GetAttributeAsync<bool>(customer, NopCustomerDefaults.CloseConfigurationStepsAttribute);
-
-            if (!hideCard && !closeCard)
-                ViewBag.ShowTour = true;
-        }
 
         return View(model);
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> Providers(ShippingProviderSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareShippingProviderListModelAsync(searchModel);
 
@@ -156,11 +133,9 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> ProviderUpdate(ShippingProviderModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return await AccessDeniedDataTablesJson();
-
         var srcm = await _shippingPluginManager.LoadPluginBySystemNameAsync(model.SystemName);
         if (_shippingPluginManager.IsPluginActive(srcm))
         {
@@ -199,11 +174,9 @@ public partial class ShippingController : BaseAdminController
 
     #region Pickup point providers
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> PickupPointProviders()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _shippingModelFactory.PreparePickupPointProviderSearchModelAsync(new PickupPointProviderSearchModel());
 
@@ -211,11 +184,9 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> PickupPointProviders(PickupPointProviderSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _shippingModelFactory.PreparePickupPointProviderListModelAsync(searchModel);
 
@@ -223,11 +194,9 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> PickupPointProviderUpdate(PickupPointProviderModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return await AccessDeniedDataTablesJson();
-
         var pickupPointProvider = await _pickupPluginManager.LoadPluginBySystemNameAsync(model.SystemName);
         if (_pickupPluginManager.IsPluginActive(pickupPointProvider))
         {
@@ -264,11 +233,9 @@ public partial class ShippingController : BaseAdminController
 
     #region Shipping methods
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> Methods()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareShippingMethodSearchModelAsync(new ShippingMethodSearchModel());
 
@@ -276,22 +243,18 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> Methods(ShippingMethodSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareShippingMethodListModelAsync(searchModel);
 
         return Json(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> CreateMethod()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareShippingMethodModelAsync(new ShippingMethodModel(), null);
 
@@ -299,15 +262,13 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> CreateMethod(ShippingMethodModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             var sm = model.ToEntity<ShippingMethod>();
-            await _shippingService.InsertShippingMethodAsync(sm);
+            await _shippingMethodsService.InsertShippingMethodAsync(sm);
 
             //locales
             await UpdateLocalesAsync(sm, model);
@@ -323,13 +284,11 @@ public partial class ShippingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> EditMethod(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //try to get a shipping method with the specified id
-        var shippingMethod = await _shippingService.GetShippingMethodByIdAsync(id);
+        var shippingMethod = await _shippingMethodsService.GetShippingMethodByIdAsync(id);
         if (shippingMethod == null)
             return RedirectToAction("Methods");
 
@@ -340,20 +299,18 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> EditMethod(ShippingMethodModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //try to get a shipping method with the specified id
-        var shippingMethod = await _shippingService.GetShippingMethodByIdAsync(model.Id);
+        var shippingMethod = await _shippingMethodsService.GetShippingMethodByIdAsync(model.Id);
         if (shippingMethod == null)
             return RedirectToAction("Methods");
 
         if (ModelState.IsValid)
         {
             shippingMethod = model.ToEntity(shippingMethod);
-            await _shippingService.UpdateShippingMethodAsync(shippingMethod);
+            await _shippingMethodsService.UpdateShippingMethodAsync(shippingMethod);
 
             //locales
             await UpdateLocalesAsync(shippingMethod, model);
@@ -371,17 +328,15 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> DeleteMethod(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //try to get a shipping method with the specified id
-        var shippingMethod = await _shippingService.GetShippingMethodByIdAsync(id);
+        var shippingMethod = await _shippingMethodsService.GetShippingMethodByIdAsync(id);
         if (shippingMethod == null)
             return RedirectToAction("Methods");
 
-        await _shippingService.DeleteShippingMethodAsync(shippingMethod);
+        await _shippingMethodsService.DeleteShippingMethodAsync(shippingMethod);
 
         _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Configuration.Shipping.Methods.Deleted"));
 
@@ -392,11 +347,9 @@ public partial class ShippingController : BaseAdminController
 
     #region Dates and ranges
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> DatesAndRanges()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareDatesRangesSearchModelAsync(new DatesRangesSearchModel());
 
@@ -408,22 +361,18 @@ public partial class ShippingController : BaseAdminController
     #region Delivery dates
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> DeliveryDates(DeliveryDateSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareDeliveryDateListModelAsync(searchModel);
 
         return Json(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> CreateDeliveryDate()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareDeliveryDateModelAsync(new DeliveryDateModel(), null);
 
@@ -431,11 +380,9 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> CreateDeliveryDate(DeliveryDateModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             var deliveryDate = model.ToEntity<DeliveryDate>();
@@ -456,11 +403,9 @@ public partial class ShippingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> EditDeliveryDate(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //try to get a delivery date with the specified id
         var deliveryDate = await _dateRangeService.GetDeliveryDateByIdAsync(id);
         if (deliveryDate == null)
@@ -473,11 +418,9 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> EditDeliveryDate(DeliveryDateModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //try to get a delivery date with the specified id
         var deliveryDate = await _dateRangeService.GetDeliveryDateByIdAsync(model.Id);
         if (deliveryDate == null)
@@ -504,11 +447,9 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> DeleteDeliveryDate(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //try to get a delivery date with the specified id
         var deliveryDate = await _dateRangeService.GetDeliveryDateByIdAsync(id);
         if (deliveryDate == null)
@@ -526,22 +467,18 @@ public partial class ShippingController : BaseAdminController
     #region Product availability ranges
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> ProductAvailabilityRanges(ProductAvailabilityRangeSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareProductAvailabilityRangeListModelAsync(searchModel);
 
         return Json(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> CreateProductAvailabilityRange()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareProductAvailabilityRangeModelAsync(new ProductAvailabilityRangeModel(), null);
 
@@ -549,11 +486,9 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> CreateProductAvailabilityRange(ProductAvailabilityRangeModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             var productAvailabilityRange = model.ToEntity<ProductAvailabilityRange>();
@@ -574,11 +509,9 @@ public partial class ShippingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> EditProductAvailabilityRange(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //try to get a product availability range with the specified id
         var productAvailabilityRange = await _dateRangeService.GetProductAvailabilityRangeByIdAsync(id);
         if (productAvailabilityRange == null)
@@ -591,11 +524,9 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> EditProductAvailabilityRange(ProductAvailabilityRangeModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //try to get a product availability range with the specified id
         var productAvailabilityRange = await _dateRangeService.GetProductAvailabilityRangeByIdAsync(model.Id);
         if (productAvailabilityRange == null)
@@ -622,11 +553,9 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> DeleteProductAvailabilityRange(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //try to get a product availability range with the specified id
         var productAvailabilityRange = await _dateRangeService.GetProductAvailabilityRangeByIdAsync(id);
         if (productAvailabilityRange == null)
@@ -643,11 +572,9 @@ public partial class ShippingController : BaseAdminController
 
     #region Warehouses
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> Warehouses()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareWarehouseSearchModelAsync(new WarehouseSearchModel());
 
@@ -655,22 +582,18 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> Warehouses(WarehouseSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareWarehouseListModelAsync(searchModel);
 
         return Json(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> CreateWarehouse()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareWarehouseModelAsync(new WarehouseModel(), null);
 
@@ -678,11 +601,9 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> CreateWarehouse(WarehouseModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             var address = model.Address.ToEntity<Address>();
@@ -693,7 +614,7 @@ public partial class ShippingController : BaseAdminController
             var warehouse = model.ToEntity<Warehouse>();
             warehouse.AddressId = address.Id;
 
-            await _shippingService.InsertWarehouseAsync(warehouse);
+            await _warehouseService.InsertWarehouseAsync(warehouse);
 
             //activity log
             await _customerActivityService.InsertActivityAsync("AddNewWarehouse",
@@ -711,13 +632,11 @@ public partial class ShippingController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> EditWarehouse(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //try to get a warehouse with the specified id
-        var warehouse = await _shippingService.GetWarehouseByIdAsync(id);
+        var warehouse = await _warehouseService.GetWarehouseByIdAsync(id);
         if (warehouse == null)
             return RedirectToAction("Warehouses");
 
@@ -728,13 +647,11 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> EditWarehouse(WarehouseModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //try to get a warehouse with the specified id
-        var warehouse = await _shippingService.GetWarehouseByIdAsync(model.Id);
+        var warehouse = await _warehouseService.GetWarehouseByIdAsync(model.Id);
         if (warehouse == null)
             return RedirectToAction("Warehouses");
 
@@ -756,7 +673,7 @@ public partial class ShippingController : BaseAdminController
 
             warehouse.AddressId = address.Id;
 
-            await _shippingService.UpdateWarehouseAsync(warehouse);
+            await _warehouseService.UpdateWarehouseAsync(warehouse);
 
             //activity log
             await _customerActivityService.InsertActivityAsync("EditWarehouse",
@@ -775,17 +692,15 @@ public partial class ShippingController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> DeleteWarehouse(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //try to get a warehouse with the specified id
-        var warehouse = await _shippingService.GetWarehouseByIdAsync(id);
+        var warehouse = await _warehouseService.GetWarehouseByIdAsync(id);
         if (warehouse == null)
             return RedirectToAction("Warehouses");
 
-        await _shippingService.DeleteWarehouseAsync(warehouse);
+        await _warehouseService.DeleteWarehouseAsync(warehouse);
 
         //activity log
         await _customerActivityService.InsertActivityAsync("DeleteWarehouse",
@@ -800,11 +715,9 @@ public partial class ShippingController : BaseAdminController
 
     #region Restrictions
 
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> Restrictions()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _shippingModelFactory.PrepareShippingMethodRestrictionModelAsync(new ShippingMethodRestrictionModel());
 
@@ -816,13 +729,11 @@ public partial class ShippingController : BaseAdminController
     //we use 2048 value because in some cases default value (1024) is too small for this action
     [RequestFormLimits(ValueCountLimit = 2048)]
     [HttpPost, ActionName("Restrictions")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_SHIPPING_SETTINGS)]
     public virtual async Task<IActionResult> RestrictionSave(ShippingMethodRestrictionModel model, IFormCollection form)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
-            return AccessDeniedView();
-
         var countries = await _countryService.GetAllCountriesAsync(showHidden: true);
-        var shippingMethods = await _shippingService.GetAllShippingMethodsAsync();
+        var shippingMethods = await _shippingMethodsService.GetAllShippingMethodsAsync();
 
         foreach (var shippingMethod in shippingMethods)
         {
@@ -837,23 +748,23 @@ public partial class ShippingController : BaseAdminController
             {
                 var restrict = countryIdsToRestrict.Contains(country.Id);
                 var shippingMethodCountryMappings =
-                    await _shippingService.GetShippingMethodCountryMappingAsync(shippingMethod.Id, country.Id);
+                    await _shippingMethodsService.GetShippingMethodCountryMappingAsync(shippingMethod.Id, country.Id);
 
                 if (restrict)
                 {
                     if (shippingMethodCountryMappings.Any())
                         continue;
 
-                    await _shippingService.InsertShippingMethodCountryMappingAsync(new ShippingMethodCountryMapping { CountryId = country.Id, ShippingMethodId = shippingMethod.Id });
-                    await _shippingService.UpdateShippingMethodAsync(shippingMethod);
+                    await _shippingMethodsService.InsertShippingMethodCountryMappingAsync(new ShippingMethodCountryMapping { CountryId = country.Id, ShippingMethodId = shippingMethod.Id });
+                    await _shippingMethodsService.UpdateShippingMethodAsync(shippingMethod);
                 }
                 else
                 {
                     if (!shippingMethodCountryMappings.Any())
                         continue;
 
-                    await _shippingService.DeleteShippingMethodCountryMappingAsync(shippingMethodCountryMappings.FirstOrDefault());
-                    await _shippingService.UpdateShippingMethodAsync(shippingMethod);
+                    await _shippingMethodsService.DeleteShippingMethodCountryMappingAsync(shippingMethodCountryMappings.FirstOrDefault());
+                    await _shippingMethodsService.UpdateShippingMethodAsync(shippingMethod);
                 }
             }
         }

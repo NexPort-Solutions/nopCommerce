@@ -119,7 +119,7 @@ public class NexportWholesaleController : BaseAdminController
 
     private async Task<bool> CheckWholesaleViewPermission()
     {
-        if (await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+        if (await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_ORDER_INVOICE))
             return true;
 
         var customer = await _workContext.GetCurrentCustomerAsync();
@@ -130,11 +130,9 @@ public class NexportWholesaleController : BaseAdminController
         if (nexportUserMapping == null)
             return false;
 
-        var groupPermissionSearchCacheKey = new CacheKey("Misc.Nexport.SearchGroupForPermission.{0}-{1}",
-            nexportUserMapping.NexportUserId.ToString(), _nexportSettings.RootOrganizationId?.ToString())
-        {
-            CacheTime = 30
-        };
+        var groupPermissionSearchCacheKey = _staticCacheManager.PrepareKey(new CacheKey("Misc.Nexport.SearchGroupForPermission.{0}-{1}"),
+            nexportUserMapping.NexportUserId.ToString(), _nexportSettings.RootOrganizationId?.ToString());
+        groupPermissionSearchCacheKey.CacheTime = 30;
 
         var groupSearchResult = await _staticCacheManager.GetAsync(groupPermissionSearchCacheKey,
             async () => (await _nexportService.SearchGroupsForPermissionAsync(nexportUserMapping.NexportUserId,
@@ -184,8 +182,8 @@ public class NexportWholesaleController : BaseAdminController
     [HttpPost]
     public virtual async Task<IActionResult> WholesaleOrderProductList(WholesaleOrderProductSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_WHOLESALE))
+            return await AccessDeniedJsonAsync();
 
         //prepare model
         var model = await _nexportPluginModelFactory.PrepareWholesaleOrderProductListModelAsync(searchModel);
@@ -196,7 +194,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/Wholesale/WholesaleOrderPaymentInfo")]
     public virtual async Task<IActionResult> WholesaleOrderPaymentInfo(string paymentSystemName)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportWholesale))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_WHOLESALE))
             return AccessDeniedView();
 
         //prepare model
@@ -885,7 +883,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/NexportWholesale/UnassignmentRequests/Edit/{requestId}")]
     public async Task<IActionResult> EditUnassignmentRequest(int requestId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         var returnRequest = await _nexportService.GetNexportRedemptionUnassignmentRequestByIdAsync(requestId);
@@ -905,7 +903,7 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> EditUnassignmentRequest(NexportRedemptionUnassignmentRequestModel model, bool denyUnassignmentRequest)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         var unassignmentRequest = await _nexportService.GetNexportRedemptionUnassignmentRequestByIdAsync(model.Id);
@@ -983,7 +981,7 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> DeleteUnassignmentRequest(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         var unassignmentRequest = await _nexportService.GetNexportRedemptionUnassignmentRequestByIdAsync(id);
@@ -1005,7 +1003,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/NexportWholesale/UnassignmentRequestReasons/List")]
     public async Task<IActionResult> UnassignmentRequestReasonsList()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/NexportWholesale/UnassignmentRequests/_RedemptionUnassignmentRequestReasons.cshtml", new NexportRedemptionUnassignmentRequestReasonSearchModel());
@@ -1017,8 +1015,8 @@ public class NexportWholesaleController : BaseAdminController
     [HttpPost]
     public async Task<IActionResult> UnassignmentRequestReasonsList(NexportRedemptionUnassignmentRequestReasonSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareRedemptionUnassignmentRequestReasonListModelAsync(searchModel);
 
@@ -1029,7 +1027,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/NexportWholesale/UnassignmentRequestReasons/Create")]
     public async Task<IActionResult> UnassignmentRequestReasonCreate()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var model = await _nexportPluginModelFactory.
@@ -1044,7 +1042,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/NexportWholesale/UnassignmentRequestReasons/Create")]
     public async Task<IActionResult> UnassignmentRequestReasonCreate(NexportRedemptionUnassignmentRequestReasonModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         if (ModelState.IsValid)
@@ -1072,7 +1070,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/NexportWholesale/UnassignmentRequestReasons/Edit/{reasonId}")]
     public async Task<IActionResult> UnassignmentRequestReasonEdit(int reasonId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var unassignmentRequestReason =
@@ -1092,7 +1090,7 @@ public class NexportWholesaleController : BaseAdminController
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     public async Task<IActionResult> UnassignmentRequestReasonEdit(NexportRedemptionUnassignmentRequestReasonModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var unassignmentRequestReason =
@@ -1128,7 +1126,7 @@ public class NexportWholesaleController : BaseAdminController
     [HttpPost]
     public async Task<IActionResult> DeleteUnassignmentRequestReason(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_SETTINGS))
             return AccessDeniedView();
 
         var unassignmentRequestReason =
@@ -1192,7 +1190,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/NexportWholesale/AssignmentApprovalRequests/Edit/{requestId}")]
     public async Task<IActionResult> EditAssignmentApprovalRequest(int requestId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         var approvalRequest = await _nexportService.GetNexportRedemptionAssignmentApprovalRequestByIdAsync(requestId);
@@ -1211,7 +1209,7 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> EditAssignmentApprovalRequest(NexportRedemptionAssignmentApprovalRequestModel model, bool denyUnassignmentRequest)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         var approvalRequest = await _nexportService.GetNexportRedemptionAssignmentApprovalRequestByIdAsync(model.Id);
@@ -1279,7 +1277,7 @@ public class NexportWholesaleController : BaseAdminController
     [AutoValidateAntiforgeryToken]
     public async Task<IActionResult> DeleteAssignmentApprovalRequest(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS))
             return AccessDeniedView();
 
         var approvalRequest = await _nexportService.GetNexportRedemptionAssignmentApprovalRequestByIdAsync(id);
@@ -1329,7 +1327,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/Wholesale/FundingPool/List")]
     public async Task<IActionResult> ListFundingPools()
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_FUNDING_POOLS))
             return AccessDeniedView();
 
         var model = await _nexportPluginModelFactory.PrepareNexportFundingPoolSearchModelAsync(new NexportFundingPoolSearchModel());
@@ -1344,8 +1342,8 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/Wholesale/FundingPool/List")]
     public async Task<IActionResult> ListFundingPools(NexportFundingPoolSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools))
-            return await AccessDeniedDataTablesJson();
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_FUNDING_POOLS))
+            return await AccessDeniedJsonAsync();
 
         var model = await _nexportPluginModelFactory.PrepareNexportFundingPoolListModelAsync(searchModel);
 
@@ -1357,7 +1355,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/Wholesale/FundingPool/Create")]
     public async Task<IActionResult> CreateFundingPool()
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_FUNDING_POOLS))
             return AccessDeniedView();
 
         var model = await _nexportPluginModelFactory.PrepareNexportFundingPoolModelAsync(new NexportFundingPoolModel(), null);
@@ -1373,7 +1371,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/Wholesale/FundingPool/Create")]
     public async Task<IActionResult> CreateFundingPool(NexportFundingPoolModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_FUNDING_POOLS))
             return AccessDeniedView();
 
         if (ModelState.IsValid)
@@ -1399,7 +1397,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/Wholesale/FundingPool/Edit/{id}")]
     public async Task<IActionResult> EditFundingPool(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_FUNDING_POOLS))
             return AccessDeniedView();
 
         var fundingPool = await _nexportWholesaleService.GetFundingPoolById(id);
@@ -1418,7 +1416,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/Wholesale/FundingPool/Edit/{id}")]
     public virtual async Task<IActionResult> EditFundingPool(NexportFundingPoolModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_FUNDING_POOLS))
             return AccessDeniedView();
 
         var fundingPool = await _nexportWholesaleService.GetFundingPoolById(model.Id);
@@ -1450,7 +1448,7 @@ public class NexportWholesaleController : BaseAdminController
     [Route("Admin/Wholesale/FundingPool/Delete/{id}")]
     public virtual async Task<IActionResult> DeleteFundingPool(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_FUNDING_POOLS))
             return AccessDeniedView();
 
         var fundingPool = await _nexportWholesaleService.GetFundingPoolById(id);
@@ -1470,7 +1468,7 @@ public class NexportWholesaleController : BaseAdminController
     [HttpPost]
     public virtual async Task<IActionResult> DeleteSelectedFundingPools(ICollection<int> selectedIds)
     {
-        if (!await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportFundingPools))
+        if (!await _permissionService.AuthorizeAsync(NexportPermissionConfigManager.MANAGE_NEXPORT_FUNDING_POOLS))
             return AccessDeniedView();
 
         if (selectedIds == null || selectedIds.Count == 0)

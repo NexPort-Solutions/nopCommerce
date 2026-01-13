@@ -498,7 +498,7 @@ public class NexportNexportWholesaleService : INexportWholesaleService
             ShippingStatus = details.ShippingStatus,
             ShippingMethod = details.ShippingMethodName,
             ShippingRateComputationMethodSystemName = details.ShippingRateComputationMethodSystemName,
-            CustomValuesXml = _paymentService.SerializeCustomValues(processPaymentRequest),
+            CustomValuesXml = processPaymentRequest.CustomValues.SerializeToXml(),
             VatNumber = details.VatNumber,
             CreatedOnUtc = DateTime.UtcNow,
             CustomOrderNumber = string.Empty

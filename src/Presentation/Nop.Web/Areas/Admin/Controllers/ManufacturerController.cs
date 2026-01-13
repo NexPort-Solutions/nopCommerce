@@ -4,7 +4,6 @@ using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Discounts;
 using Nop.Services.Catalog;
-using Nop.Services.Customers;
 using Nop.Services.Discounts;
 using Nop.Services.ExportImport;
 using Nop.Services.Localization;
@@ -18,6 +17,8 @@ using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Controllers;
+using Nop.Web.Framework.Factories;
+using Nop.Web.Framework.Models.Translation;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
@@ -27,9 +28,7 @@ public partial class ManufacturerController : BaseAdminController
 {
     #region Fields
 
-    protected readonly IAclService _aclService;
     protected readonly ICustomerActivityService _customerActivityService;
-    protected readonly ICustomerService _customerService;
     protected readonly IDiscountService _discountService;
     protected readonly IExportManager _exportManager;
     protected readonly IImportManager _importManager;
@@ -38,11 +37,10 @@ public partial class ManufacturerController : BaseAdminController
     protected readonly IManufacturerModelFactory _manufacturerModelFactory;
     protected readonly IManufacturerService _manufacturerService;
     protected readonly INotificationService _notificationService;
-    protected readonly IPermissionService _permissionService;
     protected readonly IPictureService _pictureService;
     protected readonly IProductService _productService;
     protected readonly IStoreMappingService _storeMappingService;
-    protected readonly IStoreService _storeService;
+    protected readonly ITranslationModelFactory _translationModelFactory;
     protected readonly IUrlRecordService _urlRecordService;
     protected readonly IWorkContext _workContext;
 
@@ -50,9 +48,7 @@ public partial class ManufacturerController : BaseAdminController
 
     #region Ctor
 
-    public ManufacturerController(IAclService aclService,
-        ICustomerActivityService customerActivityService,
-        ICustomerService customerService,
+    public ManufacturerController(ICustomerActivityService customerActivityService,
         IDiscountService discountService,
         IExportManager exportManager,
         IImportManager importManager,
@@ -61,17 +57,14 @@ public partial class ManufacturerController : BaseAdminController
         IManufacturerModelFactory manufacturerModelFactory,
         IManufacturerService manufacturerService,
         INotificationService notificationService,
-        IPermissionService permissionService,
         IPictureService pictureService,
         IProductService productService,
         IStoreMappingService storeMappingService,
-        IStoreService storeService,
+        ITranslationModelFactory translationModelFactory,
         IUrlRecordService urlRecordService,
         IWorkContext workContext)
     {
-        _aclService = aclService;
         _customerActivityService = customerActivityService;
-        _customerService = customerService;
         _discountService = discountService;
         _exportManager = exportManager;
         _importManager = importManager;
@@ -80,11 +73,10 @@ public partial class ManufacturerController : BaseAdminController
         _manufacturerModelFactory = manufacturerModelFactory;
         _manufacturerService = manufacturerService;
         _notificationService = notificationService;
-        _permissionService = permissionService;
         _pictureService = pictureService;
         _productService = productService;
         _storeMappingService = storeMappingService;
-        _storeService = storeService;
+        _translationModelFactory = translationModelFactory;
         _urlRecordService = urlRecordService;
         _workContext = workContext;
     }
@@ -135,56 +127,6 @@ public partial class ManufacturerController : BaseAdminController
             await _pictureService.SetSeoFilenameAsync(picture.Id, await _pictureService.GetPictureSeNameAsync(manufacturer.Name));
     }
 
-    protected virtual async Task SaveManufacturerAclAsync(Manufacturer manufacturer, ManufacturerModel model)
-    {
-        manufacturer.SubjectToAcl = model.SelectedCustomerRoleIds.Any();
-        await _manufacturerService.UpdateManufacturerAsync(manufacturer);
-
-        var existingAclRecords = await _aclService.GetAclRecordsAsync(manufacturer);
-        var allCustomerRoles = await _customerService.GetAllCustomerRolesAsync(true);
-        foreach (var customerRole in allCustomerRoles)
-        {
-            if (model.SelectedCustomerRoleIds.Contains(customerRole.Id))
-            {
-                //new role
-                if (!existingAclRecords.Any(acl => acl.CustomerRoleId == customerRole.Id))
-                    await _aclService.InsertAclRecordAsync(manufacturer, customerRole.Id);
-            }
-            else
-            {
-                //remove role
-                var aclRecordToDelete = existingAclRecords.FirstOrDefault(acl => acl.CustomerRoleId == customerRole.Id);
-                if (aclRecordToDelete != null)
-                    await _aclService.DeleteAclRecordAsync(aclRecordToDelete);
-            }
-        }
-    }
-
-    protected virtual async Task SaveStoreMappingsAsync(Manufacturer manufacturer, ManufacturerModel model)
-    {
-        manufacturer.LimitedToStores = model.SelectedStoreIds.Any();
-        await _manufacturerService.UpdateManufacturerAsync(manufacturer);
-
-        var existingStoreMappings = await _storeMappingService.GetStoreMappingsAsync(manufacturer);
-        var allStores = await _storeService.GetAllStoresAsync();
-        foreach (var store in allStores)
-        {
-            if (model.SelectedStoreIds.Contains(store.Id))
-            {
-                //new store
-                if (!existingStoreMappings.Any(sm => sm.StoreId == store.Id))
-                    await _storeMappingService.InsertStoreMappingAsync(manufacturer, store.Id);
-            }
-            else
-            {
-                //remove store
-                var storeMappingToDelete = existingStoreMappings.FirstOrDefault(sm => sm.StoreId == store.Id);
-                if (storeMappingToDelete != null)
-                    await _storeMappingService.DeleteStoreMappingAsync(storeMappingToDelete);
-            }
-        }
-    }
-
     #endregion
 
     #region List
@@ -194,11 +136,9 @@ public partial class ManufacturerController : BaseAdminController
         return RedirectToAction("List");
     }
 
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_VIEW)]
     public virtual async Task<IActionResult> List()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _manufacturerModelFactory.PrepareManufacturerSearchModelAsync(new ManufacturerSearchModel());
 
@@ -206,11 +146,9 @@ public partial class ManufacturerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_VIEW)]
     public virtual async Task<IActionResult> List(ManufacturerSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _manufacturerModelFactory.PrepareManufacturerListModelAsync(searchModel);
 
@@ -221,11 +159,9 @@ public partial class ManufacturerController : BaseAdminController
 
     #region Create / Edit / Delete
 
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Create()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _manufacturerModelFactory.PrepareManufacturerModelAsync(new ManufacturerModel(), null);
 
@@ -233,11 +169,9 @@ public partial class ManufacturerController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Create(ManufacturerModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return AccessDeniedView();
-
         if (ModelState.IsValid)
         {
             var manufacturer = model.ToEntity<Manufacturer>();
@@ -267,11 +201,8 @@ public partial class ManufacturerController : BaseAdminController
             //update picture seo file name
             await UpdatePictureSeoNamesAsync(manufacturer);
 
-            //ACL (customer roles)
-            await SaveManufacturerAclAsync(manufacturer, model);
-
             //stores
-            await SaveStoreMappingsAsync(manufacturer, model);
+            await _storeMappingService.SaveStoreMappingsAsync(manufacturer, model.SelectedStoreIds);
 
             //activity log
             await _customerActivityService.InsertActivityAsync("AddNewManufacturer",
@@ -292,11 +223,9 @@ public partial class ManufacturerController : BaseAdminController
         return View(model);
     }
 
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_VIEW)]
     public virtual async Task<IActionResult> Edit(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return AccessDeniedView();
-
         //try to get a manufacturer with the specified id
         var manufacturer = await _manufacturerService.GetManufacturerByIdAsync(id);
         if (manufacturer == null || manufacturer.Deleted)
@@ -309,11 +238,9 @@ public partial class ManufacturerController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Edit(ManufacturerModel model, bool continueEditing)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return AccessDeniedView();
-
         //try to get a manufacturer with the specified id
         var manufacturer = await _manufacturerService.GetManufacturerByIdAsync(model.Id);
         if (manufacturer == null || manufacturer.Deleted)
@@ -364,11 +291,8 @@ public partial class ManufacturerController : BaseAdminController
             //update picture seo file name
             await UpdatePictureSeoNamesAsync(manufacturer);
 
-            //ACL
-            await SaveManufacturerAclAsync(manufacturer, model);
-
             //stores
-            await SaveStoreMappingsAsync(manufacturer, model);
+            await _storeMappingService.SaveStoreMappingsAsync(manufacturer, model.SelectedStoreIds);
 
             //activity log
             await _customerActivityService.InsertActivityAsync("EditManufacturer",
@@ -390,11 +314,30 @@ public partial class ManufacturerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_CREATE_EDIT_DELETE)]
+    public virtual async Task<IActionResult> PreTranslate(int itemId)
+    {
+        var translationModel = new TranslationModel();
+
+        //try to get a manufacturer with the specified id
+        var manufacturer = await _manufacturerService.GetManufacturerByIdAsync(itemId);
+        if (manufacturer == null || manufacturer.Deleted)
+            return Json(translationModel);
+
+        //prepare model
+        var model = await _manufacturerModelFactory.PrepareManufacturerModelAsync(null, manufacturer);
+
+        translationModel = await _translationModelFactory.PrepareTranslationModelAsync(model,
+            (nameof(ManufacturerLocalizedModel.Name), false),
+            (nameof(ManufacturerLocalizedModel.Description), true));
+
+        return Json(translationModel);
+    }
+
+    [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> Delete(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return AccessDeniedView();
-
         //try to get a manufacturer with the specified id
         var manufacturer = await _manufacturerService.GetManufacturerByIdAsync(id);
         if (manufacturer == null)
@@ -412,23 +355,18 @@ public partial class ManufacturerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> DeleteSelected(ICollection<int> selectedIds)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return await AccessDeniedDataTablesJson();
-
         if (selectedIds == null || !selectedIds.Any())
             return NoContent();
 
         var manufacturers = await _manufacturerService.GetManufacturersByIdsAsync(selectedIds.ToArray());
         await _manufacturerService.DeleteManufacturersAsync(manufacturers);
 
-        var locale = await _localizationService.GetResourceAsync("ActivityLog.DeleteManufacturer");
-        foreach (var manufacturer in manufacturers)
-        {
-            //activity log
-            await _customerActivityService.InsertActivityAsync("DeleteManufacturer", string.Format(locale, manufacturer.Name), manufacturer);
-        }
+        //activity log
+        var activityLogFormat = await _localizationService.GetResourceAsync("ActivityLog.DeleteManufacturer");
+        await _customerActivityService.InsertActivitiesAsync("DeleteManufacturer", manufacturers, manufacturer => string.Format(activityLogFormat, manufacturer.Name));
 
         return Json(new { Result = true });
     }
@@ -437,11 +375,9 @@ public partial class ManufacturerController : BaseAdminController
 
     #region Export / Import
 
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_IMPORT_EXPORT)]
     public virtual async Task<IActionResult> ExportXml()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return AccessDeniedView();
-
         try
         {
             var manufacturers = await _manufacturerService.GetAllManufacturersAsync(showHidden: true);
@@ -455,14 +391,12 @@ public partial class ManufacturerController : BaseAdminController
         }
     }
 
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_IMPORT_EXPORT)]
     public virtual async Task<IActionResult> ExportXlsx()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return AccessDeniedView();
-
         try
         {
-            var bytes = await _exportManager.ExportManufacturersToXlsxAsync((await _manufacturerService.GetAllManufacturersAsync(showHidden: true)).Where(p => !p.Deleted));
+            var bytes = await _exportManager.ExportManufacturersToXlsxAsync((await _manufacturerService.GetAllManufacturersAsync(showHidden: true)).Where(p => !p.Deleted).ToList());
 
             return File(bytes, MimeTypes.TextXlsx, "manufacturers.xlsx");
         }
@@ -474,11 +408,9 @@ public partial class ManufacturerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_IMPORT_EXPORT)]
     public virtual async Task<IActionResult> ImportFromXlsx(IFormFile importexcelfile)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return AccessDeniedView();
-
         //a vendor cannot import manufacturers
         if (await _workContext.GetCurrentVendorAsync() != null)
             return AccessDeniedView();
@@ -510,11 +442,9 @@ public partial class ManufacturerController : BaseAdminController
     #region Products
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_VIEW)]
     public virtual async Task<IActionResult> ProductList(ManufacturerProductSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a manufacturer with the specified id
         var manufacturer = await _manufacturerService.GetManufacturerByIdAsync(searchModel.ManufacturerId)
             ?? throw new ArgumentException("No manufacturer found with the specified id");
@@ -526,11 +456,9 @@ public partial class ManufacturerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> ProductUpdate(ManufacturerProductModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return await AccessDeniedDataTablesJson();
-
         //try to get a product manufacturer with the specified id
         var productManufacturer = await _manufacturerService.GetProductManufacturerByIdAsync(model.Id)
             ?? throw new ArgumentException("No product manufacturer mapping found with the specified id");
@@ -543,10 +471,9 @@ public partial class ManufacturerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> ProductDelete(int id)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return await AccessDeniedDataTablesJson();
 
         //try to get a product manufacturer with the specified id
         var productManufacturer = await _manufacturerService.GetProductManufacturerByIdAsync(id)
@@ -557,11 +484,9 @@ public partial class ManufacturerController : BaseAdminController
         return new NullJsonResult();
     }
 
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> ProductAddPopup(int manufacturerId)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return AccessDeniedView();
-
         //prepare model
         var model = await _manufacturerModelFactory.PrepareAddProductToManufacturerSearchModelAsync(new AddProductToManufacturerSearchModel());
 
@@ -569,11 +494,9 @@ public partial class ManufacturerController : BaseAdminController
     }
 
     [HttpPost]
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> ProductAddPopupList(AddProductToManufacturerSearchModel searchModel)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return await AccessDeniedDataTablesJson();
-
         //prepare model
         var model = await _manufacturerModelFactory.PrepareAddProductToManufacturerListModelAsync(searchModel);
 
@@ -582,11 +505,9 @@ public partial class ManufacturerController : BaseAdminController
 
     [HttpPost]
     [FormValueRequired("save")]
+    [CheckPermission(StandardPermission.Catalog.MANUFACTURER_CREATE_EDIT_DELETE)]
     public virtual async Task<IActionResult> ProductAddPopup(AddProductToManufacturerModel model)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageManufacturers))
-            return AccessDeniedView();
-
         //get selected products
         var selectedProducts = await _productService.GetProductsByIdsAsync(model.SelectedProductIds.ToArray());
         if (selectedProducts.Any())
