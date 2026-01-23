@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
 using Nop.Data;
 using Nop.Services.Customers;
+using Nop.Services.Helpers;
 
 namespace Nop.Web.Framework.Mvc.Filters;
 
