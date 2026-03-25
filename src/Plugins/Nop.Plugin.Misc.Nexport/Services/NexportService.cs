@@ -3342,6 +3342,48 @@ public partial class NexportService
         }
     }
 
+    public async Task<bool> CanAccessWholesalePurchasesAsync(Customer customer, Store store,
+        string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION)
+    {
+        if (customer == null)
+            throw new ArgumentNullException(nameof(customer));
+
+        if (store == null)
+            throw new ArgumentNullException(nameof(store));
+
+        if (await HasWholesaleOrderInfo(null, store, customer))
+            return true;
+
+        var userMapping = await FindUserMappingByCustomerId(customer.Id);
+        if (userMapping == null)
+            return false;
+
+        if (!_nexportSettings.RootOrganizationId.HasValue)
+            return false;
+
+        var cacheKey = new CacheKey("Misc.Nexport.CanAccessWholesalePurchases.{0}-{1}-{2}",
+            userMapping.NexportUserId.ToString(),
+            _nexportSettings.RootOrganizationId.Value.ToString(),
+            permission)
+        {
+            CacheTime = 30
+        };
+
+        return await _cacheManager.GetAsync(cacheKey, async () =>
+        {
+            var result = _nexportApiService.SearchGroupsForPermission(
+                _nexportSettings.Url,
+                _nexportSettings.AuthenticationToken,
+                userMapping.NexportUserId,
+                _nexportSettings.RootOrganizationId.Value,
+                permission,
+                page: 1,
+                perPage: 1);
+
+            return result.TotalRecord > 0 || result.SearchGroupsForPermissionList?.Any() == true;
+        });
+    }
+
     public async Task<IList<DirectoryResponseItem>> SearchGroupsForPermissionAsync(Guid userId, Guid groupId, string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION)
     {
         if (userId == Guid.Empty)
@@ -3368,7 +3410,7 @@ public partial class NexportService
 
                 remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
                 page++;
-            } while (remainderItemsCount > -1);
+            } while (remainderItemsCount > 0);
         }
         catch (Exception ex)
         {

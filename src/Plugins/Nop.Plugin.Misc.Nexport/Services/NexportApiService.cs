@@ -1286,7 +1286,7 @@ public class NexportApiService(Configuration apiConfiguration)
 
     public NexportSearchGroupsForPermissionResponse SearchGroupsForPermission([NotNull] string url, [NotNull] string accessToken,
         Guid userId, Guid groupId,
-        string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION, int? page = null)
+        string permission = NexportDefaults.NEXPORT_PURCHASING_AGENT_PERMISSION, int? page = null, int perPage = 30)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
@@ -1303,7 +1303,7 @@ public class NexportApiService(Configuration apiConfiguration)
         };
 
         var response = nexportApi.AdminApiSearchGroupsForPermissionWithHttpInfo(accessToken,
-            new SearchGroupsForPermissionRequest(userId: userId, orgId: groupId, permission: permission, page: page, perPage: 30));
+            new SearchGroupsForPermissionRequest(userId: userId, orgId: groupId, permission: permission, page: page, perPage: perPage));
 
         var result = new NexportSearchGroupsForPermissionResponse
         {
