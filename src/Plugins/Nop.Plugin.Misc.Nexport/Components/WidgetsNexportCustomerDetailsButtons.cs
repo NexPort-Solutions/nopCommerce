@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Logging;
 using Nop.Web.Areas.Admin.Models.Customers;
@@ -26,10 +24,7 @@ public class WidgetsNexportCustomerDetailsButtons : NopViewComponent
     {
         var customerModel = (CustomerModel)additionalData;
 
-        if (customerModel == null)
-            return Content("");
-
-        if (customerModel.Id == 0)
+        if (customerModel == null || customerModel.Id == 0)
             return Content("");
 
         try
@@ -37,7 +32,7 @@ public class WidgetsNexportCustomerDetailsButtons : NopViewComponent
             var mapping = await _nexportService.FindUserMappingByCustomerId(customerModel.Id);
             if (mapping != null)
             {
-                return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportCustomerDetailsButtons.cshtml", customerModel);
+                return await ViewAsync("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportCustomerDetailsButtons.cshtml", customerModel);
             }
 
             return Content("");

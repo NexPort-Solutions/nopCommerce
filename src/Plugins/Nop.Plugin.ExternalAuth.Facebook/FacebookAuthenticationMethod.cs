@@ -1,4 +1,5 @@
-﻿using Nop.Plugin.ExternalAuth.Facebook.Components;
+﻿using Nop.Core;
+using Nop.Plugin.ExternalAuth.Facebook.Components;
 using Nop.Services.Authentication.External;
 using Nop.Services.Configuration;
 using Nop.Services.Helpers;

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Caching;
 using Nop.Plugin.Misc.Nexport.Models.Stores;
 using Nop.Services.Common;
@@ -67,6 +65,6 @@ public class WidgetsNexportStoreDetails : NopViewComponent
         model.OverrideNexportOwnerOrgId = await _genericAttributeService.GetAttributeAsync<bool>(store,
             NexportDefaults.OVERRIDE_OWNER_ORG_ID_SETTING_KEY, store.Id);
 
-        return View("~/Plugins/Misc.Nexport/Views/Widget/Store/NexportStoreDetails.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport/Views/Widget/Store/NexportStoreDetails.cshtml", model);
     }
 }

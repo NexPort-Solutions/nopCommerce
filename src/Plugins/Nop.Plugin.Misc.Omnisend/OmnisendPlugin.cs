@@ -1,4 +1,7 @@
-﻿using Nop.Core.Domain.Cms;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Nop.Core.Domain.Cms;
 using Nop.Core.Domain.Media;
 using Nop.Plugin.Misc.Omnisend.Components;
 using Nop.Services.Cms;
@@ -7,7 +10,6 @@ using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Plugins;
 using Nop.Web.Framework.Infrastructure;
-using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.Misc.Omnisend;
 
@@ -18,26 +20,26 @@ public class OmnisendPlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 {
     #region Fields
 
-    private readonly IReadOnlyList<string> _widgetZones;
+    private readonly IActionContextAccessor _actionContextAccessor;
     private readonly ILocalizationService _localizationService;
-    private readonly INopUrlHelper _nopUrlHelper;
     private readonly ISettingService _settingService;
+    private readonly IUrlHelperFactory _urlHelperFactory;
     private readonly WidgetSettings _widgetSettings;
 
     #endregion
 
     #region Ctor
 
-    public OmnisendPlugin(ILocalizationService localizationService,
-        INopUrlHelper nopUrlHelper,
+    public OmnisendPlugin(IActionContextAccessor actionContextAccessor,
+        ILocalizationService localizationService,
         ISettingService settingService,
+        IUrlHelperFactory urlHelperFactory,
         WidgetSettings widgetSettings)
     {
-        _widgetZones = new List<string> { PublicWidgetZones.BodyStartHtmlTagAfter, PublicWidgetZones.ProductDetailsBottom };
-
+        _actionContextAccessor = actionContextAccessor;
         _localizationService = localizationService;
-        _nopUrlHelper = nopUrlHelper;
         _settingService = settingService;
+        _urlHelperFactory = urlHelperFactory;
         _widgetSettings = widgetSettings;
     }
 
@@ -50,7 +52,11 @@ public class OmnisendPlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
     /// </summary>
     public override string GetConfigurationPageUrl()
     {
-        return _nopUrlHelper.RouteUrl(OmnisendDefaults.ConfigurationRouteName);
+        if (_actionContextAccessor.ActionContext != null)
+            return _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext)
+                .RouteUrl(OmnisendDefaults.ConfigurationRouteName);
+
+        return base.GetConfigurationPageUrl();
     }
 
     /// <summary>
@@ -63,7 +69,9 @@ public class OmnisendPlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         if (widgetZone is null)
             throw new ArgumentNullException(nameof(widgetZone));
 
-        return _widgetZones.Any(widgetZone.Equals) ? typeof(WidgetsOmnisendViewComponent) : null;
+        var zones = GetWidgetZonesAsync().Result;
+
+        return zones.Any(widgetZone.Equals) ? typeof(WidgetsOmnisendViewComponent) : null;
     }
 
     /// <summary>
@@ -75,7 +83,7 @@ public class OmnisendPlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
     /// </returns>
     public Task<IList<string>> GetWidgetZonesAsync()
     {
-        return Task.FromResult<IList<string>>(new List<string>(_widgetZones));
+        return Task.FromResult<IList<string>>(new List<string> { PublicWidgetZones.BodyStartHtmlTagAfter, PublicWidgetZones.ProductDetailsBottom });
     }
 
     /// <summary>

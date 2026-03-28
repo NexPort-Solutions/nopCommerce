@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using Nop.Services.Helpers;
+using System.Text.RegularExpressions;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
@@ -10,7 +11,6 @@ using Nop.Core.Events;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
-using Nop.Services.Helpers;
 using Nop.Services.Logging;
 using Nop.Services.Tax.Events;
 

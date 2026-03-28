@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Category;
 using Nop.Plugin.Misc.Nexport.Services.Security;
 using Nop.Services.Security;
@@ -32,6 +31,6 @@ public class WidgetsNexportCategoryProductMappings : NopViewComponent
 
         var model = new NexportCategoryProductMappingListSearchModel { NopCategoryId = categoryModel.Id };
 
-        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Category/NexportCategoryProductMappings.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Category/NexportCategoryProductMappings.cshtml", model);
     }
 }

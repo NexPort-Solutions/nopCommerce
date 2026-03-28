@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Nop.Services.Helpers;
+using System.Net;
 using System.Text;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
@@ -7,7 +8,6 @@ using Nop.Core.Domain.Orders;
 using Nop.Services.Attributes;
 using Nop.Services.Catalog;
 using Nop.Services.Directory;
-using Nop.Services.Helpers;
 using Nop.Services.Html;
 using Nop.Services.Localization;
 using Nop.Services.Media;

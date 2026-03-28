@@ -3,6 +3,7 @@ using Nop.Core.Infrastructure;
 using Nop.Plugin.Widgets.NivoSlider.Components;
 using Nop.Services.Cms;
 using Nop.Services.Configuration;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Media;
 using Nop.Services.Plugins;

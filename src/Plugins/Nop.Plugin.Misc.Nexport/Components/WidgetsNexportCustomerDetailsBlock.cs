@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using NexportApi.Client;
 using Nop.Core.Domain.Customers;
 using Nop.Services.Logging;
@@ -42,7 +40,7 @@ public class WidgetsNexportCustomerDetailsBlock : NopViewComponent
             var model =
                 await _nexportPluginModelFactory.PrepareAddNexportAdditionalInfoModel(customerModel.ToEntity<Customer>());
 
-            return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/AddNexportCustomerAdditionalInfo.cshtml", model);
+            return await ViewAsync("~/Plugins/Misc.Nexport/Views/Widget/Customer/AddNexportCustomerAdditionalInfo.cshtml", model);
         }
 
         try
@@ -89,7 +87,7 @@ public class WidgetsNexportCustomerDetailsBlock : NopViewComponent
 
             model.Editable = true;
 
-            return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportCustomerDetails.cshtml", model);
+            return await ViewAsync("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportCustomerDetails.cshtml", model);
         }
         catch (Exception ex)
         {

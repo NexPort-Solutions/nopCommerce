@@ -1,4 +1,5 @@
-﻿using System.Text.Encodings.Web;
+﻿using Nop.Services.Helpers;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -6,10 +7,10 @@ using Microsoft.AspNetCore.Mvc.ViewComponents;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Mvc.ViewFeatures.Buffers;
 using Microsoft.Extensions.Primitives;
+using Nop.Core;
 using Nop.Core.Events;
 using Nop.Core.Http.Extensions;
 using Nop.Core.Infrastructure;
-using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Web.Framework.Events;
 using Nop.Web.Framework.Models;

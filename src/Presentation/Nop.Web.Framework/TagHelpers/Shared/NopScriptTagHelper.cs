@@ -1,4 +1,5 @@
-﻿using System.Text.Encodings.Web;
+﻿using Nop.Services.Helpers;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Http;
@@ -10,7 +11,6 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.Extensions.Hosting;
 using Nop.Core;
 using Nop.Core.Configuration;
-using Nop.Services.Helpers;
 using Nop.Web.Framework.Extensions;
 using Nop.Web.Framework.UI;
 using Nop.Web.Framework.WebOptimizer;

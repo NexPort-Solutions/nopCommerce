@@ -1,13 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Caching;
-using Nop.Services.Configuration;
-using Nop.Web.Areas.Admin.Factories;
+using Nop.Services.Helpers;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Widget;
 using Nop.Services.Common;
-using Nop.Services.Helpers;
 using Nop.Services.Orders;
 using Nop.Web.Framework.Components;
 using Nop.Web.Models.Catalog;
@@ -73,6 +71,6 @@ public class WidgetsNexportProductDetailsAfterBreadcrumb : NopViewComponent
             LastPurchaseDate = lastPurchaseOrder != null ? await _dateTimeHelper.ConvertToUserTimeAsync(lastPurchaseOrder.CreatedOnUtc, DateTimeKind.Utc) : null
         };
 
-        return View("~/Plugins/Misc.Nexport/Views/Widget/Product/WidgetsNexportProductDetailsAfterBreadcrumb.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport/Views/Widget/Product/WidgetsNexportProductDetailsAfterBreadcrumb.cshtml", model);
     }
 }

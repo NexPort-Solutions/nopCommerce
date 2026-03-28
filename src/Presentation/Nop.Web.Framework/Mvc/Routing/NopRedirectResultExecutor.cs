@@ -1,11 +1,11 @@
-﻿using System.Net;
+﻿using Nop.Services.Helpers;
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Logging;
+using Nop.Core;
 using Nop.Core.Domain.Security;
-using Nop.Core.Http;
-using Nop.Services.Helpers;
 
 namespace Nop.Web.Framework.Mvc.Routing;
 
@@ -16,6 +16,7 @@ public partial class NopRedirectResultExecutor : RedirectResultExecutor
 {
     #region Fields
 
+    protected readonly IActionContextAccessor _actionContextAccessor;
     protected readonly IUrlHelperFactory _urlHelperFactory;
     protected readonly SecuritySettings _securitySettings;
     protected readonly IWebHelper _webHelper;
@@ -24,11 +25,13 @@ public partial class NopRedirectResultExecutor : RedirectResultExecutor
 
     #region Ctor
 
-    public NopRedirectResultExecutor(ILoggerFactory loggerFactory,
+    public NopRedirectResultExecutor(IActionContextAccessor actionContextAccessor,
+        ILoggerFactory loggerFactory,
         IUrlHelperFactory urlHelperFactory,
         SecuritySettings securitySettings,
         IWebHelper webHelper) : base(loggerFactory, urlHelperFactory)
     {
+        _actionContextAccessor = actionContextAccessor;
         _urlHelperFactory = urlHelperFactory;
         _securitySettings = securitySettings;
         _webHelper = webHelper;
@@ -44,7 +47,7 @@ public partial class NopRedirectResultExecutor : RedirectResultExecutor
     /// <param name="context">Action context</param>
     /// <param name="result">Redirect result</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public override async Task ExecuteAsync(ActionContext context, RedirectResult result)
+    public override Task ExecuteAsync(ActionContext context, RedirectResult result)
     {
         ArgumentNullException.ThrowIfNull(result);
 
@@ -53,7 +56,7 @@ public partial class NopRedirectResultExecutor : RedirectResultExecutor
             //passed redirect URL may contain non-ASCII characters, that are not allowed now (see https://github.com/aspnet/KestrelHttpServer/issues/1144)
             //so we force to encode this URL before processing
             var url = WebUtility.UrlDecode(result.Url);
-            var urlHelper = result.UrlHelper ?? _urlHelperFactory.GetUrlHelper(context);
+            var urlHelper = result.UrlHelper ?? _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
             var isLocalUrl = urlHelper.IsLocalUrl(url);
 
             var uriStr = url;
@@ -68,10 +71,10 @@ public partial class NopRedirectResultExecutor : RedirectResultExecutor
             if ((uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) && urlHelper.IsLocalUrl(uri.AbsolutePath))
                 result.Url = isLocalUrl ? uri.PathAndQuery : $"{uri.GetLeftPart(UriPartial.Query)}{uri.Fragment}";
             else
-                result.Url = urlHelper.RouteUrl(NopRouteNames.General.HOMEPAGE);
+                result.Url = urlHelper.RouteUrl("Homepage");
         }
 
-        await base.ExecuteAsync(context, result);
+        return base.ExecuteAsync(context, result);
     }
 
     #endregion

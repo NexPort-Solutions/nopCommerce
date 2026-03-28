@@ -56,7 +56,10 @@ public class ShoppingCartActionFilter : ActionFilterAttribute
     public override async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
     {
         if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
+        {
+            await next();
             return;
+        }
 
         if (actionDescriptor.ControllerTypeInfo == typeof(ShoppingCartController) &&
             actionDescriptor.ActionName == nameof(ShoppingCartController.Cart))
@@ -86,7 +89,10 @@ public class ShoppingCartActionFilter : ActionFilterAttribute
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
+        {
+            await next();
             return;
+        }
 
         if (actionDescriptor.ControllerTypeInfo == typeof(ShoppingCartController) &&
             (actionDescriptor.ActionName is nameof(ShoppingCartController.AddProductToCart_Details) or nameof(ShoppingCartController.AddProductToCart_Catalog) ||

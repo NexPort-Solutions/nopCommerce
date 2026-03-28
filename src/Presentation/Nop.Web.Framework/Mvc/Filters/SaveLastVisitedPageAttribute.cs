@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Nop.Services.Helpers;
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
@@ -7,7 +8,6 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Http.Extensions;
 using Nop.Data;
 using Nop.Services.Common;
-using Nop.Services.Helpers;
 
 namespace Nop.Web.Framework.Mvc.Filters;
 

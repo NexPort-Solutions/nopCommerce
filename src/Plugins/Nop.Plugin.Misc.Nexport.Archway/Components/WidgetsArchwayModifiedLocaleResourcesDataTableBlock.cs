@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Misc.Nexport.Archway.Models;
 using Nop.Services.Configuration;
 using Nop.Web.Areas.Admin.Models.Plugins;
@@ -28,6 +28,6 @@ public class WidgetsArchwayModifiedLocaleResourcesDataTableBlock : NopViewCompon
 
         var model = new ArchwayPluginResourceListSearchModel() { FriendlyName = pluginModel.FriendlyName };
 
-        return View("~/Plugins/Misc.Nexport.Archway/Areas/Admin/Views/Widget/Plugin/ArchwayModifiedLocaleResources.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport.Archway/Areas/Admin/Views/Widget/Plugin/ArchwayModifiedLocaleResources.cshtml", model);
     }
 }

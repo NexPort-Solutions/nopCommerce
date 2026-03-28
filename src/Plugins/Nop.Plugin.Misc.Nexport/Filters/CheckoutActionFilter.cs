@@ -42,7 +42,10 @@ public class CheckoutActionFilter : ActionFilterAttribute
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
+        {
+            await next();
             return;
+        }
 
         if (actionDescriptor.ControllerTypeInfo == typeof(CheckoutController)
             && actionDescriptor.ActionName is nameof(CheckoutController.Index) or nameof(CheckoutController.OnePageCheckout))

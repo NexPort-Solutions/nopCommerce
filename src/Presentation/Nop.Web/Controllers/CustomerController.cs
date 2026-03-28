@@ -1,4 +1,5 @@
-﻿using System.Text.Encodings.Web;
+﻿using Nop.Services.Helpers;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Nop.Core;
@@ -26,7 +27,6 @@ using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.ExportImport;
 using Nop.Services.Gdpr;
-using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Media;

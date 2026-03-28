@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+using Nop.Services.Helpers;
+using System.Globalization;
 using System.Text;
 using System.Xml;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +20,6 @@ using Nop.Core.Infrastructure;
 using Nop.Services.Blogs;
 using Nop.Services.Catalog;
 using Nop.Services.Customers;
-using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.News;
 using Nop.Services.Seo;

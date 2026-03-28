@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Nop.Services.Helpers;
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -16,7 +17,6 @@ using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
-using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Security;
 using Nop.Services.Seo;

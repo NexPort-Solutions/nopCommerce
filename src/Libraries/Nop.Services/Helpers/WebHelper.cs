@@ -243,8 +243,8 @@ public partial class WebHelper : IWebHelper
         {
             if (_cachedStoreUrl is null)
             {
-                var syncCodeHelper = EngineContext.Current.Resolve<ISyncCodeHelper>();
-                _cachedStoreUrl = syncCodeHelper.GetCurrentStore()?.Url;
+                var storeContext = EngineContext.Current.Resolve<IStoreContext>();
+                _cachedStoreUrl = storeContext.GetCurrentStore()?.Url;
             }
             storeLocation = _cachedStoreUrl ?? throw new Exception("Current store cannot be loaded");
         }

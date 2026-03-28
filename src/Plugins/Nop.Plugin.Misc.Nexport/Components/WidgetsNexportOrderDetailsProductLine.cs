@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Orders;
@@ -54,6 +53,6 @@ public class WidgetsNexportOrderDetailsProductLine : NopViewComponent
         if (order is not { OrderStatus: OrderStatus.Complete })
             return Content("");
 
-        return View("~/Plugins/Misc.Nexport/Views/Widget/Order/NexportOrderDetailsProductLine.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport/Views/Widget/Order/NexportOrderDetailsProductLine.cshtml", model);
     }
 }

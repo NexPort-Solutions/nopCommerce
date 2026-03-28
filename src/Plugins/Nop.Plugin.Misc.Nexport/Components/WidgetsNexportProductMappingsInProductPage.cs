@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Caching;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Web.Areas.Admin.Models.Catalog;
@@ -47,6 +46,6 @@ public class WidgetsNexportProductMappingsInProductPage : NopViewComponent
 
         var model = await _nexportPluginModelFactory.PrepareNexportProductMappingListSearchModelAsync(new NexportProductMappingListSearchModel(), productModel);
 
-        return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductMappingsInProductPage.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductMappingsInProductPage.cshtml", model);
     }
 }

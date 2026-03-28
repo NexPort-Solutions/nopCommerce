@@ -24,7 +24,10 @@ public class SignInActionFilter : ActionFilterAttribute
     public override async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
     {
         if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
+        {
+            await next();
             return;
+        }
 
         if (actionDescriptor.ActionName == nameof(CustomerController.Login) && HttpMethods.IsPost(context.HttpContext.Request.Method))
         {

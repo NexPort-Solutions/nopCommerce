@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Nop.Core;
 using Nop.Core.Caching;

@@ -3371,16 +3371,26 @@ public partial class NexportService
 
         return await _cacheManager.GetAsync(cacheKey, async () =>
         {
-            var result = _nexportApiService.SearchGroupsForPermission(
-                _nexportSettings.Url,
-                _nexportSettings.AuthenticationToken,
-                userMapping.NexportUserId,
-                _nexportSettings.RootOrganizationId.Value,
-                permission,
-                page: 1,
-                perPage: 1);
+            try
+            {
+                var result = _nexportApiService.SearchGroupsForPermission(
+                    _nexportSettings.Url,
+                    _nexportSettings.AuthenticationToken,
+                    userMapping.NexportUserId,
+                    _nexportSettings.RootOrganizationId.Value,
+                    permission,
+                    page: 1,
+                    perPage: 1);
 
-            return result.TotalRecord > 0 || result.SearchGroupsForPermissionList?.Any() == true;
+                return result.TotalRecord > 0 || result.SearchGroupsForPermissionList?.Any() == true;
+            }
+            catch (Exception ex)
+            {
+                var errMsg =
+                    $"Error occurred during SearchGroupsForPermission api call with the parameter: user_id - {userMapping.NexportUserId},group_id - {_nexportSettings.RootOrganizationId.Value}";
+                await _logger.ErrorAsync($"{errMsg}", ex);
+                return false;
+            }
         });
     }
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Domain.Common;

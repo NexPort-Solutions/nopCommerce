@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Plugin.Misc.Nexport.Factories;
@@ -57,6 +56,6 @@ public class WidgetsNexportProductBoxAddInfoBefore : NopViewComponent
 
         var model = await _nexportPluginModelFactory.PrepareNexportProductRedemptionStatusesModel(customer, productOverviewModel.Id, store.Id);
 
-        return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductBoxAddInfoBefore.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductBoxAddInfoBefore.cshtml", model);
     }
 }

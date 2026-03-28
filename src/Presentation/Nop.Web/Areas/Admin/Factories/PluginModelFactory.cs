@@ -395,13 +395,13 @@ public partial class PluginModelFactory : IPluginModelFactory
         return await _staticCacheManager.GetAsync(cacheKey, async () =>
         {
             //get installed plugins
-            return await (await _pluginService.GetPluginDescriptorsAsync<IPlugin>(LoadPluginsMode.InstalledOnly, customer))
+            return (await _pluginService.GetPluginDescriptorsAsync<IPlugin>(LoadPluginsMode.InstalledOnly, customer))
                 .Where(plugin => plugin.ShowInPluginsList)
                 .Select(plugin => new AdminNavigationPluginModel
                 {
                     FriendlyName = plugin.FriendlyName,
                     ConfigurationUrl = plugin.Instance<IPlugin>().GetConfigurationPageUrl()
-                }).Where(model => !string.IsNullOrEmpty(model.ConfigurationUrl)).ToListAsync();
+                }).Where(model => !string.IsNullOrEmpty(model.ConfigurationUrl)).ToList();
         });
     }
 

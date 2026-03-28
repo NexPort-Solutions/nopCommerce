@@ -10,6 +10,7 @@ using Nop.Plugin.Payments.AmazonPay.Services;
 using Nop.Services.Authentication.External;
 using Nop.Services.Cms;
 using Nop.Services.Configuration;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Payments;
 using Nop.Services.Plugins;

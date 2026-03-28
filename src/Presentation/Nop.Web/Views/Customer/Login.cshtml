@@ -1,6 +1,6 @@
 ﻿@model LoginModel
+@using Nop.Core
 @using Nop.Core.Domain.Customers
-@using Nop.Services.Helpers
 
 @inject IWebHelper webHelper
 @{
@@ -12,7 +12,7 @@
     NopHtml.AppendPageCssClassParts("html-login-page");
 
     //register URL with return URL (if specified)
-    var registerUrl = Url.RouteUrl("Register", new { returnUrl = this.Context.Request.Query["returnUrl"] }, webHelper.GetCurrentRequestProtocol());
+    var registerUrl = Url.RouteUrl("Register", new { returnUrl = Context.Request.Query["returnUrl"] }, webHelper.GetCurrentRequestProtocol());
 }
 <div class="page login-page">
     <div class="page-title">

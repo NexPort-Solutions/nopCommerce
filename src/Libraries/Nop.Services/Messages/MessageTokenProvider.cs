@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using Nop.Services.Helpers;
+using System.Globalization;
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
@@ -30,7 +31,6 @@ using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Forums;
-using Nop.Services.Helpers;
 using Nop.Services.Html;
 using Nop.Services.Localization;
 using Nop.Services.Logging;

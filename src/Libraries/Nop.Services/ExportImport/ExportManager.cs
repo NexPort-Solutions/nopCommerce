@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using Nop.Services.Helpers;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -29,7 +30,6 @@ using Nop.Services.Discounts;
 using Nop.Services.ExportImport.Help;
 using Nop.Services.Forums;
 using Nop.Services.Gdpr;
-using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Media;

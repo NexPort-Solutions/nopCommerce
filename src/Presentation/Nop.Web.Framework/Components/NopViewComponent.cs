@@ -62,7 +62,7 @@ public abstract partial class NopViewComponent : ViewComponent
     }
 
     /// <summary>
-    ///  Returns a result which will render the partial view
+    ///  Returns a result which will render the partial view with name viewName
     /// </summary>
     /// <returns>
     /// A task that represents the asynchronous operation

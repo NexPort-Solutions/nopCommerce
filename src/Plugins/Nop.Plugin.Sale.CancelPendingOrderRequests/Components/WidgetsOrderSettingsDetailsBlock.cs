@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
 using Nop.Web.Areas.Admin.Models.Settings;
 using Nop.Web.Framework.Components;
@@ -18,7 +18,7 @@ public class WidgetsOrderSettingsDetailsBlock : NopViewComponent
             var model  = new CancellationRequestSettingsModel();
             model.CancellationRequestReasonSearchModel.SetGridPageSize();
 
-            return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/Widget/Setting/WidgetsOrderSettingsDetailsBlock.cshtml",
+            return await ViewAsync("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/Widget/Setting/WidgetsOrderSettingsDetailsBlock.cshtml",
                 model);
         }
 }

@@ -81,7 +81,7 @@ public class DataMigration : Migration
 
         while (true)
         {
-            var customers = query.Skip(pageIndex++ * pageSize).Take(pageSize).ToList();
+            var customers = query.ToPagedListAsync(pageIndex++, pageSize).Result;
 
             if (!customers.Any())
                 break;

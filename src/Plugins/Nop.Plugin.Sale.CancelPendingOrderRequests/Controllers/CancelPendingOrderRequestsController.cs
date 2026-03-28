@@ -21,6 +21,7 @@ using Nop.Plugin.Sale.CancelPendingOrderRequests.Models;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models.Plugins;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
 using Nop.Services.Configuration;
+using Nop.Services.Helpers;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers;
 

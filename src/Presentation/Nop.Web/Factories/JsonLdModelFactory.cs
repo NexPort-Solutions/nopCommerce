@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+using Nop.Services.Helpers;
+using System.Globalization;
 using System.Text.Encodings.Web;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;

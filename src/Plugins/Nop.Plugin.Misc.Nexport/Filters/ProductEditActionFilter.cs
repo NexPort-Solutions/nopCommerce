@@ -33,7 +33,10 @@ public class ProductEditActionFilter : ActionFilterAttribute
     public override async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
     {
         if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
+        {
+            await next();
             return;
+        }
 
         if (actionDescriptor.ControllerTypeInfo == typeof(ProductController) &&
             actionDescriptor.ActionName == "Edit" &&
@@ -67,7 +70,10 @@ public class ProductEditActionFilter : ActionFilterAttribute
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
+        {
+            await next();
             return;
+        }
 
         if (actionDescriptor.ControllerTypeInfo == typeof(ProductController) &&
             actionDescriptor.ActionName == "Edit" &&

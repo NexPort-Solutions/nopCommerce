@@ -14,6 +14,7 @@ using Nop.Services.Attributes;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Directory;
+using Nop.Services.Helpers;
 using Nop.Services.Logging;
 using Nop.Services.Orders;
 using Nop.Services.Stores;

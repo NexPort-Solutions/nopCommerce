@@ -12,6 +12,7 @@ using Nop.Core.Domain.Logging;
 using Nop.Plugin.Payments.AmazonPay.Domain;
 using Nop.Plugin.Payments.AmazonPay.Enums;
 using Nop.Services.Directory;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;

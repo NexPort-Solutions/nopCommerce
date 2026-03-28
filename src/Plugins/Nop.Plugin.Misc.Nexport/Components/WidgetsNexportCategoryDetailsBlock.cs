@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Models.Category;
 using Nop.Plugin.Misc.Nexport.Services;
@@ -64,6 +63,6 @@ public class WidgetsNexportCategoryDetailsBlock : NopViewComponent
 
         ViewBag.ManageNexportProductMapping = await _permissionService.AuthorizeAsync(NexportPermissionProvider.ManageNexportProductMapping);
 
-        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Category/NexportCategoryDetails.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Category/NexportCategoryDetails.cshtml", model);
     }
 }

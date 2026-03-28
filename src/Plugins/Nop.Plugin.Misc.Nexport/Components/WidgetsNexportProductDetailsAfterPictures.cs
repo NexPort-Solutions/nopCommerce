@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Services.Configuration;
@@ -58,6 +57,6 @@ public class WidgetsNexportProductDetailsAfterPictures : NopViewComponent
             return Content("");
 
         var model = await _nexportPluginModelFactory.PrepareNexportProductRedemptionStatusesModel(customer, productDetailsModel.Id, store.Id);
-        return View("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductDetailsAfterPictures.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport/Views/Widget/Product/NexportProductDetailsAfterPictures.cshtml", model);
     }
 }

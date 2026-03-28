@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Sale.PurchaseForCustomer.Models;
 using Nop.Services.Configuration;
 using Nop.Web.Areas.Admin.Models.Plugins;
@@ -28,6 +28,6 @@ public class WidgetsPurchaseForCustomerModifiedLocaleResourcesDataTableBlock : N
 
         var model = new PurchaseForCustomerPluginResourceListSearchModel { FriendlyName = pluginModel.FriendlyName };
 
-        return View("~/Plugins/Sale.PurchaseForCustomer/Areas/Admin/Views/Widget/Plugin/PurchaseForCustomerModifiedLocaleResources.cshtml", model);
+        return await ViewAsync("~/Plugins/Sale.PurchaseForCustomer/Areas/Admin/Views/Widget/Plugin/PurchaseForCustomerModifiedLocaleResources.cshtml", model);
     }
 }

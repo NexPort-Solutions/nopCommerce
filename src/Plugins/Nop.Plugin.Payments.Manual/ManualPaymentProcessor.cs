@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Plugin.Payments.Manual.Components;

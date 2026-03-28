@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Nop.Core;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Stores;
+using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
@@ -27,7 +30,9 @@ public partial class StoreController : BaseAdminController
     protected readonly ISettingService _settingService;
     protected readonly IStoreModelFactory _storeModelFactory;
     protected readonly IStoreService _storeService;
+    protected readonly IGenericAttributeService _genericAttributeService;
     protected readonly IWebHelper _webHelper;
+    protected readonly IWorkContext _workContext;
 
     #endregion
 
@@ -41,7 +46,9 @@ public partial class StoreController : BaseAdminController
         ISettingService settingService,
         IStoreModelFactory storeModelFactory,
         IStoreService storeService,
-        IWebHelper webHelper)
+        IGenericAttributeService genericAttributeService,
+        IWebHelper webHelper,
+        IWorkContext workContext)
     {
         _customerActivityService = customerActivityService;
         _localizationService = localizationService;
@@ -51,7 +58,9 @@ public partial class StoreController : BaseAdminController
         _settingService = settingService;
         _storeModelFactory = storeModelFactory;
         _storeService = storeService;
+        _genericAttributeService = genericAttributeService;
         _webHelper = webHelper;
+        _workContext = workContext;
 
     }
 
@@ -99,9 +108,11 @@ public partial class StoreController : BaseAdminController
 
     #region Methods
 
-    [CheckPermission(StandardPermission.Configuration.MANAGE_STORES)]
     public virtual async Task<IActionResult> List()
     {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+            return AccessDeniedView();
+
         //prepare model
         var model = await _storeModelFactory.PrepareStoreSearchModelAsync(new StoreSearchModel());
 
@@ -109,18 +120,22 @@ public partial class StoreController : BaseAdminController
     }
 
     [HttpPost]
-    [CheckPermission(StandardPermission.Configuration.MANAGE_STORES)]
     public virtual async Task<IActionResult> List(StoreSearchModel searchModel)
     {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+            return await AccessDeniedDataTablesJson();
+
         //prepare model
         var model = await _storeModelFactory.PrepareStoreListModelAsync(searchModel);
 
         return Json(model);
     }
 
-    [CheckPermission(StandardPermission.Configuration.MANAGE_STORES)]
     public virtual async Task<IActionResult> Create()
     {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+            return AccessDeniedView();
+
         //prepare model
         var model = await _storeModelFactory.PrepareStoreModelAsync(new StoreModel(), null);
 
@@ -128,9 +143,11 @@ public partial class StoreController : BaseAdminController
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
-    [CheckPermission(StandardPermission.Configuration.MANAGE_STORES)]
     public virtual async Task<IActionResult> Create(StoreModel model, bool continueEditing)
     {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+            return AccessDeniedView();
+
         if (ModelState.IsValid)
         {
             var store = model.ToEntity<Store>();
@@ -161,9 +178,11 @@ public partial class StoreController : BaseAdminController
     }
 
     [HttpsRequirement(ignore: true)]
-    [CheckPermission(StandardPermission.Configuration.MANAGE_STORES)]
     public virtual async Task<IActionResult> SetStoreSslByCurrentRequestScheme(int id)
     {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+            return AccessDeniedView();
+
         //try to get a store with the specified id
         var store = await _storeService.GetStoreByIdAsync(id);
         if (store == null)
@@ -183,9 +202,11 @@ public partial class StoreController : BaseAdminController
     }
 
     [HttpsRequirement(ignore: true)]
-    [CheckPermission(StandardPermission.Configuration.MANAGE_STORES)]
-    public virtual async Task<IActionResult> Edit(int id)
+    public virtual async Task<IActionResult> Edit(int id, bool showtour = false)
     {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+            return AccessDeniedView();
+
         //try to get a store with the specified id
         var store = await _storeService.GetStoreByIdAsync(id);
         if (store == null)
@@ -194,14 +215,27 @@ public partial class StoreController : BaseAdminController
         //prepare model
         var model = await _storeModelFactory.PrepareStoreModelAsync(null, store);
 
+        //show configuration tour
+        if (showtour)
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            var hideCard = await _genericAttributeService.GetAttributeAsync<bool>(customer, NopCustomerDefaults.HideConfigurationStepsAttribute);
+            var closeCard = await _genericAttributeService.GetAttributeAsync<bool>(customer, NopCustomerDefaults.CloseConfigurationStepsAttribute);
+
+            if (!hideCard && !closeCard)
+                ViewBag.ShowTour = true;
+        }
+
         return View(model);
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     [FormValueRequired("save", "save-continue")]
-    [CheckPermission(StandardPermission.Configuration.MANAGE_STORES)]
     public virtual async Task<IActionResult> Edit(StoreModel model, bool continueEditing)
     {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+            return AccessDeniedView();
+
         //try to get a store with the specified id
         var store = await _storeService.GetStoreByIdAsync(model.Id);
         if (store == null)
@@ -237,9 +271,11 @@ public partial class StoreController : BaseAdminController
     }
 
     [HttpPost]
-    [CheckPermission(StandardPermission.Configuration.MANAGE_STORES)]
     public virtual async Task<IActionResult> Delete(int id)
     {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageStores))
+            return AccessDeniedView();
+
         //try to get a store with the specified id
         var store = await _storeService.GetStoreByIdAsync(id);
         if (store == null)

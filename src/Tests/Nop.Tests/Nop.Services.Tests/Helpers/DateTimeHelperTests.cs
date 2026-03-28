@@ -3,8 +3,8 @@ using Nop.Core.Domain.Customers;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
-using Nop.Services.Helpers;
 using NUnit.Framework;
+using Nop.Services.Helpers;
 
 namespace Nop.Tests.Nop.Services.Tests.Helpers;
 

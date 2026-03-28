@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Tax;

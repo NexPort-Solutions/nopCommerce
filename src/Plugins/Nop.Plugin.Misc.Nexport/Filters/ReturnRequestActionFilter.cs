@@ -1,14 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Controllers;
+﻿using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Nop.Core.Domain.Orders;
-using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Common;
 using Nop.Services.Localization;
 using Nop.Services.Orders;
 using Nop.Web.Controllers;
-using Nop.Web.Models.Order;
 
 namespace Nop.Plugin.Misc.Nexport.Filters;
 public class ReturnRequestActionFilter(
@@ -22,7 +18,10 @@ public class ReturnRequestActionFilter(
     public override async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
     {
         if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
+        {
+            await next();
             return;
+        }
 
         if (actionDescriptor.ControllerTypeInfo == typeof(ReturnRequestController) &&
             actionDescriptor.ActionName == "ReturnRequest" &&

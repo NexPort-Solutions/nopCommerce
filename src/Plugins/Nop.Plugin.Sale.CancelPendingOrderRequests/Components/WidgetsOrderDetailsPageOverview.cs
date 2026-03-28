@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Services.Orders;
@@ -35,6 +35,6 @@ public class WidgetsOrderDetailsPageOverview : NopViewComponent
             if (order is not { OrderStatus: OrderStatus.Pending })
                 return Content("");
 
-            return View("~/Plugins/Sale.CancelPendingOrderRequests/Views/Widget/Order/WidgetsOrderDetailsPageOverview.cshtml", orderDetailsModel);
+            return await ViewAsync("~/Plugins/Sale.CancelPendingOrderRequests/Views/Widget/Order/WidgetsOrderDetailsPageOverview.cshtml", orderDetailsModel);
         }
 }

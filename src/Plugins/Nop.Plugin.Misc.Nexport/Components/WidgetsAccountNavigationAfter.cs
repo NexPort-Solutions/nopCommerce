@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Web.Framework.Components;
@@ -32,6 +31,6 @@ public class WidgetsAccountNavigationAfter : NopViewComponent
 
         ViewData["ShowNexportWholesalePurchases"] = showNexportWholesalePurchases;
 
-        return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportSettingNavigation.cshtml");
+        return await ViewAsync("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportSettingNavigation.cshtml");
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+using Nop.Services.Helpers;
+using System.Globalization;
 using System.Text;
 using Nop.Core;
 using Nop.Core.Caching;
@@ -19,7 +20,6 @@ using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Forums;
-using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Media;
 using Nop.Services.Orders;

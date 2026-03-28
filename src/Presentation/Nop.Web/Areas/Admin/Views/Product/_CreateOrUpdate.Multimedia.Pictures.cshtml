@@ -68,7 +68,7 @@
         <div class="card-body">
             <div class="form-group row">
                 @{
-                    ViewData["Endpoint"] = this.Url.Action("ProductPictureAdd", "Product", new { productId = Model.Id });
+                    ViewData["Endpoint"] = Url.Action("ProductPictureAdd", "Product", new { productId = Model.Id });
                     ViewData["TableSelector"] = "#productpictures-grid";
                 }
                 <div class="col-md-3">

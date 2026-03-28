@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Models.Plugins;
 using Nop.Services.Configuration;
 using Nop.Web.Areas.Admin.Models.Plugins;
@@ -29,7 +29,7 @@ public class WidgetsCancelPendingOrderRequestsModifiedLocaleResourcesDataTableBl
 
         var model = new CancelPendingOrderRequestsPluginResourceListSearchModel() { FriendlyName = pluginModel.FriendlyName};
 
-        return View("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/Widget/Plugin/CancelPendingOrderRequestsModifiedLocaleResources.cshtml", model);
+        return await ViewAsync("~/Plugins/Sale.CancelPendingOrderRequests/Areas/Admin/Views/Widget/Plugin/CancelPendingOrderRequestsModifiedLocaleResources.cshtml", model);
     }
 }
 

@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Services.Common;
 using Nop.Services.Orders;
 using Nop.Web.Areas.Admin.Models.Orders;
@@ -63,6 +62,6 @@ public class WidgetsNexportOrderDetailsBlock : NopViewComponent
             }
         };
 
-        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Order/NexportOrderDetails.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Order/NexportOrderDetails.cshtml", model);
     }
 }

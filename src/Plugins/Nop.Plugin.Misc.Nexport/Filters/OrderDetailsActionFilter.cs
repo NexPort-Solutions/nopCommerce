@@ -34,7 +34,10 @@ public class OrderDetailsActionFilter : ActionFilterAttribute
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor)
+        {
+            await next();
             return;
+        }
 
         if (actionDescriptor.ControllerTypeInfo == typeof(OrderController) &&
             actionDescriptor.ActionName == nameof(OrderController.Details))

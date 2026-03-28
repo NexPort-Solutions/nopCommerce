@@ -7,6 +7,19 @@
     NopHtml.AddTitleParts(T("PageTitle.Register").Text);
     //page class
     NopHtml.AppendPageCssClassParts("html-registration-page");
+
+    bool isRecursiveAuthReturnUrl(string url) =>
+        url.Contains("returnUrl=", StringComparison.OrdinalIgnoreCase) ||
+        url.StartsWith("/login", StringComparison.OrdinalIgnoreCase) ||
+        url.StartsWith("/register", StringComparison.OrdinalIgnoreCase);
+
+    var requestedReturnUrl = Context.Request.Query["returnUrl"].ToString();
+    var safeReturnUrl = !string.IsNullOrWhiteSpace(requestedReturnUrl)
+        && Url.IsLocalUrl(requestedReturnUrl)
+        && !isRecursiveAuthReturnUrl(requestedReturnUrl)
+        && requestedReturnUrl.Length <= 512
+            ? requestedReturnUrl
+            : null;
 }
 
 <div class="page registration-page">
@@ -15,7 +28,7 @@
     </div>
     <div class="page-body">
         @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.RegisterTop, additionalData = Model })
-        <form asp-route="Register" asp-route-returnurl="@Context.Request.Query["ReturnUrl"]" method="post" autocomplete="off">
+        <form asp-route="Register" asp-route-returnurl="@safeReturnUrl" method="post" autocomplete="off">
             <div asp-validation-summary="ModelOnly" class="message-error"></div>
             <div class="fieldset">
                 <div class="title">

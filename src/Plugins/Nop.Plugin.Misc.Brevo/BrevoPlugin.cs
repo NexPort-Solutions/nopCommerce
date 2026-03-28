@@ -1,4 +1,5 @@
-﻿using Nop.Core.Domain.Cms;
+﻿using Nop.Core;
+using Nop.Core.Domain.Cms;
 using Nop.Core.Domain.ScheduleTasks;
 using Nop.Plugin.Misc.Brevo.Components;
 using Nop.Services.Cms;

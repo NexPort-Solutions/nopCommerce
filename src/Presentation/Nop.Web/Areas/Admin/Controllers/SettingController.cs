@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Nop.Services.Helpers;
+using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
@@ -28,7 +29,6 @@ using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Gdpr;
-using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Media;

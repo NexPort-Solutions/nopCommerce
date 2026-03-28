@@ -1,7 +1,8 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.AspNetCore.Http;
-using Nop.Services.Helpers;
+using Nop.Core;
 using NUnit.Framework;
+using Nop.Services.Helpers;
 
 namespace Nop.Tests.Nop.Core.Tests;
 

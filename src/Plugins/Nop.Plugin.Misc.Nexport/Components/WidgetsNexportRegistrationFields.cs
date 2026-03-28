@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Services;
@@ -35,6 +34,6 @@ public class WidgetsNexportRegistrationFields : NopViewComponent
         var model =
             await _nexportPluginModelFactory.PrepareNexportCustomerRegistrationFieldsModelAsync(await _storeContext.GetCurrentStoreAsync());
 
-        return View("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportRegistrationFields.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport/Views/Widget/Customer/NexportRegistrationFields.cshtml", model);
     }
 }

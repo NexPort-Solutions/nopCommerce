@@ -1,4 +1,5 @@
-﻿using System.IO.Compression;
+﻿using Nop.Services.Helpers;
+using System.IO.Compression;
 using System.Net;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
@@ -17,7 +18,6 @@ using Nop.Services.Catalog;
 using Nop.Services.Common.Pdf;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
-using Nop.Services.Helpers;
 using Nop.Services.Html;
 using Nop.Services.Localization;
 using Nop.Services.Media;

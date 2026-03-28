@@ -69,7 +69,7 @@ public class DataMigration : Migration
 
             while (true)
             {
-                var combinations = combinationQuery.Skip(pageIndex * pageSize).Take(pageSize).ToList();
+                var combinations = combinationQuery.ToPagedListAsync(pageIndex, pageSize).Result;
 
                 if (!combinations.Any())
                     break;
@@ -112,7 +112,7 @@ public class DataMigration : Migration
 
             while (true)
             {
-                var values = valueQuery.Skip(pageIndex * pageSize).Take(pageSize).ToList();
+                var values = valueQuery.ToPagedListAsync(pageIndex, pageSize).Result;
 
                 if (!values.Any())
                     break;

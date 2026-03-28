@@ -37,6 +37,7 @@ using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Core.Caching;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
 using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Services.Helpers;
 using Category = Nop.Core.Domain.Catalog.Category;
 
 namespace Nop.Plugin.Misc.Nexport.Services;

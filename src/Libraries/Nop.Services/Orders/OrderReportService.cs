@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using Nop.Services.Helpers;
+using System.Globalization;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
@@ -9,7 +10,6 @@ using Nop.Core.Domain.Shipping;
 using Nop.Data;
 using Nop.Services.Catalog;
 using Nop.Services.Directory;
-using Nop.Services.Helpers;
 using Nop.Services.Stores;
 
 namespace Nop.Services.Orders;

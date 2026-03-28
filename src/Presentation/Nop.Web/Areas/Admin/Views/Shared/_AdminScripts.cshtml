@@ -1,9 +1,8 @@
 @inject INopFileProvider fileProvider;
 @inject IWebHelper webHelper
 @inject LocalizationSettings localizationSettings
-@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment WebHostEnvironment
+@inject IWebHostEnvironment WebHostEnvironment
 @using Nop.Core.Domain.Localization
-@using Nop.Services.Helpers
 
 @{
     var supportRtl = (await workContext.GetWorkingLanguageAsync()).Rtl && !localizationSettings.IgnoreRtlPropertyForAdminArea;

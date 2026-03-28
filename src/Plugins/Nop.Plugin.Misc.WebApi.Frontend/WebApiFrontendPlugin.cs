@@ -1,24 +1,32 @@
-﻿using Nop.Services.Common;
+using Microsoft.AspNetCore.Routing;
+using Nop.Core;
+using Nop.Services.Common;
 using Nop.Services.Helpers;
 using Nop.Services.Plugins;
+using Nop.Services.Security;
+using Nop.Web.Framework;
+using Nop.Web.Framework.Menu;
 
 namespace Nop.Plugin.Misc.WebApi.Frontend;
 
 /// <summary>
 /// Represents the Web API frontend plugin
 /// </summary>
-public class WebApiFrontendPlugin : BasePlugin, IMiscPlugin
+public class WebApiFrontendPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin
 {
     #region Fields
 
+    protected readonly IPermissionService _permissionService;
     protected readonly IWebHelper _webHelper;
 
     #endregion
 
     #region Ctor
 
-    public WebApiFrontendPlugin(IWebHelper webHelper)
+    public WebApiFrontendPlugin(IPermissionService permissionService,
+        IWebHelper webHelper)
     {
+        _permissionService = permissionService;
         _webHelper = webHelper;
     }
 
@@ -42,7 +50,38 @@ public class WebApiFrontendPlugin : BasePlugin, IMiscPlugin
     {
         await base.InstallAsync();
     }
-    
+
+    public async Task ManageSiteMapAsync(SiteMapNode rootNode)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+            return;
+
+        var config = rootNode.ChildNodes.FirstOrDefault(node => node.SystemName.Equals("Configuration"));
+        if (config == null)
+            return;
+
+        var plugins = config.ChildNodes.FirstOrDefault(node => node.SystemName.Equals("Local plugins"));
+
+        if (plugins == null)
+            return;
+
+        var index = config.ChildNodes.IndexOf(plugins);
+
+        if (index < 0)
+            return;
+
+        config.ChildNodes.Insert(index, new SiteMapNode
+        {
+            SystemName = "nopCommerce Web API plugin",
+            Title = "Web API",
+            ControllerName = "WebApiFrontend",
+            ActionName = "Configure",
+            IconClass = "far fa-dot-circle",
+            Visible = true,
+            RouteValues = new RouteValueDictionary { { "area", AreaNames.ADMIN } }
+        });
+    }
+
     /// <summary>
     /// Uninstall the plugin
     /// </summary>

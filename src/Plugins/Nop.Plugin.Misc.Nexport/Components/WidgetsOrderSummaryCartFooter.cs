@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Nop.Core;
@@ -58,6 +57,6 @@ public class WidgetsOrderSummaryCartFooter : NopViewComponent
             model.TogglePurchasingGroupText = false;
         }
 
-        return View("~/Plugins/Misc.Nexport/Views/Widget/Order/WidgetsOrderSummaryCartFooter.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport/Views/Widget/Order/WidgetsOrderSummaryCartFooter.cshtml", model);
     }
 }

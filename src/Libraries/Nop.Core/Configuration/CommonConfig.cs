@@ -1,4 +1,6 @@
-﻿namespace Nop.Core.Configuration;
+﻿using System.Threading.RateLimiting;
+
+namespace Nop.Core.Configuration;
 
 /// <summary>
 /// Represents common configuration parameters

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Models;
 using Nop.Services.Configuration;
 using Nop.Web.Areas.Admin.Models.Plugins;
@@ -28,6 +28,6 @@ public class WidgetsDiscountPerCreditHoursModifiedLocaleResourcesDataTableBlock 
 
         var model = new DiscountPerCreditHoursPluginResourceListSearchModel() { FriendlyName = pluginModel.FriendlyName };
 
-        return View("~/Plugins/Misc.Nexport.DiscountPerCreditHours/Areas/Admin/Views/Plugin/DiscountPerCreditHoursModifiedLocaleResources.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport.DiscountPerCreditHours/Areas/Admin/Views/Plugin/DiscountPerCreditHoursModifiedLocaleResources.cshtml", model);
     }
 }

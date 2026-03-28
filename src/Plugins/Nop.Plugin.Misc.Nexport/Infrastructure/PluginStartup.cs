@@ -57,8 +57,11 @@ public class PluginStartup : INopStartup
             .UseRecurringJobAdmin(typeof(NopStartup).Assembly, typeof(NexportPlugin).Assembly));
 
         // Add the processing server as IHostedService
+        var workerCount = configuration.GetValue<int?>("NexportHangfire:WorkerCount") ?? 5;
+
         services.AddHangfireServer(options =>
         {
+            options.WorkerCount = workerCount;
             options.SchedulePollingInterval = TimeSpan.FromSeconds(5);
         });
 

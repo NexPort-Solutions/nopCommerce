@@ -13,6 +13,7 @@ using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Cms;
 using Nop.Web.Framework.Infrastructure;
 using Nop.Plugin.Misc.Nexport.DiscountPerCreditHours.Components;
+using Nop.Services.Helpers;
 
 namespace Nop.Plugin.Misc.Nexport.DiscountPerCreditHours;
 

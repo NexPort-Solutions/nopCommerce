@@ -18,6 +18,7 @@ using Nop.Plugin.Misc.Nexport.Archway.Services;
 using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Cms;
+using Nop.Services.Helpers;
 using Nop.Web.Framework.Infrastructure;
 
 namespace Nop.Plugin.Misc.Nexport.Archway;

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using Nop.Services.Helpers;
+using System.ComponentModel;
 using System.Globalization;
 using System.Resources;
 using FluentAssertions;
@@ -52,7 +53,6 @@ using Nop.Services.Events;
 using Nop.Services.ExportImport;
 using Nop.Services.Forums;
 using Nop.Services.Gdpr;
-using Nop.Services.Helpers;
 using Nop.Services.Html;
 using Nop.Services.Installation;
 using Nop.Services.Localization;

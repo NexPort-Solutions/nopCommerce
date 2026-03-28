@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Misc.Nexport.Models.Plugins;
 using Nop.Services.Configuration;
 using Nop.Web.Areas.Admin.Models.Plugins;
@@ -30,6 +29,6 @@ public class WidgetsNexportModifiedLocaleResourcesDataTableBlock : NopViewCompon
 
         var model = new NexportPluginResourceListSearchModel { FriendlyName = pluginModel.FriendlyName };
 
-        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Plugin/NexportModifiedLocaleResources.cshtml", model);
+        return await ViewAsync("~/Plugins/Misc.Nexport/Areas/Admin/Views/Widget/Plugin/NexportModifiedLocaleResources.cshtml", model);
     }
 }

@@ -16,7 +16,7 @@
         </div>
         <div class="col-md-9">
             @{
-                var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.SpecificCultures)
+                var cultures = CultureInfo.GetCultures(CultureTypes.SpecificCultures)
                     .OrderBy(x => x.EnglishName)
                     .Select(x => new SelectListItem
                     {

@@ -6,6 +6,7 @@ using Nop.Core.Domain.Cms;
 using Nop.Plugin.Widgets.GoogleAnalytics.Components;
 using Nop.Services.Cms;
 using Nop.Services.Configuration;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Plugins;
 using Nop.Web.Framework.Infrastructure;

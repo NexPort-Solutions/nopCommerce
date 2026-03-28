@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using System.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -261,7 +260,7 @@ public class NexportCustomerRegistrationService : CustomerRegistrationService
 
         //redirect to the return URL if it's specified
         if (!string.IsNullOrEmpty(returnUrl) && urlHelper.IsLocalUrl(returnUrl))
-            return new RedirectResult(HttpUtility.UrlEncode(returnUrl));
+            return new RedirectResult(returnUrl);
 
         return new RedirectToRouteResult("Homepage", null);
     }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Framework.Components;
 using Nop.Web.Areas.Admin.Models.Catalog;
 
@@ -18,6 +18,6 @@ public class ProductDetailsButtonWidget : NopViewComponent
         if (model == null)
             return Content("");
 
-        return View("~/Plugins/Sale.PurchaseForCustomer/Areas/Admin/Views/Widget/ProductDetailsButtonWidget.cshtml", model);
+        return await ViewAsync("~/Plugins/Sale.PurchaseForCustomer/Areas/Admin/Views/Widget/ProductDetailsButtonWidget.cshtml", model);
     }
 }

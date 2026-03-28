@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using Nop.Services.Helpers;
+using System.ComponentModel;
 using System.Net;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -18,7 +19,6 @@ using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Discounts;
-using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Media;
 using Nop.Services.Orders;

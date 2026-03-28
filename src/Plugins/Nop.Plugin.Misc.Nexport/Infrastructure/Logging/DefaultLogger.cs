@@ -1,13 +1,11 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Logging;
 using Nop.Core.Infrastructure;
 using Nop.Data;
+using Nop.Services.Helpers;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure.Logging;
 
@@ -20,52 +18,52 @@ public class DefaultLogger : Nop.Services.Logging.DefaultLogger
     public DefaultLogger(CommonSettings commonSettings, IRepository<Log> logRepository, IWebHelper webHelper) :
         base(commonSettings, logRepository, webHelper)
     {
-            _commonSettings = commonSettings;
-            _logRepository = logRepository;
-            _webHelper = webHelper;
-        }
+        _commonSettings = commonSettings;
+        _logRepository = logRepository;
+        _webHelper = webHelper;
+    }
 
     public override async Task<Log> InsertLogAsync(LogLevel logLevel, string shortMessage, string fullMessage = "", Customer customer = null)
     {
-            if (!IsEnabled(logLevel))
-                return null;
+        if (!IsEnabled(logLevel))
+            return null;
 
-            //check ignore word/phrase list?
-            if (IgnoreLog(shortMessage) || IgnoreLog(fullMessage))
-                return null;
+        //check ignore word/phrase list?
+        if (IgnoreLog(shortMessage) || IgnoreLog(fullMessage))
+            return null;
 
-            var log = new Log
-            {
-                LogLevel = logLevel,
-                ShortMessage = shortMessage,
-                FullMessage = fullMessage,
-                IpAddress = _webHelper.GetCurrentIpAddress(),
-                CustomerId = customer?.Id,
-                PageUrl = _webHelper.GetThisPageUrl(true),
-                ReferrerUrl = _webHelper.GetUrlReferrer(),
-                CreatedOnUtc = DateTime.UtcNow
-            };
+        var log = new Log
+        {
+            LogLevel = logLevel,
+            ShortMessage = shortMessage,
+            FullMessage = fullMessage,
+            IpAddress = _webHelper.GetCurrentIpAddress(),
+            CustomerId = customer?.Id,
+            PageUrl = _webHelper.GetThisPageUrl(true),
+            ReferrerUrl = _webHelper.GetUrlReferrer(),
+            CreatedOnUtc = DateTime.UtcNow
+        };
 
-            await _logRepository.InsertAsync(log);
+        await _logRepository.InsertAsync(log);
 
-            return log;
-        }
+        return log;
+    }
 
     public override bool IsEnabled(LogLevel level)
     {
-            switch (level)
-            {
-                case LogLevel.Debug:
-                    var hostingEnvironment = EngineContext.Current.Resolve<IWebHostEnvironment>();
-                    return hostingEnvironment.IsDevelopment();
+        switch (level)
+        {
+            case LogLevel.Debug:
+                var hostingEnvironment = EngineContext.Current.Resolve<IWebHostEnvironment>();
+                return hostingEnvironment.IsDevelopment();
 
-                case LogLevel.Information:
-                    return true;
+            case LogLevel.Information:
+                return true;
 
-                default:
-                    return base.IsEnabled(level);
-            }
+            default:
+                return base.IsEnabled(level);
         }
+    }
 
     ///// <summary>
     ///// Information

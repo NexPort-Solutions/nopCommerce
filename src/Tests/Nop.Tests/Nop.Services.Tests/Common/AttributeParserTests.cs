@@ -313,11 +313,11 @@ public class AttributeParserTests : BaseNopTest
     [TestCase(typeof(VendorAttribute))]
     [TestCase(typeof(AddressAttribute))]
     [TestCase(typeof(CheckoutAttribute))]
-    public async Task CanParseAttributeValues(Type attributeType)
+    public void CanParseAttributeValues(Type attributeType)
     {
         PrepareTestData(attributeType);
 
-        var values = (await _parser.ParseAttributeValuesAsync(_attributesXml))?.Count as int?;
+        var values = _parser.ParseAttributeValuesAsync(_attributesXml).Result?.Count as int?;
         values.Should().Be(2);
     }
 

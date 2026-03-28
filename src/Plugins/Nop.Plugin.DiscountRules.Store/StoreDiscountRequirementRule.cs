@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Nop.Core;
 using Nop.Services.Configuration;
 using Nop.Services.Discounts;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Plugins;
 
