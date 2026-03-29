@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 
-namespace Nop.Services.Helpers;
+namespace Nop.Core;
 
 /// <summary>
 /// Represents a web helper

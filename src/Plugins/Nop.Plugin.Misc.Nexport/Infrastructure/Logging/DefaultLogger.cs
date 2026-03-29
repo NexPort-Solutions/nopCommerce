@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Logging;
 using Nop.Core.Infrastructure;
 using Nop.Data;
-using Nop.Services.Helpers;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure.Logging;
 
