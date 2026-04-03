@@ -106,6 +106,7 @@ public class NexportCustomerController : BasePublicController
 
     private readonly IPluginManager<IRegistrationFieldCustomRender> _registrationFieldCustomRenderPluginManager;
     private readonly INexportPluginModelFactory _nexportPluginModelFactory;
+    private readonly INexportNavigationContextService _nexportNavigationContextService;
     private readonly NexportService _nexportService;
 
     #endregion
@@ -161,6 +162,7 @@ public class NexportCustomerController : BasePublicController
         TaxSettings taxSettings,
         IPluginManager<IRegistrationFieldCustomRender> registrationFieldCustomRenderPluginManager,
         INexportPluginModelFactory nexportPluginModelFactory,
+        INexportNavigationContextService nexportNavigationContextService,
         NexportService nexportService)
     {
         _addressSettings = addressSettings;
@@ -211,6 +213,7 @@ public class NexportCustomerController : BasePublicController
         _taxSettings = taxSettings;
         _registrationFieldCustomRenderPluginManager = registrationFieldCustomRenderPluginManager;
         _nexportPluginModelFactory = nexportPluginModelFactory;
+        _nexportNavigationContextService = nexportNavigationContextService;
         _nexportService = nexportService;
     }
 
@@ -294,6 +297,26 @@ public class NexportCustomerController : BasePublicController
         }
 
         return attributesXml;
+    }
+
+    protected virtual string ResolveSanitizedReturnUrl(string returnUrl)
+    {
+        var sanitizedReturnUrl = _nexportNavigationContextService.Sanitize(returnUrl, Url);
+        if (!string.IsNullOrWhiteSpace(sanitizedReturnUrl))
+            return sanitizedReturnUrl;
+
+        return _nexportNavigationContextService.GetSanitizedReturnUrl(Request, Url);
+    }
+
+    protected virtual NexportNavigationContextModel CreateNavigationContextModel(string safeReturnUrl)
+    {
+        return new NexportNavigationContextModel
+        {
+            LoginRouteName = _nexportNavigationContextService.LoginRouteName,
+            RegisterRouteName = _nexportNavigationContextService.RegisterRouteName,
+            ReturnUrlParameterName = _nexportNavigationContextService.ReturnUrlParameterName,
+            SafeReturnUrl = safeReturnUrl ?? string.Empty
+        };
     }
 
     protected virtual async Task LogGdpr(Customer customer, CustomerInfoModel oldCustomerInfoModel,
@@ -411,7 +434,9 @@ public class NexportCustomerController : BasePublicController
     [CheckAccessPublicStore(true)]
     public virtual async Task<IActionResult> Login(bool? checkoutAsGuest)
     {
+        var safeReturnUrl = ResolveSanitizedReturnUrl(null);
         var model = await _nexportPluginModelFactory.PrepareNexportLoginModelAsync(checkoutAsGuest);
+        model.NavigationContext = CreateNavigationContextModel(safeReturnUrl);
 
         return View("Login", model);
     }
@@ -425,6 +450,10 @@ public class NexportCustomerController : BasePublicController
     [AutoValidateAntiforgeryToken]
     public virtual async Task<IActionResult> Login(NexportLoginModel model, string returnUrl, bool captchaValid)
     {
+        returnUrl = ResolveSanitizedReturnUrl(returnUrl);
+
+        model.NavigationContext = CreateNavigationContextModel(returnUrl);
+
         //validate CAPTCHA
         if (_captchaSettings.Enabled && _captchaSettings.ShowOnLoginPage && !captchaValid)
         {
@@ -517,6 +546,7 @@ public class NexportCustomerController : BasePublicController
 
         //If we got this far, something failed, redisplay form
         model = await _nexportPluginModelFactory.PrepareNexportLoginModelAsync(model.CheckoutAsGuest);
+        model.NavigationContext = CreateNavigationContextModel(returnUrl);
 
         return View(model);
     }
@@ -524,12 +554,17 @@ public class NexportCustomerController : BasePublicController
     [CheckAccessPublicStore(true)]
     public virtual async Task<IActionResult> Register(string returnUrl)
     {
+        returnUrl = ResolveSanitizedReturnUrl(returnUrl);
+
         //check whether registration is allowed
         if (_customerSettings.UserRegistrationType == UserRegistrationType.Disabled)
             return RedirectToRoute("RegisterResult", new { resultId = (int)UserRegistrationType.Disabled, returnUrl });
 
-        var model = new RegisterModel();
-        model = await _customerModelFactory.PrepareRegisterModelAsync(model, false, setDefaultValues: true);
+        var model = new NexportRegisterModel();
+        // nop's PrepareRegisterModelAsync populates the passed instance and returns the same object.
+        // We keep the existing NexportRegisterModel reference so the typed NavigationContext payload stays intact.
+        await _customerModelFactory.PrepareRegisterModelAsync(model, false, setDefaultValues: true);
+        model.NavigationContext = CreateNavigationContextModel(returnUrl);
 
         return View(model);
     }
@@ -540,8 +575,11 @@ public class NexportCustomerController : BasePublicController
     [AutoValidateAntiforgeryToken]
     //available even when navigation is not allowed
     [CheckAccessPublicStore(true)]
-    public virtual async Task<IActionResult> Register(RegisterModel model, string returnUrl, bool captchaValid, IFormCollection form)
+    public virtual async Task<IActionResult> Register(NexportRegisterModel model, string returnUrl, bool captchaValid, IFormCollection form)
     {
+        returnUrl = ResolveSanitizedReturnUrl(returnUrl);
+        model.NavigationContext = CreateNavigationContextModel(returnUrl);
+
         //check whether registration is allowed
         if (_customerSettings.UserRegistrationType == UserRegistrationType.Disabled)
             return RedirectToRoute("RegisterResult", new { resultId = (int)UserRegistrationType.Disabled, returnUrl });
@@ -850,7 +888,9 @@ public class NexportCustomerController : BasePublicController
         }
 
         //If we got this far, something failed, redisplay form
-        model = await _customerModelFactory.PrepareRegisterModelAsync(model, true, customerAttributesXml);
+        // PrepareRegisterModelAsync enriches the current instance in-place; no reassignment needed.
+        await _customerModelFactory.PrepareRegisterModelAsync(model, true, customerAttributesXml);
+        model.NavigationContext = CreateNavigationContextModel(returnUrl);
 
         return View(model);
     }

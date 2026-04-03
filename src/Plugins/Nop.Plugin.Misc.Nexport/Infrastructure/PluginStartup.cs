@@ -69,7 +69,6 @@ public class PluginStartup : INopStartup
         {
             options.ViewLocationExpanders.Add(new ViewLocationExpander());
         });
-
         // Add action filters
         services.AddMvc(options =>
         {
@@ -99,6 +98,7 @@ public class PluginStartup : INopStartup
         services.AddScoped<NexportApiService>();
         services.AddScoped<NexportService>();
         services.AddScoped<NexportPluginService>();
+        services.AddScoped<INexportNavigationContextService, NexportNavigationContextService>();
         services.AddScoped<INexportPluginModelFactory, NexportPluginModelFactory>();
         services.AddScoped<INexportSettingModelFactory, NexportSettingModelFactory>();
         services.AddScoped<INexportWholesaleService, NexportNexportWholesaleService>();

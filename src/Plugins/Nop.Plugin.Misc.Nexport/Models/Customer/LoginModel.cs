@@ -7,4 +7,6 @@ public record NexportLoginModel : LoginModel
 {
     [NopResourceDisplayName("Account.Login.Fields.EmailOrUsername")]
     public string EmailOrUsername { get; set; }
+
+    public NexportNavigationContextModel NavigationContext { get; set; } = new();
 }

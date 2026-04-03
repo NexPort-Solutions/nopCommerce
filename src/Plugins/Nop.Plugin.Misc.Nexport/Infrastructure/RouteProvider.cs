@@ -42,14 +42,14 @@ public class RouteProvider : IRouteProvider
             "customer/transfertonexport",
             new { controller = "NexportIntegration", action = "GoToNexport" });
 
-        endpointRouteBuilder.MapControllerRoute("NexportLogin",
-            "login/",
+        endpointRouteBuilder.MapControllerRoute(NexportDefaults.NexportLoginRouteName,
+            NexportDefaults.NexportLoginRoutePattern,
             new { controller = "NexportCustomer", action = "Login", });
-        endpointRouteBuilder.MapControllerRoute("NexportLoginCheckoutAsGuest",
-            "login/checkoutasguest",
+        endpointRouteBuilder.MapControllerRoute(NexportDefaults.NexportLoginCheckoutAsGuestRouteName,
+            NexportDefaults.NexportLoginCheckoutAsGuestRoutePattern,
             new { controller = "NexportCustomer", action = "Login", checkoutAsGuest = true });
-        endpointRouteBuilder.MapControllerRoute("NexportRegistration",
-            "register/",
+        endpointRouteBuilder.MapControllerRoute(NexportDefaults.NexportRegistrationRouteName,
+            NexportDefaults.NexportRegistrationRoutePattern,
             new { controller = "NexportCustomer", action = "Register" });
         endpointRouteBuilder.MapControllerRoute("StoreList",
             "admin/store/list",

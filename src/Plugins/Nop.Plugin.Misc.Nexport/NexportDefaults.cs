@@ -15,6 +15,24 @@ public class NexportDefaults
 
     public static string NexportPluginAdminViewBasePath = "~/Plugins/Misc.Nexport/Areas/Admin/Views/";
 
+    public const string NexportLoginRouteName = "NexportLogin";
+
+    public const string NexportLoginCheckoutAsGuestRouteName = "NexportLoginCheckoutAsGuest";
+
+    public const string NexportRegistrationRouteName = "NexportRegistration";
+
+    public const string NexportLoginRoutePattern = "login/";
+
+    public const string NexportLoginCheckoutAsGuestRoutePattern = "login/checkoutasguest";
+
+    public const string NexportRegistrationRoutePattern = "register/";
+
+    public const string DefaultReturnUrlParameterName = "returnUrl";
+
+    public const int DefaultReturnUrlMaxLength = 512;
+
+    public const int DefaultReturnUrlUnwrapDepth = 10;
+
     /// <summary>
     /// Name of the Nexport redemption processing schedule task
     /// </summary>

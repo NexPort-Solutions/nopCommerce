@@ -13,21 +13,22 @@
     //page class
     NopHtml.AppendPageCssClassParts("html-login-page");
 
-    bool isRecursiveAuthReturnUrl(string url) =>
-        url.Contains("returnUrl=", StringComparison.OrdinalIgnoreCase) ||
-        url.StartsWith("/login", StringComparison.OrdinalIgnoreCase) ||
-        url.StartsWith("/register", StringComparison.OrdinalIgnoreCase);
+    var navigationContext = Model.NavigationContext ?? new NexportNavigationContextModel();
+    var loginRouteName = navigationContext.LoginRouteName;
+    var registerRouteName = navigationContext.RegisterRouteName;
+    var returnUrlParameterName = navigationContext.ReturnUrlParameterName;
+    var safeReturnUrl = navigationContext.SafeReturnUrl;
 
-    var requestedReturnUrl = Context.Request.Query["returnUrl"].ToString();
-    var safeReturnUrl = !string.IsNullOrWhiteSpace(requestedReturnUrl)
-        && Url.IsLocalUrl(requestedReturnUrl)
-        && !isRecursiveAuthReturnUrl(requestedReturnUrl)
-        && requestedReturnUrl.Length <= 512
-            ? requestedReturnUrl
-            : null;
+    var registerRouteValues = new RouteValueDictionary();
+    var loginRouteValues = new RouteValueDictionary();
+    if (!string.IsNullOrWhiteSpace(safeReturnUrl))
+    {
+        registerRouteValues[returnUrlParameterName] = safeReturnUrl;
+        loginRouteValues[returnUrlParameterName] = safeReturnUrl;
+    }
 
-    //register URL with a sanitized return URL (if specified)
-    var registerUrl = Url.RouteUrl("Register", new { returnUrl = safeReturnUrl }, webHelper.GetCurrentRequestProtocol());
+    var registerUrl = Url.RouteUrl(registerRouteName, registerRouteValues, webHelper.GetCurrentRequestProtocol());
+    var loginPostUrl = Url.RouteUrl(loginRouteName, loginRouteValues);
 }
 
 <div class="page login-page">
@@ -79,7 +80,7 @@
                 </div>
             }
             <div class="returning-wrapper fieldset">
-                <form asp-route="NexportLogin" asp-route-returnurl="@safeReturnUrl" method="post" autocomplete="off">
+                <form action="@loginPostUrl" method="post" autocomplete="off">
                     <div asp-validation-summary="ModelOnly" class="message-error">@T("Account.Login.Unsuccessful")</div>
                     <div class="title">
                         <strong>@T("Account.Login.ReturningCustomer")</strong>
