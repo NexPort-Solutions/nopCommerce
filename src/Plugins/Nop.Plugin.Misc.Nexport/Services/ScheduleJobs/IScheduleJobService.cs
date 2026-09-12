@@ -1,14 +1,14 @@
-﻿using Hangfire.Storage;
+using Hangfire.Storage;
 
 namespace Nop.Plugin.Misc.Nexport.Services.ScheduleJobs;
 
 public interface IScheduleJobService
 {
-    Task InitializeScheduleJobs();
+    Task InitializeScheduleJobsAsync();
 
-    Task RunJob(string jobId);
+    Task TriggerJobAsync(string jobId);
 
-    Task RemoveJob(string jobId);
+    Task RemoveJobAsync(string jobId);
 
     List<RecurringJobDto> GetAvailableScheduleJobs();
 }

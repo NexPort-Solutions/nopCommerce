@@ -518,7 +518,8 @@ public partial class NexportService
                 tokenExpiration = model.CustomTokenExpirationDate ?? DateTime.UtcNow.AddDays(30);
             }
 
-            var response = _nexportApiService.AuthenticateNexportApi(model.Url, model.Username, model.Password, tokenExpiration).Response;
+            var response = (await _nexportApiService.AuthenticateNexportApiAsync(model.Url, model.Username, model.Password,
+                tokenExpiration)).Response;
 
             _nexportSettings.AuthenticationToken = response.AccessToken.ToString();
             _nexportSettings.Url = model.Url;
@@ -547,13 +548,18 @@ public partial class NexportService
     }
 
     [CanBeNull]
-    public async Task<GetUserResponse> AuthenticateUserAsync(string username, string password)
+    public async Task<GetUserResponse> AuthenticateUserAsync(string username, string password,
+        CancellationToken cancellationToken = default)
     {
         GetUserResponse result;
         try
         {
-            var response = _nexportApiService.AuthenticateNexportUser(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                username, password);
+            var response = await _nexportApiService.AuthenticateNexportUserAsync(
+                _nexportSettings.Url,
+                _nexportSettings.AuthenticationToken,
+                username,
+                password,
+                cancellationToken);
 
             result = response.Response;
         }
@@ -569,7 +575,7 @@ public partial class NexportService
             }
             else
             {
-                var errorMsg = $"Error occurred during Web API call AuthenticateUser for username {username}";
+                const string errorMsg = "Error occurred during Web API call AuthenticateUser";
                 await _logger.ErrorAsync($"{errorMsg}", ex);
             }
 
@@ -584,7 +590,8 @@ public partial class NexportService
     {
         try
         {
-            var response = _nexportApiService.GetNexportUserByLogin(_nexportSettings.Url, _nexportSettings.AuthenticationToken, username);
+            var response = await _nexportApiService.GetNexportUserByLoginAsync(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, username);
 
             if (response.StatusCode == 409)
                 return null;
@@ -649,7 +656,7 @@ public partial class NexportService
 
         try
         {
-            var response = _nexportApiService.CreateNexportUser(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+            var response = await _nexportApiService.CreateNexportUserAsync(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
                 login, password, firstName, lastName, email, ownerOrgId, contactInfo);
 
             if (response.StatusCode == 200)
@@ -708,7 +715,8 @@ public partial class NexportService
     {
         try
         {
-            var response = _nexportApiService.GetNexportUserByUserId(_nexportSettings.Url, _nexportSettings.AuthenticationToken, userId);
+            var response = await _nexportApiService.GetNexportUserByUserIdAsync(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, userId);
 
             if (response.StatusCode == 200)
                 return response.Response;
@@ -762,7 +770,8 @@ public partial class NexportService
     {
         try
         {
-            var response = _nexportApiService.GetNexportUserContactInfo(_nexportSettings.Url, _nexportSettings.AuthenticationToken, userId);
+            var response = await _nexportApiService.GetNexportUserContactInfoAsync(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, userId);
 
             if (response.StatusCode == 200)
                 return response.Response;
@@ -819,8 +828,8 @@ public partial class NexportService
 
         try
         {
-            var response = _nexportApiService.EditNexportUserContactInfo(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                userId, updatedInfo);
+            var response = await _nexportApiService.EditNexportUserContactInfoAsync(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, userId, updatedInfo);
 
             if (response.StatusCode == 200)
                 return response.Response;
@@ -880,7 +889,7 @@ public partial class NexportService
         {
             if (_nexportSettings.RootOrganizationId.HasValue)
             {
-                var response = _nexportApiService.SearchNexportDirectory(_nexportSettings.Url,
+                var response = await _nexportApiService.SearchNexportDirectoryAsync(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken,
                     _nexportSettings.RootOrganizationId.Value, searchTerm, page);
 
@@ -917,7 +926,7 @@ public partial class NexportService
             int remainderItemsCount;
             do
             {
-                var result = _nexportApiService.GetNexportOrganizations(_nexportSettings.Url,
+                var result = await _nexportApiService.GetNexportOrganizationsAsync(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, baseOrgId, page);
                 items.AddRange(result.OrganizationList);
 
@@ -974,7 +983,7 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.GetNexportSubscription(_nexportSettings.Url,
+            result = await _nexportApiService.GetNexportSubscriptionAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, userId, orgId);
         }
         catch (Exception ex)
@@ -1014,10 +1023,10 @@ public partial class NexportService
 
             do
             {
-                var result = _nexportApiService.GetNexportSubscriptions(_nexportSettings.Url,
+                var result = await _nexportApiService.GetNexportSubscriptionsAsync(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, userId, page);
 
-                if(result.Subscriptions != null)
+                if (result.Subscriptions != null)
                     items.AddRange(result.Subscriptions);
 
                 remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
@@ -1051,7 +1060,7 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.SetNexportCustomerProfileFieldValues(_nexportSettings.Url,
+            result = await _nexportApiService.SetNexportCustomerProfileFieldValuesAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, subscriberId, profileFields);
         }
         catch (Exception ex)
@@ -1086,7 +1095,7 @@ public partial class NexportService
             {
                 try
                 {
-                    var result = _nexportApiService.GetNexportOrganizations(
+                    var result = await _nexportApiService.GetNexportOrganizationsAsync(
                         _nexportSettings.Url, _nexportSettings.AuthenticationToken,
                         subscription.OrgId);
 
@@ -1151,7 +1160,7 @@ public partial class NexportService
                 int remainderItemsCount;
                 do
                 {
-                    var result = _nexportApiService.GetNexportEnrollments(_nexportSettings.Url,
+                    var result = await _nexportApiService.GetNexportEnrollmentsAsync(_nexportSettings.Url,
                         _nexportSettings.AuthenticationToken, searchFilter, page);
 
                     items.AddRange(result.EnrollmentList);
@@ -1193,7 +1202,7 @@ public partial class NexportService
             int remainderItemsCount;
             do
             {
-                var result = _nexportApiService.GetNexportSectionEnrollments(_nexportSettings.Url,
+                var result = await _nexportApiService.GetNexportSectionEnrollmentsAsync(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, organizationId, userId);
 
                 items.AddRange(result.SectionEnrollments);
@@ -1236,7 +1245,7 @@ public partial class NexportService
                 int remainderItemsCount;
                 do
                 {
-                    var result = _nexportApiService.GetNexportCatalogs(_nexportSettings.Url,
+                    var result = await _nexportApiService.GetNexportCatalogsAsync(_nexportSettings.Url,
                         _nexportSettings.AuthenticationToken, orgId.Value, page);
 
                     items.AddRange(result.CatalogList);
@@ -1275,7 +1284,7 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.GetNexportCatalogDetails(_nexportSettings.Url,
+            result = await _nexportApiService.GetNexportCatalogDetailsAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, catalogId);
         }
         catch (Exception ex)
@@ -1305,7 +1314,7 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.GetNexportCatalogDescription(_nexportSettings.Url,
+            result = await _nexportApiService.GetNexportCatalogDescriptionAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, catalogId);
         }
         catch (Exception ex)
@@ -1335,7 +1344,7 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.GetNexportCatalogCreditHours(_nexportSettings.Url,
+            result = await _nexportApiService.GetNexportCatalogCreditHoursAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, catalogId);
         }
         catch (Exception ex)
@@ -1370,7 +1379,7 @@ public partial class NexportService
                 int remainderItemsCount;
                 do
                 {
-                    var result = _nexportApiService.GetNexportSyllabuses(_nexportSettings.Url,
+                    var result = await _nexportApiService.GetNexportSyllabusesAsync(_nexportSettings.Url,
                         _nexportSettings.AuthenticationToken, catalogId.Value, page);
 
                     items.AddRange(result.SyllabusList);
@@ -1409,7 +1418,7 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.GetNexportSectionDetails(_nexportSettings.Url,
+            result = await _nexportApiService.GetNexportSectionDetailsAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, sectionId);
         }
         catch (Exception ex)
@@ -1439,7 +1448,7 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.GetNexportSectionDescription(_nexportSettings.Url,
+            result = await _nexportApiService.GetNexportSectionDescriptionAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, sectionId);
         }
         catch (Exception ex)
@@ -1469,7 +1478,7 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.GetNexportSectionObjectives(_nexportSettings.Url,
+            result = await _nexportApiService.GetNexportSectionObjectivesAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, sectionId);
         }
         catch (Exception ex)
@@ -1499,8 +1508,8 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.GetNexportSectionEnrollment(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                orgId, userId, syllabusId);
+            result = await _nexportApiService.GetNexportSectionEnrollmentAsync(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, orgId, userId, syllabusId);
         }
         catch (Exception ex)
         {
@@ -1529,7 +1538,7 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.GetNexportTrainingPlanDetails(_nexportSettings.Url,
+            result = await _nexportApiService.GetNexportTrainingPlanDetailsAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, trainingPlanId);
         }
         catch (Exception ex)
@@ -1559,7 +1568,7 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.GetNexportTrainingPlanDescription(_nexportSettings.Url,
+            result = await _nexportApiService.GetNexportTrainingPlanDescriptionAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, trainingPlanId);
         }
         catch (Exception ex)
@@ -1589,8 +1598,8 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.GetNexportTrainingPlanEnrollment(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                orgId, userId, trainingPlanId);
+            result = await _nexportApiService.GetNexportTrainingPlanEnrollmentAsync(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, orgId, userId, trainingPlanId);
         }
         catch (Exception ex)
         {
@@ -1619,7 +1628,8 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.GetNexportEnrollmentCertificateUrl(_nexportSettings.Url, _nexportSettings.AuthenticationToken, enrollmentId);
+            result = await _nexportApiService.GetNexportEnrollmentCertificateUrlAsync(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, enrollmentId);
         }
         catch (Exception ex)
         {
@@ -1649,7 +1659,7 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.DropNexportEnrollment(_nexportSettings.Url,
+            result = await _nexportApiService.DropNexportEnrollmentAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, enrollmentId);
         }
         catch (Exception ex)
@@ -1679,7 +1689,7 @@ public partial class NexportService
 
         try
         {
-            result = _nexportApiService.DestroyNexportEnrollment(_nexportSettings.Url,
+            result = await _nexportApiService.DestroyNexportEnrollmentAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, enrollmentId);
         }
         catch (Exception ex)
@@ -1707,7 +1717,8 @@ public partial class NexportService
     {
         try
         {
-            var response = _nexportApiService.GetNexportInvoice(_nexportSettings.Url, _nexportSettings.AuthenticationToken, invoiceId);
+            var response = await _nexportApiService.GetNexportInvoiceAsync(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, invoiceId);
 
             if (response.StatusCode == 409)
                 return null;
@@ -1755,7 +1766,7 @@ public partial class NexportService
     {
         try
         {
-            var beginOrderResult = _nexportApiService.BeginNexportInvoiceTransaction(_nexportSettings.Url,
+            var beginOrderResult = await _nexportApiService.BeginNexportInvoiceTransactionAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, orgId, purchasingAgentId, purchasingGroupId);
 
             return beginOrderResult.InvoiceId;
@@ -1791,7 +1802,7 @@ public partial class NexportService
 
         try
         {
-            addInvoiceItemResult = _nexportApiService.AddNexportInvoiceItem(_nexportSettings.Url,
+            addInvoiceItemResult = await _nexportApiService.AddNexportInvoiceItemAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, invoiceId, nexportProductId,
                 productType, subscriptionOrgId, groupMembershipIds,
                 productCost, note, accessExpirationDate, accessExpirationTimeLimit,
@@ -1829,7 +1840,7 @@ public partial class NexportService
 
         try
         {
-            addInvoiceItemsResult = _nexportApiService.AddNexportInvoiceItems(_nexportSettings.Url,
+            addInvoiceItemsResult = await _nexportApiService.AddNexportInvoiceItemsAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, invoiceId, nexportProductId,
                 productType, subscriptionOrgId, groupMembershipIds,
                 productCost, quantity, note, accessExpirationDate, accessExpirationTimeLimit,
@@ -1861,7 +1872,7 @@ public partial class NexportService
         CommitInvoiceResponse commitInvoiceResult;
         try
         {
-            commitInvoiceResult = _nexportApiService.CommitNexportInvoiceTransaction(_nexportSettings.Url,
+            commitInvoiceResult = await _nexportApiService.CommitNexportInvoiceTransactionAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, invoiceId);
         }
         catch (Exception ex)
@@ -1892,7 +1903,7 @@ public partial class NexportService
 
         try
         {
-            _nexportApiService.AddNexportInvoicePayment(_nexportSettings.Url,
+            await _nexportApiService.AddNexportInvoicePaymentAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, invoiceId, totalCost, _nexportSettings.MerchantAccountId.Value,
                 payeeId, InvoicePaymentRequest.PaymentProcessorEnum.NopCommercePlugin,
                 nopOrderId.ToString(), dueDate, note: "Payment for NopCommerce order");
@@ -1933,20 +1944,20 @@ public partial class NexportService
             {
                 if (mapping.Type == NexportProductTypeEnum.Catalog)
                 {
-                    redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
+                    redeemInvoiceResult = await _nexportApiService.RedeemNexportInvoiceAsync(_nexportSettings.Url,
                         _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode,
                         mapping.NexportCatalogId, Enums.ProductTypeEnum.Catalog, updatedInvoiceFields);
                 }
                 else
                 {
-                    redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
+                    redeemInvoiceResult = await _nexportApiService.RedeemNexportInvoiceAsync(_nexportSettings.Url,
                         _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode,
                         mapping.NexportCatalogSyllabusLinkId, Enums.ProductTypeEnum.Syllabus, updatedInvoiceFields);
                 }
             }
             else
             {
-                redeemInvoiceResult = _nexportApiService.RedeemNexportInvoice(_nexportSettings.Url,
+                redeemInvoiceResult = await _nexportApiService.RedeemNexportInvoiceAsync(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, redeemingUserId, redemptionAction, invoiceItem.InvoiceItemRedemptionCode,
                     updatedInvoiceFields: updatedInvoiceFields);
             }
@@ -1995,7 +2006,8 @@ public partial class NexportService
 
         try
         {
-            var response = _nexportApiService.GetNexportInvoiceRedemption(_nexportSettings.Url, _nexportSettings.AuthenticationToken, invoiceItemId);
+            var response = await _nexportApiService.GetNexportInvoiceRedemptionAsync(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, invoiceItemId);
 
             if (response.StatusCode == 409)
                 return null;
@@ -2052,7 +2064,7 @@ public partial class NexportService
 
         try
         {
-            updateInvoiceItemResult = _nexportApiService.UpdateInvoiceItem(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+            updateInvoiceItemResult = await _nexportApiService.UpdateInvoiceItemAsync(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
                 invoiceItemId, updatedInvoiceFields);
         }
         catch (Exception ex)
@@ -2113,7 +2125,7 @@ public partial class NexportService
                 {
                     if (redemption.RedemptionUserId != null)
                     {
-                        signInResult = _nexportApiService.NexportSingleSignOn(_nexportSettings.Url,
+                        signInResult = await _nexportApiService.NexportSingleSignOnAsync(_nexportSettings.Url,
                             _nexportSettings.AuthenticationToken, redemption.OrganizationId,
                             redemption.RedemptionUserId.Value, (await _storeContext.GetCurrentStoreAsync()).Url);
                     }
@@ -2122,7 +2134,7 @@ public partial class NexportService
                 {
                     if (redemption.RedemptionEnrollmentId != null)
                     {
-                        signInResult = _nexportApiService.NexportClassroomSingleSignOn(_nexportSettings.Url,
+                        signInResult = await _nexportApiService.NexportClassroomSingleSignOnAsync(_nexportSettings.Url,
                             _nexportSettings.AuthenticationToken, redemption.RedemptionEnrollmentId.Value,
                             (await _storeContext.GetCurrentStoreAsync()).Url);
                     }
@@ -2162,7 +2174,7 @@ public partial class NexportService
 
         try
         {
-            var response = _nexportApiService.NexportSingleSignOn(_nexportSettings.Url,
+            var response = await _nexportApiService.NexportSingleSignOnAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken,
                 orgId, userId, (await _storeContext.GetCurrentStoreAsync()).Url);
 
@@ -2193,7 +2205,7 @@ public partial class NexportService
     {
         try
         {
-            var response = _nexportApiService.NexportClassroomSingleSignOn(_nexportSettings.Url,
+            var response = await _nexportApiService.NexportClassroomSingleSignOnAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, enrollmentId, (await _storeContext.GetCurrentStoreAsync()).Url);
 
             if (response.ApiErrorEntity.ErrorCode == 0)
@@ -2226,7 +2238,7 @@ public partial class NexportService
 
         try
         {
-            var createMembershipResult = _nexportApiService.CreateNexportMemberships(_nexportSettings.Url,
+            var createMembershipResult = await _nexportApiService.CreateNexportMembershipsAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, userId, groupIds);
 
             if (createMembershipResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
@@ -2258,7 +2270,7 @@ public partial class NexportService
     {
         try
         {
-            var removeMembershipResult = _nexportApiService.RemoveNexportMemberships(_nexportSettings.Url,
+            var removeMembershipResult = await _nexportApiService.RemoveNexportMembershipsAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, membershipIds);
 
             if (removeMembershipResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
@@ -3256,7 +3268,7 @@ public partial class NexportService
 
         try
         {
-            var resetInvoiceResult = _nexportApiService.ResetInvoiceRedemption(_nexportSettings.Url,
+            var resetInvoiceResult = await _nexportApiService.ResetInvoiceRedemptionAsync(_nexportSettings.Url,
                 _nexportSettings.AuthenticationToken, invoiceItem.InvoiceItemId, note: note);
 
             if (resetInvoiceResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
@@ -3315,7 +3327,7 @@ public partial class NexportService
 
         try
         {
-            var hasGroupPermissionResult = _nexportApiService.HasGroupPermission(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
+            var hasGroupPermissionResult = await _nexportApiService.HasGroupPermissionAsync(_nexportSettings.Url, _nexportSettings.AuthenticationToken,
                 userId, groupId, permission);
 
             if (hasGroupPermissionResult.ApiErrorEntity.ErrorCode != ApiErrorEntity.ErrorCodeEnum.NoError)
@@ -3373,7 +3385,7 @@ public partial class NexportService
         {
             try
             {
-                var result = _nexportApiService.SearchGroupsForPermission(
+                var result = await _nexportApiService.SearchGroupsForPermissionAsync(
                     _nexportSettings.Url,
                     _nexportSettings.AuthenticationToken,
                     userMapping.NexportUserId,
@@ -3410,7 +3422,7 @@ public partial class NexportService
             int remainderItemsCount;
             do
             {
-                var result = _nexportApiService.SearchGroupsForPermission(
+                var result = await _nexportApiService.SearchGroupsForPermissionAsync(
                     _nexportSettings.Url, _nexportSettings.AuthenticationToken, userId,
                     groupId, permission, page);
                 if (result.SearchGroupsForPermissionList != null)
@@ -3449,7 +3461,7 @@ public partial class NexportService
         {
             if (_nexportSettings.RootOrganizationId.HasValue)
             {
-                var response = _nexportApiService.GetNexportUsers(_nexportSettings.Url,
+                var response = await _nexportApiService.GetNexportUsersAsync(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken,
                     searchTerm, page);
 

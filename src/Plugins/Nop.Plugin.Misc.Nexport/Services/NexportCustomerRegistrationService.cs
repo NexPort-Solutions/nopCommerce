@@ -27,6 +27,8 @@ public class NexportCustomerLoginResults
     public CustomerLoginResults LoginResult;
 
     public int? NopUserId { get; set; }
+
+    public Customer Customer { get; set; }
 }
 
 public class NexportCustomerRegistrationService : CustomerRegistrationService
@@ -116,7 +118,8 @@ public class NexportCustomerRegistrationService : CustomerRegistrationService
         _actionContextAccessor = actionContextAccessor;
     }
 
-    public async Task<NexportCustomerLoginResults> ValidateNexportCustomerAsync(string usernameOrEmail, string password)
+    public async Task<NexportCustomerLoginResults> ValidateNexportCustomerAsync(string usernameOrEmail, string password,
+        CancellationToken cancellationToken = default)
     {
         var isValidEmail = usernameOrEmail.IsValidEmail();
 
@@ -126,10 +129,10 @@ public class NexportCustomerRegistrationService : CustomerRegistrationService
 
         if (customer == null)
         {
-            var nexportUserResponse = await _nexportService.AuthenticateUserAsync(usernameOrEmail, password)!;
+            var nexportUserResponse = await _nexportService.AuthenticateUserAsync(usernameOrEmail, password, cancellationToken)!;
 
             if (nexportUserResponse == null)
-                throw new Exception($"Cannot authenticate the user with the login {usernameOrEmail}");
+                throw new Exception("Cannot authenticate the user with the provided credentials");
 
             if (nexportUserResponse.ApiErrorEntity.ErrorCode == ApiErrorEntity.ErrorCodeEnum.AuthenticationError)
                 return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.WrongPassword };
@@ -191,7 +194,8 @@ public class NexportCustomerRegistrationService : CustomerRegistrationService
             return new NexportCustomerLoginResults
             {
                 LoginResult = CustomerLoginResults.Successful,
-                NopUserId = customer.Id
+                NopUserId = customer.Id,
+                Customer = customer
             };
         }
 
@@ -232,7 +236,12 @@ public class NexportCustomerRegistrationService : CustomerRegistrationService
         customer.LastLoginDateUtc = DateTime.UtcNow;
         await _customerService.UpdateCustomerAsync(customer);
 
-        return new NexportCustomerLoginResults { LoginResult = CustomerLoginResults.Successful };
+        return new NexportCustomerLoginResults
+        {
+            LoginResult = CustomerLoginResults.Successful,
+            NopUserId = customer.Id,
+            Customer = customer
+        };
     }
 
     public override async Task<IActionResult> SignInCustomerAsync(Customer customer, string returnUrl, bool isPersist = false)

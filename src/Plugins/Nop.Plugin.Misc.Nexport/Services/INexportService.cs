@@ -265,6 +265,8 @@ public interface INexportService
 
     Task<IList<NexportRegistrationField>> GetNexportRegistrationFields(int storeId);
 
+    Task<NexportRegistrationFieldDefinition> GetNexportRegistrationFieldDefinition(int storeId);
+
     Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsByCategoryId(int categoryId);
 
     Task<IPagedList<NexportRegistrationField>> GetNexportRegistrationFieldsPagination(IList<int> storeIds,

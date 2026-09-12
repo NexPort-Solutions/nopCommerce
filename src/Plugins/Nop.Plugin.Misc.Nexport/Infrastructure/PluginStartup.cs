@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using FluentMigrator.Runner;
@@ -16,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using NexportApi.Client;
 using Nop.Core.Infrastructure;
 using Nop.Data;
+using Nop.Plugin.Misc.Nexport.Configuration;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
 using Nop.Plugin.Misc.Nexport.Controllers;
 using Nop.Plugin.Misc.Nexport.Factories;
@@ -29,6 +32,7 @@ using Nop.Services.Customers;
 using Nop.Services.Orders;
 using Nop.Services.Stores;
 using Nop.Web.Infrastructure;
+using ApiConfiguration = NexportApi.Client.Configuration;
 using ILogger = Nop.Services.Logging.ILogger;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure;
@@ -49,20 +53,27 @@ public class PluginStartup : INopStartup
             string.IsNullOrWhiteSpace(dataSettings.ConnectionString))
             return;
 
+        var hangfireConfig = configuration.GetSection(NexportHangfireConfig.SectionName).Get<NexportHangfireConfig>() ?? new NexportHangfireConfig();
+        ValidateHangfireConfig(hangfireConfig);
+
+        var hangfireConnectionString = configuration.GetConnectionString("NexportHangfire");
+        if (string.IsNullOrWhiteSpace(hangfireConnectionString))
+            hangfireConnectionString = dataSettings.ConnectionString;
+
         services.AddHangfire(conf => conf
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
-            .UseSqlServerStorage(dataSettings.ConnectionString)
+            .UseSqlServerStorage(hangfireConnectionString)
             .UseRecurringJobAdmin(typeof(NopStartup).Assembly, typeof(NexportPlugin).Assembly));
 
-        // Add the processing server as IHostedService
-        var workerCount = configuration.GetValue<int?>("NexportHangfire:WorkerCount") ?? 5;
+        services.AddScoped<IScheduleJobService, ScheduleJobService>();
+        services.AddHostedService<NexportRecurringJobStartupService>();
 
         services.AddHangfireServer(options =>
         {
-            options.WorkerCount = workerCount;
-            options.SchedulePollingInterval = TimeSpan.FromSeconds(5);
+            options.WorkerCount = hangfireConfig.WorkerCount;
+            options.SchedulePollingInterval = TimeSpan.FromSeconds(hangfireConfig.SchedulePollingIntervalSeconds);
         });
 
         services.Configure<RazorViewEngineOptions>(options =>
@@ -83,11 +94,25 @@ public class PluginStartup : INopStartup
             options.Filters.Add<ReturnRequestActionFilter>();
         });
 
-        var apiConfiguration = new Configuration();
+        var apiConfiguration = new ApiConfiguration();
         services.AddSingleton(apiConfiguration);
 
-        services.AddTransient<ISynchronousClient>(a => new ApiClient(apiConfiguration.BasePath));
-        services.AddTransient<IAsynchronousClient>(a => new ApiClient(apiConfiguration.BasePath));
+        services.AddHttpClient("NexportApi", client => client.Timeout = Timeout.InfiniteTimeSpan)
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+            {
+                ConnectTimeout = TimeSpan.FromSeconds(10),
+                MaxConnectionsPerServer = 50,
+                PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+                AutomaticDecompression = DecompressionMethods.All
+            })
+            .SetHandlerLifetime(TimeSpan.FromMinutes(10));
+
+        services.AddTransient<ISynchronousClient>(provider => new ApiClient(
+            provider.GetRequiredService<IHttpClientFactory>().CreateClient("NexportApi"),
+            apiConfiguration.BasePath));
+        services.AddTransient<IAsynchronousClient>(provider => new ApiClient(
+            provider.GetRequiredService<IHttpClientFactory>().CreateClient("NexportApi"),
+            apiConfiguration.BasePath));
 
         services.AddScoped<ILogger, DefaultLogger>();
 
@@ -102,8 +127,6 @@ public class PluginStartup : INopStartup
         services.AddScoped<INexportPluginModelFactory, NexportPluginModelFactory>();
         services.AddScoped<INexportSettingModelFactory, NexportSettingModelFactory>();
         services.AddScoped<INexportWholesaleService, NexportNexportWholesaleService>();
-        services.AddScoped<IScheduleJobService, ScheduleJobService>();
-
         services.AddScoped<NexportIntegrationController>();
         services.AddScoped<NexportSettingController>();
 
@@ -184,8 +207,19 @@ public class PluginStartup : INopStartup
                 Task.Run(() => nexportPluginService.AddMessageTemplatesAsync());
                 Task.Run(() => nexportPluginService.AddOrUpdateResourcesAsync());
                 Task.Run(() => nexportPluginService.InstallPermissionProviderAsync());
-                Task.Run(() => InitScheduleJobs(application));
             }
+        }
+    }
+
+    private static void ValidateHangfireConfig(NexportHangfireConfig config)
+    {
+        if (config.WorkerCount is < 1 or > 20)
+            throw new InvalidOperationException($"{NexportHangfireConfig.SectionName}:WorkerCount must be between 1 and 20.");
+
+        if (config.SchedulePollingIntervalSeconds is < 1 or > 300)
+        {
+            throw new InvalidOperationException(
+                $"{NexportHangfireConfig.SectionName}:SchedulePollingIntervalSeconds must be between 1 and 300.");
         }
     }
 
@@ -214,22 +248,6 @@ public class PluginStartup : INopStartup
         catch (Exception ex)
         {
             await logger.ErrorAsync($"Error occurred during database migration process: {ex.Message}", ex);
-        }
-    }
-
-    private async Task InitScheduleJobs(IApplicationBuilder application)
-    {
-        var logger = EngineContext.Current.Resolve<ILogger>();
-
-        try
-        {
-            using var serviceScope = application.ApplicationServices.CreateScope();
-            var scheduleJobService = serviceScope.ServiceProvider.GetRequiredService<IScheduleJobService>();
-            await scheduleJobService.InitializeScheduleJobs();
-        }
-        catch (Exception ex)
-        {
-            await logger.ErrorAsync($"Error occurred during recurring job scheduling initialization: {ex.Message}", ex);
         }
     }
 

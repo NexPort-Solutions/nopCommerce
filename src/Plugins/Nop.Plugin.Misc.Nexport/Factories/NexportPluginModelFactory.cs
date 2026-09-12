@@ -1451,67 +1451,53 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         Store store)
     {
         var model = new NexportCustomerRegistrationFieldsModel();
+        var definition = await _nexportService.GetNexportRegistrationFieldDefinition(store.Id);
+        var categoryById = definition.Categories.ToDictionary(category => category.Id);
+        var optionsByFieldId = definition.Options.ToLookup(option => option.FieldId);
+        var attributesByFieldId = definition.Attributes.ToLookup(attribute => attribute.EntityId);
 
-        var availableFields = await _nexportService.GetNexportRegistrationFields(store.Id);
+        NexportRegistrationFieldModel PrepareFieldModel(NexportRegistrationField field)
+        {
+            var fieldModel = field.ToModel<NexportRegistrationFieldModel>();
+            var attributes = attributesByFieldId[field.Id];
 
-        var fieldsWithCategory = (await availableFields.Where(x => x.FieldCategoryId != null)
-                .ToAsyncEnumerable().GroupByAwait(async x =>
-                {
-                    if (x.FieldCategoryId == null)
-                        return null;
+            fieldModel.AllowMultipleSelection = GetBooleanAttribute(
+                attributes,
+                nameof(fieldModel.AllowMultipleSelection));
+            fieldModel.DisplayOptionByAscendingOrder = GetBooleanAttribute(
+                attributes,
+                nameof(fieldModel.DisplayOptionByAscendingOrder));
+            fieldModel.Options = optionsByFieldId[field.Id]
+                .Select(option => option.ToModel<NexportRegistrationFieldOptionModel>())
+                .ToList();
 
-                    return await _nexportService.GetNexportRegistrationFieldCategoryById(x.FieldCategoryId.Value);
-                }, comparer: new NexportRegistrationFieldCategoryComparer())
-                .ToDictionaryAwaitAsync(
-                    async x => x.Key.ToModel<NexportRegistrationFieldCategoryModel>(),
-                    x => x
-                        .SelectAwait(async f =>
-                        {
-                            var fieldModel = f.ToModel<NexportRegistrationFieldModel>();
-                            if (fieldModel.Type is NexportRegistrationFieldType.SelectCheckbox
-                                or NexportRegistrationFieldType.SelectDropDown)
-                            {
-                                if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox)
-                                    fieldModel.AllowMultipleSelection =
-                                        await _genericAttributeService.GetAttributeAsync(f,
-                                            nameof(fieldModel.AllowMultipleSelection), defaultValue: false);
+            return fieldModel;
+        }
 
-                                fieldModel.DisplayOptionByAscendingOrder =
-                                    await _genericAttributeService.GetAttributeAsync(f,
-                                        nameof(fieldModel.DisplayOptionByAscendingOrder), defaultValue: false);
-                            }
+        model.RegistrationFieldsWithCategory = definition.Fields
+            .Where(field => field.FieldCategoryId.HasValue && categoryById.ContainsKey(field.FieldCategoryId.Value))
+            .GroupBy(field => categoryById[field.FieldCategoryId.Value])
+            .OrderBy(group => group.Key.DisplayOrder)
+            .ThenBy(group => group.Key.Title)
+            .ToDictionary(
+                group => group.Key.ToModel<NexportRegistrationFieldCategoryModel>(),
+                group => group.Select(PrepareFieldModel).OrderBy(field => field.DisplayOrder).ToList());
 
-                            return fieldModel;
-                        }).OrderBy(f => f.DisplayOrder).ToListAsync()))
-            .OrderBy(x => x.Key.DisplayOrder)
-            .ThenBy(x => x.Key.Title);
-
-        model.RegistrationFieldsWithCategory = fieldsWithCategory.ToDictionary(
-            x => x.Key,
-            x => x.Value);
-
-        model.RegistrationFieldsWithoutCategory = await availableFields
-            .Where(x => x.FieldCategoryId == null)
-            .OrderBy(x => x.DisplayOrder)
-            .SelectAwait(async f =>
-            {
-                var fieldModel = f.ToModel<NexportRegistrationFieldModel>();
-                if (fieldModel.Type is NexportRegistrationFieldType.SelectCheckbox
-                    or NexportRegistrationFieldType.SelectDropDown)
-                {
-                    if (fieldModel.Type == NexportRegistrationFieldType.SelectCheckbox)
-                        fieldModel.AllowMultipleSelection = await _genericAttributeService.GetAttributeAsync(f,
-                            nameof(fieldModel.AllowMultipleSelection), defaultValue: false);
-
-                    fieldModel.DisplayOptionByAscendingOrder = await _genericAttributeService.GetAttributeAsync(f,
-                        nameof(fieldModel.DisplayOptionByAscendingOrder), defaultValue: false);
-                }
-
-                return fieldModel;
-            })
-            .ToListAsync();
+        model.RegistrationFieldsWithoutCategory = definition.Fields
+            .Where(field => !field.FieldCategoryId.HasValue)
+            .OrderBy(field => field.DisplayOrder)
+            .Select(PrepareFieldModel)
+            .ToList();
 
         return model;
+    }
+
+    private static bool GetBooleanAttribute(IEnumerable<GenericAttribute> attributes, string key)
+    {
+        var value = attributes.FirstOrDefault(attribute =>
+            attribute.Key.Equals(key, StringComparison.InvariantCultureIgnoreCase))?.Value;
+
+        return bool.TryParse(value, out var result) && result;
     }
 
     public async Task<NexportAddCustomerRegistrationFieldsModel> PrepareNexportAddCustomerRegistrationFieldsModel(

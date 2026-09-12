@@ -1,55 +1,47 @@
-﻿using System.Reflection;
+using System.Linq.Expressions;
 using Hangfire;
 using Hangfire.Storage;
-using Microsoft.Extensions.DependencyInjection;
-using Nop.Plugin.Misc.Nexport.Extensions;
-using Nop.Services.Logging;
+using Nop.Plugin.Misc.Nexport.Services.Tasks;
 
 namespace Nop.Plugin.Misc.Nexport.Services.ScheduleJobs;
 
-public class ScheduleJobService(
-    IServiceProvider serviceProvider,
-    ILogger logger)
-    : IScheduleJobService
+public class ScheduleJobService(IRecurringJobManager recurringJobManager) : IScheduleJobService
 {
-    public async Task InitializeScheduleJobs()
+    public Task InitializeScheduleJobsAsync()
     {
-        try
-        {
-            // Get all the schedule jobs that implement the interface IScheduleTask
-            var scheduleJobImplementations = Assembly.GetExecutingAssembly().GetTypes()
-                .Where(x => x.GetInterfaces().Contains(typeof(INexportScheduleJob)));
+        AddOrUpdate<NexportOrderProcessingScheduleJob>("NexportOrderProcessing", "*/5 * * * * *", job => job.ExecuteAsync());
+        AddOrUpdate<NexportInvoiceResetRedemptionScheduleJob>("NexportInvoiceResetRedemption", "*/5 * * * * *",
+            job => job.ExecuteAsync());
+        AddOrUpdate<NexportInvoiceRedemptionScheduleJob>("NexportInvoiceRedemption", "*/30 * * * * *", job => job.ExecuteAsync());
+        AddOrUpdate<NexportSupplementalInfoAnswerProcessingScheduleJob>("NexportSupplementalInfoAnswerProcessing", "*/30 * * * * *",
+            job => job.ExecuteAsync());
+        AddOrUpdate<NexportRegistrationFieldSynchronizationScheduleJob>("NexportRegistrationFieldSynchronization", "0 */5 * * * *",
+            job => job.ExecuteAsync());
+        AddOrUpdate<NexportGroupMembershipRemovalScheduleJob>("NexportGroupMembershipRemoval", "*/30 * * * * *",
+            job => job.ExecuteAsync());
 
-            foreach (var instanceType in scheduleJobImplementations)
-            {
-                // Create individual schedule job object instance
-                var scheduleTaskObject = (INexportScheduleJob)ActivatorUtilities.CreateInstance(serviceProvider, instanceType);
-                var scheduleJobIntervalTimespan = TimeSpan.FromSeconds(scheduleTaskObject.Interval).ConvertToCronExpression();
-                RecurringJob.AddOrUpdate(
-                    scheduleTaskObject.JobName,
-                    () => scheduleTaskObject.ExecuteAsync(),
-                    scheduleJobIntervalTimespan);
-            }
-        }
-        catch (Exception ex)
-        {
-            await logger.ErrorAsync("Unable to initialize schedule jobs!", ex);
-            throw;
-        }
+        return Task.CompletedTask;
     }
 
-    public Task RunJob(string jobId)
+    public Task TriggerJobAsync(string jobId)
     {
-        return Task.Run(() => RecurringJob.RemoveIfExists(jobId));
+        recurringJobManager.Trigger(jobId);
+        return Task.CompletedTask;
     }
 
-    public Task RemoveJob(string jobId)
+    public Task RemoveJobAsync(string jobId)
     {
-        return Task.Run(() => RecurringJob.TriggerJob(jobId));
+        recurringJobManager.RemoveIfExists(jobId);
+        return Task.CompletedTask;
     }
 
     public List<RecurringJobDto> GetAvailableScheduleJobs()
     {
         return JobStorage.Current.GetConnection().GetRecurringJobs();
+    }
+
+    private void AddOrUpdate<T>(string jobId, string cronExpression, Expression<Func<T, Task>> executeExpression)
+    {
+        recurringJobManager.AddOrUpdate(jobId, executeExpression, cronExpression, new RecurringJobOptions());
     }
 }

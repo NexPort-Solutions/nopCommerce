@@ -6,6 +6,7 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Plugin.Misc.Nexport.Services.ScheduleJobs;
 using Nop.Services.Cms;
 using Nop.Services.Common;
@@ -35,7 +36,7 @@ public class NexportInvoiceResetRedemptionScheduleJob(
 
     public long Interval { get; set; } = 5; // Default to 5 seconds
 
-    [DisableConcurrentExecution(120)]
+    [SkipConcurrentExecution]
     public async Task ExecuteAsync()
     {
         if (!await widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
@@ -49,13 +50,12 @@ public class NexportInvoiceResetRedemptionScheduleJob(
             _batchSize = await settingService.GetSettingByKeyAsync(NexportDefaults.NexportOrderInvoiceResetRedemptionTaskBatchSizeSettingKey,
                 NexportDefaults.NexportOrderInvoiceResetRedemptionTaskBatchSize);
 
-            var queueItems = nexportOrderInvoiceResetRedemptionQueueRepository
+            var queueItems = await nexportOrderInvoiceResetRedemptionQueueRepository
                 .Table
                 .OrderBy(q => q.UtcLastFailedDate)
                 .ThenBy(q => q.UtcDateCreated)
-                .Select(q => q.Id)
                 .Take(_batchSize)
-                .ToList();
+                .ToListAsync();
 
             await ProcessNexportOrderInvoiceResetRedemptionsAsync(queueItems);
         }
@@ -65,18 +65,13 @@ public class NexportInvoiceResetRedemptionScheduleJob(
         }
     }
 
-    public async Task ProcessNexportOrderInvoiceResetRedemptionsAsync(IList<int> queueItemIds)
+    public async Task ProcessNexportOrderInvoiceResetRedemptionsAsync(IList<NexportOrderInvoiceResetRedemptionQueueItem> queueItems)
     {
         try
         {
-            foreach (var queueItemId in queueItemIds)
+            foreach (var queueItem in queueItems)
                 try
                 {
-                    var queueItem = await nexportOrderInvoiceResetRedemptionQueueRepository.GetByIdAsync(queueItemId);
-
-                    if (queueItem == null)
-                        return;
-
                     await logger.DebugAsync($"Begin resetting order invoice redemption with invoice item id: {queueItem.OrderInvoiceItemId}");
 
                     var invoiceItem = await nexportService.FindNexportOrderInvoiceItemById(queueItem.OrderInvoiceItemId);
@@ -155,7 +150,7 @@ public class NexportInvoiceResetRedemptionScheduleJob(
                                                 await nexportService.AddOrderNoteAsync(order,
                                                     $"Nexport invoice item {invoiceItem.InvoiceItemId} that was assigned to user {oldUserId} has been reset");
 
-                                                await logger.InformationAsync($"Order invoice reset redemption queue item {queueItemId} for order {order.Id} has been processed and removed!");
+                                                await logger.InformationAsync($"Order invoice reset redemption queue item {queueItem.Id} for order {order.Id} has been processed and removed!");
 
                                                 var previousUser = await nexportService.FindUserMappingByNexportUserId(oldUserId.Value);
                                                 if (previousUser != null)
@@ -186,7 +181,7 @@ public class NexportInvoiceResetRedemptionScheduleJob(
                 }
                 catch (Exception ex)
                 {
-                    await logger.ErrorAsync($"Cannot process the NexportOrderInvoiceRedemptionQueue item with Id {queueItemId}", ex);
+                    await logger.ErrorAsync($"Cannot process the NexportOrderInvoiceRedemptionQueue item with Id {queueItem.Id}", ex);
                 }
         }
         catch (Exception ex)

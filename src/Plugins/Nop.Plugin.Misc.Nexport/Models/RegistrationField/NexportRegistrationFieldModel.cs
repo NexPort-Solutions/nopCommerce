@@ -22,6 +22,8 @@ public record NexportRegistrationFieldModel : BaseNopEntityModel, ILocalizedMode
     [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.DisplayOptionValueByAscendingOrder")]
     public bool DisplayOptionByAscendingOrder { get; set; }
 
+    public IList<NexportRegistrationFieldOptionModel> Options { get; set; } = new List<NexportRegistrationFieldOptionModel>();
+
     [NopResourceDisplayName("Plugins.Misc.Nexport.RegistrationField.Field.CustomProfileFieldKey")]
     public string NexportCustomProfileFieldKey { get; set; }
 

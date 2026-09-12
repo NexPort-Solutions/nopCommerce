@@ -51,7 +51,7 @@ public class NexportDefaults
     /// <summary>
     /// Nexport redemption processing default batch size
     /// </summary>
-    public static int NexportOrderProcessingTaskBatchSize => 100;
+    public static int NexportOrderProcessingTaskBatchSize => 10;
 
     /// <summary>
     /// Nexport redemption processing batch size setting key

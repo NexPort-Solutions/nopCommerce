@@ -9,6 +9,7 @@ using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
+using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Plugin.Misc.Nexport.Services.ScheduleJobs;
 using Nop.Services.Catalog;
 using Nop.Services.Cms;
@@ -49,7 +50,7 @@ public class NexportOrderProcessingScheduleJob(
 
     public long Interval { get; set; } = 5; // Default to 5 seconds
 
-    [DisableConcurrentExecution(120)]
+    [SkipConcurrentExecution]
     public async Task ExecuteAsync()
     {
         if (!await widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
@@ -63,21 +64,26 @@ public class NexportOrderProcessingScheduleJob(
             _batchSize = await settingService.GetSettingByKeyAsync(NexportDefaults.NexportOrderProcessingTaskBatchSizeSettingKey,
                 NexportDefaults.NexportOrderProcessingTaskBatchSize);
 
-            var queueItems = (nexportOrderProcessingQueueRepository.Table.OrderBy(q => q.UtcDateCreated)
+            var retryCutoff = DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5));
+            var queueItems = await (nexportOrderProcessingQueueRepository.Table
                 .Where(q =>
                     q.UtcProcessingDate == null ||
-                    (q.UtcProcessingDate != null &&
-                     q.UtcProcessingDate <= DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5))))
-                .Take(_batchSize)).ToList();
+                    q.UtcProcessingDate <= retryCutoff)
+                .OrderBy(q => q.UtcProcessingDate ?? q.UtcDateCreated)
+                .Take(_batchSize)).ToListAsync();
 
+            if (queueItems.Count == 0)
+                return;
+
+            var processingDate = DateTime.UtcNow;
             foreach (var queueItem in queueItems)
             {
-                queueItem.UtcProcessingDate = DateTime.UtcNow;
+                queueItem.UtcProcessingDate = processingDate;
             }
 
             await nexportOrderProcessingQueueRepository.UpdateAsync(queueItems);
 
-            await ProcessNexportOrdersAsync(queueItems.Select(x => x.Id));
+            await ProcessNexportOrdersAsync(queueItems);
         }
         catch (Exception ex)
         {
@@ -93,22 +99,20 @@ public class NexportOrderProcessingScheduleJob(
         public int? ExtensionAction;
     }
 
-    public async Task ProcessNexportOrdersAsync(IEnumerable<int> queueItemIds)
+    public async Task ProcessNexportOrdersAsync(IList<NexportOrderProcessingQueueItem> queueItems)
     {
         try
         {
-            foreach (var queueItemId in queueItemIds)
+            var orders = await orderService.GetOrdersByIdsAsync(queueItems.Select(x => x.OrderId).Distinct().ToArray());
+            var ordersById = orders.ToDictionary(x => x.Id);
+
+            foreach (var queueItem in queueItems)
             {
                 var completeOrder = false;
 
-                await logger.InformationAsync($"Begin processing order processing queue item {queueItemId}");
+                await logger.InformationAsync($"Begin processing order processing queue item {queueItem.Id}");
 
-                var queueItem = await nexportOrderProcessingQueueRepository.GetByIdAsync(queueItemId);
-
-                if (queueItem == null)
-                    continue;
-
-                var order = await orderService.GetOrderByIdAsync(queueItem.OrderId);
+                ordersById.TryGetValue(queueItem.OrderId, out var order);
 
                 try
                 {

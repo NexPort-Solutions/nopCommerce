@@ -8,6 +8,7 @@ using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Plugin.Misc.Nexport.Services.ScheduleJobs;
 using Nop.Services.Cms;
 using Nop.Services.Common;
@@ -39,7 +40,7 @@ public class NexportInvoiceRedemptionScheduleJob(
 
     public long Interval { get; set; } = 30; // Default to 30 seconds
 
-    [DisableConcurrentExecution(120)]
+    [SkipConcurrentExecution]
     public async Task ExecuteAsync()
     {
         if (!await widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
@@ -53,13 +54,12 @@ public class NexportInvoiceRedemptionScheduleJob(
             _batchSize = await settingService.GetSettingByKeyAsync(NexportDefaults.NexportOrderInvoiceRedemptionTaskBatchSizeSettingKey,
                 NexportDefaults.NexportOrderInvoiceRedemptionTaskBatchSize);
 
-            var queueItems = nexportOrderInvoiceRedemptionQueueRepository
+            var queueItems = await nexportOrderInvoiceRedemptionQueueRepository
                 .Table
                 .OrderBy(q => q.UtcLastFailedDate)
                 .ThenBy(q => q.UtcDateCreated)
-                .Select(q => q.Id)
                 .Take(_batchSize)
-                .ToList();
+                .ToListAsync();
 
             await ProcessNexportOrderInvoiceRedemptionsAsync(queueItems);
         }
@@ -69,22 +69,17 @@ public class NexportInvoiceRedemptionScheduleJob(
         }
     }
 
-    public async Task ProcessNexportOrderInvoiceRedemptionsAsync(IList<int> queueItemIds)
+    public async Task ProcessNexportOrderInvoiceRedemptionsAsync(IList<NexportOrderInvoiceRedemptionQueueItem> queueItems)
     {
         try
         {
-            foreach (var queueItemId in queueItemIds)
+            foreach (var queueItem in queueItems)
             {
                 try
                 {
-                    var queueItem = await nexportOrderInvoiceRedemptionQueueRepository.GetByIdAsync(queueItemId);
-
-                    if (queueItem == null)
-                        return;
-
                     // Processing the redemption when the processing time has reached
                     if (queueItem.UtcProcessingDate != null && DateTime.UtcNow < queueItem.UtcProcessingDate)
-                        return;
+                        continue;
 
                     // When user Id is empty, this is a bad queue item. Therefore, we should increase the retry count and delete it
                     if (queueItem.RedeemingUserId == Guid.Empty)
@@ -142,7 +137,7 @@ public class NexportInvoiceRedemptionScheduleJob(
                 }
                 catch (Exception ex)
                 {
-                    await logger.ErrorAsync($"Cannot process the NexportOrderInvoiceRedemptionQueue item with Id {queueItemId}", ex);
+                    await logger.ErrorAsync($"Cannot process the NexportOrderInvoiceRedemptionQueue item with Id {queueItem.Id}", ex);
                 }
             }
         }

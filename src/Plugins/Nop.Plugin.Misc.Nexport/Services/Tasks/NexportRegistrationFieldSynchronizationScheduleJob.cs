@@ -4,6 +4,7 @@ using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Plugin.Misc.Nexport.Services.ScheduleJobs;
 using Nop.Services.Cms;
 using Nop.Services.Logging;
@@ -28,7 +29,7 @@ public class NexportRegistrationFieldSynchronizationScheduleJob(
 
     public long Interval { get; set; } = 300; // Default to 5 minutes
 
-    [DisableConcurrentExecution(120)]
+    [SkipConcurrentExecution]
     public async Task ExecuteAsync()
     {
         if (!await widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
@@ -39,14 +40,13 @@ public class NexportRegistrationFieldSynchronizationScheduleJob(
 
         try
         {
-            var syncItemIds = await nexportRegistrationFieldSynchronizationQueueRepository.Table
+            var syncItems = await nexportRegistrationFieldSynchronizationQueueRepository.Table
                 .OrderBy(item => item.UtcDateLastAttempt)
                 .ThenBy(item => item.UtcDateCreated)
-                .Select(item => item.Id)
                 .Take(_batchSize)
                 .ToListAsync();
 
-            await SynchronizeRegistrationFieldsAsync(syncItemIds);
+            await SynchronizeRegistrationFieldsAsync(syncItems);
         }
         catch (Exception ex)
         {
@@ -54,19 +54,14 @@ public class NexportRegistrationFieldSynchronizationScheduleJob(
         }
     }
 
-    private async Task SynchronizeRegistrationFieldsAsync(IList<int> queueItemIds)
+    private async Task SynchronizeRegistrationFieldsAsync(IList<NexportRegistrationFieldSynchronizationQueueItem> syncItems)
     {
         try
         {
-            foreach (var queueItemId in queueItemIds)
+            foreach (var syncItem in syncItems)
             {
                 try
                 {
-                    var syncItem = await nexportRegistrationFieldSynchronizationQueueRepository.GetByIdAsync(queueItemId);
-
-                    if (syncItem == null)
-                        return;
-
                     await logger.DebugAsync($"Begin registration fields synchronization for customer {syncItem.CustomerId}");
 
                     var userMapping = await nexportService.FindUserMappingByCustomerId(syncItem.CustomerId);
@@ -105,7 +100,7 @@ public class NexportRegistrationFieldSynchronizationScheduleJob(
                 }
                 catch (Exception ex)
                 {
-                    await logger.ErrorAsync($"Cannot process the NexportRegistrationFieldSynchronizationQueue item with Id {queueItemId}", ex);
+                    await logger.ErrorAsync($"Cannot process the NexportRegistrationFieldSynchronizationQueue item with Id {syncItem.Id}", ex);
                 }
             }
         }

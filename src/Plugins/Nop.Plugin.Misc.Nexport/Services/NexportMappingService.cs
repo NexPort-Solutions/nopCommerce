@@ -16,6 +16,7 @@ using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
+using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
 using Nop.Services.Messages;
 
 namespace Nop.Plugin.Misc.Nexport.Services;
@@ -1458,20 +1459,78 @@ public partial class NexportService : INexportService
         if (storeId < 1)
             return new List<NexportRegistrationField>();
 
-        var fieldStoreMappingsForCurrentStore = await _nexportRegistrationFieldStoreMappingRepository.Table
-            .Where(rfs => rfs.StoreId == storeId)
-            .Select(rfs => rfs.FieldId).ToListAsync();
-
-        var fieldOStoreMappingsForOtherStores = await _nexportRegistrationFieldStoreMappingRepository.Table
-            .Where(rfs => rfs.StoreId != storeId)
-            .Select(rfs => rfs.FieldId).ToListAsync();
-
-        var fields = _nexportRegistrationFieldRepository.Table
-            .Where(f => f.IsActive &&
-                        (fieldStoreMappingsForCurrentStore.Contains(f.Id) ||
-                         !fieldOStoreMappingsForOtherStores.Contains(f.Id)));
+        var mappings = _nexportRegistrationFieldStoreMappingRepository.Table;
+        var fields = _nexportRegistrationFieldRepository.Table.Where(field =>
+            field.IsActive &&
+            (mappings.Any(mapping => mapping.FieldId == field.Id && mapping.StoreId == storeId) ||
+             !mappings.Any(mapping => mapping.FieldId == field.Id)));
 
         return await fields.ToListAsync();
+    }
+
+    public async Task<NexportRegistrationFieldDefinition> GetNexportRegistrationFieldDefinition(int storeId)
+    {
+        if (storeId < 1)
+            return new NexportRegistrationFieldDefinition();
+
+        var cacheKey = _cacheManager.PrepareKeyForDefaultCache(
+            NexportIntegrationDefaults.RegistrationFieldDefinitionCacheKey,
+            storeId);
+
+        var definition = await _cacheManager.GetAsync(cacheKey, async () =>
+        {
+            var fields = await GetNexportRegistrationFields(storeId);
+            var fieldIds = fields.Select(field => field.Id).ToList();
+            var selectableFieldIds = fields
+                .Where(field => field.Type is NexportRegistrationFieldType.SelectCheckbox or NexportRegistrationFieldType.SelectDropDown)
+                .Select(field => field.Id)
+                .ToList();
+            var categoryIds = fields
+                .Where(field => field.FieldCategoryId.HasValue)
+                .Select(field => field.FieldCategoryId.Value)
+                .Distinct()
+                .ToList();
+
+            var categories = categoryIds.Count == 0
+                ? new List<NexportRegistrationFieldCategory>()
+                : await _nexportRegistrationFieldCategoryRepository.Table
+                    .Where(category => categoryIds.Contains(category.Id))
+                    .ToListAsync();
+            var options = selectableFieldIds.Count == 0
+                ? new List<NexportRegistrationFieldOption>()
+                : await _nexportRegistrationFieldOptionRepository.Table
+                    .Where(option => selectableFieldIds.Contains(option.FieldId))
+                    .ToListAsync();
+            return new NexportRegistrationFieldDefinition
+            {
+                Fields = fields,
+                Categories = categories,
+                Options = options
+            };
+        });
+
+        var selectableFieldIds = definition.Fields
+            .Where(field => field.Type is NexportRegistrationFieldType.SelectCheckbox or NexportRegistrationFieldType.SelectDropDown)
+            .Select(field => field.Id)
+            .ToList();
+        var attributes = selectableFieldIds.Count == 0
+            ? new List<GenericAttribute>()
+            : await _genericAttributeRepository.Table
+                .Where(attribute =>
+                    selectableFieldIds.Contains(attribute.EntityId) &&
+                    attribute.KeyGroup == nameof(NexportRegistrationField) &&
+                    attribute.StoreId == 0 &&
+                    (attribute.Key == nameof(NexportRegistrationFieldModel.AllowMultipleSelection) ||
+                     attribute.Key == nameof(NexportRegistrationFieldModel.DisplayOptionByAscendingOrder)))
+                .ToListAsync();
+
+        return new NexportRegistrationFieldDefinition
+        {
+            Fields = definition.Fields,
+            Categories = definition.Categories,
+            Options = definition.Options,
+            Attributes = attributes
+        };
     }
 
     public async Task<IList<NexportRegistrationField>> GetNexportRegistrationFieldsByCategoryId(int categoryId)
@@ -1565,6 +1624,7 @@ public partial class NexportService : INexportService
             throw new ArgumentNullException(nameof(registrationField));
 
         await _nexportRegistrationFieldRepository.InsertAsync(registrationField);
+        await _cacheManager.RemoveByPrefixAsync(NexportIntegrationDefaults.RegistrationFieldPatternCacheKey.Key);
     }
 
     public async Task DeleteNexportRegistrationField(NexportRegistrationField registrationField)
@@ -1573,6 +1633,7 @@ public partial class NexportService : INexportService
             throw new ArgumentNullException(nameof(registrationField));
 
         await _nexportRegistrationFieldRepository.DeleteAsync(registrationField);
+        await _cacheManager.RemoveByPrefixAsync(NexportIntegrationDefaults.RegistrationFieldPatternCacheKey.Key);
     }
 
     public async Task UpdateNexportRegistrationField(NexportRegistrationField registrationField)
@@ -1581,6 +1642,7 @@ public partial class NexportService : INexportService
             throw new ArgumentNullException(nameof(registrationField));
 
         await _nexportRegistrationFieldRepository.UpdateAsync(registrationField);
+        await _cacheManager.RemoveByPrefixAsync(NexportIntegrationDefaults.RegistrationFieldPatternCacheKey.Key);
     }
 
     public async Task<NexportRegistrationFieldOption> GetNexportRegistrationFieldOptionById(int fieldOptionId, int? fieldId = null)
@@ -1626,6 +1688,7 @@ public partial class NexportService : INexportService
             throw new ArgumentNullException(nameof(registrationFieldOption));
 
         await _nexportRegistrationFieldOptionRepository.InsertAsync(registrationFieldOption);
+        await _cacheManager.RemoveByPrefixAsync(NexportIntegrationDefaults.RegistrationFieldPatternCacheKey.Key);
     }
 
     public async Task DeleteNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
@@ -1634,6 +1697,7 @@ public partial class NexportService : INexportService
             throw new ArgumentNullException(nameof(registrationFieldOption));
 
         await _nexportRegistrationFieldOptionRepository.DeleteAsync(registrationFieldOption);
+        await _cacheManager.RemoveByPrefixAsync(NexportIntegrationDefaults.RegistrationFieldPatternCacheKey.Key);
     }
 
     public async Task UpdateNexportRegistrationFieldOption(NexportRegistrationFieldOption registrationFieldOption)
@@ -1642,6 +1706,7 @@ public partial class NexportService : INexportService
             throw new ArgumentNullException(nameof(registrationFieldOption));
 
         await _nexportRegistrationFieldOptionRepository.UpdateAsync(registrationFieldOption);
+        await _cacheManager.RemoveByPrefixAsync(NexportIntegrationDefaults.RegistrationFieldPatternCacheKey.Key);
     }
 
     public async Task<NexportRegistrationFieldCategory> GetNexportRegistrationFieldCategoryById(int fieldCategoryId)
@@ -1663,9 +1728,11 @@ public partial class NexportService : INexportService
 
     public async Task<IList<NexportRegistrationFieldCategory>> GetNexportRegistrationFieldCategories(IList<int> fieldCategoryIds)
     {
-        return await fieldCategoryIds
-            .SelectAwait(async fieldCategoryId =>
-                await GetNexportRegistrationFieldCategoryById(fieldCategoryId))
+        if (fieldCategoryIds == null || fieldCategoryIds.Count == 0)
+            return new List<NexportRegistrationFieldCategory>();
+
+        return await _nexportRegistrationFieldCategoryRepository.Table
+            .Where(category => fieldCategoryIds.Contains(category.Id))
             .ToListAsync();
     }
 
@@ -1686,6 +1753,7 @@ public partial class NexportService : INexportService
             throw new ArgumentNullException(nameof(registrationFieldCategory));
 
         await _nexportRegistrationFieldCategoryRepository.InsertAsync(registrationFieldCategory);
+        await _cacheManager.RemoveByPrefixAsync(NexportIntegrationDefaults.RegistrationFieldPatternCacheKey.Key);
     }
 
     public async Task DeleteNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
@@ -1694,6 +1762,7 @@ public partial class NexportService : INexportService
             throw new ArgumentNullException(nameof(registrationFieldCategory));
 
         await _nexportRegistrationFieldCategoryRepository.DeleteAsync(registrationFieldCategory);
+        await _cacheManager.RemoveByPrefixAsync(NexportIntegrationDefaults.RegistrationFieldPatternCacheKey.Key);
     }
 
     public async Task UpdateNexportRegistrationFieldCategory(NexportRegistrationFieldCategory registrationFieldCategory)
@@ -1702,6 +1771,7 @@ public partial class NexportService : INexportService
             throw new ArgumentNullException(nameof(registrationFieldCategory));
 
         await _nexportRegistrationFieldCategoryRepository.UpdateAsync(registrationFieldCategory);
+        await _cacheManager.RemoveByPrefixAsync(NexportIntegrationDefaults.RegistrationFieldPatternCacheKey.Key);
     }
 
     public async Task<NexportRegistrationFieldStoreMapping> GetNexportRegistrationFieldStoreMappingById(int fieldStoreMappingId)
@@ -1731,6 +1801,7 @@ public partial class NexportService : INexportService
             return;
 
         await _nexportRegistrationFieldStoreMappingRepository.InsertAsync(registrationFieldStoreMapping);
+        await _cacheManager.RemoveByPrefixAsync(NexportIntegrationDefaults.RegistrationFieldPatternCacheKey.Key);
     }
 
     public async Task DeleteNexportRegistrationFieldStoreMapping(NexportRegistrationFieldStoreMapping registrationFieldStoreMapping)
@@ -1739,6 +1810,7 @@ public partial class NexportService : INexportService
             throw new ArgumentNullException(nameof(registrationFieldStoreMapping));
 
         await _nexportRegistrationFieldStoreMappingRepository.DeleteAsync(registrationFieldStoreMapping);
+        await _cacheManager.RemoveByPrefixAsync(NexportIntegrationDefaults.RegistrationFieldPatternCacheKey.Key);
     }
 
     public async Task<NexportRegistrationFieldAnswer> GetNexportRegistrationFieldAnswerById(int fieldAnswerId)

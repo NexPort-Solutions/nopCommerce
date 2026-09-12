@@ -97,6 +97,11 @@ public static class NexportIntegrationDefaults
 
     public static CacheKey RegistrationFieldPatternCacheKey => new("Nop.nexport.registrationfield.");
 
+    public static CacheKey RegistrationFieldDefinitionCacheKey => new("Nop.nexport.registrationfield.definition-{0}")
+    {
+        CacheTime = 5
+    };
+
     public static CacheKey RegistrationFieldCategoryAllCacheKey => new("Nop.nexport.registrationfield.category.all");
 
     public static CacheKey RegistrationFieldCategoryPatternCacheKey => new("Nop.nexport.registrationfield.category.");

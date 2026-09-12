@@ -470,7 +470,10 @@ public class NexportCustomerController : BasePublicController
             {
                 var nexportCustomerRegistrationService = EngineContext.Current.Resolve<NexportCustomerRegistrationService>();
 
-                var validationResult = await nexportCustomerRegistrationService.ValidateNexportCustomerAsync(model.EmailOrUsername, model.Password);
+                var validationResult = await nexportCustomerRegistrationService.ValidateNexportCustomerAsync(
+                    model.EmailOrUsername,
+                    model.Password,
+                    HttpContext.RequestAborted);
 
                 if (validationResult != null)
                 {
@@ -480,20 +483,10 @@ public class NexportCustomerController : BasePublicController
                     {
                         case CustomerLoginResults.Successful:
                             {
-                                Customer customer;
-
-                                if (validationResult.NopUserId != null)
-                                {
-                                    customer = await _customerService.GetCustomerByIdAsync(validationResult.NopUserId.Value);
-                                }
-                                else
-                                {
-                                    customer = _customerSettings.UsernamesEnabled ?
-                                        await _customerService.GetCustomerByUsernameAsync(model.EmailOrUsername) :
-                                        await _customerService.GetCustomerByEmailAsync(model.EmailOrUsername);
-                                }
-
-                                return await _customerRegistrationService.SignInCustomerAsync(customer, returnUrl, model.RememberMe);
+                                return await _customerRegistrationService.SignInCustomerAsync(
+                                    validationResult.Customer,
+                                    returnUrl,
+                                    model.RememberMe);
                             }
                         case CustomerLoginResults.MultiFactorAuthenticationRequired:
                             {
@@ -532,7 +525,7 @@ public class NexportCustomerController : BasePublicController
             }
             catch (Exception ex)
             {
-                var errorMsg = $"Cannot sign in customer with the given email/username {model.EmailOrUsername}.";
+                var errorMsg = "Cannot sign in customer with the provided credentials.";
 
                 if (ex is ApiException exception)
                 {

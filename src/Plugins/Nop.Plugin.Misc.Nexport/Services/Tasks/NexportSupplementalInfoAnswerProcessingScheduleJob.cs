@@ -4,6 +4,7 @@ using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Plugin.Misc.Nexport.Services.ScheduleJobs;
 using Nop.Services.Cms;
 using Nop.Services.Common;
@@ -48,7 +49,7 @@ public class NexportSupplementalInfoAnswerProcessingScheduleJob : INexportSchedu
         _nexportService = nexportService;
     }
 
-    [DisableConcurrentExecution(120)]
+    [SkipConcurrentExecution]
     public async Task ExecuteAsync()
     {
         if (!await _widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
@@ -64,7 +65,6 @@ public class NexportSupplementalInfoAnswerProcessingScheduleJob : INexportSchedu
 
             var answers = await _nexportSupplementalInfoAnswerProcessingQueueRepository.Table
                 .OrderBy(q => q.UtcDateCreated)
-                .Select(q => q.Id)
                 .Take(_batchSize)
                 .ToListAsync();
 
@@ -76,19 +76,14 @@ public class NexportSupplementalInfoAnswerProcessingScheduleJob : INexportSchedu
         }
     }
 
-    public async Task ProcessNexportSupplementalInfoAnswersAsync(IList<int> queueItemIds)
+    public async Task ProcessNexportSupplementalInfoAnswersAsync(IList<NexportSupplementalInfoAnswerProcessingQueueItem> queueItems)
     {
         try
         {
-            foreach (var queueItemId in queueItemIds)
+            foreach (var queueItem in queueItems)
             {
                 try
                 {
-                    var queueItem = await _nexportSupplementalInfoAnswerProcessingQueueRepository.GetByIdAsync(queueItemId);
-
-                    if (queueItem == null)
-                        return;
-
                     await _logger.DebugAsync($"Begin processing supplemental info answer for answer {queueItem.AnswerId}");
 
                     var answer = await _nexportService.GetNexportSupplementalInfoAnswerById(queueItem.AnswerId);
@@ -152,11 +147,11 @@ public class NexportSupplementalInfoAnswerProcessingScheduleJob : INexportSchedu
 
                     await _nexportService.DeleteNexportSupplementalInfoAnswerProcessingQueueItem(queueItem);
 
-                    await _logger.InformationAsync($"Supplemental info answer processing queue item {queueItemId} has been processed and removed!");
+                    await _logger.InformationAsync($"Supplemental info answer processing queue item {queueItem.Id} has been processed and removed!");
                 }
                 catch (Exception ex)
                 {
-                    await _logger.ErrorAsync($"Cannot process the NexportSupplementalInfoAnswerQueue item with Id {queueItemId}", ex);
+                    await _logger.ErrorAsync($"Cannot process the NexportSupplementalInfoAnswerQueue item with Id {queueItem.Id}", ex);
                 }
             }
         }

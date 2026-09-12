@@ -2,6 +2,7 @@
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Extensions;
+using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Plugin.Misc.Nexport.Services.ScheduleJobs;
 using Nop.Services.Cms;
 using Nop.Services.Configuration;
@@ -26,6 +27,7 @@ public class NexportGroupMembershipRemovalScheduleJob(
 
     public long Interval { get; set; } = 30; // Default to 30 seconds
 
+    [SkipConcurrentExecution]
     public async Task ExecuteAsync()
     {
         if (!await widgetPluginManager.IsPluginActiveAsync("Misc.Nexport"))
@@ -42,7 +44,6 @@ public class NexportGroupMembershipRemovalScheduleJob(
 
             var answers = await nexportGroupMembershipRemovalQueueRepository.Table
                 .OrderBy(q => q.UtcDateCreated)
-                .Select(q => q.Id)
                 .Take(_batchSize)
                 .ToListAsync();
 
@@ -54,19 +55,14 @@ public class NexportGroupMembershipRemovalScheduleJob(
         }
     }
 
-    public async Task ProcessNexportGroupMembershipRemovalAsync(IList<int> queueItemIds)
+    public async Task ProcessNexportGroupMembershipRemovalAsync(IList<NexportGroupMembershipRemovalQueueItem> queueItems)
     {
         try
         {
-            foreach (var queueItemId in queueItemIds)
+            foreach (var queueItem in queueItems)
             {
                 try
                 {
-                    var queueItem = await nexportGroupMembershipRemovalQueueRepository.GetByIdAsync(queueItemId);
-
-                    if (queueItem == null)
-                        return;
-
                     await logger.DebugAsync($"Begin processing group membership removal for customer {queueItem.CustomerId}");
 
                     var customer = await customerService.GetCustomerByIdAsync(queueItem.CustomerId);
@@ -108,11 +104,11 @@ public class NexportGroupMembershipRemovalScheduleJob(
 
                     await nexportService.DeleteNexportGroupMembershipRemovalQueueItem(queueItem);
 
-                    await logger.InformationAsync($"Group membership removal queue item {queueItemId} has been processed and removed!");
+                    await logger.InformationAsync($"Group membership removal queue item {queueItem.Id} has been processed and removed!");
                 }
                 catch (Exception ex)
                 {
-                    await logger.ErrorAsync($"Cannot process the NexportGroupMembershipRemovalQueue item with Id {queueItemId}", ex);
+                    await logger.ErrorAsync($"Cannot process the NexportGroupMembershipRemovalQueue item with Id {queueItem.Id}", ex);
                 }
             }
         }
