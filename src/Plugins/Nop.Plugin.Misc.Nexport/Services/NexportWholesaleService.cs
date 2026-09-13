@@ -1,43 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
-using Nop.Core.Domain.Orders;
-using Nop.Core.Domain.Payments;
+using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
 using Nop.Core;
-using Nop.Services.Orders;
-using Nop.Services.Payments;
+using Nop.Core.Caching;
+using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
+using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Localization;
+using Nop.Core.Domain.Orders;
+using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Domain.Tax;
+using Nop.Core.Domain.Vendors;
 using Nop.Core.Events;
+using Nop.Data;
+using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
+using Nop.Plugin.Misc.Nexport.Domain;
+using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
 using Nop.Services.Affiliates;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Discounts;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
+using Nop.Services.Orders;
+using Nop.Services.Payments;
 using Nop.Services.Security;
 using Nop.Services.Shipping;
 using Nop.Services.Stores;
 using Nop.Services.Tax;
 using Nop.Services.Vendors;
-using Nop.Core.Domain.Catalog;
-using Nop.Core.Domain.Vendors;
-using Nop.Core.Domain.Common;
-using Nop.Core.Domain.Discounts;
-using System.Globalization;
-using System.Linq;
-using System.Threading.Tasks;
-using Nop.Data;
-using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
-using Nop.Core.Caching;
-using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Orders;
-using Nop.Plugin.Misc.Nexport.Domain;
-using Nop.Services.Helpers;
 using Category = Nop.Core.Domain.Catalog.Category;
 
 namespace Nop.Plugin.Misc.Nexport.Services;
@@ -340,7 +340,7 @@ public class NexportNexportWholesaleService : INexportWholesaleService
     {
         var query = _fundingPoolRepository.Table.OrderBy(x => x.Name);
 
-        return query.ToList();
+        return await query.ToListAsync();
     }
 
     public virtual async Task<NexportFundingPool> GetFundingPoolById(int id)
@@ -368,7 +368,7 @@ public class NexportNexportWholesaleService : INexportWholesaleService
     {
         ArgumentNullException.ThrowIfNull(nexportFundingPool);
 
-        if (_fundingPoolRepository.Table.Any(m => m.Name == nexportFundingPool.Name))
+        if (await _fundingPoolRepository.Table.AnyAsync(m => m.Name == nexportFundingPool.Name))
             return;
 
         await _fundingPoolRepository.InsertAsync(nexportFundingPool);

@@ -6,7 +6,6 @@ using Nop.Core.Infrastructure;
 using Nop.Services.Localization;
 using Nop.Services.Themes;
 using Nop.Web.Framework.Extensions;
-using Nop.Web.Framework.Themes;
 using Nop.Web.Framework.UI.Paging;
 using Nop.Web.Models.Boards;
 using Nop.Web.Models.Common;

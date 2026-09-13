@@ -383,6 +383,15 @@ public static class ApplicationBuilderExtensions
     }
 
     /// <summary>
+    /// Configure middleware storing the current user theme in the context
+    /// </summary>
+    /// <param name="application">Builder for configuring an application's request pipeline</param>
+    public static void UseThemes(this IApplicationBuilder application)
+    {
+        application.UseMiddleware<ThemesMiddleware>();
+    }
+
+    /// <summary>
     /// Configure middleware checking whether database is installed
     /// </summary>
     /// <param name="application">Builder for configuring an application's request pipeline</param>

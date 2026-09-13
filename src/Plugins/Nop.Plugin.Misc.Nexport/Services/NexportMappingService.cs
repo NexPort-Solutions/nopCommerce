@@ -28,7 +28,7 @@ public partial class NexportService : INexportService
         if (nexportProductMapping == null)
             throw new ArgumentNullException(nameof(nexportProductMapping));
 
-        if (_nexportProductMappingRepository.Table.Any(m =>
+        if (await _nexportProductMappingRepository.Table.AnyAsync(m =>
             m.NopProductId == nexportProductMapping.NopProductId &&
             m.StoreId == nexportProductMapping.StoreId))
             return;
@@ -42,7 +42,7 @@ public partial class NexportService : INexportService
         if (nexportProductGroupMembershipMapping == null)
             throw new ArgumentNullException(nameof(nexportProductGroupMembershipMapping));
 
-        if (_nexportProductGroupMembershipMappingRepository.Table.Any(
+        if (await _nexportProductGroupMembershipMappingRepository.Table.AnyAsync(
             m => m.NexportProductMappingId == nexportProductGroupMembershipMapping.NexportProductMappingId &&
             m.NexportGroupId == nexportProductGroupMembershipMapping.NexportGroupId))
             return;
@@ -70,7 +70,7 @@ public partial class NexportService : INexportService
 
             var productQuery = _productRepository.Table
                 .Where(p => !p.Deleted && (showHidden || p.Published))
-                .Select(p => p.Id).ToList();
+                .Select(p => p.Id);
 
             var query = _nexportProductMappingRepository.Table
                 .Where(np => np.NexportCatalogId == catalogId && productQuery.Contains(np.NopProductId));
@@ -130,15 +130,14 @@ public partial class NexportService : INexportService
             showHidden, sectionId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
         return await _cacheManager.GetAsync(cacheKey, async () =>
         {
-            var productQuery = (from p in _productRepository.Table
-                                where !p.Deleted && (showHidden || p.Published)
-                                select p.Id).ToList();
+            var productQuery = _productRepository.Table
+                .Where(p => !p.Deleted && (showHidden || p.Published))
+                .Select(p => p.Id);
 
-            var query = from np in _nexportProductMappingRepository.Table
-                        where np.NexportSyllabusId == sectionId &&
-                              np.Type == NexportProductTypeEnum.Section &&
-                              productQuery.Contains(np.NopProductId)
-                        select np;
+            var query = _nexportProductMappingRepository.Table
+                .Where(np => np.NexportSyllabusId == sectionId &&
+                             np.Type == NexportProductTypeEnum.Section &&
+                             productQuery.Contains(np.NopProductId));
 
             if (!showHidden && (!_nexportSettings.IgnoreAcl || !_nexportSettings.IgnoreStoreLimitations))
             {
@@ -189,15 +188,14 @@ public partial class NexportService : INexportService
             showHidden, trainingPlanId, pageIndex, pageSize, (await _workContext.GetCurrentCustomerAsync()).Id, (await _storeContext.GetCurrentStoreAsync()).Id);
         return await _cacheManager.GetAsync(key, async () =>
         {
-            var productQuery =
-                (_productRepository.Table.Where(p => !p.Deleted && (showHidden || p.Published))
-                    .Select(p => p.Id)).ToList();
+            var productQuery = _productRepository.Table
+                .Where(p => !p.Deleted && (showHidden || p.Published))
+                .Select(p => p.Id);
 
             var query = _nexportProductMappingRepository.Table
-                .Where(np =>
-                    np.NexportSyllabusId == trainingPlanId &&
-                    np.Type == NexportProductTypeEnum.TrainingPlan &&
-                    productQuery.Contains(np.NopProductId));
+                .Where(np => np.NexportSyllabusId == trainingPlanId &&
+                             np.Type == NexportProductTypeEnum.TrainingPlan &&
+                             productQuery.Contains(np.NopProductId));
 
             if (!showHidden && (!_nexportSettings.IgnoreAcl || !_nexportSettings.IgnoreStoreLimitations))
             {
@@ -285,7 +283,7 @@ public partial class NexportService : INexportService
             string.Join(",", await _customerService.GetCustomerRoleIdsAsync(await _workContext.GetCurrentCustomerAsync())),
             false, "", true);
 
-        return _cacheManager.Get(cacheKey, () =>
+        return await _cacheManager.GetAsync(cacheKey, async () =>
         {
             var query = _nexportProductMappingRepository.Table;
 
@@ -295,7 +293,7 @@ public partial class NexportService : INexportService
             if (storeId != null)
                 query = query.Where(np => np.StoreId == storeId);
 
-            return query.ToList();
+            return await query.ToListAsync();
         });
     }
 
@@ -495,7 +493,7 @@ public partial class NexportService : INexportService
         if (queueItem == null)
             throw new ArgumentNullException(nameof(queueItem));
 
-        if (_nexportOrderInvoiceRedemptionQueueRepository.Table.Any(q => q.OrderInvoiceItemId == queueItem.OrderInvoiceItemId))
+        if (await _nexportOrderInvoiceRedemptionQueueRepository.Table.AnyAsync(q => q.OrderInvoiceItemId == queueItem.OrderInvoiceItemId))
             return;
 
         await _nexportOrderInvoiceRedemptionQueueRepository.InsertAsync(queueItem);
@@ -507,7 +505,7 @@ public partial class NexportService : INexportService
         if (queueItem == null)
             throw new ArgumentNullException(nameof(queueItem));
 
-        if (_nexportOrderInvoiceResetRedemptionQueueRepository.Table.Any(q => q.OrderInvoiceItemId == queueItem.OrderInvoiceItemId))
+        if (await _nexportOrderInvoiceResetRedemptionQueueRepository.Table.AnyAsync(q => q.OrderInvoiceItemId == queueItem.OrderInvoiceItemId))
             return;
 
         await _nexportOrderInvoiceResetRedemptionQueueRepository.InsertAsync(queueItem);
@@ -627,7 +625,7 @@ public partial class NexportService : INexportService
             return new PagedList<NexportOrderInvoiceItem>(new List<NexportOrderInvoiceItem>(), pageIndex, pageSize);
 
         var redemptionQueueQuery = _nexportOrderInvoiceRedemptionQueueRepository.Table
-            .Select(q => q.OrderItemId).ToList();
+            .Select(q => q.OrderItemId);
 
         var query = _nexportOrderInvoiceItemRepository.Table
             .Where(o => o.OrderId == orderId);
@@ -756,9 +754,8 @@ public partial class NexportService : INexportService
         if (nexportUserMapping == null)
             throw new ArgumentNullException(nameof(nexportUserMapping));
 
-        var existingMapping = _nexportUserMappingRepository
-            .Table
-            .FirstOrDefault(user => user.NexportUserId == nexportUserMapping.NexportUserId);
+        var existingMapping = await _nexportUserMappingRepository.Table
+            .FirstOrDefaultAsync(user => user.NexportUserId == nexportUserMapping.NexportUserId);
 
         if (existingMapping != null)
             throw new NexportUserMappingException(
@@ -1550,11 +1547,14 @@ public partial class NexportService : INexportService
             return await query.ToPagedListAsync(pageIndex, pageSize);
 
         var storeQuery = _storeRepository.Table
-            .Where(s => storeIds.Contains(s.Id)).Select(s => s.Id).ToList();
+            .Where(store => storeIds.Contains(store.Id))
+            .Select(store => store.Id);
 
-        var storeMappingQuery = _nexportRegistrationFieldStoreMappingRepository.Table.Where(sm => storeQuery.Contains(sm.StoreId)).Select(sm => sm.FieldId).ToList();
+        var storeMappingQuery = _nexportRegistrationFieldStoreMappingRepository.Table
+            .Where(mapping => storeQuery.Contains(mapping.StoreId))
+            .Select(mapping => mapping.FieldId);
 
-        query = query.Where(f => storeMappingQuery.Contains(f.Id));
+        query = query.Where(field => storeMappingQuery.Contains(field.Id));
 
         return await query.ToPagedListAsync(pageIndex, pageSize);
     }
@@ -1563,28 +1563,19 @@ public partial class NexportService : INexportService
         int customerId, int? storeId = null,
         int pageIndex = 0, int pageSize = int.MaxValue)
     {
-        var registrationFieldWithAnswerIds = await
-            _nexportRegistrationFieldAnswerRepository
-                .Table
-                .Where(fa => fa.CustomerId == customerId)
-                .GroupBy(fa => fa.FieldId)
-                .Select(x => x.FirstOrDefault().FieldId)
-                .ToListAsync();
+        var registrationFieldWithAnswerIds = _nexportRegistrationFieldAnswerRepository.Table
+            .Where(answer => answer.CustomerId == customerId)
+            .Select(answer => answer.FieldId)
+            .Distinct();
 
         if (storeId != null)
-        {
-            registrationFieldWithAnswerIds = await registrationFieldWithAnswerIds.Where(id =>
-                _nexportRegistrationFieldStoreMappingRepository.Table
-                    .Where(mapping => mapping.StoreId == storeId)
-                    .Select(mapping => mapping.FieldId).Contains(id) ||
-                !(_nexportRegistrationFieldStoreMappingRepository.Table
-                    .Where(mapping => mapping.FieldId == id)
-                    .Select(mapping => mapping.FieldId)).Contains(id)).ToListAsync();
-        }
+            registrationFieldWithAnswerIds = registrationFieldWithAnswerIds.Where(fieldId =>
+                _nexportRegistrationFieldStoreMappingRepository.Table.Any(mapping =>
+                    mapping.StoreId == storeId && mapping.FieldId == fieldId) ||
+                !_nexportRegistrationFieldStoreMappingRepository.Table.Any(mapping => mapping.FieldId == fieldId));
 
-        var query = _nexportRegistrationFieldRepository
-            .Table
-            .Where(f => registrationFieldWithAnswerIds.Contains(f.Id));
+        var query = _nexportRegistrationFieldRepository.Table
+            .Where(field => registrationFieldWithAnswerIds.Contains(field.Id));
 
         return await query.ToPagedListAsync(pageIndex, pageSize);
     }
@@ -1936,39 +1927,23 @@ public partial class NexportService : INexportService
     public async Task<bool> HasCustomRegistrationFieldRenderForStores(int fieldId, IList<int> storeIds, string customFieldRender)
     {
         var fieldWithCustomFieldRenders = _nexportRegistrationFieldRepository.Table
-            .Where(x => x.CustomFieldRender == customFieldRender);
+            .Where(x => x.CustomFieldRender == customFieldRender && x.Id != fieldId);
+
+        var mappedFieldsQuery = _nexportRegistrationFieldStoreMappingRepository.Table
+            .Join(fieldWithCustomFieldRenders,
+                mapping => mapping.FieldId,
+                field => field.Id,
+                (mapping, field) => new { mapping, field });
 
         if (storeIds.Count > 0)
-        {
-            // Find fields that have same custom field render
-            var fieldWithCustomFieldRenderIds = fieldWithCustomFieldRenders
-                .Where(x => x.Id != fieldId).Select(x => x.Id);
+            return await mappedFieldsQuery.AnyAsync(x => storeIds.Contains(x.mapping.StoreId));
 
-            foreach (var id in fieldWithCustomFieldRenderIds)
-            {
-                if (storeIds.Any(storeId =>
-                    _nexportRegistrationFieldStoreMappingRepository.Table
-                        .Any(x => x.FieldId == id && x.StoreId == storeId)))
-                    return true;
-            }
-        }
-        else
-        {
-            var availableStoreIds = await (await _storeService.GetAllStoresAsync()).Select(x => x.Id).ToListAsync();
-
-            var fieldWithCustomFieldRenderIds = fieldWithCustomFieldRenders
-                .Select(x => x.Id);
-
-            foreach (var id in fieldWithCustomFieldRenderIds)
-            {
-                if (availableStoreIds.Any(storeId =>
-                    _nexportRegistrationFieldStoreMappingRepository.Table
-                        .Any(x => x.FieldId == id && x.StoreId == storeId)))
-                    return true;
-            }
-        }
-
-        return false;
+        return await mappedFieldsQuery
+            .Join(_storeRepository.Table.Where(store => !store.Deleted),
+                mapping => mapping.mapping.StoreId,
+                store => store.Id,
+                (mapping, store) => mapping)
+            .AnyAsync();
     }
 
     public virtual async Task<IPagedList<NexportProductMapping>> GetAllNexportProductMappingsAsync(string searchProductName, NexportProductTypeEnum? searchProductType, string searchStoreName, int productId, int pageIndex = 0, int pageSize = int.MaxValue)
@@ -2127,8 +2102,10 @@ public partial class NexportService : INexportService
 
     public async Task<IList<GenericAttribute>> GetAllGroupForOrdersAsync()
     {
-        var query = _genericAttributeRepository.Table.AsEnumerable()
-            .Where(x => x.Key == "GroupForOrder").GroupBy(x => x.Value).Select(x => x.FirstOrDefault());
+        var query = _genericAttributeRepository.Table
+            .Where(attribute => attribute.Key == "GroupForOrder")
+            .GroupBy(attribute => attribute.Value)
+            .Select(attributeGroup => attributeGroup.FirstOrDefault());
 
         var result = await query.ToListAsync();
         return result ?? new List<GenericAttribute>();
@@ -2136,7 +2113,8 @@ public partial class NexportService : INexportService
 
     public async Task<GenericAttribute> GetGroupByGroupIdAsync(Guid groupId)
     {
-        var attr = _genericAttributeRepository.Table.FirstOrDefault(x => x.Key == "GroupForOrder" && x.Value.Contains("{\"Id\":\"" + groupId + "\""));
+        var attr = await _genericAttributeRepository.Table.FirstOrDefaultAsync(attribute =>
+            attribute.Key == "GroupForOrder" && attribute.Value.Contains("{\"Id\":\"" + groupId + "\""));
 
         return attr;
     }
@@ -3421,7 +3399,7 @@ public partial class NexportService : INexportService
         if (unassignmentRequest == null)
             throw new ArgumentNullException(nameof(unassignmentRequest));
 
-        if (_nexportRedemptionUnassignmentRequestRepository.Table.Any(x =>
+        if (await _nexportRedemptionUnassignmentRequestRepository.Table.AnyAsync(x =>
                 x.InvoiceItemId == unassignmentRequest.InvoiceItemId &&
                 x.RequestStatus == NexportRedemptionUnassignmentRequestStatus.Received))
             throw new Exception("Unable to add new unassignment request entity due to previous request status!");
@@ -3584,7 +3562,7 @@ public partial class NexportService : INexportService
         if (unassignmentRequestReason == null)
             throw new ArgumentNullException(nameof(unassignmentRequestReason));
 
-        if (_nexportRedemptionUnassignmentRequestReasonRepository.Table.Count() == 1)
+        if (await _nexportRedemptionUnassignmentRequestReasonRepository.Table.CountAsync() == 1)
             throw new NopException("You cannot delete unassignment request reason. At least one unassignment request reason is required.");
 
         await _nexportRedemptionUnassignmentRequestReasonRepository.DeleteAsync(unassignmentRequestReason);

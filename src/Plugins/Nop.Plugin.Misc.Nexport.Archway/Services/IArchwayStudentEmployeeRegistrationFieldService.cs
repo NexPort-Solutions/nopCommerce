@@ -30,7 +30,7 @@ public interface IArchwayStudentEmployeeRegistrationFieldService
 
     Task<ArchwayStudentRegistrationFieldKeyMapping> GetArchwayStudentRegistrationFieldKeyMapping(string fieldControlName);
 
-    ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMappingByFieldKey(string fieldKey);
+    Task<ArchwayStudentRegistrationFieldKeyMapping> GetArchwayStudentRegistrationFieldKeyMappingByFieldKeyAsync(string fieldKey);
 
     Task InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(ArchwayStudentRegistrationFieldKeyMapping fieldKeyMapping);
 

@@ -1,32 +1,23 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.Razor;
-using Nop.Core.Infrastructure;
-using Nop.Web.Framework.Themes;
+using Nop.Services.Themes;
 using Nop.Web.Framework;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure;
 
 public class ViewLocationExpander : IViewLocationExpander
 {
-    private const string THEME_KEY = "nop.themename";
-    private const string HTTP_CONTEXT_THEME_CACHE_KEY = "nop.cachedthemename";
-
     public void PopulateValues(ViewLocationExpanderContext context)
     {
         if (context.AreaName?.Equals(AreaNames.ADMIN) ?? false)
             return;
 
         var httpContext = context.ActionContext.HttpContext;
-        if (!httpContext.Items.TryGetValue(HTTP_CONTEXT_THEME_CACHE_KEY, out var cachedThemeName))
-        {
-            cachedThemeName = EngineContext.Current.Resolve<IThemeContext>()
-                .GetWorkingThemeNameAsync()
-                .GetAwaiter().GetResult();
-            httpContext.Items[HTTP_CONTEXT_THEME_CACHE_KEY] = cachedThemeName;
-        }
+        if (!httpContext.Items.TryGetValue(NopThemeDefaults.HttpContextThemeCacheKey, out var cachedThemeName))
+            return;
 
-        context.Values[THEME_KEY] = (string)cachedThemeName;
+        context.Values[NopThemeDefaults.ThemeKey] = (string)cachedThemeName;
     }
 
     public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
@@ -36,7 +27,7 @@ public class ViewLocationExpander : IViewLocationExpander
             "/Plugins/Misc.Nexport/Areas/Admin/Views/{1}/{0}.cshtml"
         }.Concat(viewLocations);
 
-        if (context.Values.TryGetValue(THEME_KEY, out var theme))
+        if (context.Values.TryGetValue(NopThemeDefaults.ThemeKey, out var theme))
         {
             viewLocations = new[] {
                 $"/Themes/{theme}/Views/{{1}}/{{0}}.cshtml",

@@ -121,6 +121,9 @@ public partial class BaseNopTest
 
         var provider = (IPermissionProvider)Activator.CreateInstance(typeof(StandardPermissionProvider));
         EngineContext.Current.Resolve<IPermissionService>().InstallPermissionsAsync(provider).Wait();
+
+        //init theme provider
+        EngineContext.Current.Resolve<IThemeProvider>().InitializeAsync().Wait();
     }
 
     protected static T PropertiesShouldEqual<T, Tm>(T entity, Tm model, params string[] filter) where T : BaseEntity
@@ -370,7 +373,7 @@ public partial class BaseNopTest
         services.AddTransient<IImportManager, ImportManager>();
         services.AddTransient<IPdfService, PdfService>();
         services.AddTransient<IUploadService, UploadService>();
-        services.AddTransient<IThemeProvider, ThemeProvider>();
+        services.AddSingleton<IThemeProvider, ThemeProvider>();
         services.AddTransient<IExternalAuthenticationService, ExternalAuthenticationService>();
         services.AddScoped<IBBCodeHelper, BBCodeHelper>();
         services.AddScoped<IHtmlFormatter, HtmlFormatter>();

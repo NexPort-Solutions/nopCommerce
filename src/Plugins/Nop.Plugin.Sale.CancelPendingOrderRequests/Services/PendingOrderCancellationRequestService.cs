@@ -4,17 +4,17 @@ using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Events;
 using Nop.Data;
+using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
+using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
+using Nop.Services.Common;
 using Nop.Services.Customers;
+using Nop.Services.Html;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Stores;
-using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains;
-using Nop.Plugin.Sale.CancelPendingOrderRequests.Domains.Enums;
-using Nop.Services.Common;
-using Nop.Services.Html;
 
 namespace Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
 
@@ -200,7 +200,7 @@ public class PendingOrderCancellationRequestService : IPendingOrderCancellationR
         if (cancellationRequestReason == null)
             throw new ArgumentNullException(nameof(cancellationRequestReason));
 
-        if (_pendingOrderCancellationRequestReasonRepository.Table.Count() == 1)
+        if (await _pendingOrderCancellationRequestReasonRepository.Table.CountAsync() == 1)
             throw new NopException("You cannot delete cancellation request reason. At least one cancellation request reason is required.");
 
         await _pendingOrderCancellationRequestReasonRepository.DeleteAsync(cancellationRequestReason);
@@ -243,7 +243,7 @@ public class PendingOrderCancellationRequestService : IPendingOrderCancellationR
         if (cancellationRequest == null)
             throw new ArgumentNullException(nameof(cancellationRequest));
 
-        if (_pendingOrderCancellationRequestRepository.Table.Any(x => x.OrderId == cancellationRequest.OrderId))
+        if (await _pendingOrderCancellationRequestRepository.Table.AnyAsync(x => x.OrderId == cancellationRequest.OrderId))
             return;
 
         await _pendingOrderCancellationRequestRepository.InsertAsync(cancellationRequest);

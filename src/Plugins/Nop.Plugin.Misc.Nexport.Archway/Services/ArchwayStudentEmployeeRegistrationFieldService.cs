@@ -8,12 +8,12 @@ using Nop.Core.Caching;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Infrastructure;
 using Nop.Data;
-using Nop.Services.Logging;
 using Nop.Plugin.Misc.Nexport.Archway.Data;
 using Nop.Plugin.Misc.Nexport.Archway.Domains;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Services.Localization;
+using Nop.Services.Logging;
 
 namespace Nop.Plugin.Misc.Nexport.Archway.Services;
 
@@ -95,18 +95,7 @@ public class ArchwayStudentEmployeeRegistrationFieldService : IArchwayStudentEmp
         try
         {
             var filePath = _fileProvider.GetAbsolutePath(storeDataFilePath);
-
-            using var reader = new StreamReader(filePath);
-            using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                Delimiter = "|"
-            });
-            csv.Context.RegisterClassMap<ArchwayStoreRecordParsingClassMap>();
-
-            var dt = new DataTable();
-
-            using var dr = new CsvDataReader(csv);
-            dt.Load(dr);
+            var dt = await ReadStoreDataTableAsync(filePath);
 
             var dataSettings = DataSettingsManager.LoadSettings();
             if (dataSettings == null ||
@@ -123,7 +112,10 @@ public class ArchwayStudentEmployeeRegistrationFieldService : IArchwayStudentEmp
 
             foreach (var member in map.MemberMaps)
             {
-                bulkCopy.ColumnMappings.Add(member.Data.Names.First(), member.Data.Member?.Name);
+                var memberName = member.Data.Member?.Name ??
+                                 throw new InvalidOperationException("A store data map member must have a name.");
+
+                bulkCopy.ColumnMappings.Add(memberName, memberName);
             }
 
             bulkCopy.DestinationTableName = "ArchwayStore";
@@ -134,6 +126,60 @@ public class ArchwayStudentEmployeeRegistrationFieldService : IArchwayStudentEmp
             await _logger.ErrorAsync("Cannot process uploaded store data file", ex);
             throw;
         }
+    }
+
+    private static async Task<DataTable> ReadStoreDataTableAsync(string filePath)
+    {
+        await using var fileStream = new FileStream(
+            filePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            bufferSize: 4096,
+            options: FileOptions.Asynchronous | FileOptions.SequentialScan);
+        using var reader = new StreamReader(fileStream);
+        using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
+        {
+            Delimiter = "|"
+        });
+
+        csv.Context.RegisterClassMap<ArchwayStoreRecordParsingClassMap>();
+
+        var dataTable = new DataTable();
+        dataTable.Columns.AddRange(new[]
+        {
+            new DataColumn(nameof(ArchwayStoreRecordParsingInfo.Id), typeof(int)),
+            new DataColumn(nameof(ArchwayStoreRecordParsingInfo.StoreNumber), typeof(string)),
+            new DataColumn(nameof(ArchwayStoreRecordParsingInfo.OperatorId), typeof(string)),
+            new DataColumn(nameof(ArchwayStoreRecordParsingInfo.RegionCode), typeof(int)),
+            new DataColumn(nameof(ArchwayStoreRecordParsingInfo.Address), typeof(string)),
+            new DataColumn(nameof(ArchwayStoreRecordParsingInfo.City), typeof(string)),
+            new DataColumn(nameof(ArchwayStoreRecordParsingInfo.State), typeof(string)),
+            new DataColumn(nameof(ArchwayStoreRecordParsingInfo.PostalCode), typeof(string)),
+            new DataColumn(nameof(ArchwayStoreRecordParsingInfo.AdvertisingCoop), typeof(string)),
+            new DataColumn(nameof(ArchwayStoreRecordParsingInfo.StoreType), typeof(string)),
+            new DataColumn(nameof(ArchwayStoreRecordParsingInfo.OperatorFirstName), typeof(string)),
+            new DataColumn(nameof(ArchwayStoreRecordParsingInfo.OperatorLastName), typeof(string))
+        });
+
+        await foreach (var record in csv.GetRecordsAsync<ArchwayStoreRecordParsingInfo>())
+        {
+            dataTable.Rows.Add(
+                record.Id,
+                record.StoreNumber,
+                record.OperatorId,
+                record.RegionCode,
+                record.Address ?? (object)DBNull.Value,
+                record.City,
+                record.State,
+                record.PostalCode,
+                record.AdvertisingCoop,
+                record.StoreType,
+                record.OperatorFirstName ?? (object)DBNull.Value,
+                record.OperatorLastName ?? (object)DBNull.Value);
+        }
+
+        return dataTable;
     }
 
     public async Task<ArchwayStoreRecordInfo> GetArchwayStoreRecordInfoById(int id)
@@ -243,14 +289,13 @@ public class ArchwayStudentEmployeeRegistrationFieldService : IArchwayStudentEmp
             .FirstOrDefaultAsync(x => x.FieldControlName == fieldControlName);
     }
 
-    public ArchwayStudentRegistrationFieldKeyMapping GetArchwayStudentRegistrationFieldKeyMappingByFieldKey(string fieldKey)
+    public async Task<ArchwayStudentRegistrationFieldKeyMapping> GetArchwayStudentRegistrationFieldKeyMappingByFieldKeyAsync(string fieldKey)
     {
         if (string.IsNullOrWhiteSpace(fieldKey))
             return null;
 
-        return _archwayStudentRegistrationFieldKeyMappingRepository
-            .Table
-            .FirstOrDefault(x => x.FieldKey == fieldKey);
+        return await _archwayStudentRegistrationFieldKeyMappingRepository.Table
+            .FirstOrDefaultAsync(mapping => mapping.FieldKey == fieldKey);
     }
 
     public async Task InsertOrUpdateArchwayStudentRegistrationFieldKeyMapping(
@@ -259,8 +304,8 @@ public class ArchwayStudentEmployeeRegistrationFieldService : IArchwayStudentEmp
         if (fieldKeyMapping == null)
             throw new ArgumentNullException(nameof(fieldKeyMapping));
 
-        var currentMapping = _archwayStudentRegistrationFieldKeyMappingRepository
-            .Table.FirstOrDefault(x => x.FieldControlName == fieldKeyMapping.FieldControlName);
+        var currentMapping = await _archwayStudentRegistrationFieldKeyMappingRepository.Table
+            .FirstOrDefaultAsync(mapping => mapping.FieldControlName == fieldKeyMapping.FieldControlName);
 
         if (currentMapping != null)
         {
@@ -471,7 +516,7 @@ public class ArchwayStudentEmployeeRegistrationFieldService : IArchwayStudentEmp
         var answers = await GetArchwayStudentRegistrationFieldAnswers(customerId, fieldId);
         foreach (var answer in answers.Where(x => x.FieldKey != "StoreIdField" && x.FieldKey != "StoreTypeField"))
         {
-            var fieldKeyInfo = GetArchwayStudentRegistrationFieldKeyMappingByFieldKey(answer.FieldKey);
+            var fieldKeyInfo = await GetArchwayStudentRegistrationFieldKeyMappingByFieldKeyAsync(answer.FieldKey);
             if (fieldKeyInfo != null)
             {
                 result.Add(await _localizationService.GetResourceAsync($"Plugins.Misc.Nexport.Archway.Field.{fieldKeyInfo.FieldControlName}"), answer.TextValue);
