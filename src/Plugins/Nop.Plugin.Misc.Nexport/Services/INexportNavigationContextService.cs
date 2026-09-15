@@ -18,6 +18,16 @@ public interface INexportNavigationContextService
     string GetSanitizedReturnUrl(HttpRequest request, IUrlHelper urlHelper);
 
     /// <summary>
+    /// Resolve the configured return URL query parameter from the current request.
+    /// </summary>
+    NexportReturnUrlResolutionResult Resolve(HttpRequest request, IUrlHelper urlHelper);
+
+    /// <summary>
+    /// Resolve a raw return URL value, typically an action parameter.
+    /// </summary>
+    NexportReturnUrlResolutionResult Resolve(string returnUrl, IUrlHelper urlHelper);
+
+    /// <summary>
     /// Sanitize a raw return URL value (typically an action parameter).
     /// </summary>
     string Sanitize(string returnUrl, IUrlHelper urlHelper);

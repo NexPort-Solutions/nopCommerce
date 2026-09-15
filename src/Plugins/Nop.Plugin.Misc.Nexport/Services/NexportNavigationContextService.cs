@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Primitives;
 
 namespace Nop.Plugin.Misc.Nexport.Services;
 
@@ -21,53 +19,49 @@ public class NexportNavigationContextService : INexportNavigationContextService
     /// </summary>
     public string GetSanitizedReturnUrl(HttpRequest request, IUrlHelper urlHelper)
     {
-        ArgumentNullException.ThrowIfNull(request);
-
-        if (request.Query.TryGetValue(ReturnUrlParameterName, out var values) && !StringValues.IsNullOrEmpty(values))
-            return Sanitize(values.ToString(), urlHelper);
-
-        return string.Empty;
+        return Resolve(request, urlHelper).Destination ?? string.Empty;
     }
 
     /// <summary>
-    /// Normalize nested auth redirects and validate the final return URL target.
+    /// Resolve the return URL query parameter from the current request.
     /// </summary>
-    public string Sanitize(string returnUrl, IUrlHelper urlHelper)
+    public NexportReturnUrlResolutionResult Resolve(HttpRequest request, IUrlHelper urlHelper)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(urlHelper);
+
+        var query = request.QueryString.Value ?? string.Empty;
+        if (query.StartsWith("?", StringComparison.Ordinal))
+            query = query[1..];
+
+        if (!TryGetSingleReturnUrlParameter(query, out var returnUrl, out var hasReturnUrl))
+            return new NexportReturnUrlResolutionResult(NexportReturnUrlResolutionStatus.Rejected);
+
+        if (!hasReturnUrl)
+            return new NexportReturnUrlResolutionResult(NexportReturnUrlResolutionStatus.Missing);
+
+        return ResolveCore(returnUrl, urlHelper);
+    }
+
+    /// <summary>
+    /// Resolve a raw return URL value, typically an action parameter.
+    /// </summary>
+    public NexportReturnUrlResolutionResult Resolve(string returnUrl, IUrlHelper urlHelper)
     {
         ArgumentNullException.ThrowIfNull(urlHelper);
 
         if (string.IsNullOrWhiteSpace(returnUrl))
-            return string.Empty;
+            return new NexportReturnUrlResolutionResult(NexportReturnUrlResolutionStatus.Missing);
 
-        // Unwrap recursive auth redirects like /login?returnUrl=%2Fregister%3FreturnUrl...
-        // until the chain stabilizes or max depth is reached.
-        var candidate = returnUrl;
-        var maxUnwrapDepth = NexportDefaults.DefaultReturnUrlUnwrapDepth;
+        return ResolveCore(returnUrl, urlHelper);
+    }
 
-        for (var i = 0; i < maxUnwrapDepth; i++)
-        {
-            if (!TryExtractNestedReturnUrl(candidate, urlHelper, out var nestedReturnUrl))
-                break;
-
-            candidate = nestedReturnUrl;
-        }
-
-        var maxReturnUrlLength = NexportDefaults.DefaultReturnUrlMaxLength;
-
-        if (string.IsNullOrWhiteSpace(candidate) || candidate.Length > maxReturnUrlLength)
-            return string.Empty;
-
-        // Keep redirects local and block nested returnUrl payloads/auth-page loops.
-        if (!urlHelper.IsLocalUrl(candidate))
-            return string.Empty;
-
-        if (ContainsReturnUrlParameter(candidate))
-            return string.Empty;
-
-        if (IsAuthPath(candidate, urlHelper))
-            return string.Empty;
-
-        return candidate;
+    /// <summary>
+    /// Sanitize a raw return URL value while retaining controller and POST compatibility.
+    /// </summary>
+    public string Sanitize(string returnUrl, IUrlHelper urlHelper)
+    {
+        return Resolve(returnUrl, urlHelper).Destination ?? string.Empty;
     }
 
     /// <summary>
@@ -84,17 +78,61 @@ public class NexportNavigationContextService : INexportNavigationContextService
     }
 
     /// <summary>
-    /// Extract the nested return URL only when the source URL is an auth page URL.
+    /// Extract and resolve nested return URLs until the chain stabilizes or reaches its maximum depth.
+    /// </summary>
+    private NexportReturnUrlResolutionResult ResolveCore(string returnUrl, IUrlHelper urlHelper)
+    {
+        if (returnUrl.Length > NexportDefaults.DefaultEncodedReturnUrlMaxLength)
+            return new NexportReturnUrlResolutionResult(NexportReturnUrlResolutionStatus.Rejected);
+
+        var candidate = returnUrl;
+        var canonicalized = false;
+
+        for (var depth = 0; depth < NexportDefaults.DefaultReturnUrlUnwrapDepth; depth++)
+        {
+            if (!TryExtractNestedReturnUrl(candidate, urlHelper, out var nestedReturnUrl))
+                break;
+
+            candidate = nestedReturnUrl;
+            canonicalized = true;
+
+            if (candidate.Length > NexportDefaults.DefaultEncodedReturnUrlMaxLength)
+                return new NexportReturnUrlResolutionResult(NexportReturnUrlResolutionStatus.Rejected);
+        }
+
+        if (!TryValidateFinalReturnUrl(candidate, urlHelper))
+            return new NexportReturnUrlResolutionResult(NexportReturnUrlResolutionStatus.Rejected);
+
+        return new NexportReturnUrlResolutionResult(
+            canonicalized
+                ? NexportReturnUrlResolutionStatus.Canonicalized
+                : NexportReturnUrlResolutionStatus.Valid,
+            candidate);
+    }
+
+    /// <summary>
+    /// Extract the nested return URL only when the source URL is a local auth page URL.
     /// </summary>
     protected virtual bool TryExtractNestedReturnUrl(string returnUrl, IUrlHelper urlHelper, out string nestedReturnUrl)
     {
         nestedReturnUrl = null;
 
-        if (string.IsNullOrWhiteSpace(returnUrl))
+        if (string.IsNullOrWhiteSpace(returnUrl) ||
+            returnUrl.Length > NexportDefaults.DefaultEncodedReturnUrlMaxLength ||
+            ContainsControlCharacters(returnUrl) ||
+            returnUrl.IndexOf('\\') >= 0 ||
+            !HasValidPercentEncoding(returnUrl))
+        {
             return false;
+        }
 
         var queryIndex = returnUrl.IndexOf('?', StringComparison.Ordinal);
         if (queryIndex <= 0 || queryIndex == returnUrl.Length - 1)
+            return false;
+
+        // Validate the source before using its path for endpoint classification. This keeps an absolute
+        // URL from being normalized into a path that happens to match one of the auth endpoints.
+        if (!urlHelper.IsLocalUrl(returnUrl))
             return false;
 
         var path = returnUrl[..queryIndex];
@@ -102,15 +140,15 @@ public class NexportNavigationContextService : INexportNavigationContextService
             return false;
 
         var query = returnUrl[(queryIndex + 1)..];
-        if (string.IsNullOrWhiteSpace(query))
+        if (!TryGetSingleReturnUrlParameter(query, out nestedReturnUrl, out var hasReturnUrl) ||
+            !hasReturnUrl ||
+            string.IsNullOrWhiteSpace(nestedReturnUrl))
+        {
+            nestedReturnUrl = null;
             return false;
+        }
 
-        var parsedQuery = QueryHelpers.ParseQuery(query);
-        if (!parsedQuery.TryGetValue(ReturnUrlParameterName, out var value) || StringValues.IsNullOrEmpty(value))
-            return false;
-
-        nestedReturnUrl = value.ToString();
-        return !string.IsNullOrWhiteSpace(nestedReturnUrl);
+        return true;
     }
 
     /// <summary>
@@ -126,8 +164,29 @@ public class NexportNavigationContextService : INexportNavigationContextService
             return false;
 
         var query = returnUrl[(queryIndex + 1)..];
-        var parsedQuery = QueryHelpers.ParseQuery(query);
-        return parsedQuery.ContainsKey(ReturnUrlParameterName);
+        return !TryGetSingleReturnUrlParameter(query, out _, out var hasReturnUrl) || hasReturnUrl;
+    }
+
+    /// <summary>
+    /// Determine whether a final return URL is safe and no longer points to an auth page.
+    /// </summary>
+    private bool TryValidateFinalReturnUrl(string returnUrl, IUrlHelper urlHelper)
+    {
+        if (string.IsNullOrWhiteSpace(returnUrl) ||
+            returnUrl.Length > NexportDefaults.DefaultReturnUrlMaxLength ||
+            ContainsControlCharacters(returnUrl) ||
+            returnUrl.IndexOf('\\') >= 0 ||
+            !HasValidPercentEncoding(returnUrl) ||
+            !urlHelper.IsLocalUrl(returnUrl))
+        {
+            return false;
+        }
+
+        var queryIndex = returnUrl.IndexOf('?', StringComparison.Ordinal);
+        if (queryIndex >= 0 && ContainsReturnUrlParameter(returnUrl))
+            return false;
+
+        return !IsAuthPath(returnUrl, urlHelper);
     }
 
     /// <summary>
@@ -155,6 +214,7 @@ public class NexportNavigationContextService : INexportNavigationContextService
         var authPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         AddAuthPath(authPaths, urlHelper.RouteUrl(LoginRouteName));
+        AddAuthPath(authPaths, urlHelper.RouteUrl(NexportDefaults.NexportLoginCheckoutAsGuestRouteName));
         AddAuthPath(authPaths, urlHelper.RouteUrl(RegisterRouteName));
 
         return authPaths;
@@ -186,6 +246,15 @@ public class NexportNavigationContextService : INexportNavigationContextService
         if (queryIndex >= 0)
             value = value[..queryIndex];
 
+        try
+        {
+            value = Uri.UnescapeDataString(value);
+        }
+        catch (UriFormatException)
+        {
+            return string.Empty;
+        }
+
         value = value.Trim().TrimEnd('/');
         if (string.IsNullOrWhiteSpace(value))
             return "/";
@@ -194,5 +263,111 @@ public class NexportNavigationContextService : INexportNavigationContextService
             value = "/" + value;
 
         return value;
+    }
+
+    /// <summary>
+    /// Read exactly one case-insensitive return URL parameter from a raw query string.
+    /// </summary>
+    private bool TryGetSingleReturnUrlParameter(
+        string query,
+        out string returnUrl,
+        out bool hasReturnUrl)
+    {
+        returnUrl = null;
+        hasReturnUrl = false;
+
+        if (string.IsNullOrEmpty(query))
+            return true;
+
+        if (query.StartsWith("?", StringComparison.Ordinal))
+            query = query[1..];
+
+        var values = new List<string>();
+        foreach (var segment in query.Split('&', StringSplitOptions.None))
+        {
+            if (string.IsNullOrEmpty(segment))
+                continue;
+
+            var separatorIndex = segment.IndexOf('=');
+            var encodedKey = separatorIndex >= 0 ? segment[..separatorIndex] : segment;
+            if (!TryDecodeQueryComponent(encodedKey, out var key) ||
+                !string.Equals(key, ReturnUrlParameterName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            hasReturnUrl = true;
+            var encodedValue = separatorIndex >= 0 ? segment[(separatorIndex + 1)..] : string.Empty;
+            if (encodedValue.Length > NexportDefaults.DefaultEncodedReturnUrlMaxLength ||
+                !TryDecodeQueryComponent(encodedValue, out var value))
+            {
+                return false;
+            }
+
+            values.Add(value);
+        }
+
+        if (!hasReturnUrl)
+            return true;
+
+        if (values.Count != 1 || string.IsNullOrWhiteSpace(values[0]))
+            return false;
+
+        returnUrl = values[0];
+        return true;
+    }
+
+    private static bool TryDecodeQueryComponent(string encodedValue, out string value)
+    {
+        value = null;
+
+        if (!HasValidPercentEncoding(encodedValue))
+            return false;
+
+        try
+        {
+            value = Uri.UnescapeDataString(encodedValue.Replace("+", " ", StringComparison.Ordinal));
+            return true;
+        }
+        catch (UriFormatException)
+        {
+            return false;
+        }
+    }
+
+    private static bool HasValidPercentEncoding(string value)
+    {
+        for (var index = 0; index < value.Length; index++)
+        {
+            if (value[index] != '%')
+                continue;
+
+            if (index + 2 >= value.Length ||
+                !IsHexDigit(value[index + 1]) ||
+                !IsHexDigit(value[index + 2]))
+            {
+                return false;
+            }
+
+            index += 2;
+        }
+
+        return true;
+    }
+
+    private static bool IsHexDigit(char value)
+    {
+        return value is >= '0' and <= '9' or >= 'a' and <= 'f' or >= 'A' and <= 'F';
+    }
+
+    private static bool ContainsControlCharacters(string value)
+    {
+        foreach (var character in value)
+        {
+            if (char.IsControl(character))
+                return true;
+        }
+
+        return false;
     }
 }

@@ -29,6 +29,8 @@ public class NexportDefaults
 
     public const string DefaultReturnUrlParameterName = "returnUrl";
 
+    public const int DefaultEncodedReturnUrlMaxLength = 2048;
+
     public const int DefaultReturnUrlMaxLength = 512;
 
     public const int DefaultReturnUrlUnwrapDepth = 10;

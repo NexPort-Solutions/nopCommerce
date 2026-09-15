@@ -123,7 +123,6 @@ public class PluginStartup : INopStartup
         services.AddScoped<NexportApiService>();
         services.AddScoped<NexportService>();
         services.AddScoped<NexportPluginService>();
-        services.AddScoped<INexportNavigationContextService, NexportNavigationContextService>();
         services.AddScoped<INexportPluginModelFactory, NexportPluginModelFactory>();
         services.AddScoped<INexportSettingModelFactory, NexportSettingModelFactory>();
         services.AddScoped<INexportWholesaleService, NexportNexportWholesaleService>();

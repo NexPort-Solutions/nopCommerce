@@ -3,14 +3,12 @@ using System.Globalization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Configuration;
 using Nop.Core.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Configuration;
-using Nop.Plugin.Misc.Nexport.Controllers;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure;
 
@@ -127,23 +125,34 @@ public partial class NexportRequestProtectionStartup : INopStartup
         HttpContext context,
         NexportRequestProtectionConfig settings)
     {
-        var actionDescriptor = context.GetEndpoint()?.Metadata.GetMetadata<ControllerActionDescriptor>();
-        if (actionDescriptor?.ControllerTypeInfo.AsType() != typeof(NexportCustomerController))
+        if (!NexportAuthenticationEndpointClassifier.TryClassify(context, out var endpoint))
             return null;
 
-        var method = context.Request.Method;
-        return (actionDescriptor.ActionName, method) switch
+        if (HttpMethods.IsGet(context.Request.Method))
         {
-            (nameof(NexportCustomerController.Login), "GET") =>
-                ("login", "login-page", settings.LoginPageEndpoint),
-            (nameof(NexportCustomerController.Login), "POST") =>
-                ("login", "login-submission", settings.LoginSubmissionEndpoint),
-            (nameof(NexportCustomerController.Register), "GET") =>
-                ("register", "registration-page", settings.RegistrationPageEndpoint),
-            (nameof(NexportCustomerController.Register), "POST") =>
-                ("register", "registration-submission", settings.RegistrationSubmissionEndpoint),
-            _ => null
-        };
+            return endpoint switch
+            {
+                NexportAuthenticationEndpoint.Login or NexportAuthenticationEndpoint.LoginCheckoutAsGuest =>
+                    ("login", "login-page", settings.LoginPageEndpoint),
+                NexportAuthenticationEndpoint.Register =>
+                    ("register", "registration-page", settings.RegistrationPageEndpoint),
+                _ => null
+            };
+        }
+
+        if (HttpMethods.IsPost(context.Request.Method))
+        {
+            return endpoint switch
+            {
+                NexportAuthenticationEndpoint.Login or NexportAuthenticationEndpoint.LoginCheckoutAsGuest =>
+                    ("login", "login-submission", settings.LoginSubmissionEndpoint),
+                NexportAuthenticationEndpoint.Register =>
+                    ("register", "registration-submission", settings.RegistrationSubmissionEndpoint),
+                _ => null
+            };
+        }
+
+        return null;
     }
 
     private static void Validate(NexportRequestProtectionConfig settings)
