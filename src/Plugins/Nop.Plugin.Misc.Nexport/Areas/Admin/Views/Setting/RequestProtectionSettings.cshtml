@@ -1,0 +1,73 @@
+@model Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Setting.NexportRequestProtectionSettingsModel
+
+@{
+    ViewBag.PageTitle = T("Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection").Text;
+    NopHtml.SetActiveMenuItemSystemName("Nexport Integration - Settings - Request protection");
+}
+
+<form asp-controller="NexportSetting" asp-action="RequestProtection" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection")
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.Save")
+            </button>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-horizontal">
+                <div asp-validation-summary="All"></div>
+
+                <div class="card card-default">
+                    <div class="card-body">
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="BlockKnownProbePaths" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="BlockKnownProbePaths" />
+                                <span asp-validation-for="BlockKnownProbePaths"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="BlockRecognizedCrawlersOnAuthenticationPages" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="BlockRecognizedCrawlersOnAuthenticationPages" />
+                                <span asp-validation-for="BlockRecognizedCrawlersOnAuthenticationPages"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="BlockedRequestFileExtensions" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-textarea asp-for="BlockedRequestFileExtensions"></nop-textarea>
+                                <span asp-validation-for="BlockedRequestFileExtensions"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="BlockedRequestPathPrefixes" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-textarea asp-for="BlockedRequestPathPrefixes"></nop-textarea>
+                                <span asp-validation-for="BlockedRequestPathPrefixes"></span>
+                                <div class="text-muted mt-2">
+                                    <i class="fas fa-info-circle mr-1" aria-hidden="true"></i>
+                                    @T("Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.RestartHint")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</form>

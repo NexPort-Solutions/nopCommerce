@@ -89,6 +89,17 @@ public class NexportPluginService
         { "Plugins.Misc.Nexport.Admin.Configuration.Settings.Store.RedirectAfterOrderConfirmationPath.Hint", "Store Settings" },
         { "Plugins.Misc.Nexport.Admin.Configuration.Settings.Store.DisplayManagePurchasesLink", "Display manage purchases link" },
         { "Plugins.Misc.Nexport.Admin.Configuration.Settings.Store.DisplayManagePurchasesLink.Hint", "Store Settings" },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection", "Request protection" },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.BlockKnownProbePaths", "Block known probe paths" },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.BlockKnownProbePaths.Hint", "Reject known-impossible exploit and probe paths across the site." },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.BlockRecognizedCrawlersOnAuthenticationPages", "Block recognized crawlers on authentication pages" },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.BlockRecognizedCrawlersOnAuthenticationPages.Hint", "Reject recognized crawlers on Nexport Login, Register, and checkout-as-guest GET and HEAD endpoints." },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.BlockedRequestFileExtensions", "Blocked file extensions" },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.BlockedRequestFileExtensions.Hint", "Enter one file extension per line, such as .php. Each extension blocks matching paths and path-info descendants." },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.BlockedRequestPathPrefixes", "Blocked path prefixes" },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.BlockedRequestPathPrefixes.Hint", "Enter one root-relative path prefix per line. Each prefix blocks that exact path and its descendants." },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.RestartHint", "Restart the application after saving to apply these changes." },
+        { "Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.RestartRequired", "The request protection settings were updated. Restart the application to apply them to every instance." },
         { "Plugins.Misc.Nexport.DisplayManagePurchaseLink.Title", "MANAGE PURCHASES" },
         { "Plugins.Misc.Nexport.DisplayManagePurchaseLink.Link", "Click here to redeem or assign purchases" },
 
@@ -1149,6 +1160,10 @@ public class NexportPluginService
             foreach (var languageId in languageIds)
             {
                 var currentResource = await _localizationService.GetLocaleStringResourceByNameAsync(localeResource.Key, languageId, false);
+
+                if (currentResource == null)
+                    continue;
+
                 if (currentResource.ResourceValue != localeResource.Value)
                 {
                     results.Add(currentResource);

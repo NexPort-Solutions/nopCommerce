@@ -3,6 +3,7 @@ using Nop.Core;
 using Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Setting;
 using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Factories;
+using Nop.Plugin.Misc.Nexport.Infrastructure;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
@@ -86,5 +87,79 @@ public class NexportSettingController : BaseAdminController
 
         //if we got this far, something failed, redisplay form
         return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Setting/StoreSettings.cshtml", model);
+    }
+
+    public virtual async Task<IActionResult> RequestProtection()
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+            return AccessDeniedView();
+
+        var settings = await _settingService.LoadSettingAsync<NexportRequestProtectionSettings>(storeId: 0);
+        var model = new NexportRequestProtectionSettingsModel
+        {
+            BlockRecognizedCrawlersOnAuthenticationPages = settings.BlockRecognizedCrawlersOnAuthenticationPages,
+            BlockKnownProbePaths = settings.BlockKnownProbePaths,
+            BlockedRequestFileExtensions = string.Join(Environment.NewLine,
+                settings.BlockedRequestFileExtensions ?? new List<string>()),
+            BlockedRequestPathPrefixes = string.Join(Environment.NewLine,
+                settings.BlockedRequestPathPrefixes ?? new List<string>())
+        };
+
+        return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Setting/RequestProtectionSettings.cshtml", model);
+    }
+
+    [HttpPost]
+    public virtual async Task<IActionResult> RequestProtection(NexportRequestProtectionSettingsModel model)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings))
+            return AccessDeniedView();
+
+        var pathPrefixes = ParseEntries(model.BlockedRequestPathPrefixes);
+        var fileExtensions = ParseEntries(model.BlockedRequestFileExtensions);
+        try
+        {
+            _ = new NexportRequestPathPolicy(pathPrefixes, Array.Empty<string>());
+        }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError(nameof(model.BlockedRequestPathPrefixes), exception.Message);
+        }
+
+        try
+        {
+            _ = new NexportRequestPathPolicy(Array.Empty<string>(), fileExtensions);
+        }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError(nameof(model.BlockedRequestFileExtensions), exception.Message);
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View("~/Plugins/Misc.Nexport/Areas/Admin/Views/Setting/RequestProtectionSettings.cshtml", model);
+        }
+
+        var settings = await _settingService.LoadSettingAsync<NexportRequestProtectionSettings>(storeId: 0);
+        settings.BlockRecognizedCrawlersOnAuthenticationPages = model.BlockRecognizedCrawlersOnAuthenticationPages;
+        settings.BlockKnownProbePaths = model.BlockKnownProbePaths;
+        settings.BlockedRequestPathPrefixes = pathPrefixes;
+        settings.BlockedRequestFileExtensions = fileExtensions;
+        await _settingService.SaveSettingAsync(settings, storeId: 0);
+        await _settingService.ClearCacheAsync();
+
+        await _customerActivityService.InsertActivityAsync("EditSettings",
+            await _localizationService.GetResourceAsync("ActivityLog.EditSettings"));
+        _notificationService.SuccessNotification(await _localizationService.GetResourceAsync(
+            "Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.RestartRequired"));
+
+        return RedirectToAction(nameof(RequestProtection));
+    }
+
+    private static List<string> ParseEntries(string entries)
+    {
+        return (entries ?? string.Empty)
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 }

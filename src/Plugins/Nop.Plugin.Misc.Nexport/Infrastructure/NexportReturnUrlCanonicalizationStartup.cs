@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Infrastructure;
@@ -19,5 +19,5 @@ public sealed class NexportReturnUrlCanonicalizationStartup : INopStartup
         application.UseMiddleware<NexportReturnUrlCanonicalizationMiddleware>();
     }
 
-    public int Order => 451;
+    public int Order => 452;
 }

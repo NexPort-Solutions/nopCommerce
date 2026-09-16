@@ -15,8 +15,8 @@
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyVersion>1.0.0.60</AssemblyVersion>
-    <FileVersion>1.0.0.60</FileVersion>
+    <AssemblyVersion>1.0.0.61</AssemblyVersion>
+    <FileVersion>1.0.0.61</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,6 +39,7 @@
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
     <PackageReference Include="NexportApi" Version="1.0.40" />
     <PackageReference Include="RBC.Hangfire.RecurringJobAdmin" Version="1.0.5" />
+    <PackageReference Include="UaDetector" Version="5.2.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -90,6 +91,7 @@
     <None Remove="Areas\Admin\Views\RegistrationField\_CreateOrUpdate.Options.cshtml" />
     <None Remove="Areas\Admin\Views\ReturnRequest\List.cshtml" />
     <None Remove="Areas\Admin\Views\Setting\StoreSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\Setting\RequestProtectionSettings.cshtml" />
     <None Remove="Areas\Admin\Views\Setting\_CustomerUser.NexportRegistrationFields.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Category\NexportCategoryDetails.cshtml" />
     <None Remove="Areas\Admin\Views\Widget\Order\NexportOrderDetails.cshtml" />
@@ -711,6 +713,9 @@
     <Content Include="Views\Checkout\Completed.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\Setting\RequestProtectionSettings.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\EnrollmentListingTable.cshtml">

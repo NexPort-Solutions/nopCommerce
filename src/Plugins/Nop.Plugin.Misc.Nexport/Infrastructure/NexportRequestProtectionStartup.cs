@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Configuration;
 using Nop.Core.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Configuration;
+using UaDetector;
 
 namespace Nop.Plugin.Misc.Nexport.Infrastructure;
 
@@ -31,6 +32,10 @@ public partial class NexportRequestProtectionStartup : INopStartup
 
         if (!settings.Enabled)
             return;
+
+        services.AddSingleton<NexportRequestProtectionPolicyProvider>();
+        services.AddBotParser();
+        services.AddScoped<INexportEndpointRequestEvaluator, NexportEndpointRequestEvaluator>();
 
         Validate(settings);
         var commonSettings = Singleton<AppSettings>.Instance.Get<CommonConfig>();

@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Nop.Core;
 using Nop.Core.Domain.Cms;
 using Nop.Plugin.Misc.Nexport.Components;
+using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Infrastructure;
 using Nop.Plugin.Misc.Nexport.Services;
 using Nop.Plugin.Misc.Nexport.Services.Security;
@@ -120,6 +121,16 @@ public class NexportPlugin(
             SystemName = "Nexport Integration - Settings - Store settings",
             ControllerName = "NexportSetting",
             ActionName = "Store",
+            IconClass = "far fa-circle"
+        });
+
+        pluginSettingsNode.ChildNodes.Add(new SiteMapNode
+        {
+            Visible = await permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSettings),
+            Title = "Request protection",
+            SystemName = "Nexport Integration - Settings - Request protection",
+            ControllerName = "NexportSetting",
+            ActionName = "RequestProtection",
             IconClass = "far fa-circle"
         });
 
@@ -275,6 +286,7 @@ public class NexportPlugin(
 
         var settings = new NexportSettings();
         await settingService.SaveSettingAsync(settings);
+        await settingService.SaveSettingAsync(new NexportRequestProtectionSettings());
 
         if (!widgetSetting.ActiveWidgetSystemNames.Contains(NexportDefaults.SystemName))
         {
@@ -304,6 +316,7 @@ public class NexportPlugin(
         }
 
         await settingService.DeleteSettingAsync<NexportSettings>();
+        await settingService.DeleteSettingAsync<NexportRequestProtectionSettings>();
 
         await nexportPluginService.DeleteMessageTemplatesAsync();
 
