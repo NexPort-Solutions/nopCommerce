@@ -192,12 +192,6 @@
 
     function finishCountdown() {
       stopCountdown();
-      if (requestPending) {
-        setCooldownState();
-        setButtonLabel(config.sending || "Sending...", true);
-        return;
-      }
-
       if (clearValidationOnCooldownExpiry) {
         updateValidationErrors($form, $summary, validationMessages, formControls, {});
         clearValidationOnCooldownExpiry = false;
@@ -262,13 +256,17 @@
       var submitValue = $button.val() || $button.text() || submitName;
       var requestData = $form.serialize();
       requestData += (requestData ? "&" : "") + $.param([{ name: submitName, value: submitValue }]);
+      var requestTimeoutSeconds = Math.max(1, Math.ceil(Number(config.submitSafetyTimeoutSeconds) || 30));
       requestPending = true;
-      startCountdown(config.submitSafetyTimeoutSeconds || 30);
+      stopCountdown();
+      setCooldownState();
+      setButtonLabel(config.sending || "Sending...", true);
       $.ajax({
         url: $form.attr("action") || window.location.href,
         type: "POST",
         data: requestData,
         dataType: "json",
+        timeout: requestTimeoutSeconds * 1000,
         headers: {
           "X-Nexport-Password-Recovery-Ajax": "true"
         }
