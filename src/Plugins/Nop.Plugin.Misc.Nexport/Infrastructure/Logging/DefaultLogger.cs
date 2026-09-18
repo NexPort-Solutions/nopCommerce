@@ -49,6 +49,17 @@ public class DefaultLogger : Nop.Services.Logging.DefaultLogger
         return log;
     }
 
+    public override async Task ClearLogAsync(DateTime? olderThan = null)
+    {
+        if (olderThan.HasValue)
+        {
+            await base.ClearLogAsync(olderThan);
+            return;
+        }
+
+        await _logRepository.TruncateAsync(resetIdentity: true);
+    }
+
     public override bool IsEnabled(LogLevel level)
     {
         switch (level)
