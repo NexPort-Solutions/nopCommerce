@@ -487,3 +487,17 @@ div.dt-container div.dt-paging {
     color: #fff;
     text-transform: uppercase;
 }
+
+.nexport-password-recovery-cooldown {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.nexport-password-recovery-error.validation-summary-valid {
+    display: none;
+}
+
+.nexport-password-recovery-error.validation-summary-errors {
+    display: block;
+    margin-bottom: 12px;
+}

@@ -70,6 +70,7 @@ public class NexportSettingController : BaseAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(storeSettings, x => x.RedirectAfterOrderConfirmation, model.RedirectAfterOrderConfirmation_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(storeSettings, x => x.RedirectAfterOrderConfirmationPath, model.RedirectAfterOrderConfirmationPath_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(storeSettings, x => x.DisplayManagePurchasesLink, model.DisplayManagePurchasesLink_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(storeSettings, x => x.PasswordRecoveryCooldownMinutes, model.PasswordRecoveryCooldownMinutes_OverrideForStore, storeScope, false);
 
             //now clear settings cache
             await _settingService.ClearCacheAsync();

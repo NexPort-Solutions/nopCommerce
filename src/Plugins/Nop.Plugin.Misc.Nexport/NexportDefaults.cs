@@ -15,6 +15,8 @@ public class NexportDefaults
 
     public static string NexportPluginAdminViewBasePath = "~/Plugins/Misc.Nexport/Areas/Admin/Views/";
 
+    public const string PasswordRecoveryCooldownSentUtcAttribute = "Nexport.PasswordRecoveryCooldown.SentUtc";
+
     public const string NexportLoginRouteName = "NexportLogin";
 
     public const string NexportLoginCheckoutAsGuestRouteName = "NexportLoginCheckoutAsGuest";

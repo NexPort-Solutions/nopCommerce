@@ -37,6 +37,7 @@ public class NexportSettingModelFactory : INexportSettingModelFactory
             model.RedirectAfterOrderConfirmation_OverrideForStore = await _settingService.SettingExistsAsync(nexportStoreSettings, x => x.RedirectAfterOrderConfirmation, storeId);
             model.RedirectAfterOrderConfirmationPath_OverrideForStore = await _settingService.SettingExistsAsync(nexportStoreSettings, x => x.RedirectAfterOrderConfirmationPath, storeId);
             model.DisplayManagePurchasesLink_OverrideForStore = await _settingService.SettingExistsAsync(nexportStoreSettings, x => x.DisplayManagePurchasesLink, storeId);
+            model.PasswordRecoveryCooldownMinutes_OverrideForStore = await _settingService.SettingExistsAsync(nexportStoreSettings, x => x.PasswordRecoveryCooldownMinutes, storeId);
         }
 
         return model;

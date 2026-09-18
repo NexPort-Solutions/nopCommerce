@@ -224,7 +224,8 @@ public class NexportPluginMapperConfiguration : Profile, IOrderedMapperProfile
         CreateMap<NexportStoreSettings, NexportStoreSettingsModel>()
             .ForMember(model => model.RedirectAfterOrderConfirmation_OverrideForStore, opts => opts.Ignore())
             .ForMember(model => model.RedirectAfterOrderConfirmationPath_OverrideForStore, opts => opts.Ignore())
-            .ForMember(model => model.DisplayManagePurchasesLink_OverrideForStore, opts => opts.Ignore());
+            .ForMember(model => model.DisplayManagePurchasesLink_OverrideForStore, opts => opts.Ignore())
+            .ForMember(model => model.PasswordRecoveryCooldownMinutes_OverrideForStore, opts => opts.Ignore());
 
         CreateMap<NexportStoreSettingsModel, NexportStoreSettings>();
     }

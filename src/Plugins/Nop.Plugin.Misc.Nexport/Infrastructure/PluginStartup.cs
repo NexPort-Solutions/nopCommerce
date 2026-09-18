@@ -26,6 +26,7 @@ using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Plugin.Misc.Nexport.Infrastructure.Logging;
 using Nop.Plugin.Misc.Nexport.Migrations;
 using Nop.Plugin.Misc.Nexport.Services;
+using Nop.Plugin.Misc.Nexport.Services.PasswordRecovery;
 using Nop.Plugin.Misc.Nexport.Services.ScheduleJobs;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
@@ -92,6 +93,7 @@ public class PluginStartup : INopStartup
             options.Filters.Add<NexportDashboardNotificationActionFilter>();
             options.Filters.Add<SignInActionFilter>();
             options.Filters.Add<ReturnRequestActionFilter>();
+            options.Filters.Add<PasswordRecoveryCooldownActionFilter>();
         });
 
         var apiConfiguration = new ApiConfiguration();
@@ -126,6 +128,7 @@ public class PluginStartup : INopStartup
         services.AddScoped<INexportPluginModelFactory, NexportPluginModelFactory>();
         services.AddScoped<INexportSettingModelFactory, NexportSettingModelFactory>();
         services.AddScoped<INexportWholesaleService, NexportNexportWholesaleService>();
+        services.AddScoped<IPasswordRecoveryCooldownService, PasswordRecoveryCooldownService>();
         services.AddScoped<NexportIntegrationController>();
         services.AddScoped<NexportSettingController>();
 

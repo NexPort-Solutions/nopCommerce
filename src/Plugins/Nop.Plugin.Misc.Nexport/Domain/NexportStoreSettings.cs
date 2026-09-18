@@ -9,4 +9,6 @@ public class NexportStoreSettings : ISettings
     public string RedirectAfterOrderConfirmationPath { get; set; }
 
     public bool DisplayManagePurchasesLink { get; set; }
+
+    public int PasswordRecoveryCooldownMinutes { get; set; } = 5;
 }

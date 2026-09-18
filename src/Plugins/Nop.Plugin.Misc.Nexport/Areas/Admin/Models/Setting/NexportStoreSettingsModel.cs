@@ -1,5 +1,6 @@
 ﻿using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
+using System.ComponentModel.DataAnnotations;
 
 namespace Nop.Plugin.Misc.Nexport.Areas.Admin.Models.Setting;
 
@@ -18,4 +19,9 @@ public record NexportStoreSettingsModel : BaseNopModel, ISettingsModel
     [NopResourceDisplayName("Plugins.Misc.Nexport.Admin.Configuration.Settings.Store.DisplayManagePurchasesLink")]
     public bool DisplayManagePurchasesLink { get; set; }
     public bool DisplayManagePurchasesLink_OverrideForStore { get; set; }
+
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Admin.Configuration.Settings.Store.PasswordRecoveryCooldownMinutes")]
+    [Range(0, 60)]
+    public int PasswordRecoveryCooldownMinutes { get; set; }
+    public bool PasswordRecoveryCooldownMinutes_OverrideForStore { get; set; }
 }
