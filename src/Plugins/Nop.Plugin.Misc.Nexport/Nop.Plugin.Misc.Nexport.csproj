@@ -15,8 +15,8 @@
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyVersion>1.0.0.62</AssemblyVersion>
-    <FileVersion>1.0.0.62</FileVersion>
+    <AssemblyVersion>1.0.0.63</AssemblyVersion>
+    <FileVersion>1.0.0.63</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -842,6 +842,9 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Views\Shared\_NexportOrganizationEnrollments.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Views\SupplementalInfo\AnswerQuestions.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -979,10 +982,6 @@
   <Target Name="CleanUpExtra" AfterTargets="NopTarget">
     <RemoveDir Directories="$(MSBuildProjectDirectory)\$(OutDir)de-DE" />
     <Delete Files="$(MSBuildProjectDirectory)\$(OutDir)e_sqlite3.dll" />
-  </Target>
-
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="taskkill /f /fi &quot;imagename eq w3wp.exe&quot; /fi &quot;username eq Nop&quot;" />
   </Target>
 
 </Project>

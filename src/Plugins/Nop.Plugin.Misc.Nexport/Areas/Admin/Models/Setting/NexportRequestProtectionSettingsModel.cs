@@ -11,6 +11,9 @@ public record NexportRequestProtectionSettingsModel : BaseNopModel
     [NopResourceDisplayName("Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.BlockKnownProbePaths")]
     public bool BlockKnownProbePaths { get; set; }
 
+    [NopResourceDisplayName("Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.AuthenticationPagePaths")]
+    public string AuthenticationPagePaths { get; set; } = string.Empty;
+
     [NopResourceDisplayName("Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.BlockedRequestFileExtensions")]
     public string BlockedRequestFileExtensions { get; set; } = string.Empty;
 

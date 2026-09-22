@@ -360,7 +360,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
     }
 
     public async Task<NexportSubscriptionsResponse> GetNexportSubscriptionsAsync([NotNull] string url,
-        [NotNull] string accessToken, Guid userId, int? page = null)
+        [NotNull] string accessToken, Guid userId, int? page = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
@@ -371,7 +371,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
         var nexportApi = CreateAdminApi(url);
 
         var response = await nexportApi.AdminApiGetSubscriptionsWithHttpInfoAsync(accessToken, userId: userId,
-            page: page, perPage: 30);
+            page: page, perPage: 30, cancellationToken: cancellationToken);
 
         var result = new NexportSubscriptionsResponse
         {
@@ -958,7 +958,8 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
     }
 
     public async Task<NexportGetSectionEnrollmentsResponse> GetNexportSectionEnrollmentsAsync([NotNull] string url,
-        [NotNull] string accessToken, Guid orgId, Guid userId, CancellationToken cancellationToken = default)
+        [NotNull] string accessToken, Guid orgId, Guid userId, int? page = null, int? perPage = null,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
@@ -969,7 +970,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
         var nexportApi = CreateLearningApi(url);
 
         var response = await nexportApi.LearningApiGetSectionEnrollmentsWithHttpInfoAsync(accessToken, orgId, null, userId,
-            cancellationToken: cancellationToken);
+            page: page, perPage: perPage, cancellationToken: cancellationToken);
 
         var result = new NexportGetSectionEnrollmentsResponse();
         if (response != null)

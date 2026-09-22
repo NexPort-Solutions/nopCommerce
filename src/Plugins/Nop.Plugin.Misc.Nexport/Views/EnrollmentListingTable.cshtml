@@ -11,7 +11,7 @@
 @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/Table.cshtml", new DataTablesModel
 {
     Name = tableName,
-    UrlRead = new DataUrl("GetNexportUserEnrollments", "NexportIntegration", new RouteValueDictionary { [nameof(Model.UserId)] = Model.UserId, [nameof(Model.OrganizationId)] = Model.OrganizationId }),
+    UrlRead = new DataUrl("GetNexportUserEnrollments", "NexportIntegration", new RouteValueDictionary { [nameof(Model.OrganizationId)] = Model.OrganizationId }),
     Length = Model.PageSize,
     LengthMenu = Model.AvailablePageSizes,
     ColumnCollection = new List<ColumnProperty>
@@ -40,11 +40,11 @@
             Width = "100",
             Render = new RenderCustom("renderEnrollmentStatus")
         },
-        new(nameof(NexportEnrollmentResponseItemModel.CertificateUrl))
+        new(nameof(NexportEnrollmentResponseItemModel.Id))
         {
             Title = "Certificate",
             Width = "200",
-            Render = new RenderCustom("renderDownloadCertificate")
+            Render = new RenderCustom("renderCertificateAction")
         },
         new(nameof(NexportEnrollmentResponseItemModel.Id))
         {
@@ -89,27 +89,27 @@
     function renderEnrollmentStatus(data, type, row, meta) {
         var displayText = "";
 
-        if (row.Status === +"@((int)Enums.PhaseEnum.NotStarted)") {
+        if (row.Phase === +"@((int)Enums.PhaseEnum.NotStarted)") {
             displayText = "Not started";
-        } else if (row.Status === +"@((int)Enums.PhaseEnum.InProgress)") {
+        } else if (row.Phase === +"@((int)Enums.PhaseEnum.InProgress)") {
             displayText = "In progress";
-        } else if (row.Status === +"@((int)Enums.PhaseEnum.Finished)") {
+        } else if (row.Phase === +"@((int)Enums.PhaseEnum.Finished)") {
             displayText = "Finished";
         }
 
         return displayText
     }
 
-    function renderDownloadCertificate(data, type, row, meta) {
+    function renderCertificateAction(data, type, row, meta) {
         if (!row.Id)
             return "";
 
-        if (!row.HasCertificate)
+        if (row.Phase !== +"@((int)Enums.PhaseEnum.Finished)")
             return "";
 
-        var buttonFunction = "downloadNexportCertificate('" + data + "'); return false;";
+        var buttonFunction = "viewNexportCertificate('" + row.Id + "', '" + row.OrganizationId + "', this); return false;";
 
-        return renderCustomButton(buttonFunction, "fas fa-file-certificate", "Download");
+        return renderCustomButton(buttonFunction, "fas fa-file-certificate", "Certificate");
     }
 
     function renderLaunchTraining(data, type, row, meta) {
@@ -122,5 +122,56 @@
         var buttonFunction = "launchNexportClassroom('" + data + "'); return false;";
 
         return renderCustomButton(buttonFunction, "fas fa-chalkboard-user", "Launch");
+    }
+
+    function viewNexportCertificate(enrollmentId, organizationId, button) {
+        var certificateButton = $(button);
+        if (certificateButton.data("pending")) {
+            return false;
+        }
+
+        certificateButton.data("pending", true).prop("disabled", true).attr("aria-busy", "true");
+        var certificateWindow = window.open("about:blank", "_blank");
+
+        $.ajax({
+            url: "@Url.Action("GetNexportEnrollmentCertificateUrl", "NexportIntegration")",
+            type: "POST",
+            data: {
+                organizationId: organizationId,
+                enrollmentId: enrollmentId,
+                __RequestVerificationToken: $("input[name='__RequestVerificationToken']").first().val()
+            },
+            success: function(result) {
+                if (result && result.Ready && result.CertificateUrl) {
+                    if (certificateWindow) {
+                        certificateWindow.location.href = result.CertificateUrl;
+                    } else {
+                        window.open(result.CertificateUrl, "_blank");
+                    }
+                    return;
+                }
+
+                if (certificateWindow) {
+                    certificateWindow.close();
+                }
+                displayBarNotification(result && result.Message
+                    ? result.Message
+                    : "The certificate is not ready yet.", "error");
+            },
+            error: function(xhr) {
+                if (certificateWindow) {
+                    certificateWindow.close();
+                }
+                var response = xhr.responseJSON;
+                displayBarNotification(response && response.Error
+                    ? response.Error
+                    : "Unable to retrieve the certificate right now. Please try again.", "error");
+            },
+            complete: function() {
+                certificateButton.data("pending", false).prop("disabled", false).removeAttr("aria-busy");
+            }
+        });
+
+        return false;
     }
 </script>

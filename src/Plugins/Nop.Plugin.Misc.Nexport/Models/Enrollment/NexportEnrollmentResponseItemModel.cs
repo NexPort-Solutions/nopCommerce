@@ -7,6 +7,8 @@ public record NexportEnrollmentResponseItemModel : BaseNopModel
 {
     public Guid Id { get; set; }
 
+    public Guid OrganizationId { get; set; }
+
     public string Name { get; set; }
 
     public DateTime EnrollmentDate { get; set; }

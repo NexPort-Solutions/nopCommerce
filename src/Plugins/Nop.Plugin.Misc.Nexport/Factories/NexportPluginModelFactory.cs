@@ -38,6 +38,7 @@ using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.RedeemProduct;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases.Refund;
 using Nop.Plugin.Misc.Nexport.Models.Order;
+using Nop.Plugin.Misc.Nexport.Models.Organization;
 using Nop.Plugin.Misc.Nexport.Models.Plugins;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
 using Nop.Plugin.Misc.Nexport.Models.RegistrationField;
@@ -87,6 +88,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
     private readonly CurrencySettings _currencySettings;
     private readonly IRepository<GenericAttribute> _genericAttributeRepository;
     private readonly IRepository<LocaleStringResource> _localeStringResourceRepository;
+    private readonly IRepository<OrderItem> _orderItemRepository;
     private readonly IAclSupportedModelFactory _aclSupportedModelFactory;
     private readonly IBaseAdminModelFactory _baseAdminModelFactory;
     private readonly ICategoryService _categoryService;
@@ -154,6 +156,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         CurrencySettings currencySettings,
         IRepository<GenericAttribute> genericAttributeRepository,
         IRepository<LocaleStringResource> localeStringResourceRepository,
+        IRepository<OrderItem> orderItemRepository,
         IAclSupportedModelFactory aclSupportedModelFactory,
         IBaseAdminModelFactory baseAdminModelFactory,
         ICategoryService categoryService,
@@ -216,6 +219,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         _currencySettings = currencySettings;
         _genericAttributeRepository = genericAttributeRepository;
         _localeStringResourceRepository = localeStringResourceRepository;
+        _orderItemRepository = orderItemRepository;
         _aclSupportedModelFactory = aclSupportedModelFactory;
         _baseAdminModelFactory = baseAdminModelFactory;
         _cacheManager = cacheManager;
@@ -712,139 +716,171 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         });
     }
 
-    public virtual async Task<NexportTrainingListModel> PrepareNexportTrainingListModelAsync(Customer customer)
+    public virtual async Task<NexportTrainingListModel> PrepareNexportTrainingListModelAsync(Customer customer,
+        CancellationToken cancellationToken = default)
     {
         if (customer == null)
             throw new ArgumentNullException(nameof(customer));
 
         var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
-        var redemptionOrganizations = await _nexportService.FindNexportRedemptionOrganizationsByCustomerId(customer.Id);
-
         var model = new NexportTrainingListModel();
 
         if (userMapping != null)
         {
             model.UserId = userMapping.NexportUserId;
-            model.RedemptionOrganizations = redemptionOrganizations;
-
-            var customerOrderInvoices = (await _nexportService.GetNexportOrderInvoiceItems(userMapping.NexportUserId))
-                .Where(x => x.InvoiceItemId != Guid.Empty)
-                .GroupBy(x => x.RedemptionEnrollmentId)
-                .Select(x => x.OrderByDescending(invoice => invoice.UtcDateRedemption).First())
-                .OrderByDescending(x => x.UtcDateRedemption)
-                .ToList();
-
-            var trainingList = new List<NexportTrainingItemModel>();
-            foreach (var orderInvoice in customerOrderInvoices)
-            {
-                try
-                {
-                    var nexportInvoiceDetails =
-                        await _nexportService.GetNexportInvoiceRedemptionAsync(orderInvoice.InvoiceItemId);
-                    if (nexportInvoiceDetails?.UtcRedemptionDate != null)
-                    {
-                        DateTime? enrollmentStartDate = null;
-                        DateTime? enrollmentExpirationDate = null;
-                        var enrollmentStatus = Enums.PhaseEnum.NotStarted;
-                        if (nexportInvoiceDetails.RedemptionUserId != null)
-                        {
-                            var enrollmentExisted = false;
-
-                            try
-                            {
-                                if (nexportInvoiceDetails.SyllabusId.HasValue)
-                                {
-                                    if (nexportInvoiceDetails.RedemptionType is null
-                                        or InvoiceRedemptionResponse.RedemptionTypeEnum.Section)
-                                    {
-                                        var enrollmentDetails = await _nexportService.GetSectionEnrollmentDetailsAsync(
-                                            nexportInvoiceDetails.OrganizationId,
-                                            nexportInvoiceDetails.RedemptionUserId.Value,
-                                            nexportInvoiceDetails.SyllabusId.Value);
-                                        if (enrollmentDetails != null)
-                                        {
-                                            enrollmentExisted = true;
-                                            enrollmentStartDate = enrollmentDetails.EnrollmentDate;
-                                            enrollmentExpirationDate = enrollmentDetails.ExpirationDate;
-                                            enrollmentStatus = enrollmentDetails.Phase;
-                                        }
-                                    }
-                                    else if (nexportInvoiceDetails.RedemptionType ==
-                                             InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
-                                    {
-                                        var enrollmentDetails =
-                                            await _nexportService.GetTrainingPlanEnrollmentDetailsAsync(
-                                                nexportInvoiceDetails.OrganizationId,
-                                                nexportInvoiceDetails.RedemptionUserId.Value,
-                                                nexportInvoiceDetails.SyllabusId.Value);
-                                        if (enrollmentDetails != null)
-                                        {
-                                            enrollmentExisted = true;
-                                            enrollmentStartDate = enrollmentDetails.EnrollmentDate;
-                                            enrollmentExpirationDate = enrollmentDetails.ExpirationDate;
-                                            enrollmentStatus = enrollmentDetails.Phase;
-                                        }
-                                    }
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                await _logger.WarningAsync(
-                                    $"Unable to get syllabus details for syllabus {nexportInvoiceDetails.SyllabusId}",
-                                    ex);
-                            }
-
-                            if (enrollmentExisted)
-                            {
-                                if (nexportInvoiceDetails.SyllabusId.HasValue)
-                                {
-                                    var trainingItem = new NexportTrainingItemModel
-                                    {
-                                        Name = nexportInvoiceDetails.SyllabusTitle,
-                                        Type =
-                                            nexportInvoiceDetails.RedemptionType ?? InvoiceRedemptionResponse
-                                                .RedemptionTypeEnum.Section,
-                                        UtcStartDate = enrollmentStartDate,
-                                        UtcExpirationDate = enrollmentExpirationDate,
-                                        UtcRedemptionDate = nexportInvoiceDetails.UtcRedemptionDate,
-                                        EnrollmentId = nexportInvoiceDetails.RedemptionEnrollmentId,
-                                        SyllabusId = nexportInvoiceDetails.SyllabusId.Value,
-                                        OrganizationId = nexportInvoiceDetails.OrganizationId,
-                                        Status = enrollmentStatus
-                                    };
-
-                                    if (!trainingList.Any(x => x.SyllabusId == nexportInvoiceDetails.SyllabusId))
-                                        trainingList.Add(trainingItem);
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await _logger.WarningAsync($"Unable to get Nexport invoice item {orderInvoice.InvoiceItemId}", ex,
-                        customer);
-                }
-            }
-
-            model.Trainings = trainingList
-                .GroupBy(x => x.OrganizationId)
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.ToList());
-
-            var nexportOrgs = await _nexportService.FindAllOrganizationsForUserAsync(userMapping.NexportUserId);
+            model.RedemptionOrganizations = await _nexportService.FindNexportRedemptionOrganizationsByCustomerId(customer.Id);
+            var nexportOrgs = await _nexportService.FindAllOrganizationsForUserAsync(userMapping.NexportUserId,
+                cancellationToken);
             model.Organizations = nexportOrgs.ToList();
+            model.Trainings = await PrepareNexportTrainingItemsAsync(userMapping.NexportUserId, customer,
+                cancellationToken);
         }
 
         return model;
     }
 
+    private async Task<Dictionary<Guid, List<NexportTrainingItemModel>>> PrepareNexportTrainingItemsAsync(
+        Guid userId, Customer customer, CancellationToken cancellationToken)
+    {
+        var customerOrderInvoices = (await _nexportService.GetNexportOrderInvoiceItems(userId))
+            .Where(x => x.InvoiceItemId != Guid.Empty)
+            .GroupBy(x => x.RedemptionEnrollmentId)
+            .Select(x => x.OrderByDescending(invoice => invoice.UtcDateRedemption).First())
+            .OrderByDescending(x => x.UtcDateRedemption)
+            .ToList();
+        var trainingList = new List<NexportTrainingItemModel>();
+
+        foreach (var orderInvoice in customerOrderInvoices)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                var nexportInvoiceDetails =
+                    await _nexportService.GetNexportInvoiceRedemptionAsync(orderInvoice.InvoiceItemId);
+                if (nexportInvoiceDetails?.UtcRedemptionDate == null || nexportInvoiceDetails.RedemptionUserId == null ||
+                    !nexportInvoiceDetails.SyllabusId.HasValue)
+                    continue;
+
+                DateTime? enrollmentStartDate = null;
+                DateTime? enrollmentExpirationDate = null;
+                var enrollmentStatus = Enums.PhaseEnum.NotStarted;
+                var enrollmentExisted = false;
+
+                try
+                {
+                    if (nexportInvoiceDetails.RedemptionType is null or InvoiceRedemptionResponse.RedemptionTypeEnum.Section)
+                    {
+                        var enrollmentDetails = await _nexportService.GetSectionEnrollmentDetailsAsync(
+                            nexportInvoiceDetails.OrganizationId, nexportInvoiceDetails.RedemptionUserId.Value,
+                            nexportInvoiceDetails.SyllabusId.Value);
+                        if (enrollmentDetails != null)
+                        {
+                            enrollmentExisted = true;
+                            enrollmentStartDate = enrollmentDetails.EnrollmentDate;
+                            enrollmentExpirationDate = enrollmentDetails.ExpirationDate;
+                            enrollmentStatus = enrollmentDetails.Phase;
+                        }
+                    }
+                    else if (nexportInvoiceDetails.RedemptionType == InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
+                    {
+                        var enrollmentDetails = await _nexportService.GetTrainingPlanEnrollmentDetailsAsync(
+                            nexportInvoiceDetails.OrganizationId, nexportInvoiceDetails.RedemptionUserId.Value,
+                            nexportInvoiceDetails.SyllabusId.Value);
+                        if (enrollmentDetails != null)
+                        {
+                            enrollmentExisted = true;
+                            enrollmentStartDate = enrollmentDetails.EnrollmentDate;
+                            enrollmentExpirationDate = enrollmentDetails.ExpirationDate;
+                            enrollmentStatus = enrollmentDetails.Phase;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await _logger.WarningAsync(
+                        $"Unable to get syllabus details for syllabus {nexportInvoiceDetails.SyllabusId}", ex);
+                }
+
+                if (!enrollmentExisted)
+                    continue;
+
+                var trainingItem = new NexportTrainingItemModel
+                {
+                    Name = nexportInvoiceDetails.SyllabusTitle,
+                    Type = nexportInvoiceDetails.RedemptionType ?? InvoiceRedemptionResponse.RedemptionTypeEnum.Section,
+                    UtcStartDate = enrollmentStartDate,
+                    UtcExpirationDate = enrollmentExpirationDate,
+                    UtcRedemptionDate = nexportInvoiceDetails.UtcRedemptionDate,
+                    EnrollmentId = nexportInvoiceDetails.RedemptionEnrollmentId,
+                    SyllabusId = nexportInvoiceDetails.SyllabusId.Value,
+                    OrganizationId = nexportInvoiceDetails.OrganizationId,
+                    Status = enrollmentStatus
+                };
+
+                if (!trainingList.Any(x => x.SyllabusId == trainingItem.SyllabusId))
+                    trainingList.Add(trainingItem);
+            }
+            catch (Exception ex)
+            {
+                await _logger.WarningAsync($"Unable to get Nexport invoice item {orderInvoice.InvoiceItemId}", ex,
+                    customer);
+            }
+        }
+
+        return trainingList
+            .GroupBy(x => x.OrganizationId)
+            .ToDictionary(x => x.Key, x => x.ToList());
+    }
+
     public virtual async Task<NexportEnrollmentListModel> PrepareNexportEnrollmentListModelAsync(
         NexportEnrollmentListSearchModel searchModel)
     {
-        var sectionEnrollments = await _nexportService.FindSectionEnrollmentsAsync(
-            searchModel.UserId, searchModel.OrganizationId, searchModel.Page - 1, searchModel.PageSize);
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        return await PrepareNexportEnrollmentListModelAsync(searchModel, customer);
+    }
+
+    public virtual async Task<NexportEnrollmentListModel> PrepareNexportEnrollmentListModelAsync(
+        NexportEnrollmentListSearchModel searchModel, Customer customer, CancellationToken cancellationToken = default)
+    {
+        if (customer == null)
+            throw new ArgumentNullException(nameof(customer));
+
+        var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+        var userId = userMapping?.NexportUserId ?? Guid.Empty;
+        var pageIndex = Math.Max(searchModel.Page - 1, 0);
+        var sectionEnrollments = userMapping == null
+            ? new PagedList<SectionEnrollmentsResponse>(new List<SectionEnrollmentsResponse>(), pageIndex,
+                searchModel.PageSize)
+            : await _nexportService.FindSectionEnrollmentsAsync(userId, searchModel.OrganizationId, pageIndex,
+                searchModel.PageSize, cancellationToken);
+
+        var enrollmentIds = sectionEnrollments.Select(item => item.EnrollmentId).Distinct().ToList();
+        var invoiceItems = await _nexportService.GetNexportOrderInvoiceItems(userId, enrollmentIds);
+        var invoiceByEnrollmentId = invoiceItems
+            .Where(invoice => invoice.RedemptionEnrollmentId.HasValue)
+            .GroupBy(invoice => invoice.RedemptionEnrollmentId!.Value)
+            .ToDictionary(group => group.Key, group => group.First());
+        var orderItemIds = invoiceByEnrollmentId.Values.Select(invoice => invoice.OrderItemId).Distinct().ToList();
+        var orderItems = orderItemIds.Count == 0
+            ? new List<OrderItem>()
+            : await _orderItemRepository.Table.Where(orderItem => orderItemIds.Contains(orderItem.Id)).ToListAsync();
+        var orderItemById = orderItems.ToDictionary(orderItem => orderItem.Id);
+        var productIds = orderItems.Select(orderItem => orderItem.ProductId).Distinct().ToArray();
+        var products = productIds.Length == 0
+            ? new List<Product>()
+            : (await _productService.GetProductsByIdsAsync(productIds)).ToList();
+        var productById = products.ToDictionary(product => product.Id);
+        var productUrls = new Dictionary<int, string>();
+        if (products.Count > 0)
+        {
+            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext!);
+            foreach (var product in products)
+            {
+                var seName = await _urlRecordService.GetSeNameAsync(product);
+                productUrls[product.Id] = urlHelper.RouteUrl<Product>(new { SeName = seName });
+            }
+        }
 
         var model = await new NexportEnrollmentListModel().PrepareToGridAsync(searchModel,
             sectionEnrollments, () =>
@@ -854,6 +890,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                     var enrollmentModel = new NexportEnrollmentResponseItemModel
                     {
                         Id = item.EnrollmentId,
+                        OrganizationId = searchModel.OrganizationId,
                         Name = item.Title,
                         EnrollmentDate = item.EnrollmentDate,
                         ExpirationDate = item.ExpirationDate,
@@ -866,32 +903,14 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                         Phase = item.Phase,
                     };
 
-                    if (item.Phase == Enums.PhaseEnum.Finished)
-                    {
-                        var certResult = await _nexportService.GetNexportEnrollmentCertificateUrl(item.EnrollmentId)!;
-                        if (certResult is { CertificateReady: true })
-                        {
-                            enrollmentModel.HasCertificate = true;
-                            enrollmentModel.CertificateUrl = certResult.CertificateUrl;
-                        }
-                    }
-
-                    var nexportOrderInvoice =
-                        await _nexportService.GetNexportOrderInvoiceItem(searchModel.UserId, item.EnrollmentId);
-
-                    if (nexportOrderInvoice != null)
+                    if (invoiceByEnrollmentId.TryGetValue(item.EnrollmentId, out var invoice))
                     {
                         enrollmentModel.IsMarketplacePurchase = true;
-                        var orderItem = await _orderService.GetOrderItemByIdAsync(nexportOrderInvoice.OrderItemId);
-                        if (orderItem != null)
+                        if (orderItemById.TryGetValue(invoice.OrderItemId, out var orderItem) &&
+                            productById.ContainsKey(orderItem.ProductId) &&
+                            productUrls.TryGetValue(orderItem.ProductId, out var productUrl))
                         {
-                            var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
-                            if (product != null)
-                            {
-                                var seName = await _urlRecordService.GetSeNameAsync(product);
-                                var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext!);
-                                enrollmentModel.ProductUrl = urlHelper.RouteUrl<Product>(new { SeName = seName });
-                            }
+                            enrollmentModel.ProductUrl = productUrl;
                         }
                     }
 

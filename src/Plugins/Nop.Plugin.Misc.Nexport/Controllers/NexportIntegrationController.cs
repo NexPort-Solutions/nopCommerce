@@ -3429,7 +3429,7 @@ public class NexportIntegrationController : BasePluginController,
     }
 
     [HttpsRequirement]
-    public async Task<IActionResult> ViewNexportTraining()
+    public async Task<IActionResult> ViewNexportTraining(CancellationToken cancellationToken)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
         if (!await _customerService.IsRegisteredAsync(customer))
@@ -3445,10 +3445,9 @@ public class NexportIntegrationController : BasePluginController,
                 return await AnswerSupplementalInfoQuestion("/customer/nexporttraining");
             }
 
-            var model = await _nexportPluginModelFactory.PrepareNexportTrainingListModelAsync(customer);
-
-            var myTrainingViewLocationSetting =
-                await _settingService.GetSettingAsync("nexport.mytraining.view", (await _storeContext.GetCurrentStoreAsync()).Id, true);
+            var model = await _nexportPluginModelFactory.PrepareNexportTrainingListModelAsync(customer,
+                cancellationToken);
+            var myTrainingViewLocationSetting = await _settingService.GetSettingAsync("nexport.mytraining.view", store.Id, true);
 
             return View(myTrainingViewLocationSetting != null
                 ? myTrainingViewLocationSetting.Value
@@ -3476,15 +3475,59 @@ public class NexportIntegrationController : BasePluginController,
         return PartialView("~/Plugins/Misc.Nexport/Views/EnrollmentListingTable.cshtml", model);
     }
 
-    public async Task<IActionResult> GetNexportUserEnrollments(NexportEnrollmentListSearchModel searchModel)
+    public async Task<IActionResult> GetNexportUserEnrollments(NexportEnrollmentListSearchModel searchModel,
+        CancellationToken cancellationToken)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
         if (!await _customerService.IsRegisteredAsync(customer))
             return Challenge();
 
-        var model = await _nexportPluginModelFactory.PrepareNexportEnrollmentListModelAsync(searchModel);
+        var model = await _nexportPluginModelFactory.PrepareNexportEnrollmentListModelAsync(searchModel, customer,
+            cancellationToken);
 
         return Json(model);
+    }
+
+    [HttpPost]
+    [AutoValidateAntiforgeryToken]
+    public async Task<IActionResult> GetNexportEnrollmentCertificateUrl(Guid organizationId, Guid enrollmentId,
+        CancellationToken cancellationToken)
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        if (!await _customerService.IsRegisteredAsync(customer))
+            return Challenge();
+
+        if (organizationId == Guid.Empty || enrollmentId == Guid.Empty)
+            return NotFound();
+
+        try
+        {
+            var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+            if (userMapping == null)
+                return NotFound();
+
+            var enrollment = await _nexportService.GetOwnedSectionEnrollmentAsync(userMapping.NexportUserId,
+                organizationId, enrollmentId, cancellationToken);
+            if (enrollment == null)
+                return NotFound();
+
+            if (enrollment.Phase != Enums.PhaseEnum.Finished)
+                return Json(new { Ready = false, Message = "The certificate is not ready yet." });
+
+            var certificate = await _nexportService.GetNexportEnrollmentCertificateUrl(enrollmentId,
+                cancellationToken);
+            if (certificate is not { CertificateReady: true } || string.IsNullOrWhiteSpace(certificate.CertificateUrl))
+                return Json(new { Ready = false, Message = "The certificate is not ready yet." });
+
+            return Json(new { Ready = true, CertificateUrl = certificate.CertificateUrl });
+        }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync($"Unable to retrieve certificate URL for Nexport enrollment {enrollmentId}.", ex,
+                customer);
+            Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            return Json(new { Error = "Unable to retrieve the certificate right now. Please try again." });
+        }
     }
 
     [HttpsRequirement]
@@ -3794,7 +3837,7 @@ public class NexportIntegrationController : BasePluginController,
         return Json(result);
     }
 
-    public async Task<IActionResult> GoToNexportOrg(Guid orgId, Guid userId)
+    public async Task<IActionResult> GoToNexportOrg(Guid orgId)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
         if (!await _customerService.IsRegisteredAsync(customer))
@@ -3807,7 +3850,11 @@ public class NexportIntegrationController : BasePluginController,
 
         try
         {
-            result.RedirectUrl = await _nexportService.SignInNexportAsync(orgId, userId);
+            var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+            if (userMapping == null)
+                return NotFound();
+
+            result.RedirectUrl = await _nexportService.SignInNexportAsync(orgId, userMapping.NexportUserId);
         }
         catch (Exception ex)
         {

@@ -19,8 +19,6 @@ using NexportApi.Client;
 using Nop.Core.Infrastructure;
 using Nop.Data;
 using Nop.Plugin.Misc.Nexport.Configuration;
-using Nop.Plugin.Misc.Nexport.Areas.Admin.Controllers;
-using Nop.Plugin.Misc.Nexport.Controllers;
 using Nop.Plugin.Misc.Nexport.Factories;
 using Nop.Plugin.Misc.Nexport.Filters;
 using Nop.Plugin.Misc.Nexport.Infrastructure.Logging;
@@ -99,7 +97,7 @@ public class PluginStartup : INopStartup
         var apiConfiguration = new ApiConfiguration();
         services.AddSingleton(apiConfiguration);
 
-        services.AddHttpClient("NexportApi", client => client.Timeout = Timeout.InfiniteTimeSpan)
+        services.AddHttpClient("NexportApi", client => client.Timeout = TimeSpan.FromSeconds(30))
             .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
             {
                 ConnectTimeout = TimeSpan.FromSeconds(10),
@@ -129,9 +127,6 @@ public class PluginStartup : INopStartup
         services.AddScoped<INexportSettingModelFactory, NexportSettingModelFactory>();
         services.AddScoped<INexportWholesaleService, NexportNexportWholesaleService>();
         services.AddScoped<IPasswordRecoveryCooldownService, PasswordRecoveryCooldownService>();
-        services.AddScoped<NexportIntegrationController>();
-        services.AddScoped<NexportSettingController>();
-
         //added this line because the modelstate was invalid when trying to save product mapping
         //(line 818 editmapping in nexportintegrationcontroller) which was keeping the save from happening
         //happens because we have the nullable property set in the nop.plugin.misc.nexport.csproj

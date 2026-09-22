@@ -1,26 +1,10 @@
-﻿@using Nop.Services.Helpers
-
-@inject IDateTimeHelper dateTimeHelper
-
 @model Nop.Plugin.Misc.Nexport.Models.Customer.NexportTrainingListModel
 
 @{
     Layout = "_ColumnsOne";
 
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/js/admin.table.js", excludeFromBundle: true);
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/lib_npm/moment/min/moment-with-locales.min.js", "", true);
-
-    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/bootstrap/bootstrap-custom.min.css");
-    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/datatables-custom.min.css");
-    NopHtml.AddCssFileParts("~/Plugins/Misc.Nexport/Content/nexport.css");
-
     NopHtml.AddTitleParts("Nexport Trainings");
     NopHtml.AppendPageCssClassParts("html-account-page");
-
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/bootstrap.bundle.min.js", "", true);
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/datatables-custom.min.js");
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/Misc.Nexport/Scripts/nexport_plugin_common.js", "", true);
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/js/admin.common.js", "", true);
 }
 
 <script src="~/Plugins/Misc.Nexport/Scripts/fontawesome/fontawesome.min.js"></script>
@@ -33,145 +17,6 @@
         <h1>@T("Account.MyAccount") - @T("Plugins.Misc.Nexport.Training")</h1>
     </div>
     <div class="page-body">
-        @if (Model?.Organizations is { Count: > 0 })
-        {
-            <div class="nexport-training-list nex-plugin">
-                <input id="userId" type="hidden" value="@Model.UserId" />
-
-                <div class="accordion accordion-flush" id="organization-list-selection">
-                    @foreach (var org in Model.Organizations)
-                    {
-                        var subscriptionDisabled = false;
-                        var subscriptionStatusText = "Active";
-                        if (org.Subscription != null)
-                        {
-                            if (org.Subscription.IsDisabled)
-                            {
-                                subscriptionDisabled = true;
-                                subscriptionStatusText = "Disabled";
-                            }
-                            else
-                            {
-                                var subscriptionExpired = DateTime.UtcNow > org.Subscription.UtcExpirationDate;
-                                subscriptionDisabled = subscriptionExpired;
-                                if (subscriptionExpired)
-                                {
-                                    subscriptionStatusText = "Expired";
-                                }
-                            }
-                            var headingId = $"organization-heading-{org.OrgId}";
-                            var collapseId = $"enrollment-listing-container-{org.OrgId}";
-                            <div class="accordion-item" data-org-id="@org.OrgId">
-                                <div class="accordion-header d-flex align-items-center" id="@headingId">
-                                    <div class="accordion-button collapsed" role="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
-                                        <h3 class="w-100">
-                                            @org.OrgName (@org.OrgShortName)
-                                        </h3>
-                                        <a href="javascript:void(0);" class="text-nowrap mx-2" data-org-id="@org.OrgId" data-function="viewTrainingLink">View Training</a>
-                                    </div>
-                                </div>
-                                <div id="@collapseId" class="accordion-collapse collapse" aria-labelledby="@headingId" data-bs-parent="#organization-list-selection" data-org-id="@org.OrgId">
-                                    <div class="accordion-body w-100" data-id="enrollment-listing">
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    }
-                </div>
-            </div>
-        }
+        @await Html.PartialAsync("~/Plugins/Misc.Nexport/Views/Shared/_NexportOrganizationEnrollments.cshtml", Model)
     </div>
 </div>
-
-<script asp-location="Footer">
-    function navigateToNexportOrganization(element) {
-        var orgId = $(element).data("org-id");
-        var userId = $("#userId").val();
-        if (orgId && userId) {
-            var url = "@Url.Action("GoToNexportOrg", "NexportIntegration")";
-            url += "?orgId=" + orgId + "&userId=" + userId;
-
-            navigateToNexport(url);
-        }
-    }
-
-    function launchNexportClassroom(enrollmentId) {
-        if (enrollmentId) {
-            var url = "@Url.Action("GoToNexportClassroom", "NexportIntegration")";
-            url += "?enrollmentId=" + enrollmentId;
-
-            navigateToNexport(url);
-        }
-
-        return false;
-    }
-
-    function navigateToNexportClassroom(element) {
-        var enrollmentId = $(element).data("enrollment-id");
-        if (enrollmentId) {
-            var url = "@Url.Action("GoToNexportClassroom", "NexportIntegration")";
-            url += "?enrollmentId=" + enrollmentId;
-
-            navigateToNexport(url);
-        }
-    }
-
-    function navigateToNexport(url) {
-        var nexportWindow = window.open("about:blank", "_blank");
-
-        $.ajax({
-            url: url,
-            type: "GET",
-            success: function (result) {
-                if (result && result.RedirectUrl) {
-                    nexportWindow.location.href = result.RedirectUrl;
-                }
-            },
-            error: function (xhr, textStatus, errorThrown) {
-                var response = xhr.responseJSON;
-                if (response && response.Error) {
-                    nexportWindow.close();
-                    displayBarNotification(response.Error, "error");
-                }
-            }
-        });
-    }
-
-    function downloadNexportCertificate(url) {
-        window.open(url);
-    }
-
-    $(document).ready(function() {
-        $("[data-function='viewTrainingLink'").on("click", function(e) {
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            e.preventDefault();
-
-            navigateToNexportOrganization(e.target);
-
-            return false;
-        })
-
-        const orgListSelection = document.getElementById("organization-list-selection");
-        orgListSelection.addEventListener("show.bs.collapse", function(e) {
-            console.log("Loading table from show event");
-            var currentElement = $(e.target);
-            var orgId = currentElement.attr("data-org-id");
-            if (orgId) {
-                $.ajax({
-                    url: "@(Url.Action("ListNexportUserEnrollments", "NexportIntegration"))",
-                    data: {
-                        "organizationId": orgId
-                    },
-                    success: function(data, textStatus, jqXHR) {
-                        e.stopImmediatePropagation();
-                        currentElement.find("[data-id='enrollment-listing']").html(data);
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        console.log("Error while getting enrollment listing!");
-                    }
-                });
-            }
-        });
-    });
-</script>

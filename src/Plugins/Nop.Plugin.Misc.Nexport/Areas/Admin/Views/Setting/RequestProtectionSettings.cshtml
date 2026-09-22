@@ -45,6 +45,19 @@
                         </div>
                         <div class="form-group row">
                             <div class="col-md-3">
+                                <nop-label asp-for="AuthenticationPagePaths" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-textarea asp-for="AuthenticationPagePaths"></nop-textarea>
+                                <span asp-validation-for="AuthenticationPagePaths"></span>
+                                <div class="text-muted mt-2">
+                                    <i class="fas fa-info-circle mr-1" aria-hidden="true"></i>
+                                    @T("Plugins.Misc.Nexport.Admin.Configuration.Settings.RequestProtection.AuthenticationPagePaths.Hint")
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
                                 <nop-label asp-for="BlockedRequestFileExtensions" />
                             </div>
                             <div class="col-md-9">

@@ -923,16 +923,28 @@ public partial class NexportService
         try
         {
             var page = 1;
-            int remainderItemsCount;
             do
             {
                 var result = await _nexportApiService.GetNexportOrganizationsAsync(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, baseOrgId, page);
-                items.AddRange(result.OrganizationList);
+                var pageItems = result.OrganizationList ?? new List<OrganizationResponseItem>();
+                items.AddRange(pageItems);
 
-                remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+                if (pageItems.Count == 0)
+                    break;
+
+                if (result.TotalRecord <= 0 || result.RecordPerPage <= 0)
+                {
+                    await _logger.WarningAsync(
+                        $"Pagination metadata was missing while getting organizations for organization #{baseOrgId}; stopping after page {page}.");
+                    break;
+                }
+
+                if (page * result.RecordPerPage >= result.TotalRecord)
+                    break;
+
                 page++;
-            } while (remainderItemsCount > -1);
+            } while (true);
         }
         catch (Exception ex)
         {
@@ -1012,26 +1024,37 @@ public partial class NexportService
         return result;
     }
 
-    public async Task<IList<SubscriptionResponse>> FindAllSubscriptionsAsync(Guid userId)
+    public async Task<IList<SubscriptionResponse>> FindAllSubscriptionsAsync(Guid userId,
+        CancellationToken cancellationToken = default)
     {
         var items = new List<SubscriptionResponse>();
 
         try
         {
             var page = 1;
-            int remainderItemsCount;
 
             do
             {
                 var result = await _nexportApiService.GetNexportSubscriptionsAsync(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, userId, page);
+                    _nexportSettings.AuthenticationToken, userId, page, cancellationToken);
+                var pageItems = result.Subscriptions ?? new List<SubscriptionResponse>();
+                items.AddRange(pageItems);
 
-                if (result.Subscriptions != null)
-                    items.AddRange(result.Subscriptions);
+                if (pageItems.Count == 0)
+                    break;
 
-                remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
+                if (result.TotalRecord <= 0 || result.RecordPerPage <= 0)
+                {
+                    await _logger.WarningAsync(
+                        $"Pagination metadata was missing while getting subscriptions for user #{userId}; stopping after page {page}.");
+                    break;
+                }
+
+                if (page * result.RecordPerPage >= result.TotalRecord)
+                    break;
+
                 page++;
-            } while (remainderItemsCount > -1);
+            } while (true);
         }
         catch (Exception ex)
         {
@@ -1083,13 +1106,14 @@ public partial class NexportService
         return result;
     }
 
-    public async Task<IList<NexportOrganizationModel>> FindAllOrganizationsForUserAsync(Guid userId)
+    public async Task<IList<NexportOrganizationModel>> FindAllOrganizationsForUserAsync(Guid userId,
+        CancellationToken cancellationToken = default)
     {
         var items = new List<NexportOrganizationModel>();
 
         try
         {
-            var subscriptions = await FindAllSubscriptionsAsync(userId);
+            var subscriptions = await FindAllSubscriptionsAsync(userId, cancellationToken);
 
             foreach (var subscription in subscriptions)
             {
@@ -1097,7 +1121,7 @@ public partial class NexportService
                 {
                     var result = await _nexportApiService.GetNexportOrganizationsAsync(
                         _nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                        subscription.OrgId);
+                        subscription.OrgId, cancellationToken: cancellationToken);
 
                     var currentOrg = result?.OrganizationList.FirstOrDefault(x => x.OrgId == subscription.OrgId);
                     if (currentOrg != null)
@@ -1192,24 +1216,18 @@ public partial class NexportService
         return pagedItems;
     }
 
-    public async Task<IPagedList<SectionEnrollmentsResponse>> FindSectionEnrollmentsAsync(Guid userId, Guid organizationId, int pageIndex = 0, int pageSize = int.MaxValue)
+    public async Task<IPagedList<SectionEnrollmentsResponse>> FindSectionEnrollmentsAsync(Guid userId, Guid organizationId,
+        int pageIndex = 0, int pageSize = int.MaxValue, CancellationToken cancellationToken = default)
     {
-        var items = new List<SectionEnrollmentsResponse>();
-
         try
         {
-            var page = 1;
-            int remainderItemsCount;
-            do
-            {
-                var result = await _nexportApiService.GetNexportSectionEnrollmentsAsync(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, organizationId, userId);
+            var apiPage = Math.Max(pageIndex, 0) + 1;
+            var result = await _nexportApiService.GetNexportSectionEnrollmentsAsync(_nexportSettings.Url,
+                _nexportSettings.AuthenticationToken, organizationId, userId, apiPage, pageSize, cancellationToken);
+            var items = result.SectionEnrollments ?? new List<SectionEnrollmentsResponse>();
+            var totalCount = result.TotalRecord > 0 ? result.TotalRecord : items.Count;
 
-                items.AddRange(result.SectionEnrollments);
-
-                remainderItemsCount = result.TotalRecord - (result.RecordPerPage * page);
-                page++;
-            } while (remainderItemsCount > 0);
+            return new PagedList<SectionEnrollmentsResponse>(items, pageIndex, pageSize, totalCount);
         }
         catch (Exception ex)
         {
@@ -1227,10 +1245,41 @@ public partial class NexportService
 
             throw;
         }
+    }
 
-        var pagedItems = new PagedList<SectionEnrollmentsResponse>(items, pageIndex, pageSize);
+    public async Task<SectionEnrollmentsResponse> GetOwnedSectionEnrollmentAsync(Guid userId, Guid organizationId,
+        Guid enrollmentId, CancellationToken cancellationToken = default)
+    {
+        if (userId == Guid.Empty || organizationId == Guid.Empty || enrollmentId == Guid.Empty)
+            return null;
 
-        return pagedItems;
+        try
+        {
+            const int pageSize = 30;
+            var page = 1;
+            int totalCount;
+
+            do
+            {
+                var result = await _nexportApiService.GetNexportSectionEnrollmentsAsync(_nexportSettings.Url,
+                    _nexportSettings.AuthenticationToken, organizationId, userId, page, pageSize, cancellationToken);
+                var enrollment = result.SectionEnrollments?.FirstOrDefault(item => item.EnrollmentId == enrollmentId);
+                if (enrollment != null)
+                    return enrollment;
+
+                totalCount = result.TotalRecord;
+                if (result.RecordPerPage <= 0 || result.SectionEnrollments == null || result.SectionEnrollments.Count == 0)
+                    break;
+
+                page++;
+            } while (totalCount <= 0 || (page - 1) * pageSize < totalCount);
+        }
+        catch (Exception ex)
+        {
+            await _logger.WarningAsync($"Unable to verify ownership for Nexport enrollment {enrollmentId} in organization {organizationId}.", ex);
+        }
+
+        return null;
     }
 
     public async Task<IPagedList<CatalogResponseItem>> FindAllCatalogsAsync(Guid? orgId, int pageIndex = 0, int pageSize = int.MaxValue)
@@ -1622,14 +1671,15 @@ public partial class NexportService
     }
 
     [CanBeNull]
-    public async Task<CertificateUrlResponse> GetNexportEnrollmentCertificateUrl(Guid enrollmentId)
+    public async Task<CertificateUrlResponse> GetNexportEnrollmentCertificateUrl(Guid enrollmentId,
+        CancellationToken cancellationToken = default)
     {
         CertificateUrlResponse result;
 
         try
         {
             result = await _nexportApiService.GetNexportEnrollmentCertificateUrlAsync(_nexportSettings.Url,
-                _nexportSettings.AuthenticationToken, enrollmentId);
+                _nexportSettings.AuthenticationToken, enrollmentId, cancellationToken);
         }
         catch (Exception ex)
         {

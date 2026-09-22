@@ -58,9 +58,13 @@ public partial interface INexportPluginModelFactory
 
     Task<NexportLoginModel> PrepareNexportLoginModelAsync(bool? checkoutAsGuest);
 
-    Task<NexportTrainingListModel> PrepareNexportTrainingListModelAsync(Customer customer);
+    Task<NexportTrainingListModel> PrepareNexportTrainingListModelAsync(Customer customer,
+        CancellationToken cancellationToken = default);
 
     Task<NexportEnrollmentListModel> PrepareNexportEnrollmentListModelAsync(NexportEnrollmentListSearchModel searchModel);
+
+    Task<NexportEnrollmentListModel> PrepareNexportEnrollmentListModelAsync(
+        NexportEnrollmentListSearchModel searchModel, Customer customer, CancellationToken cancellationToken = default);
 
     Task<NexportCustomerSupplementalInfoAnswersModel> PrepareNexportCustomerSupplementalInfoAnswersModelAsync(Customer customer, Store store);
 

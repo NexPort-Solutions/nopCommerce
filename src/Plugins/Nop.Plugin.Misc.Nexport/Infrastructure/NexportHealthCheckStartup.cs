@@ -40,10 +40,10 @@ public sealed class NexportHealthCheckStartup : INopStartup
         {
             branch.Use(async (context, next) =>
             {
-                if (!HttpMethods.IsGet(context.Request.Method))
+                if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method))
                 {
                     context.Response.StatusCode = StatusCodes.Status405MethodNotAllowed;
-                    context.Response.Headers.Allow = HttpMethods.Get;
+                    context.Response.Headers.Allow = "GET, HEAD";
                     return;
                 }
 

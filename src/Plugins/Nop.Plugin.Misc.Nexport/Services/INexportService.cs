@@ -105,6 +105,8 @@ public interface INexportService
 
     Task<NexportOrderInvoiceItem> GetNexportOrderInvoiceItem(Guid userId, Guid enrollmentId);
 
+    Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId, IList<Guid> enrollmentIds);
+
     //Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(int orderId);
 
     Task<IPagedList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(int orderId,

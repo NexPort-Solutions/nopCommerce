@@ -13,7 +13,6 @@ using Nop.Services.Configuration;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Migrations;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Services;
 using ILogger = Nop.Services.Logging.ILogger;
-using Nop.Plugin.Sale.CancelPendingOrderRequests.Controllers;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Factories;
 using Nop.Plugin.Sale.CancelPendingOrderRequests.Filters;
 
@@ -34,7 +33,6 @@ public class PluginStartup : INopStartup
         });
 
         services.AddScoped<IPendingOrderCancellationRequestService, PendingOrderCancellationRequestService>();
-        services.AddScoped<CancelPendingOrderRequestsController>();
         services.AddScoped<IPendingOrderCancellationRequestModelFactory, PendingOrderCancellationRequestModelFactory>();
         services.AddScoped<IPluginLocalizationService, PluginLocalizationService>();
         services.AddScoped<CancelPendingOrderRequestsPluginService>();

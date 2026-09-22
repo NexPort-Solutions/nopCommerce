@@ -15,6 +15,8 @@ internal sealed class NexportRequestProtectionPolicyProvider
         var snapshot = new NexportRequestProtectionPolicySnapshot(
             settings.BlockRecognizedCrawlersOnAuthenticationPages,
             settings.BlockKnownProbePaths,
+            new NexportAuthenticationPathPolicy(
+                settings.AuthenticationPagePaths ?? NexportRequestProtectionSettings.DefaultAuthenticationPagePaths),
             new NexportRequestPathPolicy(
                 settings.BlockedRequestPathPrefixes ?? new List<string>(),
                 settings.BlockedRequestFileExtensions ?? new List<string>()));
@@ -26,8 +28,10 @@ internal sealed class NexportRequestProtectionPolicyProvider
 internal sealed record NexportRequestProtectionPolicySnapshot(
     bool BlockRecognizedCrawlersOnAuthenticationPages,
     bool BlockKnownProbePaths,
+    NexportAuthenticationPathPolicy AuthenticationPathPolicy,
     NexportRequestPathPolicy RequestPathPolicy)
 {
     public static NexportRequestProtectionPolicySnapshot Disabled { get; } =
-        new(false, false, new NexportRequestPathPolicy(Array.Empty<string>(), Array.Empty<string>()));
+        new(false, false, new NexportAuthenticationPathPolicy(Array.Empty<string>(), true),
+            new NexportRequestPathPolicy(Array.Empty<string>(), Array.Empty<string>()));
 }

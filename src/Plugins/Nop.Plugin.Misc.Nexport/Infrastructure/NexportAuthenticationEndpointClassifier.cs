@@ -13,6 +13,16 @@ internal enum NexportAuthenticationEndpoint
 
 internal static class NexportAuthenticationEndpointClassifier
 {
+    public static bool TryClassifyPath(HttpContext context, NexportAuthenticationPathPolicy pathPolicy)
+    {
+        ArgumentNullException.ThrowIfNull(pathPolicy);
+
+        if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method))
+            return false;
+
+        return pathPolicy.Contains(context.Request.Path);
+    }
+
     public static bool TryClassify(HttpContext context, out NexportAuthenticationEndpoint endpoint)
     {
         endpoint = default;

@@ -100,6 +100,8 @@ public class NexportSettingController : BaseAdminController
         {
             BlockRecognizedCrawlersOnAuthenticationPages = settings.BlockRecognizedCrawlersOnAuthenticationPages,
             BlockKnownProbePaths = settings.BlockKnownProbePaths,
+            AuthenticationPagePaths = string.Join(Environment.NewLine,
+                settings.AuthenticationPagePaths ?? NexportRequestProtectionSettings.DefaultAuthenticationPagePaths),
             BlockedRequestFileExtensions = string.Join(Environment.NewLine,
                 settings.BlockedRequestFileExtensions ?? new List<string>()),
             BlockedRequestPathPrefixes = string.Join(Environment.NewLine,
@@ -117,6 +119,16 @@ public class NexportSettingController : BaseAdminController
 
         var pathPrefixes = ParseEntries(model.BlockedRequestPathPrefixes);
         var fileExtensions = ParseEntries(model.BlockedRequestFileExtensions);
+        var authenticationPagePaths = ParseEntries(model.AuthenticationPagePaths);
+        try
+        {
+            _ = new NexportAuthenticationPathPolicy(authenticationPagePaths);
+        }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError(nameof(model.AuthenticationPagePaths), exception.Message);
+        }
+
         try
         {
             _ = new NexportRequestPathPolicy(pathPrefixes, Array.Empty<string>());
@@ -143,6 +155,7 @@ public class NexportSettingController : BaseAdminController
         var settings = await _settingService.LoadSettingAsync<NexportRequestProtectionSettings>(storeId: 0);
         settings.BlockRecognizedCrawlersOnAuthenticationPages = model.BlockRecognizedCrawlersOnAuthenticationPages;
         settings.BlockKnownProbePaths = model.BlockKnownProbePaths;
+        settings.AuthenticationPagePaths = authenticationPagePaths;
         settings.BlockedRequestPathPrefixes = pathPrefixes;
         settings.BlockedRequestFileExtensions = fileExtensions;
         await _settingService.SaveSettingAsync(settings, storeId: 0);

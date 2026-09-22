@@ -608,6 +608,18 @@ public partial class NexportService : INexportService
                 .FirstOrDefaultAsync(o => o.RedeemingUserId == userId && o.RedemptionEnrollmentId == enrollmentId);
     }
 
+    public async Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId,
+        IList<Guid> enrollmentIds)
+    {
+        if (userId == Guid.Empty || enrollmentIds == null || enrollmentIds.Count == 0)
+            return new List<NexportOrderInvoiceItem>();
+
+        return await _nexportOrderInvoiceItemRepository.Table
+            .Where(o => o.RedeemingUserId == userId && o.RedemptionEnrollmentId.HasValue &&
+                enrollmentIds.Contains(o.RedemptionEnrollmentId.Value))
+            .ToListAsync();
+    }
+
     //public async Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(int orderId)
     //{
     //    return orderId < 1
