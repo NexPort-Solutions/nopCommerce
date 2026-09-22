@@ -45,6 +45,20 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
         return new SsoApi(client, client, configuration);
     }
 
+    private static void ApplyPaginationHeaders(NexportApiResponseBase result, Multimap<string, string> headers)
+    {
+        result.TotalRecord = GetPaginationHeaderValue(headers, "X-Total-Count");
+        result.RecordPerPage = GetPaginationHeaderValue(headers, "X-Per-Page");
+        result.CurrentPage = GetPaginationHeaderValue(headers, "X-Page");
+    }
+
+    private static int GetPaginationHeaderValue(Multimap<string, string> headers, string name)
+    {
+        var values = headers.FirstOrDefault(header =>
+            string.Equals(header.Key, name, StringComparison.OrdinalIgnoreCase)).Value;
+        return int.Parse(values?.FirstOrDefault() ?? "0");
+    }
+
     public async Task<NexportAuthenticationResponseDetails> AuthenticateNexportApiAsync([NotNull] string url,
         [NotNull] string username, [NotNull] string password, DateTime? tokenExp,
         CancellationToken cancellationToken = default)
@@ -198,14 +212,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
             UserList = response.Data
         };
 
-        if (response.Headers.ContainsKey("X-Total-Count"))
-            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
-
-        if (response.Headers.ContainsKey("X-Per-Page"))
-            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
-
-        if (response.Headers.ContainsKey("X-Page"))
-            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        ApplyPaginationHeaders(result, response.Headers);
 
         return result;
     }
@@ -299,14 +306,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
             DirectoryList = response.Data
         };
 
-        if (response.Headers.ContainsKey("X-Total-Count"))
-            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
-
-        if (response.Headers.ContainsKey("X-Per-Page"))
-            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
-
-        if (response.Headers.ContainsKey("X-Page"))
-            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        ApplyPaginationHeaders(result, response.Headers);
 
         return result;
     }
@@ -330,14 +330,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
             OrganizationList = response.Data
         };
 
-        if (response.Headers.ContainsKey("X-Total-Count"))
-            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
-
-        if (response.Headers.ContainsKey("X-Per-Page"))
-            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
-
-        if (response.Headers.ContainsKey("X-Page"))
-            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        ApplyPaginationHeaders(result, response.Headers);
 
         return result;
     }
@@ -378,14 +371,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
             Subscriptions = response.Data
         };
 
-        if (response.Headers.TryGetValue("X-Total-Count", out var totalCounteHeader))
-            result.TotalRecord = int.Parse(totalCounteHeader.FirstOrDefault() ?? "0");
-
-        if (response.Headers.TryGetValue("X-Per-Page", out var perPageHeader))
-            result.RecordPerPage = int.Parse(perPageHeader.FirstOrDefault() ?? "0");
-
-        if (response.Headers.TryGetValue("X-Page", out var pageHeader))
-            result.CurrentPage = int.Parse(pageHeader.FirstOrDefault() ?? "0");
+        ApplyPaginationHeaders(result, response.Headers);
 
         return result;
     }
@@ -410,14 +396,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
             result.EnrollmentList = response.Data.Enrollments;
         }
 
-        if (response.Headers.TryGetValue("X-Total-Count", out var totalCounteHeader))
-            result.TotalRecord = int.Parse(totalCounteHeader.FirstOrDefault() ?? "0");
-
-        if (response.Headers.TryGetValue("X-Per-Page", out var perPageHeader))
-            result.RecordPerPage = int.Parse(perPageHeader.FirstOrDefault() ?? "0");
-
-        if (response.Headers.TryGetValue("X-Page", out var pageHeader))
-            result.CurrentPage = int.Parse(pageHeader.FirstOrDefault() ?? "0");
+        ApplyPaginationHeaders(result, response.Headers);
 
         return result;
     }
@@ -442,14 +421,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
             CatalogList = response.Data.Catalogs
         };
 
-        if (response.Headers.ContainsKey("X-Total-Count"))
-            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
-
-        if (response.Headers.ContainsKey("X-Per-Page"))
-            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
-
-        if (response.Headers.ContainsKey("X-Page"))
-            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        ApplyPaginationHeaders(result, response.Headers);
 
         return result;
     }
@@ -524,14 +496,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
             SyllabusList = response.Data
         };
 
-        if (response.Headers.ContainsKey("X-Total-Count"))
-            result.TotalRecord = int.Parse(response.Headers["X-Total-Count"].FirstOrDefault() ?? "0");
-
-        if (response.Headers.ContainsKey("X-Per-Page"))
-            result.RecordPerPage = int.Parse(response.Headers["X-Per-Page"].FirstOrDefault() ?? "0");
-
-        if (response.Headers.ContainsKey("X-Page"))
-            result.CurrentPage = int.Parse(response.Headers["X-Page"].FirstOrDefault() ?? "0");
+        ApplyPaginationHeaders(result, response.Headers);
 
         return result;
     }
@@ -977,14 +942,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
         {
             result.SectionEnrollments = response.Data;
 
-            if (response.Headers.TryGetValue("X-Total-Count", out var totalCountHeader))
-                result.TotalRecord = int.Parse(totalCountHeader.FirstOrDefault() ?? "0");
-
-            if (response.Headers.TryGetValue("X-Per-Page", out var perPageHeader))
-                result.RecordPerPage = int.Parse(perPageHeader.FirstOrDefault() ?? "0");
-
-            if (response.Headers.TryGetValue("X-Page", out var pageHeader))
-                result.CurrentPage = int.Parse(pageHeader.FirstOrDefault() ?? "0");
+            ApplyPaginationHeaders(result, response.Headers);
         }
 
         return result;
@@ -1158,14 +1116,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
             SearchGroupsForPermissionList = response.Data != null ? response.Data.Groups : []
         };
 
-        if (response.Headers.TryGetValue("X-Total-Count", out var totalCountHeader))
-            result.TotalRecord = int.Parse(totalCountHeader.FirstOrDefault() ?? "0");
-
-        if (response.Headers.TryGetValue("X-Per-Page", out var perPageHeader))
-            result.RecordPerPage = int.Parse(perPageHeader.FirstOrDefault() ?? "0");
-
-        if (response.Headers.TryGetValue("X-Page", out var pageHeader))
-            result.CurrentPage = int.Parse(pageHeader.FirstOrDefault() ?? "0");
+        ApplyPaginationHeaders(result, response.Headers);
 
         return result;
     }
