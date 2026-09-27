@@ -27,6 +27,6 @@ internal sealed class NexportEndpointProtectionMiddleware
         if (!requestEvaluator.ShouldReject(context))
             return _next(context);
 
-        return NexportRejectedRequestResponse.WriteAsync(context.Response);
+        return NexportRejectedRequestResponse.WriteAsync(context, "crawler");
     }
 }

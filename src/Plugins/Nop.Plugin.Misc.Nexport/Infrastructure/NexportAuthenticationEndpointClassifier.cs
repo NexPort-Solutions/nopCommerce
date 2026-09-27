@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Nop.Plugin.Misc.Nexport.Controllers;
 
@@ -13,6 +13,36 @@ internal enum NexportAuthenticationEndpoint
 
 internal static class NexportAuthenticationEndpointClassifier
 {
+    public static bool TryClassifyPath(PathString requestPath, out NexportAuthenticationEndpoint endpoint)
+    {
+        endpoint = default;
+        var path = requestPath.Value;
+        if (string.IsNullOrEmpty(path))
+            return false;
+        if (path.EndsWith('/'))
+            path = path[..^1];
+
+        if (string.Equals(path, "/" + NexportDefaults.NexportLoginRoutePattern.TrimEnd('/'),
+                StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (string.Equals(path, "/" + NexportDefaults.NexportLoginCheckoutAsGuestRoutePattern.TrimEnd('/'),
+                StringComparison.OrdinalIgnoreCase))
+        {
+            endpoint = NexportAuthenticationEndpoint.LoginCheckoutAsGuest;
+            return true;
+        }
+
+        if (string.Equals(path, "/" + NexportDefaults.NexportRegistrationRoutePattern.TrimEnd('/'),
+                StringComparison.OrdinalIgnoreCase))
+        {
+            endpoint = NexportAuthenticationEndpoint.Register;
+            return true;
+        }
+
+        return false;
+    }
+
     public static bool TryClassifyPath(HttpContext context, NexportAuthenticationPathPolicy pathPolicy)
     {
         ArgumentNullException.ThrowIfNull(pathPolicy);
