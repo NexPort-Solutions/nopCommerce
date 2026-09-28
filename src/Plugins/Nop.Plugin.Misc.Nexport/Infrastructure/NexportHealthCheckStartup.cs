@@ -58,7 +58,7 @@ public sealed class NexportHealthCheckStartup : INopStartup
     }
 
     /// <inheritdoc />
-    public int Order => 1; // Run before application middleware that can reject or redirect requests.
+    public int Order => -9000; // Serve the exact health endpoint before third-party request filters.
 
     private static DbConnection CreatePrimarySqlConnection()
     {
