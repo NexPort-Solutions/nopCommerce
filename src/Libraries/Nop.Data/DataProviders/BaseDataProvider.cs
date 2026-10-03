@@ -169,7 +169,8 @@ public abstract partial class BaseDataProvider
 
         return new DataContext(options)
         {
-            CommandTimeout = DataSettingsManager.GetSqlCommandTimeout()
+            CommandTimeout = DataSettingsManager.GetSqlCommandTimeout(),
+            CloseAfterUse = DataSettingsManager.GetCloseDataContextAfterUse()
         }
         .GetTable<TEntity>();
     }
@@ -363,7 +364,7 @@ public abstract partial class BaseDataProvider
     public virtual async Task BulkInsertEntitiesAsync<TEntity>(IEnumerable<TEntity> entities) where TEntity : BaseEntity
     {
         using var dataContext = CreateDataConnection(LinqToDbDataProvider);
-        await dataContext.BulkCopyAsync(new BulkCopyOptions() { KeepIdentity = true }, entities.RetrieveIdentity(dataContext));
+        await dataContext.BulkCopyAsync(DataSettingsManager.GetBulkCopyOptions(), entities.RetrieveIdentity(dataContext));
     }
 
     /// <summary>
@@ -374,7 +375,7 @@ public abstract partial class BaseDataProvider
     public virtual void BulkInsertEntities<TEntity>(IEnumerable<TEntity> entities) where TEntity : BaseEntity
     {
         using var dataContext = CreateDataConnection(LinqToDbDataProvider);
-        dataContext.BulkCopy(new BulkCopyOptions() { KeepIdentity = true }, entities.RetrieveIdentity(dataContext));
+        dataContext.BulkCopy(DataSettingsManager.GetBulkCopyOptions(), entities.RetrieveIdentity(dataContext));
     }
 
     /// <summary>

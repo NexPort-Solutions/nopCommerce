@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using LinqToDB.Data;
 using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Configuration;
@@ -170,6 +171,33 @@ public partial class DataSettingsManager
             return false;
 
         return settings.DataProvider == DataProviderType.SqlServer && settings.WithNoLock;
+    }
+
+    /// <summary>
+    /// Gets the bulk copy options configured according to the current data settings.
+    /// </summary>
+    public static BulkCopyOptions GetBulkCopyOptions()
+    {
+        var settings = LoadSettings();
+
+        if (settings is null)
+            return new BulkCopyOptions();
+
+        return new BulkCopyOptions
+        {
+            CheckConstraints = settings.BulkCopyWithCheckConstraints,
+            KeepIdentity = true
+        };
+    }
+
+    /// <summary>
+    /// Gets whether query connections should be closed after use.
+    /// </summary>
+    public static bool GetCloseDataContextAfterUse()
+    {
+        var settings = LoadSettings();
+
+        return settings is null || settings.CloseDataContextAfterUse;
     }
 
     #endregion

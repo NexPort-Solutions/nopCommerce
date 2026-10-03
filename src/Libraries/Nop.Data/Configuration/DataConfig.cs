@@ -32,6 +32,16 @@ public partial class DataConfig : IConfig, IConnectionStringAccessor
     public bool WithNoLock { get; set; } = false;
 
     /// <summary>
+    /// Gets or sets whether query connections are closed after each operation, releasing resources for reuse.
+    /// </summary>
+    public bool CloseDataContextAfterUse { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether bulk copy operations enforce the target table's check constraints.
+    /// </summary>
+    public bool BulkCopyWithCheckConstraints { get; set; } = true;
+
+    /// <summary>
     /// Gets a section name to load configuration
     /// </summary>
     [JsonIgnore]

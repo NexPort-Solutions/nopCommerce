@@ -93,7 +93,7 @@ public abstract partial class BaseController : Controller
 
                 //we publish the ModelPrepared event for all models as the BaseNopModel, 
                 //so you need to implement IConsumer<ModelPrepared<BaseNopModel>> interface to handle this event
-                eventPublisher.ModelPreparedAsync(nopModel).Wait();
+                await eventPublisher.ModelPreparedAsync(nopModel);
                 break;
             }
             case IEnumerable<BaseNopModel> modelCollection:
@@ -102,7 +102,7 @@ public abstract partial class BaseController : Controller
 
                 //we publish the ModelPrepared event for collection as the IEnumerable<BaseNopModel>, 
                 //so you need to implement IConsumer<ModelPrepared<IEnumerable<BaseNopModel>>> interface to handle this event
-                eventPublisher.ModelPreparedAsync(modelCollection).Wait();
+                await eventPublisher.ModelPreparedAsync(modelCollection);
                 break;
             }
         }
