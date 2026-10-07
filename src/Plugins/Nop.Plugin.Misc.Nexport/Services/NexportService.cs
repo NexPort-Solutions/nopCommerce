@@ -916,7 +916,15 @@ public partial class NexportService
         return null;
     }
 
-    public async Task<IList<OrganizationResponseItem>> FindAllOrganizationsAsync(Guid baseOrgId)
+    public Task<IList<OrganizationResponseItem>> FindAllOrganizationsAsync(Guid baseOrgId)
+        => FindAllOrganizationsAsync(baseOrgId, CancellationToken.None);
+
+    public Task<IList<OrganizationResponseItem>> FindAllOrganizationsAsync(Guid baseOrgId,
+        CancellationToken cancellationToken)
+        => FindAllOrganizationsAsync(baseOrgId, new NexportTrainingLookupContext(), cancellationToken);
+
+    private async Task<IList<OrganizationResponseItem>> FindAllOrganizationsAsync(Guid baseOrgId,
+        NexportTrainingLookupContext lookups, CancellationToken cancellationToken)
     {
         var items = new List<OrganizationResponseItem>();
 
@@ -925,8 +933,7 @@ public partial class NexportService
             var page = 1;
             do
             {
-                var result = await _nexportApiService.GetNexportOrganizationsAsync(_nexportSettings.Url,
-                    _nexportSettings.AuthenticationToken, baseOrgId, page);
+                var result = await GetTrainingOrganizationPageAsync(baseOrgId, page, lookups, cancellationToken);
                 var pageItems = result.OrganizationList ?? new List<OrganizationResponseItem>();
                 items.AddRange(pageItems);
 
@@ -945,6 +952,10 @@ public partial class NexportService
 
                 page++;
             } while (true);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -989,14 +1000,23 @@ public partial class NexportService
         return result;
     }
 
-    public async Task<SubscriptionResponse> FindSubscription(Guid userId, Guid orgId)
+    public Task<SubscriptionResponse> FindSubscription(Guid userId, Guid orgId)
+        => FindSubscription(userId, orgId, CancellationToken.None);
+
+    public async Task<SubscriptionResponse> FindSubscription(Guid userId, Guid orgId,
+        CancellationToken cancellationToken)
     {
         SubscriptionResponse result;
 
         try
         {
             result = await _nexportApiService.GetNexportSubscriptionAsync(_nexportSettings.Url,
-                _nexportSettings.AuthenticationToken, userId, orgId);
+                _nexportSettings.AuthenticationToken, userId, orgId, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -1037,6 +1057,7 @@ public partial class NexportService
             {
                 var result = await _nexportApiService.GetNexportSubscriptionsAsync(_nexportSettings.Url,
                     _nexportSettings.AuthenticationToken, userId, page, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
                 var pageItems = result.Subscriptions ?? new List<SubscriptionResponse>();
                 items.AddRange(pageItems);
 
@@ -1055,6 +1076,10 @@ public partial class NexportService
 
                 page++;
             } while (true);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -1106,8 +1131,12 @@ public partial class NexportService
         return result;
     }
 
-    public async Task<IList<NexportOrganizationModel>> FindAllOrganizationsForUserAsync(Guid userId,
+    public Task<IList<NexportOrganizationModel>> FindAllOrganizationsForUserAsync(Guid userId,
         CancellationToken cancellationToken = default)
+        => FindAllOrganizationsForUserAsync(userId, new NexportTrainingLookupContext(), cancellationToken);
+
+    internal async Task<IList<NexportOrganizationModel>> FindAllOrganizationsForUserAsync(Guid userId,
+        NexportTrainingLookupContext lookups, CancellationToken cancellationToken)
     {
         var items = new List<NexportOrganizationModel>();
 
@@ -1119,9 +1148,8 @@ public partial class NexportService
             {
                 try
                 {
-                    var result = await _nexportApiService.GetNexportOrganizationsAsync(
-                        _nexportSettings.Url, _nexportSettings.AuthenticationToken,
-                        subscription.OrgId, cancellationToken: cancellationToken);
+                    var result = await GetTrainingOrganizationPageAsync(
+                        subscription.OrgId, null, lookups, cancellationToken);
 
                     var currentOrg = result?.OrganizationList.FirstOrDefault(x => x.OrgId == subscription.OrgId);
                     if (currentOrg != null)
@@ -1135,6 +1163,10 @@ public partial class NexportService
                         });
                     }
                     //items.AddRange(result.OrganizationList);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch (Exception ex)
                 {
@@ -1151,6 +1183,10 @@ public partial class NexportService
                     }
                 }
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -1171,6 +1207,17 @@ public partial class NexportService
 
         return items;
     }
+
+    private Task<NexportOrganizationResponse> GetTrainingOrganizationPageAsync(Guid orgId, int? page,
+        NexportTrainingLookupContext lookups, CancellationToken cancellationToken)
+        => lookups.GetOrganizationsAsync(
+            _nexportSettings.Url,
+            _nexportSettings.AuthenticationToken,
+            orgId,
+            page,
+            () => _nexportApiService.GetNexportOrganizationsAsync(
+                _nexportSettings.Url, _nexportSettings.AuthenticationToken, orgId, page, cancellationToken),
+            cancellationToken);
 
     public async Task<IPagedList<ApiEnrollmentItem>> FindEnrollmentsAsync(EnrollmentSearchFilter searchFilter, int pageIndex = 0, int pageSize = int.MaxValue)
     {
@@ -2058,6 +2105,11 @@ public partial class NexportService
         }
     }
 
+    internal Task<InvoiceRedemptionResponse> GetNexportInvoiceRedemptionAsync(Guid invoiceItemId,
+        NexportTrainingLookupContext lookups, CancellationToken cancellationToken)
+        => lookups.GetRedemptionAsync(invoiceItemId,
+            () => GetNexportInvoiceRedemptionAsync(invoiceItemId, cancellationToken), cancellationToken);
+
     [CanBeNull]
     public async Task<InvoiceRedemptionResponse> GetNexportInvoiceRedemptionAsync(Guid invoiceItemId,
         CancellationToken cancellationToken = default)
@@ -2363,69 +2415,74 @@ public partial class NexportService
         }
     }
 
-    public async Task<List<NexportOrganizationModel>> FindNexportRedemptionOrganizationsByCustomerId(int customerId, bool checkSubscription = false)
+    public Task<List<NexportOrganizationModel>> FindNexportRedemptionOrganizationsByCustomerId(
+        int customerId, bool checkSubscription = false)
+        => FindNexportRedemptionOrganizationsByCustomerId(customerId, checkSubscription, CancellationToken.None);
+
+    public Task<List<NexportOrganizationModel>> FindNexportRedemptionOrganizationsByCustomerId(
+        int customerId, bool checkSubscription, CancellationToken cancellationToken)
+        => FindNexportRedemptionOrganizationsByCustomerId(
+            customerId, checkSubscription, new NexportTrainingLookupContext(), cancellationToken);
+
+    internal async Task<List<NexportOrganizationModel>> FindNexportRedemptionOrganizationsByCustomerId(
+        int customerId, bool checkSubscription, NexportTrainingLookupContext lookups,
+        CancellationToken cancellationToken)
     {
-        var orders = await _orderService.SearchOrdersAsync((await _storeContext.GetCurrentStoreAsync()).Id, customerId: customerId);
-        var organizationModelList = new List<NexportOrganizationModel>();
-        NexportUserMapping userMapping = null;
-
-        if (checkSubscription)
-        {
-            userMapping = await FindUserMappingByCustomerId(customerId);
-        }
-
+        cancellationToken.ThrowIfCancellationRequested();
+        var store = await _storeContext.GetCurrentStoreAsync();
+        var orders = await _orderService.SearchOrdersAsync(store.Id, customerId: customerId);
+        var selectedItems = new List<(int OrderId, int OrderItemId)>();
         foreach (var order in orders)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
-            foreach (var orderItem in orderItems)
+            selectedItems.AddRange(orderItems.Select(item => (order.Id, item.Id)));
+        }
+
+        // Preserve core order selection and ordering; batch only the equivalent invoice mapping reads.
+        var mappings = await FindTrainingInvoiceMappingsAsync(selectedItems, cancellationToken);
+        var organizationModelList = new List<NexportOrganizationModel>();
+        NexportUserMapping userMapping = null;
+        if (checkSubscription)
+            userMapping = await FindUserMappingByCustomerId(customerId, cancellationToken);
+
+        foreach (var item in selectedItems)
+        {
+            foreach (var invoice in mappings[item])
             {
-                // this method doesn't work for wholesale
-                //var orderInvoiceItem = await FindNexportOrderInvoiceItem(order.Id, orderItem.Id);
-                var orderInvoiceItems = await FindNexportOrderInvoiceItems(order.Id, orderItem.Id);
-                if (orderInvoiceItems != null)
+                if (invoice.UtcDateRedemption == null)
+                    continue;
+
+                var redemption = await GetNexportInvoiceRedemptionAsync(
+                    invoice.InvoiceItemId, lookups, cancellationToken);
+                if (redemption == null || redemption.ApiErrorEntity.ErrorCode != 0 ||
+                    organizationModelList.Any(org => org.OrgId == redemption.OrganizationId))
+                    continue;
+
+                var organizations = await FindAllOrganizationsAsync(
+                    redemption.OrganizationId, lookups, cancellationToken);
+                var organization = organizations.FirstOrDefault(org => org.OrgId == redemption.OrganizationId);
+                if (organization == null)
+                    continue;
+
+                var model = new NexportOrganizationModel
                 {
-                    foreach (var orderInvoiceItem in orderInvoiceItems)
-                    {
-                        if (orderInvoiceItem?.UtcDateRedemption != null)
-                        {
-                            var invoiceRedemption =
-                                await GetNexportInvoiceRedemptionAsync(orderInvoiceItem.InvoiceItemId)!;
-                            if (invoiceRedemption != null && invoiceRedemption?.ApiErrorEntity.ErrorCode == 0)
-                            {
-                                if (!organizationModelList.Exists(i => i.OrgId == invoiceRedemption.OrganizationId))
-                                {
-                                    var availableOrganizations =
-                                        await FindAllOrganizationsAsync(invoiceRedemption.OrganizationId);
-
-                                    var org = availableOrganizations.FirstOrDefault(o =>
-                                        o.OrgId == invoiceRedemption.OrganizationId);
-
-                                    if (org != null)
-                                    {
-                                        var model = new NexportOrganizationModel
-                                        {
-                                            OrgId = org.OrgId,
-                                            OrgName = org.Name,
-                                            OrgShortName = org.ShortName
-                                        };
-
-                                        if (checkSubscription && userMapping != null)
-                                        {
-                                            model.Subscription = await FindSubscription(userMapping.NexportUserId, org.OrgId);
-                                        }
-
-                                        organizationModelList.Add(model);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    OrgId = organization.OrgId,
+                    OrgName = organization.Name,
+                    OrgShortName = organization.ShortName
+                };
+                if (checkSubscription && userMapping != null)
+                {
+                    model.Subscription = await FindSubscription(
+                        userMapping.NexportUserId, organization.OrgId, cancellationToken);
                 }
+                organizationModelList.Add(model);
             }
         }
 
         return organizationModelList;
     }
+
 
     public async Task SyncNexportProductAsync(int mappingId, [CanBeNull] Product product = null)
     {
