@@ -13,6 +13,7 @@ using Nop.Plugin.Misc.Nexport.Domain;
 using Nop.Plugin.Misc.Nexport.Domain.Enums;
 using Nop.Plugin.Misc.Nexport.Domain.RegistrationField;
 using Nop.Plugin.Misc.Nexport.Domain.Wholesale;
+using Nop.Plugin.Misc.Nexport.Extensions;
 using Nop.Plugin.Misc.Nexport.Infrastructure.CustomExceptions;
 using Nop.Plugin.Misc.Nexport.Models.NexportWholesale.WholesalePurchases;
 using Nop.Plugin.Misc.Nexport.Models.ProductMappings;
@@ -591,13 +592,31 @@ public partial class NexportService : INexportService
             : await _nexportOrderInvoiceItemRepository.GetByIdAsync(orderInvoiceItemId);
     }
 
-    public async Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId)
+    private async Task<ILookup<(int OrderId, int OrderItemId), NexportOrderInvoiceItem>> FindTrainingInvoiceMappingsAsync(
+        IList<(int OrderId, int OrderItemId)> selectedItems, CancellationToken cancellationToken)
+    {
+        var selectedPairs = selectedItems.Where(item => item.OrderId > 0 && item.OrderItemId > 0).ToHashSet();
+        var mappings = new List<NexportOrderInvoiceItem>();
+        foreach (var ids in selectedPairs.Select(item => item.OrderItemId).Distinct().Chunk(500))
+        {
+            var query = _nexportOrderInvoiceItemRepository.Table.Where(item => ids.Contains(item.OrderItemId));
+            var batch = await query.ToListAsync(cancellationToken);
+            mappings.AddRange(batch.Where(item => selectedPairs.Contains((item.OrderId, item.OrderItemId))));
+        }
+
+        return mappings.ToLookup(item => (item.OrderId, item.OrderItemId));
+    }
+
+    public Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId)
+        => GetNexportOrderInvoiceItems(userId, CancellationToken.None);
+
+    public async Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId,
+        CancellationToken cancellationToken)
     {
         return userId == Guid.Empty
             ? new List<NexportOrderInvoiceItem>()
-            : await _nexportOrderInvoiceItemRepository.Table
-                .Where(o => o.RedeemingUserId == userId)
-                .ToListAsync();
+            : await _nexportOrderInvoiceItemRepository.Table.Where(o => o.RedeemingUserId == userId)
+                .ToListAsync(cancellationToken);
     }
 
     public async Task<NexportOrderInvoiceItem> GetNexportOrderInvoiceItem(Guid userId, Guid enrollmentId)
@@ -795,11 +814,16 @@ public partial class NexportService : INexportService
         await _nexportUserMappingRepository.UpdateAsync(nexportUserMapping);
     }
 
-    public async Task<NexportUserMapping> FindUserMappingByCustomerId(int nopCustomerId)
+    public Task<NexportUserMapping> FindUserMappingByCustomerId(int nopCustomerId)
+        => FindUserMappingByCustomerId(nopCustomerId, CancellationToken.None);
+
+    public async Task<NexportUserMapping> FindUserMappingByCustomerId(int nopCustomerId,
+        CancellationToken cancellationToken)
     {
         return nopCustomerId < 1
             ? null
-            : await _nexportUserMappingRepository.Table.SingleOrDefaultAsync(np => np.NopUserId == nopCustomerId);
+            : await _nexportUserMappingRepository.Table.Where(np => np.NopUserId == nopCustomerId)
+                .SingleOrDefaultAsync(cancellationToken);
     }
 
     public async Task<NexportUserMapping> FindUserMappingByNexportUserId(Guid userId)

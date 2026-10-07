@@ -37,7 +37,7 @@
     <PackageReference Include="Hangfire.SqlServer" Version="1.8.25" />
     <PackageReference Include="JetBrains.Annotations" Version="2026.2.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
-    <PackageReference Include="NexportApi" Version="1.0.40" />
+    <PackageReference Include="NexportApi" Version="1.0.41" />
     <PackageReference Include="RBC.Hangfire.RecurringJobAdmin" Version="1.0.5" />
     <PackageReference Include="UaDetector" Version="5.2.3" />
   </ItemGroup>
@@ -182,6 +182,7 @@
     <None Remove="Scripts\jquery-ui-timepicker-addon.min.js" />
     <None Remove="Scripts\nexport.wholesale.common.js" />
     <None Remove="Scripts\nexport_common.js" />
+    <None Remove="Scripts\login_submission.js" />
     <None Remove="Scripts\nexport_plugin_common.js" />
     <None Remove="Scripts\uikit.min.js" />
     <None Remove="Scripts\xregexp-all.min.js" />
@@ -252,6 +253,7 @@
     <None Remove="Views\Widget\Product\WidgetsNexportProductDetailsAfterBreadcrumb.cshtml" />
     <None Remove="Views\Widget\Product\WidgetsProductDetailsOverviewTop.cshtml" />
     <None Remove="Views\Widget\WidgetsHeaderLinksBefore.cshtml" />
+    <None Remove="Views\Widget\WidgetsNexportLoginBottom.cshtml" />
     <None Remove="Views\Widget\_EmailStep.cshtml" />
     <None Remove="Views\_ConfirmStep.cshtml" />
     <None Remove="Views\_EmailStep.cshtml" />
@@ -704,6 +706,10 @@
     <Content Include="Scripts\password_recovery.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Scripts\login_submission.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Scripts\nexport_plugin_common.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -931,6 +937,10 @@
     </Content>
     <Content Include="Views\Widget\WidgetsHeaderLinksBefore.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Widget\WidgetsNexportLoginBottom.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="Views\_ViewImports.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

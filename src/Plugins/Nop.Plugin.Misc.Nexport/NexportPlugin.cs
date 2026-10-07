@@ -370,6 +370,7 @@ public class NexportPlugin(
                 PublicWidgetZones.OrderDetailsProductLine,
                 PublicWidgetZones.AccountNavigationAfter,
                 PublicWidgetZones.HeaderLinksBefore,
+                PublicWidgetZones.LoginBottom,
                 PublicWidgetZones.OrderSummaryCartFooter,
                 PublicWidgetZones.ProductDetailsOverviewTop,
                 NexportDefaults.NexportRegistrationFieldsZone,
@@ -421,6 +422,9 @@ public class NexportPlugin(
 
         if (widgetZone == PublicWidgetZones.HeaderLinksBefore)
             return typeof(WidgetsHeaderLinksBefore);
+
+        if (widgetZone == PublicWidgetZones.LoginBottom)
+            return typeof(WidgetsNexportLoginBottom);
 
         if (widgetZone == PublicWidgetZones.OrderSummaryCartFooter)
             return typeof(WidgetsOrderSummaryCartFooter);

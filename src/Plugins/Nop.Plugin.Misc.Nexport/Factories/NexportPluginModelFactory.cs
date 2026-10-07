@@ -722,27 +722,29 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
         if (customer == null)
             throw new ArgumentNullException(nameof(customer));
 
-        var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id);
+        var lookups = new NexportTrainingLookupContext();
+        var userMapping = await _nexportService.FindUserMappingByCustomerId(customer.Id, cancellationToken);
         var model = new NexportTrainingListModel();
 
         if (userMapping != null)
         {
             model.UserId = userMapping.NexportUserId;
-            model.RedemptionOrganizations = await _nexportService.FindNexportRedemptionOrganizationsByCustomerId(customer.Id);
+            model.RedemptionOrganizations = await _nexportService.FindNexportRedemptionOrganizationsByCustomerId(
+                customer.Id, false, lookups, cancellationToken);
             var nexportOrgs = await _nexportService.FindAllOrganizationsForUserAsync(userMapping.NexportUserId,
-                cancellationToken);
+                lookups, cancellationToken);
             model.Organizations = nexportOrgs.ToList();
             model.Trainings = await PrepareNexportTrainingItemsAsync(userMapping.NexportUserId, customer,
-                cancellationToken);
+                lookups, cancellationToken);
         }
 
         return model;
     }
 
     private async Task<Dictionary<Guid, List<NexportTrainingItemModel>>> PrepareNexportTrainingItemsAsync(
-        Guid userId, Customer customer, CancellationToken cancellationToken)
+        Guid userId, Customer customer, NexportTrainingLookupContext lookups, CancellationToken cancellationToken)
     {
-        var customerOrderInvoices = (await _nexportService.GetNexportOrderInvoiceItems(userId))
+        var customerOrderInvoices = (await _nexportService.GetNexportOrderInvoiceItems(userId, cancellationToken))
             .Where(x => x.InvoiceItemId != Guid.Empty)
             .GroupBy(x => x.RedemptionEnrollmentId)
             .Select(x => x.OrderByDescending(invoice => invoice.UtcDateRedemption).First())
@@ -752,12 +754,12 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
 
         foreach (var orderInvoice in customerOrderInvoices)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
             try
             {
-                var nexportInvoiceDetails =
-                    await _nexportService.GetNexportInvoiceRedemptionAsync(orderInvoice.InvoiceItemId, cancellationToken);
+                var nexportInvoiceDetails = await _nexportService.GetNexportInvoiceRedemptionAsync(
+                    orderInvoice.InvoiceItemId,
+                    lookups,
+                    cancellationToken);
                 if (nexportInvoiceDetails?.UtcRedemptionDate == null || nexportInvoiceDetails.RedemptionUserId == null ||
                     !nexportInvoiceDetails.SyllabusId.HasValue)
                     continue;

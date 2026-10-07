@@ -103,6 +103,8 @@ public interface INexportService
 
     Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId);
 
+    Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId, CancellationToken cancellationToken);
+
     Task<NexportOrderInvoiceItem> GetNexportOrderInvoiceItem(Guid userId, Guid enrollmentId);
 
     Task<IList<NexportOrderInvoiceItem>> GetNexportOrderInvoiceItems(Guid userId, IList<Guid> enrollmentIds);
@@ -122,6 +124,8 @@ public interface INexportService
     Task UpdateUserMapping(NexportUserMapping nexportUserMapping);
 
     Task<NexportUserMapping> FindUserMappingByCustomerId(int nopCustomerId);
+
+    Task<NexportUserMapping> FindUserMappingByCustomerId(int nopCustomerId, CancellationToken cancellationToken);
 
     Task<NexportUserMapping> FindUserMappingByNexportUserId(Guid userId);
 

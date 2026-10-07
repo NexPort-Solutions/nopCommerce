@@ -325,8 +325,11 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
         var response = await nexportApi.AdminApiGetOrganizationsWithHttpInfoAsync(accessToken, orgId, page: page,
             perPage: 30, cancellationToken: cancellationToken);
 
+        // RestSharp may return an empty response for cancellation instead of throwing.
+        cancellationToken.ThrowIfCancellationRequested();
         var result = new NexportOrganizationResponse
         {
+            StatusCode = (int)response.StatusCode,
             OrganizationList = response.Data
         };
 
