@@ -1551,14 +1551,19 @@ public partial class NexportService
     }
 
     [CanBeNull]
-    public async Task<SectionEnrollmentsResponse> GetSectionEnrollmentDetailsAsync(Guid orgId, Guid userId, Guid syllabusId)
+    public async Task<SectionEnrollmentsResponse> GetSectionEnrollmentDetailsAsync(Guid orgId, Guid userId,
+        Guid syllabusId, CancellationToken cancellationToken = default)
     {
         SectionEnrollmentsResponse result;
 
         try
         {
             result = await _nexportApiService.GetNexportSectionEnrollmentAsync(_nexportSettings.Url,
-                _nexportSettings.AuthenticationToken, orgId, userId, syllabusId);
+                _nexportSettings.AuthenticationToken, orgId, userId, syllabusId, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -1641,14 +1646,19 @@ public partial class NexportService
     }
 
     [CanBeNull]
-    public async Task<TrainingPlanEnrollmentsResponse> GetTrainingPlanEnrollmentDetailsAsync(Guid orgId, Guid userId, Guid trainingPlanId)
+    public async Task<TrainingPlanEnrollmentsResponse> GetTrainingPlanEnrollmentDetailsAsync(Guid orgId, Guid userId,
+        Guid trainingPlanId, CancellationToken cancellationToken = default)
     {
         TrainingPlanEnrollmentsResponse result;
 
         try
         {
             result = await _nexportApiService.GetNexportTrainingPlanEnrollmentAsync(_nexportSettings.Url,
-                _nexportSettings.AuthenticationToken, orgId, userId, trainingPlanId);
+                _nexportSettings.AuthenticationToken, orgId, userId, trainingPlanId, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -2049,7 +2059,8 @@ public partial class NexportService
     }
 
     [CanBeNull]
-    public async Task<InvoiceRedemptionResponse> GetNexportInvoiceRedemptionAsync(Guid invoiceItemId)
+    public async Task<InvoiceRedemptionResponse> GetNexportInvoiceRedemptionAsync(Guid invoiceItemId,
+        CancellationToken cancellationToken = default)
     {
         if (invoiceItemId == Guid.Empty)
             throw new ArgumentException("Invoice item Id cannot be an empty GUID");
@@ -2057,7 +2068,7 @@ public partial class NexportService
         try
         {
             var response = await _nexportApiService.GetNexportInvoiceRedemptionAsync(_nexportSettings.Url,
-                _nexportSettings.AuthenticationToken, invoiceItemId);
+                _nexportSettings.AuthenticationToken, invoiceItemId, cancellationToken);
 
             if (response.StatusCode == 409)
                 return null;
@@ -2080,6 +2091,10 @@ public partial class NexportService
 
                 throw new ApiException(response.StatusCode, message);
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {

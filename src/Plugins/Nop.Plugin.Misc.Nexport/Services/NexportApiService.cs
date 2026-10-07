@@ -858,7 +858,7 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
     }
 
     public async Task<NexportGetInvoiceRedemptionDetails> GetNexportInvoiceRedemptionAsync([NotNull] string url,
-        [NotNull] string accessToken, Guid invoiceItemId)
+        [NotNull] string accessToken, Guid invoiceItemId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
@@ -868,7 +868,11 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
 
         var nexportApi = CreatePointOfSaleApi(url);
 
-        var response = await nexportApi.PointOfSaleApiGetInvoiceRedemptionWithHttpInfoAsync(invoiceItemId, accessToken);
+        var response = await nexportApi.PointOfSaleApiGetInvoiceRedemptionWithHttpInfoAsync(
+            invoiceItemId,
+            accessToken,
+            cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
 
         var result = new NexportGetInvoiceRedemptionDetails
         {
@@ -949,7 +953,8 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
     }
 
     public async Task<SectionEnrollmentsResponse> GetNexportSectionEnrollmentAsync([NotNull] string url,
-        [NotNull] string accessToken, Guid orgId, Guid userId, Guid syllabusId)
+        [NotNull] string accessToken, Guid orgId, Guid userId, Guid syllabusId,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
@@ -959,11 +964,16 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
 
         var nexportApi = CreateLearningApi(url);
 
-        var result = (await nexportApi
-                .LearningApiGetSectionEnrollmentsAsync(accessToken, orgId, null, userId, syllabusId))
-            .FirstOrDefault();
+        var enrollments = await nexportApi.LearningApiGetSectionEnrollmentsAsync(
+            accessToken,
+            orgId,
+            null,
+            userId,
+            syllabusId,
+            cancellationToken: cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        return result;
+        return enrollments.FirstOrDefault();
     }
 
     public List<TrainingPlanEnrollmentsResponse> GetNexportTrainingPlanEnrollments([NotNull] string url, [NotNull] string accessToken, Guid orgId, Guid userId)
@@ -988,7 +998,8 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
     }
 
     public async Task<TrainingPlanEnrollmentsResponse> GetNexportTrainingPlanEnrollmentAsync([NotNull] string url,
-        [NotNull] string accessToken, Guid orgId, Guid userId, Guid syllabusId)
+        [NotNull] string accessToken, Guid orgId, Guid userId, Guid syllabusId,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new NullReferenceException("Api url cannot be empty");
@@ -998,11 +1009,15 @@ public class NexportApiService(ApiConfiguration apiConfiguration, IHttpClientFac
 
         var nexportApi = CreateLearningApi(url);
 
-        var result = (await nexportApi
-                .LearningApiGetTrainingPlanEnrollmentsAsync(accessToken, orgId, userId: userId, syllabusId: syllabusId))
-            .FirstOrDefault();
+        var enrollments = await nexportApi.LearningApiGetTrainingPlanEnrollmentsAsync(
+            accessToken,
+            orgId,
+            userId: userId,
+            syllabusId: syllabusId,
+            cancellationToken: cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        return result;
+        return enrollments.FirstOrDefault();
     }
 
     public async Task<CertificateUrlResponse> GetNexportEnrollmentCertificateUrlAsync([NotNull] string url,

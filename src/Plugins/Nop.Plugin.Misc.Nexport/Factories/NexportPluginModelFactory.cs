@@ -757,7 +757,7 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
             try
             {
                 var nexportInvoiceDetails =
-                    await _nexportService.GetNexportInvoiceRedemptionAsync(orderInvoice.InvoiceItemId);
+                    await _nexportService.GetNexportInvoiceRedemptionAsync(orderInvoice.InvoiceItemId, cancellationToken);
                 if (nexportInvoiceDetails?.UtcRedemptionDate == null || nexportInvoiceDetails.RedemptionUserId == null ||
                     !nexportInvoiceDetails.SyllabusId.HasValue)
                     continue;
@@ -772,8 +772,10 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                     if (nexportInvoiceDetails.RedemptionType is null or InvoiceRedemptionResponse.RedemptionTypeEnum.Section)
                     {
                         var enrollmentDetails = await _nexportService.GetSectionEnrollmentDetailsAsync(
-                            nexportInvoiceDetails.OrganizationId, nexportInvoiceDetails.RedemptionUserId.Value,
-                            nexportInvoiceDetails.SyllabusId.Value);
+                            nexportInvoiceDetails.OrganizationId,
+                            nexportInvoiceDetails.RedemptionUserId.Value,
+                            nexportInvoiceDetails.SyllabusId.Value,
+                            cancellationToken);
                         if (enrollmentDetails != null)
                         {
                             enrollmentExisted = true;
@@ -785,8 +787,10 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                     else if (nexportInvoiceDetails.RedemptionType == InvoiceRedemptionResponse.RedemptionTypeEnum.TrainingPlan)
                     {
                         var enrollmentDetails = await _nexportService.GetTrainingPlanEnrollmentDetailsAsync(
-                            nexportInvoiceDetails.OrganizationId, nexportInvoiceDetails.RedemptionUserId.Value,
-                            nexportInvoiceDetails.SyllabusId.Value);
+                            nexportInvoiceDetails.OrganizationId,
+                            nexportInvoiceDetails.RedemptionUserId.Value,
+                            nexportInvoiceDetails.SyllabusId.Value,
+                            cancellationToken);
                         if (enrollmentDetails != null)
                         {
                             enrollmentExisted = true;
@@ -795,6 +799,10 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
                             enrollmentStatus = enrollmentDetails.Phase;
                         }
                     }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch (Exception ex)
                 {
@@ -820,6 +828,10 @@ public class NexportPluginModelFactory : INexportPluginModelFactory
 
                 if (!trainingList.Any(x => x.SyllabusId == trainingItem.SyllabusId))
                     trainingList.Add(trainingItem);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {

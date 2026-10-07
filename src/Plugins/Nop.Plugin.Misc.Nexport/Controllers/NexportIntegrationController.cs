@@ -3454,6 +3454,10 @@ public class NexportIntegrationController : BasePluginController,
                 : "~/Plugins/Misc.Nexport/Views/NexportTrainings.cshtml",
                 model);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return new EmptyResult();
+        }
         catch (Exception ex)
         {
             var errorMsg = "Cannot display training details.";
